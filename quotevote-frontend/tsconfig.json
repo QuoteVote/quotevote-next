@@ -32,6 +32,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
+      "@/components/ui/*": ["./src/components/ui/*"],
       "@/components/*": ["./src/app/components/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/store/*": ["./src/store/*"],
