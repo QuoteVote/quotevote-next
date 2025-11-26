@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+:root {
+  /* Quote.Vote Color Scheme */
+  /* Primary Colors */
+  --color-primary: #52b274;
+  --color-primary-contrast: #ffffff;
+  --color-secondary: #E91E63;
+  --color-secondary-contrast: #ffffff;
+  
+  /* Background Colors */
+  --color-background: #EEF4F9;
+  --color-background-off-white: #FAFAFA;
+  --color-white: #ffffff;
+  
+  /* Text Colors */
+  --color-text-primary: #000000;
+  --color-text-secondary: #424556;
+  --color-text-muted: #454545;
+  --color-text-light: #999999;
+  
+  /* Activity Card Colors */
+  --color-quoted: #E36DFA;
+  --color-commented: #FDD835;
+  --color-upvote: #52b274;
+  --color-downvote: #FF6060;
+  --color-hearted: #F16C99;
+  --color-trending: #00BCD4;
+  
+  /* Status Colors */
+  --color-success: #55B559;
+  --color-warning: #FF9E0F;
+  --color-danger: #F55145;
+  --color-info: #00CAE3;
+  
+  /* Additional Colors */
+  --color-gray-inactive: #D8D8D8;
+  --color-gray-light: #E5E5E5;
+  --color-black-card: #2D2A2A;
+  
+  /* Legacy variables for compatibility */
+  --background: var(--color-background);
+  --foreground: var(--color-text-primary);
+}
+
+/* Tailwind v4 requires @theme inline to expose CSS variables as Tailwind utilities */
+@theme inline {
+  /* Background Colors */
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-text-primary);
+  --color-white: var(--color-white);
+  --color-background-off-white: var(--color-background-off-white);
+  
+  /* Primary Brand Colors */
+  --color-primary: var(--color-primary);
+  --color-primary-contrast: var(--color-primary-contrast);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-contrast: var(--color-secondary-contrast);
+  
+  /* Text Colors */
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-light: var(--color-text-light);
+  
+  /* Activity Colors */
+  --color-quoted: var(--color-quoted);
+  --color-commented: var(--color-commented);
+  --color-upvote: var(--color-upvote);
+  --color-downvote: var(--color-downvote);
+  --color-hearted: var(--color-hearted);
+  --color-trending: var(--color-trending);
+  
+  /* Status Colors */
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-info: var(--color-info);
+  
+  /* Fonts */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-geist-sans), "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+/* Accessibility: Focus styles for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Screen reader only class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only:focus,
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
