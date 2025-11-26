@@ -85,6 +85,46 @@ export default function Home(): ReactElement {
           </p>
         </div>
 
+        {/* shadcn/ui Component Test Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>shadcn/ui Components Test</CardTitle>
+            <CardDescription>
+              Testing Button, Card, Dialog, and Input components from shadcn/ui
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button>Default Button</Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="outline">Outline</Button>
+              <Button variant="ghost">Ghost</Button>
+            </div>
+            <div className="space-y-2">
+              <Input type="text" placeholder="Enter text here..." />
+              <Input type="email" placeholder="Enter email..." />
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">Open Dialog</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Test Dialog</DialogTitle>
+                  <DialogDescription>
+                    This is a test dialog component from shadcn/ui. All components are rendering correctly!
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-sm text-muted-foreground">
+                    The Dialog component is working properly with overlay and animations.
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
+
         {/* Call to Action */}
         <div className="text-center">
           <div className="inline-flex flex-col sm:flex-row gap-3">
