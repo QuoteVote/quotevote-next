@@ -265,6 +265,7 @@ export const useAppStore = create<AppStore>((set) => ({
 
   removePresence: (userId) =>
     set((state) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [userId]: _, ...rest } = state.chat.presenceMap;
       return {
         chat: {
