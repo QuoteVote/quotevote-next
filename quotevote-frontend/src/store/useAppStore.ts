@@ -101,6 +101,10 @@ interface AppStore extends AppState {
   updateTyping: (messageRoomId: string, userId: string, isTyping: boolean) => void;
   clearTyping: (messageRoomId: string) => void;
   setUserStatus: (status: string, statusMessage?: string) => void;
+  addPendingRequest: (request: unknown) => void;
+  removePendingRequest: (rosterId: string) => void;
+  addBlockedUser: (userId: string) => void;
+  removeBlockedUser: (userId: string) => void;
 
   // Filter actions
   setFilterVisibility: (visibility: boolean) => void;
@@ -312,6 +316,40 @@ export const useAppStore = create<AppStore>((set) => ({
         ...state.chat,
         userStatus: status,
         userStatusMessage: statusMessage,
+      },
+    })),
+
+  addPendingRequest: (request) =>
+    set((state) => ({
+      chat: {
+        ...state.chat,
+        pendingBuddyRequests: [...state.chat.pendingBuddyRequests, request],
+      },
+    })),
+
+  removePendingRequest: (rosterId) =>
+    set((state) => ({
+      chat: {
+        ...state.chat,
+        pendingBuddyRequests: state.chat.pendingBuddyRequests.filter(
+          (req) => (req as { id: string }).id !== rosterId
+        ),
+      },
+    })),
+
+  addBlockedUser: (userId) =>
+    set((state) => ({
+      chat: {
+        ...state.chat,
+        blockedUsers: [...state.chat.blockedUsers, userId],
+      },
+    })),
+
+  removeBlockedUser: (userId) =>
+    set((state) => ({
+      chat: {
+        ...state.chat,
+        blockedUsers: state.chat.blockedUsers.filter((id) => id !== userId),
       },
     })),
 
