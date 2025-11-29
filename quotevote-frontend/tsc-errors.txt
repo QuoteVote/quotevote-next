@@ -1,0 +1,18 @@
+﻿src/__tests__/hooks/usePresenceHeartbeat.test.ts(2,10): error TS2305: Module '"@apollo/client"' has no exported member 'useMutation'.
+src/__tests__/hooks/usePresenceSubscription.test.ts(2,10): error TS2305: Module '"@apollo/client"' has no exported member 'useSubscription'.
+src/__tests__/hooks/useRosterManagement.test.ts(1,22): error TS6133: 'waitFor' is declared but its value is never read.
+src/__tests__/hooks/useRosterManagement.test.ts(2,10): error TS2305: Module '"@apollo/client"' has no exported member 'useMutation'.
+src/__tests__/hooks/useTypingIndicator.test.ts(2,10): error TS2305: Module '"@apollo/client"' has no exported member 'useMutation'.
+src/hooks/usePagination.ts(22,5): error TS6133: 'resetOnFilterChange' is declared but its value is never read.
+src/hooks/usePresenceHeartbeat.ts(4,10): error TS2305: Module '"@apollo/client"' has no exported member 'useMutation'.
+src/hooks/usePresenceSubscription.ts(4,10): error TS2305: Module '"@apollo/client"' has no exported member 'useSubscription'.
+src/hooks/usePresenceSubscription.ts(25,13): error TS2554: Expected 2 arguments, but got 1.
+src/hooks/useRosterManagement.ts(3,10): error TS2305: Module '"@apollo/client"' has no exported member 'useMutation'.
+src/hooks/useRosterManagement.ts(22,60): error TS2339: Property 'addPendingRequest' does not exist on type 'AppStore'.
+src/hooks/useRosterManagement.ts(23,63): error TS2339: Property 'removePendingRequest' does not exist on type 'AppStore'.
+src/hooks/useRosterManagement.ts(24,57): error TS2339: Property 'addBlockedUser' does not exist on type 'AppStore'.
+src/hooks/useRosterManagement.ts(25,60): error TS2339: Property 'removeBlockedUser' does not exist on type 'AppStore'.
+src/hooks/useTypingIndicator.ts(4,10): error TS2305: Module '"@apollo/client"' has no exported member 'useMutation'.
+src/hooks/useTypingIndicator.ts(32,27): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/hooks/useTypingIndicator.ts(57,19): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/hooks/useTypingIndicator.ts(80,23): error TS7006: Parameter 'err' implicitly has an 'any' type.
