@@ -35,8 +35,7 @@ export function serializeObjectIds<T = unknown>(data: T): T | string | Record<st
         }
         // Another fallback: try to access the id as a string
         return String(maybeObjId.id);
-      } catch (error) {
-        console.warn('Error serializing ObjectID:', error);
+      } catch (_error) {
         return String(maybeObjId.id);
       }
     }

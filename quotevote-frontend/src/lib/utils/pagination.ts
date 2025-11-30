@@ -73,7 +73,7 @@ export const generatePageNumbers = (currentPage: number, totalPages: number, max
 
   const half = Math.floor(maxVisible / 2)
   let start = Math.max(1, currentPage - half)
-  let end = Math.min(totalPages, start + maxVisible - 1)
+  const end = Math.min(totalPages, start + maxVisible - 1)
 
   if (end - start + 1 < maxVisible) {
     start = Math.max(1, end - maxVisible + 1)
@@ -150,7 +150,7 @@ export const createGraphQLVariables = (params: GraphQLVariableParams): GraphQLVa
  * @param {string} entityName - Name of the entity (e.g., 'posts', 'activities')
  * @returns {Object} Pagination data
  */
-export const extractPaginationData = <T = unknown>(data: Record<string, any>, entityName: string): ExtractPaginationDataResult<T> => {
+export const extractPaginationData = <T = unknown>(data: Record<string, unknown>, entityName: string): ExtractPaginationDataResult<T> => {
   if (!data || !data[entityName]) {
     return {
       entities: [],

@@ -275,7 +275,7 @@ export interface NormalizePaginationParamsInput {
   totalCount: number
 }
 
-export interface NormalizePaginationParamsOutput extends NormalizePaginationParamsInput { }
+export type NormalizePaginationParamsOutput = NormalizePaginationParamsInput
 
 export interface GraphQLVariableParams {
   page: number

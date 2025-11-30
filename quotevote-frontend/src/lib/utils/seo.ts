@@ -37,8 +37,8 @@ export const generateCanonicalUrl = (baseUrl: string, params: SeoParams = {}): s
 
   const urlParams = new URLSearchParams()
 
-  // Add pagination parameters (only if not default)
-  if (page && page > 1) {
+  // Add pagination parameters (always include page if provided)
+  if (typeof page === 'number') {
     urlParams.set('page', page.toString())
   }
   if (pageSize && pageSize !== 20) {
@@ -90,13 +90,13 @@ export const generatePaginationUrls = (
   baseUrl: string,
   params: SeoParams,
   currentPage: number,
-  totalPages: number,
+  _totalPages: number,
 ): PaginationUrlsResult => {
   const prevUrl = currentPage > 1
     ? generateCanonicalUrl(baseUrl, { ...params, page: currentPage - 1 })
     : null
 
-  const nextUrl = currentPage < totalPages
+  const nextUrl = currentPage < _totalPages
     ? generateCanonicalUrl(baseUrl, { ...params, page: currentPage + 1 })
     : null
 
@@ -114,7 +114,7 @@ export const generatePaginationUrls = (
 export const generatePageTitle = (
   baseTitle: string,
   currentPage: number,
-  // totalPages: number,
+  _totalPages: number,
   searchKey?: string,
 ): string => {
   let title = baseTitle

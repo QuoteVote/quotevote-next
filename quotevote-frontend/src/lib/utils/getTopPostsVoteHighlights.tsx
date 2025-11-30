@@ -1,18 +1,17 @@
-import React from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import {
   range, get, isEqual, isEmpty, size, reduce,
 } from 'lodash'
 import { VoteStyle, Vote, VotePoint, Span, ReduceAccumulator } from '@/types/store'
 
-const getTextSpan = (text: string, prevSpan: React.ReactNode = null, style: React.CSSProperties | null = null) => (
-  // eslint-disable-next-line react/jsx-fragments
-  <React.Fragment>
+const getTextSpan = (text: string, prevSpan: ReactNode = null, style: CSSProperties | null = null) => (
+  <>
     {prevSpan}
     <span style={style || undefined}>{text}</span>
-  </React.Fragment>
+  </>
 )
 
-const getSpanBgColor = (upvotes: number, downvotes: number) : VoteStyle => {
+const getSpanBgColor = (upvotes: number, downvotes: number): VoteStyle => {
   const isEqualVotes = upvotes === downvotes
   const greenBg = upvotes > downvotes
   const voteThreshold = 100 // equal or above threshold will be max darkness of either green (upvotes)/ red(downvotes)
@@ -32,9 +31,9 @@ const getSpanBgColor = (upvotes: number, downvotes: number) : VoteStyle => {
 
 const getTopPostsVoteHighlights = (
   votes: Vote[],
-  postTextToChange: React.ReactNode,
+  postTextToChange: ReactNode,
   text: string,
-): React.ReactNode => {
+): ReactNode => {
   let indexesAndTheirPoints: Record<number, VotePoint> = {}
   let postText = postTextToChange
   votes.forEach((vote) => {

@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-export const parseCommentDate = (rawDate: Date) => {
+export const parseCommentDate = (rawDate: Date): string => {
   const now = moment(new Date()) // todays date
   const end = moment(rawDate) // another date
   const duration = moment.duration(now.diff(end))

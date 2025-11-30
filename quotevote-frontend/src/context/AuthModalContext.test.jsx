@@ -1,110 +1,109 @@
-import React from 'react'
-import { render } from '@testing-library/react'
-import { vi } from 'vitest'
-import { AuthModalProvider, useAuthModal } from './AuthModalContext'
+import React from "react";
+import { render } from "@testing-library/react";
+// Using Jest in this project; replace vitest's vi with jest
+import { AuthModalProvider, useAuthModal } from "./AuthModalContext";
 
 function TestComponent({ onRender }) {
-  const authModal = useAuthModal()
-  onRender(authModal)
-  return null
+  const authModal = useAuthModal();
+  onRender(authModal);
+  return null;
 }
 
-describe('AuthModalContext', () => {
-  it('provides modal state and control functions', () => {
-    let hookValue
+describe("AuthModalContext", () => {
+  it("provides modal state and control functions", () => {
+    let hookValue;
 
     render(
       <AuthModalProvider>
         <TestComponent
           onRender={(value) => {
-            hookValue = value
+            hookValue = value;
           }}
         />
-      </AuthModalProvider>,
-    )
+      </AuthModalProvider>
+    );
 
-    expect(hookValue.isModalOpen).toBe(false)
-    expect(typeof hookValue.openAuthModal).toBe('function')
-    expect(typeof hookValue.closeAuthModal).toBe('function')
-  })
+    expect(hookValue.isModalOpen).toBe(false);
+    expect(typeof hookValue.openAuthModal).toBe("function");
+    expect(typeof hookValue.closeAuthModal).toBe("function");
+  });
 
-  it('opens modal when openAuthModal is called', () => {
-    let hookValue
+  it("opens modal when openAuthModal is called", () => {
+    let hookValue;
 
     const { rerender } = render(
       <AuthModalProvider>
         <TestComponent
           onRender={(value) => {
-            hookValue = value
+            hookValue = value;
           }}
         />
-      </AuthModalProvider>,
-    )
+      </AuthModalProvider>
+    );
 
-    hookValue.openAuthModal()
+    hookValue.openAuthModal();
 
     rerender(
       <AuthModalProvider>
         <TestComponent
           onRender={(value) => {
-            hookValue = value
+            hookValue = value;
           }}
         />
-      </AuthModalProvider>,
-    )
+      </AuthModalProvider>
+    );
 
-    expect(hookValue.isModalOpen).toBe(true)
-  })
+    expect(hookValue.isModalOpen).toBe(true);
+  });
 
-  it('closes modal when closeAuthModal is called', () => {
-    let hookValue
+  it("closes modal when closeAuthModal is called", () => {
+    let hookValue;
 
     const { rerender } = render(
       <AuthModalProvider>
         <TestComponent
           onRender={(value) => {
-            hookValue = value
+            hookValue = value;
           }}
         />
-      </AuthModalProvider>,
-    )
+      </AuthModalProvider>
+    );
 
     // First open the modal
-    hookValue.openAuthModal()
+    hookValue.openAuthModal();
     rerender(
       <AuthModalProvider>
         <TestComponent
           onRender={(value) => {
-            hookValue = value
+            hookValue = value;
           }}
         />
-      </AuthModalProvider>,
-    )
-    expect(hookValue.isModalOpen).toBe(true)
+      </AuthModalProvider>
+    );
+    expect(hookValue.isModalOpen).toBe(true);
 
     // Then close it
-    hookValue.closeAuthModal()
+    hookValue.closeAuthModal();
     rerender(
       <AuthModalProvider>
         <TestComponent
           onRender={(value) => {
-            hookValue = value
+            hookValue = value;
           }}
         />
-      </AuthModalProvider>,
-    )
-    expect(hookValue.isModalOpen).toBe(false)
-  })
+      </AuthModalProvider>
+    );
+    expect(hookValue.isModalOpen).toBe(false);
+  });
 
-  it('throws error when useAuthModal is used outside provider', () => {
+  it("throws error when useAuthModal is used outside provider", () => {
     // Suppress console.error for this test
-    const originalError = console.error
-    console.error = vi.fn()
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     expect(() => {
-      render(<TestComponent onRender={() => {}} />)
-    }).toThrow('useAuthModal must be used within an AuthModalProvider')
+      render(<TestComponent onRender={() => {}} />);
+    }).toThrow("useAuthModal must be used within an AuthModalProvider");
 
-    console.error = originalError
-  })
-})
+    errorSpy.mockRestore();
+  });
+});

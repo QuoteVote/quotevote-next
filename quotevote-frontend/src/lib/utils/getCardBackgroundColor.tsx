@@ -1,6 +1,6 @@
-import {ActivityContentType} from '@/types/store'
+import { ActivityContentType } from '@/types/store'
 
-const getCardBackgroundColor = (activityType : ActivityContentType) => {
+const getCardBackgroundColor = (activityType: ActivityContentType): string => {
   switch (activityType.toUpperCase()) {
     case 'POSTED':
       return '#FFFFFF'

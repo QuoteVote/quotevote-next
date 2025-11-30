@@ -11,7 +11,7 @@ export function isAuthenticated(): boolean {
       return false
     }
     return true
-  } catch (err) {
+  } catch (_err) {
     return false
   }
 }
