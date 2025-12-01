@@ -9,6 +9,7 @@ export interface LoadingSpinnerProps {
    * @default '15px'
    */
   marginTop?: string;
+  
 }
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -36,4 +37,18 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
    */
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
+
+export type AlertVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
+
+export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Visual variant of the alert
+   * @default 'default'
+   */
+  variant?: AlertVariant;
+}
+
+export type AlertTitleProps = React.HTMLAttributes<HTMLDivElement>;
+
+export type AlertDescriptionProps = React.HTMLAttributes<HTMLDivElement>;
 

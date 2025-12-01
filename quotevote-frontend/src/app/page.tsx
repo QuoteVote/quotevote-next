@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import type { ReactElement } from "react";
-import { Avatar } from "@/components/Avatar";
 
 export default function Home(): ReactElement {
   return (
@@ -83,61 +82,7 @@ export default function Home(): ReactElement {
             Open-source project welcoming contributions from developers, designers, and democratic technologists.
           </p>
         </div>
-
-        {/* Avatar Component Test Section */}
-        <div className="bg-[var(--color-white)] rounded-xl shadow-md border border-[var(--color-gray-light)] p-6 sm:p-8 mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-[var(--color-text-primary)]">
-            Avatar Component Test
-          </h2>
-          <p className="text-[var(--color-text-secondary)] text-sm mb-6">
-            Testing the Avatar component with various configurations:
-          </p>
-          
-          <div className="flex flex-wrap items-center gap-6 mb-6">
-            <div className="flex flex-col items-center gap-2">
-              <Avatar 
-                src="/assets/QuoteVoteLogo.png" 
-                alt="Test Avatar" 
-                size="sm" 
-              />
-              <span className="text-xs text-[var(--color-text-secondary)]">With src (sm)</span>
-            </div>
-            
-            <div className="flex flex-col items-center gap-2">
-              <Avatar 
-                alt="John Doe" 
-                size="md" 
-              />
-              <span className="text-xs text-[var(--color-text-secondary)]">Fallback initials (md)</span>
-            </div>
-            
-            <div className="flex flex-col items-center gap-2">
-              <Avatar 
-                alt="Jane Smith" 
-                fallback="JS" 
-                size="lg" 
-              />
-              <span className="text-xs text-[var(--color-text-secondary)]">Custom fallback (lg)</span>
-            </div>
-            
-            <div className="flex flex-col items-center gap-2">
-              <Avatar 
-                alt="User" 
-                size="xl" 
-              />
-              <span className="text-xs text-[var(--color-text-secondary)]">Default icon (xl)</span>
-            </div>
-            
-            <div className="flex flex-col items-center gap-2">
-              <Avatar 
-                alt="Test User" 
-                size="md" 
-              />
-              <span className="text-xs text-[var(--color-text-secondary)]">No src fallback</span>
-            </div>
-          </div>
-        </div>
-
+                
         {/* Call to Action */}
         <div className="text-center">
           <div className="inline-flex flex-col sm:flex-row gap-3">
