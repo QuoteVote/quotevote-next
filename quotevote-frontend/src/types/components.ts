@@ -52,3 +52,52 @@ export type AlertTitleProps = React.HTMLAttributes<HTMLDivElement>;
 
 export type AlertDescriptionProps = React.HTMLAttributes<HTMLDivElement>;
 
+export interface AlertItem {
+  /**
+   * Unique identifier for the alert
+   */
+  id: string;
+  /**
+   * Visual variant of the alert
+   * @default 'default'
+   */
+  variant?: AlertVariant;
+  /**
+   * Title text for the alert
+   */
+  title?: string;
+  /**
+   * Description text for the alert
+   */
+  description?: string;
+  /**
+   * Optional dismiss handler function
+   */
+  onDismiss?: (id: string) => void;
+}
+
+export interface AlertListProps {
+  /**
+   * Array of alert items to display
+   */
+  alerts: AlertItem[];
+  /**
+   * Whether the component is in a loading state
+   * @default false
+   */
+  loading?: boolean;
+  /**
+   * Number of skeleton loaders to show when loading
+   * @default 3
+   */
+  skeletonLimit?: number;
+  /**
+   * Message to display when there are no alerts
+   */
+  emptyMessage?: string;
+  /**
+   * Additional CSS classes for the container
+   */
+  className?: string;
+}
+
