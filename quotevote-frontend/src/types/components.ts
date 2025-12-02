@@ -343,3 +343,140 @@ export interface SEOHeadProps {
   noIndex?: boolean;
 }
 
+// CustomButtons Component Types
+export interface AdminIconButtonProps {
+  /**
+   * Font size for the icon
+   * @default 'default'
+   */
+  fontSize?: string;
+  /**
+   * Callback function called before navigation (e.g., to close mobile drawer)
+   */
+  onNavigate?: () => void;
+}
+
+export interface DoubleArrowIconButtonProps {
+  /**
+   * Click handler function
+   */
+  onClick?: () => void;
+}
+
+export interface BookmarkIconButtonProps {
+  /**
+   * Post object with _id and bookmarkedBy array
+   */
+  post: {
+    _id: string;
+    bookmarkedBy?: string[];
+  };
+  /**
+   * User object with _id
+   */
+  user: {
+    _id: string;
+  };
+  /**
+   * Limit for queries
+   */
+  limit?: number;
+}
+
+export interface ApproveButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Whether the button is in selected/active state
+   * @default false
+   */
+  selected?: boolean;
+  /**
+   * Count to display
+   * @default 0
+   */
+  count?: number;
+}
+
+export interface RejectButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Whether the button is in selected/active state
+   * @default false
+   */
+  selected?: boolean;
+  /**
+   * Count to display
+   * @default 0
+   */
+  count?: number;
+}
+
+export interface ManageInviteButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+export interface InvestButtonProps {
+  /**
+   * Click handler function
+   */
+  handleClick?: () => void;
+  /**
+   * Width breakpoint ('xs', 'sm', etc.)
+   */
+  width?: string;
+}
+
+export interface SignOutButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+export interface GetAccessButtonProps {
+  // No props - this is a self-contained button
+}
+
+export interface SettingsSaveButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+export interface FollowButtonProps {
+  /**
+   * Whether the user is currently following
+   */
+  isFollowing: boolean;
+  /**
+   * Username of the profile being followed/unfollowed
+   */
+  username?: string;
+  /**
+   * User ID of the profile being followed/unfollowed
+   */
+  profileUserId: string;
+  /**
+   * Whether to show as icon-only button
+   * @default false
+   */
+  showIcon?: boolean;
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+export interface SettingsIconButtonProps {
+  /**
+   * Font size for the icon
+   */
+  fontSize?: string;
+}
+
+export interface SelectPlansButtonProps extends React.ComponentProps<'button'> {
+  // Extends button props
+}
+
