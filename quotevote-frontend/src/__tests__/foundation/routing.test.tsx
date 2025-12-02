@@ -74,9 +74,9 @@ describe('Routing', () => {
 
       expect(container).toBeInTheDocument()
       // Logo should be present (mocked as img)
-      const logo = screen.queryByAltText('Quote.Vote Logo')
+      const logos = screen.queryAllByAltText('Quote.Vote Logo')
       const errorUI = screen.queryByText(/Something went wrong/i)
-      expect(logo || errorUI).toBeTruthy()
+      expect(logos.length > 0 || errorUI).toBeTruthy()
     })
   })
 
