@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -31,26 +35,72 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/ui/*": ["./src/components/ui/*"],
-      "@/components/common/*": ["./src/components/common/*"],
-      "@/components/ErrorBoundary": ["./src/components/ErrorBoundary"],
-      "@/components/LoadingSpinner": ["./src/components/LoadingSpinner"],
-      "@/components/Avatar": ["./src/components/Avatar"],
-      "@/components/AlertList": ["./src/components/AlertList"],
-      "@/components/ForgotPassword": ["./src/components/ForgotPassword"],
-      "@/components/ForgotPassword/*": ["./src/components/ForgotPassword/*"],
-      "@/components/PasswordReset": ["./src/components/PasswordReset"],
-      "@/components/PasswordReset/*": ["./src/components/PasswordReset/*"],
-      "@/components/*": ["./src/app/components/*"],
-      "@/hooks/*": ["./src/hooks/*"],
-      "@/store/*": ["./src/store/*"],
-      "@/graphql/*": ["./src/graphql/*"],
-      "@/lib/*": ["./src/lib/*"],
-      "@/config/*": ["./src/config/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/context/*": ["./src/context/*"],
-      "@/constants/*": ["./src/constants/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/components/ui/*": [
+        "./src/components/ui/*"
+      ],
+      "@/components/common/*": [
+        "./src/components/common/*"
+      ],
+      "@/components/ErrorBoundary": [
+        "./src/components/ErrorBoundary"
+      ],
+      "@/components/LoadingSpinner": [
+        "./src/components/LoadingSpinner"
+      ],
+      "@/components/Avatar": [
+        "./src/components/Avatar"
+      ],
+      "@/components/AlertList": [
+        "./src/components/AlertList"
+      ],
+      "@/components/ForgotPassword": [
+        "./src/components/ForgotPassword"
+      ],
+      "@/components/ForgotPassword/*": [
+        "./src/components/ForgotPassword/*"
+      ],
+      "@/components/PasswordReset": [
+        "./src/components/PasswordReset"
+      ],
+      "@/components/PasswordReset/*": [
+        "./src/components/PasswordReset/*"
+      ],
+      "@/components/SignupForm": [
+        "./src/components/SignupForm"
+      ],
+      "@/components/SignupForm/*": [
+        "./src/components/SignupForm/*"
+      ],
+      "@/components/*": [
+        "./src/app/components/*"
+      ],
+      "@/hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@/store/*": [
+        "./src/store/*"
+      ],
+      "@/graphql/*": [
+        "./src/graphql/*"
+      ],
+      "@/lib/*": [
+        "./src/lib/*"
+      ],
+      "@/config/*": [
+        "./src/config/*"
+      ],
+      "@/types/*": [
+        "./src/types/*"
+      ],
+      "@/context/*": [
+        "./src/context/*"
+      ],
+      "@/constants/*": [
+        "./src/constants/*"
+      ]
     }
   },
   "include": [
@@ -62,6 +112,11 @@
     "**/*.mts",
     "jest.setup.js"
   ],
-  "types": ["jest", "@testing-library/jest-dom"],
-  "exclude": ["node_modules"]
+  "types": [
+    "jest",
+    "@testing-library/jest-dom"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
