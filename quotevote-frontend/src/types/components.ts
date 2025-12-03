@@ -434,7 +434,7 @@ export interface SignOutButtonProps extends React.ComponentProps<'button'> {
   className?: string;
 }
 
-// GetAccessButton component has no props
+// GetAccessButton has no props - it's a self-contained button
 export type GetAccessButtonProps = Record<string, never>;
 
 export interface SettingsSaveButtonProps extends React.ComponentProps<'button'> {
@@ -477,83 +477,60 @@ export interface SettingsIconButtonProps {
 
 export type SelectPlansButtonProps = React.ComponentProps<'button'>;
 
-// Password Reset Component Types
-export interface ForgotPasswordFormProps {
+// Navbar Component Types
+// MainNavBar doesn't require props - it reads from store
+export type MainNavBarProps = Record<string, never>;
+
+export interface AuthNavbarProps {
   /**
-   * Callback function when form is submitted
+   * Color variant for the navbar
    */
-  onSubmit: (values: { email: string }) => void | Promise<void>;
+  color?: 'primary' | 'info' | 'success' | 'warning' | 'danger';
   /**
-   * Whether the form is in a loading state
+   * Brand text to display
    */
-  loading: boolean;
-  /**
-   * Error message to display
-   */
-  error?: string | null;
+  brandText?: string;
 }
 
-export interface ForgotPasswordProps {
+export interface NavItem {
   /**
-   * Callback function when form is submitted
+   * Display name of the navigation item
    */
-  onSubmit: (values: { email: string }) => void | Promise<void>;
+  name: string;
   /**
-   * Whether the form is in a loading state
-   * @default false
+   * Route path for the navigation item
    */
-  loading?: boolean;
+  href: string;
   /**
-   * Error message to display
+   * Icon component for the navigation item
    */
-  error?: string | null;
+  icon?: React.ComponentType<{ className?: string }>;
+  /**
+   * Whether to show this item in mobile menu
+   * @default true
+   */
+  showInMobile?: boolean;
 }
 
-// EmailSent component has no props
-export type EmailSentProps = Record<string, never>;
-
-export interface PasswordResetFormProps {
+export interface ProfileHeaderProps {
   /**
-   * Callback function when form is submitted
+   * Profile user object
    */
-  onSubmit: (values: { password: string; confirmPassword: string }) => void | Promise<void>;
+  profileUser: {
+    _id: string;
+    username: string;
+    _followingId?: string[];
+    _followersId?: string[];
+    avatar?: string;
+    contributorBadge?: boolean;
+    [key: string]: unknown;
+  };
   /**
-   * Whether the form is in a loading state
+   * Logged in user object (optional, will be read from store if not provided)
    */
-  loading: boolean;
-  /**
-   * Error message to display
-   */
-  error?: string | null;
-}
-
-export interface PasswordResetProps {
-  /**
-   * Callback function when form is submitted
-   */
-  onSubmit: (values: { password: string; confirmPassword: string }) => void | Promise<void>;
-  /**
-   * Whether the form is in a loading state
-   * @default false
-   */
-  loading?: boolean;
-  /**
-   * Error message to display
-   */
-  error?: string | null;
-  /**
-   * Whether the password has been successfully updated
-   * @default false
-   */
-  passwordUpdated?: boolean;
-  /**
-   * Whether the reset token is valid
-   */
-  isValidToken?: boolean;
-  /**
-   * Whether token verification is in progress
-   * @default false
-   */
-  loadingData?: boolean;
+  loggedInUser?: {
+    _id: string;
+    [key: string]: unknown;
+  };
 }
 

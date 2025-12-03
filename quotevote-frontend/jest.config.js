@@ -15,14 +15,10 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testMatch: [
-    '**/__tests__/**/*.[jt]s?(x)',
-    '**/?(*.)+(spec|test).[jt]s?(x)',
-  ],
-  testPathIgnorePatterns: ['/node_modules/', '/.next/'],
-  testMatch: [
     '**/__tests__/**/*.test.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)',
   ],
+  testPathIgnorePatterns: ['/node_modules/', '/.next/'],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
@@ -42,12 +38,16 @@ const customJestConfig = {
   },
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  // Ignore patterns
-  testPathIgnorePatterns: ['/node_modules/', '/.next/'],
   // Clear mocks between tests
   clearMocks: true,
   // Restore mocks after each test
   restoreMocks: true,
+  // Reduce workers to prevent SIGSEGV errors
+  maxWorkers: '50%',
+  // Increase timeout for slower tests
+  testTimeout: 10000,
+  // Worker configuration to prevent crashes
+  workerIdleMemoryLimit: '512MB',
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
