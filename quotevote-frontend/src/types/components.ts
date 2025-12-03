@@ -434,9 +434,8 @@ export interface SignOutButtonProps extends React.ComponentProps<'button'> {
   className?: string;
 }
 
-export interface GetAccessButtonProps {
-  // No props - this is a self-contained button
-}
+// GetAccessButton has no props - it's a self-contained button
+export type GetAccessButtonProps = Record<string, never>;
 
 export interface SettingsSaveButtonProps extends React.ComponentProps<'button'> {
   /**
@@ -476,7 +475,62 @@ export interface SettingsIconButtonProps {
   fontSize?: string;
 }
 
-export interface SelectPlansButtonProps extends React.ComponentProps<'button'> {
-  // Extends button props
+export type SelectPlansButtonProps = React.ComponentProps<'button'>;
+
+// Navbar Component Types
+// MainNavBar doesn't require props - it reads from store
+export type MainNavBarProps = Record<string, never>;
+
+export interface AuthNavbarProps {
+  /**
+   * Color variant for the navbar
+   */
+  color?: 'primary' | 'info' | 'success' | 'warning' | 'danger';
+  /**
+   * Brand text to display
+   */
+  brandText?: string;
+}
+
+export interface NavItem {
+  /**
+   * Display name of the navigation item
+   */
+  name: string;
+  /**
+   * Route path for the navigation item
+   */
+  href: string;
+  /**
+   * Icon component for the navigation item
+   */
+  icon?: React.ComponentType<{ className?: string }>;
+  /**
+   * Whether to show this item in mobile menu
+   * @default true
+   */
+  showInMobile?: boolean;
+}
+
+export interface ProfileHeaderProps {
+  /**
+   * Profile user object
+   */
+  profileUser: {
+    _id: string;
+    username: string;
+    _followingId?: string[];
+    _followersId?: string[];
+    avatar?: string;
+    contributorBadge?: boolean;
+    [key: string]: unknown;
+  };
+  /**
+   * Logged in user object (optional, will be read from store if not provided)
+   */
+  loggedInUser?: {
+    _id: string;
+    [key: string]: unknown;
+  };
 }
 
