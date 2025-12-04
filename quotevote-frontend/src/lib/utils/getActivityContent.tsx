@@ -6,12 +6,15 @@ const getActivityContent = ({ type, post, quote, vote, comment }: GetActivityCon
     case 'POSTED':
       return text
     case 'COMMENTED':
-      return text.substring(comment.startWordIndex, comment.endWordIndex).replace(/(\r\n|\n|\r)/gm, '')
+      if (!comment) return text
+      return text.substring(Number(comment.startWordIndex), Number(comment.endWordIndex)).replace(/(\r\n|\n|\r)/gm, '')
     case 'UPVOTED':
     case 'DOWNVOTED':
-      return text.substring(vote.startWordIndex, vote.endWordIndex).replace(/(\r\n|\n|\r)/gm, '')
+      if (!vote) return text
+      return text.substring(Number(vote.startWordIndex), Number(vote.endWordIndex)).replace(/(\r\n|\n|\r)/gm, '')
     case 'QUOTED':
-      return text.substring(quote.startWordIndex, quote.endWordIndex).replace(/(\r\n|\n|\r)/gm, '')
+      if (!quote) return text
+      return text.substring(Number(quote.startWordIndex), Number(quote.endWordIndex)).replace(/(\r\n|\n|\r)/gm, '')
     default:
       return text
   }

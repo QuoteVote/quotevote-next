@@ -46,3 +46,21 @@ export function useMobileDetection(): boolean {
 
     return isMobile
 }
+
+// Combined hook for responsive behavior
+export function useResponsive() {
+    const width = useWidth()
+    const isMobile = useMobileDetection()
+    
+    return {
+        breakpoint: width,
+        width,
+        isMobile,
+        isTablet: width === 'md' || width === 'lg',
+        isDesktop: width === 'lg' || width === 'xl',
+        isSmallScreen: width === 'xs' || width === 'sm',
+        isMediumScreen: width === 'md' || width === 'lg',
+        isLargeScreen: width === 'lg' || width === 'xl',
+        isExtraLargeScreen: width === 'xl',
+    }
+}

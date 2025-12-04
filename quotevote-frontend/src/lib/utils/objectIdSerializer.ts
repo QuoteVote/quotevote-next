@@ -107,5 +107,5 @@ export function serializePost<T extends PostWithIds>(post: PostWithIds): T {
       ...(post.creator as Record<string, unknown>),
       _id: serializeObjectIds(((post as PostWithIds).creator as CreatorRef)?._id) as IdLike
     } : post.creator
-  } as T;
+  } as unknown as T;
 } 

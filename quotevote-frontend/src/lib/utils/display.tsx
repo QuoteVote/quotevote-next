@@ -13,7 +13,8 @@ export const getGridListCols = {
 // Note: responsive hooks moved to '@/hooks/useResponsive'
 
 export function composePost(activity: Activity, theme: ThemeShape) {
-  const time = activity && formatContentDate(activity.data.created)
+  const created = activity?.data?.created
+  const time = created ? formatContentDate(typeof created === 'string' || created instanceof Date ? created : String(created)) : ''
 
   const ACTIVITY_COLORS = {
     QUOTED: theme.activityCards.quoted.color,
@@ -30,7 +31,7 @@ export function composePost(activity: Activity, theme: ThemeShape) {
         id: activity.data._id,
         AlertTitle: `${String(activity.data.type).toUpperCase()}VOTED`,
         color: ACTIVITY_COLORS[String(activity.data.type).toUpperCase() as keyof typeof ACTIVITY_COLORS],
-        AlertBody: activity.data.content?.title ?? '',
+        AlertBody: (activity.data.content && typeof activity.data.content === 'object' && 'title' in activity.data.content ? String(activity.data.content.title) : '') ?? '',
         time,
         points: activity.data.type === 'up' ? `+${activity.data.points}` : `-${activity.data.points}`,
         creator: activity.data.creator,
@@ -70,7 +71,7 @@ export function composePost(activity: Activity, theme: ThemeShape) {
         id: activity.data._id,
         AlertTitle: activity.event,
         color: ACTIVITY_COLORS.HEARTED,
-        AlertBody: activity.data.content?.title ?? '',
+        AlertBody: (activity.data.content && typeof activity.data.content === 'object' && 'title' in activity.data.content ? String(activity.data.content.title) : '') ?? '',
         time,
         points: '',
         creator: activity.data.creator,

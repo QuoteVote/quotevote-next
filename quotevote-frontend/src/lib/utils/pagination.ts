@@ -48,9 +48,10 @@ export const calculatePagination = (totalCount: number, page: number, pageSize: 
   const normalizedPage = Math.min(Math.max(page, 1), totalPages || 1)
 
   return {
+    total: totalCount,
+    page: normalizedPage,
     currentPage: normalizedPage,
     totalPages: Math.max(totalPages, 1),
-    totalCount,
     pageSize,
     hasNextPage: normalizedPage < totalPages,
     hasPreviousPage: normalizedPage > 1,
@@ -96,9 +97,9 @@ export const generatePageNumbers = (currentPage: number, totalPages: number, max
  * @returns {Object} Normalized pagination parameters
  */
 export const normalizePaginationParams = ({ page, pageSize, totalCount }: NormalizePaginationParamsInput): NormalizePaginationParamsOutput => {
-  const normalizedPage = Math.max(1, Math.floor(page) || 1)
-  const normalizedPageSize = Math.max(1, Math.min(100, Math.floor(pageSize) || 20))
-  const normalizedTotalCount = Math.max(0, Math.floor(totalCount) || 0)
+  const normalizedPage = Math.max(1, Math.floor(Number(page) || 1))
+  const normalizedPageSize = Math.max(1, Math.min(100, Math.floor(Number(pageSize) || 20)))
+  const normalizedTotalCount = Math.max(0, Math.floor(Number(totalCount) || 0))
 
   return {
     page: normalizedPage,
@@ -127,7 +128,7 @@ export const createGraphQLVariables = (params: GraphQLVariableParams): GraphQLVa
     approved,
   } = params
 
-  const { limit, offset } = pageToOffset(page, pageSize)
+  const { limit, offset } = pageToOffset(Number(page || 1), Number(pageSize || 20))
 
   return {
     limit,
@@ -153,11 +154,14 @@ export const createGraphQLVariables = (params: GraphQLVariableParams): GraphQLVa
 export const extractPaginationData = <T = unknown>(data: Record<string, unknown>, entityName: string): ExtractPaginationDataResult<T> => {
   if (!data || !data[entityName]) {
     return {
-      entities: [],
+      data: [],
       pagination: {
-        total_count: 0,
-        limit: 0,
-        offset: 0,
+        total: 0,
+        page: 1,
+        pageSize: 20,
+        totalPages: 0,
+        currentPage: 1,
+        hasNextPage: false,
       },
     }
   }
@@ -167,12 +171,22 @@ export const extractPaginationData = <T = unknown>(data: Record<string, unknown>
     pagination?: { total_count?: number; limit?: number; offset?: number }
   }
 
+  const totalCount = pagination?.total_count ?? 0
+  const limit = pagination?.limit ?? 0
+  const offset = pagination?.offset ?? 0
+  const pageSize = limit || 20
+  const page = limit > 0 ? Math.floor(offset / limit) + 1 : 1
+  const totalPages = pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0
+
   return {
-    entities: entities ?? [],
+    data: entities ?? [],
     pagination: {
-      total_count: pagination?.total_count ?? 0,
-      limit: pagination?.limit ?? 0,
-      offset: pagination?.offset ?? 0,
+      total: totalCount,
+      page,
+      pageSize,
+      totalPages,
+      currentPage: page,
+      hasNextPage: page < totalPages,
     },
   }
 }

@@ -60,10 +60,10 @@ export const generateCanonicalUrl = (baseUrl: string, params: SeoParams = {}): s
   if (interactions) {
     urlParams.set('interactions', 'true')
   }
-  if (startDateRange) {
+  if (startDateRange && typeof startDateRange === 'string') {
     urlParams.set('start_date', startDateRange)
   }
-  if (endDateRange) {
+  if (endDateRange && typeof endDateRange === 'string') {
     urlParams.set('end_date', endDateRange)
   }
 
@@ -100,7 +100,10 @@ export const generatePaginationUrls = (
     ? generateCanonicalUrl(baseUrl, { ...params, page: currentPage + 1 })
     : null
 
-  return { prevUrl, nextUrl }
+  return { 
+    prevUrl: prevUrl || undefined,
+    nextUrl: nextUrl || undefined,
+  }
 }
 
 /**
@@ -201,7 +204,7 @@ export const generatePaginationStructuredData = (
 ): PaginationStructuredData | null => {
   if (totalPages <= 1) return null
 
-  const items: PaginationStructuredData['mainEntity']['itemListElement'] = []
+  const items: unknown[] = []
 
   for (let i = 1; i <= totalPages; i++) {
     items.push({

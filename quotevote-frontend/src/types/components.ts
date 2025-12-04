@@ -584,3 +584,48 @@ export interface SidebarWrapperProps {
   links?: React.ReactNode;
 }
 
+export interface SubHeaderProps {
+  /**
+   * The header text to display
+   */
+  headerName: string;
+  /**
+   * Whether to show the filter icon button
+   * @default true
+   */
+  showFilterIconButton?: boolean;
+  /**
+   * Callback function to set offset (currently unused)
+   */
+  setOffset?: (offset: number) => void;
+}
+
+export interface ForgotPasswordFormProps {
+  onSubmit: (data: { email: string }) => void | Promise<void>;
+  loading?: boolean;
+  error?: string | null;
+}
+
+export interface ForgotPasswordProps {
+  onSubmit?: (data: { email: string }) => void | Promise<void>;
+  loading?: boolean;
+  error?: string | null;
+}
+
+export interface PasswordResetFormProps {
+  onSubmit: (data: { password: string; confirmPassword: string }) => void | Promise<void>;
+  loading?: boolean;
+  error?: string | null;
+  token?: string;
+}
+
+export interface PasswordResetProps {
+  onSubmit?: (data: { password: string; confirmPassword: string }) => void | Promise<void>;
+  loading?: boolean;
+  error?: string | null;
+  token?: string;
+  loadingData?: boolean;
+  passwordUpdated?: boolean;
+  isValidToken?: boolean;
+}
+

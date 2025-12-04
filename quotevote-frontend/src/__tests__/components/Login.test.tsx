@@ -5,6 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { Login } from '@/app/components/Login';
 import { useAppStore } from '@/store/useAppStore';
+import type { AppState } from '@/types/store';
 
 // Mock the useAppStore hook
 jest.mock('@/store/useAppStore');
@@ -17,7 +18,7 @@ describe('Login Component', () => {
         jest.clearAllMocks();
         mockUseAppStore.mockReturnValue({
             user: { loginError: null },
-        } as any);
+        } as Partial<AppState> as AppState);
     });
 
     it('renders login component with header', () => {

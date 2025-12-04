@@ -33,7 +33,7 @@ describe('pagination utils', () => {
     it('extracts pagination data', () => {
         const data = { posts: { entities: [1, 2], pagination: { total_count: 2, limit: 10, offset: 0 } } }
         const result = extractPaginationData<number>(data, 'posts')
-        expect(result.entities).toEqual([1, 2])
-        expect(result.pagination.total_count).toBe(2)
+        expect(result.data).toEqual([1, 2])
+        expect(result.pagination?.total).toBe(2)
     })
 })
