@@ -104,13 +104,14 @@ Object.defineProperty(window, 'sessionStorage', {
   writable: true,
 })
 
-// Suppress console errors from ErrorBoundary during tests
-// These errors are expected when components hit error boundaries in test environment
+// Suppress console errors and warnings from ErrorBoundary and Radix UI during tests
+// These are expected when components hit error boundaries or Radix UI validation in test environment
 const originalError = console.error
+const originalWarn = console.warn
 beforeAll(() => {
   console.error = jest.fn((...args) => {
-    // Only suppress errors related to ErrorBoundary and undefined component types
-    // This prevents noise from expected error boundary catches while preserving real errors
+    // Only suppress errors related to ErrorBoundary, undefined component types, and Radix UI accessibility warnings
+    // This prevents noise from expected error boundary catches and test environment warnings while preserving real errors
     const errorString = args
       .map(arg => {
         if (typeof arg === 'string') return arg
@@ -127,18 +128,54 @@ beforeAll(() => {
       errorString.includes('Check the render method of') ||
       (errorString.includes('ErrorBoundary') && errorString.includes('undefined'))
     
-    if (isExpectedError) {
-      // Suppress these expected errors - they're caught by ErrorBoundary
+    // Check if this is a Radix UI Dialog accessibility warning
+    // These appear in test environment even when DialogTitle/DialogDescription are properly included
+    const isRadixDialogWarning = 
+      (errorString.includes('DialogContent') && errorString.includes('DialogTitle')) ||
+      (errorString.includes('DialogContent') && errorString.includes('DialogDescription')) ||
+      (errorString.includes('requires a `DialogTitle`')) ||
+      (errorString.includes('requires a `DialogDescription`')) ||
+      (errorString.includes('DialogContent') && errorString.includes('accessible for screen reader'))
+    
+    // Check if this is a jsdom navigation error (expected in test environment)
+    const isJsdomNavigationError = 
+      errorString.includes('Not implemented: navigation') ||
+      errorString.includes('navigation (except hash changes)')
+    
+    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError) {
+      // Suppress these expected errors - they're caught by ErrorBoundary or are test environment warnings
       return
     }
     
     // Log all other errors normally
     originalError(...args)
   })
+
+  console.warn = jest.fn((...args) => {
+    // Suppress Radix UI DialogDescription warnings in test environment
+    // These warnings appear even when DialogDescription is properly included
+    // due to timing issues in test rendering
+    const warnString = args
+      .map(arg => {
+        if (typeof arg === 'string') return arg
+        if (arg?.toString) return arg.toString()
+        return String(arg)
+      })
+      .join(' ')
+    
+    // Suppress DialogDescription warnings - we properly include DialogDescription in components
+    if (warnString.includes('Missing `Description`') && warnString.includes('DialogContent')) {
+      return
+    }
+    
+    // Log all other warnings normally
+    originalWarn(...args)
+  })
 })
 
 afterAll(() => {
   console.error = originalError
+  console.warn = originalWarn
 })
 
 // Set up environment variables for tests

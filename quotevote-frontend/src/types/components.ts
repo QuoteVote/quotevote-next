@@ -534,3 +534,53 @@ export interface ProfileHeaderProps {
   };
 }
 
+// Sidebar Component Types
+export interface SidebarProps {
+  /**
+   * Whether the sidebar is open
+   */
+  open: boolean;
+  /**
+   * Callback to toggle sidebar open/close state
+   */
+  onOpenChange: (open: boolean) => void;
+  /**
+   * Background color variant
+   * @default 'blue'
+   */
+  bgColor?: 'white' | 'black' | 'blue';
+  /**
+   * Whether RTL (right-to-left) mode is active
+   * @default false
+   */
+  rtlActive?: boolean;
+  /**
+   * Color variant for the sidebar
+   */
+  color?: 'white' | 'red' | 'orange' | 'green' | 'blue' | 'purple' | 'rose';
+  /**
+   * Whether mini sidebar mode is active
+   * @default false
+   */
+  miniActive?: boolean;
+}
+
+export interface SidebarWrapperProps {
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+  /**
+   * User section content
+   */
+  user?: React.ReactNode;
+  /**
+   * Header links section content
+   */
+  headerLinks?: React.ReactNode;
+  /**
+   * Navigation links section content
+   */
+  links?: React.ReactNode;
+}
+
