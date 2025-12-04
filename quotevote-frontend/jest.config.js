@@ -48,6 +48,12 @@ const customJestConfig = {
 
   clearMocks: true,
   restoreMocks: true,
+  // Reduce workers to prevent SIGSEGV errors
+  maxWorkers: '50%',
+  // Increase timeout for slower tests
+  testTimeout: 10000,
+  // Worker configuration to prevent crashes
+  workerIdleMemoryLimit: '512MB',
 }
 
 module.exports = createJestConfig(customJestConfig)
