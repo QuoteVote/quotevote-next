@@ -172,7 +172,7 @@ export const generatePageDescription = (
 
 /**
  * Extract URL parameters for SEO
- * @param {Object} location - React Router location object
+ * @param {Object} location - Location-like object with pathname and search properties (compatible with Next.js)
  * @returns {Object} Extracted parameters
  */
 export const extractUrlParams = (location: LocationLike): SeoParams => {
