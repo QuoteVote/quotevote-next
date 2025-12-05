@@ -34,7 +34,7 @@
       "@/*": ["./src/*"],
       "@/components/ui/*": ["./src/components/ui/*"],
       "@/components/ErrorBoundary": ["./src/components/ErrorBoundary"],
-      "@/components/*": ["./src/app/components/*"],
+      "@/components/*": ["./src/components/*", "./src/app/components/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/store/*": ["./src/store/*"],
       "@/graphql/*": ["./src/graphql/*"],
