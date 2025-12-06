@@ -64,9 +64,17 @@ export const env = {
   
   /**
    * Base server URL
-   * Required environment variable: NEXT_PUBLIC_SERVER_URL
+   * Derived from GraphQL endpoint or from NEXT_PUBLIC_SERVER_URL
    */
   get serverUrl(): string {
+    // If GraphQL endpoint is set, derive server URL from it
+    const graphqlEndpoint = getOptionalEnvVar('NEXT_PUBLIC_GRAPHQL_ENDPOINT');
+    if (graphqlEndpoint) {
+      // Remove /graphql suffix if present
+      return graphqlEndpoint.replace(/\/graphql\/?$/, '');
+    }
+    
+    // Fallback to explicit server URL
     return getEnvVar('NEXT_PUBLIC_SERVER_URL');
   },
   

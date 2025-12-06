@@ -58,13 +58,14 @@ The application will be available at [http://localhost:3000](http://localhost:30
 
 ### Environment Variables
 
-Create a `.env.local` file in the root directory with the following variables:
+Create a `.env.local` file in the root directory with the following variable:
 
 ```env
-# Client-side variables (must be prefixed with NEXT_PUBLIC_)
-NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_GRAPHQL_URL=http://localhost:4000
+# GraphQL endpoint URL (must be prefixed with NEXT_PUBLIC_)
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:4000/graphql
 ```
+
+The server URL is automatically derived from the GraphQL endpoint by removing the `/graphql` suffix.
 
 ## 🎯 Path Aliases
 
