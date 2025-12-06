@@ -1,52 +1,60 @@
-import "dotenv/config";
-import express, { Application, Request, Response, NextFunction } from "express";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
+import express from 'express';
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@as-integrations/express5';
+import cors from 'cors';
+import http from 'http';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
-const app: Application = express();
+// Load environment variables
+dotenv.config();
+
+const app = express();
+const httpServer = http.createServer(app);
+
+// Environment Variables
 const PORT = process.env.PORT || 4000;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/quotevote';
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
-app.use(helmet());
-app.use(morgan("dev"));
+async function startServer() {
+  // 1. Database Connection (Mongoose v9)
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log('✅ Connected to MongoDB');
+  } catch (err) {
+    console.error('❌ MongoDB Connection Error:', err);
+    process.exit(1);
+  }
 
-// Health Check
-app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({ status: "UP", timestamp: new Date().toISOString() });
-});
-
-// Root Route
-app.get("/", (req: Request, res: Response) => {
-  res.send("QuoteVote Backend Running Successfully!");
-});
-
-// Global Error Handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({
-    message: "Internal Server Error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined,
+  // 2. Apollo Server Setup (v4/v5 Syntax)
+  const server = new ApolloServer({
+    typeDefs: `
+      type Query {
+        hello: String
+        status: String
+      }
+    `,
+    resolvers: {
+      Query: {
+        hello: () => 'Hello from TypeScript Backend! 🚀',
+        status: () => 'Active & Migrated successfully',
+      },
+    },
   });
-});
 
-// Start Server
-const server = app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-  console.log(`Backend Link: http://localhost:${PORT}`);
-});
+  await server.start();
 
-// Graceful Shutdown
-const shutdown = () => {
-  console.log("Shutting down server...");
-  server.close(() => {
-    console.log("Server closed.");
-    process.exit(0);
-  });
-};
+  // 3. Middleware Integration
+  app.use(
+    '/graphql',
+    cors<cors.CorsRequest>(),
+    express.json(),
+    expressMiddleware(server),
+  );
 
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+  // 4. Start Server
+  await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
+  console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+}
+
+startServer();
