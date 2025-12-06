@@ -6,10 +6,10 @@ const createJestConfig = nextJest({
 })
 
 const customJestConfig = {
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
 
-  // No Testing Library setup anymore
-  setupFilesAfterEnv: [],
+  // Setup files after environment is created
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',

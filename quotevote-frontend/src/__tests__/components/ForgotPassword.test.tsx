@@ -86,8 +86,7 @@ describe('ForgotPassword', () => {
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
-        { email: 'test@example.com' },
-        expect.any(Object)
+        { email: 'test@example.com' }
       );
     });
   });

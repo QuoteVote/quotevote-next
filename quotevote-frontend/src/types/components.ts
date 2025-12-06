@@ -629,3 +629,70 @@ export interface PasswordResetProps {
   isValidToken?: boolean;
 }
 
+// SubmitPost Component Types
+export interface Group {
+  _id: string;
+  title: string;
+  description?: string;
+  url?: string;
+  privacy?: 'public' | 'private';
+  creatorId?: string;
+  adminIds?: string[];
+  allowedUserIds?: string[];
+  created?: string;
+}
+
+export interface SubmitPostProps {
+  /**
+   * Callback to close the submit post dialog/modal
+   */
+  setOpen: (open: boolean) => void;
+}
+
+export interface SubmitPostFormProps {
+  /**
+   * Array of available groups for selection
+   */
+  options?: Group[];
+  /**
+   * Current user object
+   */
+  user: {
+    _id: string;
+    [key: string]: unknown;
+  };
+  /**
+   * Callback to close the submit post dialog/modal
+   */
+  setOpen: (open: boolean) => void;
+}
+
+export interface SubmitPostAlertProps {
+  /**
+   * Callback to hide the alert
+   */
+  hideAlert: () => void;
+  /**
+   * Shareable link URL for the created post
+   */
+  shareableLink?: string;
+  /**
+   * Error object if post creation failed
+   */
+  error?: Error | { message?: string; toString?: () => string } | null;
+  /**
+   * Callback to set alert visibility
+   */
+  setShowAlert: (show: boolean) => void;
+  /**
+   * Callback to close the submit post dialog/modal
+   */
+  setOpen: (open: boolean) => void;
+}
+
+export interface SubmitPostFormValues {
+  title: string;
+  text: string;
+  group: Group | { title: string } | string;
+}
+
