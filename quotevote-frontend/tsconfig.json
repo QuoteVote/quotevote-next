@@ -74,6 +74,12 @@
       "@/components/SignupForm/*": [
         "./src/components/SignupForm/*"
       ],
+      "@/components/SubmitPost": [
+        "./src/components/SubmitPost"
+      ],
+      "@/components/SubmitPost/*": [
+        "./src/components/SubmitPost/*"
+      ],
       "@/components/*": [
         "./src/app/components/*"
       ],

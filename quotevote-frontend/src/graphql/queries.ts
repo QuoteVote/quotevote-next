@@ -61,3 +61,21 @@ export const VERIFY_PASSWORD_RESET_TOKEN = gql`
     verifyUserPasswordResetToken(token: $token)
   }
 `
+
+/**
+ * Get groups query for post creation
+ */
+export const GROUPS_QUERY = gql`
+  query groups($limit: Int!) {
+    groups(limit: $limit) {
+      _id
+      creatorId
+      adminIds
+      allowedUserIds
+      privacy
+      title
+      url
+      description
+    }
+  }
+`

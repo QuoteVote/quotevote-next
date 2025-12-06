@@ -212,8 +212,7 @@ describe('PasswordReset', () => {
         {
           password: 'ValidPass123',
           confirmPassword: 'ValidPass123',
-        },
-        expect.any(Object)
+        }
       );
     });
   });

@@ -124,3 +124,30 @@ export const UPDATE_USER_PASSWORD = gql`
     updateUserPassword(username: $username, password: $password, token: $token)
   }
 `
+
+/**
+ * Create group mutation
+ */
+export const CREATE_GROUP = gql`
+  mutation createGroup($group: GroupInput!) {
+    createGroup(group: $group) {
+      _id
+      title
+      description
+      url
+      created
+    }
+  }
+`
+
+/**
+ * Submit post mutation
+ */
+export const SUBMIT_POST = gql`
+  mutation addPost($post: PostInput!) {
+    addPost(post: $post) {
+      _id
+      url
+    }
+  }
+`
