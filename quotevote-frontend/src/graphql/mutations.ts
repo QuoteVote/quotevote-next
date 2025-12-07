@@ -221,3 +221,129 @@ export const UPDATE_ACTION_REACTION = gql`
     }
   }
 `
+
+/**
+ * Approve post mutation
+ */
+export const APPROVE_POST = gql`
+  mutation approvePost($postId: String!, $userId: String!, $remove: Boolean) {
+    approvePost(postId: $postId, userId: $userId, remove: $remove) {
+      _id
+    }
+  }
+`
+
+/**
+ * Reject post mutation
+ */
+export const REJECT_POST = gql`
+  mutation rejectPost($postId: String!, $userId: String!, $remove: Boolean) {
+    rejectPost(postId: $postId, userId: $userId, remove: $remove) {
+      _id
+    }
+  }
+`
+
+/**
+ * Delete post mutation
+ */
+export const DELETE_POST = gql`
+  mutation deletePost($postId: String!) {
+    deletePost(postId: $postId) {
+      _id
+    }
+  }
+`
+
+/**
+ * Update post bookmark mutation
+ */
+export const UPDATE_POST_BOOKMARK = gql`
+  mutation updatePostBookmark($postId: String!, $userId: String!) {
+    updatePostBookmark(postId: $postId, userId: $userId) {
+      _id
+      bookmarkedBy
+    }
+  }
+`
+
+/**
+ * Toggle voting on a post mutation
+ */
+export const TOGGLE_VOTING = gql`
+  mutation toggleVoting($postId: String!) {
+    toggleVoting(postId: $postId) {
+      _id
+      enable_voting
+    }
+  }
+`
+
+/**
+ * Update featured slot mutation
+ */
+export const UPDATE_FEATURED_SLOT = gql`
+  mutation updateFeaturedSlot($postId: String!, $featuredSlot: Int) {
+    updateFeaturedSlot(postId: $postId, featuredSlot: $featuredSlot) {
+      _id
+      featuredSlot
+    }
+  }
+`
+
+/**
+ * Report post mutation
+ */
+export const REPORT_POST = gql`
+  mutation reportPost($postId: String!, $userId: String!) {
+    reportPost(postId: $postId, userId: $userId) {
+      _id
+      reportedBy
+    }
+  }
+`
+
+/**
+ * Add vote mutation
+ */
+export const VOTE = gql`
+  mutation addVote($vote: VoteInput!) {
+    addVote(vote: $vote) {
+      postId
+      type
+    }
+  }
+`
+
+/**
+ * Delete vote mutation
+ */
+export const DELETE_VOTE = gql`
+  mutation deleteVote($voteId: String!) {
+    deleteVote(voteId: $voteId) {
+      _id
+    }
+  }
+`
+
+/**
+ * Add quote mutation
+ */
+export const ADD_QUOTE = gql`
+  mutation addQuote($quote: QuoteInput!) {
+    addQuote(quote: $quote) {
+      _id
+    }
+  }
+`
+
+/**
+ * Delete quote mutation
+ */
+export const DELETE_QUOTE = gql`
+  mutation deleteQuote($quoteId: String!) {
+    deleteQuote(quoteId: $quoteId) {
+      _id
+    }
+  }
+`
