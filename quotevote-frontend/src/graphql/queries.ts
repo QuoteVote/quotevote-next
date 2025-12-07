@@ -490,3 +490,75 @@ export const GET_LATEST_QUOTES = gql`
     }
   }
 `
+
+/**
+ * Get user by username query
+ */
+export const GET_USER = gql`
+  query user($username: String!) {
+    user(username: $username) {
+      _id
+      name
+      username
+      upvotes
+      downvotes
+      _followingId
+      _followersId
+      avatar
+      contributorBadge
+      reputation {
+        _id
+        overallScore
+        inviteNetworkScore
+        conductScore
+        activityScore
+        metrics {
+          totalInvitesSent
+          totalInvitesAccepted
+          totalInvitesDeclined
+          averageInviteeReputation
+          totalReportsReceived
+          totalReportsResolved
+          totalUpvotes
+          totalDownvotes
+          totalPosts
+          totalComments
+        }
+        lastCalculated
+      }
+    }
+  }
+`
+
+/**
+ * Get user follow info (followers or following)
+ */
+export const GET_FOLLOW_INFO = gql`
+  query getUserFollowInfo($username: String!, $filter: String!) {
+    getUserFollowInfo(username: $username, filter: $filter) {
+      id
+      username
+      name
+      avatar
+      numFollowers
+      numFollowing
+    }
+  }
+`
+
+/**
+ * Get chat room between two users
+ */
+export const GET_CHAT_ROOM = gql`
+  query getChatRoom($otherUserId: String!) {
+    messageRoom(otherUserId: $otherUserId) {
+      _id
+      users
+      postId
+      messageType
+      created
+      title
+      avatar
+    }
+  }
+`

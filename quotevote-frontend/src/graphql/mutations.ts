@@ -347,3 +347,36 @@ export const DELETE_QUOTE = gql`
     }
   }
 `
+
+/**
+ * Send user invite mutation
+ */
+export const SEND_USER_INVITE = gql`
+  mutation sendUserInvite($email: String!) {
+    sendUserInvite(email: $email) {
+      code
+      message
+    }
+  }
+`
+
+/**
+ * Report user mutation
+ */
+export const REPORT_USER = gql`
+  mutation reportUser($reportUserInput: ReportUserInput!) {
+    reportUser(reportUserInput: $reportUserInput) {
+      code
+      message
+    }
+  }
+`
+
+/**
+ * Report bot mutation
+ */
+export const REPORT_BOT = gql`
+  mutation reportBot($userId: String!, $reporterId: String!) {
+    reportBot(userId: $userId, reporterId: $reporterId)
+  }
+`
