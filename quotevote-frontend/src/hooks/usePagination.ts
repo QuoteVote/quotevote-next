@@ -10,7 +10,7 @@ import type {
 
 /**
  * Custom hook for managing pagination state with URL synchronization
- * Adapted for Next.js App Router from React Router implementation
+ * Uses Next.js App Router navigation APIs (useRouter, usePathname, useSearchParams)
  */
 export const usePagination = ({
     defaultPage = 1,

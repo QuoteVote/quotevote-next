@@ -40,6 +40,9 @@ function PasswordResetForm({
   loading,
   error,
 }: PasswordResetFormProps) {
+  const handleFormSubmit = (data: PasswordFormData) => {
+    onSubmit(data);
+  };
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -65,7 +68,7 @@ function PasswordResetForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-5">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="w-full space-y-5">
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
@@ -189,7 +192,7 @@ export function PasswordReset({
                   </h2>
                   <div className="w-full">
                     <PasswordResetForm
-                      onSubmit={onSubmit}
+                      onSubmit={onSubmit ? (data) => onSubmit(data) : () => {}}
                       loading={loading}
                       error={error}
                     />

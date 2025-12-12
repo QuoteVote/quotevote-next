@@ -120,7 +120,7 @@ export function ForgotPassword({
         <div className="flex flex-col items-center gap-4">
           <div className="w-full">
             <ForgotPasswordForm
-              onSubmit={onSubmit}
+              onSubmit={onSubmit ? (data) => onSubmit(data) : () => {}}
               loading={loading}
               error={error}
             />

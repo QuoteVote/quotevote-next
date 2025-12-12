@@ -1,67 +1,66 @@
-'use client'
+import { useEffect, useState } from 'react'
+import { isMobile as isDeviceMobile } from 'react-device-detect'
 
-import { useState, useEffect } from 'react'
-import type { ResponsiveBreakpoint, UseResponsiveReturn } from '@/types/hooks'
+type Breakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
-/**
- * Tailwind breakpoints (matching default Tailwind CSS configuration)
- */
-const BREAKPOINTS = {
-    sm: 640,
-    md: 768,
-    lg: 1024,
-    xl: 1280,
-    '2xl': 1536,
-} as const
+const queries: Array<{ key: Breakpoint; query: string }> = [
+    { key: 'xl', query: '(min-width: 1280px)' },
+    { key: 'lg', query: '(min-width: 1024px)' },
+    { key: 'md', query: '(min-width: 768px)' },
+    { key: 'sm', query: '(min-width: 640px)' },
+]
 
-/**
- * Custom hook to get responsive breakpoint information
- * Replaces Material-UI useTheme/useMediaQuery with Tailwind breakpoints
- * @returns Object containing current breakpoint and responsive boolean helpers
- */
-export const useResponsive = (): UseResponsiveReturn => {
-    const [windowWidth, setWindowWidth] = useState<number>(
-        typeof window !== 'undefined' ? window.innerWidth : 0
-    )
+export function useWidth(): Breakpoint {
+    const [bp, setBp] = useState<Breakpoint>('xs')
 
     useEffect(() => {
-        // Handle SSR - return early if window is not defined
         if (typeof window === 'undefined') return
+        const mqls = queries.map(({ key, query }) => ({ key, mql: window.matchMedia(query) }))
 
-        const handleResize = (): void => {
-            setWindowWidth(window.innerWidth)
+        const update = () => {
+            const match = mqls.find(({ mql }) => mql.matches)
+            setBp(match ? match.key : 'xs')
         }
 
-        // Set initial width
-        handleResize()
-
-        // Add event listener
-        window.addEventListener('resize', handleResize)
-
-        // Cleanup
-        return () => window.removeEventListener('resize', handleResize)
+        mqls.forEach(({ mql }) => mql.addEventListener?.('change', update))
+        update()
+        return () => {
+            mqls.forEach(({ mql }) => mql.removeEventListener?.('change', update))
+        }
     }, [])
 
-    let breakpoint: ResponsiveBreakpoint = 'xs'
-    if (windowWidth >= BREAKPOINTS['2xl']) {
-        breakpoint = '2xl'
-    } else if (windowWidth >= BREAKPOINTS.xl) {
-        breakpoint = 'xl'
-    } else if (windowWidth >= BREAKPOINTS.lg) {
-        breakpoint = 'lg'
-    } else if (windowWidth >= BREAKPOINTS.md) {
-        breakpoint = 'md'
-    } else if (windowWidth >= BREAKPOINTS.sm) {
-        breakpoint = 'sm'
-    }
-
-    return {
-        breakpoint,
-        isSmallScreen: windowWidth < BREAKPOINTS.sm,
-        isMediumScreen: windowWidth >= BREAKPOINTS.md,
-        isLargeScreen: windowWidth >= BREAKPOINTS.lg,
-        isExtraLargeScreen: windowWidth >= BREAKPOINTS.xl,
-    }
+    return bp
 }
 
-export default useResponsive
+export function useMobileDetection(): boolean {
+    const [isMobile, setIsMobile] = useState<boolean>(isDeviceMobile)
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        const mql = window.matchMedia('(max-width: 640px)')
+        const update = () => setIsMobile(isDeviceMobile || mql.matches)
+        mql.addEventListener?.('change', update)
+        update()
+        return () => mql.removeEventListener?.('change', update)
+    }, [])
+
+    return isMobile
+}
+
+// Combined hook for responsive behavior
+export function useResponsive() {
+    const width = useWidth()
+    const isMobile = useMobileDetection()
+    
+    return {
+        breakpoint: width,
+        width,
+        isMobile,
+        isTablet: width === 'md' || width === 'lg',
+        isDesktop: width === 'lg' || width === 'xl',
+        isSmallScreen: width === 'xs' || width === 'sm',
+        isMediumScreen: width === 'md' || width === 'lg',
+        isLargeScreen: width === 'lg' || width === 'xl',
+        isExtraLargeScreen: width === 'xl',
+    }
+}

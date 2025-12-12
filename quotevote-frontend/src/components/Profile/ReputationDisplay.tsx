@@ -1,219 +1,233 @@
 'use client';
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
-    Users,
-    Shield,
-    Activity,
-    RefreshCw,
-    Info
+  Users,
+  Shield,
+  TrendingUp,
+  RefreshCw,
+  Info,
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { ReputationDisplayProps } from '@/types/profile';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
-interface ReputationMetrics {
-    totalInvitesSent: number;
-    totalInvitesAccepted: number;
-    totalInvitesDeclined: number;
-    averageInviteeReputation: number;
-    totalReportsReceived: number;
-    totalReportsResolved: number;
-    totalUpvotes: number;
-    totalDownvotes: number;
-    totalPosts: number;
-    totalComments: number;
-}
-
-interface ReputationData {
-    _id: string;
-    overallScore: number;
-    inviteNetworkScore: number;
-    conductScore: number;
-    activityScore: number;
-    metrics: ReputationMetrics;
-    lastCalculated: string;
-}
-
-interface ReputationDisplayProps {
-    reputation: ReputationData;
-    onRefresh?: () => void;
-    loading?: boolean;
-}
-
-export default function ReputationDisplay({ reputation, onRefresh, loading = false }: ReputationDisplayProps) {
-    if (!reputation) {
-        return (
-            <Card className="mb-4">
-                <CardContent className="p-6">
-                    <p className="text-gray-500">No reputation data available</p>
-                </CardContent>
-            </Card>
-        );
-    }
-
-    const getScoreColor = (score: number) => {
-        if (score >= 800) return 'bg-green-500';
-        if (score >= 600) return 'bg-orange-500';
-        if (score >= 400) return 'bg-red-500';
-        return 'bg-red-600';
-    };
-
-    const getScoreLabel = (score: number) => {
-        if (score >= 800) return 'Excellent';
-        if (score >= 600) return 'Good';
-        if (score >= 400) return 'Fair';
-        return 'Poor';
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString();
-    };
-
+export function ReputationDisplay({
+  reputation,
+  onRefresh,
+  loading = false,
+}: ReputationDisplayProps) {
+  if (!reputation) {
     return (
-        <div className="space-y-4 mb-6">
-            {/* Main Reputation Card */}
-            <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none">
-                <CardContent className="p-6">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h3 className="text-lg font-semibold mb-2">Reputation Score</h3>
-                            <div className="flex items-center mb-2">
-                                <span className="text-4xl font-bold mr-3">{reputation.overallScore}</span>
-                                <Badge className={`${getScoreColor(reputation.overallScore)} text-white border-none`}>
-                                    {getScoreLabel(reputation.overallScore)}
-                                </Badge>
-                            </div>
-                            <div className="w-full bg-white/30 h-2 rounded-full mb-2">
-                                <div
-                                    className="bg-green-400 h-2 rounded-full"
-                                    style={{ width: `${(reputation.overallScore / 1000) * 100}%` }}
-                                />
-                            </div>
-                            <p className="text-xs opacity-80">
-                                Last updated: {formatDate(reputation.lastCalculated)}
-                            </p>
-                        </div>
-                        <div>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={onRefresh}
-                                            disabled={loading}
-                                            className="text-white hover:bg-white/20"
-                                        >
-                                            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Refresh reputation</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Score Breakdown */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Score Breakdown</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <Users className="h-8 w-8 mx-auto text-blue-500 mb-2" />
-                            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                                {reputation.inviteNetworkScore}
-                            </div>
-                            <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
-                                Invite Network
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <Info className="h-3 w-3" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Based on quality of invited users and acceptance rate</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <Shield className="h-8 w-8 mx-auto text-blue-500 mb-2" />
-                            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                                {reputation.conductScore}
-                            </div>
-                            <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
-                                Conduct
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <Info className="h-3 w-3" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Based on reports received and voting behavior</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <Activity className="h-8 w-8 mx-auto text-blue-500 mb-2" />
-                            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                                {reputation.activityScore}
-                            </div>
-                            <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
-                                Activity
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <Info className="h-3 w-3" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Based on content creation and platform engagement</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Detailed Metrics */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Detailed Metrics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <MetricItem label="Invites Sent" value={reputation.metrics.totalInvitesSent} />
-                        <MetricItem label="Invites Accepted" value={reputation.metrics.totalInvitesAccepted} />
-                        <MetricItem label="Posts Created" value={reputation.metrics.totalPosts} />
-                        <MetricItem label="Comments Made" value={reputation.metrics.totalComments} />
-                        <MetricItem label="Upvotes Given" value={reputation.metrics.totalUpvotes} />
-                        <MetricItem label="Reports Received" value={reputation.metrics.totalReportsReceived} />
-                        <MetricItem label="Avg Invitee Rep" value={reputation.metrics.averageInviteeReputation} />
-                        <MetricItem label="Reports Resolved" value={reputation.metrics.totalReportsResolved} />
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-muted-foreground">No reputation data available</p>
+        </CardContent>
+      </Card>
     );
+  }
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 800) return '#4caf50'; // Green
+    if (score >= 600) return '#ff9800'; // Orange
+    if (score >= 400) return '#ff5722'; // Red-Orange
+    return '#f44336'; // Red
+  };
+
+  const getScoreLabel = (score: number): string => {
+    if (score >= 800) return 'Excellent';
+    if (score >= 600) return 'Good';
+    if (score >= 400) return 'Fair';
+    return 'Poor';
+  };
+
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const scoreColor = getScoreColor(reputation.overallScore);
+  const scoreLabel = getScoreLabel(reputation.overallScore);
+  const progressPercentage = (reputation.overallScore / 1000) * 100;
+
+  return (
+    <div className="space-y-4">
+      {/* Main Reputation Card */}
+      <Card
+        className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
+      >
+        <CardContent className="pt-6">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold mb-2">Reputation Score</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-3xl font-bold">{reputation.overallScore}</span>
+                <span
+                  className="px-2 py-1 rounded text-sm font-medium text-white"
+                  style={{ backgroundColor: scoreColor }}
+                >
+                  {scoreLabel}
+                </span>
+              </div>
+              <div className="w-full bg-white/30 rounded-full h-2 mb-2">
+                <div
+                  className="h-2 rounded-full transition-all"
+                  style={{
+                    width: `${progressPercentage}%`,
+                    backgroundColor: '#4caf50',
+                  }}
+                />
+              </div>
+              <p className="text-sm opacity-80">
+                Last updated: {formatDate(reputation.lastCalculated)}
+              </p>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onRefresh}
+                    disabled={loading}
+                    className="text-white hover:bg-white/20"
+                  >
+                    <RefreshCw
+                      className={cn('h-5 w-5', loading && 'animate-spin')}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh reputation</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Score Breakdown */}
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="text-lg font-semibold mb-4">Score Breakdown</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="text-center">
+              <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
+              <p className="text-xl font-bold text-primary">
+                {reputation.inviteNetworkScore}
+              </p>
+              <p className="text-sm text-muted-foreground">Invite Network</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 mx-auto mt-1 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Based on quality of invited users and acceptance rate</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="text-center">
+              <Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
+              <p className="text-xl font-bold text-primary">
+                {reputation.conductScore}
+              </p>
+              <p className="text-sm text-muted-foreground">Conduct</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 mx-auto mt-1 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Based on reports received and voting behavior</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="text-center">
+              <TrendingUp className="h-6 w-6 mx-auto mb-2 text-primary" />
+              <p className="text-xl font-bold text-primary">
+                {reputation.activityScore}
+              </p>
+              <p className="text-sm text-muted-foreground">Activity</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 mx-auto mt-1 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Based on content creation and platform engagement</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Detailed Metrics */}
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="text-lg font-semibold mb-4">Detailed Metrics</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="text-center">
+              <p className="text-xl font-bold text-primary">
+                {reputation.metrics.totalInvitesSent}
+              </p>
+              <p className="text-sm text-muted-foreground">Invites Sent</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-primary">
+                {reputation.metrics.totalInvitesAccepted}
+              </p>
+              <p className="text-sm text-muted-foreground">Invites Accepted</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-primary">
+                {reputation.metrics.totalPosts}
+              </p>
+              <p className="text-sm text-muted-foreground">Posts Created</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-primary">
+                {reputation.metrics.totalComments}
+              </p>
+              <p className="text-sm text-muted-foreground">Comments Made</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-primary">
+                {reputation.metrics.totalUpvotes}
+              </p>
+              <p className="text-sm text-muted-foreground">Upvotes Given</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-primary">
+                {reputation.metrics.totalReportsReceived}
+              </p>
+              <p className="text-sm text-muted-foreground">Reports Received</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-primary">
+                {reputation.metrics.averageInviteeReputation.toFixed(1)}
+              </p>
+              <p className="text-sm text-muted-foreground">Avg Invitee Rep</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-primary">
+                {reputation.metrics.totalReportsResolved}
+              </p>
+              <p className="text-sm text-muted-foreground">Reports Resolved</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
-function MetricItem({ label, value }: { label: string; value: number }) {
-    return (
-        <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{value}</div>
-            <div className="text-xs text-gray-500">{label}</div>
-        </div>
-    );
-}

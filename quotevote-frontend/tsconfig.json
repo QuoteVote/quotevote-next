@@ -74,8 +74,29 @@
       "@/components/SignupForm/*": [
         "./src/components/SignupForm/*"
       ],
+      "@/components/SubmitPost": [
+        "./src/components/SubmitPost"
+      ],
+      "@/components/SubmitPost/*": [
+        "./src/components/SubmitPost/*"
+      ],
+      "@/components/Comment": [
+        "./src/components/Comment"
+      ],
+      "@/components/Comment/*": [
+        "./src/components/Comment/*"
+      ],
+      "@/components/Quotes": [
+        "./src/components/Quotes"
+      ],
+      "@/components/Quotes/*": [
+        "./src/components/Quotes/*"
+      ],
       "@/components/*": [
         "./src/components/*"
+      ],
+      "@/components/SubHeader": [
+        "./src/components/SubHeader"
       ],
       "@/hooks/*": [
         "./src/hooks/*"

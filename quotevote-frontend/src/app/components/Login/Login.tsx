@@ -8,7 +8,7 @@
  * Features geographic location backgrounds to inspire global unity.
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Card } from '@/components/ui/card';
 import { LoginForm } from './LoginForm';
@@ -32,15 +32,11 @@ const backgroundImages = [
 
 export function Login({ onSubmit = () => { }, loading = false }: LoginProps) {
     const loginError = useAppStore((state) => state.user.loginError);
-    const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
-
-    useEffect(() => {
-        // Select a random background image on first load
-        if (!selectedBackground) {
-            const randomIndex = Math.floor(Math.random() * backgroundImages.length);
-            setSelectedBackground(backgroundImages[randomIndex]);
-        }
-    }, [selectedBackground]);
+    // Use lazy initializer to select random background on first render
+    const [selectedBackground] = useState<string>(() => {
+        const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+        return backgroundImages[randomIndex];
+    });
 
     const backgroundStyle = selectedBackground
         ? { backgroundImage: `url('/assets/bg/${selectedBackground}')` }
