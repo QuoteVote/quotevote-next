@@ -75,7 +75,7 @@
         "./src/components/SignupForm/*"
       ],
       "@/components/*": [
-        "./src/app/components/*"
+        "./src/components/*"
       ],
       "@/hooks/*": [
         "./src/hooks/*"
