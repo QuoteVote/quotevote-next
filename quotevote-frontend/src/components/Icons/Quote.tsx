@@ -8,9 +8,11 @@ export function Quote({
   size = 24,
   className,
   color,
+  fill,
   ...props
 }: IconProps) {
   const sizeValue = typeof size === 'number' ? `${size}px` : size;
+  const fillValue = color || fill || 'currentColor';
   
   return (
     <svg
@@ -18,7 +20,7 @@ export function Quote({
       width={sizeValue}
       height={sizeValue}
       viewBox="0 0 693 605"
-      fill={color || 'currentColor'}
+      fill={typeof fillValue === 'string' ? fillValue : 'currentColor'}
       className={cn('inline-block', className)}
       {...props}
     >

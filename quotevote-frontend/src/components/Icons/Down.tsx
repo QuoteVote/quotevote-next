@@ -9,9 +9,11 @@ export function Down({
   size = 24,
   className,
   color,
+  fill,
   ...props
 }: IconProps) {
   const sizeValue = typeof size === 'number' ? `${size}px` : size;
+  const fillValue = color || fill || 'currentColor';
   
   return (
     <svg
@@ -19,7 +21,7 @@ export function Down({
       width={sizeValue}
       height={sizeValue}
       viewBox="0 0 5400 5630"
-      fill={color || 'currentColor'}
+      fill={typeof fillValue === 'string' ? fillValue : 'currentColor'}
       className={cn('inline-block', className)}
       {...props}
     >

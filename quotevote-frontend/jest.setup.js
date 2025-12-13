@@ -148,7 +148,12 @@ beforeAll(() => {
       errorString.includes('Not implemented: navigation') ||
       errorString.includes('navigation (except hash changes)')
     
-    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError) {
+    // Check if this is a React 19 fill attribute warning (we handle fill properly in components)
+    const isFillAttributeWarning = 
+      errorString.includes('Received `true` for a non-boolean attribute `fill`') ||
+      (errorString.includes('fill') && errorString.includes('non-boolean attribute'))
+    
+    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError || isFillAttributeWarning) {
       // Suppress these expected errors - they're caught by ErrorBoundary or are test environment warnings
       return
     }

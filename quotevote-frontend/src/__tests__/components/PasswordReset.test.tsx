@@ -1,240 +1,614 @@
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { PasswordReset } from '@/components/PasswordReset';
-import { render } from '../utils/test-utils';
+/**
+ * Tests for PasswordReset Component
+ */
 
-// Mock next/navigation
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { PasswordReset } from '@/components/PasswordReset/PasswordReset';
+
+// Mock Next.js router
+const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
   }),
 }));
 
-describe('PasswordReset', () => {
+describe('PasswordReset Component', () => {
   const mockOnSubmit = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPush.mockClear();
   });
 
-  it('renders loading state when loadingData is true', () => {
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        loadingData={true}
-        isValidToken={false}
-      />
-    );
+  describe('Rendering - Loading State', () => {
+    it('shows loader when loadingData is true', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          loadingData={true}
+          isValidToken={true}
+        />
+      );
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
-  });
-
-  it('renders password updated success message', () => {
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        passwordUpdated={true}
-        isValidToken={true}
-      />
-    );
-
-    expect(
-      screen.getByText('Your password has been changed successfully!')
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
-  });
-
-  it('renders password reset form when token is valid', () => {
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        isValidToken={true}
-      />
-    );
-
-    expect(screen.getByText('Choose New Password')).toBeInTheDocument();
-    expect(screen.getByLabelText('Password')).toBeInTheDocument();
-    expect(screen.getByLabelText('Confirm Password')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /confirm password/i })
-    ).toBeInTheDocument();
-  });
-
-  it('renders invalid token message when token is invalid', () => {
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        isValidToken={false}
-      />
-    );
-
-    expect(screen.getByText('Password Reset')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Sorry, your password reset link is invalid or expired.'
-      )
-    ).toBeInTheDocument();
-    expect(screen.getByText('Request reset password.')).toBeInTheDocument();
-  });
-
-  it('displays error message when provided', async () => {
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        error="Password reset failed"
-        isValidToken={true}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Password reset failed')).toBeInTheDocument();
+      // Check for loader component
+      const loader = screen.getByRole('status');
+      expect(loader).toBeInTheDocument();
     });
   });
 
-  it('shows loading state when submitting', () => {
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={true}
-        isValidToken={true}
-      />
-    );
+  describe('Rendering - Password Updated State', () => {
+    it('shows success message when passwordUpdated is true', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          passwordUpdated={true}
+          isValidToken={true}
+        />
+      );
 
-    expect(screen.getByText('Updating...')).toBeInTheDocument();
-    const submitButton = screen.getByRole('button', { name: /updating/i });
-    expect(submitButton).toBeDisabled();
-  });
-
-  it('validates password requirements', async () => {
-    const user = userEvent.setup();
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        isValidToken={true}
-      />
-    );
-
-    const passwordInput = screen.getByLabelText('Password');
-    const submitButton = screen.getByRole('button', { name: /confirm password/i });
-
-    // Test minimum length
-    await user.type(passwordInput, 'short');
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('Password should be more than six characters')
-      ).toBeInTheDocument();
-    });
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('validates password contains uppercase, lowercase, and number', async () => {
-    const user = userEvent.setup();
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        isValidToken={true}
-      />
-    );
-
-    const passwordInput = screen.getByLabelText('Password');
-    const submitButton = screen.getByRole('button', { name: /confirm password/i });
-
-    // Test missing requirements
-    await user.type(passwordInput, 'alllowercase123');
-    await user.click(submitButton);
-
-    await waitFor(() => {
       expect(
         screen.getByText(
-          'Password should contain a number, an uppercase, and lowercase letter'
+          /your password has been changed successfully/i
         )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /login/i })
       ).toBeInTheDocument();
     });
 
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('validates password confirmation matches', async () => {
-    const user = userEvent.setup();
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        isValidToken={true}
-      />
-    );
-
-    const passwordInput = screen.getByLabelText('Password');
-    const confirmPasswordInput = screen.getByLabelText('Confirm Password');
-    const submitButton = screen.getByRole('button', { name: /confirm password/i });
-
-    await user.type(passwordInput, 'ValidPass123');
-    await user.type(confirmPasswordInput, 'DifferentPass123');
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("Passwords don't match.")).toBeInTheDocument();
-    });
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('calls onSubmit with password when form is valid', async () => {
-    const user = userEvent.setup();
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        isValidToken={true}
-      />
-    );
-
-    const passwordInput = screen.getByLabelText('Password');
-    const confirmPasswordInput = screen.getByLabelText('Confirm Password');
-    const submitButton = screen.getByRole('button', { name: /confirm password/i });
-
-    await user.type(passwordInput, 'ValidPass123');
-    await user.type(confirmPasswordInput, 'ValidPass123');
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith(
-        {
-          password: 'ValidPass123',
-          confirmPassword: 'ValidPass123',
-        }
+    it('navigates to login when login button is clicked in success state', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          passwordUpdated={true}
+          isValidToken={true}
+        />
       );
+
+      const loginButton = screen.getByRole('button', { name: /login/i });
+      await user.click(loginButton);
+
+      expect(mockPush).toHaveBeenCalledWith('/auth/login');
     });
   });
 
-  it('toggles password visibility', async () => {
-    const user = userEvent.setup();
-    render(
-      <PasswordReset
-        onSubmit={mockOnSubmit}
-        loading={false}
-        isValidToken={true}
-      />
-    );
+  describe('Rendering - Invalid Token State', () => {
+    it('shows error message when token is invalid', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={false}
+        />
+      );
 
-    const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
-    const toggleButton = screen.getByLabelText('toggle password visibility');
+      expect(screen.getByText(/^Password Reset$/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /sorry, your password reset link is invalid or expired/i
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', { name: /request reset password/i })
+      ).toBeInTheDocument();
+    });
 
-    expect(passwordInput.type).toBe('password');
+    it('has correct link to forgot password page', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={false}
+        />
+      );
 
-    await user.click(toggleButton);
+      const resetLink = screen.getByRole('link', {
+        name: /request reset password/i,
+      });
+      expect(resetLink).toHaveAttribute('href', '/auth/forgot');
+    });
+  });
 
-    expect(passwordInput.type).toBe('text');
+  describe('Rendering - Valid Token State', () => {
+    it('renders form when token is valid', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      expect(screen.getByText(/choose new password/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/confirm password/i)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /confirm password/i })
+      ).toBeInTheDocument();
+    });
+
+    it('renders password visibility toggle button', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const toggleButton = screen.getByLabelText('toggle password visibility');
+      expect(toggleButton).toBeInTheDocument();
+    });
+  });
+
+  describe('Form Validation', () => {
+    it('shows validation error for empty password', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        const errorMessages = screen.getAllByText(/password is required/i);
+        expect(errorMessages.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('shows validation error for password shorter than 6 characters', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(passwordInput, '12345');
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/password should be more than six characters/i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('shows validation error for password longer than 20 characters', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(passwordInput, 'a'.repeat(21));
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(
+            /password should be less than twenty characters/i
+          )
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('shows validation error for password without required characters', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(passwordInput, 'password'); // No uppercase, no number
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(
+            /password should contain a number, an uppercase, and lowercase letter/i
+          )
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('shows validation error when passwords do not match', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+
+      await user.type(passwordInput, 'Password123');
+      await user.type(confirmPasswordInput, 'Password456');
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/passwords don't match/i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('accepts valid password that meets all requirements', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+
+      await user.type(passwordInput, 'Password123');
+      await user.type(confirmPasswordInput, 'Password123');
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalledWith({
+          password: 'Password123',
+          confirmPassword: 'Password123',
+        });
+      });
+    });
+  });
+
+  describe('Password Visibility Toggle', () => {
+    it('toggles password visibility when button is clicked', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i) as HTMLInputElement;
+      const toggleButton = screen.getByLabelText('toggle password visibility');
+
+      // Initially password should be hidden
+      expect(passwordInput.type).toBe('password');
+
+      // Click toggle to show password
+      await user.click(toggleButton);
+
+      await waitFor(() => {
+        expect(passwordInput.type).toBe('text');
+      });
+
+      // Click toggle again to hide password
+      await user.click(toggleButton);
+
+      await waitFor(() => {
+        expect(passwordInput.type).toBe('password');
+      });
+    });
+
+    it('toggles confirm password visibility when button is clicked', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const confirmPasswordInput = screen.getByLabelText(
+        /confirm password/i
+      ) as HTMLInputElement;
+      const toggleButton = screen.getByLabelText('toggle password visibility');
+
+      // Initially password should be hidden
+      expect(confirmPasswordInput.type).toBe('password');
+
+      // Click toggle to show password
+      await user.click(toggleButton);
+
+      await waitFor(() => {
+        expect(confirmPasswordInput.type).toBe('text');
+      });
+    });
+  });
+
+  describe('Form Submission', () => {
+    it('submits form with valid password data', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+
+      await user.type(passwordInput, 'NewPassword123');
+      await user.type(confirmPasswordInput, 'NewPassword123');
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+        expect(mockOnSubmit).toHaveBeenCalledWith({
+          password: 'NewPassword123',
+          confirmPassword: 'NewPassword123',
+        });
+      });
+    });
+
+    it('does not submit form with invalid password', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(passwordInput, 'short');
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Loading States', () => {
+    it('disables submit button when loading', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={true}
+          isValidToken={true}
+        />
+      );
+
+      const submitButton = screen.getByRole('button', { name: /updating/i });
+      expect(submitButton).toBeDisabled();
+    });
+
+    it('shows "Updating..." text when loading', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={true}
+          isValidToken={true}
+        />
+      );
+
+      expect(screen.getByText(/updating/i)).toBeInTheDocument();
+    });
+
+    it('shows "Confirm Password" text when not loading', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      expect(
+        screen.getByRole('button', { name: /^confirm password$/i })
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('displays error message when provided', () => {
+      const errorMessage = 'Password reset failed';
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          error={errorMessage}
+          isValidToken={true}
+        />
+      );
+
+      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('has proper labels for password inputs', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+    });
+
+    it('sets aria-invalid on password input when there is an error', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(passwordInput).toHaveAttribute('aria-invalid', 'true');
+      });
+    });
+
+    it('associates error messages with input fields', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        const errorMessages = screen.getAllByText(/password is required/i);
+        expect(errorMessages.length).toBeGreaterThan(0);
+        errorMessages.forEach((msg) => {
+          expect(msg).toHaveClass('text-destructive');
+        });
+      });
+    });
+
+    it('has accessible password visibility toggle button', () => {
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const toggleButton = screen.getByLabelText('toggle password visibility');
+      expect(toggleButton).toBeInTheDocument();
+      expect(toggleButton).toHaveAttribute('aria-label', 'toggle password visibility');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('handles onSubmit prop being undefined', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset loading={false} isValidToken={true} />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+
+      await user.type(passwordInput, 'Password123');
+      await user.type(confirmPasswordInput, 'Password123');
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      // Should not throw an error
+      await waitFor(() => {
+        expect(submitButton).toBeInTheDocument();
+      });
+    });
+
+    it('handles password with special characters', async () => {
+      const user = userEvent.setup();
+      render(
+        <PasswordReset
+          onSubmit={mockOnSubmit}
+          loading={false}
+          isValidToken={true}
+        />
+      );
+
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+
+      const specialPassword = 'Password123!@#';
+      await user.type(passwordInput, specialPassword);
+      await user.type(confirmPasswordInput, specialPassword);
+
+      const submitButton = screen.getByRole('button', {
+        name: /confirm password/i,
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalledWith({
+          password: specialPassword,
+          confirmPassword: specialPassword,
+        });
+      });
+    });
   });
 });
-
