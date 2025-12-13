@@ -21,7 +21,7 @@ export function PaginatedList<T = unknown>({
   loading,
   error,
   totalCount,
-  
+
   // Pagination props
   defaultPageSize = 20,
   pageParam = 'page',
@@ -29,18 +29,18 @@ export function PaginatedList<T = unknown>({
   showPageInfo = true,
   showFirstLast = true,
   maxVisiblePages = 5,
-  
+
   // Render props
   renderItem,
   renderEmpty,
   renderError,
   renderLoading,
-  
+
   // Callbacks
   onPageChange,
   onPageSizeChange,
   onRefresh,
-  
+
   // Styling
   className,
   contentClassName,
@@ -58,6 +58,8 @@ export function PaginatedList<T = unknown>({
     onPageChange,
     onPageSizeChange,
   });
+
+
 
   const paginationData = pagination.calculatePagination(totalCount || 0);
 
@@ -80,8 +82,8 @@ export function PaginatedList<T = unknown>({
   ) : null;
 
   return (
-    <StickyPaginationWrapper 
-      className={className} 
+    <StickyPaginationWrapper
+      className={className}
       pagination={paginationComponent}
       {...otherProps}
     >

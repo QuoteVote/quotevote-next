@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
 
@@ -80,7 +80,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-[var(--color-text-secondary)] mb-6">
                 We encountered an unexpected error. Please try refreshing the page.
               </p>
-              
+
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <div className="mb-6 text-left">
                   <details className="bg-[var(--color-background-off-white)] rounded p-4">

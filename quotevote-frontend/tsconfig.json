@@ -93,7 +93,7 @@
         "./src/components/Quotes/*"
       ],
       "@/components/*": [
-        "./src/app/components/*"
+        "./src/components/*"
       ],
       "@/components/SubHeader": [
         "./src/components/SubHeader"
