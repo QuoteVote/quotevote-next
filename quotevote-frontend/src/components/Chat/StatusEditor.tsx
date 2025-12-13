@@ -47,14 +47,24 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
   const setUserStatus = useAppStore((state) => state.setUserStatus);
   const setSnackbar = useAppStore((state) => state.setSnackbar);
 
-  const [status, setStatus] = useState<PresenceStatus>('online');
-  const [statusMessage, setStatusMessage] = useState('');
+  // Initialize state from chatState - reset when dialog opens using key prop
+  const [status, setStatus] = useState<PresenceStatus>(
+    () => (chatState.userStatus as PresenceStatus) || 'online'
+  );
+  const [statusMessage, setStatusMessage] = useState(
+    () => chatState.userStatusMessage || ''
+  );
 
+  // Update state when dialog opens - using setTimeout to defer state update
   useEffect(() => {
     if (open) {
-      setStatus((chatState.userStatus as PresenceStatus) || 'online');
-      setStatusMessage(chatState.userStatusMessage || '');
+      const timeoutId = setTimeout(() => {
+        setStatus((chatState.userStatus as PresenceStatus) || 'online');
+        setStatusMessage(chatState.userStatusMessage || '');
+      }, 0);
+      return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [open, chatState.userStatus, chatState.userStatusMessage]);
 
   const [updatePresence, { loading }] = useMutation<

@@ -87,7 +87,7 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
     if (searchQuery.length >= MIN_QUERY_LENGTH && users.length === 0) {
       return (
         <p className="py-6 text-center text-sm text-muted-foreground">
-          No users found matching "{searchQuery}"
+          No users found matching &quot;{searchQuery}&quot;
         </p>
       );
     }

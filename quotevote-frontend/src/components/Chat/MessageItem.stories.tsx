@@ -1,5 +1,3 @@
-import React from 'react';
-
 import MessageItem from './MessageItem';
 import type { ChatMessage } from '@/types/chat';
 
@@ -15,11 +13,12 @@ const baseMessage: ChatMessage = {
 };
 
 const message: ChatMessage & {
-    user?: { avatar?: string | null; name?: string | null; username?: string | null };
+    user?: { _id?: string; avatar?: string; name?: string; username?: string; [key: string]: unknown };
     readBy?: string[];
 } = {
     ...baseMessage,
     user: {
+        _id: 'user-123',
         avatar: 'J',
         name: 'Jane Doe',
         username: 'jane',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppStore } from '@/store';
-import { Avatar } from '@/components/Avatar';
+import Avatar from '@/components/Avatar';
 import type { ProfileAvatarProps } from '@/types/profile';
 
 export function ProfileAvatar({

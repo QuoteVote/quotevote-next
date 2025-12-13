@@ -32,7 +32,7 @@ function Header({ room }: HeaderProps) {
   const setSnackbar = useAppStore((state) => state.setSnackbar)
 
   const { blockBuddy, unblockBuddy, removeBuddy } = useRosterManagement()
-  const { data: roomsData, refetch: refetchChatRooms } = useQuery<{ messageRooms: ChatRoom[] }>(
+  const { refetch: refetchChatRooms } = useQuery<{ messageRooms: ChatRoom[] }>(
     GET_CHAT_ROOMS,
     {
       fetchPolicy: 'cache-and-network',
@@ -47,7 +47,6 @@ function Header({ room }: HeaderProps) {
   const messageType = room?.messageType ?? 'USER'
   const users = room?.users ?? []
   const avatar = room?.avatar ?? null
-  const messageRoomId = room?._id ?? null
 
   const currentUserIdForHeader = currentUser?._id?.toString()
   const otherUserId =

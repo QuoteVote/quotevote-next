@@ -4,10 +4,11 @@ import ScrollableFeed from 'react-scrollable-feed'
 
 import MessageItem from './MessageItem'
 import QuoteHeaderMessage from './QuoteHeaderMessage'
-import LoadingSpinner from '../LoadingSpinner'
+import { LoadingSpinner } from '../LoadingSpinner'
 import { GET_ROOM_MESSAGES, GET_POST } from '@/graphql/queries'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
-import type { ChatRoom, ChatMessage } from '@/types/chat'
+import type { ChatRoom, ChatMessage, ChatParticipant } from '@/types/chat'
+import type { PostQueryData } from '@/types/post'
 
 interface MessageItemListProps {
   room: ChatRoom | null
@@ -33,7 +34,7 @@ export default function MessageItemList({ room }: MessageItemListProps) {
   })
 
   // Fetch full post with creator info if this is a POST type room
-  const { data: postData } = useQuery<{ post: any }>(GET_POST, {
+  const { data: postData } = useQuery<PostQueryData>(GET_POST, {
     variables: { postId },
     skip: !postId || messageType !== 'POST',
   })
@@ -80,6 +81,17 @@ export default function MessageItemList({ room }: MessageItemListProps) {
   const post = postData?.post
   const postCreator = post?.creator
 
+  // Convert PostCreator to ChatParticipant format
+  const chatParticipantCreator: ChatParticipant | null | undefined = postCreator
+    ? {
+        id: postCreator._id,
+        username: postCreator.username || '',
+        name: postCreator.name || undefined,
+        avatar: postCreator.avatar || undefined,
+        contributorBadge: postCreator.contributorBadge || undefined,
+      }
+    : null
+
   const quoteData = post || postDetails
   const showQuoteHeader = messageType === 'POST' && !!quoteData
 
@@ -89,7 +101,7 @@ export default function MessageItemList({ room }: MessageItemListProps) {
         <div className="flex flex-col gap-1 py-1">
           {loading && <LoadingSpinner size={50} />}
           {showQuoteHeader && quoteData && (
-            <QuoteHeaderMessage postDetails={quoteData} postCreator={postCreator} />
+            <QuoteHeaderMessage postDetails={quoteData} postCreator={chatParticipantCreator} />
           )}
           {messageData.map((message) => (
             <MessageItem key={message._id} message={message} />

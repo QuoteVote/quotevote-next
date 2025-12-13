@@ -11,9 +11,10 @@ import { render } from '../../utils/test-utils';
 import { ProfileAvatar } from '../../../components/Profile/ProfileAvatar';
 import { useAppStore } from '@/store';
 
-// Mock the Avatar component
+// Mock the Avatar component (default export)
 jest.mock('../../../components/Avatar', () => ({
-  Avatar: ({ src, alt, size }: { src?: string; alt?: string; size?: string | number }) => (
+  __esModule: true,
+  default: ({ src, alt, size }: { src?: string; alt?: string; size?: string | number }) => (
     <div data-testid="avatar" data-src={src} data-alt={alt} data-size={String(size)}>
       Avatar
     </div>
