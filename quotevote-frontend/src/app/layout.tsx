@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ApolloProviderWrapper } from "@/lib/apollo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
+import { Eyebrow } from "./components/Eyebrow/Eyebrow";
 
 /**
  * Global Providers Setup:
@@ -57,7 +58,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ErrorBoundary>
-          <ApolloProviderWrapper>{children}</ApolloProviderWrapper>
+          <ApolloProviderWrapper>
+            <>
+            <Eyebrow />
+            {children}
+            </>
+          </ApolloProviderWrapper>
         </ErrorBoundary>
       </body>
     </html>
