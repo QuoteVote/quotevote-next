@@ -72,7 +72,7 @@ describe("Eyebrow Component", () => {
     });
   });
 
-  it("displays login options modal when user is 'not_requested'", async () => {
+  it("displays feedback message when user is 'not_requested'", async () => {
     const user = userEvent.setup();
 
     render(<Eyebrow />);
@@ -88,14 +88,14 @@ describe("Eyebrow Component", () => {
 
     await user.click(continueButton);
 
-    await waitFor(async () => {
-      expect(
-        await screen.findByText("Your request has been received! You’ll be notified once approved.")
-      ).toBeInTheDocument();
-    });
+    const feedbackMessages = await screen.findAllByText(
+      "Your request has been received! You’ll be notified once approved."
+    );
+
+    expect(feedbackMessages.length).toBeGreaterThan(0);
   });
 
-  it("displays login options modal when user is 'requested_pending'", async () => {
+  it("displays feedback message when user is 'requested_pending'", async () => {
     const user = userEvent.setup();
 
     render(<Eyebrow />);
@@ -110,12 +110,12 @@ describe("Eyebrow Component", () => {
     await user.type(emailInput, "testuser@email.com");
 
     await user.click(continueButton);
+    
+    const feedbackMessages = await screen.findAllByText(
+      "Your invite request is still waiting for approval."
+    );
 
-    await waitFor(async () => {
-      expect(
-        await screen.findByText("Your invite request is still waiting for approval.")
-      ).toBeInTheDocument();
-    });
+    expect(feedbackMessages.length).toBeGreaterThan(0);
   });
 
   it("displays login options modal when user is 'approved_no_password'", async () => {

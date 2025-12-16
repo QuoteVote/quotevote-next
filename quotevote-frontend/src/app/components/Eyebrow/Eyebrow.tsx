@@ -21,7 +21,7 @@ export function Eyebrow() {
   }
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [feedback, setFeedback] = useState<string | undefined>("sfsfsfwgvrw");
+  const [feedback, setFeedback] = useState<string | undefined>();
 
   const [isLoginOptionsModalOpen, setIsLoginOptionsModalOpen] = useState<boolean>(false);
   const [isOnboardingCompletionModalOpen, setIsOnboardingCompletionModalOpen] =
