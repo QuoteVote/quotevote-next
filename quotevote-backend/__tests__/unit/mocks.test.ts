@@ -1,7 +1,6 @@
 import { logMessage, logError } from '~/utils/logger';
 import { logger } from '../../__mocks__/logger';
 
-// Mock the logger module
 jest.mock('~/utils/logger', () => ({
   logMessage: jest.fn(),
   logError: jest.fn(),
