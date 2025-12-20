@@ -8,7 +8,7 @@ import { useAppStore } from '@/store';
 import type { ProfileUser } from '@/types/profile';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
-import { Avatar } from '@/components/Avatar';
+import Avatar from '@/components/Avatar';
 import { FollowButton } from '../CustomButtons/FollowButton';
 import { Button } from '@/components/ui/button';
 import {

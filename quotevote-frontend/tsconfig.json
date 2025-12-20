@@ -92,11 +92,29 @@
       "@/components/Quotes/*": [
         "./src/components/Quotes/*"
       ],
+      "@/components/PostChat/*": [
+        "./src/components/PostChat/*"
+      ],
+      "@/components/Chat/*": [
+        "./src/components/Chat/*"
+      ],
       "@/components/*": [
         "./src/components/*"
       ],
       "@/components/SubHeader": [
         "./src/components/SubHeader"
+      ],
+      "@/components/UserPosts": [
+        "./src/components/UserPosts"
+      ],
+      "@/components/UserPosts/*": [
+        "./src/components/UserPosts/*"
+      ],
+      "@/components/Icons": [
+        "./src/components/Icons"
+      ],
+      "@/components/Icons/*": [
+        "./src/components/Icons/*"
       ],
       "@/hooks/*": [
         "./src/hooks/*"

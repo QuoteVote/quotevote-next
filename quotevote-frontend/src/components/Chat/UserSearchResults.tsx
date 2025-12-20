@@ -97,7 +97,7 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
           No users found
         </p>
         <p className="opacity-80">
-          No users found matching "{searchQuery}"
+          No users found matching &quot;{searchQuery}&quot;
         </p>
       </div>
     );

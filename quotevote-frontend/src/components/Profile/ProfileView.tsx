@@ -6,20 +6,7 @@ import { ProfileHeader } from './ProfileHeader';
 import { ReputationDisplay } from './ReputationDisplay';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Card, CardContent } from '@/components/ui/card';
-
-// TODO: Migrate UserPosts component when Post components are migrated
-// For now, this is a placeholder
-function UserPosts() {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-muted-foreground text-center">
-          User posts will be displayed here once Post components are migrated.
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
+import { UserPosts } from '@/components/UserPosts';
 
 export function ProfileView({
   profileUser,
@@ -59,7 +46,7 @@ export function ProfileView({
               onRefresh={() => window.location.reload()}
             />
           )}
-          <UserPosts />
+          <UserPosts userId={profileUser._id} />
         </div>
       </div>
     </div>

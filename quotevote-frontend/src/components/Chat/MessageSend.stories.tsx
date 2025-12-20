@@ -1,5 +1,3 @@
-import React from 'react';
-
 import MessageSend from './MessageSend';
 
 export default {

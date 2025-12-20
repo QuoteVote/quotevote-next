@@ -426,3 +426,30 @@ export const DELETE_MESSAGE = gql`
     }
   }
 `
+
+/**
+ * Add message reaction mutation
+ * Used by PostChatReactions component
+ */
+export const ADD_MESSAGE_REACTION = gql`
+  mutation addMessageReaction($reaction: ReactionInput!) {
+    addMessageReaction(reaction: $reaction) {
+      userId
+      messageId
+      emoji
+    }
+  }
+`
+
+/**
+ * Update message reaction mutation
+ * Used by PostChatReactions component
+ */
+export const UPDATE_MESSAGE_REACTION = gql`
+  mutation updateReaction($_id: String!, $emoji: String!) {
+    updateReaction(_id: $_id, emoji: $emoji) {
+      _id
+      emoji
+    }
+  }
+`

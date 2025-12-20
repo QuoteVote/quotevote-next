@@ -17,6 +17,6 @@
     "allowSyntheticDefaultImports": true,
     "types": ["node", "jest"]
   },
-  "include": ["app/**/*.ts", "app/**/*.js"],
+  "include": ["app/**/*.ts", "app/**/*.js", "__tests__/**/*.ts", "__tests__/**/*.js", "jest.setup.ts"],
   "exclude": ["dist", "node_modules"],
 }

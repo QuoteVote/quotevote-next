@@ -620,3 +620,18 @@ export const SEARCH_USERNAMES = gql`
     }
   }
 `
+
+/**
+ * Get message reactions query
+ * Used by PostChatReactions component
+ */
+export const GET_MESSAGE_REACTIONS = gql`
+  query messageReactions($messageId: String!) {
+    messageReactions(messageId: $messageId) {
+      _id
+      emoji
+      messageId
+      userId
+    }
+  }
+`

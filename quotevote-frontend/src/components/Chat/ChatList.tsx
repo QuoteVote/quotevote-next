@@ -6,7 +6,7 @@ import { MessageCircle, Users2 } from 'lucide-react';
 
 import { GET_CHAT_ROOMS } from '@/graphql/queries';
 import { useAppStore } from '@/store';
-import LoadingSpinner from '../LoadingSpinner';
+import { LoadingSpinner } from '../LoadingSpinner';
 import Avatar from '@/components/Avatar';
 import type { ChatRoom } from '@/types/chat';
 

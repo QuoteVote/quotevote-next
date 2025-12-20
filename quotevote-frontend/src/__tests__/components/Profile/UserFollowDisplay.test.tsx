@@ -20,9 +20,10 @@ jest.mock('../../../components/CustomButtons/FollowButton', () => ({
   ),
 }));
 
-// Mock Avatar
+// Mock Avatar (default export)
 jest.mock('../../../components/Avatar', () => ({
-  Avatar: ({ src, alt, size }: { src?: string; alt?: string; size?: number }) => (
+  __esModule: true,
+  default: ({ src, alt, size }: { src?: string; alt?: string; size?: number }) => (
     <div data-testid="avatar" data-src={src} data-alt={alt} data-size={String(size)}>
       Avatar
     </div>

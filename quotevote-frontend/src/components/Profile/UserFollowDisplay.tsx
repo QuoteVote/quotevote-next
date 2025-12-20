@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { UserFollowDisplayProps } from '@/types/profile';
-import { Avatar } from '@/components/Avatar';
+import Avatar from '@/components/Avatar';
 import { FollowButton } from '../CustomButtons/FollowButton';
 
 export function UserFollowDisplay({

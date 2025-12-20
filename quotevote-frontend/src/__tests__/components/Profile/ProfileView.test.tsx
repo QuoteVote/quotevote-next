@@ -8,7 +8,7 @@
  * - Component composition
  */
 
-import { render, screen } from '../../utils/test-utils';
+import { render, screen, act, waitFor } from '../../utils/test-utils';
 import { ProfileView } from '../../../components/Profile/ProfileView';
 import type { ProfileUser } from '@/types/profile';
 
@@ -86,45 +86,71 @@ describe('ProfileView', () => {
   });
 
   describe('Valid Profile', () => {
-    it('renders profile header', () => {
+    it('renders profile header', async () => {
+      await act(async () => {
       render(<ProfileView profileUser={mockProfileUser} />);
+      });
+      await waitFor(() => {
       expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+      });
       expect(screen.getByText(/Header for testuser/)).toBeInTheDocument();
     });
 
-    it('renders reputation display when reputation exists', () => {
+    it('renders reputation display when reputation exists', async () => {
+      await act(async () => {
       render(<ProfileView profileUser={mockProfileUser} />);
+      });
+      await waitFor(() => {
       expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
+      });
       expect(screen.getByText('Reputation')).toBeInTheDocument();
     });
 
-    it('does not render reputation display when reputation is missing', () => {
+    it('does not render reputation display when reputation is missing', async () => {
       const userWithoutReputation: ProfileUser = {
         ...mockProfileUser,
         reputation: undefined,
       };
+      await act(async () => {
       render(<ProfileView profileUser={userWithoutReputation} />);
+      });
+      await waitFor(() => {
       expect(screen.queryByTestId('reputation-display')).not.toBeInTheDocument();
+      });
     });
 
-    it('renders user posts placeholder', () => {
+    it('renders user posts placeholder', async () => {
+      await act(async () => {
       render(<ProfileView profileUser={mockProfileUser} />);
+      });
+      // UserPosts component is now rendered (not a placeholder)
+      // The actual component will be tested in UserPosts.test.tsx
+      await waitFor(() => {
       expect(
-        screen.getByText(/User posts will be displayed here/)
-      ).toBeInTheDocument();
+          screen.queryByText(/User posts will be displayed here/)
+        ).not.toBeInTheDocument();
+      });
     });
   });
 
   describe('Layout', () => {
-    it('has proper container structure', () => {
-      const { container } = render(<ProfileView profileUser={mockProfileUser} />);
-      const mainContainer = container.querySelector('.flex.flex-col.items-center');
+    it('has proper container structure', async () => {
+      let container: HTMLElement;
+      await act(async () => {
+        const result = render(<ProfileView profileUser={mockProfileUser} />);
+        container = result.container;
+      });
+      const mainContainer = container!.querySelector('.flex.flex-col.items-center');
       expect(mainContainer).toBeInTheDocument();
     });
 
-    it('has max-width constraint', () => {
-      const { container } = render(<ProfileView profileUser={mockProfileUser} />);
-      const contentContainer = container.querySelector('.max-w-4xl');
+    it('has max-width constraint', async () => {
+      let container: HTMLElement;
+      await act(async () => {
+        const result = render(<ProfileView profileUser={mockProfileUser} />);
+        container = result.container;
+      });
+      const contentContainer = container!.querySelector('.max-w-4xl');
       expect(contentContainer).toBeInTheDocument();
     });
   });

@@ -1,0 +1,51 @@
+import type { IconProps } from '@/types/icons';
+import { cn } from '@/lib/utils';
+
+/**
+ * Up icon component
+ */
+export function Up({
+  size = 24,
+  className,
+  color,
+  fill,
+  ...props
+}: IconProps) {
+  const sizeValue = typeof size === 'number' ? `${size}px` : size;
+  const fillValue = color || fill || 'currentColor';
+  
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={sizeValue}
+      height={sizeValue}
+      viewBox="0 0 368 420"
+      fill={typeof fillValue === 'string' ? fillValue : 'currentColor'}
+      className={cn('inline-block', className)}
+      {...props}
+    >
+      <g
+        transform="translate(0.000000,419.000000) scale(0.100000,-0.100000)"
+        fill={color || '#000000'}
+        stroke="none"
+      >
+        <path
+          d="M330 4076 c-90 -24 -172 -95 -214 -185 l-21 -46 0 -1765 0 -1765 22
+        -47 c30 -66 96 -133 162 -165 l56 -28 1765 0 1765 0 56 28 c66 32 132 99 162
+        165 l22 47 0 1765 0 1765 -22 47 c-30 66 -96 133 -162 165 l-56 28 -1745 2
+        c-1358 1 -1755 -1 -1790 -11z m3360 -1996 l0 -1590 -1590 0 -1590 0 0 1590 0
+        1590 1590 0 1590 0 0 -1590z"
+        />
+        <path
+          d="M2461 2304 c-321 -354 -586 -644 -590 -644 -3 0 -172 129 -374 286
+        -212 165 -372 283 -377 278 -5 -5 -65 -81 -134 -169 -93 -120 -122 -163 -113
+        -171 7 -6 245 -192 531 -414 l518 -402 33 33 c71 73 1405 1552 1405 1558 0 5
+        -222 210 -289 267 l-27 23 -583 -645z"
+        />
+      </g>
+    </svg>
+  );
+}
+
+export default Up;
+
