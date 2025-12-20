@@ -44,6 +44,14 @@ jest.mock('next/link', () => ({
   },
 }))
 
+// Mock window.scrollTo (only in jsdom environment)
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'scrollTo', {
+    writable: true,
+    value: jest.fn(),
+  })
+}
+
 // Mock window.matchMedia (only in jsdom environment)
 if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'matchMedia', {

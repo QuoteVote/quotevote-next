@@ -104,6 +104,12 @@
       "@/components/SubHeader": [
         "./src/components/SubHeader"
       ],
+      "@/components/UserPosts": [
+        "./src/components/UserPosts"
+      ],
+      "@/components/UserPosts/*": [
+        "./src/components/UserPosts/*"
+      ],
       "@/components/Icons": [
         "./src/components/Icons"
       ],
