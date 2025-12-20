@@ -6,7 +6,7 @@
 export interface PostCreator {
   _id: string
   name?: string | null
-  avatar?: string | null
+  avatar?: string | { url: string } | null
   username?: string | null
   contributorBadge?: string | null
 }
@@ -50,6 +50,7 @@ export interface PostMessageRoom {
   postId?: string | null
   messageType?: string | null
   created?: string | null
+  messages?: { _id: string }[] | null
 }
 
 export interface Post {

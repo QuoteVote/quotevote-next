@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/Avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowUp, ArrowDown, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
+import type { PostCreator, PostVote, PostComment, PostQuote, PostMessageRoom } from '@/types/post';
 
 // Simple string limit function
 const stringLimit = (text: string, limit: number) => {
@@ -25,33 +26,38 @@ const GET_GROUP = gql`
   }
 `;
 
+interface GroupQueryData {
+    group: {
+        _id: string;
+        title: string;
+    };
+}
+
 interface PostCardProps {
     _id: string;
-    text: string;
-    title: string;
-    url?: string;
-    bookmarkedBy?: string[];
-    approvedBy?: string[];
-    rejectedBy?: string[];
+    text?: string | null;
+    title?: string | null;
+    url?: string | null;
+    bookmarkedBy?: string[] | null;
+    approvedBy?: string[] | null;
+    rejectedBy?: string[] | null;
     created: string;
-    creator: any;
+    creator?: PostCreator | null;
     activityType?: string;
     limitText?: boolean;
-    votes?: any[];
-    comments?: any[];
-    quotes?: any[];
-    messageRoom?: any;
-    groupId?: string;
-    onHidePost?: (post: any) => void;
-    user?: any;
+    votes?: PostVote[] | null;
+    comments?: PostComment[] | null;
+    quotes?: PostQuote[] | null;
+    messageRoom?: PostMessageRoom | null;
+    groupId?: string | null;
 }
 
 export default function PostCard(props: PostCardProps) {
     const router = useRouter();
     const {
 
-        text,
-        title,
+        text = '',
+        title = '',
         url,
         approvedBy = [],
         rejectedBy = [],
@@ -77,7 +83,7 @@ export default function PostCard(props: PostCardProps) {
 
     const interactionsCount = (comments?.length || 0) + (votes?.length || 0) + (quotes?.length || 0) + (messages?.length || 0);
 
-    const { data: groupData, loading: groupLoading } = useQuery(GET_GROUP, {
+    const { data: groupData, loading: groupLoading } = useQuery<GroupQueryData>(GET_GROUP, {
         variables: { groupId },
         skip: !groupId,
         errorPolicy: 'all',
@@ -134,11 +140,11 @@ export default function PostCard(props: PostCardProps) {
                     <div className="flex gap-4">
                         <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
                             <ArrowUp className="w-4 h-4 text-green-500" />
-                            <span className="text-sm font-medium">{approvedBy.length}</span>
+                            <span className="text-sm font-medium">{approvedBy?.length || 0}</span>
                         </div>
                         <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
                             <ArrowDown className="w-4 h-4 text-red-500" />
-                            <span className="text-sm font-medium">{rejectedBy.length}</span>
+                            <span className="text-sm font-medium">{rejectedBy?.length || 0}</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-1 text-gray-500 text-sm">
@@ -152,7 +158,7 @@ export default function PostCard(props: PostCardProps) {
                     <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{title}</h3>
                     {groupId && (
                         <span className="text-xs font-semibold text-green-600 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full border border-green-200 dark:border-green-800">
-                            #{(groupData as any)?.group?.title || (groupLoading ? 'Loading...' : 'GROUP')}
+                            #{groupData?.group?.title || (groupLoading ? 'Loading...' : 'GROUP')}
                         </span>
                     )}
                 </div>
@@ -184,11 +190,13 @@ export default function PostCard(props: PostCardProps) {
                         }}
                     >
                         <div className="w-8 h-8 rounded-full overflow-hidden">
-                            <Avatar
-                                src={creator?.avatar?.url}
-                                alt={creator?.username}
-                                fallback={creator?.username?.charAt(0).toUpperCase()}
-                            />
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage
+                                    src={typeof creator?.avatar === 'string' ? creator.avatar : creator?.avatar?.url || undefined}
+                                    alt={creator?.username || ''}
+                                />
+                                <AvatarFallback>{creator?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
                         </div>
                         <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                             {creator?.username || 'Anonymous'}

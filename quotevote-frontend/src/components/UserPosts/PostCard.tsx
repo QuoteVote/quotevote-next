@@ -18,16 +18,16 @@ import { cn } from '@/lib/utils'
 export function PostCard({ post, index }: PostCardProps) {
   const creator = post.creator
   const username = creator?.username || 'Unknown'
-  const avatar = creator?.avatar || undefined
+  const avatar = typeof creator?.avatar === 'string' ? creator.avatar : creator?.avatar?.url || undefined
   const name = creator?.name || username
 
   // Format date
   const createdDate = post.created
     ? new Date(post.created).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
     : ''
 
   // Get initials for avatar fallback

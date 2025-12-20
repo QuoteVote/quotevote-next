@@ -63,10 +63,24 @@ export const generatePageNumbers = (currentPage: number, totalPages: number, max
     return pages;
 };
 
+export interface PaginationParams {
+    page: number;
+    pageSize: number;
+    searchKey?: string;
+    startDateRange?: string;
+    endDateRange?: string;
+    friendsOnly?: boolean;
+    interactions?: boolean;
+    userId?: string;
+    sortOrder?: string;
+    groupId?: string;
+    approved?: number;
+}
+
 /**
  * Create GraphQL variables for paginated queries
  */
-export const createGraphQLVariables = (params: any) => {
+export const createGraphQLVariables = (params: PaginationParams) => {
     const {
         page,
         pageSize,
@@ -98,13 +112,24 @@ export const createGraphQLVariables = (params: any) => {
     };
 };
 
+export interface PaginationData {
+    total_count: number;
+    limit: number;
+    offset: number;
+}
+
+export interface PaginatedResponse<T> {
+    entities: T[];
+    pagination: PaginationData;
+}
+
 /**
  * Extract pagination data from GraphQL response
  */
-export const extractPaginationData = (data: any, entityName: string) => {
+export const extractPaginationData = <T>(data: Record<string, PaginatedResponse<T>> | undefined | null, entityName: string) => {
     if (!data || !data[entityName]) {
         return {
-            entities: [],
+            entities: [] as T[],
             pagination: {
                 total_count: 0,
                 limit: 0,

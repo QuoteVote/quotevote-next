@@ -84,12 +84,12 @@ export default function MessageItemList({ room }: MessageItemListProps) {
   // Convert PostCreator to ChatParticipant format
   const chatParticipantCreator: ChatParticipant | null | undefined = postCreator
     ? {
-        id: postCreator._id,
-        username: postCreator.username || '',
-        name: postCreator.name || undefined,
-        avatar: postCreator.avatar || undefined,
-        contributorBadge: postCreator.contributorBadge || undefined,
-      }
+      id: postCreator._id,
+      username: postCreator.username || '',
+      name: postCreator.name || undefined,
+      avatar: typeof postCreator.avatar === 'string' ? postCreator.avatar : postCreator.avatar?.url || undefined,
+      contributorBadge: postCreator.contributorBadge || undefined,
+    }
     : null
 
   const quoteData = post || postDetails

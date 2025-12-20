@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import PaginatedPostsList from '../Post/PaginatedPostsList';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 

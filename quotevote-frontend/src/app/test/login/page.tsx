@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { Login } from '@/components/Login';
+import { Login } from '@/app/components/Login';
 import { loginUser } from '@/lib/auth';
 import { useAppStore } from '@/store/useAppStore';
 import type { LoginFormData } from '@/types/login';

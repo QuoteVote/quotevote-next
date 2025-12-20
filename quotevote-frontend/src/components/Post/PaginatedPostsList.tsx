@@ -3,10 +3,11 @@
 import { useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { GET_TOP_POSTS } from '@/graphql/queries';
+import type { Post } from '@/types/post';
 import PostCard from './PostCard';
 import { PostSkeleton } from './PostSkeleton';
 import { PaginatedList } from '@/components/common/PaginatedList';
-import { createGraphQLVariables, extractPaginationData } from '@/lib/pagination';
+import { createGraphQLVariables, extractPaginationData, PaginationData } from '@/lib/pagination';
 import { usePagination } from '@/hooks/usePagination';
 
 interface PaginatedPostsListProps {
@@ -83,19 +84,19 @@ export default function PaginatedPostsList({
 
 
 
-    const { loading, error, data, refetch } = useQuery(GET_TOP_POSTS, {
+    const { loading, error, data, refetch } = useQuery<{ posts: { entities: Post[]; pagination: PaginationData } }>(GET_TOP_POSTS, {
         variables,
         fetchPolicy: 'cache-and-network',
         notifyOnNetworkStatusChange: true,
     });
 
     useEffect(() => {
-        if (pagination.currentPage > 1 && (!data || !(data as any).posts)) {
+        if (pagination.currentPage > 1 && (!data || !data.posts)) {
             refetch();
         }
     }, [pagination.currentPage, data, refetch]);
 
-    const { entities, pagination: paginationData } = extractPaginationData(data, 'posts');
+    const { entities, pagination: paginationData } = extractPaginationData<Post>(data, 'posts');
 
     useEffect(() => {
         if (onTotalCountChange && paginationData.total_count !== undefined) {
@@ -103,7 +104,7 @@ export default function PaginatedPostsList({
         }
     }, [paginationData.total_count, onTotalCountChange]);
 
-    const renderPost = (post: any) => (
+    const renderPost = (post: Post) => (
         <div key={post._id} className="w-full mb-6">
             <PostCard
                 {...post}
