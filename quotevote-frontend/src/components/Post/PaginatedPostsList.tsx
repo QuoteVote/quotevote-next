@@ -4,37 +4,12 @@ import { useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { GET_TOP_POSTS } from '@/graphql/queries';
 import type { Post } from '@/types/post';
+import type { PaginatedPostsListProps } from '@/types/components';
 import PostCard from './PostCard';
 import { PostSkeleton } from './PostSkeleton';
 import { PaginatedList } from '@/components/common/PaginatedList';
 import { createGraphQLVariables, extractPaginationData, PaginationData } from '@/lib/pagination';
 import { usePagination } from '@/hooks/usePagination';
-
-interface PaginatedPostsListProps {
-    defaultPageSize?: number;
-    pageParam?: string;
-    pageSizeParam?: string;
-    searchKey?: string;
-    startDateRange?: string;
-    endDateRange?: string;
-    friendsOnly?: boolean;
-    interactions?: boolean;
-    userId?: string;
-    sortOrder?: string;
-    groupId?: string;
-    approved?: number;
-    cols?: number;
-    showPageInfo?: boolean;
-    showFirstLast?: boolean;
-    maxVisiblePages?: number;
-    onPageChange?: (page: number) => void;
-    onPageSizeChange?: (pageSize: number) => void;
-    onRefresh?: () => void;
-    onTotalCountChange?: (totalCount: number) => void;
-    className?: string;
-    contentClassName?: string;
-    paginationClassName?: string;
-}
 
 export default function PaginatedPostsList({
     defaultPageSize = 20,

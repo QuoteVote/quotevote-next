@@ -9,7 +9,7 @@ import { ArrowUp, ArrowDown, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
-import type { PostCreator, PostVote, PostComment, PostQuote, PostMessageRoom } from '@/types/post';
+import type { PostCardProps } from '@/types/post';
 
 // Simple string limit function
 const stringLimit = (text: string, limit: number) => {
@@ -31,25 +31,6 @@ interface GroupQueryData {
         _id: string;
         title: string;
     };
-}
-
-interface PostCardProps {
-    _id: string;
-    text?: string | null;
-    title?: string | null;
-    url?: string | null;
-    bookmarkedBy?: string[] | null;
-    approvedBy?: string[] | null;
-    rejectedBy?: string[] | null;
-    created: string;
-    creator?: PostCreator | null;
-    activityType?: string;
-    limitText?: boolean;
-    votes?: PostVote[] | null;
-    comments?: PostComment[] | null;
-    quotes?: PostQuote[] | null;
-    messageRoom?: PostMessageRoom | null;
-    groupId?: string | null;
 }
 
 export default function PostCard(props: PostCardProps) {

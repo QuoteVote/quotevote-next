@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { MessageCircle, Flag } from 'lucide-react';
 import { useAppStore } from '@/store';
-import type { ProfileUser } from '@/types/profile';
+import type { ProfileHeaderProps } from '@/types/profile';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
 import Avatar from '@/components/Avatar';
@@ -20,10 +20,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ProfileBadge, ProfileBadgeContainer } from './ProfileBadge';
-
-interface ProfileHeaderProps {
-  profileUser: ProfileUser;
-}
 
 export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const router = useRouter();

@@ -9,7 +9,7 @@ export interface LoadingSpinnerProps {
    * @default '15px'
    */
   marginTop?: string;
-  
+
 }
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -216,7 +216,7 @@ export interface PaginatedListProps<T = unknown> {
    * Total count of items (required for pagination)
    */
   totalCount: number;
-  
+
   // Pagination props
   /**
    * Default page size
@@ -248,7 +248,7 @@ export interface PaginatedListProps<T = unknown> {
    * @default 5
    */
   maxVisiblePages?: number;
-  
+
   // Render props
   /**
    * Function to render each item
@@ -266,7 +266,7 @@ export interface PaginatedListProps<T = unknown> {
    * Custom loading state renderer
    */
   renderLoading?: () => React.ReactNode;
-  
+
   // Callbacks
   /**
    * Callback when page changes
@@ -280,7 +280,7 @@ export interface PaginatedListProps<T = unknown> {
    * Callback to refresh/retry data fetch
    */
   onRefresh?: () => void;
-  
+
   // Styling
   /**
    * Additional CSS classes for root container
@@ -294,7 +294,7 @@ export interface PaginatedListProps<T = unknown> {
    * Additional CSS classes for pagination
    */
   paginationClassName?: string;
-  
+
   // Other props
   /**
    * Child content (alternative to renderItem)
@@ -718,3 +718,29 @@ export interface LatestQuotesProps {
   limit?: number;
 }
 
+
+export interface PaginatedPostsListProps {
+  defaultPageSize?: number;
+  pageParam?: string;
+  pageSizeParam?: string;
+  searchKey?: string;
+  startDateRange?: string;
+  endDateRange?: string;
+  friendsOnly?: boolean;
+  interactions?: boolean;
+  userId?: string;
+  sortOrder?: string;
+  groupId?: string;
+  approved?: number;
+  cols?: number;
+  showPageInfo?: boolean;
+  showFirstLast?: boolean;
+  maxVisiblePages?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  onRefresh?: () => void;
+  onTotalCountChange?: (totalCount: number) => void;
+  className?: string;
+  contentClassName?: string;
+  paginationClassName?: string;
+}

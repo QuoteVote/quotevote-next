@@ -79,3 +79,22 @@ export interface PostQueryData {
   post: Post
 }
 
+
+export interface PostCardProps {
+  _id: string
+  text?: string | null
+  title?: string | null
+  url?: string | null
+  bookmarkedBy?: string[] | null
+  approvedBy?: string[] | null
+  rejectedBy?: string[] | null
+  created: string
+  creator?: PostCreator | null
+  activityType?: string
+  limitText?: boolean
+  votes?: PostVote[] | null
+  comments?: PostComment[] | null
+  quotes?: PostQuote[] | null
+  messageRoom?: PostMessageRoom | null
+  groupId?: string | null
+}

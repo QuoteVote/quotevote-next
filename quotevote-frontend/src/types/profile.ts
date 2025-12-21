@@ -153,3 +153,7 @@ export interface ProfileControllerProps {
   username?: string;
 }
 
+
+export interface ProfileHeaderProps {
+  profileUser: ProfileUser;
+}

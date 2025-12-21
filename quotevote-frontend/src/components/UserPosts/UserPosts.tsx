@@ -1,12 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import type { UserPostsProps } from '@/types/userPosts';
 import PaginatedPostsList from '../Post/PaginatedPostsList';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-
-interface UserPostsProps {
-    userId: string;
-}
 
 export default function UserPosts({ userId }: UserPostsProps) {
 
