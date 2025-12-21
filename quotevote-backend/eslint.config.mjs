@@ -9,6 +9,16 @@ export default [
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
     {
+        files: ["**/*.test.{js,ts}", "**/__tests__/**/*.{js,ts}", "**/__mocks__/**/*.{js,ts}"],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+                ...globals.jest,
+            },
+        },
+    },
+    {
         ignores: ["dist/"] // Ignore built files
     }
 ];
+

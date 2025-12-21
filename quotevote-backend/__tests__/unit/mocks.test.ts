@@ -1,4 +1,3 @@
-import { logMessage, logError } from '~/utils/logger';
 import { logger } from '../../__mocks__/logger';
 
 jest.mock('~/utils/logger', () => ({
