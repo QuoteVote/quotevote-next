@@ -283,3 +283,15 @@ export interface PaginationStructuredData {
   };
   [key: string]: unknown;
 }
+
+export interface ParsedSelection {
+  startIndex: number;
+  endIndex: number;
+  text: string;
+  points: number;
+}
+
+export interface FocusedComment {
+  startWordIndex: number;
+  endWordIndex: number;
+}

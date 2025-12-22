@@ -27,3 +27,72 @@ export function requireAuth<Args extends unknown[], R>(action: (...args: Args) =
     return action(...args)
   }
 }
+
+
+// src/lib/utils/auth.ts
+
+/**
+ * Validate if a token exists and is valid
+ */
+export function tokenValidator(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    const token = localStorage.getItem('token') || 
+                  sessionStorage.getItem('token') ||
+                  document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    
+    return !!token;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get the current auth token
+ */
+export function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    return localStorage.getItem('token') || 
+           sessionStorage.getItem('token') ||
+           document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1] || 
+           null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check if user is authenticated
+ */
+
+/**
+ * Remove auth token (logout)
+ */
+export function removeAuthToken(): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  } catch (error) {
+    console.error('Error removing auth token:', error);
+  }
+}
+
+/**
+ * Set auth token
+ */
+export function setAuthToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem('token', token);
+  } catch (error) {
+    console.error('Error setting auth token:', error);
+  }
+}
+

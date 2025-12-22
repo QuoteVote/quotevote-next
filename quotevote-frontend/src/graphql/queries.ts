@@ -93,3 +93,266 @@ export const GET_ACTION_REACTIONS = gql`
     }
   }
 `
+/**
+ * Get paginated list of posts with filters
+ */
+export const GET_TOP_POSTS = gql`
+  query GetTopPosts(
+    $limit: Int!
+    $offset: Int!
+    $searchKey: String
+    $startDateRange: String
+    $endDateRange: String
+    $friendsOnly: Boolean
+    $interactions: Boolean
+    $userId: String
+    $sortOrder: String
+    $groupId: String
+    $approved: Int
+  ) {
+    posts(
+      limit: $limit
+      offset: $offset
+      searchKey: $searchKey
+      startDateRange: $startDateRange
+      endDateRange: $endDateRange
+      friendsOnly: $friendsOnly
+      interactions: $interactions
+      userId: $userId
+      sortOrder: $sortOrder
+      groupId: $groupId
+      approved: $approved
+    ) {
+      entities {
+        _id
+        id
+        title
+        text
+        url
+        created
+        createdAt
+        enable_voting
+        creator {
+          name
+          username
+          avatar {
+            url
+            color
+            initials
+          }
+        }
+        userId
+        votedBy {
+          userId
+          type
+          deleted
+          content
+          tags
+          startWordIndex
+          endWordIndex
+          created
+        }
+        votes {
+          userId
+          type
+          deleted
+          content
+          tags
+          startWordIndex
+          endWordIndex
+        }
+        approvedBy
+        rejectedBy
+        reportedBy
+        likesCount
+        commentsCount
+        isLiked
+        isAuthor
+      }
+      pagination {
+        total_count
+        offset
+        limit
+      }
+    }
+  }
+`
+
+/**
+ * Get single post by ID
+ */
+export const GET_POST = gql`
+  query GetPost($postId: ID!) {
+    post(id: $postId) {
+      _id
+      id
+      title
+      text
+      url
+      created
+      createdAt
+      enable_voting
+      creator {
+        name
+        username
+        avatar {
+          url
+          color
+          initials
+        }
+      }
+      userId
+      votedBy {
+        userId
+        type
+        deleted
+        content
+        tags
+        startWordIndex
+        endWordIndex
+        created
+      }
+      votes {
+        userId
+        type
+        deleted
+        content
+        tags
+        startWordIndex
+        endWordIndex
+      }
+      approvedBy
+      rejectedBy
+      reportedBy
+      likesCount
+      commentsCount
+      isLiked
+      isAuthor
+    }
+  }
+`
+
+/**
+ * Get post by ID (for post detail page)
+ */
+export const GET_POST_BY_ID_QUERY = gql`
+  query GetPostById($postId: ID!) {
+    post(id: $postId) {
+      _id
+      id
+      title
+      text
+      content
+      url
+      created
+      createdAt
+      enable_voting
+      creator {
+        name
+        username
+        avatar {
+          url
+          color
+          initials
+        }
+      }
+      userId
+      votedBy {
+        userId
+        type
+        deleted
+        content
+        tags
+        startWordIndex
+        endWordIndex
+        created
+      }
+      votes {
+        userId
+        type
+        deleted
+        content
+        tags
+        startWordIndex
+        endWordIndex
+      }
+      approvedBy
+      rejectedBy
+      reportedBy
+      likesCount
+      commentsCount
+      isLiked
+      isAuthor
+    }
+  }
+`
+
+/**
+ * Get all users (for admin tooltips)
+ */
+export const GET_USERS = gql`
+  query GetUsers {
+    users {
+      _id
+      username
+      name
+      email
+      avatar {
+        url
+        color
+        initials
+      }
+    }
+  }
+`
+
+/**
+ * Get user activity feed
+ */
+export const GET_USER_ACTIVITY = gql`
+  query GetUserActivity(
+    $limit: Int!
+    $offset: Int!
+    $searchKey: String
+    $activityEvent: [String!]
+    $user_id: String
+    $startDateRange: String
+    $endDateRange: String
+  ) {
+    userActivity(
+      limit: $limit
+      offset: $offset
+      searchKey: $searchKey
+      activityEvent: $activityEvent
+      user_id: $user_id
+      startDateRange: $startDateRange
+      endDateRange: $endDateRange
+    ) {
+      entities {
+        _id
+        type
+        created
+        post {
+          _id
+          title
+          text
+        }
+        user {
+          _id
+          username
+          name
+          avatar {
+            url
+            color
+            initials
+          }
+        }
+      }
+      pagination {
+        total_count
+        offset
+        limit
+      }
+    }
+  }
+`
