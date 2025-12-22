@@ -78,3 +78,145 @@ export interface PostQueryData {
   post: Post
 }
 
+/**
+ * Post component props
+ */
+export interface PostProps {
+  post: Post
+  user: {
+    _id?: string
+    admin?: boolean
+    _followingId?: string[]
+  }
+  postHeight?: number
+  postActions?: unknown[]
+  refetchPost?: () => void
+}
+
+/**
+ * PostCard component props
+ */
+export interface PostCardProps {
+  _id: string
+  text: string | null | undefined
+  title: string | null | undefined
+  url: string | null | undefined
+  bookmarkedBy?: string[]
+  approvedBy?: string[]
+  rejectedBy?: string[]
+  created: string
+  creator?: {
+    name?: string | null
+    username?: string | null
+    avatar?: string | null
+    _id?: string | null
+  }
+  activityType?: string
+  limitText?: boolean
+  votes?: PostVote[]
+  comments?: PostComment[]
+  quotes?: PostQuote[]
+  messageRoom?: PostMessageRoom
+  groupId?: string | null
+}
+
+/**
+ * PostController component props
+ */
+export interface PostControllerProps {
+  postId?: string
+}
+
+/**
+ * Posts list data structure from GraphQL
+ */
+export interface PostsListData {
+  posts: {
+    entities: Post[]
+    pagination: {
+      total_count: number
+      limit: number
+      offset: number
+    }
+  }
+}
+
+/**
+ * LoadPostsList component props
+ */
+export interface LoadPostsListProps {
+  data?: PostsListData
+  onLoadMore: () => void
+  loading?: boolean
+}
+
+/**
+ * PostList component props
+ */
+export interface PostListProps {
+  data?: PostsListData
+  loading: boolean
+  limit: number
+  fetchMore: (options: {
+    variables: Record<string, unknown>
+    updateQuery: (
+      prev: PostsListData,
+      result: { fetchMoreResult?: PostsListData }
+    ) => PostsListData
+  }) => Promise<unknown>
+  variables: Record<string, unknown>
+  cols?: number
+}
+
+/**
+ * Paginated posts list data structure from GraphQL
+ */
+export interface PaginatedPostsListData {
+  posts: {
+    entities: Post[]
+    pagination: {
+      total_count: number
+      limit: number
+      offset: number
+    }
+  }
+}
+
+/**
+ * PaginatedPostsList component props
+ */
+export interface PaginatedPostsListProps {
+  // Pagination props
+  defaultPageSize?: number
+  pageParam?: string
+  pageSizeParam?: string
+  
+  // Filter props
+  searchKey?: string
+  startDateRange?: string
+  endDateRange?: string
+  friendsOnly?: boolean
+  interactions?: boolean
+  userId?: string
+  sortOrder?: string
+  groupId?: string
+  approved?: number
+  
+  // Component props
+  cols?: number
+  showPageInfo?: boolean
+  showFirstLast?: boolean
+  maxVisiblePages?: number
+  
+  // Callbacks
+  onPageChange?: (page: number) => void
+  onPageSizeChange?: (size: number) => void
+  onRefresh?: () => void
+  onTotalCountChange?: (count: number) => void
+  
+  // Styling
+  className?: string
+  contentClassName?: string
+  paginationClassName?: string
+}
+
