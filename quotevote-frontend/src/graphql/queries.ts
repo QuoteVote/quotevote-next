@@ -100,6 +100,18 @@ export const GROUPS_QUERY = gql`
 `
 
 /**
+ * Get a single group by ID
+ */
+export const GET_GROUP = gql`
+  query getGroup($groupId: String!) {
+    group(groupId: $groupId) {
+      _id
+      title
+    }
+  }
+`
+
+/**
  * Get action reactions query
  */
 export const GET_ACTION_REACTIONS = gql`
@@ -632,6 +644,64 @@ export const GET_MESSAGE_REACTIONS = gql`
       emoji
       messageId
       userId
+    }
+  }
+`
+
+/**
+ * Get users query (admin only)
+ * Used for admin tooltips and user management
+ */
+export const GET_USERS = gql`
+  query users($limit: Int, $offset: Int) {
+    users(limit: $limit, offset: $offset) {
+      _id
+      name
+      username
+      contributorBadge
+    }
+  }
+`
+
+/**
+ * Get user activity query
+ */
+export const GET_USER_ACTIVITY = gql`
+  query getUserActivity(
+    $limit: Int!
+    $offset: Int!
+    $searchKey: String!
+    $activityEvent: [String!]
+    $user_id: String!
+    $startDateRange: String
+    $endDateRange: String
+  ) {
+    getUserActivity(
+      limit: $limit
+      offset: $offset
+      searchKey: $searchKey
+      activityEvent: $activityEvent
+      user_id: $user_id
+      startDateRange: $startDateRange
+      endDateRange: $endDateRange
+    ) {
+      entities {
+        _id
+        userId
+        activityType
+        created
+        post {
+          _id
+          title
+          text
+          url
+        }
+      }
+      pagination {
+        total_count
+        limit
+        offset
+      }
     }
   }
 `
