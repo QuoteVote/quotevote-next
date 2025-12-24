@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import { ApolloProviderWrapper } from "@/lib/apollo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
@@ -62,6 +63,7 @@ export default function RootLayout({
             <>
             <Eyebrow />
             {children}
+            <Toaster position="top-right" richColors />
             </>
           </ApolloProviderWrapper>
         </ErrorBoundary>

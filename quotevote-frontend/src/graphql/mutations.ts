@@ -483,3 +483,15 @@ export const FOLLOW_USER = gql`
     }
   }
 `
+
+/**
+ * Delete notification mutation
+ */
+export const DELETE_NOTIFICATION = gql`
+  mutation removeNotification($notificationId: String!) {
+    removeNotification(notificationId: $notificationId) {
+      _id
+      status
+    }
+  }
+`

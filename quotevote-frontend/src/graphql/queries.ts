@@ -705,3 +705,31 @@ export const GET_USER_ACTIVITY = gql`
     }
   }
 `
+
+/**
+ * Get notifications query
+ */
+export const GET_NOTIFICATIONS = gql`
+  query notifications {
+    notifications {
+      _id
+      userId
+      userIdBy
+      userBy {
+        _id
+        name
+        avatar
+        username
+        contributorBadge
+      }
+      label
+      status
+      created
+      notificationType
+      post {
+        _id
+        url
+      }
+    }
+  }
+`
