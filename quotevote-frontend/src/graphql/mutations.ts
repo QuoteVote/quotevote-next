@@ -453,3 +453,45 @@ export const UPDATE_MESSAGE_REACTION = gql`
     }
   }
 `
+
+/**
+ * Create post message room mutation
+ * Used when bookmarking a post to create a chat room
+ */
+export const CREATE_POST_MESSAGE_ROOM = gql`
+  mutation createPostMessageRoom($postId: String!) {
+    createPostMessageRoom(postId: $postId) {
+      _id
+      users
+      messageType
+      created
+      title
+      avatar
+    }
+  }
+`
+
+/**
+ * Follow user mutation
+ * Used for following/unfollowing users
+ */
+export const FOLLOW_USER = gql`
+  mutation followUser($user_id: String!, $action: String!) {
+    followUser(user_id: $user_id, action: $action) {
+      _id
+      name
+    }
+  }
+`
+
+/**
+ * Delete notification mutation
+ */
+export const DELETE_NOTIFICATION = gql`
+  mutation removeNotification($notificationId: String!) {
+    removeNotification(notificationId: $notificationId) {
+      _id
+      status
+    }
+  }
+`

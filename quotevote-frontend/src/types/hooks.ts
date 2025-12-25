@@ -88,17 +88,17 @@ export interface UsePresenceHeartbeatReturn {
 // ============================================================================
 
 /**
- * Presence data structure
+ * Presence data structure from subscription
  */
 export interface PresenceData {
   /** User ID */
   userId: string
-  /** Online status */
-  isOnline: boolean
-  /** Last seen timestamp */
+  /** Status (e.g., 'online', 'offline', 'away') */
+  status: string
+  /** Status message */
+  statusMessage?: string
+  /** Last seen timestamp (ISO string) */
   lastSeen?: string
-  /** Additional presence metadata */
-  [key: string]: unknown
 }
 
 /**
@@ -192,4 +192,153 @@ export interface UseTypingIndicatorReturn {
   handleTyping: () => void
   /** Handler to call when user stops typing */
   stopTyping: () => void
+}
+
+// ============================================================================
+// Message Subscription Types
+// ============================================================================
+
+/**
+ * Message data structure from subscription
+ */
+export interface MessageSubscriptionData {
+  /** Message ID */
+  _id: string
+  /** Message room ID */
+  messageRoomId: string
+  /** User ID who sent the message */
+  userId: string
+  /** User name */
+  userName: string
+  /** Message title */
+  title?: string
+  /** Message text */
+  text: string
+  /** Creation timestamp */
+  created: string
+  /** Message type */
+  type?: string
+  /** Mutation type */
+  mutation_type?: string
+}
+
+/**
+ * Message subscription result
+ */
+export interface MessageSubscriptionResult {
+  /** Message data from subscription */
+  message: MessageSubscriptionData
+}
+
+// ============================================================================
+// Typing Subscription Types
+// ============================================================================
+
+/**
+ * Typing event data structure from subscription
+ */
+export interface TypingEventData {
+  /** Message room ID */
+  messageRoomId: string
+  /** User ID who is typing */
+  userId: string
+  /** User information */
+  user?: {
+    _id: string
+    name?: string | null
+    username?: string | null
+  } | null
+  /** Whether user is typing */
+  isTyping: boolean
+  /** Timestamp of typing event */
+  timestamp: string
+}
+
+/**
+ * Typing subscription result
+ */
+export interface TypingSubscriptionResult {
+  /** Typing event data from subscription */
+  typing: TypingEventData | null
+}
+
+// ============================================================================
+// Notification Subscription Types
+// ============================================================================
+
+/**
+ * Notification data structure from subscription
+ */
+export interface NotificationSubscriptionData {
+  /** Notification ID */
+  _id: string
+  /** User ID who receives the notification */
+  userId: string
+  /** User ID who triggered the notification */
+  userIdBy: string
+  /** User information who triggered the notification */
+  userBy?: {
+    name?: string | null
+    avatar?: string | null
+  } | null
+  /** Notification label */
+  label?: string
+  /** Notification status */
+  status?: string
+  /** Creation timestamp */
+  created: string
+  /** Notification type */
+  notificationType: string
+  /** Related post (if applicable) */
+  post?: {
+    _id: string
+    url?: string
+  } | null
+}
+
+/**
+ * Notification subscription result
+ */
+export interface NotificationSubscriptionResult {
+  /** Notification data from subscription */
+  notification: NotificationSubscriptionData
+}
+
+// ============================================================================
+// Roster Subscription Types
+// ============================================================================
+
+/**
+ * Roster entry data structure from subscription
+ */
+export interface RosterEntryData {
+  /** Roster entry ID */
+  _id: string
+  /** User ID */
+  userId: string
+  /** Buddy ID */
+  buddyId: string
+  /** Roster status */
+  status: string
+  /** Who initiated the relationship */
+  initiatedBy: string
+  /** Creation timestamp */
+  created: string
+  /** Last update timestamp */
+  updated: string
+  /** Buddy information */
+  buddy?: {
+    _id: string
+    name?: string | null
+    username?: string | null
+    avatar?: string | null
+  } | null
+}
+
+/**
+ * Roster subscription result
+ */
+export interface RosterSubscriptionResult {
+  /** Roster entry data from subscription */
+  roster: RosterEntryData
 }

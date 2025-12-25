@@ -190,4 +190,255 @@ describe('UserPosts Component', () => {
     const callArgs = mockUseQuery.mock.calls[0]
     expect(callArgs[1].variables.userId).toBe(mockUserId)
   })
+
+  describe('Pagination', () => {
+    it('uses correct pagination variables', async () => {
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      expect(mockUseQuery).toHaveBeenCalled()
+      const callArgs = mockUseQuery.mock.calls[0]
+      // createGraphQLVariables converts page/pageSize to limit/offset
+      expect(callArgs[1].variables.limit).toBe(15)
+      expect(callArgs[1].variables.offset).toBe(0) // page 1 with pageSize 15 = offset 0
+      expect(callArgs[1].variables.sortOrder).toBe('created')
+    })
+
+    it('filters posts by userId', async () => {
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      expect(mockUseQuery).toHaveBeenCalled()
+      const callArgs = mockUseQuery.mock.calls[0]
+      expect(callArgs[1].variables.userId).toBe(mockUserId)
+    })
+  })
+
+  describe('Hidden Posts', () => {
+    it('filters out hidden posts', async () => {
+      useAppStore.setState({
+        ui: {
+          ...useAppStore.getState().ui,
+          hiddenPosts: ['post1'],
+        },
+      })
+
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: null,
+        data: {
+          posts: {
+            entities: mockPosts,
+            pagination: { total_count: 1, limit: 15, offset: 0 },
+          },
+        },
+        refetch: mockRefetch,
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      // Post should be filtered out, so it shouldn't appear
+      await waitFor(() => {
+        expect(screen.queryByTestId('post-card-post1')).not.toBeInTheDocument()
+      })
+    })
+
+    it('shows posts that are not hidden', async () => {
+      useAppStore.setState({
+        ui: {
+          ...useAppStore.getState().ui,
+          hiddenPosts: ['other-post'],
+        },
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      await waitFor(() => {
+        expect(screen.getByTestId('post-card-post1')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('displays error message when GraphQL error occurs', async () => {
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: new Error('GraphQL error: Failed to fetch posts'),
+        data: undefined,
+        refetch: mockRefetch,
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      await waitFor(() => {
+        expect(screen.getByText(/error loading posts/i)).toBeInTheDocument()
+        expect(screen.getByText(/GraphQL error: Failed to fetch posts/)).toBeInTheDocument()
+      })
+    })
+
+    it('displays generic error message when error has no message', async () => {
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: { message: undefined } as unknown as Error,
+        data: undefined,
+        refetch: mockRefetch,
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      await waitFor(() => {
+        expect(screen.getByText(/error loading posts/i)).toBeInTheDocument()
+        expect(screen.getByText(/An error occurred while loading posts/)).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Data Handling', () => {
+    it('handles missing pagination data', async () => {
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: null,
+        data: {
+          posts: {
+            entities: mockPosts,
+            pagination: undefined,
+          },
+        },
+        refetch: mockRefetch,
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      await waitFor(() => {
+        expect(screen.getByTestId('paginated-list')).toBeInTheDocument()
+      })
+    })
+
+    it('handles null data response', async () => {
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: null,
+        data: null,
+        refetch: mockRefetch,
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      await waitFor(() => {
+        expect(screen.getByText(/no posts found/i)).toBeInTheDocument()
+      })
+    })
+
+    it('handles undefined data response', async () => {
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: null,
+        data: undefined,
+        refetch: mockRefetch,
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      await waitFor(() => {
+        expect(screen.getByText(/no posts found/i)).toBeInTheDocument()
+      })
+    })
+
+    it('handles empty posts array', async () => {
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: null,
+        data: {
+          posts: {
+            entities: [],
+            pagination: { total_count: 0, limit: 15, offset: 0 },
+          },
+        },
+        refetch: mockRefetch,
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      await waitFor(() => {
+        expect(screen.getByText(/no posts found/i)).toBeInTheDocument()
+        expect(screen.getByText(/This user hasn't created any posts yet/)).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Multiple Posts', () => {
+    it('renders multiple post cards', async () => {
+      const multiplePosts: Post[] = [
+        {
+          _id: 'post1',
+          userId: mockUserId,
+          created: '2024-01-01T00:00:00Z',
+          title: 'Test Post 1',
+          text: 'Content 1',
+          upvotes: 10,
+          downvotes: 2,
+        },
+        {
+          _id: 'post2',
+          userId: mockUserId,
+          created: '2024-01-02T00:00:00Z',
+          title: 'Test Post 2',
+          text: 'Content 2',
+          upvotes: 5,
+          downvotes: 1,
+        },
+        {
+          _id: 'post3',
+          userId: mockUserId,
+          created: '2024-01-03T00:00:00Z',
+          title: 'Test Post 3',
+          text: 'Content 3',
+          upvotes: 20,
+          downvotes: 3,
+        },
+      ]
+
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: null,
+        data: {
+          posts: {
+            entities: multiplePosts,
+            pagination: { total_count: 3, limit: 15, offset: 0 },
+          },
+        },
+        refetch: mockRefetch,
+      })
+
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      await waitFor(() => {
+        expect(screen.getByTestId('post-card-post1')).toBeInTheDocument()
+        expect(screen.getByTestId('post-card-post2')).toBeInTheDocument()
+        expect(screen.getByTestId('post-card-post3')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Query Configuration', () => {
+    it('uses correct fetch policy', async () => {
+      await act(async () => {
+        render(<UserPosts userId={mockUserId} />)
+      })
+      expect(mockUseQuery).toHaveBeenCalled()
+      const callArgs = mockUseQuery.mock.calls[0]
+      expect(callArgs[1].fetchPolicy).toBe('cache-and-network')
+      expect(callArgs[1].errorPolicy).toBe('all')
+      expect(callArgs[1].notifyOnNetworkStatusChange).toBe(true)
+    })
+  })
 })

@@ -20,17 +20,7 @@ interface TypingUser {
   timestamp: string;
 }
 
-interface TypingSubscriptionData {
-  typing?: {
-    userId: string;
-    isTyping: boolean;
-    timestamp: string;
-    user?: {
-      name?: string | null;
-      username?: string | null;
-    } | null;
-  } | null;
-}
+import type { TypingSubscriptionResult } from '@/types/hooks'
 
 interface TypingSubscriptionVariables {
   messageRoomId: string;
@@ -42,42 +32,49 @@ const TypingIndicator: FC<TypingIndicatorProps> = ({ messageRoomId }) => {
     | undefined;
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
 
-  const { error } = useSubscription<
-    TypingSubscriptionData,
+  const { data: subscriptionData, error } = useSubscription<
+    TypingSubscriptionResult,
     TypingSubscriptionVariables
   >(TYPING_SUBSCRIPTION, {
     skip: !messageRoomId,
     variables: messageRoomId ? { messageRoomId } : { messageRoomId: '' },
-    onData: ({ data }) => {
-      const typingEvent = data.data?.typing;
-      if (!typingEvent) return;
-
-      const { userId, isTyping, timestamp, user } = typingEvent;
-
-      if (userId && currentUser?._id && userId === currentUser._id) {
-        return;
-      }
-
-      setTypingUsers((prev) => {
-        if (isTyping) {
-          if (prev.find((u) => u.userId === userId)) {
-            return prev.map((u) =>
-              u.userId === userId ? { ...u, timestamp, user } : u
-            );
-          }
-          return [...prev, { userId, user, timestamp }];
-        }
-
-        return prev.filter((u) => u.userId !== userId);
-      });
-    },
-    onError: (err) => {
-      console.error('[Typing Subscription] Error:', err);
-    },
   });
 
+  // Handle subscription data updates (Apollo Client v4 API)
+  // Note: This effect handles external subscription data, which is a valid use case for setState in effects
   useEffect(() => {
-    if (error) {
+    const typingEvent = subscriptionData?.typing;
+    if (!typingEvent) return;
+
+    const { userId, isTyping, timestamp, user } = typingEvent;
+
+    // Don't show typing indicator for current user
+    if (userId && currentUser?._id && userId === currentUser._id) {
+      return;
+    }
+
+    // Use functional update to avoid dependency on typingUsers
+    setTypingUsers((prev) => {
+      if (isTyping) {
+        // Update existing user or add new one
+        const existingUser = prev.find((u) => u.userId === userId);
+        if (existingUser) {
+          return prev.map((u) =>
+            u.userId === userId ? { ...u, timestamp, user } : u
+          );
+        }
+        return [...prev, { userId, user, timestamp }];
+      }
+
+      // Remove user from list when they stop typing
+      return prev.filter((u) => u.userId !== userId);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- subscriptionData is the only dependency we need
+  }, [subscriptionData]);
+
+  // Handle subscription errors
+  useEffect(() => {
+    if (error && process.env.NODE_ENV === 'development') {
       console.error('[Typing Subscription] Subscription error:', error);
     }
   }, [error]);

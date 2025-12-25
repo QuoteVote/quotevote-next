@@ -11,4 +11,6 @@ export { Filter, default as FilterDefault } from './Filter';
 export { Group, default as GroupDefault } from './Group';
 export { Comment, default as CommentDefault } from './Comment';
 export { Quote, default as QuoteDefault } from './Quote';
+export { Like, default as LikeDefault } from './Like';
+export { Dislike, default as DislikeDefault } from './Dislike';
 

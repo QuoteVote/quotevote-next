@@ -126,6 +126,9 @@
       "@/components/Chat": [
         "./src/components/Chat"
       ],
+      "@/components/VotingComponents/*": [
+        "./src/components/VotingComponents/*"
+      ],
       "@/hooks/*": [
         "./src/hooks/*"
       ],

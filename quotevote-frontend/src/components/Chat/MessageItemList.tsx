@@ -9,6 +9,7 @@ import { GET_ROOM_MESSAGES, GET_POST } from '@/graphql/queries'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
 import type { ChatRoom, ChatMessage, ChatParticipant } from '@/types/chat'
 import type { PostQueryData } from '@/types/post'
+import type { MessageSubscriptionResult } from '@/types/hooks'
 
 interface MessageItemListProps {
   room: ChatRoom | null
@@ -39,27 +40,40 @@ export default function MessageItemList({ room }: MessageItemListProps) {
     skip: !postId || messageType !== 'POST',
   })
 
-  const { error: subscriptionError } = useSubscription<{ newMessage: ChatMessage }>(NEW_MESSAGE_SUBSCRIPTION, {
-    skip: !messageRoomId,
-    variables: { messageRoomId: messageRoomId ?? '' },
-    onData: async ({ data: subData }) => {
-      if (subData?.data?.newMessage) {
-        await refetch()
-      }
-    },
-    onError: (err) => {
-      console.error('[Message Subscription] Error:', err)
-      refetch().catch((refetchErr) => {
-        console.error('[Message Subscription] Refetch error:', refetchErr)
-      })
-    },
-  })
+  const { data: subscriptionData, error: subscriptionError } = useSubscription<MessageSubscriptionResult>(
+    NEW_MESSAGE_SUBSCRIPTION,
+    {
+      skip: !messageRoomId,
+      variables: { messageRoomId: messageRoomId ?? '' },
+    }
+  )
 
+  // Handle subscription data updates (Apollo Client v4 API)
+  useEffect(() => {
+    if (subscriptionData?.message) {
+      // Refetch messages to get the latest list
+      refetch().catch((refetchErr) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[Message Subscription] Refetch error:', refetchErr)
+        }
+      })
+    }
+  }, [subscriptionData, refetch])
+
+  // Handle subscription errors
   useEffect(() => {
     if (subscriptionError) {
-      console.error('[Message Subscription] Subscription error:', subscriptionError)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Message Subscription] Subscription error:', subscriptionError)
+      }
+      // Try to refetch on error to ensure we have the latest messages
+      refetch().catch((refetchErr) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[Message Subscription] Refetch error:', refetchErr)
+        }
+      })
     }
-  }, [subscriptionError])
+  }, [subscriptionError, refetch])
 
   if (!messageRoomId) {
     return (

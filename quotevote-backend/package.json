@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/app/server.js",
     "test": "jest --passWithNoTests",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
   },
   "_legacy_scripts_TODO_remove_after_stable": {
     "dev": "babel-node src/index.js",

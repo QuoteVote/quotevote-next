@@ -2,32 +2,12 @@
 
 import { UserPlus, UserMinus } from 'lucide-react';
 import { useMutation } from '@apollo/client/react';
-import { gql } from '@apollo/client';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
+import { FOLLOW_USER } from '@/graphql/mutations';
+import { GET_USER } from '@/graphql/queries';
 import type { FollowButtonProps } from '@/types/components';
 import { cn } from '@/lib/utils';
-
-// GraphQL mutations - TODO: Move to @/graphql/mutations when GraphQL operations are migrated
-const FOLLOW_MUTATION = gql`
-  mutation followUser($user_id: String!, $action: String!) {
-    followUser(user_id: $user_id, action: $action) {
-      _id
-      name
-    }
-  }
-`;
-
-// GraphQL queries - TODO: Move to @/graphql/queries when GraphQL operations are migrated
-const GET_USER = gql`
-  query getUser($username: String!) {
-    user(username: $username) {
-      _id
-      name
-      username
-    }
-  }
-`;
 
 /**
  * FollowButton Component
@@ -42,7 +22,7 @@ export function FollowButton({
   showIcon = false,
   className,
 }: FollowButtonProps) {
-  const [followMutation] = useMutation(FOLLOW_MUTATION, {
+  const [followMutation] = useMutation(FOLLOW_USER, {
     refetchQueries: username
       ? [
           {

@@ -66,6 +66,7 @@ function createAuthLink() {
 /**
  * Create a WebSocket link for GraphQL subscriptions
  * Only available on the client side (browser)
+ * Includes enhanced error handling and logging for disconnects/reconnects
  * 
  * @returns Configured WebSocket link or null if on server
  */
@@ -81,24 +82,41 @@ function createWsLink(): GraphQLWsLink | null {
   const MAX_RETRY_ATTEMPTS = 10; // Maximum retry attempts before giving up
   const RETRY_RESET_DELAY = 60000; // Reset retry count after 60 seconds
 
+  // Logging utility (only in development)
+  const log = (message: string, ...args: unknown[]): void => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[WebSocket] ${message}`, ...args);
+    }
+  };
+
+  const logError = (message: string, error?: unknown): void => {
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`[WebSocket Error] ${message}`, error);
+    }
+  };
+
   return new GraphQLWsLink(
     createClient({
       url: getGraphqlWsServerUrl(),
       connectionParams: () => {
         const token = localStorage.getItem('token');
+        const authToken = token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : undefined;
+        log('Connecting with auth token', authToken ? 'present' : 'missing');
         return {
-          authToken: token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : undefined,
+          authToken,
         };
       },
       retryAttempts: MAX_RETRY_ATTEMPTS,
       shouldRetry: (errOrCloseEvent) => {
         // Don't retry if we've exceeded max attempts
         if (retryCount >= MAX_RETRY_ATTEMPTS) {
+          logError(`Max retry attempts (${MAX_RETRY_ATTEMPTS}) reached. Scheduling reset.`);
           // Schedule a reset of retry count after RETRY_RESET_DELAY
           if (retryResetTimeout) {
             clearTimeout(retryResetTimeout);
           }
           retryResetTimeout = setTimeout(() => {
+            log('Resetting retry count after delay');
             retryCount = 0;
           }, RETRY_RESET_DELAY);
           return false;
@@ -115,20 +133,24 @@ function createWsLink(): GraphQLWsLink | null {
           const code = errOrCloseEvent.code as number;
           if (code === 1001 || code === 1002) {
             // 1001: Going Away, 1002: Protocol Error - don't retry
+            logError(`Connection error code ${code} - not retrying`);
             return false;
           }
 
           // Check if connection was cleanly closed (code 1000)
           if (code === 1000 && 'wasClean' in errOrCloseEvent && errOrCloseEvent.wasClean) {
+            log('Connection cleanly closed - not retrying');
             return false;
           }
         }
 
         retryCount++;
+        log(`Retrying connection (attempt ${retryCount}/${MAX_RETRY_ATTEMPTS})`);
         return true;
       },
       on: {
         opened: () => {
+          log('WebSocket connection opened');
           // Reset retry count on successful connection
           retryCount = 0;
           if (retryResetTimeout) {
@@ -136,11 +158,16 @@ function createWsLink(): GraphQLWsLink | null {
             retryResetTimeout = null;
           }
         },
-        closed: () => {
-          // Connection closed
+        closed: (event?: unknown) => {
+          if (event && typeof event === 'object' && 'code' in event) {
+            const closeEvent = event as { code?: number; reason?: string; wasClean?: boolean };
+            log(`WebSocket connection closed: code=${closeEvent.code}, reason=${closeEvent.reason || 'none'}, wasClean=${closeEvent.wasClean}`);
+          } else {
+            log('WebSocket connection closed');
+          }
         },
-        error: () => {
-          // Connection error
+        error: (error?: unknown) => {
+          logError('WebSocket connection error', error);
         },
       },
     })

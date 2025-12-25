@@ -43,10 +43,11 @@ describe('usePresenceSubscription', () => {
 
         renderHook(() => usePresenceSubscription())
 
+        // Updated to match new behavior: subscribes to all users (userId: null)
         expect(useSubscription).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
-                variables: { userId: '1' },
+                variables: { userId: null },
                 skip: false,
             })
         )
@@ -71,9 +72,10 @@ describe('usePresenceSubscription', () => {
     })
 
     it('should update store when presence data is received', () => {
+        // Updated to match actual subscription structure (status instead of isOnline)
         const presenceData = {
             userId: '2',
-            isOnline: true,
+            status: 'online',
             lastSeen: '2024-01-01T00:00:00Z',
             statusMessage: 'Hello',
         }
@@ -122,15 +124,16 @@ describe('usePresenceSubscription', () => {
     })
 
     it('should update store when presence data changes', () => {
+        // Updated to match actual subscription structure (status instead of isOnline)
         const presenceData1 = {
             userId: '2',
-            isOnline: true,
+            status: 'online',
             lastSeen: '2024-01-01T00:00:00Z',
         }
 
         const presenceData2 = {
             userId: '2',
-            isOnline: false,
+            status: 'offline',
             lastSeen: '2024-01-01T01:00:00Z',
         }
 

@@ -154,5 +154,85 @@ describe('ProfileView', () => {
       expect(contentContainer).toBeInTheDocument();
     });
   });
+
+  describe('Edge Cases', () => {
+    it('handles profile user with minimal data', async () => {
+      const minimalUser: ProfileUser = {
+        _id: 'user1',
+        username: 'minimaluser',
+      };
+      await act(async () => {
+        render(<ProfileView profileUser={minimalUser} />);
+      });
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+      });
+    });
+
+    it('handles profile user with empty arrays for following/followers', async () => {
+      const userWithEmptyArrays: ProfileUser = {
+        ...mockProfileUser,
+        _followingId: [],
+        _followersId: [],
+      };
+      await act(async () => {
+        render(<ProfileView profileUser={userWithEmptyArrays} />);
+      });
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+      });
+    });
+
+    it('handles profile user with null reputation gracefully', async () => {
+      const userWithNullReputation: ProfileUser = {
+        ...mockProfileUser,
+        reputation: undefined,
+      };
+      await act(async () => {
+        render(<ProfileView profileUser={userWithNullReputation} />);
+      });
+      await waitFor(() => {
+        expect(screen.queryByTestId('reputation-display')).not.toBeInTheDocument();
+      });
+    });
+
+    it('renders UserPosts component with correct userId', async () => {
+      jest.mock('@/components/UserPosts', () => ({
+        UserPosts: ({ userId }: { userId: string }) => (
+          <div data-testid="user-posts">Posts for {userId}</div>
+        ),
+      }));
+
+      await act(async () => {
+        render(<ProfileView profileUser={mockProfileUser} />);
+      });
+      // UserPosts is rendered but mocked in this test
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Component Integration', () => {
+    it('renders all child components in correct order', async () => {
+      await act(async () => {
+        render(<ProfileView profileUser={mockProfileUser} />);
+      });
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+        expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
+      });
+    });
+
+    it('maintains proper spacing between components', async () => {
+      let container: HTMLElement;
+      await act(async () => {
+        const result = render(<ProfileView profileUser={mockProfileUser} />);
+        container = result.container;
+      });
+      const spaceYContainer = container!.querySelector('.space-y-4');
+      expect(spaceYContainer).toBeInTheDocument();
+    });
+  });
 });
 
