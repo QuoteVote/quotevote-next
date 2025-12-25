@@ -8,8 +8,7 @@ import ChatSearchInput from './ChatSearchInput';
 import MessageBox from './MessageBox';
 import ChatTabs from './ChatTabs';
 import ChatList from './ChatList';
-// TODO: Migrate BuddyListWithPresence component
-// import BuddyListWithPresence from '../BuddyList/BuddyListWithPresence';
+import BuddyListWithPresence from '@/components/BuddyList/BuddyListWithPresence';
 import UserSearchResults from './UserSearchResults';
 import StatusEditor from './StatusEditor';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
@@ -218,10 +217,7 @@ function ChatContent() {
                 <ChatList search={search} filterType="groups" />
               )}
               {activeTab === 'buddies' && (
-                <div className="p-4 text-sm text-muted-foreground">
-                  {/* TODO: Migrate BuddyListWithPresence component */}
-                  Buddy list coming soon
-                </div>
+                <BuddyListWithPresence search={search} />
               )}
             </>
           )}

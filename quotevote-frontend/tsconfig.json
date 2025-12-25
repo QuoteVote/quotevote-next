@@ -99,10 +99,17 @@
         "./src/components/Chat/*"
       ],
       "@/components/*": [
+        "./src/components/*",
         "./src/app/components/*"
       ],
       "@/components/SubHeader": [
         "./src/components/SubHeader"
+      ],
+      "@/components/BuddyList": [
+        "./src/components/BuddyList"
+      ],
+      "@/components/BuddyList/*": [
+        "./src/components/BuddyList/*"
       ],
       "@/components/UserPosts": [
         "./src/components/UserPosts"
@@ -115,6 +122,9 @@
       ],
       "@/components/Icons/*": [
         "./src/components/Icons/*"
+      ],
+      "@/components/Chat": [
+        "./src/components/Chat"
       ],
       "@/components/VotingComponents/*": [
         "./src/components/VotingComponents/*"
