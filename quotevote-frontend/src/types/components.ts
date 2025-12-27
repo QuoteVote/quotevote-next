@@ -910,3 +910,88 @@ export interface CreditCardInputProps {
 
 export type PlansProps = Record<string, never>;
 
+// SearchContainer Component Types
+export interface SearchContentResult {
+  _id: string;
+  title: string;
+  creatorId: string;
+  domain: {
+    key: string;
+    _id: string;
+  };
+  __typename?: string;
+}
+
+export interface SearchCreatorResult {
+  _id: string;
+  name: string;
+  avatar?: string;
+  creator?: {
+    _id: string;
+  };
+  __typename?: string;
+}
+
+export interface SearchResultsData {
+  searchContent?: SearchContentResult[];
+  searchCreator?: SearchCreatorResult[];
+}
+
+export interface SearchResultsProps {
+  /**
+   * Search results data from GraphQL query
+   */
+  searchResults: SearchResultsData;
+  /**
+   * Whether the search is currently loading
+   * @default false
+   */
+  isLoading?: boolean;
+  /**
+   * Error object if search failed
+   */
+  isError?: Error | { message?: string } | null;
+}
+
+export interface UsernameSearchUser {
+  _id: string;
+  username: string;
+  name: string;
+  avatar?: string;
+  contributorBadge?: boolean;
+}
+
+export interface UsernameResultsProps {
+  /**
+   * Array of user search results
+   * @default []
+   */
+  users?: UsernameSearchUser[];
+  /**
+   * Whether the search is currently loading
+   * @default false
+   */
+  loading?: boolean;
+  /**
+   * Error object if search failed
+   */
+  error?: Error | { message?: string } | null;
+  /**
+   * Callback when a user is selected
+   */
+  onUserSelect?: (user: UsernameSearchUser) => void;
+  /**
+   * Current search query text
+   * @default ''
+   */
+  query?: string;
+}
+
+export interface SidebarSearchViewProps {
+  /**
+   * Display style for the container
+   * @default 'block'
+   */
+  Display?: 'block' | 'flex' | 'none' | string;
+}
+

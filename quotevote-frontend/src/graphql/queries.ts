@@ -634,6 +634,31 @@ export const SEARCH_USERNAMES = gql`
 `
 
 /**
+ * Search query for content and creators
+ */
+export const SEARCH = gql`
+  query search($text: String!) {
+    searchContent(text: $text) {
+      _id
+      title
+      creatorId
+      domain {
+        key
+        _id
+      }
+    }
+    searchCreator(text: $text) {
+      _id
+      name
+      avatar
+      creator {
+        _id
+      }
+    }
+  }
+`
+
+/**
  * Get message reactions query
  * Used by PostChatReactions component
  */
