@@ -517,3 +517,29 @@ export const REQUEST_USER_ACCESS_MUTATION = gql`
     }
   }
 `
+
+/**
+ * Disable user account mutation (admin only)
+ * Used for admin moderation tools
+ */
+export const DISABLE_USER = gql`
+  mutation disableUser($userId: String!) {
+    disableUser(userId: $userId) {
+      _id
+      accountStatus
+    }
+  }
+`
+
+/**
+ * Enable user account mutation (admin only)
+ * Used for admin moderation tools
+ */
+export const ENABLE_USER = gql`
+  mutation enableUser($userId: String!) {
+    enableUser(userId: $userId) {
+      _id
+      accountStatus
+    }
+  }
+`
