@@ -41,6 +41,9 @@
       "@/components/ui/*": [
         "./src/components/ui/*"
       ],
+      "@/components/common/*": [
+        "./src/components/common/*"
+      ],
       "@/components/ErrorBoundary": [
         "./src/components/ErrorBoundary"
       ],
@@ -50,8 +53,93 @@
       "@/components/ContentList": [
         "./src/components/ContentList"
       ],
+      "@/components/Avatar": [
+        "./src/components/Avatar"
+      ],
+      "@/components/AlertList": [
+        "./src/components/AlertList"
+      ],
+      "@/components/ForgotPassword": [
+        "./src/components/ForgotPassword"
+      ],
+      "@/components/ForgotPassword/*": [
+        "./src/components/ForgotPassword/*"
+      ],
+      "@/components/PasswordReset": [
+        "./src/components/PasswordReset"
+      ],
+      "@/components/PasswordReset/*": [
+        "./src/components/PasswordReset/*"
+      ],
+      "@/components/SignupForm": [
+        "./src/components/SignupForm"
+      ],
+      "@/components/SignupForm/*": [
+        "./src/components/SignupForm/*"
+      ],
+      "@/components/SubmitPost": [
+        "./src/components/SubmitPost"
+      ],
+      "@/components/SubmitPost/*": [
+        "./src/components/SubmitPost/*"
+      ],
+      "@/components/Comment": [
+        "./src/components/Comment"
+      ],
+      "@/components/Comment/*": [
+        "./src/components/Comment/*"
+      ],
+      "@/components/Quotes": [
+        "./src/components/Quotes"
+      ],
+      "@/components/Quotes/*": [
+        "./src/components/Quotes/*"
+      ],
+      "@/components/PostChat/*": [
+        "./src/components/PostChat/*"
+      ],
+      "@/components/Chat/*": [
+        "./src/components/Chat/*"
+      ],
       "@/components/*": [
+        "./src/components/*",
         "./src/app/components/*"
+      ],
+      "@/components/SubHeader": [
+        "./src/components/SubHeader"
+      ],
+      "@/components/BuddyList": [
+        "./src/components/BuddyList"
+      ],
+      "@/components/BuddyList/*": [
+        "./src/components/BuddyList/*"
+      ],
+      "@/components/UserPosts": [
+        "./src/components/UserPosts"
+      ],
+      "@/components/UserPosts/*": [
+        "./src/components/UserPosts/*"
+      ],
+      "@/components/Icons": [
+        "./src/components/Icons"
+      ],
+      "@/components/Icons/*": [
+        "./src/components/Icons/*"
+      ],
+      "@/components/Chat": [
+        "./src/components/Chat"
+      ],
+      "@/components/VotingComponents/*": [
+        "./src/components/VotingComponents/*"
+      ],
+      "@/components/Carousel": [
+        "./src/components/Carousel"
+      ],
+      "@/components/Carousel/*": [
+        "./src/components/Carousel/*"
+      ],
+      "@/components/CustomButtons": [
+        "./src/components/CustomButtons"
       ],
       "@/hooks/*": [
         "./src/hooks/*"

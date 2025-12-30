@@ -81,7 +81,7 @@ function customRender(
   const { apolloClient, ...renderOptions } = options || {}
 
   return render(ui, {
-    wrapper: ({ children }) => (
+    wrapper: ({ children }: { children: React.ReactNode }) => (
       <AllTheProviders apolloClient={apolloClient}>{children}</AllTheProviders>
     ),
     ...renderOptions,
@@ -91,6 +91,14 @@ function customRender(
 // Re-export everything from React Testing Library
 export * from '@testing-library/react'
 export { customRender as render }
+
+// Explicitly export commonly used testing utilities
+export {
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react'
 
 // Export test utilities
 export { createTestApolloClient, AllTheProviders }

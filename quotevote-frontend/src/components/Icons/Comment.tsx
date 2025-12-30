@@ -1,0 +1,59 @@
+import type { IconProps } from '@/types/icons';
+import { cn } from '@/lib/utils';
+
+/**
+ * Comment icon component
+ * Custom SVG icon migrated from Material UI
+ */
+export function Comment({
+  size = 24,
+  className,
+  color,
+  fill,
+  ...props
+}: IconProps) {
+  const sizeValue = typeof size === 'number' ? `${size}px` : size;
+  const fillValue = color || fill || 'currentColor';
+  
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={sizeValue}
+      height={sizeValue}
+      viewBox="0 0 548 598"
+      fill={typeof fillValue === 'string' ? fillValue : 'currentColor'}
+      className={cn('inline-block', className)}
+      {...props}
+    >
+      <g
+        transform="translate(0.000000,598.000000) scale(0.100000,-0.100000)"
+        fill={color || '#000000'}
+        stroke="none"
+      >
+        <path
+          d="M304 5721 c-62 -28 -119 -84 -145 -144 l-24 -52 0 -2545 0 -2545 24
+        -53 c29 -64 95 -125 158 -146 63 -22 168 -20 218 3 23 10 397 295 832 634
+        l792 617 1733 2 1733 3 46 21 c63 29 110 74 139 131 l25 48 3 1915 2 1915 -31
+        63 c-32 66 -85 114 -152 139 -24 9 -677 12 -2672 12 -2562 1 -2641 0 -2681
+        -18z m4976 -2106 l0 -1555 -1648 -2 -1648 -3 -47 -25 c-26 -14 -309 -227 -629
+        -475 -319 -247 -585 -451 -590 -453 -4 -2 -8 912 -8 2032 l0 2036 2285 0 2285
+        0 0 -1555z"
+        />
+        <path
+          d="M1627 4459 c-89 -21 -160 -80 -198 -163 -29 -64 -26 -178 7 -244 29
+        -59 79 -106 143 -136 l46 -21 1365 0 c1274 0 1368 1 1403 17 62 28 111 73 143
+        130 26 47 29 63 29 138 0 75 -3 91 -29 138 -32 57 -81 102 -143 130 -35 16
+        -130 17 -1383 19 -764 0 -1361 -3 -1383 -8z"
+        />
+        <path
+          d="M1599 3325 c-61 -19 -136 -87 -165 -150 -31 -66 -33 -170 -3 -235 27
+        -60 83 -117 144 -146 l50 -24 1365 0 1365 0 50 24 c148 69 208 251 129 396
+        -31 57 -65 89 -128 123 l-41 22 -1360 2 c-1152 1 -1367 0 -1406 -12z"
+        />
+      </g>
+    </svg>
+  );
+}
+
+export default Comment;
+

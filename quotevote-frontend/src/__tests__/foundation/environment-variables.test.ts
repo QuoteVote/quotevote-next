@@ -1,4 +1,7 @@
 /**
+ * @jest-environment node
+ */
+/**
  * Environment Variable Tests
  * 
  * Tests that verify:
@@ -42,6 +45,7 @@ describe('Environment Variables', () => {
 
     it('throws error when NEXT_PUBLIC_SERVER_URL is missing', () => {
       delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_SERVER_URL
+      delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_GRAPHQL_ENDPOINT
 
       jest.resetModules()
 
@@ -149,6 +153,7 @@ describe('Environment Variables', () => {
 
       // Delete and try to access again
       delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_SERVER_URL
+      delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_GRAPHQL_ENDPOINT
       jest.resetModules()
 
       // Should throw on access

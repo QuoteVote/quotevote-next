@@ -1,11 +1,3 @@
-/**
- * TypeScript interfaces for React components
- * These types define the structure of component props
- */
-
-/**
- * Props for the LoadingSpinner component
- */
 export interface LoadingSpinnerProps {
   /**
    * Size of the spinner in pixels
@@ -17,5 +9,989 @@ export interface LoadingSpinnerProps {
    * @default '15px'
    */
   marginTop?: string;
+  
+}
+
+export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * URL of the avatar image
+   */
+  src?: string;
+  /**
+   * Alt text for the image (required for accessibility)
+   */
+  alt?: string;
+  /**
+   * Fallback content when image is missing or fails to load.
+   * Can be a string (typically initials) or a React node.
+   * If not provided, initials will be generated from alt text.
+   */
+  fallback?: string | React.ReactNode;
+  /**
+   * Size variant: 'sm', 'md', 'lg', 'xl', or a custom number in pixels
+   * @default 'md'
+   */
+  size?: 'sm' | 'md' | 'lg' | 'xl' | number;
+  /**
+   * Optional click handler
+   */
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+}
+
+export type AlertVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
+
+export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Visual variant of the alert
+   * @default 'default'
+   */
+  variant?: AlertVariant;
+}
+
+export type AlertTitleProps = React.HTMLAttributes<HTMLDivElement>;
+
+export type AlertDescriptionProps = React.HTMLAttributes<HTMLDivElement>;
+
+export interface AlertItem {
+  /**
+   * Unique identifier for the alert
+   */
+  id: string;
+  /**
+   * Visual variant of the alert
+   * @default 'default'
+   */
+  variant?: AlertVariant;
+  /**
+   * Title text for the alert
+   */
+  title?: string;
+  /**
+   * Description text for the alert
+   */
+  description?: string;
+  /**
+   * Optional dismiss handler function
+   */
+  onDismiss?: (id: string) => void;
+}
+
+export interface AlertListProps {
+  /**
+   * Array of alert items to display
+   */
+  alerts: AlertItem[];
+  /**
+   * Whether the component is in a loading state
+   * @default false
+   */
+  loading?: boolean;
+  /**
+   * Number of skeleton loaders to show when loading
+   * @default 3
+   */
+  skeletonLimit?: number;
+  /**
+   * Message to display when there are no alerts
+   */
+  emptyMessage?: string;
+  /**
+   * Additional CSS classes for the container
+   */
+  className?: string;
+}
+
+export interface LoaderProps {
+  /**
+   * Size of the loader spinner
+   * @default 40
+   */
+  size?: number;
+  /**
+   * Custom loader styles
+   */
+  loaderStyle?: React.CSSProperties;
+  /**
+   * Whether to merge custom styles with default styles
+   * @default false
+   */
+  mergeStyles?: boolean;
+  /**
+   * Whether the loader should be absolutely positioned
+   * @default true
+   */
+  absolutelyPositioned?: boolean;
+  /**
+   * Additional props for the spinner wrapper
+   * Includes all standard div attributes plus data-* attributes
+   */
+  PulseLoaderProps?: React.HTMLAttributes<HTMLDivElement> & {
+    [key: `data-${string}`]: string | undefined;
+  };
+  /**
+   * Thickness of the spinner border
+   * @default 3.6
+   */
+  thickness?: number;
+  /**
+   * Optional loading label text
+   */
+  loadingLabel?: string;
+}
+
+export interface PaginationProps {
+  /**
+   * Current page number (1-indexed)
+   */
+  currentPage: number;
+  /**
+   * Total number of pages
+   */
+  totalPages: number;
+  /**
+   * Total number of items
+   */
+  totalCount: number;
+  /**
+   * Number of items per page
+   */
+  pageSize: number;
+  /**
+   * Callback when page changes
+   */
+  onPageChange: (page: number) => void;
+  /**
+   * Whether to show page info (e.g., "1-20 of 100")
+   * @default true
+   */
+  showPageInfo?: boolean;
+  /**
+   * Whether to show first/last page buttons
+   * @default true
+   */
+  showFirstLast?: boolean;
+  /**
+   * Maximum number of visible page buttons
+   * @default 5
+   */
+  maxVisiblePages?: number;
+  /**
+   * Whether pagination is disabled
+   * @default false
+   */
+  disabled?: boolean;
+}
+
+export interface StickyPaginationWrapperProps {
+  /**
+   * Child content to wrap
+   */
+  children: React.ReactNode;
+  /**
+   * Pagination component to display at the bottom
+   */
+  pagination?: React.ReactNode;
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+export interface PaginatedListProps<T = unknown> {
+  // Data props
+  /**
+   * Array of data items to paginate
+   */
+  data?: T[];
+  /**
+   * Whether data is currently loading
+   * @default false
+   */
+  loading?: boolean;
+  /**
+   * Error object if data fetch failed
+   */
+  error?: Error | { message?: string };
+  /**
+   * Total count of items (required for pagination)
+   */
+  totalCount: number;
+  
+  // Pagination props
+  /**
+   * Default page size
+   * @default 20
+   */
+  defaultPageSize?: number;
+  /**
+   * URL parameter name for page
+   * @default 'page'
+   */
+  pageParam?: string;
+  /**
+   * URL parameter name for page size
+   * @default 'page_size'
+   */
+  pageSizeParam?: string;
+  /**
+   * Whether to show page info
+   * @default true
+   */
+  showPageInfo?: boolean;
+  /**
+   * Whether to show first/last page buttons
+   * @default true
+   */
+  showFirstLast?: boolean;
+  /**
+   * Maximum number of visible page buttons
+   * @default 5
+   */
+  maxVisiblePages?: number;
+  
+  // Render props
+  /**
+   * Function to render each item
+   */
+  renderItem?: (item: T, index: number) => React.ReactNode;
+  /**
+   * Custom empty state renderer
+   */
+  renderEmpty?: () => React.ReactNode;
+  /**
+   * Custom error state renderer
+   */
+  renderError?: (error: Error | { message?: string }, onRefresh?: () => void) => React.ReactNode;
+  /**
+   * Custom loading state renderer
+   */
+  renderLoading?: () => React.ReactNode;
+  
+  // Callbacks
+  /**
+   * Callback when page changes
+   */
+  onPageChange?: (page: number) => void;
+  /**
+   * Callback when page size changes
+   */
+  onPageSizeChange?: (pageSize: number) => void;
+  /**
+   * Callback to refresh/retry data fetch
+   */
+  onRefresh?: () => void;
+  
+  // Styling
+  /**
+   * Additional CSS classes for root container
+   */
+  className?: string;
+  /**
+   * Additional CSS classes for content area
+   */
+  contentClassName?: string;
+  /**
+   * Additional CSS classes for pagination
+   */
+  paginationClassName?: string;
+  
+  // Other props
+  /**
+   * Child content (alternative to renderItem)
+   */
+  children?: React.ReactNode;
+}
+
+export interface SEOHeadProps {
+  /**
+   * Page title
+   */
+  title?: string;
+  /**
+   * Page description
+   */
+  description?: string;
+  /**
+   * Canonical URL
+   */
+  canonicalUrl?: string;
+  /**
+   * Previous page URL (for pagination)
+   */
+  prevUrl?: string;
+  /**
+   * Next page URL (for pagination)
+   */
+  nextUrl?: string;
+  /**
+   * Keywords meta tag
+   */
+  keywords?: string;
+  /**
+   * Open Graph image URL
+   */
+  ogImage?: string;
+  /**
+   * Open Graph type
+   * @default 'website'
+   */
+  ogType?: string;
+  /**
+   * Whether to set noindex, nofollow
+   * @default false
+   */
+  noIndex?: boolean;
+}
+
+// CustomButtons Component Types
+export interface AdminIconButtonProps {
+  /**
+   * Font size for the icon
+   * @default 'default'
+   */
+  fontSize?: string;
+  /**
+   * Callback function called before navigation (e.g., to close mobile drawer)
+   */
+  onNavigate?: () => void;
+}
+
+export interface DoubleArrowIconButtonProps {
+  /**
+   * Click handler function
+   */
+  onClick?: () => void;
+}
+
+export interface BookmarkIconButtonProps {
+  /**
+   * Post object with _id and bookmarkedBy array
+   */
+  post: {
+    _id: string;
+    bookmarkedBy?: string[];
+  };
+  /**
+   * User object with _id
+   */
+  user: {
+    _id: string;
+  };
+  /**
+   * Limit for queries
+   */
+  limit?: number;
+}
+
+export interface ApproveButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Whether the button is in selected/active state
+   * @default false
+   */
+  selected?: boolean;
+  /**
+   * Count to display
+   * @default 0
+   */
+  count?: number;
+}
+
+export interface RejectButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Whether the button is in selected/active state
+   * @default false
+   */
+  selected?: boolean;
+  /**
+   * Count to display
+   * @default 0
+   */
+  count?: number;
+}
+
+export interface ManageInviteButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+export interface InvestButtonProps {
+  /**
+   * Click handler function
+   */
+  handleClick?: () => void;
+  /**
+   * Width breakpoint ('xs', 'sm', etc.)
+   */
+  width?: string;
+}
+
+export interface SignOutButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+// GetAccessButton has no props - it's a self-contained button
+export type GetAccessButtonProps = Record<string, never>;
+
+export interface SettingsSaveButtonProps extends React.ComponentProps<'button'> {
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+export interface FollowButtonProps {
+  /**
+   * Whether the user is currently following
+   */
+  isFollowing: boolean;
+  /**
+   * Username of the profile being followed/unfollowed
+   */
+  username?: string;
+  /**
+   * User ID of the profile being followed/unfollowed
+   */
+  profileUserId: string;
+  /**
+   * Whether to show as icon-only button
+   * @default false
+   */
+  showIcon?: boolean;
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+}
+
+export interface SettingsIconButtonProps {
+  /**
+   * Font size for the icon
+   */
+  fontSize?: string;
+}
+
+export type SelectPlansButtonProps = React.ComponentProps<'button'>;
+
+// Navbar Component Types
+// MainNavBar doesn't require props - it reads from store
+export type MainNavBarProps = Record<string, never>;
+
+export interface AuthNavbarProps {
+  /**
+   * Color variant for the navbar
+   */
+  color?: 'primary' | 'info' | 'success' | 'warning' | 'danger';
+  /**
+   * Brand text to display
+   */
+  brandText?: string;
+}
+
+export interface NavItem {
+  /**
+   * Display name of the navigation item
+   */
+  name: string;
+  /**
+   * Route path for the navigation item
+   */
+  href: string;
+  /**
+   * Icon component for the navigation item
+   */
+  icon?: React.ComponentType<{ className?: string }>;
+  /**
+   * Whether to show this item in mobile menu
+   * @default true
+   */
+  showInMobile?: boolean;
+}
+
+export interface ProfileHeaderProps {
+  /**
+   * Profile user object
+   */
+  profileUser: {
+    _id: string;
+    username: string;
+    _followingId?: string[];
+    _followersId?: string[];
+    avatar?: string;
+    contributorBadge?: boolean;
+    [key: string]: unknown;
+  };
+  /**
+   * Logged in user object (optional, will be read from store if not provided)
+   */
+  loggedInUser?: {
+    _id: string;
+    [key: string]: unknown;
+  };
+}
+
+// Sidebar Component Types
+export interface SidebarProps {
+  /**
+   * Whether the sidebar is open
+   */
+  open: boolean;
+  /**
+   * Callback to toggle sidebar open/close state
+   */
+  onOpenChange: (open: boolean) => void;
+  /**
+   * Background color variant
+   * @default 'blue'
+   */
+  bgColor?: 'white' | 'black' | 'blue';
+  /**
+   * Whether RTL (right-to-left) mode is active
+   * @default false
+   */
+  rtlActive?: boolean;
+  /**
+   * Color variant for the sidebar
+   */
+  color?: 'white' | 'red' | 'orange' | 'green' | 'blue' | 'purple' | 'rose';
+  /**
+   * Whether mini sidebar mode is active
+   * @default false
+   */
+  miniActive?: boolean;
+}
+
+export interface SidebarWrapperProps {
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+  /**
+   * User section content
+   */
+  user?: React.ReactNode;
+  /**
+   * Header links section content
+   */
+  headerLinks?: React.ReactNode;
+  /**
+   * Navigation links section content
+   */
+  links?: React.ReactNode;
+}
+
+export interface SubHeaderProps {
+  /**
+   * The header text to display
+   */
+  headerName: string;
+  /**
+   * Whether to show the filter icon button
+   * @default true
+   */
+  showFilterIconButton?: boolean;
+  /**
+   * Callback function to set offset (currently unused)
+   */
+  setOffset?: (offset: number) => void;
+}
+
+export interface ForgotPasswordFormProps {
+  onSubmit: (data: { email: string }) => void | Promise<void>;
+  loading?: boolean;
+  error?: string | null;
+}
+
+export interface ForgotPasswordProps {
+  onSubmit?: (data: { email: string }) => void | Promise<void>;
+  loading?: boolean;
+  error?: string | null;
+}
+
+export interface PasswordResetFormProps {
+  onSubmit: (data: { password: string; confirmPassword: string }) => void | Promise<void>;
+  loading?: boolean;
+  error?: string | null;
+  token?: string;
+}
+
+export interface PasswordResetProps {
+  onSubmit?: (data: { password: string; confirmPassword: string }) => void | Promise<void>;
+  loading?: boolean;
+  error?: string | null;
+  token?: string;
+  loadingData?: boolean;
+  passwordUpdated?: boolean;
+  isValidToken?: boolean;
+}
+
+// SubmitPost Component Types
+export interface Group {
+  _id: string;
+  title: string;
+  description?: string;
+  url?: string;
+  privacy?: 'public' | 'private';
+  creatorId?: string;
+  adminIds?: string[];
+  allowedUserIds?: string[];
+  created?: string;
+}
+
+export interface SubmitPostProps {
+  /**
+   * Callback to close the submit post dialog/modal
+   */
+  setOpen: (open: boolean) => void;
+}
+
+export interface SubmitPostFormProps {
+  /**
+   * Array of available groups for selection
+   */
+  options?: Group[];
+  /**
+   * Current user object
+   */
+  user: {
+    _id: string;
+    [key: string]: unknown;
+  };
+  /**
+   * Callback to close the submit post dialog/modal
+   */
+  setOpen: (open: boolean) => void;
+}
+
+export interface SubmitPostAlertProps {
+  /**
+   * Callback to hide the alert
+   */
+  hideAlert: () => void;
+  /**
+   * Shareable link URL for the created post
+   */
+  shareableLink?: string;
+  /**
+   * Error object if post creation failed
+   */
+  error?: Error | { message?: string; toString?: () => string } | null;
+  /**
+   * Callback to set alert visibility
+   */
+  setShowAlert: (show: boolean) => void;
+  /**
+   * Callback to close the submit post dialog/modal
+   */
+  setOpen: (open: boolean) => void;
+}
+
+export interface SubmitPostFormValues {
+  title: string;
+  text: string;
+  group: Group | { title: string } | string;
+}
+
+// Quotes Component Types
+export interface QuoteUser {
+  _id: string;
+  username: string;
+  contributorBadge?: string;
+}
+
+export interface Quote {
+  _id: string;
+  quote: string;
+  created: string;
+  user?: QuoteUser;
+}
+
+export interface LatestQuotesProps {
+  /**
+   * Maximum number of quotes to fetch
+   * @default 5
+   */
+  limit?: number;
+}
+
+// RequestAccess Component Types
+export interface RequestAccessFormProps {
+  /**
+   * Callback function called when request is successful
+   */
+  onSuccess?: () => void;
+}
+
+export interface CardDetails {
+  cardNumber: string;
+  expiry: string;
+  cvv: string;
+  cost: string;
+}
+
+export interface PersonalFormProps {
+  /**
+   * Whether the request invite was successful
+   */
+  requestInviteSuccessful: boolean;
+  /**
+   * React Hook Form handleSubmit function
+   */
+  handleSubmit: (onSubmit: (data: unknown) => void) => (e?: React.BaseSyntheticEvent) => Promise<void>;
+  /**
+   * Whether the form has been continued to payment step
+   */
+  isContinued: boolean;
+  /**
+   * Callback when continue button is clicked
+   */
+  onContinue: (data: { firstName: string; lastName: string; email: string }) => void;
+  /**
+   * Form errors from react-hook-form
+   */
+  errors: Record<string, { message?: string }>;
+  /**
+   * React Hook Form register function
+   */
+  register: (rules?: unknown) => (ref: HTMLInputElement | null) => void;
+  /**
+   * Callback to set card details
+   */
+  setCardDetails: (details: CardDetails | ((prev: CardDetails) => CardDetails)) => void;
+  /**
+   * Current card details
+   */
+  cardDetails: CardDetails;
+  /**
+   * Callback when form is submitted
+   */
+  onSubmit: () => void | Promise<void>;
+  /**
+   * Error message to display
+   */
+  errorMessage?: string | null;
+  /**
+   * Whether the form is in loading state
+   */
+  loading?: boolean;
+}
+
+export interface BusinessFormProps {
+  /**
+   * Whether the request invite was successful
+   */
+  requestInviteSuccessful: boolean;
+  /**
+   * React Hook Form handleSubmit function
+   */
+  handleSubmit: (onSubmit: (data: unknown) => void) => (e?: React.BaseSyntheticEvent) => Promise<void>;
+  /**
+   * Whether the form has been continued to payment step
+   */
+  isContinued: boolean;
+  /**
+   * Callback when continue button is clicked
+   */
+  onContinue: (data: { fullName: string; companyName: string; email: string }) => void;
+  /**
+   * Form errors from react-hook-form
+   */
+  errors: Record<string, { message?: string }>;
+  /**
+   * React Hook Form register function
+   */
+  register: (rules?: unknown) => (ref: HTMLInputElement | null) => void;
+  /**
+   * Callback to set card details
+   */
+  setCardDetails: (details: CardDetails | ((prev: CardDetails) => CardDetails)) => void;
+  /**
+   * Current card details
+   */
+  cardDetails: CardDetails;
+  /**
+   * Callback when form is submitted
+   */
+  onSubmit: () => void | Promise<void>;
+  /**
+   * Error message to display
+   */
+  errorMessage?: string | null;
+  /**
+   * Whether the form is in loading state
+   */
+  loading?: boolean;
+}
+
+export interface PaymentMethodProps {
+  /**
+   * Whether the form has been continued to payment step
+   */
+  isContinued: boolean;
+  /**
+   * Current card details
+   */
+  cardDetails: CardDetails;
+  /**
+   * Callback when form is submitted
+   */
+  onSubmit: () => void | Promise<void>;
+  /**
+   * Callback to set card details
+   */
+  setCardDetails: (details: CardDetails | ((prev: CardDetails) => CardDetails)) => void;
+  /**
+   * Whether this is for personal plan (allows custom cost)
+   * @default true
+   */
+  isPersonal?: boolean;
+  /**
+   * Error message to display
+   */
+  errorMessage?: string | null;
+  /**
+   * Whether the form is in loading state
+   */
+  loading?: boolean;
+}
+
+export interface CreditCardInputProps {
+  /**
+   * Props for card number input
+   */
+  cardNumberInputProps?: {
+    value?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onError?: () => void;
+    autoFocus?: boolean;
+    inputProps?: Record<string, unknown>;
+  };
+  /**
+   * Props for expiry input
+   */
+  cardExpiryInputProps?: {
+    value?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onError?: () => void;
+    inputProps?: Record<string, unknown>;
+  };
+  /**
+   * Props for CVC input
+   */
+  cardCVCInputProps?: {
+    value?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onError?: () => void;
+    inputProps?: Record<string, unknown>;
+  };
+  /**
+   * Container style
+   */
+  containerStyle?: React.CSSProperties;
+  /**
+   * Input style
+   */
+  inputStyle?: React.CSSProperties;
+  /**
+   * Custom text labels
+   */
+  customTextLabels?: {
+    cardNumberPlaceholder?: string;
+  };
+  /**
+   * Field class name
+   */
+  fieldClassName?: string;
+}
+
+export type PlansProps = Record<string, never>;
+
+// SearchContainer Component Types
+export interface SearchContentResult {
+  _id: string;
+  title: string;
+  creatorId: string;
+  domain: {
+    key: string;
+    _id: string;
+  };
+  __typename?: string;
+}
+
+export interface SearchCreatorResult {
+  _id: string;
+  name: string;
+  avatar?: string;
+  creator?: {
+    _id: string;
+  };
+  __typename?: string;
+}
+
+export interface SearchResultsData {
+  searchContent?: SearchContentResult[];
+  searchCreator?: SearchCreatorResult[];
+}
+
+export interface SearchResultsProps {
+  /**
+   * Search results data from GraphQL query
+   */
+  searchResults: SearchResultsData;
+  /**
+   * Whether the search is currently loading
+   * @default false
+   */
+  isLoading?: boolean;
+  /**
+   * Error object if search failed
+   */
+  isError?: Error | { message?: string } | null;
+}
+
+export interface UsernameSearchUser {
+  _id: string;
+  username: string;
+  name: string;
+  avatar?: string;
+  contributorBadge?: boolean;
+}
+
+export interface UsernameResultsProps {
+  /**
+   * Array of user search results
+   * @default []
+   */
+  users?: UsernameSearchUser[];
+  /**
+   * Whether the search is currently loading
+   * @default false
+   */
+  loading?: boolean;
+  /**
+   * Error object if search failed
+   */
+  error?: Error | { message?: string } | null;
+  /**
+   * Callback when a user is selected
+   */
+  onUserSelect?: (user: UsernameSearchUser) => void;
+  /**
+   * Current search query text
+   * @default ''
+   */
+  query?: string;
+}
+
+export interface SidebarSearchViewProps {
+  /**
+   * Display style for the container
+   * @default 'block'
+   */
+  Display?: 'block' | 'flex' | 'none' | string;
 }
 

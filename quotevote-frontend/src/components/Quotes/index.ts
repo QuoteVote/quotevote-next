@@ -1,0 +1,2 @@
+export { LatestQuotes } from './LatestQuotes'
+
