@@ -26,17 +26,31 @@ import {
   SelectPlansButton,
 } from '../../components/CustomButtons';
 
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  Shield: () => <span data-testid="shield-icon">🛡️</span>,
+  ChevronsRight: () => <span data-testid="chevrons-right-icon">»</span>,
+  Bookmark: () => <span data-testid="bookmark-icon">🔖</span>,
+  BookmarkCheck: () => <span data-testid="bookmark-check-icon">✅🔖</span>,
+  Check: () => <span data-testid="check-icon">✓</span>,
+  LogOut: () => <span data-testid="logout-icon">🚪</span>,
+  Settings: () => <span data-testid="settings-icon">⚙️</span>,
+  UserPlus: () => <span data-testid="user-plus-icon">➕👤</span>,
+  UserMinus: () => <span data-testid="user-minus-icon">➖👤</span>,
+  X: () => <span data-testid="x-icon">✖</span>,
+}));
+
 // Helper to check if component rendered or hit error boundary
 function checkComponentRendered(container: HTMLElement) {
   const errorBoundary = container.querySelector('h1');
   const hasError = errorBoundary?.textContent?.includes('Something went wrong');
-  
+
   if (hasError) {
     // Component hit error boundary - this is expected for some components in test env
     // The component is still valid, just needs proper provider setup
     return { rendered: false, error: true };
   }
-  
+
   return { rendered: true, error: false };
 }
 
@@ -81,7 +95,7 @@ describe('CustomButtons Components', () => {
     jest.clearAllMocks();
     mockPush.mockClear();
     mockMutate.mockClear();
-    
+
     // Reset store state
     useAppStore.setState({
       user: {
@@ -291,9 +305,9 @@ describe('CustomButtons Components', () => {
         if (button) {
           expect(button).toBeInTheDocument();
           // Check for red color - either custom class or destructive variant
-          const hasRedColor = button?.className.includes('#f44336') || 
-                             button?.className.includes('destructive') ||
-                             button?.className.includes('bg-primary'); // May use primary with custom styling
+          const hasRedColor = button?.className.includes('#f44336') ||
+            button?.className.includes('destructive') ||
+            button?.className.includes('bg-primary'); // May use primary with custom styling
           expect(hasRedColor || button?.className).toBeTruthy();
         }
       } else {
