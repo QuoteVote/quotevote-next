@@ -87,12 +87,12 @@ This project uses TypeScript path aliases for clean imports. Always use these al
 
 ```typescript
 // ✅ GOOD - Using path aliases
-import { User } from '~/models/User'
+import { User } from '~/data/models/User'
 import type { UserType } from '~/types/user'
-import { authenticate } from '~/utils/auth'
+import { authenticate } from '~/data/utils/auth'
 
 // ❌ BAD - Using relative paths
-import { User } from '../../../models/User'
+import { User } from '../../../data/models/User'
 ```
 
 **Note**: Path aliases are configured in `tsconfig.json`. Additional aliases can be added as the project grows.
@@ -132,7 +132,7 @@ pnpm test app/__tests__/utils/auth.test.ts
 
 ```typescript
 import { describe, it, expect } from '@jest/globals'
-import { authenticate } from '~/utils/auth'
+import { authenticate } from '~/data/utils/auth'
 
 describe('authenticate', () => {
   it('should authenticate valid user', () => {
@@ -266,7 +266,7 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
 ```typescript
 // ✅ GOOD - Service with business logic
 // app/services/userService.ts
-import { User } from '~/models/User'
+import { User } from '~/data/models/User'
 import type { UserInput } from '~/types/user'
 
 export class UserService {
@@ -311,10 +311,11 @@ export class UserService {
 
 - **Controllers**: `app/controllers/`
 - **Services**: `app/services/`
-- **Models**: `app/models/`
+- **Models**: `app/data/models/`
 - **Routes**: `app/routes/`
 - **Middleware**: `app/middleware/`
-- **Utilities**: `app/utils/`
+- **Resolvers**: `app/data/resolvers/`
+- **Utilities**: `app/data/utils/`
 - **Type definitions**: `app/types/` (MANDATORY)
 - **Test files**: `app/__tests__/` (MANDATORY)
 - **GraphQL**: `app/graphql/`

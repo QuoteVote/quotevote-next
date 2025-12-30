@@ -44,6 +44,28 @@ jest.mock('next/link', () => ({
   },
 }))
 
+// Mock window.scrollTo (only in jsdom environment)
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'scrollTo', {
+    writable: true,
+    value: jest.fn(),
+  })
+  
+  // Mock window.location.origin for components that need it
+  if (!window.location.origin) {
+    Object.defineProperty(window.location, 'origin', {
+      writable: false,
+      configurable: true,
+      value: 'http://localhost',
+    })
+  }
+  
+  // Mock Element.prototype.scrollIntoView for components that use it
+  if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = jest.fn()
+  }
+}
+
 // Mock window.matchMedia (only in jsdom environment)
 if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'matchMedia', {
@@ -148,7 +170,12 @@ beforeAll(() => {
       errorString.includes('Not implemented: navigation') ||
       errorString.includes('navigation (except hash changes)')
     
-    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError) {
+    // Check if this is a React 19 fill attribute warning (we handle fill properly in components)
+    const isFillAttributeWarning = 
+      errorString.includes('Received `true` for a non-boolean attribute `fill`') ||
+      (errorString.includes('fill') && errorString.includes('non-boolean attribute'))
+    
+    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError || isFillAttributeWarning) {
       // Suppress these expected errors - they're caught by ErrorBoundary or are test environment warnings
       return
     }

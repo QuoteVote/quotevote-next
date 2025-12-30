@@ -92,11 +92,51 @@
       "@/components/Quotes/*": [
         "./src/components/Quotes/*"
       ],
+      "@/components/PostChat/*": [
+        "./src/components/PostChat/*"
+      ],
+      "@/components/Chat/*": [
+        "./src/components/Chat/*"
+      ],
       "@/components/*": [
+        "./src/components/*",
         "./src/app/components/*"
       ],
       "@/components/SubHeader": [
         "./src/components/SubHeader"
+      ],
+      "@/components/BuddyList": [
+        "./src/components/BuddyList"
+      ],
+      "@/components/BuddyList/*": [
+        "./src/components/BuddyList/*"
+      ],
+      "@/components/UserPosts": [
+        "./src/components/UserPosts"
+      ],
+      "@/components/UserPosts/*": [
+        "./src/components/UserPosts/*"
+      ],
+      "@/components/Icons": [
+        "./src/components/Icons"
+      ],
+      "@/components/Icons/*": [
+        "./src/components/Icons/*"
+      ],
+      "@/components/Chat": [
+        "./src/components/Chat"
+      ],
+      "@/components/VotingComponents/*": [
+        "./src/components/VotingComponents/*"
+      ],
+      "@/components/Carousel": [
+        "./src/components/Carousel"
+      ],
+      "@/components/Carousel/*": [
+        "./src/components/Carousel/*"
+      ],
+      "@/components/CustomButtons": [
+        "./src/components/CustomButtons"
       ],
       "@/hooks/*": [
         "./src/hooks/*"

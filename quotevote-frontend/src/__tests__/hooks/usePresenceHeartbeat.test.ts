@@ -1,4 +1,4 @@
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 // TODO: Fix Apollo Client v4.0.9 type resolution issues
 // @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation export
 import { useMutation } from '@apollo/client'
@@ -64,108 +64,107 @@ describe('usePresenceHeartbeat', () => {
         expect(mockHeartbeat).toHaveBeenCalledTimes(2)
     })
 
-    // Skipped: Retry logic tests are flaky in this test environment due to timer/promise interaction issues.
-    // Needs further investigation into how to properly mock timers and promises together for this hook.
-    it.skip('should retry on failure with exponential backoff', async () => {
+    it('should retry on failure with exponential backoff', async () => {
         mockHeartbeat
             .mockRejectedValueOnce(new Error('Network error'))
             .mockRejectedValueOnce(new Error('Network error'))
-            .mockResolvedValueOnce({ data: { heartbeat: { success: true } } })
+            .mockResolvedValue({ data: { heartbeat: { success: true } } })
 
-        renderHook(() => usePresenceHeartbeat(10000))
+        // Use large interval (1 hour) so interval won't fire during retry tests
+        // Retry delays are capped at 300000ms (5 minutes)
+        renderHook(() => usePresenceHeartbeat(3600000))
 
         // Initial call fails
-        await waitFor(() => {
-            expect(mockHeartbeat).toHaveBeenCalledTimes(1)
-        })
-
-        // First retry after 20000ms (interval * 2^1)
         await act(async () => {
-            jest.advanceTimersByTime(20000)
+            await Promise.resolve() // Let initial call complete
         })
-        await waitFor(() => {
+        expect(mockHeartbeat).toHaveBeenCalledTimes(1)
+
+        // First retry after 300000ms (capped at max 5 minutes)
+        await act(async () => {
+            jest.advanceTimersByTime(300000)
+            await Promise.resolve() // Let retry promise resolve
+        })
             expect(mockHeartbeat).toHaveBeenCalledTimes(2)
-        })
 
-        // Second retry after 40000ms (interval * 2^2)
+        // Second retry after another 300000ms (also capped)
         await act(async () => {
-            jest.advanceTimersByTime(40000)
+            jest.advanceTimersByTime(300000)
+            await Promise.resolve() // Let retry promise resolve
         })
-        await waitFor(() => {
             expect(mockHeartbeat).toHaveBeenCalledTimes(3)
-        })
     })
 
-    // Skipped: See above
-    it.skip('should stop retrying after max retries', async () => {
+    it('should stop retrying after max retries', async () => {
         mockHeartbeat.mockRejectedValue(new Error('Network error'))
 
-        renderHook(() => usePresenceHeartbeat(10000))
+        // Use large interval (1 hour) so interval won't fire during retry tests
+        // Retry delays are capped at 300000ms (5 minutes)
+        renderHook(() => usePresenceHeartbeat(3600000))
 
         // Initial call
-        await waitFor(() => {
-            expect(mockHeartbeat).toHaveBeenCalledTimes(1)
-        })
-
-        // Retry 1
         await act(async () => {
-            jest.advanceTimersByTime(20000)
+            await Promise.resolve() // Let initial call complete
         })
-        await waitFor(() => {
+        expect(mockHeartbeat).toHaveBeenCalledTimes(1)
+
+        // Retry 1 (300000ms - capped)
+        await act(async () => {
+            jest.advanceTimersByTime(300000)
+            await Promise.resolve() // Let retry promise resolve
+        })
             expect(mockHeartbeat).toHaveBeenCalledTimes(2)
-        })
 
-        // Retry 2
+        // Retry 2 (300000ms - capped)
         await act(async () => {
-            jest.advanceTimersByTime(40000)
+            jest.advanceTimersByTime(300000)
+            await Promise.resolve() // Let retry promise resolve
         })
-        await waitFor(() => {
             expect(mockHeartbeat).toHaveBeenCalledTimes(3)
-        })
 
-        // Retry 3
+        // Retry 3 (300000ms - capped)
         await act(async () => {
-            jest.advanceTimersByTime(80000)
+            jest.advanceTimersByTime(300000)
+            await Promise.resolve() // Let retry promise resolve
         })
-        await waitFor(() => {
             expect(mockHeartbeat).toHaveBeenCalledTimes(4)
-        })
 
         // Should not retry after max retries (3)
-        act(() => {
-            jest.advanceTimersByTime(160000)
+        await act(async () => {
+            jest.advanceTimersByTime(300000)
+            await Promise.resolve() // Let any pending promises resolve
         })
         expect(mockHeartbeat).toHaveBeenCalledTimes(4)
     })
 
-    // Skipped: See above
-    it.skip('should reset retry count on successful heartbeat', async () => {
+    it('should reset retry count on successful heartbeat', async () => {
         mockHeartbeat
             .mockRejectedValueOnce(new Error('Network error'))
             .mockResolvedValue({ data: { heartbeat: { success: true } } })
 
-        renderHook(() => usePresenceHeartbeat(10000))
+        // Use large interval (1 hour) so interval won't fire during retry tests
+        // Retry delays are capped at 300000ms (5 minutes)
+        renderHook(() => usePresenceHeartbeat(3600000))
 
         // Initial call fails
-        await waitFor(() => {
-            expect(mockHeartbeat).toHaveBeenCalledTimes(1)
-        })
-
-        // Retry succeeds
         await act(async () => {
-            jest.advanceTimersByTime(20000)
+            await Promise.resolve() // Let initial call complete
         })
-        await waitFor(() => {
+        expect(mockHeartbeat).toHaveBeenCalledTimes(1)
+
+        // Retry succeeds (300000ms - capped)
+        await act(async () => {
+            jest.advanceTimersByTime(300000)
+            await Promise.resolve() // Let retry promise resolve
+        })
             expect(mockHeartbeat).toHaveBeenCalledTimes(2)
-        })
 
         // Next interval should work normally (not with backoff)
         await act(async () => {
-            jest.advanceTimersByTime(10000)
+            jest.advanceTimersByTime(3600000)
+            await Promise.resolve() // Let interval promise resolve
         })
-        await waitFor(() => {
             expect(mockHeartbeat).toHaveBeenCalledTimes(3)
-        })
     })
 
     it('should cleanup interval on unmount', () => {

@@ -2,7 +2,7 @@
 
 > An open-source, text-only social platform for thoughtful dialogue. Every post creates its own chatroom where people can quote, vote, and respond in real time.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Open Collective](https://img.shields.io/badge/Open%20Collective-Support-blue.svg)](https://opencollective.com/quotevote/donate)
 
 Quote.Vote fosters deliberative, ad-free conversations for communities and civic collaboration. Built with modern web technologies including Next.js 16, React 19, TypeScript, GraphQL, and Tailwind CSS.
@@ -122,7 +122,7 @@ Quote.Vote is an open-source project. If you find it valuable, please consider s
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](./LICENSE) file for details.
 
 ---
 

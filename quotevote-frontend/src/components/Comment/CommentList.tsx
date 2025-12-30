@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from 'react'
-import { Filter } from 'lucide-react'
+import { Filter } from '@/components/Icons'
 import moment from 'moment'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'

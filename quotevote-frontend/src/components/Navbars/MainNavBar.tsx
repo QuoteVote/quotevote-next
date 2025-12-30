@@ -16,7 +16,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Avatar } from '@/components/Avatar';
+import Avatar from '@/components/Avatar';
 import { AdminIconButton } from '../CustomButtons/AdminIconButton';
 import { SettingsIconButton } from '../CustomButtons/SettingsIconButton';
 import type { MainNavBarProps } from '@/types/components';

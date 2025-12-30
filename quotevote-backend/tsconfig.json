@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
@@ -14,8 +14,9 @@
     "skipLibCheck": true,
     "strict": false,
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "types": ["node", "jest"]
   },
-  "include": ["app/**/*.ts", "app/**/*.js"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["app/**/*.ts", "app/**/*.js", "__tests__/**/*.ts", "__tests__/**/*.js", "jest.setup.ts"],
+  "exclude": ["dist", "node_modules"],
 }

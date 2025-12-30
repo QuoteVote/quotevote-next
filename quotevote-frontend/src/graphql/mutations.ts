@@ -324,3 +324,300 @@ export const UPDATE_ACTION_REACTION = gql`
     }
   }
 `
+
+/**
+ * Approve post mutation
+ */
+export const APPROVE_POST = gql`
+  mutation approvePost($postId: String!, $userId: String!, $remove: Boolean) {
+    approvePost(postId: $postId, userId: $userId, remove: $remove) {
+      _id
+    }
+  }
+`
+
+/**
+ * Reject post mutation
+ */
+export const REJECT_POST = gql`
+  mutation rejectPost($postId: String!, $userId: String!, $remove: Boolean) {
+    rejectPost(postId: $postId, userId: $userId, remove: $remove) {
+      _id
+    }
+  }
+`
+
+/**
+ * Delete post mutation
+ */
+export const DELETE_POST = gql`
+  mutation deletePost($postId: String!) {
+    deletePost(postId: $postId) {
+      _id
+    }
+  }
+`
+
+/**
+ * Update post bookmark mutation
+ */
+export const UPDATE_POST_BOOKMARK = gql`
+  mutation updatePostBookmark($postId: String!, $userId: String!) {
+    updatePostBookmark(postId: $postId, userId: $userId) {
+      _id
+      bookmarkedBy
+    }
+  }
+`
+
+/**
+ * Toggle voting on a post mutation
+ */
+export const TOGGLE_VOTING = gql`
+  mutation toggleVoting($postId: String!) {
+    toggleVoting(postId: $postId) {
+      _id
+      enable_voting
+    }
+  }
+`
+
+/**
+ * Update featured slot mutation
+ */
+export const UPDATE_FEATURED_SLOT = gql`
+  mutation updateFeaturedSlot($postId: String!, $featuredSlot: Int) {
+    updateFeaturedSlot(postId: $postId, featuredSlot: $featuredSlot) {
+      _id
+      featuredSlot
+    }
+  }
+`
+
+/**
+ * Report post mutation
+ */
+export const REPORT_POST = gql`
+  mutation reportPost($postId: String!, $userId: String!) {
+    reportPost(postId: $postId, userId: $userId) {
+      _id
+      reportedBy
+    }
+  }
+`
+
+/**
+ * Add vote mutation
+ */
+export const VOTE = gql`
+  mutation addVote($vote: VoteInput!) {
+    addVote(vote: $vote) {
+      postId
+      type
+    }
+  }
+`
+
+/**
+ * Delete vote mutation
+ */
+export const DELETE_VOTE = gql`
+  mutation deleteVote($voteId: String!) {
+    deleteVote(voteId: $voteId) {
+      _id
+    }
+  }
+`
+
+/**
+ * Add quote mutation
+ */
+export const ADD_QUOTE = gql`
+  mutation addQuote($quote: QuoteInput!) {
+    addQuote(quote: $quote) {
+      _id
+    }
+  }
+`
+
+/**
+ * Delete quote mutation
+ */
+export const DELETE_QUOTE = gql`
+  mutation deleteQuote($quoteId: String!) {
+    deleteQuote(quoteId: $quoteId) {
+      _id
+    }
+  }
+`
+
+/**
+ * Send user invite mutation
+ */
+export const SEND_USER_INVITE = gql`
+  mutation sendUserInvite($email: String!) {
+    sendUserInvite(email: $email) {
+      code
+      message
+    }
+  }
+`
+
+/**
+ * Report user mutation
+ */
+export const REPORT_USER = gql`
+  mutation reportUser($reportUserInput: ReportUserInput!) {
+    reportUser(reportUserInput: $reportUserInput) {
+      code
+      message
+    }
+  }
+`
+
+/**
+ * Report bot mutation
+ */
+export const REPORT_BOT = gql`
+  mutation reportBot($userId: String!, $reporterId: String!) {
+    reportBot(userId: $userId, reporterId: $reporterId)
+  }
+`
+export const SEND_MESSAGE = gql`
+  mutation chat($message: MessageInput!) {
+    createMessage(message: $message) {
+      _id
+      userId
+      userName
+      messageRoomId
+      title
+      text
+      type
+      created
+      user {
+        _id
+        name
+        username
+        avatar
+        contributorBadge
+      }
+    }
+  }
+`
+
+
+export const DELETE_MESSAGE = gql`
+  mutation deleteMessage($messageId: String!) {
+    deleteMessage(messageId: $messageId) {
+      _id
+    }
+  }
+`
+
+/**
+ * Add message reaction mutation
+ * Used by PostChatReactions component
+ */
+export const ADD_MESSAGE_REACTION = gql`
+  mutation addMessageReaction($reaction: ReactionInput!) {
+    addMessageReaction(reaction: $reaction) {
+      userId
+      messageId
+      emoji
+    }
+  }
+`
+
+/**
+ * Update message reaction mutation
+ * Used by PostChatReactions component
+ */
+export const UPDATE_MESSAGE_REACTION = gql`
+  mutation updateReaction($_id: String!, $emoji: String!) {
+    updateReaction(_id: $_id, emoji: $emoji) {
+      _id
+      emoji
+    }
+  }
+`
+
+/**
+ * Create post message room mutation
+ * Used when bookmarking a post to create a chat room
+ */
+export const CREATE_POST_MESSAGE_ROOM = gql`
+  mutation createPostMessageRoom($postId: String!) {
+    createPostMessageRoom(postId: $postId) {
+      _id
+      users
+      messageType
+      created
+      title
+      avatar
+    }
+  }
+`
+
+/**
+ * Follow user mutation
+ * Used for following/unfollowing users
+ */
+export const FOLLOW_USER = gql`
+  mutation followUser($user_id: String!, $action: String!) {
+    followUser(user_id: $user_id, action: $action) {
+      _id
+      name
+    }
+  }
+`
+
+/**
+ * Delete notification mutation
+ */
+export const DELETE_NOTIFICATION = gql`
+  mutation removeNotification($notificationId: String!) {
+    removeNotification(notificationId: $notificationId) {
+      _id
+      status
+    }
+  }
+`
+
+/**
+ * Request user access mutation
+ * Used for requesting platform access via email invitation
+ */
+export const REQUEST_USER_ACCESS_MUTATION = gql`
+  mutation requestUserAccess($requestUserAccessInput: RequestUserAccessInput!) {
+    requestUserAccess(requestUserAccessInput: $requestUserAccessInput) {
+      _id
+      email
+    }
+  }
+`
+
+/**
+ * Disable user account mutation (admin only)
+ * Used for admin moderation tools
+ */
+export const DISABLE_USER = gql`
+  mutation disableUser($userId: String!) {
+    disableUser(userId: $userId) {
+      _id
+      accountStatus
+    }
+  }
+`
+
+/**
+ * Enable user account mutation (admin only)
+ * Used for admin moderation tools
+ */
+export const ENABLE_USER = gql`
+  mutation enableUser($userId: String!) {
+    enableUser(userId: $userId) {
+      _id
+      accountStatus
+    }
+  }
+`

@@ -15,7 +15,7 @@ import {
   SheetContent,
 } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Avatar } from '@/components/Avatar';
+import Avatar from '@/components/Avatar';
 import { AdminIconButton } from '../CustomButtons/AdminIconButton';
 import { SettingsIconButton } from '../CustomButtons/SettingsIconButton';
 import type { SidebarProps, SidebarWrapperProps } from '@/types/components';

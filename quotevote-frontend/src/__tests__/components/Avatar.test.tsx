@@ -12,7 +12,7 @@
  */
 
 import { render, screen, fireEvent } from '../utils/test-utils'
-import { Avatar } from '@/components/Avatar'
+import Avatar from '@/components/Avatar'
 
 describe('Avatar Component', () => {
   describe('Rendering', () => {

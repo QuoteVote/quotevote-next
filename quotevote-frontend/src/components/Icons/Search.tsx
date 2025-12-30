@@ -1,0 +1,35 @@
+import type { IconProps } from '@/types/icons';
+import { cn } from '@/lib/utils';
+
+/**
+ * Search icon component
+ * Custom SVG icon migrated from Material UI
+ */
+export function Search({
+  size = 24,
+  className,
+  color,
+  fill,
+  ...props
+}: IconProps) {
+  const sizeValue = typeof size === 'number' ? `${size}px` : size;
+  const fillValue = color || fill || 'currentColor';
+  
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={sizeValue}
+      height={sizeValue}
+      viewBox="0 0 28 30"
+      fill={typeof fillValue === 'string' ? fillValue : 'currentColor'}
+      className={cn('inline-block', className)}
+      {...props}
+    >
+      <path d="M10.7539 15.9434L0.93343 24.7674C-0.297824 25.9511 -0.313061 27.9052 0.899953 29.1076C1.50023 29.7028 2.28635 29.9997 3.07225 29.9997C3.87362 29.9997 4.67498 29.6905 5.27779 29.0741L14.1743 19.3432C13.5011 18.9092 12.8729 18.4047 12.2952 17.8321C11.7102 17.2522 11.1958 16.6205 10.7539 15.9434Z" />
+      <path d="M27.3929 2.84345C25.481 0.948201 22.9741 0 20.4682 0C17.9616 0 15.456 0.947509 13.5436 2.84345C9.71918 6.63487 9.71918 12.7819 13.5436 16.5733C15.4557 18.469 17.9621 19.417 20.4682 19.417C22.9746 19.417 25.4808 18.469 27.3929 16.5733C31.2173 12.7819 31.2173 6.63487 27.3929 2.84345ZM24.5416 13.7465C23.4167 14.8616 21.9426 15.4192 20.4682 15.4192C18.9941 15.4192 17.52 14.8616 16.3951 13.7465C14.1455 11.5162 14.1455 7.90052 16.3951 5.67028C17.5197 4.55538 18.9943 3.99782 20.4682 3.99759C21.9428 3.99759 23.4167 4.55515 24.5416 5.67028C26.7912 7.90052 26.7912 11.5162 24.5416 13.7465Z" />
+    </svg>
+  );
+}
+
+export default Search;
+

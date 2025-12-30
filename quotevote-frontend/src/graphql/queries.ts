@@ -19,6 +19,25 @@ export const GET_BUDDY_LIST = gql`
 `
 
 /**
+ * Get all messages for a chat room
+ * Used by the conversation view (MessageItemList)
+ */
+export const GET_ROOM_MESSAGES = gql`
+    query getRoomMessages($messageRoomId: String!) {
+      messages(messageRoomId: $messageRoomId) {
+        _id
+        messageRoomId
+        userId
+        userName
+        title
+        text
+        created
+        type
+      }
+    }
+  `
+
+/**
  * Get roster query (includes pending requests and blocked users)
  */
 export const GET_ROSTER = gql`
@@ -76,6 +95,18 @@ export const GROUPS_QUERY = gql`
       title
       url
       description
+    }
+  }
+`
+
+/**
+ * Get a single group by ID
+ */
+export const GET_GROUP = gql`
+  query getGroup($groupId: String!) {
+    group(groupId: $groupId) {
+      _id
+      title
     }
   }
 `

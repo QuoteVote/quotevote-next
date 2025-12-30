@@ -1,18 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-// Note: useSubscription may require additional Apollo Client subscription setup
-// For now, this is a placeholder implementation
-// TODO: Configure Apollo Client with subscription support (WebSocket link)
 import { useAppStore } from '@/store'
-
-/**
- * Custom hook to subscribe to presence updates
- * Automatically updates Zustand store when presence changes
- * 
- * NOTE: This hook requires Apollo Client to be configured with WebSocket/subscription support.
- * The subscription functionality is currently disabled pending proper Apollo setup.
- */
 // TODO: Fix Apollo Client v4.0.9 type resolution issues
 // @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useSubscription export
 import { useSubscription } from '@apollo/client'
@@ -22,26 +11,33 @@ import type { PresenceSubscriptionResult } from '@/types/hooks'
 /**
  * Custom hook to subscribe to presence updates
  * Automatically updates Zustand store when presence changes
+ * 
+ * When userId is null, subscribes to all users' presence updates (matches old client behavior)
  */
 export const usePresenceSubscription = (): void => {
     const user = useAppStore((state) => state.user)
     const updatePresence = useAppStore((state) => state.updatePresence)
 
+    // Subscribe to all presence updates (userId: null means all users)
+    // Only skip if user is not logged in
     const { data, error } = useSubscription<PresenceSubscriptionResult>(PRESENCE_SUBSCRIPTION, {
-        variables: { userId: user.data.id },
-        skip: !user.data.id,
+        variables: { userId: null },
+        skip: !user.data?.id,
     })
 
     useEffect(() => {
         if (error) {
-            // console.error('Presence subscription error:', error)
+            // Log error in development mode only
+            if (process.env.NODE_ENV === 'development') {
+                console.error('[Presence Subscription] Error:', error)
+            }
         }
 
         if (data?.presence) {
-            const { userId, isOnline, lastSeen, ...rest } = data.presence
+            const { userId, status, statusMessage, lastSeen } = data.presence
             updatePresence(userId, {
-                status: isOnline ? 'online' : 'offline',
-                statusMessage: (rest.statusMessage as string) || '',
+                status: status || 'offline',
+                statusMessage: statusMessage || '',
                 lastSeen: lastSeen ? new Date(lastSeen).getTime() : Date.now(),
             })
         }
