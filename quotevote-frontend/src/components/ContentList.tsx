@@ -20,7 +20,6 @@ export interface ContentItemData {
     downvotes: number
     url: string
     createdAt?: string // Optional for sorting
-    [key: string]: any
 }
 
 interface ContentListProps {
@@ -181,8 +180,8 @@ export function ContentList({ items, itemsPerPage = 5 }: ContentListProps) {
 
             <div className="space-y-4">
                 {paginatedItems.length > 0 ? (
-                    paginatedItems.map((item) => (
-                        <ContentItem key={item._id || Math.random()} item={item} />
+                    paginatedItems.map((item, index) => (
+                        <ContentItem key={item._id || `item-${index}`} item={item} />
                     ))
                 ) : (
                     <div className="text-center py-12 border border-dashed rounded-lg">
