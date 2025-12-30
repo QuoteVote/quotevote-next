@@ -112,6 +112,44 @@ export const UPDATE_USER_PASSWORD = gql`
 `
 
 // ============================================
+// USER MUTATIONS
+// ============================================
+
+export const UPDATE_USER = gql`
+  mutation UpdateUser($user: UserInput!) {
+    updateUser(user: $user) {
+      _id
+      username
+      email
+      name
+      avatar
+      admin
+      created
+      updated
+    }
+  }
+`
+
+export const UPDATE_USER_AVATAR = gql`
+  mutation UpdateUserAvatar($userId: ID!, $avatar: AvatarInput!) {
+    updateUserAvatar(userId: $userId, avatar: $avatar) {
+      _id
+      avatar
+    }
+  }
+`
+
+export const DELETE_USER = gql`
+  mutation DeleteUser($userId: ID!) {
+    deleteUser(userId: $userId) {
+      success
+      message
+    }
+  }
+`
+
+
+// ============================================
 // GROUP MUTATIONS
 // ============================================
 
