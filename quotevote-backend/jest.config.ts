@@ -10,6 +10,7 @@ const config: Config = {
   },
   
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/.next/'],
+  modulePathIgnorePatterns: ['<rootDir>/dist/'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   
   transform: {
