@@ -67,6 +67,9 @@ jest.mock('lucide-react', () => ({
   Star: () => <span data-testid="star-icon">★</span>,
   Award: () => <span data-testid="award-icon">🏆</span>,
   Shield: () => <span data-testid="shield-icon">🛡️</span>,
+  User: () => <span data-testid="user-icon">👤</span>,
+  UserPlus: () => <span data-testid="user-plus-icon">➕👤</span>,
+  UserMinus: () => <span data-testid="user-minus-icon">➖👤</span>,
 }));
 
 const mockProfileUser: ProfileUser = {
