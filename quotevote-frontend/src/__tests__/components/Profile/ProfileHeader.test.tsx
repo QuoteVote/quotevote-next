@@ -62,6 +62,11 @@ jest.mock('../../../components/Profile/ProfileBadge', () => ({
 jest.mock('lucide-react', () => ({
   MessageCircle: () => <span data-testid="message-icon">💬</span>,
   Flag: () => <span data-testid="flag-icon">🚩</span>,
+  XIcon: () => <span data-testid="close-icon">✖</span>,
+  Verified: () => <span data-testid="verified-icon">✓</span>,
+  Star: () => <span data-testid="star-icon">★</span>,
+  Award: () => <span data-testid="award-icon">🏆</span>,
+  Shield: () => <span data-testid="shield-icon">🛡️</span>,
 }));
 
 const mockProfileUser: ProfileUser = {
@@ -274,7 +279,7 @@ describe('ProfileHeader Component', () => {
         const errorUI = screen.queryByText(/Something went wrong/i);
         expect(button || errorUI).toBeTruthy();
       }, { timeout: 5000 });
-      
+
       const button = screen.queryByText('Change Photo');
       if (button) {
         await act(async () => {

@@ -150,7 +150,7 @@ export function ContentList({ items, itemsPerPage = 5 }: ContentListProps) {
                         placeholder="Search content..."
                         className="pl-10"
                         value={filterQuery}
-                        onChange={(e) => setFilterQuery(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterQuery(e.target.value)}
                     />
                 </div>
                 <div className="flex gap-2 w-full md:w-auto overflow-x-auto">
