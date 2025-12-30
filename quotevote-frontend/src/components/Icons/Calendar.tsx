@@ -1,0 +1,36 @@
+import type { IconProps } from '@/types/icons';
+import { cn } from '@/lib/utils';
+
+/**
+ * Calendar icon component
+ * Custom SVG icon migrated from Material UI
+ */
+export function Calendar({
+  size = 24,
+  className,
+  color,
+  fill,
+  ...props
+}: IconProps) {
+  const sizeValue = typeof size === 'number' ? `${size}px` : size;
+  const fillValue = color || fill || 'currentColor';
+  
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={sizeValue}
+      height={sizeValue}
+      viewBox="0 0 37 32"
+      fill={typeof fillValue === 'string' ? fillValue : 'currentColor'}
+      className={cn('inline-block', className)}
+      {...props}
+    >
+      <path d="M1.97715 25.6307H29.1884C29.4325 25.6307 29.6684 25.5456 29.8554 25.3904C30.1168 25.1722 36.0788 20.059 36.4423 9.02148H7.21796C6.85582 19.0406 1.36511 23.7499 1.30805 23.7969C0.97353 24.0787 0.850455 24.5389 1.00095 24.9485C1.1504 25.357 1.5399 25.6307 1.97715 25.6307Z" />
+      <path d="M35.4358 2.79295H30.2296V1.75487C30.2296 1.17355 29.7714 0.716797 29.1883 0.716797C28.6052 0.716797 28.1471 1.17355 28.1471 1.75487V2.79295H22.8714V1.75487C22.8714 1.17355 22.4133 0.716797 21.8302 0.716797C21.2471 0.716797 20.7889 1.17355 20.7889 1.75487V2.79295H15.5827V1.75487C15.5827 1.17355 15.1245 0.716797 14.5414 0.716797C13.9583 0.716797 13.5002 1.17355 13.5002 1.75487V2.79295H8.29393C7.71083 2.79295 7.25269 3.24971 7.25269 3.83103V6.94526H36.477V3.83103C36.477 3.24971 36.0189 2.79295 35.4358 2.79295Z" />
+      <path d="M31.1927 26.982C30.6273 27.4514 29.9176 27.7069 29.1885 27.7069H7.25293V30.8211C7.25293 31.3949 7.71865 31.8592 8.29418 31.8592H35.436C36.0116 31.8592 36.4773 31.3949 36.4773 30.8211V19.1846C34.4698 24.0947 31.6684 26.5852 31.1927 26.982Z" />
+    </svg>
+  );
+}
+
+export default Calendar;
+

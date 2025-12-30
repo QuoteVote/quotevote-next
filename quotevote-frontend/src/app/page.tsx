@@ -82,7 +82,7 @@ export default function Home(): ReactElement {
             Open-source project welcoming contributions from developers, designers, and democratic technologists.
           </p>
         </div>
-
+                
         {/* Call to Action */}
         <div className="text-center">
           <div className="inline-flex flex-col sm:flex-row gap-3">

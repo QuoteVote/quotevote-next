@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import { ApolloProviderWrapper } from "@/lib/apollo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
+import { Eyebrow } from "./components/Eyebrow/Eyebrow";
 
 /**
  * Global Providers Setup:
@@ -57,7 +59,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ErrorBoundary>
-          <ApolloProviderWrapper>{children}</ApolloProviderWrapper>
+          <ApolloProviderWrapper>
+            <>
+            <Eyebrow />
+            {children}
+            <Toaster position="top-right" richColors />
+            </>
+          </ApolloProviderWrapper>
         </ErrorBoundary>
       </body>
     </html>
