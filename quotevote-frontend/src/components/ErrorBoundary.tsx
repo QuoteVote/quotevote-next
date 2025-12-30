@@ -1,129 +1,118 @@
-'use client';
+'use client'
 
-import { Component, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
+import { Component, type ReactNode, type ErrorInfo } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { AlertCircle, RefreshCcw, Home } from 'lucide-react'
 
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+interface ErrorBoundaryProps {
+  children: ReactNode
+  fallback?: ReactNode
+  onError?: (error: Error, errorInfo: ErrorInfo) => void
 }
 
-interface State {
-  hasError: boolean;
-  error: Error | null;
+interface ErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
 }
 
 /**
- * Error Boundary component to catch React errors gracefully
- * 
- * Usage:
- * <ErrorBoundary>
- *   <YourComponent />
- * </ErrorBoundary>
+ * ErrorBoundary component catches React errors in its child component tree.
+ * It displays a fallback UI instead of crashing the whole app.
  */
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
     this.state = {
       hasError: false,
       error: null,
-    };
+    }
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    // Update state so the next render will show the fallback UI.
     return {
       hasError: true,
       error,
-    };
+    }
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
-    }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // You can also log the error to an error reporting service
+    console.error('ErrorBoundary caught an error:', error, errorInfo)
 
-    // Call optional error handler
     if (this.props.onError) {
-      this.props.onError(error, errorInfo);
+      this.props.onError(error, errorInfo)
     }
-
-    // TODO: In production, send error to error tracking service (e.g., Sentry)
-    // if (process.env.NODE_ENV === 'production') {
-    //   Sentry.captureException(error, { contexts: { react: errorInfo } });
-    // }
   }
 
-  handleReset = (): void => {
+  resetErrorBoundary = (): void => {
     this.setState({
       hasError: false,
       error: null,
-    });
-  };
+    })
+  }
 
   render(): ReactNode {
     if (this.state.hasError) {
-      // Use custom fallback if provided
       if (this.props.fallback) {
-        return this.props.fallback;
+        return this.props.fallback
       }
 
-      // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)] p-4">
-          <div className="max-w-md w-full bg-[var(--color-white)] rounded-lg shadow-lg border border-[var(--color-gray-light)] p-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">
+        <div className="flex min-h-[50vh] items-center justify-center p-4">
+          <Card className="max-w-md w-full border-red-200 dark:border-red-900 shadow-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+                <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <CardTitle className="text-xl text-red-700 dark:text-red-400">
                 Something went wrong
-              </h1>
-              <p className="text-[var(--color-text-secondary)] mb-6">
-                We encountered an unexpected error. Please try refreshing the page.
-              </p>
-              
+              </CardTitle>
+              <CardDescription>
+                We encountered an unexpected error while rendering this component.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               {process.env.NODE_ENV === 'development' && this.state.error && (
-                <div className="mb-6 text-left">
-                  <details className="bg-[var(--color-background-off-white)] rounded p-4">
-                    <summary className="cursor-pointer font-semibold text-sm text-[var(--color-text-primary)] mb-2">
-                      Error Details (Development Only)
-                    </summary>
-                    <pre className="text-xs text-[var(--color-text-secondary)] overflow-auto mt-2">
-                      {this.state.error.toString()}
-                      {this.state.error.stack && (
-                        <div className="mt-2">
-                          <strong>Stack Trace:</strong>
-                          <pre className="mt-1">{this.state.error.stack}</pre>
-                        </div>
-                      )}
-                    </pre>
-                  </details>
+                <div className="mt-2 rounded-md bg-slate-100 dark:bg-slate-900 p-3 text-xs overflow-auto max-h-48 border border-slate-200 dark:border-slate-800">
+                  <p className="font-mono font-semibold text-red-500 mb-1">
+                    {this.state.error.name}: {this.state.error.message}
+                  </p>
+                  <pre className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                    {this.state.error.stack}
+                  </pre>
                 </div>
               )}
-
-              <div className="flex gap-3 justify-center">
-                <Button
-                  onClick={this.handleReset}
-                  variant="default"
-                >
-                  Try Again
-                </Button>
-                <Button
-                  onClick={() => window.location.reload()}
-                  variant="outline"
-                >
-                  Refresh Page
-                </Button>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+            <CardFooter className="flex justify-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/'}
+                className="gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Go Home
+              </Button>
+              <Button onClick={this.resetErrorBoundary} className="gap-2 bg-red-600 hover:bg-red-700 text-white">
+                <RefreshCcw className="h-4 w-4" />
+                Try Again
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }
 
-// Export as default for easier importing
-export default ErrorBoundary;
-
+export default ErrorBoundary
