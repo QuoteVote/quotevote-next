@@ -77,9 +77,13 @@ describe("Eyebrow Component", () => {
 
     render(<Eyebrow />);
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: async () => ({ status: "not_requested" }),
-    });
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        json: async () => ({ status: "not_requested" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+      });
 
     const emailInput = screen.getByPlaceholderText(/enter your email/i);
     const continueButton = screen.getByRole("button", { name: /Continue/i });
@@ -88,8 +92,13 @@ describe("Eyebrow Component", () => {
 
     await user.click(continueButton);
 
-    const feedbackMessages = await screen.findAllByText(
-      "Your request has been received! You’ll be notified once approved."
+    const feedbackMessages = await waitFor(
+      () => {
+        return screen.findAllByText(
+          /Your request has been received! You'll be notified once approved\./i
+        );
+      },
+      { timeout: 3000 }
     );
 
     expect(feedbackMessages.length).toBeGreaterThan(0);

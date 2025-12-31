@@ -1037,3 +1037,15 @@ export interface HighlightTextProps {
   }) => Array<{ start: number; end: number }>;
 }
 
+// ============================================================================
+// GuestFooter Component Types
+// ============================================================================
+
+export interface GuestFooterProps {
+  /**
+   * Whether the footer is displayed on the request access page
+   * @default false
+   */
+  isRequestAccess?: boolean;
+}
+
