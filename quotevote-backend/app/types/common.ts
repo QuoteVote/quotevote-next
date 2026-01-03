@@ -189,6 +189,9 @@ export interface MessageRoom {
   updatedAt?: Date | string
 }
 
+/** @deprecated Use Message instead. Alias for backwards compatibility. */
+export type Messages = Message
+
 // ============================================================================
 // Notification Types
 // ============================================================================
