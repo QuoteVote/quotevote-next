@@ -4,8 +4,8 @@
  */
 
 import type { Request, Response } from 'express'
-import type * as Common from './common'
-import type * as Mongoose from './mongoose'
+import type * as Common from '~/types/common'
+import type * as Mongoose from '~/types/mongoose'
 
 // ============================================================================
 // Extended Request Interface
