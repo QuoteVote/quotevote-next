@@ -4,7 +4,7 @@
  */
 
 import type { Request, Response } from 'express'
-import type * as Common from './common'
+import type * as Common from '~/types/common'
 
 /**
  * PubSub type from graphql-subscriptions
@@ -102,6 +102,11 @@ export type TypeResolvers<TSource = unknown> = {
 // Query Resolvers
 // ============================================================================
 
+/**
+ * Query resolver types
+ * @note When implementing resolvers, ensure return types match these definitions.
+ * Use `satisfies QueryResolvers` to verify type compatibility.
+ */
 export interface QueryResolvers {
   // User queries
   user: ResolverFn<Common.User | null, unknown, { username: string }>
@@ -156,6 +161,11 @@ export interface QueryResolvers {
 // Mutation Resolvers
 // ============================================================================
 
+/**
+ * Mutation resolver types
+ * @note When implementing resolvers, ensure return types match these definitions.
+ * Use `satisfies MutationResolvers` to verify type compatibility.
+ */
 export interface MutationResolvers {
   // User mutations
   followUser: ResolverFn<Common.User, unknown, { user_id: string; action: string }>
@@ -233,6 +243,10 @@ export interface MutationResolvers {
 // Subscription Resolvers
 // ============================================================================
 
+/**
+ * Subscription resolver types
+ * @note When implementing resolvers, ensure payload types match these definitions.
+ */
 export interface SubscriptionResolvers {
   presence: SubscriptionResolver<Common.Presence, { userId?: string }>
   notification: SubscriptionResolver<Common.Notification, { userId: string }>
