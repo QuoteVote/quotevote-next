@@ -52,6 +52,7 @@ pnpm dev
 The server will be available at [http://localhost:4000](http://localhost:4000).
 
 ### Environment Variables
+
 #### This will be update after the backend fully setuped.
 
 Create a `.env` file in the root directory with the following variables:
@@ -87,12 +88,12 @@ This project uses TypeScript path aliases for clean imports. Always use these al
 
 ```typescript
 // ✅ GOOD - Using path aliases
-import { User } from '~/data/models/User'
-import type { UserType } from '~/types/user'
-import { authenticate } from '~/data/utils/auth'
+import { User } from '~/data/models/User';
+import type { UserType } from '~/types/user';
+import { authenticate } from '~/data/utils/auth';
 
 // ❌ BAD - Using relative paths
-import { User } from '../../../data/models/User'
+import { User } from '../../../data/models/User';
 ```
 
 **Note**: Path aliases are configured in `tsconfig.json`. Additional aliases can be added as the project grows.
@@ -131,15 +132,15 @@ pnpm test app/__tests__/utils/auth.test.ts
 ### Test Structure
 
 ```typescript
-import { describe, it, expect } from '@jest/globals'
-import { authenticate } from '~/data/utils/auth'
+import { describe, it, expect } from '@jest/globals';
+import { authenticate } from '~/data/utils/auth';
 
 describe('authenticate', () => {
   it('should authenticate valid user', () => {
-    const result = authenticate('valid-token')
-    expect(result).toBeDefined()
-  })
-})
+    const result = authenticate('valid-token');
+    expect(result).toBeDefined();
+  });
+});
 ```
 
 ## 🏗️ Building for Production
@@ -179,22 +180,22 @@ The compiled JavaScript will be in the `dist/` directory.
 // ✅ GOOD - Types in app/types/user.ts
 // app/types/user.ts
 export interface User {
-  id: string
-  username: string
-  email: string
-  createdAt: Date
+  id: string;
+  username: string;
+  email: string;
+  createdAt: Date;
 }
 
-export type UserInput = Omit<User, 'id' | 'createdAt'>
+export type UserInput = Omit<User, 'id' | 'createdAt'>;
 
 // Usage in controller
-import type { User, UserInput } from '~/types/user'
+import type { User, UserInput } from '~/types/user';
 
 // ❌ BAD - Types defined inline
 // Controller file (WRONG)
 interface User {
-  id: string
-  username: string
+  id: string;
+  username: string;
 }
 ```
 
@@ -231,15 +232,15 @@ pnpm format:check
 ```typescript
 // ✅ GOOD - Organized route structure
 // app/routes/users.ts
-import { Router } from 'express'
-import { getUsers, createUser } from '~/controllers/userController'
+import { Router } from 'express';
+import { getUsers, createUser } from '~/controllers/userController';
 
-const router = Router()
+const router = Router();
 
-router.get('/', getUsers)
-router.post('/', createUser)
+router.get('/', getUsers);
+router.post('/', createUser);
 
-export default router
+export default router;
 ```
 
 ### Controller Pattern
@@ -247,16 +248,16 @@ export default router
 ```typescript
 // ✅ GOOD - Controller with proper types
 // app/controllers/userController.ts
-import type { Request, Response } from 'express'
-import type { UserInput } from '~/types/user'
-import { UserService } from '~/services/userService'
+import type { Request, Response } from 'express';
+import type { UserInput } from '~/types/user';
+import { UserService } from '~/services/userService';
 
 export async function getUsers(req: Request, res: Response): Promise<void> {
   try {
-    const users = await UserService.getAll()
-    res.json(users)
+    const users = await UserService.getAll();
+    res.json(users);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
 ```
@@ -266,35 +267,35 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
 ```typescript
 // ✅ GOOD - Service with business logic
 // app/services/userService.ts
-import { User } from '~/data/models/User'
-import type { UserInput } from '~/types/user'
+import { User } from '~/data/models/User';
+import type { UserInput } from '~/types/user';
 
 export class UserService {
   static async getAll(): Promise<User[]> {
-    return User.find()
+    return User.find();
   }
 
   static async create(input: UserInput): Promise<User> {
-    return User.create(input)
+    return User.create(input);
   }
 }
 ```
 
 ## 🔧 Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | Start development server with hot reload |
-| `pnpm build` | Build TypeScript to JavaScript |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Run ESLint |
-| `pnpm lint:fix` | Fix ESLint issues |
-| `pnpm type-check` | Check TypeScript types |
-| `pnpm format` | Format code with Prettier |
-| `pnpm format:check` | Check code formatting |
-| `pnpm test` | Run tests |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm test:coverage` | Run tests with coverage |
+| Script               | Description                              |
+| -------------------- | ---------------------------------------- |
+| `pnpm dev`           | Start development server with hot reload |
+| `pnpm build`         | Build TypeScript to JavaScript           |
+| `pnpm start`         | Start production server                  |
+| `pnpm lint`          | Run ESLint                               |
+| `pnpm lint:fix`      | Fix ESLint issues                        |
+| `pnpm type-check`    | Check TypeScript types                   |
+| `pnpm format`        | Format code with Prettier                |
+| `pnpm format:check`  | Check code formatting                    |
+| `pnpm test`          | Run tests                                |
+| `pnpm test:watch`    | Run tests in watch mode                  |
+| `pnpm test:coverage` | Run tests with coverage                  |
 
 ## 📚 Key Conventions
 
@@ -325,14 +326,14 @@ export class UserService {
 ```typescript
 // ✅ GOOD - Proper error handling
 try {
-  const result = await someAsyncOperation()
-  res.json(result)
+  const result = await someAsyncOperation();
+  res.json(result);
 } catch (error) {
-  console.error('Error:', error)
-  res.status(500).json({ 
+  console.error('Error:', error);
+  res.status(500).json({
     error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? error.message : undefined
-  })
+    message: process.env.NODE_ENV === 'development' ? error.message : undefined,
+  });
 }
 ```
 
@@ -341,15 +342,15 @@ try {
 ```typescript
 // ✅ GOOD - Using async/await
 export async function getUser(req: Request, res: Response): Promise<void> {
-  const user = await User.findById(req.params.id)
-  res.json(user)
+  const user = await User.findById(req.params.id);
+  res.json(user);
 }
 
 // ❌ BAD - Using promises
 export function getUser(req: Request, res: Response): void {
-  User.findById(req.params.id).then(user => {
-    res.json(user)
-  })
+  User.findById(req.params.id).then((user) => {
+    res.json(user);
+  });
 }
 ```
 
@@ -393,6 +394,7 @@ The original backend codebase is available for reference during migration:
 - **[Legacy Backend Repository](https://github.com/QuoteVote/quotevote-monorepo/tree/main/server)** - Original JavaScript/Babel/Express 4 codebase
 
 When migrating features or modules:
+
 - Reference the legacy codebase for business logic and API endpoints
 - Convert JavaScript to TypeScript with proper type definitions
 - Update to Express 5 patterns and modern async/await
@@ -437,7 +439,6 @@ Before submitting a PR, ensure:
 - **Environment Variables**: Sensitive data in `.env` (not committed)
 - **Input Validation**: Validate all user inputs
 - **Error Messages**: Don't expose sensitive information in error messages
-
 
 ---
 

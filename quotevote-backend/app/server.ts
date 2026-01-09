@@ -45,12 +45,7 @@ async function startServer() {
   await server.start();
 
   // 3. Middleware Integration
-  app.use(
-    '/graphql',
-    cors<cors.CorsRequest>(),
-    express.json(),
-    expressMiddleware(server),
-  );
+  app.use('/graphql', cors<cors.CorsRequest>(), express.json(), expressMiddleware(server));
 
   // 4. Start Server
   await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
