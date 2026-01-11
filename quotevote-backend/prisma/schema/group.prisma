@@ -1,0 +1,22 @@
+// Group model
+
+model Group {
+    id             String       @id @default(auto()) @map("_id") @db.ObjectId
+    creatorId      String       @db.ObjectId
+    adminIds       String[]     @db.ObjectId
+    allowedUserIds String[]     @db.ObjectId
+    privacy        GroupPrivacy @default(public)
+    title          String
+    url            String?
+    description    String?
+    created        DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+
+    // Relations
+    creator        User         @relation("GroupCreator", fields: [creatorId], references: [id])
+    posts          Post[]
+
+    @@index([creatorId])
+    @@index([privacy])
+    @@map("groups")
+}
