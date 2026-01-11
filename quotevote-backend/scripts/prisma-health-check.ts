@@ -1,8 +1,9 @@
+/// <reference types="node" />
 /**
  * Prisma Connection Health Check
  * Tests that Prisma Client can connect to MongoDB
  *
- * Usage: pnpm exec tsx scripts/prisma-health-check.ts
+ * Usage: pnpm prisma:health
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -10,9 +11,7 @@ import { PrismaClient } from '@prisma/client';
 async function main() {
   console.log('🔌 Initializing Prisma Client...');
 
-  const prisma = new PrismaClient({
-    log: ['query', 'info', 'warn', 'error'],
-  });
+  const prisma = new PrismaClient();
 
   try {
     console.log('📡 Connecting to MongoDB...');
