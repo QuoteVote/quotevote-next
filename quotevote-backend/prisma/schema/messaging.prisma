@@ -1,0 +1,70 @@
+// Messaging models: Message, MessageRoom, Notification
+
+model Message {
+    id            String      @id @default(auto()) @map("_id") @db.ObjectId
+    messageRoomId String      @db.ObjectId
+    userId        String      @db.ObjectId
+    userName      String?
+    title         String?
+    text          String?
+    type          String?
+    mutationType  String?     @map("mutation_type")
+    created       DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+
+    // Relations
+    user          User        @relation(fields: [userId], references: [id])
+    messageRoom   MessageRoom @relation(fields: [messageRoomId], references: [id])
+    reactions     Reaction[]
+
+    @@index([messageRoomId])
+    @@index([userId])
+    @@index([created])
+    @@map("messages")
+}
+
+model MessageRoom {
+    id              String       @id @default(auto()) @map("_id") @db.ObjectId
+    userIds         String[]     @db.ObjectId
+    postId          String?      @db.ObjectId
+    messageType     MesssageType @default(USER)
+    title           String?
+    avatar          String?
+    lastMessageTime DateTime?
+    lastActivity    DateTime?
+    unreadMessages  Int          @default(0)
+    created         DateTime     @default(now())
+    updatedAt       DateTime     @updatedAt
+
+    // Relations
+    post            Post?        @relation(fields: [postId], references: [id])
+    messages        Message[]
+    typingIndicators Typing[]
+
+    @@index([postId])
+    @@index([lastActivity])
+    @@map("messagerooms")
+}
+
+model Notification {
+    id               String           @id @default(auto()) @map("_id") @db.ObjectId
+    userId           String           @db.ObjectId
+    userIdBy         String           @db.ObjectId
+    label            String
+    status           String           @default("unread")
+    notificationType NotificationType
+    postId           String?          @db.ObjectId
+    created          DateTime         @default(now())
+    updatedAt        DateTime         @updatedAt
+
+    // Relations
+    user             User             @relation("NotificationRecipient", fields: [userId], references: [id])
+    sender           User             @relation("NotificationSender", fields: [userIdBy], references: [id])
+    post             Post?            @relation(fields: [postId], references: [id])
+
+    @@index([userId])
+    @@index([userIdBy])
+    @@index([status])
+    @@index([created])
+    @@map("notifications")
+}
