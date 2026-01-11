@@ -544,3 +544,24 @@ export const ENABLE_USER = gql`
     }
   }
 `
+
+/**
+ * Update user profile mutation
+ * Used by Settings component for updating user information
+ */
+export const UPDATE_USER = gql`
+  mutation updateUser($user: UserInput!) {
+    updateUser(user: $user) {
+      _id
+      id
+      username
+      email
+      name
+      avatar
+      admin
+      accountStatus
+      created
+      updated
+    }
+  }
+`

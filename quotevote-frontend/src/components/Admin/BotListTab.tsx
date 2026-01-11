@@ -57,7 +57,7 @@ export default function BotListTab() {
     } catch (err) {
       // Error handling is done by Apollo Client
       if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
+         
         console.error('Error disabling user:', err)
       }
     }
@@ -72,7 +72,7 @@ export default function BotListTab() {
     } catch (err) {
       // Error handling is done by Apollo Client
       if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
+         
         console.error('Error enabling user:', err)
       }
     }
