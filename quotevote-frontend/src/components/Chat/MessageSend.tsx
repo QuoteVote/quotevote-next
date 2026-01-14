@@ -12,34 +12,7 @@ import { SEND_MESSAGE } from '@/graphql/mutations';
 import useGuestGuard from '@/hooks/useGuestGuard';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { cn } from '@/lib/utils';
-
-interface MessageSendProps {
-  messageRoomId?: string | null;
-  type: string;
-  title?: string | null;
-  /**
-   * For DMs started from a profile or post, this is
-   * the target user / component identifier when a room
-   * does not yet exist.
-   */
-  componentId?: string | null;
-}
-
-interface ChatUser {
-  _id?: string;
-  name?: string;
-  username?: string;
-  avatar?: string;
-}
-
-interface ChatRoomRef {
-  users?: (string | { toString(): string })[];
-}
-
-interface SelectedRoomState {
-  room?: ChatRoomRef;
-  users?: (string | { toString(): string })[];
-}
+import type { MessageSendProps, ChatUser, SelectedRoomState } from '@/types/chat';
 
 export default function MessageSend({
   messageRoomId,

@@ -12,13 +12,7 @@ import { Login } from '@/components/Login';
 import { loginUser } from '@/lib/auth';
 import { useAppStore } from '@/store/useAppStore';
 import type { LoginFormData } from '@/types/login';
-
-interface User {
-    id?: string;
-    username?: string;
-    email?: string;
-    [key: string]: unknown;
-}
+import type { TestUser } from '@/types/test';
 
 export default function LoginTestPage() {
     const [loading, setLoading] = useState(false);
@@ -35,7 +29,7 @@ export default function LoginTestPage() {
             const response = await loginUser(username, password);
 
             if (response.success) {
-                setUserData((response.data?.user || {}) as User);
+                setUserData((response.data?.user || {}) as TestUser);
                 // In a real app, you would redirect here
                 // router.push('/dashboard');
             } else {

@@ -11,41 +11,7 @@ import { SEND_MESSAGE } from '@/graphql/mutations'
 import { GET_ROOM_MESSAGES } from '@/graphql/queries'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
-import type { PostChatSendProps } from '@/types/postChat'
-
-interface MessagesData {
-  messages: Array<{
-    _id: string
-    messageRoomId: string
-    userId: string
-    userName: string
-    title: string
-    text: string
-    type: string
-    created: string
-  }>
-}
-
-interface CreateMessageData {
-  createMessage: {
-    __typename?: string
-    _id: string
-    messageRoomId: string
-    userId: string
-    userName: string
-    title: string
-    text: string
-    type: string
-    created: string
-    user: {
-      __typename?: string
-      _id: string
-      name: string
-      username: string
-      avatar: string
-    }
-  }
-}
+import type { PostChatSendProps, MessagesData, CreateMessageData } from '@/types/postChat'
 
 export default function PostChatSend({ messageRoomId, title, postId }: PostChatSendProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)

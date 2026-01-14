@@ -1,10 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useQuery export
-import { useQuery } from '@apollo/client'
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation export
-import { useMutation } from '@apollo/client'
+import { useQuery, useMutation } from '@apollo/client/react'
 import { PaginatedList } from '@/components/common/PaginatedList'
 import { ActivityCard } from '@/components/ui/ActivityCard'
 import { GET_USER_ACTIVITY } from '@/graphql/queries'
@@ -224,14 +221,14 @@ export function PaginatedActivityList({
 
   // Ensure data is fetched when component mounts with page parameter
   useEffect(() => {
-    if (pagination.currentPage > 1 && (!data || !data.activities)) {
+    if (pagination.currentPage > 1 && !data) {
       refetch()
     }
   }, [pagination.currentPage, data, refetch])
 
   // Extract and process data
   const { data: entities, pagination: paginationData } = extractPaginationData(
-    data,
+    data as Record<string, unknown>,
     'activities'
   )
 

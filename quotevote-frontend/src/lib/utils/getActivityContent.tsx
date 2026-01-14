@@ -1,5 +1,10 @@
-import { GetActivityContentArgs } from "@/types/store"
-const getActivityContent = ({ type, post, quote, vote, comment }: GetActivityContentArgs): string => {
+function getActivityContent(
+  type: string,
+  post: { text: string; [key: string]: unknown },
+  quote?: { startWordIndex: number; endWordIndex: number; [key: string]: unknown },
+  vote?: { startWordIndex: number; endWordIndex: number; type?: string; [key: string]: unknown },
+  comment?: { startWordIndex: number; endWordIndex: number; [key: string]: unknown }
+): string {
   const { text } = post
   switch (type.toUpperCase()) {
     case 'LIKED':
@@ -20,4 +25,5 @@ const getActivityContent = ({ type, post, quote, vote, comment }: GetActivityCon
   }
 }
 
-export default getActivityContent
+export { getActivityContent };
+export default getActivityContent;

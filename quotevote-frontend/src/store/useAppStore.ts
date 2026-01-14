@@ -76,6 +76,7 @@ const initialFilterState: FilterState = {
 interface AppStore extends AppState {
   // User actions
   setUserData: (data: UserState['data']) => void;
+  clearUserData: () => void;
   setUserLoading: (loading: boolean) => void;
   setLoginError: (error: string | null) => void;
   logout: () => void;
@@ -130,6 +131,11 @@ export const useAppStore = create<AppStore>((set) => ({
   setUserData: (data) =>
     set((state) => ({
       user: { ...state.user, data },
+    })),
+
+  clearUserData: () =>
+    set((state) => ({
+      user: { ...state.user, data: {} },
     })),
 
   setUserLoading: (loading) =>

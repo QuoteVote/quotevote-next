@@ -62,11 +62,91 @@ export async function loginUser(
 }
 
 /**
+ * Sign up user
+ * 
+ * @param userData - User signup data
+ * @returns Promise with signup response
+ * 
+ * @todo Replace with actual GraphQL mutation when auth is migrated
+ */
+export async function signupUser(userData: {
+    username: string;
+    email: string;
+    password: string;
+}): Promise<LoginResponse> {
+    try {
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        if (!userData.username || !userData.email || !userData.password) {
+            return {
+                success: false,
+                error: 'All fields are required',
+            };
+        }
+
+        return {
+            success: true,
+            data: {
+                user: {
+                    username: userData.username,
+                    email: userData.email,
+                } as Record<string, unknown>,
+                token: 'placeholder-token',
+            },
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Signup failed',
+        };
+    }
+}
+
+/**
+ * Reset password
+ * 
+ * @param email - User's email
+ * @returns Promise with reset response
+ * 
+ * @todo Replace with actual GraphQL mutation when auth is migrated
+ */
+export async function resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        if (!email) {
+            return {
+                success: false,
+                error: 'Email is required',
+            };
+        }
+
+        return { success: true };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Password reset failed',
+        };
+    }
+}
+
+/**
  * Logout user
  * 
  * @todo Implement actual logout logic with GraphQL mutation
  */
-export async function logoutUser(): Promise<void> {
-    // TODO: Implement logout logic
-    // Clear tokens, call logout mutation, etc.
+export async function logoutUser(): Promise<{ success: boolean; error?: string }> {
+    try {
+        // TODO: Implement logout logic
+        // Clear tokens, call logout mutation, etc.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return { success: true };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Logout failed',
+        };
+    }
 }

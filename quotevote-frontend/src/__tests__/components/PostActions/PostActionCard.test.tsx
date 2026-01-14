@@ -56,14 +56,14 @@ jest.mock('next/navigation', () => ({
 // Mock GraphQL hooks
 const mockUseQuery = jest.fn(() => ({ loading: false, data: { actionReactions: [] }, error: null }))
 const mockMutate = jest.fn()
-const mockUseMutation = jest.fn((_mutation, _options) => [mockMutate, { loading: false, error: null }])
+const mockUseMutation = jest.fn(() => [mockMutate, { loading: false, error: null }])
 
 jest.mock('@apollo/client/react', () => {
   const actual = jest.requireActual('@apollo/client/react')
   return {
     ...actual,
     useQuery: jest.fn(() => mockUseQuery()),
-    useMutation: jest.fn((mutation: unknown, options?: unknown) => mockUseMutation(mutation, options)),
+    useMutation: jest.fn(() => mockUseMutation()),
   }
 })
 
@@ -88,14 +88,14 @@ jest.mock('@/components/PostChat/PostChatMessage', () => ({
 // Mock icons - Like and Dislike are named exports
 jest.mock('@/components/Icons/Like', () => ({
   __esModule: true,
-  Like: ({ size: _size }: { size?: number }) => <div data-testid="like-icon">Like</div>,
-  default: ({ size: _size }: { size?: number }) => <div data-testid="like-icon">Like</div>,
+  Like: () => <div data-testid="like-icon">Like</div>,
+  default: () => <div data-testid="like-icon">Like</div>,
 }))
 
 jest.mock('@/components/Icons/Dislike', () => ({
   __esModule: true,
-  Dislike: ({ size: _size }: { size?: number }) => <div data-testid="dislike-icon">Dislike</div>,
-  default: ({ size: _size }: { size?: number }) => <div data-testid="dislike-icon">Dislike</div>,
+  Dislike: () => <div data-testid="dislike-icon">Dislike</div>,
+  default: () => <div data-testid="dislike-icon">Dislike</div>,
 }))
 
 // Mock clipboard API

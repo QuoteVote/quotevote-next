@@ -20,10 +20,10 @@ jest.mock('@/store', () => ({
 
 // Mock useMutation from Apollo Client
 const mockMutate = jest.fn().mockResolvedValue({ data: { deleteMessage: { _id: 'msg1' } } })
-const mockUseMutation = jest.fn((_mutation: unknown, _options?: unknown) => [mockMutate, { loading: false, error: null }])
+const mockUseMutation = jest.fn(() => [mockMutate, { loading: false, error: null }])
 jest.mock('@apollo/client/react', () => ({
   ...jest.requireActual('@apollo/client/react'),
-  useMutation: (mutation: unknown, options?: unknown) => mockUseMutation(mutation, options),
+  useMutation: () => mockUseMutation(),
 }))
 
 // Mock Avatar component

@@ -6,19 +6,7 @@ import { useSubscription } from '@apollo/client/react';
 
 import { TYPING_SUBSCRIPTION } from '@/graphql/subscriptions';
 import { useAppStore } from '@/store';
-
-interface TypingIndicatorProps {
-  messageRoomId?: string | null;
-}
-
-interface TypingUser {
-  userId: string;
-  user?: {
-    name?: string | null;
-    username?: string | null;
-  } | null;
-  timestamp: string;
-}
+import type { TypingIndicatorProps, TypingUser } from '@/types/chat';
 
 import type { TypingSubscriptionResult } from '@/types/hooks'
 

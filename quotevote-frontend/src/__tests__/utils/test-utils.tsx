@@ -103,3 +103,6 @@ export {
 // Export test utilities
 export { createTestApolloClient, AllTheProviders }
 
+// Export TestWrapper as an alias for AllTheProviders for backward compatibility
+export { AllTheProviders as TestWrapper }
+

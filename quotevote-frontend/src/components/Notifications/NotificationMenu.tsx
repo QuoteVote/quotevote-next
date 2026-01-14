@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useQuery/useSubscription exports
-import { useQuery, useSubscription } from '@apollo/client';
+import { useQuery, useSubscription } from '@apollo/client/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import RichTooltip from '@/components/Chat/RichToolTip';
@@ -37,7 +36,7 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
   });
 
   const notifications: NotificationType[] =
-    loading || error || !data ? [] : data.notifications || [];
+    loading || error || !data ? [] : (data as { notifications?: NotificationType[] }).notifications || [];
 
   const handleToggle = (): void => {
     setOpen(!open);

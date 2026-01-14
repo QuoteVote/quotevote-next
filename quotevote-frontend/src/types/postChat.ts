@@ -91,3 +91,43 @@ export interface ReactionInput {
   messageId: string
   emoji: string
 }
+
+/**
+ * GraphQL response data for messages query
+ */
+export interface MessagesData {
+  messages: Array<{
+    _id: string
+    messageRoomId: string
+    userId: string
+    userName: string
+    title: string
+    text: string
+    type: string
+    created: string
+  }>
+}
+
+/**
+ * GraphQL response data for create message mutation
+ */
+export interface CreateMessageData {
+  createMessage: {
+    __typename?: string
+    _id: string
+    messageRoomId: string
+    userId: string
+    userName: string
+    title: string
+    text: string
+    type: string
+    created: string
+    user: {
+      __typename?: string
+      _id: string
+      name: string
+      username: string
+      avatar: string
+    }
+  }
+}

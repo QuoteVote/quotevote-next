@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { Activity } from '@/components/Activity'
 
 /**
@@ -21,7 +22,9 @@ export default function ActivityTestPage() {
 
       <div className="bg-card border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Activity Feed:</h2>
-        <Activity showSubHeader={true} userId="" />
+        <Suspense fallback={<div>Loading activity...</div>}>
+          <Activity showSubHeader={true} userId="" />
+        </Suspense>
       </div>
 
       <div className="mt-6 bg-card border rounded-lg p-6">

@@ -8,23 +8,8 @@ import { Check, CheckCheck, Trash2 } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 import { useAppStore } from '@/store';
 import { DELETE_MESSAGE } from '@/graphql/mutations';
-import type { ChatMessage } from '@/types/chat';
+import type { MessageItemProps } from '@/types/chat';
 import { cn } from '@/lib/utils';
-
-interface ExtendedChatMessage extends ChatMessage {
-  user?: {
-    _id?: string;
-    name?: string;
-    username?: string;
-    avatar?: string | null | undefined | Record<string, unknown>;
-    [key: string]: unknown;
-  };
-  readBy?: Array<string | { toString(): string } | null | undefined>;
-}
-
-interface MessageItemProps {
-  message: ExtendedChatMessage;
-}
 
 const normalizeId = (id: unknown): string | null => {
   if (!id) return null;

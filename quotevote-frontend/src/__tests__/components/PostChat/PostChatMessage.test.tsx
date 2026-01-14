@@ -21,11 +21,11 @@ jest.mock('@/store', () => ({
 // Mock useQuery and useMutation from Apollo Client
 const mockUseQuery = jest.fn()
 const mockMutate = jest.fn().mockResolvedValue({ data: { deleteMessage: { _id: 'msg1' } } })
-const mockUseMutation = jest.fn((_mutation: unknown, _options?: unknown) => [mockMutate, { loading: false, error: null }])
+const mockUseMutation = jest.fn(() => [mockMutate, { loading: false, error: null }])
 jest.mock('@apollo/client/react', () => ({
   ...jest.requireActual('@apollo/client/react'),
   useQuery: (query: unknown, options?: unknown) => mockUseQuery(query, options),
-  useMutation: (mutation: unknown, options?: unknown) => mockUseMutation(mutation, options),
+  useMutation: () => mockUseMutation(),
 }))
 
 // Mock next/navigation

@@ -25,7 +25,7 @@ jest.mock('next/navigation', () => ({
 // Mock Next.js Image component
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ priority, unoptimized, ...props }) => {
+  default: ({ ...props }) => {
     // Filter out Next.js-specific props that shouldn't be passed to DOM
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img {...props} />
@@ -175,7 +175,15 @@ beforeAll(() => {
       errorString.includes('Received `true` for a non-boolean attribute `fill`') ||
       (errorString.includes('fill') && errorString.includes('non-boolean attribute'))
     
-    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError || isFillAttributeWarning) {
+    // Check if this is a Next.js Image component attribute warning (priority, unoptimized)
+    // These are valid Next.js Image props but React 19 warns about them in test environment
+    const isNextImageAttributeWarning = 
+      errorString.includes('Received `true` for a non-boolean attribute `priority`') ||
+      errorString.includes('Received `true` for a non-boolean attribute `unoptimized`') ||
+      (errorString.includes('priority') && errorString.includes('non-boolean attribute')) ||
+      (errorString.includes('unoptimized') && errorString.includes('non-boolean attribute'))
+    
+    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError || isFillAttributeWarning || isNextImageAttributeWarning) {
       // Suppress these expected errors - they're caught by ErrorBoundary or are test environment warnings
       return
     }

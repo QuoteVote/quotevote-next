@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { RequestInviteDialog } from '@/components/RequestInviteDialog';
 import { Button } from '@/components/ui/button';
 
@@ -57,7 +57,9 @@ export default function RequestInviteDialogTestPage() {
         </div>
       </div>
 
-      <RequestInviteDialog open={open} onClose={() => setOpen(false)} />
+      <Suspense fallback={<div>Loading dialog...</div>}>
+        <RequestInviteDialog open={open} onClose={() => setOpen(false)} />
+      </Suspense>
     </div>
   );
 }

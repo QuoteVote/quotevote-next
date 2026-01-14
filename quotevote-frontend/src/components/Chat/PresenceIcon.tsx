@@ -1,11 +1,6 @@
 "use client";
 
-type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
-
-interface PresenceIconProps {
-  status: PresenceStatus;
-  className?: string;
-}
+import type { PresenceStatus, PresenceIconProps } from '@/types/chat';
 
 const statusClasses: Record<PresenceStatus, string> = {
   online:

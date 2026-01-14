@@ -1,8 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation export
-import { useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client/react'
 import { useAppStore } from '@/store'
 import { ActivityCard } from '@/components/ui/ActivityCard'
 import { ActivitySkeletonLoader } from './ActivitySkeleton'

@@ -8,8 +8,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation and useApolloClient exports
-import { useApolloClient, useMutation } from '@apollo/client';
+import { useApolloClient, useMutation } from '@apollo/client/react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -66,8 +65,8 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
 
       if (
         checkDuplicate &&
-        Array.isArray(checkDuplicate.data.checkDuplicateEmail) &&
-        checkDuplicate.data.checkDuplicateEmail.length > 0
+        Array.isArray((checkDuplicate.data as { checkDuplicateEmail?: unknown[] })?.checkDuplicateEmail) &&
+        ((checkDuplicate.data as { checkDuplicateEmail?: unknown[] })?.checkDuplicateEmail?.length || 0) > 0
       ) {
         setError(
           'This email address has already been used to request an invite.'

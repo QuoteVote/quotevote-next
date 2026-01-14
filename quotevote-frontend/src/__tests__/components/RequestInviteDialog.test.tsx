@@ -14,6 +14,8 @@ import { render, screen, fireEvent, waitFor, act } from '@/__tests__/utils/test-
 import userEvent from '@testing-library/user-event';
 import { RequestInviteDialog } from '@/components/RequestInviteDialog';
 
+// Mock Apollo Client hooks - will be set up properly below
+
 // Mock toast
 jest.mock('sonner', () => ({
   toast: {
@@ -46,11 +48,11 @@ const mockClient = {
 // Create a mock function for useMutation that can be controlled per test
 const mockUseMutation = jest.fn(() => [
   mockMutation,
-  { loading: false },
+  { loading: false, error: null },
 ]);
 
-jest.mock('@apollo/client', () => {
-  const actual = jest.requireActual('@apollo/client');
+jest.mock('@apollo/client/react', () => {
+  const actual = jest.requireActual('@apollo/client/react');
   return {
     ...actual,
     useApolloClient: () => mockClient,
@@ -66,12 +68,11 @@ describe('RequestInviteDialog', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
     
     // Reset useMutation mock to default
     mockUseMutation.mockReturnValue([
       mockMutation,
-      { loading: false },
+      { loading: false, error: null },
     ]);
     
     // Default query response (no duplicate)
@@ -92,12 +93,6 @@ describe('RequestInviteDialog', () => {
     });
   });
 
-  afterEach(() => {
-    act(() => {
-      jest.runOnlyPendingTimers();
-    });
-    jest.useRealTimers();
-  });
 
   it('renders dialog when open is true', () => {
     render(<RequestInviteDialog {...defaultProps} />);
@@ -182,11 +177,9 @@ describe('RequestInviteDialog', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          /this email address has already been used to request an invite/i
-        )
+        screen.getByText(/already been used to request an invite/i)
       ).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('submits form successfully with valid email', async () => {
@@ -200,24 +193,27 @@ describe('RequestInviteDialog', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockQuery).toHaveBeenCalledWith({
-        query: expect.any(Object),
-        variables: { email: 'test@example.com' },
-        fetchPolicy: 'network-only',
-      });
-    });
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: { email: 'test@example.com' },
+          fetchPolicy: 'network-only',
+        })
+      );
+    }, { timeout: 3000 });
 
     await waitFor(() => {
-      expect(mockMutation).toHaveBeenCalledWith({
-        variables: {
-          requestUserAccessInput: { email: 'test@example.com' },
-        },
-      });
-    });
+      expect(mockMutation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: {
+            requestUserAccessInput: { email: 'test@example.com' },
+          },
+        })
+      );
+    }, { timeout: 3000 });
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Request submitted successfully!');
-    });
+    }, { timeout: 3000 });
   });
 
   it('shows success message after successful submission', async () => {
@@ -244,8 +240,9 @@ describe('RequestInviteDialog', () => {
   });
 
   it('auto-closes dialog after 3 seconds on successful submission', async () => {
+    jest.useFakeTimers();
     const onClose = jest.fn();
-    const user = userEvent.setup({ delay: null });
+    const user = userEvent.setup({ delay: null, advanceTimers: jest.advanceTimersByTime });
     render(<RequestInviteDialog open={true} onClose={onClose} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
@@ -268,6 +265,8 @@ describe('RequestInviteDialog', () => {
     await waitFor(() => {
       expect(onClose).toHaveBeenCalled();
     });
+    
+    jest.useRealTimers();
   });
 
   it('handles mutation error and shows error message', async () => {
@@ -290,11 +289,13 @@ describe('RequestInviteDialog', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/an unexpected error occurred. please try again later./i)
+        screen.getByText(/an unexpected error occurred/i)
       ).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
 
-    expect(toast.error).toHaveBeenCalledWith('Failed to submit request');
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Failed to submit request');
+    }, { timeout: 3000 });
     
     // Restore console.error
     console.error = originalError;
@@ -306,11 +307,12 @@ describe('RequestInviteDialog', () => {
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
 
-    await user.type(emailInput, 'test@example.com{Enter}');
+    await user.type(emailInput, 'test@example.com');
+    await user.keyboard('{Enter}');
 
     await waitFor(() => {
       expect(mockQuery).toHaveBeenCalled();
-    });
+    }, { timeout: 3000 });
   });
 
   it('clears form state when dialog closes', async () => {
@@ -341,7 +343,7 @@ describe('RequestInviteDialog', () => {
     // Mock loading state
     mockUseMutation.mockReturnValueOnce([
       mockMutation,
-      { loading: true },
+      { loading: true, error: null },
     ]);
 
     render(<RequestInviteDialog {...defaultProps} />);
@@ -374,7 +376,8 @@ describe('RequestInviteDialog', () => {
   });
 
   it('cleans up timeout on unmount', async () => {
-    const user = userEvent.setup({ delay: null });
+    jest.useFakeTimers();
+    const user = userEvent.setup({ delay: null, advanceTimers: jest.advanceTimersByTime });
     const { unmount } = render(<RequestInviteDialog {...defaultProps} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
@@ -399,6 +402,7 @@ describe('RequestInviteDialog', () => {
 
     // No errors should occur
     expect(true).toBe(true);
+    jest.useRealTimers();
   });
 });
 

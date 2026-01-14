@@ -32,10 +32,7 @@ import type {
   SettingsUserData, 
   UserAvatar 
 } from '@/types/settings'
-
-interface UpdateUserResponse {
-  updateUser: SettingsUserData
-}
+import type { UpdateUserResponse } from '@/types/test'
 
 const settingsSchema = z.object({
   name: z.string().min(1, 'Name is required'),

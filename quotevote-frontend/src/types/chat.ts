@@ -96,3 +96,96 @@ export interface ChatRoom {
         text?: string | null
     } | null
 }
+
+/**
+ * Extended chat message with additional user and read status information
+ */
+export interface ExtendedChatMessage extends ChatMessage {
+  user?: {
+    _id?: string;
+    name?: string;
+    username?: string;
+    avatar?: string | null | undefined | Record<string, unknown>;
+    [key: string]: unknown;
+  };
+  readBy?: Array<string | { toString(): string } | null | undefined>;
+}
+
+/**
+ * Props for MessageItem component
+ */
+export interface MessageItemProps {
+  message: ExtendedChatMessage;
+}
+
+/**
+ * Props for MessageSend component
+ */
+export interface MessageSendProps {
+  messageRoomId?: string | null;
+  type: string;
+  title?: string | null;
+  /**
+   * For DMs started from a profile or post, this is
+   * the target user / component identifier when a room
+   * does not yet exist.
+   */
+  componentId?: string | null;
+}
+
+/**
+ * Chat user information
+ */
+export interface ChatUser {
+  _id?: string;
+  name?: string;
+  username?: string;
+  avatar?: string;
+}
+
+/**
+ * Chat room reference for selected room state
+ */
+export interface ChatRoomRef {
+  users?: (string | { toString(): string })[];
+}
+
+/**
+ * Selected room state interface
+ */
+export interface SelectedRoomState {
+  room?: ChatRoomRef;
+  users?: (string | { toString(): string })[];
+}
+
+/**
+ * Typing indicator props
+ */
+export interface TypingIndicatorProps {
+  messageRoomId?: string | null;
+}
+
+/**
+ * Typing user information
+ */
+export interface TypingUser {
+  userId: string;
+  user?: {
+    name?: string | null;
+    username?: string | null;
+  } | null;
+  timestamp: string;
+}
+
+/**
+ * Presence status type
+ */
+export type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
+
+/**
+ * Presence icon props
+ */
+export interface PresenceIconProps {
+  status: PresenceStatus;
+  className?: string;
+}

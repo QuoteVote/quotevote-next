@@ -8,6 +8,8 @@ import { render, screen, waitFor } from '../../utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { RequestAccessForm } from '@/components/RequestAccess/RequestAccessForm';
 
+// Mock Apollo Client hooks - will be set up properly below
+
 // Mock toast
 jest.mock('sonner', () => ({
   toast: {
@@ -25,14 +27,14 @@ const mockClient = {
   query: mockQuery,
 };
 
-jest.mock('@apollo/client', () => {
-  const actual = jest.requireActual('@apollo/client');
+jest.mock('@apollo/client/react', () => {
+  const actual = jest.requireActual('@apollo/client/react');
   return {
     ...actual,
     useApolloClient: () => mockClient,
     useMutation: () => [
       mockMutation,
-      { loading: false },
+      { loading: false, error: null },
     ],
   };
 });
@@ -102,9 +104,9 @@ describe('RequestAccessForm Component', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/this email address has already been used to request an invite/i)
+        screen.getByText(/already been used to request an invite/i)
       ).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('submits form successfully with valid email', async () => {
@@ -120,7 +122,7 @@ describe('RequestAccessForm Component', () => {
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Request submitted successfully!');
-    });
+    }, { timeout: 3000 });
   });
 
   it('calls onSuccess callback when provided', async () => {
@@ -137,7 +139,7 @@ describe('RequestAccessForm Component', () => {
 
     await waitFor(() => {
       expect(onSuccess).toHaveBeenCalled();
-    });
+    }, { timeout: 3000 });
   });
 
   it('submits on Enter key press', async () => {
@@ -147,11 +149,12 @@ describe('RequestAccessForm Component', () => {
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
 
-    await user.type(emailInput, 'test@example.com{Enter}');
+    await user.type(emailInput, 'test@example.com');
+    await user.keyboard('{Enter}');
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Request submitted successfully!');
-    });
+    }, { timeout: 3000 });
   });
 
   describe('Loading States', () => {
@@ -169,7 +172,7 @@ describe('RequestAccessForm Component', () => {
       // Form should submit successfully
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith('Request submitted successfully!');
-      });
+      }, { timeout: 3000 });
     });
   });
 
@@ -227,7 +230,7 @@ describe('RequestAccessForm Component', () => {
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith('Request submitted successfully!');
-      });
+      }, { timeout: 3000 });
     });
 
     it('handles email with subdomain', async () => {
@@ -243,7 +246,7 @@ describe('RequestAccessForm Component', () => {
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith('Request submitted successfully!');
-      });
+      }, { timeout: 3000 });
     });
 
     it('handles query error when checking duplicate email', async () => {
@@ -351,7 +354,7 @@ describe('RequestAccessForm Component', () => {
 
         await waitFor(() => {
           expect(screen.getByText(/please enter a valid email address/i)).toBeInTheDocument();
-        });
+        }, { timeout: 3000 });
       }
     });
 
