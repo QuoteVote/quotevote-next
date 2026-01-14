@@ -22,7 +22,7 @@
     "postinstall": "prisma generate --schema=./prisma/schema"
   },
   "prisma": {
-    "schema": "./prisma/schema "
+    "schema": "./prisma/schema"
   },
   "_legacy_scripts_TODO_remove_after_stable": {
     "dev": "babel-node src/index.js",
