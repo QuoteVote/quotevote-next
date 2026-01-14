@@ -1,40 +1,40 @@
 // Realtime models: Presence, Typing
 
 enum PresenceStatus {
-    online
-    away
-    dnd
-    offline
-    invisible
+  online
+  away
+  dnd
+  offline
+  invisible
 }
 
 model Presence {
-    id            String         @id @default(auto()) @map("_id") @db.ObjectId
-    userId        String         @unique @db.ObjectId
-    status        PresenceStatus @default(offline)
-    statusMessage String?
-    lastHeartbeat DateTime?
-    lastSeen      DateTime?
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String         @unique @db.ObjectId
+  status        PresenceStatus @default(offline)
+  statusMessage String?
+  lastHeartbeat DateTime?
+  lastSeen      DateTime?
 
-    // Relations
-    user          User           @relation(fields: [userId], references: [id])
+  // Relations
+  user User @relation(fields: [userId], references: [id])
 
-    @@index([status])
-    @@map("presences")
+  @@index([status])
+  @@map("presences")
 }
 
 model Typing {
-    id            String      @id @default(auto()) @map("_id") @db.ObjectId
-    messageRoomId String      @db.ObjectId
-    userId        String      @db.ObjectId
-    isTyping      Boolean     @default(false)
-    timestamp     DateTime    @default(now())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  messageRoomId String   @db.ObjectId
+  userId        String   @db.ObjectId
+  isTyping      Boolean  @default(false)
+  timestamp     DateTime @default(now())
 
-    // Relations
-    messageRoom   MessageRoom @relation(fields: [messageRoomId], references: [id])
-    user          User        @relation(fields: [userId], references: [id])
+  // Relations
+  messageRoom MessageRoom @relation(fields: [messageRoomId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
 
-    @@unique([messageRoomId, userId])
-    @@index([messageRoomId])
-    @@map("typings")
+  @@unique([messageRoomId, userId])
+  @@index([messageRoomId])
+  @@map("typings")
 }
