@@ -81,14 +81,25 @@ async function main() {
     // Test 5: CREATE related - Create a post for the user
     // ============================================
     console.log('📝 Test 5: CREATE - Creating a post for the user');
+    
+    // First create a group for the post (required relation)
+    const testGroup = await prisma.group.create({
+      data: {
+        creatorId: newUser.id,
+        title: 'Test Group',
+        privacy: 'public',
+      },
+    });
+    
     const newPost = await prisma.post.create({
       data: {
-        userId: newUser.id,
+        user: { connect: { id: newUser.id } },
+        group: { connect: { id: testGroup.id } },
         title: 'Test Post from Prisma',
         text: 'This is a test post created by the Prisma CRUD test script.',
         upvotes: 0,
         downvotes: 0,
-        enableVoting: true,
+        enableVoting: false,
         deleted: false,
       },
     });
@@ -126,6 +137,12 @@ async function main() {
       where: { id: newPost.id },
     });
     console.log('   ✅ Deleted test post');
+
+    // Delete the group
+    await prisma.group.delete({
+      where: { id: testGroup.id },
+    });
+    console.log('   ✅ Deleted test group');
 
     // Delete the user
     await prisma.user.delete({
