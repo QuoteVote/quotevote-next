@@ -6,15 +6,12 @@ export const logger = winston.createLogger({
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
-    winston.format.json(),
+    winston.format.json()
   ),
   defaultMeta: { service: 'quotevote-backend' },
   transports: [
     new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple(),
-      ),
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
   ],
 });

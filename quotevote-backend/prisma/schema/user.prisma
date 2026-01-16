@@ -1,0 +1,70 @@
+// User and authentication related models
+//User model - Core user entity
+
+model User {
+  id                String        @id @default(auto()) @map("_id") @db.ObjectId
+  email             String        @unique
+  username          String        @unique
+  name              String?
+  password          String?
+  hashPassword      String?       @map("hash_password")
+  avatar            Json?
+  bio               String?
+  location          String?
+  website           String?
+  companyName       String?
+  plan              String?       @default("personal")
+  stripeCustomerId  String?
+  tokens            Int           @default(0)
+  wallet            String?       @map("_wallet")
+  votesId           String?       @map("_votesId") @db.ObjectId
+  favorited         Json?         @default("[]")
+  status            Int?
+  contributorBadge  Boolean       @default(false)
+  accountStatus     AccountStatus @default(active)
+  emailVerified     Boolean       @default(false)
+  isAdmin           Boolean       @default(false)
+  isModerator       Boolean       @default(false)
+  botReports        Int           @default(0)
+  lastBotReportDate DateTime?
+  upvotes           Int           @default(0)
+  downvotes         Int           @default(0)
+  followingIds      String[]      @db.ObjectId
+  followerIds       String[]      @db.ObjectId
+  blockedUserIds    String[]      @db.ObjectId
+  settings          Json?
+  lastLogin         DateTime?
+  joined            DateTime      @default(now())
+  updated           DateTime      @updatedAt
+
+  //Relations
+  posts               Post[]
+  comments            Comment[]
+  votes               Vote[]
+  quotesAsQuoter      Quote[]         @relation("QuoterUser")
+  quotesAsQuoted      Quote[]         @relation("QuotedUser")
+  postMessages        PostMessage[]   @relation("PostMessages")
+  directMessages      DirectMessage[] @relation("DirectMessages")
+  notifications       Notification[]  @relation("NotificationRecipient")
+  notificationsFrom   Notification[]  @relation("NotificationSender")
+  activities          Activity[]
+  reactions           Reaction[]
+  reputations         UserReputation?
+  rosters             Roster[]        @relation("RosterUser")
+  buddyRosters        Roster[]        @relation("RosterBuddy")
+  presence            Presence?
+  typingIndicators    Typing[]
+  inviteSent          UserInvite[]    @relation("InviteSender")
+  inviteReceived      UserInvite[]    @relation("InviteRecipient")
+  userReportsMade     UserReport[]    @relation("Reporter")
+  userReportsReceived UserReport[]    @relation("ReportedUser")
+  botReportsMade      BotReport[]     @relation("BotReporter")
+  botReportsReceived  BotReport[]     @relation("BotReportedUser")
+  createdGroups       Group[]         @relation("GroupCreator")
+  memberOfGroups      String[]        @db.ObjectId
+  voteLog             VoteLog[]
+
+  @@index([accountStatus])
+  @@index([botReports, lastBotReportDate])
+  @@map("users")
+}

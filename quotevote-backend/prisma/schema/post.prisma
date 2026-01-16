@@ -1,0 +1,161 @@
+// Post-related models: Post, Comment, Quote, Vote, VoteLog, Reaction
+
+model Post {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  groupId        String   @db.ObjectId
+  title          String
+  text           String
+  url            String?
+  citationUrl    String?
+  upvotes        Int      @default(0)
+  downvotes      Int      @default(0)
+  reported       Int      @default(0)
+  approved       Int?
+  votedBy        Json?    @default("[]")
+  dayPoints      Int      @default(0)
+  pointTimestamp DateTime @default(now())
+  approvedBy     String[] @db.ObjectId
+  rejectedBy     String[] @db.ObjectId
+  reportedBy     String[] @db.ObjectId
+  bookmarkedBy   String[] @db.ObjectId
+  enableVoting   Boolean  @default(false)
+  messageRoomId  String?
+  urlId          String?
+  featuredSlot   Int?
+  deleted        Boolean  @default(false)
+  created        DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id])
+  group         Group?         @relation(fields: [groupId], references: [id])
+  comments      Comment[]
+  votes         Vote[]
+  quotes        Quote[]
+  voteLogs      VoteLog[]
+  activities    Activity[]
+  notifications Notification[]
+  messageRooms  MessageRoom[]
+
+  @@index([userId])
+  @@index([groupId])
+  @@index([created])
+  @@index([featuredSlot])
+  @@index([featuredSlot, created])
+  @@index([featuredSlot, pointTimestamp])
+  @@index([featuredSlot, userId])
+  @@index([featuredSlot, groupId])
+  @@index([featuredSlot, deleted])
+  @@index([featuredSlot, approved])
+  @@index([userId, featuredSlot])
+  @@index([groupId, featuredSlot])
+  @@map("posts")
+}
+
+model Comment {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  postId         String?  @db.ObjectId
+  content        String
+  startWordIndex Int?
+  endWordIndex   Int?
+  url            String?
+  reaction       String?
+  deleted        Boolean  @default(false)
+  created        DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id])
+  post       Post?      @relation(fields: [postId], references: [id])
+  activities Activity[] @relation("CommentActivity")
+
+  @@index([userId])
+  @@index([postId])
+  @@index([created])
+  @@map("comments")
+}
+
+model Quote {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  quoterId       String   @map("quoter") @db.ObjectId
+  quotedId       String   @map("quoted") @db.ObjectId
+  postId         String   @db.ObjectId
+  quote          String
+  startWordIndex Int?
+  endWordIndex   Int?
+  deleted        Boolean  @default(false)
+  created        DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  quoter     User       @relation("QuoterUser", fields: [quoterId], references: [id])
+  quoted     User       @relation("QuotedUser", fields: [quotedId], references: [id])
+  post       Post       @relation(fields: [postId], references: [id])
+  activities Activity[] @relation("QuoteActivity")
+
+  @@index([quoterId])
+  @@index([quotedId])
+  @@index([postId])
+  @@index([created])
+  @@map("quotes")
+}
+
+model Vote {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  postId         String   @db.ObjectId
+  type           VoteType
+  startWordIndex Int?
+  endWordIndex   Int?
+  tags           String
+  content        String?
+  deleted        Boolean  @default(false)
+  created        DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id])
+  post       Post       @relation(fields: [postId], references: [id])
+  activities Activity[] @relation("VoteActivity")
+
+  @@index([userId])
+  @@index([postId])
+  @@index([type])
+  @@map("votes")
+}
+
+model VoteLog {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId  String   @db.ObjectId
+  userId  String   @db.ObjectId
+  type    VoteType
+  created DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@index([postId])
+  @@index([userId])
+  @@map("votelogs")
+}
+
+model Reaction {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String       @db.ObjectId
+  actionId      String?      @db.ObjectId
+  postMessageId String?      @db.ObjectId
+  emoji         String
+  created       DateTime     @default(now())
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id])
+  postMessage PostMessage? @relation(fields: [postMessageId], references: [id])
+
+  @@index([userId])
+  @@index([actionId])
+  @@index([postMessageId])
+  @@map("reactions")
+}

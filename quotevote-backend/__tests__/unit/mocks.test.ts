@@ -14,7 +14,7 @@ describe('Logger Utils with Mocks', () => {
     it('should mock function calls', () => {
       const mockLog = jest.fn();
       mockLog('test message');
-      
+
       expect(mockLog).toHaveBeenCalledWith('test message');
       expect(mockLog).toHaveBeenCalledTimes(1);
     });
@@ -22,16 +22,14 @@ describe('Logger Utils with Mocks', () => {
     it('should work with TypeScript mocks', () => {
       const mockData = { id: 1, name: 'test' };
       const mockFn = jest.fn(() => mockData);
-      
+
       const result = mockFn();
       expect(result).toEqual(mockData);
       expect(mockFn).toHaveBeenCalled();
     });
 
     it('should mock return values', () => {
-      const mockCalculate = jest.fn()
-        .mockReturnValueOnce(10)
-        .mockReturnValueOnce(20);
+      const mockCalculate = jest.fn().mockReturnValueOnce(10).mockReturnValueOnce(20);
 
       expect(mockCalculate()).toBe(10);
       expect(mockCalculate()).toBe(20);

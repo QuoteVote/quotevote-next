@@ -1,0 +1,103 @@
+// Messaging models: PostMessage, DirectMessage, MessageRoom, Notification
+
+// Composite types for PostMessage read receipts and delivery tracking
+type ReadByDetail {
+  userId String   @db.ObjectId
+  readAt DateTime
+}
+
+type DeliveredToDetail {
+  userId      String   @db.ObjectId
+  deliveredAt DateTime
+}
+
+model PostMessage {
+  id             String              @id @default(auto()) @map("_id") @db.ObjectId
+  messageRoomId  String              @db.ObjectId
+  userId         String              @db.ObjectId
+  userName       String?
+  title          String?
+  text           String
+  type           String?
+  mutationType   String?             @map("mutation_type")
+  readBy         String[]            @db.ObjectId
+  readByDetailed ReadByDetail[]
+  deliveredTo    DeliveredToDetail[]
+  deleted        Boolean             @default(false)
+  created        DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  // Relations
+  user        User        @relation("PostMessages", fields: [userId], references: [id])
+  messageRoom MessageRoom @relation(fields: [messageRoomId], references: [id])
+  reactions   Reaction[]
+
+  @@index([messageRoomId])
+  @@index([userId])
+  @@index([created])
+  @@map("messages")
+}
+
+model DirectMessage {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String   @db.ObjectId
+  title   String?
+  text    String
+  created DateTime @default(now())
+
+  // Relations
+  user User @relation("DirectMessages", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([created])
+  @@map("directmessages")
+}
+
+model MessageRoom {
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  userIds          String[]      @db.ObjectId
+  postId           String?       @db.ObjectId
+  messageType      MessageType   @default(USER)
+  isDirect         Boolean       @default(false)
+  title            String?
+  avatar           String?
+  lastMessageTime  DateTime?
+  lastActivity     DateTime?
+  lastSeenMessages Json?         @default("{}")
+  unreadMessages   Int           @default(0)
+  created          DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Relations
+  post             Post?         @relation(fields: [postId], references: [id])
+  postMessages     PostMessage[]
+  typingIndicators Typing[]
+
+  @@index([postId])
+  @@index([lastActivity])
+  @@index([userIds, lastActivity])
+  @@map("messagerooms")
+}
+
+model Notification {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String           @db.ObjectId
+  userIdBy         String           @db.ObjectId
+  label            String
+  status           String           @default("unread")
+  notificationType NotificationType
+  postId           String?          @db.ObjectId
+  created          DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  user   User  @relation("NotificationRecipient", fields: [userId], references: [id])
+  sender User  @relation("NotificationSender", fields: [userIdBy], references: [id])
+  post   Post? @relation(fields: [postId], references: [id])
+
+  @@index([userId])
+  @@index([userIdBy])
+  @@index([status])
+  @@index([created])
+  @@map("notifications")
+}
