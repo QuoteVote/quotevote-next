@@ -143,19 +143,19 @@ model VoteLog {
 }
 
 model Reaction {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  actionId  String?  @db.ObjectId
-  messageId String?  @db.ObjectId
-  emoji     String
-  created   DateTime @default(now())
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String       @db.ObjectId
+  actionId      String?      @db.ObjectId
+  postMessageId String?      @db.ObjectId
+  emoji         String
+  created       DateTime     @default(now())
 
   // Relations
-  user    User     @relation(fields: [userId], references: [id])
-  message Message? @relation(fields: [messageId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
+  postMessage PostMessage? @relation(fields: [postMessageId], references: [id])
 
   @@index([userId])
   @@index([actionId])
-  @@index([messageId])
+  @@index([postMessageId])
   @@map("reactions")
 }

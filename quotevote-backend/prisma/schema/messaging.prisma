@@ -1,6 +1,6 @@
-// Messaging models: Message, MessageRoom, Notification
+// Messaging models: PostMessage, DirectMessage, MessageRoom, Notification
 
-// Composite types for Message read receipts and delivery tracking
+// Composite types for PostMessage read receipts and delivery tracking
 type ReadByDetail {
   userId String   @db.ObjectId
   readAt DateTime
@@ -11,7 +11,7 @@ type DeliveredToDetail {
   deliveredAt DateTime
 }
 
-model Message {
+model PostMessage {
   id             String              @id @default(auto()) @map("_id") @db.ObjectId
   messageRoomId  String              @db.ObjectId
   userId         String              @db.ObjectId
@@ -28,7 +28,7 @@ model Message {
   updatedAt      DateTime            @updatedAt
 
   // Relations
-  user        User        @relation(fields: [userId], references: [id])
+  user        User        @relation("PostMessages", fields: [userId], references: [id])
   messageRoom MessageRoom @relation(fields: [messageRoomId], references: [id])
   reactions   Reaction[]
 
@@ -38,24 +38,39 @@ model Message {
   @@map("messages")
 }
 
+model DirectMessage {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String   @db.ObjectId
+  title   String?
+  text    String
+  created DateTime @default(now())
+
+  // Relations
+  user User @relation("DirectMessages", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([created])
+  @@map("directmessages")
+}
+
 model MessageRoom {
-  id               String      @id @default(auto()) @map("_id") @db.ObjectId
-  userIds          String[]    @db.ObjectId
-  postId           String?     @db.ObjectId
-  messageType      MessageType @default(USER)
-  isDirect         Boolean     @default(false)
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  userIds          String[]      @db.ObjectId
+  postId           String?       @db.ObjectId
+  messageType      MessageType   @default(USER)
+  isDirect         Boolean       @default(false)
   title            String?
   avatar           String?
   lastMessageTime  DateTime?
   lastActivity     DateTime?
-  lastSeenMessages Json?       @default("{}")
-  unreadMessages   Int         @default(0)
-  created          DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  lastSeenMessages Json?         @default("{}")
+  unreadMessages   Int           @default(0)
+  created          DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   // Relations
-  post             Post?     @relation(fields: [postId], references: [id])
-  messages         Message[]
+  post             Post?         @relation(fields: [postId], references: [id])
+  postMessages     PostMessage[]
   typingIndicators Typing[]
 
   @@index([postId])

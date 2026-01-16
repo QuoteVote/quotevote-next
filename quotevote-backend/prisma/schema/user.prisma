@@ -43,7 +43,8 @@ model User {
   votes               Vote[]
   quotesAsQuoter      Quote[]         @relation("QuoterUser")
   quotesAsQuoted      Quote[]         @relation("QuotedUser")
-  messages            Message[]
+  postMessages        PostMessage[]   @relation("PostMessages")
+  directMessages      DirectMessage[] @relation("DirectMessages")
   notifications       Notification[]  @relation("NotificationRecipient")
   notificationsFrom   Notification[]  @relation("NotificationSender")
   activities          Activity[]
