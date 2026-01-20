@@ -9,7 +9,20 @@
     "start": "node dist/app/server.js",
     "test": "jest --passWithNoTests",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "prisma:generate": "prisma generate --schema=./prisma/schema",
+    "prisma:validate": "prisma validate --schema=./prisma/schema",
+    "prisma:format": "prisma format --schema=./prisma/schema",
+    "prisma:studio": "prisma db push --schema=./prisma/schema",
+    "prisma:health": "tsx scripts/prisma-health-check.ts",
+    "prisma:test": "tsx scripts/prisma-crud-test.ts",
+    "postinstall": "prisma generate --schema=./prisma/schema"
+  },
+  "prisma": {
+    "schema": "./prisma/schema"
   },
   "_legacy_scripts_TODO_remove_after_stable": {
     "dev": "babel-node src/index.js",
@@ -23,6 +36,7 @@
     "@as-integrations/express5": "^1.1.2",
     "@inrupt/solid-client": "^3.0.0",
     "@inrupt/solid-client-authn-node": "^3.1.1",
+    "@prisma/client": "^6.19.1",
     "bcryptjs": "^3.0.3",
     "commonjs": "^0.0.1",
     "cors": "^2.8.5",
@@ -52,6 +66,8 @@
     "@typescript-eslint/parser": "^8.49.0",
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
+    "prettier": "^3.7.4",
+    "prisma": "^6.19.1",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

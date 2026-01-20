@@ -8,72 +8,79 @@
 // Enums and Constants
 // ============================================================================
 
-export type ActivityEventType = 'POSTED' | 'VOTED' | 'COMMENTED' | 'QUOTED' | 'LIKED' | 'UPVOTED' | 'DOWNVOTED'
+export type ActivityEventType =
+  | 'POSTED'
+  | 'VOTED'
+  | 'COMMENTED'
+  | 'QUOTED'
+  | 'LIKED'
+  | 'UPVOTED'
+  | 'DOWNVOTED';
 
-export type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible'
+export type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
 
-export type NotificationType = 'FOLLOW' | 'UPVOTED' | 'DOWNVOTED' | 'COMMENTED' | 'QUOTED'
+export type NotificationType = 'FOLLOW' | 'UPVOTED' | 'DOWNVOTED' | 'COMMENTED' | 'QUOTED';
 
-export type VoteType = 'up' | 'down'
+export type VoteType = 'up' | 'down';
 
-export type MessageType = 'USER' | 'POST'
+export type MessageType = 'USER' | 'POST';
 
-export type RosterStatus = 'pending' | 'accepted' | 'declined' | 'blocked'
+export type RosterStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 
-export type AccountStatus = 'active' | 'disabled'
+export type AccountStatus = 'active' | 'disabled';
 
-export type VoteOption = '#true' | '#agree' | '#like' | '#false' | '#disagree' | '#dislike'
+export type VoteOption = '#true' | '#agree' | '#like' | '#false' | '#disagree' | '#dislike';
 
-export type GroupPrivacy = 'public' | 'private' | 'restricted'
+export type GroupPrivacy = 'public' | 'private' | 'restricted';
 
 // ============================================================================
 // User Types
 // ============================================================================
 
 export interface ReputationMetrics {
-  totalInvitesSent: number
-  totalInvitesAccepted: number
-  totalInvitesDeclined: number
-  averageInviteeReputation: number
-  totalReportsReceived: number
-  totalReportsResolved: number
-  totalUpvotes: number
-  totalDownvotes: number
-  totalPosts: number
-  totalComments: number
+  totalInvitesSent: number;
+  totalInvitesAccepted: number;
+  totalInvitesDeclined: number;
+  averageInviteeReputation: number;
+  totalReportsReceived: number;
+  totalReportsResolved: number;
+  totalUpvotes: number;
+  totalDownvotes: number;
+  totalPosts: number;
+  totalComments: number;
 }
 
 export interface Reputation {
-  _id: string
-  userId?: string
-  overallScore: number
-  inviteNetworkScore: number
-  conductScore: number
-  activityScore: number
-  metrics: ReputationMetrics
-  lastCalculated: Date | string
+  _id: string;
+  userId?: string;
+  overallScore: number;
+  inviteNetworkScore: number;
+  conductScore: number;
+  activityScore: number;
+  metrics: ReputationMetrics;
+  lastCalculated: Date | string;
 }
 
 export interface User {
-  _id: string
-  name?: string
-  username: string
-  email: string
-  password?: string
-  avatar?: string
-  contributorBadge?: boolean
-  admin?: boolean
-  _followingId?: string[]
-  _followersId?: string[]
-  upvotes?: number
-  downvotes?: number
-  accountStatus?: AccountStatus
-  botReports?: number
-  lastBotReportDate?: Date | string
-  joined?: Date | string
-  reputation?: Reputation
-  createdAt?: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  name?: string;
+  username: string;
+  email: string;
+  password?: string;
+  avatar?: string;
+  contributorBadge?: boolean;
+  admin?: boolean;
+  _followingId?: string[];
+  _followersId?: string[];
+  upvotes?: number;
+  downvotes?: number;
+  accountStatus?: AccountStatus;
+  botReports?: number;
+  lastBotReportDate?: Date | string;
+  joined?: Date | string;
+  reputation?: Reputation;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 // ============================================================================
@@ -81,24 +88,24 @@ export interface User {
 // ============================================================================
 
 export interface Post {
-  _id: string
-  userId: string
-  groupId?: string
-  title?: string
-  text?: string
-  url?: string
-  citationUrl?: string
-  upvotes?: number
-  downvotes?: number
-  approvedBy?: string[]
-  rejectedBy?: string[]
-  reportedBy?: string[]
-  bookmarkedBy?: string[]
-  enable_voting?: boolean
-  featuredSlot?: number
-  deleted?: boolean
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  userId: string;
+  groupId?: string;
+  title?: string;
+  text?: string;
+  url?: string;
+  citationUrl?: string;
+  upvotes?: number;
+  downvotes?: number;
+  approvedBy?: string[];
+  rejectedBy?: string[];
+  reportedBy?: string[];
+  bookmarkedBy?: string[];
+  enable_voting?: boolean;
+  featuredSlot?: number;
+  deleted?: boolean;
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 // ============================================================================
@@ -106,16 +113,16 @@ export interface Post {
 // ============================================================================
 
 export interface Comment {
-  _id: string
-  userId: string
-  postId: string
-  content: string
-  startWordIndex?: number
-  endWordIndex?: number
-  url?: string
-  reaction?: string
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  userId: string;
+  postId: string;
+  content: string;
+  startWordIndex?: number;
+  endWordIndex?: number;
+  url?: string;
+  reaction?: string;
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 // ============================================================================
@@ -123,24 +130,24 @@ export interface Comment {
 // ============================================================================
 
 export interface Vote {
-  _id: string
-  userId: string
-  postId: string
-  type: VoteType
-  startWordIndex?: number
-  endWordIndex?: number
-  tags?: string[]
-  content?: string
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  userId: string;
+  postId: string;
+  type: VoteType;
+  startWordIndex?: number;
+  endWordIndex?: number;
+  tags?: string[];
+  content?: string;
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 export interface VoteLog {
-  _id: string
-  postId: string
-  userId: string
-  type: VoteType
-  created: Date | string
+  _id: string;
+  postId: string;
+  userId: string;
+  type: VoteType;
+  created: Date | string;
 }
 
 // ============================================================================
@@ -148,14 +155,14 @@ export interface VoteLog {
 // ============================================================================
 
 export interface Quote {
-  _id: string
-  userId: string
-  postId: string
-  quote: string
-  startWordIndex?: number
-  endWordIndex?: number
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  userId: string;
+  postId: string;
+  quote: string;
+  startWordIndex?: number;
+  endWordIndex?: number;
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 // ============================================================================
@@ -163,49 +170,49 @@ export interface Quote {
 // ============================================================================
 
 export interface Message {
-  _id: string
-  messageRoomId: string
-  userId: string
-  userName?: string
-  title?: string
-  text?: string
-  type?: string
-  mutation_type?: string
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  messageRoomId: string;
+  userId: string;
+  userName?: string;
+  title?: string;
+  text?: string;
+  type?: string;
+  mutation_type?: string;
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 export interface MessageRoom {
-  _id: string
-  users?: string[]
-  postId?: string
-  messageType?: MessageType
-  title?: string
-  avatar?: string
-  lastMessageTime?: Date | string
-  lastActivity?: Date | string
-  unreadMessages?: number
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  users?: string[];
+  postId?: string;
+  messageType?: MessageType;
+  title?: string;
+  avatar?: string;
+  lastMessageTime?: Date | string;
+  lastActivity?: Date | string;
+  unreadMessages?: number;
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 /** @deprecated Use Message instead. Alias for backwards compatibility. */
-export type Messages = Message
+export type Messages = Message;
 
 // ============================================================================
 // Notification Types
 // ============================================================================
 
 export interface Notification {
-  _id: string
-  userId: string
-  userIdBy: string
-  label: string
-  status: string
-  notificationType: NotificationType
-  postId?: string
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  userId: string;
+  userIdBy: string;
+  label: string;
+  status: string;
+  notificationType: NotificationType;
+  postId?: string;
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 // ============================================================================
@@ -213,15 +220,15 @@ export interface Notification {
 // ============================================================================
 
 export interface Activity {
-  _id: string
-  userId: string
-  postId?: string
-  activityType: ActivityEventType
-  content?: string
-  voteId?: string
-  commentId?: string
-  quoteId?: string
-  created: Date | string
+  _id: string;
+  userId: string;
+  postId?: string;
+  activityType: ActivityEventType;
+  content?: string;
+  voteId?: string;
+  commentId?: string;
+  quoteId?: string;
+  created: Date | string;
 }
 
 // ============================================================================
@@ -229,16 +236,16 @@ export interface Activity {
 // ============================================================================
 
 export interface Group {
-  _id: string
-  creatorId: string
-  adminIds?: string[]
-  allowedUserIds?: string[]
-  privacy: GroupPrivacy
-  title: string
-  url?: string
-  description?: string
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  creatorId: string;
+  adminIds?: string[];
+  allowedUserIds?: string[];
+  privacy: GroupPrivacy;
+  title: string;
+  url?: string;
+  description?: string;
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 // ============================================================================
@@ -246,13 +253,13 @@ export interface Group {
 // ============================================================================
 
 export interface Roster {
-  _id: string
-  userId: string
-  buddyId: string
-  status: RosterStatus
-  initiatedBy?: string
-  created: Date | string
-  updated?: Date | string
+  _id: string;
+  userId: string;
+  buddyId: string;
+  status: RosterStatus;
+  initiatedBy?: string;
+  created: Date | string;
+  updated?: Date | string;
 }
 
 // ============================================================================
@@ -260,12 +267,12 @@ export interface Roster {
 // ============================================================================
 
 export interface Presence {
-  _id: string
-  userId: string
-  status: PresenceStatus
-  statusMessage?: string
-  lastHeartbeat?: Date | string | number
-  lastSeen?: Date | string | number
+  _id: string;
+  userId: string;
+  status: PresenceStatus;
+  statusMessage?: string;
+  lastHeartbeat?: Date | string | number;
+  lastSeen?: Date | string | number;
 }
 
 // ============================================================================
@@ -273,10 +280,10 @@ export interface Presence {
 // ============================================================================
 
 export interface Typing {
-  messageRoomId: string
-  userId: string
-  isTyping: boolean
-  timestamp: Date | string | number
+  messageRoomId: string;
+  userId: string;
+  isTyping: boolean;
+  timestamp: Date | string | number;
 }
 
 // ============================================================================
@@ -284,12 +291,12 @@ export interface Typing {
 // ============================================================================
 
 export interface Reaction {
-  _id: string
-  userId: string
-  actionId?: string
-  messageId?: string
-  emoji: string
-  created?: Date | string
+  _id: string;
+  userId: string;
+  actionId?: string;
+  messageId?: string;
+  emoji: string;
+  created?: Date | string;
 }
 
 // ============================================================================
@@ -297,29 +304,29 @@ export interface Reaction {
 // ============================================================================
 
 export interface UserInvite {
-  _id: string
-  email: string
-  invitedBy?: string
-  code?: string
-  status?: string
-  created: Date | string
-  expiresAt?: Date | string
+  _id: string;
+  email: string;
+  invitedBy?: string;
+  code?: string;
+  status?: string;
+  created: Date | string;
+  expiresAt?: Date | string;
 }
 
 export interface UserReport {
-  _id: string
-  reportedUserId: string
-  reporterId: string
-  reason: string
-  status?: string
-  created: Date | string
+  _id: string;
+  reportedUserId: string;
+  reporterId: string;
+  reason: string;
+  status?: string;
+  created: Date | string;
 }
 
 export interface BotReport {
-  _id: string
-  userId: string
-  reporterId: string
-  created: Date | string
+  _id: string;
+  userId: string;
+  reporterId: string;
+  created: Date | string;
 }
 
 // ============================================================================
@@ -327,13 +334,13 @@ export interface BotReport {
 // ============================================================================
 
 export interface Collection {
-  _id: string
-  userId: string
-  name: string
-  description?: string
-  postIds?: string[]
-  created: Date | string
-  updatedAt?: Date | string
+  _id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  postIds?: string[];
+  created: Date | string;
+  updatedAt?: Date | string;
 }
 
 // ============================================================================
@@ -341,27 +348,27 @@ export interface Collection {
 // ============================================================================
 
 export interface Domain {
-  _id: string
-  key: string
-  name?: string
-  created?: Date | string
+  _id: string;
+  key: string;
+  name?: string;
+  created?: Date | string;
 }
 
 export interface Creator {
-  _id: string
-  name: string
-  avatar?: string
-  bio?: string
-  created?: Date | string
+  _id: string;
+  name: string;
+  avatar?: string;
+  bio?: string;
+  created?: Date | string;
 }
 
 export interface Content {
-  _id: string
-  title: string
-  creatorId: string
-  domainId?: string
-  url?: string
-  created: Date | string
+  _id: string;
+  title: string;
+  creatorId: string;
+  domainId?: string;
+  url?: string;
+  created: Date | string;
 }
 
 // ============================================================================
@@ -369,14 +376,14 @@ export interface Content {
 // ============================================================================
 
 export interface Pagination {
-  total_count: number
-  limit: number
-  offset: number
+  total_count: number;
+  limit: number;
+  offset: number;
 }
 
 export interface PaginatedResult<T> {
-  entities: T[]
-  pagination: Pagination
+  entities: T[];
+  pagination: Pagination;
 }
 
 // ============================================================================
@@ -384,96 +391,96 @@ export interface PaginatedResult<T> {
 // ============================================================================
 
 export interface PostInput {
-  userId: string
-  groupId?: string
-  title?: string
-  text?: string
-  url?: string
-  citationUrl?: string
-  enable_voting?: boolean
+  userId: string;
+  groupId?: string;
+  title?: string;
+  text?: string;
+  url?: string;
+  citationUrl?: string;
+  enable_voting?: boolean;
 }
 
 export interface CommentInput {
-  userId: string
-  postId: string
-  content: string
-  startWordIndex?: number
-  endWordIndex?: number
-  url?: string
-  reaction?: string
+  userId: string;
+  postId: string;
+  content: string;
+  startWordIndex?: number;
+  endWordIndex?: number;
+  url?: string;
+  reaction?: string;
 }
 
 export interface VoteInput {
-  userId: string
-  postId: string
-  type: VoteType
-  startWordIndex?: number
-  endWordIndex?: number
-  tags?: string[]
-  content?: string
+  userId: string;
+  postId: string;
+  type: VoteType;
+  startWordIndex?: number;
+  endWordIndex?: number;
+  tags?: string[];
+  content?: string;
 }
 
 export interface QuoteInput {
-  userId: string
-  postId: string
-  quote: string
-  startWordIndex?: number
-  endWordIndex?: number
+  userId: string;
+  postId: string;
+  quote: string;
+  startWordIndex?: number;
+  endWordIndex?: number;
 }
 
 export interface MessageInput {
-  messageRoomId?: string
-  userId: string
-  userName?: string
-  title?: string
-  text?: string
-  type?: string
-  postId?: string
+  messageRoomId?: string;
+  userId: string;
+  userName?: string;
+  title?: string;
+  text?: string;
+  type?: string;
+  postId?: string;
 }
 
 export interface ReactionInput {
-  userId: string
-  actionId?: string
-  messageId?: string
-  emoji: string
+  userId: string;
+  actionId?: string;
+  messageId?: string;
+  emoji: string;
 }
 
 export interface GroupInput {
-  creatorId: string
-  adminIds?: string[]
-  allowedUserIds?: string[]
-  privacy: GroupPrivacy
-  title: string
-  url?: string
-  description?: string
+  creatorId: string;
+  adminIds?: string[];
+  allowedUserIds?: string[];
+  privacy: GroupPrivacy;
+  title: string;
+  url?: string;
+  description?: string;
 }
 
 export interface RosterInput {
-  userId: string
-  buddyId: string
-  status?: RosterStatus
+  userId: string;
+  buddyId: string;
+  status?: RosterStatus;
 }
 
 export interface PresenceInput {
-  userId: string
-  status: PresenceStatus
-  statusMessage?: string
+  userId: string;
+  status: PresenceStatus;
+  statusMessage?: string;
 }
 
 export interface TypingInput {
-  messageRoomId: string
-  userId: string
-  isTyping: boolean
+  messageRoomId: string;
+  userId: string;
+  isTyping: boolean;
 }
 
 export interface ReportUserInput {
-  reportedUserId: string
-  reporterId: string
-  reason: string
+  reportedUserId: string;
+  reporterId: string;
+  reason: string;
 }
 
 export interface RequestUserAccessInput {
-  email: string
-  name?: string
-  message?: string
+  email: string;
+  name?: string;
+  message?: string;
 }

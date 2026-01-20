@@ -1,0 +1,65 @@
+// All enums used across the schema
+
+enum AccountStatus {
+  active
+  disabled
+  suspended
+  pending
+}
+
+enum VoteType {
+  upvote
+  downvote
+}
+
+enum RosterStatus {
+  pending
+  accepted
+  blocked
+}
+
+enum MessageType {
+  USER
+  POST
+  SYSTEM
+}
+
+enum NotificationType {
+  FOLLOW
+  VOTE
+  COMMENT
+  QUOTE
+  MESSAGE
+  MENTION
+  SYSTEM
+}
+
+enum ActivityEventType {
+  POSTED
+  VOTED
+  COMMENTED
+  QUOTED
+  LIKED
+  UPVOTED
+  DOWNVOTED
+}
+
+enum GroupPrivacy {
+  public
+  private
+  invite_only
+}
+
+enum InviteStatus {
+  pending
+  accepted
+  declined
+  expired
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  resolved
+  dismissed
+}

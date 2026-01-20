@@ -3,9 +3,9 @@
  * Type extensions for Express Request and Response objects
  */
 
-import type { Request, Response } from 'express'
-import type * as Common from '~/types/common'
-import type * as Mongoose from '~/types/mongoose'
+import type { Request, Response } from 'express';
+import type * as Common from '~/types/common';
+import type * as Mongoose from '~/types/mongoose';
 
 // ============================================================================
 // Extended Request Interface
@@ -19,49 +19,49 @@ export interface AuthenticatedRequest<
   ResBody = unknown,
   ReqBody = unknown,
   ReqQuery = Record<string, string | undefined>,
-  Locals extends Record<string, unknown> = Record<string, unknown>
+  Locals extends Record<string, unknown> = Record<string, unknown>,
 > extends Request<P, ResBody, ReqBody, ReqQuery, Locals> {
   /** Currently authenticated user */
-  user?: Common.User
+  user?: Common.User;
   /** User document from database (Mongoose) */
-  userDoc?: Mongoose.UserDocument
+  userDoc?: Mongoose.UserDocument;
   /** JWT token */
-  token?: string
+  token?: string;
   /** Request ID for tracing/logging */
-  requestId?: string
+  requestId?: string;
   /** Session data */
-  session?: SessionData
+  session?: SessionData;
   /** File upload data */
-  file?: MulterFile
-  files?: MulterFile[]
+  file?: MulterFile;
+  files?: MulterFile[];
 }
 
 /**
  * Session data structure
  */
 export interface SessionData {
-  userId?: string
-  username?: string
-  email?: string
-  isAuthenticated?: boolean
-  createdAt?: Date
-  expiresAt?: Date
-  [key: string]: string | boolean | Date | undefined
+  userId?: string;
+  username?: string;
+  email?: string;
+  isAuthenticated?: boolean;
+  createdAt?: Date;
+  expiresAt?: Date;
+  [key: string]: string | boolean | Date | undefined;
 }
 
 /**
  * Multer file upload interface
  */
 export interface MulterFile {
-  fieldname: string
-  originalname: string
-  encoding: string
-  mimetype: string
-  size: number
-  destination: string
-  filename: string
-  path: string
-  buffer?: Buffer
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer?: Buffer;
 }
 
 // ============================================================================
@@ -73,26 +73,22 @@ export interface MulterFile {
  */
 export interface ExtendedResponse<
   ResBody = unknown,
-  Locals extends Record<string, unknown> = Record<string, unknown>
+  Locals extends Record<string, unknown> = Record<string, unknown>,
 > extends Response<ResBody, Locals> {
   /**
    * Send a success response
    */
-  success<T = unknown>(data: T, message?: string, statusCode?: number): this
-  
+  success<T = unknown>(data: T, message?: string, statusCode?: number): this;
+
   /**
    * Send an error response
    */
-  error(message: string, statusCode?: number, details?: unknown): this
-  
+  error(message: string, statusCode?: number, details?: unknown): this;
+
   /**
    * Send a paginated response
    */
-  paginated<T = unknown>(
-    data: T[],
-    pagination: Common.Pagination,
-    message?: string
-  ): this
+  paginated<T = unknown>(data: T[], pagination: Common.Pagination, message?: string): this;
 }
 
 // ============================================================================
@@ -106,12 +102,12 @@ export type AuthRequestHandler<
   TParams = Record<string, string>,
   TResBody = unknown,
   TReqBody = unknown,
-  TQuery = Record<string, string | undefined>
+  TQuery = Record<string, string | undefined>,
 > = (
   req: AuthenticatedRequest<TParams, TResBody, TReqBody, TQuery>,
   res: ExtendedResponse,
   next: NextFunction
-) => void | Promise<void>
+) => void | Promise<void>;
 
 /**
  * Express middleware function type
@@ -120,7 +116,7 @@ export type MiddlewareFunction = (
   req: AuthenticatedRequest,
   res: ExtendedResponse,
   next: NextFunction
-) => void | Promise<void>
+) => void | Promise<void>;
 
 /**
  * Express error handler
@@ -130,12 +126,12 @@ export type ErrorHandler = (
   req: AuthenticatedRequest,
   res: ExtendedResponse,
   next: NextFunction
-) => void | Promise<void>
+) => void | Promise<void>;
 
 /**
  * Next function type
  */
-export type NextFunction = (err?: unknown) => void
+export type NextFunction = (err?: unknown) => void;
 
 // ============================================================================
 // Route Parameter Types
@@ -145,16 +141,16 @@ export type NextFunction = (err?: unknown) => void
  * Common route parameters
  */
 export interface RouteParams {
-  id?: string
-  userId?: string
-  postId?: string
-  commentId?: string
-  voteId?: string
-  quoteId?: string
-  messageId?: string
-  messageRoomId?: string
-  notificationId?: string
-  groupId?: string
+  id?: string;
+  userId?: string;
+  postId?: string;
+  commentId?: string;
+  voteId?: string;
+  quoteId?: string;
+  messageId?: string;
+  messageRoomId?: string;
+  notificationId?: string;
+  groupId?: string;
 }
 
 // ============================================================================
@@ -166,32 +162,38 @@ export interface RouteParams {
  */
 export interface QueryParams {
   // Pagination
-  limit?: string
-  offset?: string
-  page?: string
-  pageSize?: string
-  sort?: string
-  order?: 'asc' | 'desc'
+  limit?: string;
+  offset?: string;
+  page?: string;
+  pageSize?: string;
+  sort?: string;
+  order?: 'asc' | 'desc';
   // Search
-  q?: string
-  query?: string
-  searchKey?: string
+  q?: string;
+  query?: string;
+  searchKey?: string;
   // Filters
-  startDateRange?: string
-  endDateRange?: string
-  userId?: string
-  postId?: string
-  groupId?: string
-  status?: string
-  type?: string
+  startDateRange?: string;
+  endDateRange?: string;
+  userId?: string;
+  postId?: string;
+  groupId?: string;
+  status?: string;
+  type?: string;
 }
 
 /** @deprecated Use QueryParams instead */
-export type PaginationQuery = Pick<QueryParams, 'limit' | 'offset' | 'page' | 'pageSize' | 'sort' | 'order'>
+export type PaginationQuery = Pick<
+  QueryParams,
+  'limit' | 'offset' | 'page' | 'pageSize' | 'sort' | 'order'
+>;
 /** @deprecated Use QueryParams instead */
-export type SearchQuery = Pick<QueryParams, 'limit' | 'offset' | 'page' | 'pageSize' | 'sort' | 'order' | 'q' | 'query' | 'searchKey'>
+export type SearchQuery = Pick<
+  QueryParams,
+  'limit' | 'offset' | 'page' | 'pageSize' | 'sort' | 'order' | 'q' | 'query' | 'searchKey'
+>;
 /** @deprecated Use QueryParams instead */
-export type FilterQuery = QueryParams
+export type FilterQuery = QueryParams;
 
 // ============================================================================
 // Response Body Types
@@ -201,35 +203,35 @@ export type FilterQuery = QueryParams
  * Standard API success response
  */
 export interface SuccessResponse<T = unknown> {
-  success: true
-  data: T
-  message?: string
-  timestamp: string
+  success: true;
+  data: T;
+  message?: string;
+  timestamp: string;
 }
 
 /**
  * Standard API error response
  */
 export interface ErrorResponse {
-  success: false
+  success: false;
   error: {
-    message: string
-    code?: string
-    statusCode: number
-    details?: unknown
-  }
-  timestamp: string
+    message: string;
+    code?: string;
+    statusCode: number;
+    details?: unknown;
+  };
+  timestamp: string;
 }
 
 /**
  * Paginated API response
  */
 export interface PaginatedResponse<T = unknown> {
-  success: true
-  data: T[]
-  pagination: Common.Pagination
-  message?: string
-  timestamp: string
+  success: true;
+  data: T[];
+  pagination: Common.Pagination;
+  message?: string;
+  timestamp: string;
 }
 
 // ============================================================================
@@ -240,53 +242,53 @@ export interface PaginatedResponse<T = unknown> {
  * JWT payload structure
  */
 export interface JWTPayload {
-  userId: string
-  username: string
-  email: string
-  admin?: boolean
-  iat?: number
-  exp?: number
+  userId: string;
+  username: string;
+  email: string;
+  admin?: boolean;
+  iat?: number;
+  exp?: number;
 }
 
 /**
  * Login request body
  */
 export interface LoginRequest {
-  username: string
-  password: string
-  tos?: boolean
-  coc?: boolean
+  username: string;
+  password: string;
+  tos?: boolean;
+  coc?: boolean;
 }
 
 /**
  * Login response body
  */
 export interface LoginResponse {
-  user: Common.User
-  token: string
-  expiresIn: number
+  user: Common.User;
+  token: string;
+  expiresIn: number;
 }
 
 /**
  * Signup request body
  */
 export interface SignupRequest {
-  username: string
-  email: string
-  password: string
-  name?: string
-  inviteCode?: string
-  tos: boolean
-  coc: boolean
+  username: string;
+  email: string;
+  password: string;
+  name?: string;
+  inviteCode?: string;
+  tos: boolean;
+  coc: boolean;
 }
 
 /**
  * Signup response body
  */
 export interface SignupResponse {
-  user: Common.User
-  token: string
-  expiresIn: number
+  user: Common.User;
+  token: string;
+  expiresIn: number;
 }
 
 // ============================================================================
@@ -297,17 +299,17 @@ export interface SignupResponse {
  * Validation error details
  */
 export interface ValidationError {
-  field: string
-  message: string
-  value?: unknown
+  field: string;
+  message: string;
+  value?: unknown;
 }
 
 /**
  * Validation result
  */
 export interface ValidationResult {
-  isValid: boolean
-  errors: ValidationError[]
+  isValid: boolean;
+  errors: ValidationError[];
 }
 
 // ============================================================================
@@ -317,17 +319,15 @@ export interface ValidationResult {
 /**
  * Type guard to check if request is authenticated
  */
-export function isAuthenticatedRequest(
-  req: Request
-): req is AuthenticatedRequest {
-  return 'user' in req && req.user !== undefined
+export function isAuthenticatedRequest(req: Request): req is AuthenticatedRequest {
+  return 'user' in req && req.user !== undefined;
 }
 
 /**
  * Type guard to check if user is admin
  */
 export function isAdminUser(user: Common.User | undefined): user is Common.User & { admin: true } {
-  return user !== undefined && user.admin === true
+  return user !== undefined && user.admin === true;
 }
 
 // ============================================================================
@@ -338,10 +338,10 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
-      user?: Common.User
-      userDoc?: Mongoose.UserDocument
-      token?: string
-      requestId?: string
+      user?: Common.User;
+      userDoc?: Mongoose.UserDocument;
+      token?: string;
+      requestId?: string;
     }
   }
 }

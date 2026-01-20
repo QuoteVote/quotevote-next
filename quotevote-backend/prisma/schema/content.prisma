@@ -1,0 +1,62 @@
+// Content models: Content, Creator, Domain, Collection
+
+model Domain {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  key     String   @unique
+  name    String?
+  created DateTime @default(now())
+
+  // Relations
+  contents Content[]
+
+  @@map("domains")
+}
+
+model Creator {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  avatar  String?
+  bio     String?
+  created DateTime @default(now())
+
+  // Relations
+  contents Content[]
+
+  @@index([name])
+  @@map("creators")
+}
+
+model Content {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  text         String
+  creatorId    String   @db.ObjectId
+  coCreatorIds String[] @db.ObjectId
+  domainId     String?  @db.ObjectId
+  url          String?
+  media        Json?    @default("[]")
+  score        Int      @default(0)
+  created      DateTime @default(now())
+
+  // Relations
+  creator Creator @relation(fields: [creatorId], references: [id])
+  domain  Domain? @relation(fields: [domainId], references: [id])
+
+  @@index([creatorId])
+  @@index([domainId])
+  @@map("contents")
+}
+
+model Collection {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  creatorId   String   @map("creatorId") @db.ObjectId
+  title       String
+  description String?
+  contentIds  String[] @db.ObjectId
+  options     Json?
+  created     DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([creatorId])
+  @@map("collections")
+}
