@@ -46,7 +46,7 @@ export const createGuestUser = async (req: Request, res: Response): Promise<void
 
     try {
         const randomUser = crypto.randomBytes(20).toString('hex');
-        const hashPassword = await generateHashPassword(randomUser);
+        // const hashPassword = await generateHashPassword(randomUser); // Unused
 
         const newUser = await User.create({
             name: 'guest',
@@ -309,7 +309,8 @@ export const refresh = async (req: Request, res: Response): Promise<Response | v
             accessToken,
             refreshToken, // Sending same or could rotate
         });
-    } catch (err) {
+    } catch (err: unknown) {
+        // Log error if needed, or just suppress
         return res.status(401).json({ message: 'Invalid or expired refresh token.' });
     }
 };
@@ -329,7 +330,8 @@ export const verifyToken = async (authToken: string): Promise<JWTPayload> => {
         const decoded = jwt.verify(token, safeSecret) as JWTPayload;
         return decoded;
     } catch (err: any) {
-        logger.error('Token verification failed', { error: err.message });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        logger.error('Token verification failed', { error: (err as any).message });
 
         if (err.message === 'invalid issuer') {
             throw new GraphQLError('Token issued cannot be used in this endpoint.', {

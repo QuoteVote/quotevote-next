@@ -1,5 +1,4 @@
 import request from 'supertest';
-import mongoose from 'mongoose';
 import express from 'express';
 import * as auth from '../../app/data/utils/authentication';
 import User from '../../app/data/models/User';

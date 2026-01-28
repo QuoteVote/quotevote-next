@@ -110,9 +110,9 @@ async function startServer() {
           try {
             const decoded = await auth.verifyToken(token);
             if (decoded && typeof decoded === 'object' && decoded.userId) {
-              user = (await User.findById(decoded.userId)) as any;
+              user = (await User.findById(decoded.userId)) as typeof User.prototype;
             }
-          } catch (err) {
+          } catch {
             // Token invalid or expired, proceed as unauthenticated
           }
         }
