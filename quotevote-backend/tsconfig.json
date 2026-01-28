@@ -5,7 +5,9 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["app/*"]
+      "~/*": [
+        "app/*"
+      ]
     },
     "outDir": "dist",
     "rootDir": ".",
@@ -15,7 +17,10 @@
     "strict": false,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["node", "jest"]
+    "types": [
+      "node",
+      "jest"
+    ]
   },
   "include": [
     "app/**/*.ts",
@@ -25,5 +30,8 @@
     "scripts/**/*.ts",
     "jest.setup.ts"
   ],
-  "exclude": ["dist", "node_modules"]
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }
