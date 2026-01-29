@@ -38,7 +38,7 @@ export function AuthNavbar({ color, brandText = 'QuoteVote' }: AuthNavbarProps) 
   const navigationItems: NavItem[] = [
     {
       name: 'Register',
-      href: '/auth/register-page',
+      href: '/auth/signup',
       icon: UserPlus,
       showInMobile: true,
     },
