@@ -117,7 +117,7 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
 
   // Get current URL path to pass as redirect parameter (including hash)
   const currentPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
-  const loginUrl = `/auth/login?redirect=${encodeURIComponent(currentPath)}`;
+  const loginUrl = `/login?redirect=${encodeURIComponent(currentPath)}`;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>

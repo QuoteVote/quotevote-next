@@ -275,7 +275,7 @@ describe('SettingsContent', () => {
     it('renders Forgot Password link', () => {
       renderComponent()
       const link = screen.getByText(/Forgot Password\?/i)
-      expect(link).toHaveAttribute('href', '/auth/forgot')
+      expect(link).toHaveAttribute('href', '/forgot-password')
     })
   })
 
@@ -302,7 +302,7 @@ describe('SettingsContent', () => {
       await user.click(logoutButton)
 
       expect(setOpen).toHaveBeenCalledWith(false)
-      expect(mockPush).toHaveBeenCalledWith('/auth/login')
+      expect(mockPush).toHaveBeenCalledWith('/login')
     })
   })
 

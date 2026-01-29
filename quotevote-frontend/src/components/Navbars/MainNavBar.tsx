@@ -167,7 +167,7 @@ export function MainNavBar({}: MainNavBarProps) {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => router.push('/auth/login')}
+                onClick={() => router.push('/login')}
                 className="border-2 border-[#2AE6B2] text-[#0A2342] font-semibold px-6 py-2 hover:bg-[rgba(14,17,22,0.06)] hover:-translate-y-0.5 transition-all"
               >
                 Login
@@ -263,7 +263,7 @@ export function MainNavBar({}: MainNavBarProps) {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    router.push('/auth/login');
+                    router.push('/login');
                     closeDrawer();
                   }}
                   className="w-full justify-start border-2 border-[#2AE6B2] text-[#0A2342] font-semibold hover:bg-[rgba(14,17,22,0.06)] transition-all"

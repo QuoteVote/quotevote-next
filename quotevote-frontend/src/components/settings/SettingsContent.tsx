@@ -225,7 +225,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                   )}
                 />
                 <a
-                  href="/auth/forgot"
+                  href="/forgot-password"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-2 block text-right text-sm text-blue-500 hover:underline"
@@ -259,7 +259,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                 if (setOpen) setOpen(false)
                 localStorage.removeItem('token')
                 useAppStore.getState().logout()
-                router.push('/auth/login')
+                router.push('/login')
               }}
               disabled={loading}
             >

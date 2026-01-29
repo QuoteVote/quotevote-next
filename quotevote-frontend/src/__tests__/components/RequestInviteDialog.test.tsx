@@ -362,7 +362,7 @@ describe('RequestInviteDialog', () => {
     const loginLink = screen.getByRole('link', { name: /login/i });
     expect(loginLink).toHaveAttribute(
       'href',
-      expect.stringContaining('/auth/login?redirect=')
+      expect.stringContaining('/login?redirect=')
     );
   });
 
