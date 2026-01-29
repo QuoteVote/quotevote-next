@@ -122,7 +122,7 @@ export function Eyebrow() {
         onClose={closeOnboardingCompletionModal}
         email={watch("email")}
       />
-      <div className="bg-white z-40 shadow-sm">
+      <div className="bg-white z-40 shadow-sm border-b border-gray-200">
         <div className="mx-auto px-6 py-3 w-full flex flex-col sm:flex-row items-start justify-between gap-3">
           <div className="flex flex-col gap-1.5 grow w-full">
             <Input
@@ -135,12 +135,12 @@ export function Eyebrow() {
               aria-invalid={!!errors.email}
             />
             {errors.email && (
-              <div className="min-h-4 text-[13px] text-red-500 hidden sm:block">
+              <div className="min-h-4 text-[13px] hidden sm:block text-red-500">
                 <span>{errors.email.message}</span>
               </div>
             )}
             {feedback && (
-              <div className="min-h-4 text-[13px] text-primary hidden sm:block">
+              <div className="min-h-4 text-[13px] hidden sm:block text-primary">
                 <span>{feedback}</span>
               </div>
             )}
@@ -156,12 +156,12 @@ export function Eyebrow() {
           </Button>
 
           {errors.email && (
-            <div className="min-h-4 text-[13px] text-red-500 block sm:hidden">
+            <div className="min-h-4 text-[13px] block sm:hidden text-red-500">
               <span>{errors.email.message}</span>
             </div>
           )}
           {feedback && (
-            <div className="min-h-4 text-[13px] text-primary block sm:hidden">
+            <div className="min-h-4 text-[13px] block sm:hidden text-primary">
               <span>{feedback}</span>
             </div>
           )}

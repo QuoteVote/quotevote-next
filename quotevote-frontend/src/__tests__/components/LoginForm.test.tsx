@@ -16,9 +16,9 @@ describe('LoginForm Component', () => {
     it('renders all form fields', () => {
         render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByLabelText(/email\/username/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
 
     it('renders Terms of Service checkbox and link', () => {
@@ -43,9 +43,9 @@ describe('LoginForm Component', () => {
         const user = userEvent.setup();
         render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        const usernameInput = screen.getByLabelText(/email\/username/i);
+        const usernameInput = screen.getByLabelText(/email or username/i);
         const passwordInput = screen.getByLabelText(/^password$/i);
-        const submitButton = screen.getByRole('button', { name: /log in/i });
+        const submitButton = screen.getByRole('button', { name: /sign in/i });
 
         await user.type(usernameInput, 'testuser');
         await user.type(passwordInput, 'password123');
@@ -58,7 +58,7 @@ describe('LoginForm Component', () => {
         const user = userEvent.setup();
         render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        const usernameInput = screen.getByLabelText(/email\/username/i);
+        const usernameInput = screen.getByLabelText(/email or username/i);
         const passwordInput = screen.getByLabelText(/^password$/i);
 
         await user.type(usernameInput, 'testuser');
@@ -71,7 +71,7 @@ describe('LoginForm Component', () => {
         await user.click(tosCheckbox);
         await user.click(cocCheckbox);
 
-        const submitButton = screen.getByRole('button', { name: /log in/i });
+        const submitButton = screen.getByRole('button', { name: /sign in/i });
 
         // Wait for button to be enabled
         await waitFor(() => {
@@ -98,7 +98,7 @@ describe('LoginForm Component', () => {
         const errorMessage = 'Invalid credentials';
         render(<LoginForm onSubmit={mockOnSubmit} loading={false} loginError={errorMessage} />);
 
-        expect(screen.getByText(errorMessage)).toBeInTheDocument();
+        expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
     });
 
     it('displays login error from error object', () => {
@@ -106,31 +106,31 @@ describe('LoginForm Component', () => {
         const loginError = { data: { message: errorMessage } };
         render(<LoginForm onSubmit={mockOnSubmit} loading={false} loginError={loginError} />);
 
-        expect(screen.getByText(errorMessage)).toBeInTheDocument();
+        expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
     });
 
     it('disables all inputs when loading', () => {
         render(<LoginForm onSubmit={mockOnSubmit} loading={true} />);
 
-        const usernameInput = screen.getByLabelText(/email\/username/i);
+        const usernameInput = screen.getByLabelText(/email or username/i);
         const passwordInput = screen.getByLabelText(/^password$/i);
-        const submitButton = screen.getByRole('button', { name: /logging in/i });
+        const submitButton = screen.getByRole('button', { name: /signing in/i });
 
         expect(usernameInput).toBeDisabled();
         expect(passwordInput).toBeDisabled();
         expect(submitButton).toBeDisabled();
     });
 
-    it('shows "Logging in..." text when loading', () => {
+    it('shows "Signing in..." text when loading', () => {
         render(<LoginForm onSubmit={mockOnSubmit} loading={true} />);
 
-        expect(screen.getByRole('button', { name: /logging in/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /signing in/i })).toBeInTheDocument();
     });
 
-    it('shows "Log in" text when not loading', () => {
+    it('shows "Sign in" text when not loading', () => {
         render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByRole('button', { name: /^log in$/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
     });
 
     describe('Form Validation', () => {
@@ -138,7 +138,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             const passwordInput = screen.getByLabelText(/^password$/i);
             await user.type(usernameInput, 'abc');
             await user.type(passwordInput, 'validpass');
@@ -149,7 +149,7 @@ describe('LoginForm Component', () => {
             await user.click(tosCheckbox);
             await user.click(cocCheckbox);
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             await waitFor(() => {
                 expect(submitButton).not.toBeDisabled();
             });
@@ -158,7 +158,7 @@ describe('LoginForm Component', () => {
 
             await waitFor(() => {
                 expect(
-                    screen.getByText(/username should be more than 4 characters/i)
+                    screen.getAllByText(/username should be more than 4 characters/i)[0]
                 ).toBeInTheDocument();
             });
         });
@@ -167,7 +167,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             const passwordInput = screen.getByLabelText(/^password$/i);
             await user.type(usernameInput, 'a'.repeat(31));
             await user.type(passwordInput, 'validpass');
@@ -178,7 +178,7 @@ describe('LoginForm Component', () => {
             await user.click(tosCheckbox);
             await user.click(cocCheckbox);
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             await waitFor(() => {
                 expect(submitButton).not.toBeDisabled();
             });
@@ -187,7 +187,7 @@ describe('LoginForm Component', () => {
 
             await waitFor(() => {
                 expect(
-                    screen.getByText(/username should be less than thirty characters/i)
+                    screen.getAllByText(/username should be less than thirty characters/i)[0]
                 ).toBeInTheDocument();
             });
         });
@@ -196,7 +196,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             const passwordInput = screen.getByLabelText(/^password$/i);
             await user.type(usernameInput, 'validuser');
             await user.type(passwordInput, 'a');
@@ -207,7 +207,7 @@ describe('LoginForm Component', () => {
             await user.click(tosCheckbox);
             await user.click(cocCheckbox);
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             await waitFor(() => {
                 expect(submitButton).not.toBeDisabled();
             });
@@ -216,7 +216,7 @@ describe('LoginForm Component', () => {
 
             await waitFor(() => {
                 expect(
-                    screen.getByText(/password should be more than 2 characters/i)
+                    screen.getAllByText(/password should be more than 2 characters/i)[0]
                 ).toBeInTheDocument();
             });
         });
@@ -225,7 +225,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             const passwordInput = screen.getByLabelText(/^password$/i);
             await user.type(usernameInput, 'validuser');
             await user.type(passwordInput, 'a'.repeat(21));
@@ -236,7 +236,7 @@ describe('LoginForm Component', () => {
             await user.click(tosCheckbox);
             await user.click(cocCheckbox);
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             await waitFor(() => {
                 expect(submitButton).not.toBeDisabled();
             });
@@ -245,7 +245,7 @@ describe('LoginForm Component', () => {
 
             await waitFor(() => {
                 expect(
-                    screen.getByText(/password should be less than twenty characters/i)
+                    screen.getAllByText(/password should be less than twenty characters/i)[0]
                 ).toBeInTheDocument();
             });
         });
@@ -254,10 +254,10 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             await user.type(usernameInput, 'ab'); // Too short
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             await user.click(submitButton);
 
             await waitFor(() => {
@@ -270,7 +270,7 @@ describe('LoginForm Component', () => {
         it('has proper labels for all inputs', () => {
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            expect(screen.getByLabelText(/email\/username/i)).toBeInTheDocument();
+            expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
             expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
         });
 
@@ -278,7 +278,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             const passwordInput = screen.getByLabelText(/^password$/i);
             await user.type(usernameInput, 'ab');
             await user.type(passwordInput, 'validpass');
@@ -289,7 +289,7 @@ describe('LoginForm Component', () => {
             await user.click(tosCheckbox);
             await user.click(cocCheckbox);
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             await waitFor(() => {
                 expect(submitButton).not.toBeDisabled();
             });
@@ -305,7 +305,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             const passwordInput = screen.getByLabelText(/^password$/i);
             await user.type(usernameInput, 'ab');
             await user.type(passwordInput, 'validpass');
@@ -316,7 +316,7 @@ describe('LoginForm Component', () => {
             await user.click(tosCheckbox);
             await user.click(cocCheckbox);
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             await waitFor(() => {
                 expect(submitButton).not.toBeDisabled();
             });
@@ -324,11 +324,18 @@ describe('LoginForm Component', () => {
             await user.click(submitButton);
 
             await waitFor(() => {
-                const errorMessage = screen.getByText(
+                const errorMessages = screen.getAllByText(
                     /username should be more than 4 characters/i
                 );
-                expect(errorMessage).toBeInTheDocument();
-                expect(errorMessage).toHaveClass('text-destructive');
+                expect(errorMessages.length).toBeGreaterThan(0);
+                // Error message should be visible (either in alert or inline)
+                const visibleError = errorMessages.find(msg => {
+                    const element = msg as HTMLElement;
+                    return element.offsetParent !== null || 
+                           element.closest('[role="alert"]') !== null ||
+                           element.closest('.text-red-600') !== null;
+                });
+                expect(visibleError).toBeDefined();
             });
         });
 
@@ -350,7 +357,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             await user.tab();
             expect(usernameInput).toHaveFocus();
         });
@@ -361,7 +368,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             await user.click(submitButton);
 
             await waitFor(() => {
@@ -373,7 +380,7 @@ describe('LoginForm Component', () => {
             const user = userEvent.setup();
             render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-            const usernameInput = screen.getByLabelText(/email\/username/i);
+            const usernameInput = screen.getByLabelText(/email or username/i);
             const passwordInput = screen.getByLabelText(/^password$/i);
 
             await user.type(usernameInput, 'testuser');
@@ -382,7 +389,7 @@ describe('LoginForm Component', () => {
             const tosCheckbox = document.querySelector('#tos') as HTMLElement;
             await user.click(tosCheckbox);
 
-            const submitButton = screen.getByRole('button', { name: /log in/i });
+            const submitButton = screen.getByRole('button', { name: /sign in/i });
             expect(submitButton).toBeDisabled();
         });
 
@@ -396,7 +403,7 @@ describe('LoginForm Component', () => {
                 />
             );
 
-            expect(screen.getByText('Login failed')).toBeInTheDocument();
+            expect(screen.getAllByText(/login failed/i).length).toBeGreaterThan(0);
         });
     });
 });

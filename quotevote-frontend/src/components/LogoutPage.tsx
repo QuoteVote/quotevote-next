@@ -47,7 +47,7 @@ export function LogoutPage({ className }: LogoutPageProps) {
         await new Promise((resolve) => setTimeout(resolve, 100));
 
         // Redirect to login page
-        router.push('/auth/login');
+        router.push('/login');
       } catch (err) {
         // If there's an error, still try to redirect
         const errorMessage = err instanceof Error 
@@ -60,7 +60,7 @@ export function LogoutPage({ className }: LogoutPageProps) {
         
         // Redirect even on error after a short delay
         setTimeout(() => {
-          router.push('/auth/login');
+          router.push('/login');
         }, 2000);
       }
     };

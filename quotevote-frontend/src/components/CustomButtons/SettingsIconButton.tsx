@@ -35,7 +35,7 @@ export function SettingsIconButton({ fontSize }: SettingsIconButtonProps) {
       client.stop();
       client.resetStore();
     }
-    router.push('/auth/login');
+    router.push('/login');
   };
 
   const handleInviteControlPanel = () => {

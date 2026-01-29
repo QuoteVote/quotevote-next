@@ -162,7 +162,7 @@ describe('Sidebar Component', () => {
       const loginButton = screen.getByText('Login');
       await user.click(loginButton);
 
-      expect(mockPush).toHaveBeenCalledWith('/auth/login');
+      expect(mockPush).toHaveBeenCalledWith('/login');
     });
   });
 
@@ -359,7 +359,7 @@ describe('Sidebar Component', () => {
       expect(storeState.user.data).toEqual({});
 
       // Should navigate to login
-      expect(mockPush).toHaveBeenCalledWith('/auth/login');
+      expect(mockPush).toHaveBeenCalledWith('/login');
     });
   });
 

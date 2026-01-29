@@ -24,13 +24,13 @@ describe('Login Component', () => {
     it('renders login component with header', () => {
         render(<Login onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByText('Login')).toBeInTheDocument();
+        expect(screen.getByText('Welcome back')).toBeInTheDocument();
     });
 
     it('renders username/email input field', () => {
         render(<Login onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByLabelText(/email\/username/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
     });
 
     it('renders password input field', () => {
@@ -42,7 +42,7 @@ describe('Login Component', () => {
     it('renders submit button', () => {
         render(<Login onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
 
     it('renders forgot password link', () => {
@@ -50,15 +50,15 @@ describe('Login Component', () => {
 
         const forgotPasswordLink = screen.getByText('Forgot password?');
         expect(forgotPasswordLink).toBeInTheDocument();
-        expect(forgotPasswordLink).toHaveAttribute('href', '/auth/forgot');
+        expect(forgotPasswordLink).toHaveAttribute('href', '/forgot-password');
     });
 
     it('renders request access link', () => {
         render(<Login onSubmit={mockOnSubmit} loading={false} />);
 
-        const requestAccessLink = screen.getByText('Request Access');
+        const requestAccessLink = screen.getByRole('link', { name: /request access/i });
         expect(requestAccessLink).toBeInTheDocument();
-        expect(requestAccessLink).toHaveAttribute('href', '/auth/request-access');
+        expect(requestAccessLink).toHaveAttribute('href', '/request-access');
     });
 
     it('renders Terms of Service link', () => {
@@ -80,20 +80,19 @@ describe('Login Component', () => {
     it('applies background image styles', () => {
         const { container } = render(<Login onSubmit={mockOnSubmit} loading={false} />);
 
-        const backgroundDiv = container.querySelector('.bg-cover');
+        const backgroundDiv = container.querySelector('.object-cover');
         expect(backgroundDiv).toBeInTheDocument();
-        expect(backgroundDiv).toHaveClass('bg-center', 'bg-no-repeat');
     });
 
     it('uses default onSubmit when not provided', () => {
         render(<Login loading={false} />);
 
-        expect(screen.getByText('Login')).toBeInTheDocument();
+        expect(screen.getByText('Welcome back')).toBeInTheDocument();
     });
 
     it('uses default loading state when not provided', () => {
         render(<Login onSubmit={mockOnSubmit} />);
 
-        expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
 });

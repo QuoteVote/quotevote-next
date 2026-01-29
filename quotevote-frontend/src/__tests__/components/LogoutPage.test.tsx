@@ -136,7 +136,7 @@ describe('LogoutPage Component', () => {
       jest.advanceTimersByTime(200);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/auth/login');
+        expect(mockPush).toHaveBeenCalledWith('/login');
       });
     });
 
@@ -161,7 +161,7 @@ describe('LogoutPage Component', () => {
         expect(storeState.user.data).toEqual({});
         
         // Finally redirect happens
-        expect(mockPush).toHaveBeenCalledWith('/auth/login');
+        expect(mockPush).toHaveBeenCalledWith('/login');
       });
     });
   });
@@ -183,7 +183,7 @@ describe('LogoutPage Component', () => {
       });
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/auth/login');
+        expect(mockPush).toHaveBeenCalledWith('/login');
       }, { timeout: 3000 });
       
       // Restore console.error
@@ -208,7 +208,7 @@ describe('LogoutPage Component', () => {
       });
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/auth/login');
+        expect(mockPush).toHaveBeenCalledWith('/login');
       }, { timeout: 3000 });
       
       // Restore console.error
@@ -232,7 +232,7 @@ describe('LogoutPage Component', () => {
       await waitFor(
         () => {
           // Should still complete logout and redirect
-          expect(mockPush).toHaveBeenCalledWith('/auth/login');
+          expect(mockPush).toHaveBeenCalledWith('/login');
         },
         { timeout: 3000 }
       );
@@ -250,7 +250,7 @@ describe('LogoutPage Component', () => {
       jest.advanceTimersByTime(600);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/auth/login');
+        expect(mockPush).toHaveBeenCalledWith('/login');
       });
     });
   });

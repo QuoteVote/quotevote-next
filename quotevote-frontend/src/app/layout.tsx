@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { ApolloProviderWrapper } from "@/lib/apollo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthModalProvider } from "@/context/AuthModalContext";
 import "./globals.css";
 import { Eyebrow } from "./components/Eyebrow/Eyebrow";
 
@@ -13,11 +14,14 @@ import { Eyebrow } from "./components/Eyebrow/Eyebrow";
  * - ApolloProviderWrapper: Provides Apollo Client context for GraphQL queries/mutations
  *   All client components can use useQuery, useMutation, etc.
  * 
+ * - AuthModalProvider: Provides auth modal context for request invite dialog
+ *   Used by auth pages and other components that need to show the invite dialog
+ * 
  * - Zustand Store: No provider needed - the store is available globally via useAppStore hook
  *   Import and use: import { useAppStore } from '@/store'
  * 
- * Provider order: ErrorBoundary > ApolloProvider > children
- * This ensures error handling wraps all providers and Apollo is available to all children.
+ * Provider order: ErrorBoundary > ApolloProvider > AuthModalProvider > children
+ * This ensures error handling wraps all providers and Apollo/AuthModal are available to all children.
  */
 
 const geistSans = Geist({
@@ -60,11 +64,11 @@ export default function RootLayout({
       >
         <ErrorBoundary>
           <ApolloProviderWrapper>
-            <>
-            <Eyebrow />
-            {children}
-            <Toaster position="top-right" richColors />
-            </>
+            <AuthModalProvider>
+              <Eyebrow />
+              {children}
+              <Toaster position="top-right" richColors />
+            </AuthModalProvider>
           </ApolloProviderWrapper>
         </ErrorBoundary>
       </body>

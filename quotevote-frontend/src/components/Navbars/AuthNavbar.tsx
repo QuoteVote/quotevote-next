@@ -44,7 +44,7 @@ export function AuthNavbar({ color, brandText = 'QuoteVote' }: AuthNavbarProps) 
     },
     {
       name: 'Login',
-      href: '/auth/login',
+      href: '/login',
       icon: Fingerprint,
       showInMobile: true,
     },

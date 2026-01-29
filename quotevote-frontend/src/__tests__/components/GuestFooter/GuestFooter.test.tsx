@@ -8,20 +8,12 @@
 import { render, screen } from '../../utils/test-utils';
 import { GuestFooter } from '@/components/GuestFooter';
 
-// Mock useResponsive hook
-const mockUseResponsive = jest.fn();
-jest.mock('@/hooks/useResponsive', () => ({
-  useResponsive: () => mockUseResponsive(),
-}));
+// Note: useResponsive hook is no longer used in the component
+// The component now uses Tailwind responsive classes directly
 
 describe('GuestFooter Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Default to desktop view
-    mockUseResponsive.mockReturnValue({
-      isMobile: false,
-      breakpoint: 'lg',
-    });
   });
 
   describe('Rendering', () => {
@@ -30,11 +22,14 @@ describe('GuestFooter Component', () => {
       expect(container).toBeInTheDocument();
     });
 
-    it('renders brand message with heart emoji', () => {
+    it('renders brand message with heart icon', () => {
       render(<GuestFooter />);
-      expect(screen.getByText(/Quote\.Vote made with/i)).toBeInTheDocument();
-      expect(screen.getByText('❤️')).toBeInTheDocument();
-      expect(screen.getByText(/on Earth/i)).toBeInTheDocument();
+      expect(screen.getByText('Quote.Vote')).toBeInTheDocument();
+      expect(screen.getByText('made with')).toBeInTheDocument();
+      expect(screen.getByText('on Earth')).toBeInTheDocument();
+      // Check for Heart icon (lucide-react icon)
+      const heartIcon = document.querySelector('.lucide-heart');
+      expect(heartIcon).toBeInTheDocument();
     });
 
     it('renders copyright with current year', () => {
@@ -48,7 +43,9 @@ describe('GuestFooter Component', () => {
     it('renders all footer links', () => {
       render(<GuestFooter />);
       expect(screen.getByRole('link', { name: /request invite/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /donate/i })).toBeInTheDocument();
+      // Donate link now includes Mail icon, so we check for the text
+      const donateLink = screen.getByRole('link', { name: /donate/i });
+      expect(donateLink).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /github/i })).toBeInTheDocument();
     });
 
@@ -91,39 +88,31 @@ describe('GuestFooter Component', () => {
     it('applies default isRequestAccess prop (false)', () => {
       const { container } = render(<GuestFooter />);
       const footer = container.querySelector('footer');
-      expect(footer).toHaveClass('bg-transparent');
+      // New design uses gradient backgrounds
+      expect(footer).toHaveClass('from-white/80', 'via-white/60', 'to-transparent');
     });
 
     it('applies isRequestAccess prop when true', () => {
       const { container } = render(<GuestFooter isRequestAccess={true} />);
       const footer = container.querySelector('footer');
-      expect(footer).toHaveClass('bg-background');
+      // When isRequestAccess is true, uses different gradient
+      expect(footer).toHaveClass('from-background', 'to-background/95');
     });
   });
 
   describe('Responsive Behavior', () => {
-    it('applies mobile styles when isMobile is true', () => {
-      mockUseResponsive.mockReturnValue({
-        isMobile: true,
-        breakpoint: 'xs',
-      });
-
+    it('renders with responsive layout structure', () => {
       const { container } = render(<GuestFooter />);
       const footer = container.querySelector('footer');
-      expect(footer).toHaveClass('flex-col', 'gap-5');
-      expect(footer).toHaveClass('text-center');
+      // New design uses flex-col sm:flex-row for responsive layout
+      const innerContainer = container.querySelector('.flex.flex-col.sm\\:flex-row');
+      expect(innerContainer).toBeInTheDocument();
     });
 
-    it('applies desktop styles when isMobile is false', () => {
-      mockUseResponsive.mockReturnValue({
-        isMobile: false,
-        breakpoint: 'lg',
-      });
-
+    it('has responsive padding classes', () => {
       const { container } = render(<GuestFooter />);
-      const footer = container.querySelector('footer');
-      expect(footer).toHaveClass('flex-row', 'gap-0');
-      expect(footer).toHaveClass('sm:text-left');
+      const innerContainer = container.querySelector('.px-4.sm\\:px-6.lg\\:px-8');
+      expect(innerContainer).toBeInTheDocument();
     });
   });
 
@@ -131,20 +120,22 @@ describe('GuestFooter Component', () => {
     it('applies correct footer classes', () => {
       const { container } = render(<GuestFooter />);
       const footer = container.querySelector('footer');
-      expect(footer).toHaveClass('w-full', 'mt-[60px]', 'mb-5', 'min-h-[48px]', 'border-t');
+      expect(footer).toHaveClass('w-full', 'relative', 'border-t');
+      expect(footer).toHaveClass('mt-16', 'sm:mt-20');
     });
 
     it('applies correct link styling classes', () => {
       render(<GuestFooter />);
       const link = screen.getByRole('link', { name: /request invite/i });
       expect(link).toHaveClass(
-        'px-4',
-        'py-2',
-        'rounded-md',
+        'px-5',
+        'py-2.5',
+        'rounded-lg',
         'transition-all',
-        'border',
-        'bg-transparent'
+        'border'
       );
+      // New design uses semi-transparent white background
+      expect(link).toHaveClass('group', 'relative', 'overflow-hidden');
     });
   });
 
@@ -178,19 +169,26 @@ describe('GuestFooter Component', () => {
     it('applies hover styles on Request Invite link', () => {
       render(<GuestFooter />);
       const link = screen.getByRole('link', { name: /request invite/i });
-      expect(link).toHaveClass('hover:-translate-y-[1px]');
+      expect(link).toHaveClass('hover:shadow-md', 'hover:shadow-teal-500/20');
     });
 
     it('applies hover styles on Donate link', () => {
       render(<GuestFooter />);
       const link = screen.getByRole('link', { name: /donate/i });
-      expect(link).toHaveClass('hover:-translate-y-[1px]');
+      expect(link).toHaveClass('hover:shadow-md', 'hover:shadow-cyan-500/20');
     });
 
     it('applies hover styles on GitHub link', () => {
       render(<GuestFooter />);
       const link = screen.getByRole('link', { name: /github/i });
-      expect(link).toHaveClass('hover:-translate-y-[1px]');
+      expect(link).toHaveClass('hover:shadow-md', 'hover:shadow-blue-500/20');
+    });
+
+    it('has Mail icon in Donate link', () => {
+      render(<GuestFooter />);
+      const donateLink = screen.getByRole('link', { name: /donate/i });
+      const mailIcon = donateLink.querySelector('.lucide-mail');
+      expect(mailIcon).toBeInTheDocument();
     });
   });
 });
