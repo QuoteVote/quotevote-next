@@ -2,3 +2,4 @@
 export * from './logger';
 export * from './sample';
 export * from './rateLimiter';
+export * from './authentication';
