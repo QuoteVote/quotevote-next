@@ -5,8 +5,10 @@ import cors from 'cors';
 import http from 'http';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import { GraphQLError } from 'graphql';
 import { solidResolvers } from './data/resolvers/solidResolvers';
 import type { GraphQLContext, PubSub } from './types/graphql';
+import { requireAuth } from './data/utils/requireAuth';
 
 // Temporary NoOp PubSub until real implementation
 const noOpPubSub: PubSub = {
@@ -124,6 +126,9 @@ async function startServer() {
         const token = req.headers.authorization?.split(' ')[1];
         let user = null;
 
+        // Check if this is an introspection query (GraphQL Playground/IDE)
+        const isIntrospection = req.body?.operationName === 'IntrospectionQuery';
+
         if (token) {
           try {
             const decoded = await auth.verifyToken(token);
@@ -132,6 +137,16 @@ async function startServer() {
             }
           } catch {
             // Token invalid or expired, proceed as unauthenticated
+          }
+        }
+
+        // Check if query requires authentication (skip for introspection)
+        if (!isIntrospection) {
+          const query = req.body?.query;
+          if (query && requireAuth(query) && !user) {
+            throw new GraphQLError('Auth token not found in request', {
+              extensions: { code: 'UNAUTHENTICATED' },
+            });
           }
         }
 

@@ -35,19 +35,34 @@ const prodFormat = winston.format.combine(
  */
 export function createWinstonLogger(options: LoggerOptions = {}): winston.Logger {
   const { level = process.env.LOG_LEVEL || 'info', service = 'quotevote-backend' } = options;
+  const isTest = process.env.NODE_ENV === 'test';
 
-  const transports: winston.transport[] = [
-    new winston.transports.Console({
-      format: isProduction ? prodFormat : devFormat,
-    }),
-  ];
+  const transports: winston.transport[] = [];
+
+  // Only add console transport if not in test environment
+  if (!isTest) {
+    transports.push(
+      new winston.transports.Console({
+        format: isProduction ? prodFormat : devFormat,
+      })
+    );
+  }
 
   // Add file logging if not in test environment (to avoid cluttering during tests)
   // or if explicitly configured (could add env var like LOG_TO_FILE=true)
-  if (process.env.NODE_ENV !== 'test') {
+  if (!isTest) {
     transports.push(
       new winston.transports.File({ filename: 'error.log', level: 'error' }),
       new winston.transports.File({ filename: 'combined.log' })
+    );
+  }
+
+  // In test environment, use a silent transport to suppress all output
+  if (isTest && transports.length === 0) {
+    transports.push(
+      new winston.transports.Console({
+        silent: true, // Suppress all output in test environment
+      })
     );
   }
 
