@@ -165,7 +165,7 @@ describe('CustomButtons Components', () => {
         if (button) {
           fireEvent.click(button);
           expect(onNavigate).toHaveBeenCalled();
-          expect(mockPush).toHaveBeenCalledWith('/ControlPanel');
+          expect(mockPush).toHaveBeenCalledWith('/dashboard/control-panel');
         }
       } else {
         expect(container).toBeInTheDocument();
