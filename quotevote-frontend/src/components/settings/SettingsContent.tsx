@@ -271,7 +271,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                 type="button"
                 variant="secondary"
                 onClick={() => {
-                    router.push('/ControlPanel')
+                    router.push('/dashboard/control-panel')
                     if (setOpen) setOpen(false)
                 }}
                 disabled={loading}
