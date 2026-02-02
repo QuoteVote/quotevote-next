@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Control Panel Layout
  * 
@@ -8,6 +6,9 @@
  * 
  * This layout provides admin-specific structure while inheriting
  * the dashboard layout's MainNavBar and RequestInviteDialog.
+ * 
+ * Note: This is a Server Component since it doesn't use any hooks or client-side features.
+ * It inherits client-side features from the parent dashboard layout.
  */
 
 import type { ReactNode } from 'react';

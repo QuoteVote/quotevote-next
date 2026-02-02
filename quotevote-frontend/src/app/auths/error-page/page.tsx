@@ -6,6 +6,9 @@
  * Error page for authentication routes.
  * Shows error messages for invalid/expired tokens or 404 errors.
  * Migrated from legacy ErrorPage.jsx.
+ * 
+ * Note: This page uses dynamic rendering due to useSearchParams().
+ * The Suspense boundary is required by Next.js 16 for pages using useSearchParams.
  */
 
 import { Suspense } from 'react';
@@ -14,6 +17,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader } from '@/components/common/Loader';
+
+// Force dynamic rendering for this page since it uses useSearchParams
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function ErrorPageContent(): React.ReactNode {
   const router = useRouter();
@@ -65,6 +72,8 @@ function ErrorPageContent(): React.ReactNode {
   );
 }
 
+// Wrap the default export in Suspense to satisfy Next.js requirements
+// This is required for pages using useSearchParams() in Next.js 16
 export default function ErrorPage(): React.ReactNode {
   return (
     <Suspense fallback={
