@@ -6,21 +6,46 @@
  * Layout wrapper for authentication pages.
  * Migrated from legacy Auth.jsx with full feature parity:
  * - AuthNavbar with brand text detection
+ * - Random background image selection (matching legacy behavior)
  * - GuestFooter (conditionally shown)
  * - InfoSections for request-access page
  * - RequestInviteDialog
  * 
- * Note: Background images are handled by individual page components (Login, ForgotPassword, etc.)
- * which display a single image on the left side of the form.
+ * Background images are randomly selected on first load, matching the legacy behavior.
+ * Individual page components may also display images on the left side of forms.
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { RequestInviteDialog } from '@/components/RequestInviteDialog';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { AuthNavbar } from '@/components/Navbars/AuthNavbar';
 import { GuestFooter } from '@/components/GuestFooter/GuestFooter';
 import { InfoSections } from '@/components/RequestAccess/InfoSections';
+
+// Available background images (matching legacy Auth.jsx)
+const backgroundImages = [
+  'viviana-rishe-UC8fvOyG5pU-unsplash.jpg',
+  'steph-smith-3jYcQf9oiJ8-unsplash.jpg',
+  'sergio-rodriguez-rrlEOXRmMAA-unsplash.jpg',
+  'sergio-otoya-gCNh426vB30-unsplash.jpg',
+  'rondell-chaz-mabunga-EHLKkMDxe3M-unsplash.jpg',
+  'rommel-paras-wrHnE3kMplg-unsplash.jpg',
+  'peter-thomas-efLcMHXtrg0-unsplash.jpg',
+  'julia-caesar-jeXkw2HR1SU-unsplash.jpg',
+  'ehmir-bautista-JjDqyWuWZyU-unsplash.jpg',
+  'adam-navarro-qXcl3z7_AOc-unsplash.jpg',
+  'actionvance-guy5aS3GvgA-unsplash.jpg',
+] as const;
+
+/**
+ * Get a random background image
+ * This function is used as a lazy initializer for useState
+ */
+function getRandomBackgroundImage(): string {
+  const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+  return backgroundImages[randomIndex] ?? '';
+}
 
 // Route metadata for brand text (matching legacy route structure)
 const routeMetadata: Record<string, { name: string; hideNavbar?: boolean }> = {
@@ -40,6 +65,8 @@ export default function AuthLayout({
 }): React.ReactNode {
   const { isModalOpen, closeAuthModal } = useAuthModal();
   const pathname = usePathname();
+  // Use lazy initializer to select random background image on first render only
+  const [selectedBackground] = useState<string>(getRandomBackgroundImage);
 
   // Reset body overflow on mount
   useEffect(() => {
@@ -70,6 +97,11 @@ export default function AuthLayout({
     [isRequestAccessPage, activeRoute.hideNavbar]
   );
 
+  // Background image URL
+  const backgroundImageUrl = selectedBackground
+    ? `/assets/bg/${selectedBackground}`
+    : '/assets/Mountain.png';
+
   return (
     <div
       className="flex flex-col min-h-screen w-full overflow-x-hidden"
@@ -87,14 +119,18 @@ export default function AuthLayout({
         </div>
       )}
 
-      {/* Body - takes full remaining height without background */}
+      {/* Body - takes full remaining height with background image */}
       <div
-        className="flex-1 min-h-0 overflow-auto w-full relative bg-transparent"
+        className="flex-1 min-h-0 overflow-auto w-full relative"
         style={{
           flex: '1 1 auto',
           minHeight: 0,
           overflow: 'auto',
           width: '100%',
+          backgroundImage: `url('${backgroundImageUrl}')`,
+          backgroundPosition: 'left',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover',
         }}
       >
         <div className="relative z-[3]">
