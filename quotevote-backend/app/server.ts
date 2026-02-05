@@ -9,20 +9,14 @@ import { GraphQLError } from 'graphql';
 import { solidResolvers } from './data/resolvers/solidResolvers';
 import type { GraphQLContext, PubSub } from './types/graphql';
 import { requireAuth } from './data/utils/requireAuth';
-
-// Temporary NoOp PubSub until real implementation
-const noOpPubSub: PubSub = {
-  publish: async () => { },
-  subscribe: async () => 0,
-  unsubscribe: () => { },
-  asyncIterableIterator: <T>() => {
-    const emptyIterator = (async function* () { })();
-    return emptyIterator as AsyncIterableIterator<T>;
-  }
-};
+import { pubsub } from './data/utils/pubsub';
+import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
 import * as auth from './data/utils/authentication';
 import User from './data/models/User';
 import type * as Common from './types/common';
+
+// Use shared pubsub instance referencing the import
+const noOpPubSub: PubSub = pubsub;
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +37,9 @@ async function startServer() {
     console.error('❌ MongoDB Connection Error:', err);
     process.exit(1);
   }
+
+  // Start Presence Cleanup Job
+  startPresenceCleanup();
 
   // 2. Apollo Server Setup (v4/v5 Syntax)
   const server = new ApolloServer<GraphQLContext>({

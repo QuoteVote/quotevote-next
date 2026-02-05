@@ -2,3 +2,4 @@
 // Export all Mongoose/Prisma models here as they are created
 
 export * from './SolidConnection';
+export * from './Presence';
