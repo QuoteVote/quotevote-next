@@ -4,3 +4,4 @@ export * from './sample';
 export * from './rateLimiter';
 export * from './authentication';
 export * from './requireAuth';
+export * from './send-grid-mail';

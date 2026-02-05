@@ -49,6 +49,7 @@ export interface EnvironmentVariables {
   SMTP_PASSWORD?: string;
   SMTP_FROM_EMAIL?: string;
   SENDGRID_API_KEY?: string;
+  SENDGRID_SENDER_EMAIL?: string;
 
   // AWS (if using S3 for file storage)
   AWS_ACCESS_KEY_ID?: string;
@@ -157,6 +158,7 @@ export interface EnvironmentConfig {
     };
     sendgrid?: {
       apiKey: string;
+      senderEmail: string;
     };
   };
 
@@ -232,6 +234,8 @@ export const REQUIRED_ENV_VARS: Array<keyof EnvironmentVariables> = [
   'PORT',
   'MONGODB_URI',
   'JWT_SECRET',
+  'SENDGRID_API_KEY',
+  'SENDGRID_SENDER_EMAIL',
 ];
 
 /**
@@ -328,6 +332,7 @@ export function parseEnvironmentConfig(env: NodeJS.ProcessEnv): EnvironmentConfi
             sendgrid: env.SENDGRID_API_KEY
               ? {
                   apiKey: env.SENDGRID_API_KEY,
+                  senderEmail: env.SENDGRID_SENDER_EMAIL || 'noreply@quotevote.com',
                 }
               : undefined,
           }

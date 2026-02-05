@@ -37,6 +37,7 @@
     "@inrupt/solid-client": "^3.0.0",
     "@inrupt/solid-client-authn-node": "^3.1.1",
     "@prisma/client": "^6.19.1",
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.3",
     "commonjs": "^0.0.1",
     "cors": "^2.8.5",
