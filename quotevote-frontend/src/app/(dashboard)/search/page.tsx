@@ -1,14 +1,21 @@
-'use client';
-
-import SidebarSearchView from '@/components/SearchContainer/index.tsx';
+import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { SubHeader } from '@/components/SubHeader';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { SidebarSearchView } from '@/components/SearchContainer';
+
+export const metadata: Metadata = {
+  title: 'Search - Quote.Vote',
+  description: 'Search content and creators on Quote.Vote',
+};
 
 /**
- * Search Page
- * 
+ * Search Page (Server Component)
+ *
  * Dashboard page for searching content and creators.
- * Uses the SearchContainer component with debounced GraphQL queries.
- * 
+ * The interactive search input and results are rendered
+ * inside a Suspense boundary via the SidebarSearchView client component.
+ *
  * Route: /search
  */
 export default function SearchPage() {
@@ -16,7 +23,9 @@ export default function SearchPage() {
     <div className="space-y-4">
       <SubHeader headerName="Search" />
       <div className="max-w-4xl">
-        <SidebarSearchView Display="block" />
+        <Suspense fallback={<LoadingSpinner />}>
+          <SidebarSearchView Display="block" />
+        </Suspense>
       </div>
     </div>
   );
