@@ -12,6 +12,30 @@ import SearchResultsView from './SearchResults'
 import type { SidebarSearchViewProps } from '@/types/components'
 import { cn } from '@/lib/utils'
 
+interface SearchContent {
+  _id: string
+  title: string
+  creatorId: string
+  domain: {
+    key: string
+    _id: string
+  }
+}
+
+interface SearchCreator {
+  _id: string
+  name: string
+  avatar?: string
+  creator: {
+    _id: string
+  }
+}
+
+interface SearchQueryData {
+  searchContent: SearchContent[]
+  searchCreator: SearchCreator[]
+}
+
 /**
  * SidebarSearchView Component
  * 
@@ -24,7 +48,7 @@ export default function SidebarSearchView({ Display = 'block' }: SidebarSearchVi
   const [searchText, setSearchText] = useState('')
   const debouncedSearchText = useDebounce(searchText, 300)
 
-  const { loading, error, data } = useQuery(SEARCH, {
+  const { loading, error, data } = useQuery<SearchQueryData>(SEARCH, {
     variables: { text: debouncedSearchText },
     skip: !debouncedSearchText.trim(),
   })
@@ -63,7 +87,7 @@ export default function SidebarSearchView({ Display = 'block' }: SidebarSearchVi
         <SearchResultsView
           searchResults={data}
           isLoading={loading}
-          isError={error}
+          isError={!!error}
         />
       )}
     </div>
