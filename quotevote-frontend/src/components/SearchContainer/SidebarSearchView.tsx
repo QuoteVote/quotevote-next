@@ -2,9 +2,7 @@
 
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-// TODO: Fix Apollo Client v4.0.9 type resolution issues
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useQuery export
-import { useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client/react'
 
 import { SEARCH } from '@/graphql/queries'
 import { useDebounce } from '@/hooks/useDebounce'
