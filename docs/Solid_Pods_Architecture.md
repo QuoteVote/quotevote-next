@@ -859,7 +859,7 @@ type Query {
 
 **Quote.Vote Team:**
 - **Om Kawale** (@Om7035) - Lead Developer, Solid Integration
-- **flyblackbox** - Founder, Product Vision
+- **@flyblackbox** - Founder, Product Vision
 
 **Solid Expert:**
 - **Jesse Wright** (ODI) - Solid Advisor
@@ -869,3 +869,4 @@ type Query {
 **Document Status:** Draft v1.0 - Awaiting feedback from Jesse Wright
 
 **Last Updated:** February 13, 2026
+
