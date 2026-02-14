@@ -1,46 +1,15 @@
-'use client';
-
 /**
- * Forgot Password Page
+ * Forgot Password Page (Server Component Wrapper)
  * 
- * Page for requesting password reset email.
+ * Server component wrapper for the forgot password page.
  * Migrated from legacy ForgotPasswordPage.jsx.
  */
 
-import { useState } from 'react';
-import { useMutation } from '@apollo/client/react';
-import { ForgotPassword, EmailSent } from '@/components/ForgotPassword';
-import { SEND_PASSWORD_RESET_EMAIL } from '@/graphql/mutations';
+import ForgotPasswordPageContent from './PageContent';
 
-export default function ForgotPasswordPage(): React.ReactNode {
-  const [loading, setLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [sendPasswordResetEmail] = useMutation(SEND_PASSWORD_RESET_EMAIL);
+// Mark this route as dynamic to prevent static optimization issues
+export const dynamic = 'force-dynamic';
 
-  const handleSubmit = async (values: { email: string }) => {
-    const { email } = values;
-    setLoading(true);
-    setError(null);
-
-    try {
-      await sendPasswordResetEmail({ variables: { email } });
-      setEmailSent(true);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send password reset email';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <>
-      {!emailSent ? (
-        <ForgotPassword onSubmit={handleSubmit} loading={loading} error={error} />
-      ) : (
-        <EmailSent />
-      )}
-    </>
-  );
+export default function ForgotPasswordPage() {
+  return <ForgotPasswordPageContent />;
 }

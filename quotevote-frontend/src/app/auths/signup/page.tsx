@@ -8,6 +8,10 @@ import SignupPageContent from './PageContent';
  * Wraps the client component in Suspense at the route segment level
  * as required by Next.js 16 for pages using useSearchParams().
  */
+
+// Mark this route as dynamic since it uses useSearchParams
+export const dynamic = 'force-dynamic';
+
 export default function SignupPage() {
   return (
     <Suspense fallback={
