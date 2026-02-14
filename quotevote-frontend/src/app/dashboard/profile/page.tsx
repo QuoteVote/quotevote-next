@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: 'View and manage your Quote.Vote profile',
 };
 
+// Mark as dynamic to prevent static optimization issues
+export const dynamic = 'force-dynamic';
+
 /**
  * Profile Page (Server Component)
  *

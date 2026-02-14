@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: 'Browse and discover posts on Quote.Vote',
 };
 
+// Mark as dynamic to prevent static optimization issues
+export const dynamic = 'force-dynamic';
+
 /**
  * Posts Page (Server Component)
  *

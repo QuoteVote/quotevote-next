@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: 'Administrative controls for Quote.Vote',
 };
 
+// Mark as dynamic to prevent static optimization issues
+export const dynamic = 'force-dynamic';
+
 /**
  * Control Panel Page (Server Component)
  *
