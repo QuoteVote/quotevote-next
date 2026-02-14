@@ -10,72 +10,81 @@ jobs:
   backend:
     name: Backend CI
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         working-directory: ./quotevote-backend
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
           cache-dependency-path: quotevote-backend/pnpm-lock.yaml
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-workspace
-      
+
       - name: Run linter
         run: pnpm lint
-      
+
       - name: Run type check
         run: pnpm type-check
-      
-      - name: Run tests
-        run: pnpm test
+
+      - name: Run tests with coverage
+        run: pnpm test -- --coverage --coverageReporters=text --coverageReporters=lcov
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./quotevote-backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
 
   frontend:
     name: Frontend CI
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         working-directory: ./quotevote-frontend
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
           cache-dependency-path: quotevote-frontend/pnpm-lock.yaml
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-workspace
-      
+
       - name: Run linter
         run: pnpm lint
-      
+
       - name: Run type check
         run: pnpm type-check
-      
+
       - name: Run tests
         run: pnpm test
 

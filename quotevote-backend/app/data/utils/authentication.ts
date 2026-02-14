@@ -30,7 +30,7 @@ const safeSecret = JWT_SECRET || 'dev_jwt_secret_fallback_do_not_use_in_prod';
  * @param str The string to format.
  * @returns The formatted string.
  */
-const toTitleCase = (str: string): string => {
+export const toTitleCase = (str: string): string => {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };

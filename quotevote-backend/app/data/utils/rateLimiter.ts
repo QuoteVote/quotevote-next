@@ -27,6 +27,7 @@ export const checkRateLimit = (
   limit = 10,
   windowMs = 60000
 ): boolean => {
+  if (!reqOrUserId) return true;
   const userId =
     typeof reqOrUserId === 'string'
       ? reqOrUserId
@@ -66,6 +67,7 @@ export const resetRateLimit = (
   reqOrUserId: RateLimitRequest | string,
   action: string
 ): void => {
+  if (!reqOrUserId) return;
   const userId =
     typeof reqOrUserId === 'string'
       ? reqOrUserId
@@ -76,16 +78,21 @@ export const resetRateLimit = (
   }
 };
 
+/**
+ * Clean up expired rate limit entries
+ */
+export const cleanupRateLimitMap = (): void => {
+  const now = Date.now();
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (now >= value.resetAt) {
+      rateLimitMap.delete(key);
+    }
+  }
+};
+
 if (process.env.NODE_ENV !== 'test') {
   // Clean up old entries every 5 minutes
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of rateLimitMap.entries()) {
-      if (now >= value.resetAt) {
-        rateLimitMap.delete(key);
-      }
-    }
-  }, 300000);
+  setInterval(cleanupRateLimitMap, 300000);
 }
 
-export default { checkRateLimit, resetRateLimit };
+export default { checkRateLimit, resetRateLimit, cleanupRateLimitMap };

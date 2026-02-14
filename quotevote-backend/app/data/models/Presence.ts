@@ -21,7 +21,6 @@ const PresenceSchema = new Schema<PresenceDocument, PresenceModel>(
 );
 
 // Indexes
-PresenceSchema.index({ userId: 1 });
 PresenceSchema.index({ status: 1 });
 PresenceSchema.index({ lastHeartbeat: 1 });
 

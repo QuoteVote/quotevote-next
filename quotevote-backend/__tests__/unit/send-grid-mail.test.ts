@@ -160,6 +160,21 @@ describe('send-grid-mail', () => {
         const sendCall = mockSend.mock.calls[0][0] as unknown as Record<string, unknown>;
         expect(sendCall.from).toBe('custom@quote.vote');
       });
+
+      it('should send a text-only email successfully', async () => {
+        const emailData: EmailData = {
+          to: 'test@example.com',
+          subject: 'Text Test',
+          text: 'This is plain text',
+        };
+        const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
+        mockSend.mockResolvedValue([{}, {}] as never);
+        
+        const result = await sendGridEmail(emailData);
+        expect(result.success).toBe(true);
+        const sendCall = mockSend.mock.calls[0][0] as unknown as { content: Array<{ type: string }> };
+        expect(sendCall.content[0].type).toBe('text/plain');
+      });
     });
 
     // Test error cases (when things go wrong)
@@ -276,6 +291,57 @@ describe('send-grid-mail', () => {
         expect(result.error).toBe('Network timeout');
         expect(result.details).toBeNull();
       });
+
+      it('should handle SendGrid API errors without errors array', async () => {
+        const emailData: EmailData = { to: 'test@example.com' };
+        const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
+        const sgError = {
+          message: 'Error',
+          response: {
+            body: {
+              something: 'else'
+            }
+          }
+        };
+        mockSend.mockRejectedValue(sgError);
+
+        const result = await sendGridEmail(emailData);
+        expect(result.success).toBe(false);
+      });
+
+      it('should handle authorization grant is invalid error explicitly', async () => {
+        const emailData: EmailData = { to: 'test@example.com' };
+        const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
+        const sgError = {
+          message: 'Forbidden',
+          response: {
+            body: {
+              errors: [
+                { message: 'authorization grant is invalid' }
+              ]
+            }
+          }
+        };
+        mockSend.mockRejectedValue(sgError);
+
+        const result = await sendGridEmail(emailData);
+        expect(result.success).toBe(false);
+        expect(logger.error).toHaveBeenCalledWith(
+          expect.stringContaining('SendGrid API Key Error'),
+          expect.any(Object)
+        );
+      });
+
+      it('should handle unexpected non-SendGrid errors', async () => {
+        const emailData: EmailData = { to: 'test@example.com' };
+        // Throw a string or something that doesn't have 'message' in it
+        const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
+        mockSend.mockRejectedValue(null); // This will fail the isSendGridError guard
+
+        const result = await sendGridEmail(emailData);
+        expect(result.success).toBe(false);
+        expect(result.error).toBe('An unexpected error occurred while sending email');
+      });
     });
 
     // Test edge cases
@@ -286,12 +352,9 @@ describe('send-grid-mail', () => {
           templateId: SENDGRID_TEMPLATE_IDS.INVITATION_APPROVE,
           dynamicTemplateData: {},
         };
-
         const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
         mockSend.mockResolvedValue([{}, {}] as never);
-
         const result = await sendGridEmail(emailData);
-
         expect(result.success).toBe(true);
       });
 
@@ -301,19 +364,34 @@ describe('send-grid-mail', () => {
           subject: 'Debug Test',
           html: '<p>Test</p>',
         };
-
         const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
         mockSend.mockResolvedValue([{}, {}] as never);
-
         await sendGridEmail(emailData);
-
-        // Verify debug logging
         expect(logger.debug).toHaveBeenCalledWith(
           'sendGridEmail',
           expect.objectContaining({
             to: 'test@example.com',
             subject: 'Debug Test',
           })
+        );
+      });
+
+      it('should hit the else branch for other SendGrid error messages', async () => {
+        const emailData: EmailData = { to: 'test@example.com' };
+        const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
+        const sgError = {
+          message: 'Error',
+          response: {
+            body: {
+              errors: [{ message: 'some other error' }]
+            }
+          }
+        };
+        mockSend.mockRejectedValue(sgError);
+        await sendGridEmail(emailData);
+        expect(logger.error).not.toHaveBeenCalledWith(
+          expect.stringContaining('SendGrid API Key Error'),
+          expect.any(Object)
         );
       });
     });
