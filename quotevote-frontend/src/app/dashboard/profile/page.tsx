@@ -1,15 +1,34 @@
-'use client';
-
-/**
- * Profile Page
- * 
- * Dashboard profile page for viewing and editing user profile.
- * Shows the logged-in user's profile when no username is provided.
- * Migrated from Profile component.
- */
-
+import { Suspense } from 'react';
+import type { Metadata } from 'next';
+import { SubHeader } from '@/components/SubHeader';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ProfileController } from '@/components/Profile/ProfileController';
 
-export default function ProfilePage(): React.ReactNode {
-  return <ProfileController />;
+export const metadata: Metadata = {
+  title: 'Profile - Quote.Vote',
+  description: 'View and manage your Quote.Vote profile',
+};
+
+// Mark as dynamic to prevent static optimization issues
+export const dynamic = 'force-dynamic';
+
+/**
+ * Profile Page (Server Component)
+ *
+ * Dashboard page for viewing and managing user profiles.
+ * Profile and Control Panel rely on client-side state (forms, toggles),
+ * so the interactive ProfileController is rendered as a Client Component
+ * within a Suspense boundary.
+ *
+ * Route: /dashboard/profile
+ */
+export default function ProfilePage() {
+  return (
+    <div className="space-y-4">
+      <SubHeader headerName="Profile" />
+      <Suspense fallback={<LoadingSpinner />}>
+        <ProfileController />
+      </Suspense>
+    </div>
+  );
 }

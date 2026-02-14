@@ -1,17 +1,35 @@
-/**
- * Search Page
- * 
- * Dashboard search page for browsing and searching content.
- * This page will be populated with the SearchPage component migration.
- */
+import { Suspense } from 'react';
+import type { Metadata } from 'next';
+import { SubHeader } from '@/components/SubHeader';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { SidebarSearchView } from '@/components/SearchContainer';
 
-export default function SearchPage(): React.ReactNode {
+export const metadata: Metadata = {
+  title: 'Search - Quote.Vote',
+  description: 'Search content and creators on Quote.Vote',
+};
+
+// Mark as dynamic to prevent static optimization issues
+export const dynamic = 'force-dynamic';
+
+/**
+ * Search Page (Server Component)
+ *
+ * Dashboard page for searching content and creators.
+ * The interactive search input and results are rendered
+ * inside a Suspense boundary via the SidebarSearchView client component.
+ *
+ * Route: /dashboard/search
+ */
+export default function SearchPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Search</h1>
-      <p className="text-muted-foreground">
-        Search page content will be migrated from SearchPage component.
-      </p>
+    <div className="space-y-4">
+      <SubHeader headerName="Search" />
+      <div className="max-w-4xl">
+        <Suspense fallback={<LoadingSpinner />}>
+          <SidebarSearchView Display="block" />
+        </Suspense>
+      </div>
     </div>
   );
 }

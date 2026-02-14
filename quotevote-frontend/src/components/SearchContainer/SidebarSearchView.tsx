@@ -2,9 +2,7 @@
 
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-// TODO: Fix Apollo Client v4.0.9 type resolution issues
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useQuery export
-import { useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client/react'
 
 import { SEARCH } from '@/graphql/queries'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -13,6 +11,30 @@ import { Card, CardHeader } from '@/components/ui/card'
 import SearchResultsView from './SearchResults'
 import type { SidebarSearchViewProps } from '@/types/components'
 import { cn } from '@/lib/utils'
+
+interface SearchContent {
+  _id: string
+  title: string
+  creatorId: string
+  domain: {
+    key: string
+    _id: string
+  }
+}
+
+interface SearchCreator {
+  _id: string
+  name: string
+  avatar?: string
+  creator: {
+    _id: string
+  }
+}
+
+interface SearchQueryData {
+  searchContent: SearchContent[]
+  searchCreator: SearchCreator[]
+}
 
 /**
  * SidebarSearchView Component
@@ -26,7 +48,7 @@ export default function SidebarSearchView({ Display = 'block' }: SidebarSearchVi
   const [searchText, setSearchText] = useState('')
   const debouncedSearchText = useDebounce(searchText, 300)
 
-  const { loading, error, data } = useQuery(SEARCH, {
+  const { loading, error, data } = useQuery<SearchQueryData>(SEARCH, {
     variables: { text: debouncedSearchText },
     skip: !debouncedSearchText.trim(),
   })
@@ -65,7 +87,7 @@ export default function SidebarSearchView({ Display = 'block' }: SidebarSearchVi
         <SearchResultsView
           searchResults={data}
           isLoading={loading}
-          isError={error}
+          isError={error || null}
         />
       )}
     </div>
