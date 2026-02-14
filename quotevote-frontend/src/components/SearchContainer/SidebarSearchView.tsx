@@ -87,7 +87,7 @@ export default function SidebarSearchView({ Display = 'block' }: SidebarSearchVi
         <SearchResultsView
           searchResults={data}
           isLoading={loading}
-          isError={!!error}
+          isError={error || null}
         />
       )}
     </div>

@@ -1,17 +1,36 @@
-/**
- * Control Panel Page
- * 
- * Dashboard control panel page for administrative functions.
- * This page will be populated with the ControlPanel component migration.
- */
+import { Suspense } from 'react';
+import type { Metadata } from 'next';
+import { SubHeader } from '@/components/SubHeader';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import BotListTab from '@/components/Admin/BotListTab';
 
-export default function ControlPanelPage(): React.ReactNode {
+export const metadata: Metadata = {
+  title: 'Control Panel - Quote.Vote',
+  description: 'Administrative controls for Quote.Vote',
+};
+
+/**
+ * Control Panel Page (Server Component)
+ *
+ * Dashboard page for administrative controls and settings.
+ * Profile and Control Panel rely on client-side state,
+ * so the interactive BotListTab is rendered as a Client Component
+ * within a Suspense boundary.
+ *
+ * Route: /dashboard/control-panel
+ */
+export default function ControlPanelPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Control Panel</h1>
-      <p className="text-muted-foreground">
-        Control panel page content will be migrated from ControlPanel component.
-      </p>
+    <div className="space-y-4">
+      <SubHeader headerName="Control Panel" />
+      <div className="space-y-6">
+        <section>
+          <h2 className="text-xl font-semibold mb-4">Bot Reports</h2>
+          <Suspense fallback={<LoadingSpinner />}>
+            <BotListTab />
+          </Suspense>
+        </section>
+      </div>
     </div>
   );
 }

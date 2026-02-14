@@ -1,17 +1,45 @@
-/**
- * Post Page
- * 
- * Dashboard post page for creating and viewing posts.
- * This page will be populated with the PostPage component migration.
- */
+import { Suspense } from 'react';
+import type { Metadata } from 'next';
+import { SubHeader } from '@/components/SubHeader';
+import PostSkeleton from '@/components/Post/PostSkeleton';
+import PaginatedPostsList from '@/components/Post/PaginatedPostsList';
 
-export default function PostPage(): React.ReactNode {
+export const metadata: Metadata = {
+  title: 'Posts - Quote.Vote',
+  description: 'Browse and discover posts on Quote.Vote',
+};
+
+/**
+ * Posts Page (Server Component)
+ *
+ * Dashboard page for viewing and managing posts.
+ * The interactive paginated list is rendered inside a Suspense boundary
+ * with a skeleton fallback while data loads.
+ *
+ * Route: /dashboard/post
+ */
+export default function PostsPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Posts</h1>
-      <p className="text-muted-foreground">
-        Post page content will be migrated from PostPage component.
-      </p>
+    <div className="space-y-4">
+      <SubHeader headerName="Posts" />
+      <Suspense fallback={<PostsLoadingSkeleton />}>
+        <PaginatedPostsList
+          defaultPageSize={20}
+          showPageInfo={true}
+          showFirstLast={true}
+          maxVisiblePages={5}
+        />
+      </Suspense>
+    </div>
+  );
+}
+
+function PostsLoadingSkeleton() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <PostSkeleton key={i} />
+      ))}
     </div>
   );
 }
