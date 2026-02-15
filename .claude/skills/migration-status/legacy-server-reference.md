@@ -1,0 +1,1 @@
+../migrate-resolver/legacy-server-reference.md
