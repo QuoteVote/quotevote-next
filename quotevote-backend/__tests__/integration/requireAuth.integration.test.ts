@@ -8,11 +8,12 @@ import express from 'express';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { GraphQLError } from 'graphql';
-import type { GraphQLContext, PubSub } from '../../app/types/graphql';
+import type { GraphQLContext } from '../../app/types/graphql';
 import { requireAuth } from '../../app/data/utils/requireAuth';
 import * as auth from '../../app/data/utils/authentication';
 import User from '../../app/data/models/User';
 import type * as Common from '../../app/types/common';
+import { PubSub } from 'graphql-subscriptions';
 
 // Mock logger
 jest.mock('../../app/data/utils/logger', () => ({
@@ -41,16 +42,7 @@ jest.mock('jsonwebtoken', () => ({
   verify: jest.fn(),
 }));
 
-// Temporary NoOp PubSub
-const noOpPubSub: PubSub = {
-  publish: async () => {},
-  subscribe: async () => 0,
-  unsubscribe: () => {},
-  asyncIterableIterator: <T>() => {
-    const emptyIterator = (async function* () {})();
-    return emptyIterator as AsyncIterableIterator<T>;
-  },
-};
+const testPubSub = new PubSub();
 
 // Create test Apollo Server
 const createTestServer = () => {
@@ -143,7 +135,7 @@ describe('requireAuth Integration Tests', () => {
             req,
             res,
             user,
-            pubsub: noOpPubSub,
+            pubsub: testPubSub,
           };
         },
       })

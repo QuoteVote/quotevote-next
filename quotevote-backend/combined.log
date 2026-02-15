@@ -1,0 +1,1 @@
+{"level":"warn","message":"NOTICE: process.env.JWT_SECRET is not defined. Using development fallback secret.","service":"quotevote-backend"}

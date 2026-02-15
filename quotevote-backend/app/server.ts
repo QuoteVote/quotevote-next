@@ -7,16 +7,13 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { GraphQLError } from 'graphql';
 import { solidResolvers } from './data/resolvers/solidResolvers';
-import type { GraphQLContext, PubSub } from './types/graphql';
+import type { GraphQLContext } from './types/graphql';
 import { requireAuth } from './data/utils/requireAuth';
 import { pubsub } from './data/utils/pubsub';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
 import * as auth from './data/utils/authentication';
 import User from './data/models/User';
 import type * as Common from './types/common';
-
-// Use shared pubsub instance referencing the import
-const noOpPubSub: PubSub = pubsub;
 
 // Load environment variables
 dotenv.config();
@@ -106,7 +103,16 @@ async function startServer() {
   await server.start();
 
   // 3. Middleware & Routes Integration
-  app.use(cors<cors.CorsRequest>());
+  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim());
+
+  app.use(
+    cors<cors.CorsRequest>({
+      origin: allowedOrigins,
+      credentials: true,
+    })
+  );
   app.use(express.json());
 
   // Auth Routes
@@ -151,7 +157,7 @@ async function startServer() {
           req,
           res,
           user,
-          pubsub: noOpPubSub,
+          pubsub,
         };
       },
     })

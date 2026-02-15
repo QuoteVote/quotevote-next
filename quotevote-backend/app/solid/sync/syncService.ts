@@ -7,6 +7,7 @@ import type {
     PortablePreferences,
     ActivityEvent,
     ActivityEventInput,
+    ActivityLedger,
 } from '../schemas/portable';
 import {
     createDefaultProfile,
@@ -92,10 +93,10 @@ export async function pullPortableState(
         }
 
         // Fetch activity ledger if enabled
-        let activityLedger;
+        let activityLedger: ActivityLedger | undefined;
         if (uris.activityLedger && process.env.SOLID_ACTIVITY_LEDGER_ENABLED === 'true') {
             try {
-                activityLedger = await client.getJson(uris.activityLedger);
+                activityLedger = await client.getJson<ActivityLedger>(uris.activityLedger);
             } catch {
                 // Activity ledger is optional
                 activityLedger = undefined;

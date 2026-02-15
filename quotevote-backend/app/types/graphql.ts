@@ -5,17 +5,9 @@
 
 import type { Request, Response } from 'express';
 import type * as Common from '~/types/common';
+import type { PubSub } from 'graphql-subscriptions';
 
-/**
- * PubSub type from graphql-subscriptions
- * Using generic type to avoid requiring the package as a dependency
- */
-export interface PubSub {
-  publish(triggerName: string, payload: unknown): Promise<void>;
-  subscribe(triggerName: string, onMessage: (message: unknown) => void): Promise<number>;
-  unsubscribe(subId: number): void;
-  asyncIterableIterator<T>(triggers: string | string[]): AsyncIterableIterator<T>;
-}
+export type { PubSub };
 
 // ============================================================================
 // GraphQL Context
