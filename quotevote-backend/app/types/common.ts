@@ -101,9 +101,15 @@ export interface Post {
   rejectedBy?: string[];
   reportedBy?: string[];
   bookmarkedBy?: string[];
+  votedBy?: Array<{ userId: string; type: string }>;
   enable_voting?: boolean;
   featuredSlot?: number;
   deleted?: boolean;
+  reported?: number;
+  dayPoints?: number;
+  pointTimestamp?: Date | string;
+  messageRoomId?: string;
+  urlId?: string;
   created: Date | string;
   updatedAt?: Date | string;
 }
