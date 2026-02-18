@@ -1,81 +1,18 @@
-'use client';
+import { Suspense } from 'react';
+import { Loader } from '@/components/common/Loader';
+import PasswordResetPageContent from './PageContent';
 
 /**
- * Password Reset Page
+ * Password Reset Page (Server Component Wrapper)
  * 
- * Page for resetting password with token verification.
- * Migrated from legacy PasswordResetPage.jsx.
+ * Wraps the client component in Suspense at the route segment level
+ * as required by Next.js 16 for pages using useSearchParams().
  */
 
-import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@apollo/client/react';
-import { PasswordReset } from '@/components/PasswordReset/PasswordReset';
-import { VERIFY_PASSWORD_RESET_TOKEN } from '@/graphql/queries';
-import { UPDATE_USER_PASSWORD } from '@/graphql/mutations';
-import { isAuthenticated } from '@/lib/utils/auth';
-import { Loader } from '@/components/common/Loader';
+// Mark this route as dynamic since it uses useSearchParams
+export const dynamic = 'force-dynamic';
 
-function PasswordResetPageContent(): React.ReactNode {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = Object.fromEntries(searchParams.entries());
-  const { token, username } = params;
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [passwordUpdated, setPasswordUpdated] = useState(false);
-
-  const { data, loading: loadingData } = useQuery(VERIFY_PASSWORD_RESET_TOKEN, {
-    variables: { token },
-    skip: !token,
-  });
-
-  const [updateUserPassword] = useMutation(UPDATE_USER_PASSWORD);
-  const isValidToken = Boolean(data && (data as { verifyUserPasswordResetToken?: unknown }).verifyUserPasswordResetToken);
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated()) {
-      router.push('/home');
-    }
-  }, [router]);
-
-  const handleSubmit = async (values: { password: string; confirmPassword: string }) => {
-    const { password } = values;
-    setLoading(true);
-    setError('');
-
-    try {
-      await updateUserPassword({
-        variables: {
-          username,
-          password,
-          token,
-        },
-      });
-      setPasswordUpdated(true);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update password';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <PasswordReset
-      onSubmit={handleSubmit}
-      loadingData={loadingData}
-      loading={loading}
-      passwordUpdated={passwordUpdated}
-      isValidToken={isValidToken}
-      error={error}
-    />
-  );
-}
-
-export default function PasswordResetPage(): React.ReactNode {
+export default function PasswordResetPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-screen">
