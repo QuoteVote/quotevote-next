@@ -32,7 +32,6 @@ const SolidConnectionSchema: Schema = new Schema(
             ref: 'User',
             required: true,
             unique: true,
-            index: true,
         },
         webId: {
             type: String,
@@ -72,7 +71,6 @@ const SolidConnectionSchema: Schema = new Schema(
 );
 
 // Indexes for efficient queries
-SolidConnectionSchema.index({ userId: 1 });
 SolidConnectionSchema.index({ webId: 1 });
 
 export const SolidConnection = mongoose.model<ISolidConnection>(

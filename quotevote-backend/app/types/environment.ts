@@ -274,7 +274,9 @@ export function parseInteger(value: string | undefined, defaultValue: number): n
  * Parses environment variables into a typed configuration object
  */
 export function parseEnvironmentConfig(env: NodeJS.ProcessEnv): EnvironmentConfig {
-  validateEnvironment(env);
+  // Use a test hook to allow bypassing validation in tests without invasive mocks
+  const validator = (parseEnvironmentConfig as unknown as { validator?: (env: NodeJS.ProcessEnv) => void }).validator || validateEnvironment;
+  validator(env);
 
   return {
     nodeEnv: (env.NODE_ENV as EnvironmentConfig['nodeEnv']) || 'development',

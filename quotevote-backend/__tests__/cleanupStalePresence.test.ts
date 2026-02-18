@@ -55,11 +55,45 @@ describe('cleanupStalePresence', () => {
   });
 
   it('should handle errors gracefully', async () => {
+    const { logger } = await import('../app/data/utils/logger');
     (Presence.find as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
     await cleanupStalePresence();
 
-    // Should not throw, but log error (which is mocked)
-    // We can verify logger was called if we exported the mock, but for now just ensuring no crash is good.
+    expect(logger.error).toHaveBeenCalledWith(
+        expect.stringMatching(/\[Presence Cleanup\] Error: DB Error/),
+        expect.any(Object)
+    );
+  });
+
+  it('should do nothing if no stale presences are found', async () => {
+    (Presence.find as jest.Mock).mockResolvedValue([]);
+    await cleanupStalePresence();
+    expect(pubsub.publish).not.toHaveBeenCalled();
+  });
+
+  it('should handle non-Error objects in catch block', async () => {
+    const { logger } = await import('../app/data/utils/logger');
+    (Presence.find as jest.Mock).mockRejectedValue('String Error');
+
+    await cleanupStalePresence();
+
+    expect(logger.error).toHaveBeenCalledWith(
+        expect.stringMatching(/\[Presence Cleanup\] Error: String Error/)
+    );
+  });
+
+  describe('startPresenceCleanup', () => {
+    it('should start the cleanup job interval', async () => {
+        const { startPresenceCleanup } = await import('../app/data/utils/presence/cleanupStalePresence');
+        jest.useFakeTimers();
+        const spy = jest.spyOn(global, 'setInterval');
+        
+        startPresenceCleanup();
+        
+        expect(spy).toHaveBeenCalledWith(expect.any(Function), 60000);
+        spy.mockRestore();
+        jest.useRealTimers();
+    });
   });
 });
