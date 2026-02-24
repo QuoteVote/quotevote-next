@@ -1,0 +1,73 @@
+﻿node.exe : [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline 
+data, please update: `npm i baseline-browser-mapping@latest -D`
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([baseline-brows...ping@latest -D`:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please 
+update: `npm i baseline-browser-mapping@latest -D`
+FAIL src/__tests__/components/settings/SettingsContent.test.tsx (12.441 s)
+  SettingsContent
+    Rendering
+      ○ skipped renders all form fields
+      ○ skipped renders avatar with user data
+      ○ skipped renders Sign Out button
+      ○ skipped renders Save button
+      ○ skipped renders Manage Invites button for admin users
+      ○ skipped renders Forgot Password link
+    Button Actions
+      ○ skipped handles logout click
+    Save Button State
+      ○ skipped shows loading state when submitting
+      ○ skipped disables save button when loading
+    Form Validation
+      ○ skipped validates required fields
+      ○ skipped validates email format
+      ○ skipped validates username format
+      ○ skipped validates password length when provided
+    Form Submission
+      ○ skipped submits form with valid data
+      ○ skipped submits form with password when provided
+      ○ skipped excludes password from submission when empty
+      ○ skipped handles submission errors
+      ○ skipped updates user data in store after successful submission
+    Edge Cases
+      × handles very long input values (10024 ms)
+      ○ skipped handles missing user data gracefully
+      ○ skipped handles partial user data
+      ○ skipped handles special characters in inputs
+      ○ skipped handles unicode characters in inputs
+    Avatar Interaction
+      ○ skipped navigates to avatar page on avatar click
+      ○ skipped handles missing avatar gracefully
+
+  ● SettingsContent › Edge Cases › handles very long input values
+
+    thrown: "Exceeded timeout of 10000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 602 |[39m     })
+     [90m 603 |[39m
+    [31m[1m>[22m[39m[90m 604 |[39m     it([32m'handles very long input values'[39m[33m,[39m [36masync[39m 
+() [33m=>[39m {
+     [90m     |[39m     [31m[1m^[22m[39m
+     [90m 605 |[39m       [36mconst[39m user [33m=[39m userEvent[33m.[39msetup()
+     [90m 606 |[39m       [36mconst[39m longName [33m=[39m [32m'a'[39m[33m.[39mrepeat([35m1000[39m)
+     [90m 607 |[39m[0m
+
+      at it (src/__tests__/components/settings/SettingsContent.test.tsx:604:5)
+      at describe (src/__tests__/components/settings/SettingsContent.test.tsx:562:3)
+      at Object.describe (src/__tests__/components/settings/SettingsContent.test.tsx:196:1)
+
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due 
+to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure 
+that .unref() was called on them.
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 24 skipped, 25 total
+Snapshots:   0 total
+Time:        14.68 s
+Ran all test suites matching src/__tests__/components/settings/SettingsContent.test.tsx with tests matching "handles 
+very long input values".

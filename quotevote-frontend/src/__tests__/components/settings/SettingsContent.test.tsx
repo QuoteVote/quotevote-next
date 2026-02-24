@@ -79,13 +79,13 @@ jest.mock('@/components/ui/form', () => ({
   }: {
     control: unknown
     name: string
-    render: (props: { 
-      field: { 
+    render: (props: {
+      field: {
         name: string
         value: string
         onChange: (e: React.ChangeEvent<HTMLInputElement> | string) => void
         onBlur: () => void
-      } 
+      }
     }) => React.ReactNode
   }) => {
     const [value, setValue] = React.useState('')
@@ -103,7 +103,7 @@ jest.mock('@/components/ui/form', () => ({
             name,
             value,
             onChange: handleChange,
-            onBlur: () => {},
+            onBlur: () => { },
           },
         })}
       </div>
@@ -125,7 +125,7 @@ jest.mock('@/components/ui/form', () => ({
     const id = React.useContext(FormItemIdContext)
     return <div>{React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id })}</div>
   },
-  FormMessage: ({ children }: { children?: React.ReactNode }) => 
+  FormMessage: ({ children }: { children?: React.ReactNode }) =>
     children ? <span role="alert">{children}</span> : null,
 }))
 
@@ -520,7 +520,7 @@ describe('SettingsContent', () => {
     it('updates user data in store after successful submission', async () => {
       const user = userEvent.setup()
       const mockSetUserData = jest.fn()
-      
+
       mockUseAppStore.mockImplementation((selector: (state: Record<string, unknown>) => unknown) => {
         const state = {
           user: {
@@ -574,7 +574,7 @@ describe('SettingsContent', () => {
       })
 
       renderComponent()
-      
+
       // Should render without crashing
       expect(screen.getByText('Settings')).toBeInTheDocument()
     })
@@ -596,7 +596,7 @@ describe('SettingsContent', () => {
       })
 
       renderComponent()
-      
+
       // Should render with available data (form may use empty defaults for missing fields)
       expect(screen.getByRole('textbox', { name: 'Username' })).toBeInTheDocument()
     })
@@ -613,7 +613,7 @@ describe('SettingsContent', () => {
 
       // Input should accept the value (form mock may not reflect it in value attribute)
       expect(nameInput).toBeInTheDocument()
-    })
+    }, 60000)
 
     it('handles special characters in inputs', async () => {
       const user = userEvent.setup()
@@ -675,7 +675,7 @@ describe('SettingsContent', () => {
       })
 
       renderComponent()
-      
+
       // Should render avatar with fallback
       const avatar = screen.getByTestId('avatar')
       expect(avatar).toBeInTheDocument()

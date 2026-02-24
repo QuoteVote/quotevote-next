@@ -14,6 +14,18 @@ const nextConfig: NextConfig = {
   // Compress output
   compress: true,
 
+  // Backwards-compatible redirects for auth paths referenced in legacy components
+  async redirects() {
+    return [
+      // /auth/forgot  →  /auth/forgot-password  (used by ForgotPassword & PasswordReset links)
+      {
+        source: '/auth/forgot',
+        destination: '/auth/forgot-password',
+        permanent: true,
+      },
+    ];
+  },
+
   // Security headers
   async headers() {
     return [
