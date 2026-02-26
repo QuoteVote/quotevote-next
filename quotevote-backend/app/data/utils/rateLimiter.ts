@@ -90,8 +90,9 @@ export const cleanupRateLimitMap = (): void => {
   }
 };
 
+// Auto-start cleanup interval in non-test environments
+/* istanbul ignore next -- @preserve: intentionally skipped in test environment */
 if (process.env.NODE_ENV !== 'test') {
-  // Clean up old entries every 5 minutes
   setInterval(cleanupRateLimitMap, 300000);
 }
 
