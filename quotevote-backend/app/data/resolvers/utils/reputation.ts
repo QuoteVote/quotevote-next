@@ -95,6 +95,7 @@ export const calculateUserReputation = async (userId: string): Promise<Reputatio
  */
 export const calculateInviteNetworkScore = async (_userId: string): Promise<number> => {
   // TODO: Implement when UserInviteModel and UserReputationModel are migrated
+  void _userId;
   return 0;
 };
 
@@ -188,7 +189,8 @@ export const recalculateAllReputations = async (): Promise<RecalculationResult[]
       const reputation = await calculateUserReputation(user._id.toString());
       results.push({ userId: user._id.toString(), success: true, reputation });
     } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      // calculateUserReputation always wraps non-Error throws into Error (line 79)
+      const err = error as Error;
       results.push({ userId: user._id.toString(), success: false, error: err.message });
     }
   }
