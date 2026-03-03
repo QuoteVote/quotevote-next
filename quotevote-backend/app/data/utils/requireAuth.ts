@@ -31,6 +31,8 @@ const PUBLIC_QUERIES: readonly string[] = [
   'getUserFollowInfo',
   'group',
   'groups',
+  'checkEmailStatus',
+  'sendMagicLink',
   // add more public queries/mutations
 ] as const;
 

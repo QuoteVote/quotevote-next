@@ -155,6 +155,9 @@ export interface QueryResolvers {
 
   // Token verification
   verifyUserPasswordResetToken: ResolverFn<boolean, unknown, { token: string }>;
+
+  // Eyebrow email status
+  checkEmailStatus: ResolverFn<EmailStatusResult, unknown, { email: string }>;
 }
 
 // ============================================================================
@@ -253,6 +256,7 @@ export interface MutationResolvers {
   // Email mutations
   sendPasswordResetEmail: ResolverFn<boolean, unknown, { email: string }>;
   sendInvestorMail: ResolverFn<boolean, unknown, { email: string }>;
+  sendMagicLink: ResolverFn<boolean, unknown, { email: string }>;
 }
 
 // ============================================================================
@@ -424,6 +428,10 @@ export interface RosterQueryResult {
   buddies: Common.Roster[];
   pendingRequests: Common.Roster[];
   blockedUsers: Common.User[];
+}
+
+export interface EmailStatusResult {
+  status: 'registered' | 'not_requested' | 'requested_pending' | 'approved_no_password';
 }
 
 // ============================================================================

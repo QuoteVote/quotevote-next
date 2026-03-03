@@ -113,6 +113,16 @@ describe('requireAuth', () => {
       const query = 'query { topPosts { id } }';
       expect(requireAuth(query)).toBe(false);
     });
+
+    it('should return false for "checkEmailStatus" query', () => {
+      const query = 'query { checkEmailStatus(email: "test@example.com") { status } }';
+      expect(requireAuth(query)).toBe(false);
+    });
+
+    it('should return false for "sendMagicLink" mutation', () => {
+      const query = 'mutation { sendMagicLink(email: "test@example.com") }';
+      expect(requireAuth(query)).toBe(false);
+    });
   });
 
   describe('Protected queries (should return true)', () => {

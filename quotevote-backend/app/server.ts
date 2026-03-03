@@ -5,6 +5,7 @@ import cors from 'cors';
 import http from 'http';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import * as jwt from 'jsonwebtoken';
 import { GraphQLError } from 'graphql';
 import { solidResolvers } from './data/resolvers/solidResolvers';
 import type { GraphQLContext, PubSub } from './types/graphql';
@@ -13,6 +14,9 @@ import { pubsub } from './data/utils/pubsub';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
 import * as auth from './data/utils/authentication';
 import User from './data/models/User';
+import UserInvite from './data/models/UserInvite';
+import sendGridEmail, { SENDGRID_TEMPLATE_IDS } from './data/utils/send-grid-mail';
+import { logger } from './data/utils/logger';
 import type * as Common from './types/common';
 
 // Use shared pubsub instance referencing the import
@@ -48,6 +52,7 @@ async function startServer() {
         hello: String
         status: String
         solidConnectionStatus: SolidConnectionStatus
+        checkEmailStatus(email: String!): EmailStatusResult!
       }
 
       type Mutation {
@@ -57,6 +62,11 @@ async function startServer() {
           solidPullPortableState: PortableState
           solidPushPortableState(input: PortableStateInput!): Boolean
           solidAppendActivityEvent(input: ActivityEventInput!): Boolean
+          sendMagicLink(email: String!): Boolean
+      }
+
+      type EmailStatusResult {
+        status: String!
       }
 
       type SolidConnectionStatus {
@@ -97,6 +107,65 @@ async function startServer() {
         Query: {
           hello: () => 'Hello from TypeScript Backend! 🚀',
           status: () => 'Active',
+          checkEmailStatus: async (_parent: unknown, args: { email: string }) => {
+            const email = args.email.toLowerCase().trim();
+
+            // Check if user exists with a password
+            const user = await User.findOne({ email });
+            if (user && user.password) {
+              return { status: 'registered' };
+            }
+
+            // Check invite status
+            const invite = await UserInvite.findOne({ email });
+            if (!invite) {
+              return { status: 'not_requested' };
+            }
+
+            if (invite.status === 'pending') {
+              return { status: 'requested_pending' };
+            }
+
+            if (invite.status === 'accepted') {
+              return { status: 'approved_no_password' };
+            }
+
+            return { status: 'not_requested' };
+          },
+        },
+        Mutation: {
+          sendMagicLink: async (_parent: unknown, args: { email: string }) => {
+            const email = args.email.toLowerCase().trim();
+            const user = await User.findOne({ email });
+
+            if (!user) {
+              logger.warn('sendMagicLink called for non-existent user', { email });
+              // Return true to avoid leaking user existence
+              return true;
+            }
+
+            const jwtSecret = process.env.JWT_SECRET || 'dev_jwt_secret_fallback_do_not_use_in_prod';
+            const token = jwt.sign(
+              { userId: user._id.toString(), email, purpose: 'magic_link' },
+              jwtSecret,
+              { expiresIn: '15m' }
+            );
+
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            const magicLinkUrl = `${frontendUrl}/auth/magic-link?token=${token}`;
+
+            await sendGridEmail({
+              to: email,
+              templateId: SENDGRID_TEMPLATE_IDS.MAGIC_LOGIN_LINK,
+              dynamicTemplateData: {
+                magicLinkUrl,
+                userName: user.name || user.username,
+              },
+            });
+
+            logger.info('Magic link sent', { email });
+            return true;
+          },
         },
       },
       solidResolvers

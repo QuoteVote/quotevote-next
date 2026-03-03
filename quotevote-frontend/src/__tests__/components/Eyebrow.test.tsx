@@ -13,13 +13,64 @@ jest.mock("@/store/useAppStore", () => ({
   useAppStore: jest.fn(),
 }));
 
+// Mock toast
+jest.mock("sonner", () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+import { toast } from "sonner";
+
+// Mock Next.js navigation
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+  usePathname: () => "/",
+  useSearchParams: () => ({
+    toString: () => "",
+  }),
+}));
+
+// Mock Apollo Client hooks
+const mockQuery = jest.fn();
+const mockMutation = jest.fn();
+const mockClient = {
+  query: mockQuery,
+};
+
+const mockUseMutation = jest.fn(() => [
+  mockMutation,
+  { loading: false, error: null },
+]);
+
+jest.mock("@apollo/client/react", () => {
+  const actual = jest.requireActual("@apollo/client/react");
+  return {
+    ...actual,
+    useApolloClient: () => mockClient,
+    useMutation: () => mockUseMutation(),
+  };
+});
+
 describe("Eyebrow Component", () => {
   const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    global.fetch = jest.fn();
     mockUseAppStore.mockReturnValue(null);
+
+    // Default mutation response
+    mockMutation.mockResolvedValue({
+      data: {
+        requestUserAccess: {
+          _id: "123",
+          email: "test@example.com",
+        },
+      },
+    });
   });
 
   it("renders all form fields", () => {
@@ -55,18 +106,16 @@ describe("Eyebrow Component", () => {
 
     render(<Eyebrow />);
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: async () => ({ status: "registered" }),
+    mockQuery.mockResolvedValueOnce({
+      data: { checkEmailStatus: { status: "registered" } },
     });
 
     const emailInput = screen.getByPlaceholderText(/enter your email/i);
     const continueButton = screen.getByRole("button", { name: /Continue/i });
 
     await user.type(emailInput, "testuser@email.com");
-
     await user.click(continueButton);
 
-    // Check whether login options modal opens up
     await waitFor(() => {
       expect(screen.getByText(/We recognize this email./i)).toBeInTheDocument();
     });
@@ -77,19 +126,14 @@ describe("Eyebrow Component", () => {
 
     render(<Eyebrow />);
 
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        json: async () => ({ status: "not_requested" }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-      });
+    mockQuery.mockResolvedValueOnce({
+      data: { checkEmailStatus: { status: "not_requested" } },
+    });
 
     const emailInput = screen.getByPlaceholderText(/enter your email/i);
     const continueButton = screen.getByRole("button", { name: /Continue/i });
 
     await user.type(emailInput, "testuser@email.com");
-
     await user.click(continueButton);
 
     const feedbackMessages = await waitFor(
@@ -109,17 +153,16 @@ describe("Eyebrow Component", () => {
 
     render(<Eyebrow />);
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: async () => ({ status: "requested_pending" }),
+    mockQuery.mockResolvedValueOnce({
+      data: { checkEmailStatus: { status: "requested_pending" } },
     });
 
     const emailInput = screen.getByPlaceholderText(/enter your email/i);
     const continueButton = screen.getByRole("button", { name: /Continue/i });
 
     await user.type(emailInput, "testuser@email.com");
-
     await user.click(continueButton);
-    
+
     const feedbackMessages = await screen.findAllByText(
       "Your invite request is still waiting for approval."
     );
@@ -127,25 +170,100 @@ describe("Eyebrow Component", () => {
     expect(feedbackMessages.length).toBeGreaterThan(0);
   });
 
-  it("displays login options modal when user is 'approved_no_password'", async () => {
+  it("displays onboarding modal when user is 'approved_no_password'", async () => {
     const user = userEvent.setup();
 
     render(<Eyebrow />);
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: async () => ({ status: "approved_no_password" }),
+    mockQuery.mockResolvedValueOnce({
+      data: { checkEmailStatus: { status: "approved_no_password" } },
     });
 
     const emailInput = screen.getByPlaceholderText(/enter your email/i);
     const continueButton = screen.getByRole("button", { name: /Continue/i });
 
     await user.type(emailInput, "testuser@email.com");
-
     await user.click(continueButton);
 
-    // Check whether onboarding completion modal opens up
     await waitFor(() => {
       expect(screen.getByText(/Your invite is approved!/i)).toBeInTheDocument();
     });
+  });
+
+  it("calls CHECK_EMAIL_STATUS query with correct variables", async () => {
+    const user = userEvent.setup();
+
+    render(<Eyebrow />);
+
+    mockQuery.mockResolvedValueOnce({
+      data: { checkEmailStatus: { status: "not_requested" } },
+    });
+
+    const emailInput = screen.getByPlaceholderText(/enter your email/i);
+    const continueButton = screen.getByRole("button", { name: /Continue/i });
+
+    await user.type(emailInput, "testuser@email.com");
+    await user.click(continueButton);
+
+    await waitFor(() => {
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: { email: "testuser@email.com" },
+          fetchPolicy: "network-only",
+        })
+      );
+    });
+  });
+
+  it("calls REQUEST_USER_ACCESS_MUTATION for 'not_requested' status", async () => {
+    const user = userEvent.setup();
+
+    render(<Eyebrow />);
+
+    mockQuery.mockResolvedValueOnce({
+      data: { checkEmailStatus: { status: "not_requested" } },
+    });
+
+    const emailInput = screen.getByPlaceholderText(/enter your email/i);
+    const continueButton = screen.getByRole("button", { name: /Continue/i });
+
+    await user.type(emailInput, "testuser@email.com");
+    await user.click(continueButton);
+
+    await waitFor(() => {
+      expect(mockMutation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: {
+            requestUserAccessInput: { email: "testuser@email.com" },
+          },
+        })
+      );
+    });
+  });
+
+  it("shows error feedback and toast on network error", async () => {
+    const user = userEvent.setup();
+    const originalError = console.error;
+    console.error = jest.fn();
+
+    render(<Eyebrow />);
+
+    mockQuery.mockRejectedValueOnce(new Error("Network error"));
+
+    const emailInput = screen.getByPlaceholderText(/enter your email/i);
+    const continueButton = screen.getByRole("button", { name: /Continue/i });
+
+    await user.type(emailInput, "testuser@email.com");
+    await user.click(continueButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText("Unable to connect. Please try again.").length
+      ).toBeGreaterThan(0);
+    });
+
+    expect(toast.error).toHaveBeenCalledWith("Something went wrong");
+
+    console.error = originalError;
   });
 });

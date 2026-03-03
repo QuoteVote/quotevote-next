@@ -546,6 +546,16 @@ export const ENABLE_USER = gql`
 `
 
 /**
+ * Send magic login link mutation
+ * Used by Eyebrow LoginOptionsModal and OnboardingCompletionModal
+ */
+export const SEND_MAGIC_LINK = gql`
+  mutation sendMagicLink($email: String!) {
+    sendMagicLink(email: $email)
+  }
+`
+
+/**
  * Update user profile mutation
  * Used by Settings component for updating user information
  */

@@ -2,18 +2,25 @@
 
 import { useForm } from "react-hook-form";
 import { useAppStore } from "@/store";
+import { useApolloClient, useMutation } from "@apollo/client/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { eyebrowSchema } from "@/lib/validation/eyebrowSchema";
-import { EyebrowFormData } from "@/types/eyebrow";
+import { EyebrowFormData, CheckEmailStatusResult } from "@/types/eyebrow";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import LoginOptionsModal from "@/app/components/Eyebrow/LoginOptionsModal";
-import OnboardingCompletionModal from "@/app/components/Eyebrow/OnboardingCompletionModal";
+import { toast } from "sonner";
+import { LoginOptionsModal } from "@/app/components/Eyebrow/LoginOptionsModal";
+import { OnboardingCompletionModal } from "@/app/components/Eyebrow/OnboardingCompletionModal";
+import { CHECK_EMAIL_STATUS } from "@/graphql/queries";
+import { REQUEST_USER_ACCESS_MUTATION } from "@/graphql/mutations";
 
 export function Eyebrow() {
   const user = useAppStore((state) => state.user.data);
   const loggedIn = !!user?.id;
+
+  const client = useApolloClient();
+  const [requestUserAccess] = useMutation(REQUEST_USER_ACCESS_MUTATION);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<string | undefined>();
@@ -48,10 +55,14 @@ export function Eyebrow() {
 
       const email = data?.email;
 
-      const res = await fetch(`/auth/check-email?email=${email}`);
-      const result = await res.json();
+      const res = await client.query<{ checkEmailStatus: CheckEmailStatusResult }>({
+        query: CHECK_EMAIL_STATUS,
+        variables: { email },
+        fetchPolicy: 'network-only',
+      });
+      const status = res.data?.checkEmailStatus.status;
 
-      switch (result.status) {
+      switch (status) {
         case "registered":
           openLoginOptionsModal();
           break;
@@ -69,18 +80,19 @@ export function Eyebrow() {
           openOnboardingCompletionModal();
           break;
       }
-    } catch {
-      setFeedback("An error has occurred");
+    } catch (err) {
+      const error = err as Error;
+      setFeedback("Unable to connect. Please try again.");
+      toast.error("Something went wrong");
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleNewInviteRequest = async (email: string) => {
-    // Add correct endpoint here when backend is complete
-    await fetch("", {
-      method: "POST",
-      body: JSON.stringify({ email }),
+    await requestUserAccess({
+      variables: { requestUserAccessInput: { email } },
     });
   };
 
