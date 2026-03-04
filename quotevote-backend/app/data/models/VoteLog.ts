@@ -1,0 +1,18 @@
+import mongoose, { Schema } from 'mongoose';
+import type { VoteLogDocument, VoteLogModel } from '~/types/mongoose';
+
+const VoteLogSchema = new Schema<VoteLogDocument, VoteLogModel>(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    postId: { type: Schema.Types.ObjectId, ref: 'Post', required: true },
+    type: { type: String, enum: ['up', 'down'], required: true },
+    created: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+const VoteLog =
+  (mongoose.models.VoteLog as VoteLogModel) ||
+  mongoose.model<VoteLogDocument, VoteLogModel>('VoteLog', VoteLogSchema);
+
+export default VoteLog;

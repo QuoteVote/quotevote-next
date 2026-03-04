@@ -178,6 +178,8 @@ export interface Message {
   text?: string;
   type?: string;
   mutation_type?: string;
+  deleted?: boolean;
+  readBy?: string[];
   created: Date | string;
   updatedAt?: Date | string;
 }

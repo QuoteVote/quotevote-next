@@ -57,6 +57,8 @@ export interface PostDocument
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   groupId?: Types.ObjectId;
+  dayPoints?: number;
+  pointTimestamp?: Date;
 }
 
 export interface PostModel extends Model<PostDocument> {
