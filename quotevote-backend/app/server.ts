@@ -56,6 +56,7 @@ async function startServer() {
       }
 
       type Mutation {
+          requestUserAccess(requestUserAccessInput: RequestUserAccessInput!): UserInviteResult
           solidStartConnect(issuer: String!): SolidConnectResult
           solidFinishConnect(code: String!, state: String!, redirectUri: String!): SolidConnectResult
           solidDisconnect: Boolean
@@ -63,6 +64,17 @@ async function startServer() {
           solidPushPortableState(input: PortableStateInput!): Boolean
           solidAppendActivityEvent(input: ActivityEventInput!): Boolean
           sendMagicLink(email: String!): Boolean
+      }
+
+      input RequestUserAccessInput {
+        email: String!
+        name: String
+        message: String
+      }
+
+      type UserInviteResult {
+        _id: String
+        email: String
       }
 
       type EmailStatusResult {
@@ -134,6 +146,24 @@ async function startServer() {
           },
         },
         Mutation: {
+          requestUserAccess: async (_parent: unknown, args: { requestUserAccessInput: { email: string; name?: string; message?: string } }) => {
+            const { email, name, message } = args.requestUserAccessInput;
+            const normalizedEmail = email.toLowerCase().trim();
+
+            // Check if invite already exists
+            const existing = await UserInvite.findOne({ email: normalizedEmail });
+            if (existing) {
+              return { _id: existing._id.toString(), email: existing.email };
+            }
+
+            const invite = await UserInvite.create({
+              email: normalizedEmail,
+              status: 'pending',
+            });
+
+            logger.info('User access requested', { email: normalizedEmail, name, message });
+            return { _id: invite._id.toString(), email: invite.email };
+          },
           sendMagicLink: async (_parent: unknown, args: { email: string }) => {
             const email = args.email.toLowerCase().trim();
             const user = await User.findOne({ email });
@@ -175,7 +205,10 @@ async function startServer() {
   await server.start();
 
   // 3. Middleware & Routes Integration
-  app.use(cors<cors.CorsRequest>());
+  app.use(cors<cors.CorsRequest>({
+    origin: process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true,
+  }));
   app.use(express.json());
 
   // Auth Routes
