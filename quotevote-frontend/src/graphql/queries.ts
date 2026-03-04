@@ -854,3 +854,15 @@ export const GET_BOT_REPORTED_USERS = gql`
     }
   }
 `
+
+/**
+ * Check email status query
+ * Used by Eyebrow component to determine the user's onboarding/login state
+ */
+export const CHECK_EMAIL_STATUS = gql`
+  query checkEmailStatus($email: String!) {
+    checkEmailStatus(email: $email) {
+      status
+    }
+  }
+`

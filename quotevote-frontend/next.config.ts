@@ -56,7 +56,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
-              "connect-src 'self' http://localhost:4000",
+              "connect-src 'self' http://localhost:4000 ws://localhost:4000",
               "frame-ancestors 'none'",
             ].join("; "),
           },
