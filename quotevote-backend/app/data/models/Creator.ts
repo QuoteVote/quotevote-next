@@ -1,0 +1,18 @@
+import mongoose, { Schema } from 'mongoose';
+import type { CreatorDocument, CreatorModel } from '~/types/mongoose';
+
+const CreatorSchema = new Schema<CreatorDocument, CreatorModel>(
+  {
+    name: { type: String, required: true },
+    avatar: { type: String },
+    bio: { type: String },
+    created: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+const Creator =
+  (mongoose.models.Creator as CreatorModel) ||
+  mongoose.model<CreatorDocument, CreatorModel>('Creator', CreatorSchema);
+
+export default Creator;
