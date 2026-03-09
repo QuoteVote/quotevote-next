@@ -123,7 +123,7 @@ describe("LoginOptionsModal", () => {
     const passwordButton = screen.getByRole("button", { name: /Login with password/i });
     await user.click(passwordButton);
 
-    expect(mockPush).toHaveBeenCalledWith("/login?email=test%40example.com");
+    expect(mockPush).toHaveBeenCalledWith("/auths/login?email=test%40example.com");
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
@@ -146,7 +146,7 @@ describe("LoginOptionsModal", () => {
     console.error = originalError;
   });
 
-  it("calls onClose when dialog is dismissed", async () => {
+  it("does not call onClose on initial render", async () => {
     render(<LoginOptionsModal {...defaultProps} />);
 
     // The dialog onOpenChange triggers onClose

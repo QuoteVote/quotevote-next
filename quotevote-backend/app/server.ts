@@ -170,8 +170,7 @@ async function startServer() {
 
             if (!user) {
               logger.warn('sendMagicLink called for non-existent user', { email });
-              // Return true to avoid leaking user existence
-              return true;
+              return false;
             }
 
             const jwtSecret = process.env.JWT_SECRET || 'dev_jwt_secret_fallback_do_not_use_in_prod';

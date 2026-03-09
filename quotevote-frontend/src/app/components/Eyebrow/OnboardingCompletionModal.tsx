@@ -22,7 +22,7 @@ export function OnboardingCompletionModal({ email, isOpen, onClose }: Onboarding
   const [isOnboardLinkSuccess, setIsOnboardLinkSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (!email) return;
+  if (!email) return null;
 
   const handleOnboardingLinkCreate = async () => {
     try {

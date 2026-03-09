@@ -45,7 +45,7 @@ export function Eyebrow() {
 
   // We don't render component if user is authenticated
   if (loggedIn) {
-    return;
+    return null;
   }
 
   const handleContinue = async (data: EyebrowFormData) => {
@@ -78,6 +78,10 @@ export function Eyebrow() {
 
         case "approved_no_password":
           openOnboardingCompletionModal();
+          break;
+
+        default:
+          setFeedback("Unexpected status. Please try again.");
           break;
       }
     } catch (err) {

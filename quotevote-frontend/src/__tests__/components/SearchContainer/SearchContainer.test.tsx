@@ -15,11 +15,11 @@
  */
 
 // Mock useQuery from Apollo Client - MUST be before any imports
-// Component imports from '@apollo/client' directly
+// Component imports from '@apollo/client/react'
 const mockUseQuery = jest.fn()
 
-jest.mock('@apollo/client', () => {
-  const actual = jest.requireActual('@apollo/client')
+jest.mock('@apollo/client/react', () => {
+  const actual = jest.requireActual('@apollo/client/react')
   return {
     ...actual,
     useQuery: jest.fn((...args: unknown[]) => mockUseQuery(...args)),

@@ -21,7 +21,7 @@ export function LoginOptionsModal({ email, isOpen, onClose }: LoginOptionsModalP
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  if (!email) return;
+  if (!email) return null;
 
   const handleSendMagicLink = async () => {
     try {
@@ -43,7 +43,7 @@ export function LoginOptionsModal({ email, isOpen, onClose }: LoginOptionsModalP
   };
 
   const handleLoginWithPassword = () => {
-    router.push("/login?email=" + encodeURIComponent(email));
+    router.push("/auths/login?email=" + encodeURIComponent(email));
     onClose();
   };
 
