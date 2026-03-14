@@ -8,6 +8,7 @@ import { EyebrowFormData } from "@/types/eyebrow";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { X } from "lucide-react";
 import LoginOptionsModal from "@/app/components/Eyebrow/LoginOptionsModal";
 import OnboardingCompletionModal from "@/app/components/Eyebrow/OnboardingCompletionModal";
 
@@ -15,6 +16,7 @@ export function Eyebrow() {
   const user = useAppStore((state) => state.user.data);
   const loggedIn = !!user?.id;
 
+  const [isDismissed, setIsDismissed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<string | undefined>();
 
@@ -36,8 +38,8 @@ export function Eyebrow() {
     },
   });
 
-  // We don't render component if user is authenticated
-  if (loggedIn) {
+  // We don't render component if user is authenticated or banner is dismissed
+  if (loggedIn || isDismissed) {
     return;
   }
 
@@ -122,8 +124,8 @@ export function Eyebrow() {
         onClose={closeOnboardingCompletionModal}
         email={watch("email")}
       />
-      <div className="bg-white z-40 shadow-sm border-b border-gray-200">
-        <div className="mx-auto px-6 py-3 w-full flex flex-col sm:flex-row items-start justify-between gap-3">
+      <div className="relative bg-white z-40 shadow-sm border-b border-gray-200">
+        <div className="mx-auto px-6 pr-12 sm:pr-14 py-3 w-full flex flex-col sm:flex-row items-start justify-between gap-3">
           <div className="flex flex-col gap-1.5 grow w-full">
             <Input
               id="email"
@@ -166,6 +168,14 @@ export function Eyebrow() {
             </div>
           )}
         </div>
+        <button
+          type="button"
+          onClick={() => setIsDismissed(true)}
+          className="absolute inset-y-0 right-3 my-auto h-8 w-8 flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+          aria-label="Close banner"
+        >
+          <X size={18} strokeWidth={2.5} aria-hidden />
+        </button>
       </div>
     </>
   );
