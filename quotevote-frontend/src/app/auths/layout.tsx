@@ -53,7 +53,7 @@ const routeMetadata: Record<string, { name: string; hideNavbar?: boolean }> = {
   '/signup': { name: 'Sign Up' },
   '/forgot-password': { name: 'Forgot Password' },
   '/password-reset': { name: 'Reset Password' },
-  '/auth/request-access': { name: 'Request Access' },
+  '/request-access': { name: 'Request Access' },
   '/invite': { name: 'Invite' },
   '/error-page': { name: 'Error' },
 };
@@ -85,6 +85,15 @@ export default function AuthLayout({
     return { name: 'QuoteVote' };
   }, [pathname]);
 
+  // Pages that own their full layout (navbar + background) — bypass this layout entirely
+  const isFullPageRoute = useMemo(
+    () =>
+      pathname.includes('/auths/login') ||
+      pathname.includes('/auths/request-access') ||
+      pathname.includes('/auths/forgot-password'),
+    [pathname]
+  );
+
   // Check if we're on request-access or invite page
   const isRequestAccessPage = useMemo(
     () => pathname.includes('request-access') || pathname.includes('/invite'),
@@ -101,6 +110,11 @@ export default function AuthLayout({
   const backgroundImageUrl = selectedBackground
     ? `/assets/bg/${selectedBackground}`
     : '/assets/Mountain.png';
+
+  // Let login and request-access pages render their own full layout
+  if (isFullPageRoute) {
+    return <>{children}</>;
+  }
 
   return (
     <div

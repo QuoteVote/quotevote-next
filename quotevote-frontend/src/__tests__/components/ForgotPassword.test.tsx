@@ -29,40 +29,25 @@ describe('ForgotPassword Component', () => {
     it('renders all form fields and elements', () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      expect(screen.getByText('Forgot password?')).toBeInTheDocument();
-      expect(
-        screen.getByText('We will send you a link to reset your password.')
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /forgot your password/i })).toBeInTheDocument();
+      expect(screen.getByText(/send a reset link/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /send/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /send reset link/i })).toBeInTheDocument();
     });
 
     it('renders back button with correct aria-label', () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const backButton = screen.getByLabelText('Go Back');
+      const backButton = screen.getAllByRole('link', { name: /back to login/i })[0];
       expect(backButton).toBeInTheDocument();
     });
 
     it('renders login link', () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const loginLink = screen.getByRole('link', { name: /login/i });
-      expect(loginLink).toBeInTheDocument();
-      expect(loginLink).toHaveAttribute('href', '/login');
-    });
-
-    it('renders request access link', () => {
-      render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
-
-      const requestAccessLink = screen.getByRole('link', {
-        name: /request access/i,
-      });
-      expect(requestAccessLink).toBeInTheDocument();
-      expect(requestAccessLink).toHaveAttribute(
-        'href',
-        '/request-access'
-      );
+      const loginLinks = screen.getAllByRole('link', { name: /login/i });
+      expect(loginLinks.length).toBeGreaterThan(0);
+      expect(loginLinks[0]).toHaveAttribute('href', '/auths/login');
     });
   });
 
@@ -120,9 +105,10 @@ describe('ForgotPassword Component', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockOnSubmit).toHaveBeenCalledWith({
-          email: 'test@example.com',
-        });
+        expect(mockOnSubmit).toHaveBeenCalledWith(
+          { email: 'test@example.com' },
+          expect.anything()
+        );
       });
     });
   });
@@ -140,9 +126,10 @@ describe('ForgotPassword Component', () => {
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-        expect(mockOnSubmit).toHaveBeenCalledWith({
-          email: 'user@example.com',
-        });
+        expect(mockOnSubmit).toHaveBeenCalledWith(
+          { email: 'user@example.com' },
+          expect.anything()
+        );
       });
     });
 
@@ -276,21 +263,18 @@ describe('ForgotPassword Component', () => {
     it('has accessible back button', () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const backButton = screen.getByLabelText('Go Back');
+      const backButton = screen.getAllByRole('link', { name: /back to login/i })[0];
       expect(backButton).toBeInTheDocument();
-      expect(backButton).toHaveAttribute('aria-label', 'Go Back');
+      expect(backButton).toHaveAttribute('aria-label', 'Back to login');
     });
   });
 
   describe('Navigation', () => {
-    it('navigates to login page when back button is clicked', async () => {
-      const user = userEvent.setup();
+    it('back button points to login page', () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const backButton = screen.getByLabelText('Go Back');
-      await user.click(backButton);
-
-      expect(mockPush).toHaveBeenCalledWith('/login');
+      const backButton = screen.getAllByRole('link', { name: /back to login/i })[0];
+      expect(backButton).toHaveAttribute('href', '/auths/login');
     });
   });
 
@@ -323,9 +307,10 @@ describe('ForgotPassword Component', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockOnSubmit).toHaveBeenCalledWith({
-          email: longEmail,
-        });
+        expect(mockOnSubmit).toHaveBeenCalledWith(
+          { email: longEmail },
+          expect.anything()
+        );
       });
     });
   });

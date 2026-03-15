@@ -1,127 +1,156 @@
 'use client';
 
-/**
- * Email Sent Component
- * 
- * Matches login page theme with split-screen layout and consistent styling.
- */
-
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { ArrowRight, MailCheck, RefreshCw } from 'lucide-react';
+
+import { AuthPageShell } from '@/components/AuthPageShell/AuthPageShell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 export function EmailSent() {
-  const router = useRouter();
-
-  const handleLogin = () => {
-    router.push('/login');
-  };
-
   return (
-    <div className="h-[calc(100vh-80px)] w-full">
-      <div className="flex flex-col lg:flex-row h-full">
-        {/* Left Side - Image */}
-        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-          <div className="absolute inset-0">
-            <Image
-              src="/assets/bg/viviana-rishe-UC8fvOyG5pU-unsplash.jpg"
-              alt="Quote.Vote"
-              fill
-              className="object-cover"
-              priority
-              quality={90}
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
-        </div>
+    <AuthPageShell showLogin={false}>
+      <div className="flex-1 flex items-center justify-center px-4 py-12 lg:py-16">
+        <div className="w-full max-w-md mx-auto">
 
-        {/* Right Side - Content */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-6 relative">
-          <div className="w-full max-w-md mx-auto relative z-10">
-            <div className="bg-[var(--color-white)] rounded-xl shadow-md border border-[var(--color-gray-light)]">
-              {/* Header Section */}
-              <div className="px-6 pt-6 pb-4 text-center border-b border-[var(--color-gray-light)]">
-                <div className="flex justify-center mb-4">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-[var(--color-primary)] p-1 shadow-md">
-                    <div className="w-full h-full rounded-md bg-[var(--color-white)] flex items-center justify-center">
-                      <Image
-                        src="/icons/android-chrome-192x192.png"
-                        alt="Quote.Vote"
-                        width={40}
-                        height={40}
-                        className="rounded"
-                        priority
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-center mb-3">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 border-2 border-green-200">
-                    <CheckCircle2 className="h-8 w-8 text-green-600" />
-                  </div>
-                </div>
-                <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-1 tracking-tight">
-                  Email Sent
-                </h1>
-                <p className="text-[var(--color-text-secondary)] text-sm">
-                  We have sent you an email to reset your password.
-                </p>
-              </div>
-
-              {/* Content Section */}
-              <div className="px-6 py-5">
-                <p className="text-sm text-[var(--color-text-secondary)] text-center leading-relaxed">
-                  Please check your inbox and follow the instructions to reset your password. 
-                  If you don&apos;t see the email, check your spam folder.
-                </p>
-              </div>
-
-              {/* Footer Section */}
-              <div className="px-6 pb-6 space-y-3 border-t border-[var(--color-gray-light)] pt-4">
-                <Button
-                  onClick={handleLogin}
-                  className={cn(
-                    "w-full h-10 text-base font-semibold",
-                    "bg-[var(--color-primary)] hover:opacity-90",
-                    "text-[var(--color-primary-contrast)] border-0 shadow-md",
-                    "hover:shadow-lg",
-                    "transition-all duration-200",
-                    "rounded-lg group"
-                  )}
-                  size="lg"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <span>Go to Login</span>
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </span>
-                </Button>
-
-                <div className="relative py-3">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[var(--color-gray-light)]" />
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="bg-[var(--color-white)] px-4 py-1 text-[var(--color-text-muted)]">
-                      Didn&apos;t receive it?
-                    </span>
-                  </div>
-                </div>
-
-                <Link
-                  href="/forgot-password"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg border border-[var(--color-gray-light)] bg-[var(--color-background-off-white)] hover:bg-[var(--color-background)] text-[var(--color-text-primary)] font-medium transition-colors group"
-                >
-                  <span>Resend Email</span>
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
+          {/* Header */}
+          <div className="text-center mb-8">
+            {/* Animated check icon */}
+            <div className="flex justify-center mb-5">
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                style={{
+                  background: 'rgba(82,178,116,0.12)',
+                  border: '1px solid rgba(82,178,116,0.30)',
+                  boxShadow: '0 0 40px rgba(82,178,116,0.25)',
+                }}
+              >
+                <MailCheck size={28} style={{ color: '#52b274' }} aria-hidden />
               </div>
             </div>
+            <Badge
+              className="mb-4 px-3 py-1 text-xs font-semibold rounded-full"
+              style={{
+                background: 'rgba(82,178,116,0.10)',
+                border: '1px solid rgba(82,178,116,0.25)',
+                color: '#8de0a8',
+              }}
+            >
+              Email sent
+            </Badge>
+            <h1
+              className="text-3xl sm:text-4xl font-extrabold tracking-tight"
+              style={{ color: '#fff' }}
+            >
+              Check your{' '}
+              <span
+                style={{
+                  background: 'linear-gradient(100deg, #52b274 0%, #9de8b8 60%, #52b274 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                inbox
+              </span>
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              We&apos;ve sent a password reset link to your email address.
+            </p>
           </div>
+
+          {/* Card */}
+          <div
+            className="p-8 space-y-6"
+            style={{
+              background: 'rgba(13,31,16,0.96)',
+              border: '1px solid rgba(82,178,116,0.18)',
+              boxShadow: '0 8px 48px rgba(0,0,0,0.50), 0 0 0 1px rgba(82,178,116,0.06)',
+              borderRadius: '1.25rem',
+            }}
+          >
+            <h2 className="text-lg font-bold text-white">What to do next</h2>
+              {/* Steps */}
+              <ol className="space-y-3">
+                {[
+                  'Open the email we sent you',
+                  'Click the reset link (valid for 1 hour)',
+                  'Choose a new password and sign in',
+                ].map((step, i) => (
+                  <li key={step} className="flex items-start gap-3">
+                    <span
+                      className="text-xs font-bold w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{
+                        background: 'rgba(82,178,116,0.10)',
+                        border: '1px solid rgba(82,178,116,0.20)',
+                        color: '#52b274',
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+                    <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                      {step}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+
+              {/* Spam notice */}
+              <div
+                className="rounded-xl px-4 py-3 text-xs leading-relaxed"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  color: 'rgba(255,255,255,0.35)',
+                }}
+              >
+                Can&apos;t find it? Check your spam or junk folder, or make sure the email address
+                you entered is correct.
+              </div>
+
+              <Separator style={{ background: 'rgba(82,178,116,0.10)' }} />
+
+              {/* CTAs */}
+              <div className="flex flex-col gap-3">
+                <Button
+                  asChild
+                  className="w-full h-11 text-sm font-semibold rounded-xl border-0 text-white group transition-all hover:-translate-y-0.5"
+                  style={{
+                    background: 'linear-gradient(135deg, #52b274 0%, #3a9058 100%)',
+                    boxShadow: '0 4px 20px rgba(82,178,116,0.30)',
+                  }}
+                >
+                  <Link href="/auths/login">
+                    <span className="flex items-center justify-center gap-2">
+                      Go to Login
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </Link>
+                </Button>
+
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="w-full h-11 text-sm font-medium rounded-xl border transition-all"
+                  style={{
+                    color: 'rgba(255,255,255,0.50)',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    background: 'transparent',
+                  }}
+                >
+                  <Link href="/auths/forgot-password">
+                    <span className="flex items-center justify-center gap-2">
+                      <RefreshCw className="h-4 w-4" />
+                      Resend email
+                    </span>
+                  </Link>
+                </Button>
+              </div>
+          </div>
+
         </div>
       </div>
-    </div>
+    </AuthPageShell>
   );
 }
