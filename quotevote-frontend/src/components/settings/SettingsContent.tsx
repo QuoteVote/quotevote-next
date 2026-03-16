@@ -112,7 +112,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
         setTimeout(() => setShowSuccess(false), 3000);
         form.reset(values);
       }
-    } catch (err) {
+    } catch (_err) {
       // Error handled by Apollo
     }
   };
@@ -121,6 +121,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
     ? avatar 
     : (avatar as UserAvatar)?.url || (avatar as UserAvatar)?.src || ''
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch is safe here, compiler skips memoization
   const watchedName = (form.watch('name') as string) || name || '';
 
   return (

@@ -94,6 +94,7 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
           'bg-[var(--color-white)]'
         )}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/assets/ZeroNotificationsBG.png" alt="No notifications" />
         <p className="text-sm text-[var(--color-text-secondary)] mt-4">
           Relax, you don&apos;t have any alerts right now.
@@ -139,6 +140,7 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
                     size="md"
                   />
                   {badgeIcon && (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={badgeIcon}
                       alt={notification.notificationType}

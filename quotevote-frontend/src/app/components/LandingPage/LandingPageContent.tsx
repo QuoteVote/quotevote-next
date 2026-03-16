@@ -1711,8 +1711,10 @@ function HeroSearch({ router }: HeroSearchProps) {
             onKeyDown={handleKeyDown}
             placeholder="Search topics, quotes, conversations…"
             className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/50 text-base px-4 py-4"
+            role="combobox"
             aria-label="Search topics, quotes, conversations"
             aria-expanded={showDropdown}
+            aria-controls="hero-search-listbox"
             aria-autocomplete="list"
             autoComplete="off"
           />
@@ -1732,6 +1734,7 @@ function HeroSearch({ router }: HeroSearchProps) {
         <div
           className="absolute top-full left-0 right-0 mt-2 rounded-2xl shadow-2xl overflow-hidden z-50 text-left"
           style={{ background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(12px)' }}
+          id="hero-search-listbox"
           role="listbox"
           aria-label="Search results"
         >

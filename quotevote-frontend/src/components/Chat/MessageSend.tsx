@@ -90,6 +90,7 @@ export default function MessageSend({
     if (currentUserBlockedOther) return 'blocker';
     if (otherUserBlockedCurrent) return 'blocked';
     return null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chatUser._id is covered by user (same reference)
   }, [type, normalizedSelectedRoom, rosterData, user]);
 
   const isBlocked = blockingStatus !== null;

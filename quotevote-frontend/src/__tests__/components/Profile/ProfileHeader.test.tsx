@@ -18,11 +18,15 @@ import type { ProfileUser } from '@/types/profile';
 import { MockedProvider } from '@apollo/client/testing';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
+import { toast } from 'sonner';
 
 // Mock sonner toast
-const mockToast = { success: jest.fn(), error: jest.fn(), warning: jest.fn() };
 jest.mock('sonner', () => ({
-  toast: mockToast,
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
 }));
 
 // Mock Next.js router
@@ -469,7 +473,7 @@ describe('ProfileHeader Component', () => {
         });
 
         await waitFor(() => {
-          expect(mockToast.warning).toHaveBeenCalledWith(
+          expect((toast.warning as jest.Mock)).toHaveBeenCalledWith(
             expect.stringContaining('blocked')
           );
         }, { timeout: 3000 });
@@ -559,7 +563,7 @@ describe('ProfileHeader Component', () => {
           });
 
           await waitFor(() => {
-            expect(mockToast.success).toHaveBeenCalledWith(
+            expect((toast.success as jest.Mock)).toHaveBeenCalledWith(
               expect.stringContaining('reported successfully')
             );
           }, { timeout: 3000 });
@@ -615,7 +619,7 @@ describe('ProfileHeader Component', () => {
           });
 
           await waitFor(() => {
-            expect(mockToast.error).toHaveBeenCalled();
+            expect((toast.error as jest.Mock)).toHaveBeenCalled();
           }, { timeout: 3000 });
         }
       } else {

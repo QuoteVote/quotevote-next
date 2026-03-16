@@ -36,6 +36,7 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch is safe here, compiler skips memoization
   const tosAccepted = watch('tos');
   const cocAccepted = watch('coc');
 

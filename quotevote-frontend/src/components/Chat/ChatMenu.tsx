@@ -44,6 +44,7 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
         onMouseLeave={() => setIsHovered(false)}
         className="relative inline-flex items-center justify-center rounded-full border border-transparent bg-background/80 p-1.5 text-muted-foreground shadow-sm transition-colors hover:border-emerald-400 hover:bg-emerald-50/80 dark:hover:border-emerald-500/40 dark:hover:bg-emerald-900/40"
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/assets/ChatActive.svg"
           alt="Chat"

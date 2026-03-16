@@ -96,7 +96,6 @@ export default function Post({
   const parsedCreated = moment(created).format('LLL')
 
   // selectedText is used in handlers, but setSelectedText is not used until VotingBoard is migrated
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedText, _setSelectedText] = useState<{
     text: string
     startIndex: number

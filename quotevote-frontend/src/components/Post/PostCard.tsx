@@ -46,7 +46,6 @@ export default function PostCard({
   text,
   title,
   url,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   bookmarkedBy: _bookmarkedBy = [],
   approvedBy = [],
   rejectedBy = [],
