@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { parseCommentDate } from '@/lib/utils/momentUtils'
 import { useAppStore } from '@/store/useAppStore'
+import { toast } from 'sonner'
 import { DELETE_COMMENT } from '@/graphql/mutations'
 import { CommentData } from '@/types/comment'
 import useGuestGuard from '@/hooks/useGuestGuard'
@@ -48,7 +49,6 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
   const parsedDate = parseCommentDate(new Date(created))
   
   const currentUser = useAppStore((state) => state.user.data)
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
   const setFocusedComment = useAppStore((state) => state.setFocusedComment)
   const ensureAuth = useGuestGuard()
 
@@ -71,28 +71,16 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
     if (!ensureAuth()) return
     try {
       await deleteComment({ variables: { commentId: _id } })
-      setSnackbar({
-        open: true,
-        message: 'Comment deleted successfully',
-        type: 'success',
-      })
+      toast.success('Comment deleted successfully')
     } catch (err: unknown) {
-      setSnackbar({
-        open: true,
-        message: `Delete Error: ${(err as Error).message}`,
-        type: 'danger',
-      })
+      toast.error(`Delete Error: ${(err as Error).message}`)
     }
   }
 
   const handleCopy = async () => {
     const baseUrl = window.location.origin
     await navigator.clipboard.writeText(`${baseUrl}${postUrl}/comment/#${_id}`)
-    setSnackbar({
-      open: true,
-      message: 'Comment URL copied!',
-      type: 'success',
-    })
+    toast.success('Comment URL copied!')
   }
 
   const isOwner = currentUser.id === comment.userId || currentUser._id === comment.userId || currentUser.admin

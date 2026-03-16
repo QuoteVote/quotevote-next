@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { MessageCircle, Flag } from 'lucide-react';
 import { useAppStore } from '@/store';
+import { toast } from 'sonner';
 import type { ProfileUser } from '@/types/profile';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
@@ -28,7 +29,6 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const router = useRouter();
   const loggedInUserId = useAppStore((state) => state.user.data._id || state.user.data.id);
-  const setSnackbar = useAppStore((state) => state.setSnackbar);
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
   const setChatOpen = useAppStore((state) => state.setChatOpen);
   const loggedInUserIdString = typeof loggedInUserId === 'string' ? loggedInUserId : String(loggedInUserId || '');
@@ -118,11 +118,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
         ? 'You have blocked this user. You cannot send messages to them.'
         : 'You have been blocked by this user. You cannot send messages.';
 
-      setSnackbar({
-        open: true,
-        message,
-        type: 'warning',
-      });
+      toast(message);
       return;
     }
 
@@ -142,18 +138,10 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           reporterId: loggedInUserIdString,
         },
       });
-      setSnackbar({
-        open: true,
-        message: 'User reported successfully. Thank you for helping keep our platform safe.',
-        type: 'success',
-      });
+      toast.success('User reported successfully. Thank you for helping keep our platform safe.');
       setReportDialogOpen(false);
     } catch (error) {
-      setSnackbar({
-        open: true,
-        message: error instanceof Error ? error.message : 'Failed to report user',
-        type: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to report user');
     }
   };
 

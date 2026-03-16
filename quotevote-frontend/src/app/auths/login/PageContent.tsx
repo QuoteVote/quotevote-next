@@ -18,8 +18,8 @@ function LoginPageContent(): React.ReactNode {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   
-  // Get redirect parameter from URL
-  const redirectPath = searchParams.get('redirect') || '/home';
+  // Get redirect parameter from URL (middleware sets ?callbackUrl=...)
+  const redirectPath = searchParams.get('callbackUrl') || '/dashboard/search';
 
   const handleSubmit = async (values: { username: string; password: string }) => {
     const { username, password } = values;

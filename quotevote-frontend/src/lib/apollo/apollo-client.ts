@@ -1,13 +1,16 @@
 import { ApolloClient, InMemoryCache, HttpLink, from, split, ApolloLink, type ApolloClient as ApolloClientType } from '@apollo/client';
+import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { setContext } from '@apollo/client/link/context';
-import { onError } from '@apollo/client/link/error';
+import { ErrorLink } from '@apollo/client/link/error';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { map } from 'rxjs';
+import { toast } from 'sonner';
 import { env } from '@/config/env';
 import { getGraphqlWsServerUrl } from '@/lib/utils/getServerUrl';
 import { serializeObjectIds } from '@/lib/utils/objectIdSerializer';
+import { getToken } from '@/lib/auth';
 
 /**
  * Get the GraphQL endpoint URL from validated environment configuration
@@ -48,7 +51,7 @@ function createAuthLink() {
       return { headers };
     }
 
-    const token = localStorage.getItem('token');
+    const token = getToken();
     const authHeaders: Record<string, string> = { ...headers };
 
     if (token) {
@@ -99,7 +102,7 @@ function createWsLink(): GraphQLWsLink | null {
     createClient({
       url: getGraphqlWsServerUrl(),
       connectionParams: () => {
-        const token = localStorage.getItem('token');
+        const token = getToken();
         const authToken = token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : undefined;
         log('Connecting with auth token', authToken ? 'present' : 'missing');
         return {
@@ -180,16 +183,37 @@ function createWsLink(): GraphQLWsLink | null {
  * @returns Configured error link
  */
 function createErrorLink() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return onError((error: any) => {
-    // Errors are handled silently to prevent console spam
-    // You can add logging here if needed for debugging
-    if (error?.graphQLErrors) {
-      // GraphQL errors handled silently
-    }
+  return new ErrorLink(({ error, operation }) => {
+    if (CombinedGraphQLErrors.is(error)) {
+      for (const err of error.errors) {
+        const code = (err.extensions?.code as string) ?? '';
 
-    if (error?.networkError) {
-      // Network errors handled silently
+        if (code === 'UNAUTHENTICATED') {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auths/login';
+          }
+          return;
+        }
+
+        if (typeof window !== 'undefined') {
+          const message = err.message || 'An error occurred';
+          if (code !== 'NOT_FOUND') {
+            toast.error(message);
+          }
+        }
+
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`[GraphQL error] op=${operation.operationName} code=${code}`, err);
+        }
+      }
+    } else {
+      // Network / protocol error
+      if (typeof window !== 'undefined') {
+        toast.error('Network error — please check your connection.');
+      }
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Network error]', error);
+      }
     }
   });
 }
@@ -261,10 +285,29 @@ function createApolloClient(): ApolloClientType {
   return new ApolloClient({
     link,
     cache: new InMemoryCache({
-      // Configure cache policies as needed
       typePolicies: {
         Query: {
           fields: {
+            // Paginated post lists — merge pages so cache doesn't thrash on fetchMore
+            posts: {
+              keyArgs: ['filter', 'searchKey', 'startDateRange', 'friendsOnly'],
+              merge(existing = { data: [] }, incoming) {
+                return {
+                  ...incoming,
+                  data: [...(existing.data ?? []), ...(incoming.data ?? [])],
+                };
+              },
+            },
+            // Paginated comment lists
+            comments: {
+              keyArgs: ['postId'],
+              merge(existing = { data: [] }, incoming) {
+                return {
+                  ...incoming,
+                  data: [...(existing.data ?? []), ...(incoming.data ?? [])],
+                };
+              },
+            },
             searchKey: {
               read() {
                 return '';

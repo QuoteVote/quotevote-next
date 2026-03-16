@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ADD_COMMENT, UPDATE_COMMENT } from '@/graphql/mutations'
 import { useAppStore } from '@/store/useAppStore'
+import { toast } from 'sonner'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
 
@@ -50,7 +51,6 @@ export default function CommentInput({
   const [content, setContent] = useState(initialContent)
   const [isFocused, setIsFocused] = useState(false)
   const userId = useAppStore((state) => state.user.data.id || state.user.data._id)
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
   const ensureAuth = useGuestGuard()
 
   const [addComment, { loading: adding }] = useMutation<AddCommentData>(ADD_COMMENT, {
@@ -99,7 +99,7 @@ export default function CommentInput({
             content
           }
         })
-        setSnackbar({ open: true, message: 'Comment updated!', type: 'success' })
+        toast.success('Comment updated!')
       } else {
         // Create mode
         await addComment({
@@ -111,16 +111,12 @@ export default function CommentInput({
             }
           }
         })
-        setSnackbar({ open: true, message: 'Comment posted!', type: 'success' })
+        toast.success('Comment posted!')
         setContent('')
       }
       if (onSuccess) onSuccess()
     } catch (err: unknown) {
-      setSnackbar({ 
-        open: true, 
-        message: `Error: ${(err as Error).message}`, 
-        type: 'danger' 
-      })
+      toast.error(`Error: ${(err as Error).message}`)
     }
   }
 

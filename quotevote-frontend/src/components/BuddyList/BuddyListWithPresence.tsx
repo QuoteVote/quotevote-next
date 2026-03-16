@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { Check, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAppStore } from '@/store';
 import { GET_BUDDY_LIST, GET_ROSTER } from '@/graphql/queries';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
@@ -16,7 +17,6 @@ import { Buddy, BuddyItem, BuddyListWithPresenceProps, Presence, GetBuddyListDat
 export default function BuddyListWithPresence({ search = '' }: BuddyListWithPresenceProps) {
     const currentUser = useAppStore((state) => state.user.data);
     const setBuddyList = useAppStore((state) => state.setBuddyList);
-    const setSnackbar = useAppStore((state) => state.setSnackbar);
     // Note: setPendingRequests not available in store, we rely on local query data for this view.
 
     const presenceMap = useAppStore((state) => state.chat.presenceMap) as Record<string, Presence>;
@@ -80,38 +80,22 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
     const handleAcceptBuddy = async (rosterId: string) => {
         try {
             await acceptBuddy(rosterId);
-            setSnackbar({
-                open: true,
-                message: 'Buddy request accepted!',
-                type: 'success',
-            });
+            toast.success('Buddy request accepted!');
             refetchRoster();
             refetch();
         } catch (error) {
-            setSnackbar({
-                open: true,
-                message: (error as Error).message || 'Failed to accept buddy request',
-                type: 'danger',
-            });
+            toast.error((error as Error).message || 'Failed to accept buddy request');
         }
     };
 
     const handleDeclineBuddy = async (rosterId: string) => {
         try {
             await declineBuddy(rosterId);
-            setSnackbar({
-                open: true,
-                message: 'Buddy request declined',
-                type: 'info',
-            });
+            toast('Buddy request declined');
             refetchRoster();
             refetch();
         } catch (error) {
-            setSnackbar({
-                open: true,
-                message: (error as Error).message || 'Failed to decline buddy request',
-                type: 'danger',
-            });
+            toast.error((error as Error).message || 'Failed to decline buddy request');
         }
     };
 

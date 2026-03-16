@@ -19,6 +19,12 @@ import { MockedProvider } from '@apollo/client/testing';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
 
+// Mock sonner toast
+const mockToast = { success: jest.fn(), error: jest.fn(), warning: jest.fn() };
+jest.mock('sonner', () => ({
+  toast: mockToast,
+}));
+
 // Mock Next.js router
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -121,7 +127,6 @@ describe('ProfileHeader Component', () => {
         loginError: null,
         data: mockLoggedInUser,
       },
-      setSnackbar: jest.fn(),
       setSelectedChatRoom: jest.fn(),
       setChatOpen: jest.fn(),
     });
@@ -430,11 +435,6 @@ describe('ProfileHeader Component', () => {
         },
       };
 
-      const setSnackbar = jest.fn();
-      useAppStore.setState({
-        setSnackbar,
-      });
-
       const mockChatRoom = {
         request: {
           query: GET_CHAT_ROOM,
@@ -469,12 +469,8 @@ describe('ProfileHeader Component', () => {
         });
 
         await waitFor(() => {
-          expect(setSnackbar).toHaveBeenCalledWith(
-            expect.objectContaining({
-              open: true,
-              type: 'warning',
-              message: expect.stringContaining('blocked'),
-            })
+          expect(mockToast.warning).toHaveBeenCalledWith(
+            expect.stringContaining('blocked')
           );
         }, { timeout: 3000 });
       } else {
@@ -530,11 +526,6 @@ describe('ProfileHeader Component', () => {
         },
       };
 
-      const setSnackbar = jest.fn();
-      useAppStore.setState({
-        setSnackbar,
-      });
-
       await act(async () => {
         render(
           <MockedProvider mocks={[...createMocks(), mockReportBot]} addTypename={false}>
@@ -568,12 +559,8 @@ describe('ProfileHeader Component', () => {
           });
 
           await waitFor(() => {
-            expect(setSnackbar).toHaveBeenCalledWith(
-              expect.objectContaining({
-                open: true,
-                type: 'success',
-                message: expect.stringContaining('reported successfully'),
-              })
+            expect(mockToast.success).toHaveBeenCalledWith(
+              expect.stringContaining('reported successfully')
             );
           }, { timeout: 3000 });
         }
@@ -594,11 +581,6 @@ describe('ProfileHeader Component', () => {
         },
         error: new Error('Failed to report user'),
       };
-
-      const setSnackbar = jest.fn();
-      useAppStore.setState({
-        setSnackbar,
-      });
 
       await act(async () => {
         render(
@@ -633,12 +615,7 @@ describe('ProfileHeader Component', () => {
           });
 
           await waitFor(() => {
-            expect(setSnackbar).toHaveBeenCalledWith(
-              expect.objectContaining({
-                open: true,
-                type: 'error',
-              })
-            );
+            expect(mockToast.error).toHaveBeenCalled();
           }, { timeout: 3000 });
         }
       } else {

@@ -1,62 +1,86 @@
 /**
  * Authentication utilities
- * 
- * Placeholder implementation for login functionality.
- * Will be replaced with actual GraphQL mutations when auth is migrated.
+ *
+ * Token helpers write to both localStorage and a `qv-token` cookie so that
+ * the Next.js edge middleware can read the token without accessing localStorage.
  */
 
+import { jwtDecode } from 'jwt-decode';
 import type { LoginResponse } from '@/types/login';
 
+const TOKEN_KEY = 'token';
+const COOKIE_NAME = 'qv-token';
+
+/** Read the auth token (client-side only). */
+export function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
 /**
- * Login user with username and password
- * 
+ * Persist the auth token to localStorage and to a `qv-token` cookie.
+ * The cookie is readable by Next.js middleware (edge runtime).
+ */
+export function setToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(TOKEN_KEY, token);
+  // SameSite=Lax lets the cookie be sent on normal navigations; Secure is omitted
+  // in dev so HTTP localhost works fine.
+  document.cookie = `${COOKIE_NAME}=${token}; path=/; SameSite=Lax`;
+}
+
+/** Remove the auth token from localStorage and clear the cookie. */
+export function removeToken(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(TOKEN_KEY);
+  document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+/**
+ * Login user via REST POST /login
+ *
  * @param username - User's username or email
  * @param password - User's password
- * @returns Promise with login response
- * 
- * @todo Replace with actual GraphQL mutation when auth is migrated
+ * @returns Promise with login response including decoded user data
  */
 export async function loginUser(
     username: string,
     password: string
 ): Promise<LoginResponse> {
-    // Placeholder implementation
-    // This will be replaced with actual GraphQL mutation
-
     try {
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
+        const response = await fetch(`${serverUrl}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
 
-        // TODO: Replace with actual GraphQL mutation
-        // Example:
-        // const { data } = await apolloClient.mutate({
-        //   mutation: LOGIN_MUTATION,
-        //   variables: { username, password }
-        // });
+        const data = await response.json();
 
-        // For now, just validate that credentials are provided
-        if (!username || !password) {
+        if (!response.ok) {
             return {
                 success: false,
-                error: 'Username and password are required',
+                error: data?.message || 'Invalid username or password.',
             };
         }
 
-        // Placeholder success response
-        return {
-            success: true,
-            data: {
-                user: {
-                    username,
-                    // Add other user fields as needed
-                } as Record<string, unknown>,
-                token: 'placeholder-token',
-            },
-        };
+        const { token } = data;
+
+        if (!token) {
+            return { success: false, error: 'No token received from server.' };
+        }
+
+        // Persist token to localStorage + qv-token cookie for middleware
+        setToken(token);
+
+        // Decode JWT to extract user data (same approach as original app)
+        const user = jwtDecode<Record<string, unknown>>(token);
+
+        return { success: true, data: { user, token } };
     } catch (error) {
         return {
             success: false,
-            error: error instanceof Error ? error.message : 'Login failed',
+            error: error instanceof Error ? error.message : 'Connection failed. Please try again.',
         };
     }
 }
@@ -133,20 +157,8 @@ export async function resetPassword(email: string): Promise<{ success: boolean; 
 }
 
 /**
- * Logout user
- * 
- * @todo Implement actual logout logic with GraphQL mutation
+ * Logout user — clears token from localStorage and cookie.
  */
-export async function logoutUser(): Promise<{ success: boolean; error?: string }> {
-    try {
-        // TODO: Implement logout logic
-        // Clear tokens, call logout mutation, etc.
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        return { success: true };
-    } catch (error) {
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Logout failed',
-        };
-    }
+export function logoutUser(): void {
+    removeToken();
 }

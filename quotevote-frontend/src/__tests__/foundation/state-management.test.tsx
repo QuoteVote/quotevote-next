@@ -19,7 +19,6 @@ function TestStoreComponent() {
 
   const setSelectedPage = useAppStore((state) => state.setSelectedPage)
   const setUserData = useAppStore((state) => state.setUserData)
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
   const resetStore = useAppStore((state) => state.resetStore)
 
   return (
@@ -41,13 +40,6 @@ function TestStoreComponent() {
         onClick={() => setUserData({ id: '123', name: 'Test User' })}
       >
         Set User
-      </button>
-      
-      <button
-        data-testid="set-snackbar"
-        onClick={() => setSnackbar({ open: true, type: 'success', message: 'Test message' })}
-      >
-        Set Snackbar
       </button>
       
       <button
@@ -92,7 +84,6 @@ describe('State Management (Zustand)', () => {
 
       expect(typeof state.setUserData).toBe('function')
       expect(typeof state.setSelectedPage).toBe('function')
-      expect(typeof state.setSnackbar).toBe('function')
       expect(typeof state.resetStore).toBe('function')
     })
   })
@@ -172,29 +163,6 @@ describe('State Management (Zustand)', () => {
       expect(userData).toEqual({ id: '123', name: 'Test User' })
     })
 
-    it('updates snackbar state correctly', () => {
-      render(<TestStoreComponent />)
-
-      const button = screen.queryByTestId('set-snackbar')
-      if (button) {
-        act(() => {
-          button.click()
-        })
-      } else {
-        // Update state directly if button not found
-        act(() => {
-          useAppStore.getState().setSnackbar({ open: true, type: 'success', message: 'Test message' })
-        })
-      }
-
-      const snackbar = useAppStore.getState().ui.snackbar
-      expect(snackbar).toEqual({
-        open: true,
-        type: 'success',
-        message: 'Test message',
-      })
-    })
-
     it('updates state immutably', () => {
       const initialState = useAppStore.getState().ui
       
@@ -217,7 +185,6 @@ describe('State Management (Zustand)', () => {
       act(() => {
         useAppStore.getState().setSelectedPage('test-page')
         useAppStore.getState().setUserData({ id: '123' })
-        useAppStore.getState().setSnackbar({ open: true, type: 'success', message: 'Test' })
       })
 
       // Reset
@@ -228,7 +195,6 @@ describe('State Management (Zustand)', () => {
       const state = useAppStore.getState()
       expect(state.ui.selectedPage).toBe('home')
       expect(state.user.data).toEqual({})
-      expect(state.ui.snackbar.open).toBe(false)
     })
 
     it('reset button works in components', () => {

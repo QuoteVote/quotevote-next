@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Link2, Ban, Trash2 } from 'lucide-react'
-import { useAppStore } from '@/store'
+import { toast } from 'sonner'
 import AvatarDisplay from '@/components/Avatar'
 import { ApproveButton } from '../CustomButtons/ApproveButton'
 import { RejectButton } from '../CustomButtons/RejectButton'
@@ -88,7 +88,6 @@ export default function Post({
   refetchPost,
 }: PostProps) {
   const router = useRouter()
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
   const ensureAuth = useGuestGuard()
 
   const { title, creator, created, _id, userId } = post
@@ -219,17 +218,9 @@ export default function Post({
     if (!ensureAuth()) return
     try {
       await toggleVoting({ variables: { postId: _id } })
-      setSnackbar({
-        open: true,
-        message: post.enable_voting ? 'Voting disabled' : 'Voting enabled',
-        type: 'success',
-      })
+      toast.success(post.enable_voting ? 'Voting disabled' : 'Voting enabled')
     } catch (err) {
-      setSnackbar({
-        open: true,
-        message: `Toggle voting error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        type: 'danger',
-      })
+      toast.error(`Toggle voting error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -416,17 +407,9 @@ export default function Post({
       })
       const reportedBy = res.data?.reportPost?.reportedBy || []
       const reported = reportedBy.length
-      setSnackbar({
-        open: true,
-        message: `Post Reported. Total Reports: ${reported}`,
-        type: 'success',
-      })
+      toast.success(`Post Reported. Total Reports: ${reported}`)
     } catch (err) {
-      setSnackbar({
-        open: true,
-        message: err instanceof Error ? err.message : 'Unknown error',
-        type: 'danger',
-      })
+      toast.error(err instanceof Error ? err.message : 'Unknown error')
     }
   }
 
@@ -448,28 +431,16 @@ export default function Post({
 
     try {
       await addComment({ variables: { comment: newComment } })
-      setSnackbar({
-        open: true,
-        message: 'Commented Successfully',
-        type: 'success',
-      })
+      toast.success('Commented Successfully')
     } catch (err) {
-      setSnackbar({
-        open: true,
-        message: `Comment Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        type: 'danger',
-      })
+      toast.error(`Comment Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
   const handleVoting = async (obj: { type: string; tags?: string[] }) => {
     if (!ensureAuth()) return
     if (hasVoted) {
-      setSnackbar({
-        open: true,
-        message: 'You have already voted on this post',
-        type: 'warning',
-      })
+      toast('You have already voted on this post')
       return
     }
 
@@ -484,17 +455,9 @@ export default function Post({
     }
     try {
       await addVote({ variables: { vote } })
-      setSnackbar({
-        open: true,
-        message: 'Voted Successfully',
-        type: 'success',
-      })
+      toast.success('Voted Successfully')
     } catch (err) {
-      setSnackbar({
-        open: true,
-        message: `Vote Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        type: 'danger',
-      })
+      toast.error(`Vote Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -510,17 +473,9 @@ export default function Post({
     }
     try {
       await addQuote({ variables: { quote } })
-      setSnackbar({
-        open: true,
-        message: 'Quoted Successfully',
-        type: 'success',
-      })
+      toast.success('Quoted Successfully')
     } catch (err) {
-      setSnackbar({
-        open: true,
-        message: `Quote Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        type: 'danger',
-      })
+      toast.error(`Quote Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -556,32 +511,16 @@ export default function Post({
         await removeApprove({
           variables: { postId: _id, userId: user._id, remove: true },
         })
-        setSnackbar({
-          open: true,
-          message: 'Approval removed',
-          type: 'success',
-        })
+        toast.success('Approval removed')
       } catch (err) {
-        setSnackbar({
-          open: true,
-          message: `Approve Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-          type: 'danger',
-        })
+        toast.error(`Approve Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
       }
     } else {
       try {
         await approvePost({ variables: { postId: _id, userId: user._id } })
-        setSnackbar({
-          open: true,
-          message: 'Post Approved',
-          type: 'success',
-        })
+        toast.success('Post Approved')
       } catch (err) {
-        setSnackbar({
-          open: true,
-          message: `Approve Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-          type: 'danger',
-        })
+        toast.error(`Approve Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
       }
     }
   }
@@ -593,32 +532,16 @@ export default function Post({
         await removeReject({
           variables: { postId: _id, userId: user._id, remove: true },
         })
-        setSnackbar({
-          open: true,
-          message: 'Rejection removed',
-          type: 'success',
-        })
+        toast.success('Rejection removed')
       } catch (err) {
-        setSnackbar({
-          open: true,
-          message: `Reject Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-          type: 'danger',
-        })
+        toast.error(`Reject Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
       }
     } else {
       try {
         await rejectPost({ variables: { postId: _id, userId: user._id } })
-        setSnackbar({
-          open: true,
-          message: 'Post Rejected',
-          type: 'success',
-        })
+        toast.success('Post Rejected')
       } catch (err) {
-        setSnackbar({
-          open: true,
-          message: `Reject Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-          type: 'danger',
-        })
+        toast.error(`Reject Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
       }
     }
   }
@@ -626,14 +549,10 @@ export default function Post({
   const handleDelete = async () => {
     try {
       await deletePost({ variables: { postId: _id } })
-      setSnackbar({ open: true, message: 'Post deleted', type: 'success' })
+      toast.success('Post deleted')
       router.push('/search')
     } catch (err) {
-      setSnackbar({
-        open: true,
-        message: `Delete Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        type: 'danger',
-      })
+      toast.error(`Delete Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 

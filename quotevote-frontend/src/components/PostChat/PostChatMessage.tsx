@@ -7,6 +7,7 @@ import { Trash2 } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import PostChatReactions from './PostChatReactions'
 import { useAppStore } from '@/store'
+import { toast } from 'sonner'
 import { GET_MESSAGE_REACTIONS } from '@/graphql/queries'
 import { DELETE_MESSAGE } from '@/graphql/mutations'
 import { cn } from '@/lib/utils'
@@ -27,7 +28,6 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
   const router = useRouter()
 
   const user = useAppStore((state) => state.user.data)
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
 
   const userId = user._id || user.id
   const isDefaultDirection = message.userId !== userId
@@ -57,18 +57,10 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
   const handleDelete = async () => {
     try {
       await deleteMessage({ variables: { messageId: message._id } })
-      setSnackbar({
-        open: true,
-        message: 'Message deleted successfully',
-        type: 'success',
-      })
+      toast.success('Message deleted successfully')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      setSnackbar({
-        open: true,
-        message: `Delete Error: ${errorMessage}`,
-        type: 'danger',
-      })
+      toast.error(`Delete Error: ${errorMessage}`)
     }
   }
 

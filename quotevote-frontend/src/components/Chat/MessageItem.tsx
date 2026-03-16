@@ -7,6 +7,7 @@ import { Check, CheckCheck, Trash2 } from 'lucide-react';
 
 import Avatar from '@/components/Avatar';
 import { useAppStore } from '@/store';
+import { toast } from 'sonner';
 import { DELETE_MESSAGE } from '@/graphql/mutations';
 import type { MessageItemProps } from '@/types/chat';
 import { cn } from '@/lib/utils';
@@ -47,7 +48,6 @@ const formatTime = (date?: string | number | Date): string => {
 
 const MessageItem: FC<MessageItemProps> = ({ message }) => {
   const currentUser = useAppStore((state) => state.user.data);
-  const setSnackbar = useAppStore((state) => state.setSnackbar);
 
   const currentUserId = currentUser?._id ? normalizeId(currentUser._id) : null;
   const isOwnMessage = currentUserId
@@ -72,22 +72,14 @@ const MessageItem: FC<MessageItemProps> = ({ message }) => {
     if (!message._id) return;
     try {
       await deleteMessage({ variables: { messageId: message._id } });
-      setSnackbar({
-        open: true,
-        message: 'Message deleted successfully',
-        type: 'success',
-      });
+      toast.success('Message deleted successfully');
     } catch (err) {
       const errorMessage =
         err instanceof Error && err.message
           ? err.message
           : 'Failed to delete message';
 
-      setSnackbar({
-        open: true,
-        message: `Delete Error: ${errorMessage}`,
-        type: 'danger',
-      });
+      toast.error(`Delete Error: ${errorMessage}`);
     }
   };
 
