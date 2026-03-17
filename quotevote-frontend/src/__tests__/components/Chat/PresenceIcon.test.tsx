@@ -10,7 +10,8 @@
 
 import { render } from '@/__tests__/utils/test-utils'
 import PresenceIcon from '@/components/Chat/PresenceIcon'
-import type { PresenceStatus } from '@/types/chat'
+
+type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
 
 // Helper: grab the rendered <span> from the container
 const getIcon = (container: HTMLElement) =>

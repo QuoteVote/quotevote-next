@@ -14,10 +14,12 @@ import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils
 import PostChatReactions from '@/components/PostChat/PostChatReactions'
 import { useAppStore } from '@/store'
 
+import useGuestGuard from '@/hooks/useGuestGuard'
+
 // ─── Apollo mocks ──────────────────────────────────────────────────────────
 const mockAddReaction = jest.fn().mockResolvedValue({})
 const mockUpdateReaction = jest.fn().mockResolvedValue({})
-const mockUseMutation = jest.fn((mutation) => {
+const mockUseMutation = jest.fn((mutation: unknown, _options?: unknown) => {
   // Distinguish between ADD and UPDATE by checking the mutation name stored in it
   const mutationStr = JSON.stringify(mutation)
   if (mutationStr.includes('addMessageReaction') || mutationStr.includes('AddMessageReaction')) {
@@ -240,7 +242,6 @@ describe('PostChatReactions', () => {
 
   it('does not add reaction when guest guard returns false', async () => {
     // Simulate unauthenticated user
-    const useGuestGuard = require('@/hooks/useGuestGuard').default
     ;(useGuestGuard as jest.Mock).mockReturnValueOnce(() => false)
 
     render(<PostChatReactions {...baseProps} reactions={[]} />)
