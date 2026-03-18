@@ -16,6 +16,7 @@ import AvatarDisplay from '@/components/Avatar'
 import { GET_GROUP } from '@/graphql/queries'
 import getTopPostsVoteHighlights from '@/lib/utils/getTopPostsVoteHighlights'
 import useGuestGuard from '@/hooks/useGuestGuard'
+import HighlightText from '@/components/HighlightText/HighlightText'
 import type { PostCardProps } from '@/types/post'
 
 /**
@@ -59,6 +60,7 @@ export default function PostCard({
   messageRoom,
   groupId,
   citationUrl,
+  searchKey,
 }: PostCardProps) {
   const router = useRouter()
   const setSelectedPost = useAppStore((state) => state.setSelectedPost)
@@ -169,7 +171,7 @@ export default function PostCard({
         <div className="space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-xl font-bold text-foreground cursor-pointer break-words">
-              {title || 'Untitled'}
+              <HighlightText text={title || 'Untitled'} highlightTerms={searchKey || ''} />
             </h3>
             {groupId && (
               <span className="text-xs text-[#52b274] font-semibold px-2 py-1 rounded-full bg-[#52b274]/10 border border-[#52b274]/20 uppercase tracking-wide">

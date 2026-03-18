@@ -13,10 +13,14 @@ import {
   GET_TOP_POSTS,
   GET_FEATURED_POSTS,
   GET_FRIENDS_POSTS,
+  SEARCH_USERNAMES,
 } from '@/graphql/queries'
 import { useAppStore } from '@/store'
+import DateSearchBar from '@/components/DateSearchBar/DateSearchBar'
+import UsernameResults from './UsernameResults'
 import SearchGuestSections from './SearchGuestSections'
 import type { Post, PostsListData } from '@/types/post'
+import type { UsernameSearchUser } from '@/types/components'
 
 interface FeaturedPostsData {
   featuredPosts: {
@@ -37,9 +41,11 @@ const LIMIT = 20
 function PostsTab({
   posts,
   loading,
+  searchKey,
 }: {
   posts: Post[]
   loading: boolean
+  searchKey?: string
 }) {
   if (loading) {
     return (
@@ -77,6 +83,7 @@ function PostsTab({
           quotes={post.quotes ?? []}
           messageRoom={post.messageRoom ?? undefined}
           groupId={post.groupId}
+          searchKey={searchKey}
         />
       ))}
     </div>
@@ -158,7 +165,7 @@ function SearchTab({
     skip: !searchKey,
   })
   const posts: Post[] = data?.posts?.entities ?? []
-  return <PostsTab posts={posts} loading={loading && !!searchKey} />
+  return <PostsTab posts={posts} loading={loading && !!searchKey} searchKey={searchKey} />
 }
 
 /**
@@ -215,6 +222,14 @@ export default function SearchContainer() {
     [router, searchParams]
   )
 
+  // User search for username results dropdown
+  const { loading: usersLoading, data: usersData, error: usersError } = useQuery<{
+    searchUser: UsernameSearchUser[]
+  }>(SEARCH_USERNAMES, {
+    variables: { query: debouncedQuery },
+    skip: !debouncedQuery,
+  })
+
   // Determine active tab — if no query, don't show 'search' tab as active
   const activeTab = q ? tab : tab === 'search' ? 'trending' : tab
   const isLoggedIn = !!(user?._id || user?.id)
@@ -232,7 +247,18 @@ export default function SearchContainer() {
           className="pl-9"
           aria-label="Search posts"
         />
+        {debouncedQuery && (
+          <UsernameResults
+            users={usersData?.searchUser ?? []}
+            loading={usersLoading}
+            error={usersError ?? null}
+            query={debouncedQuery}
+          />
+        )}
       </div>
+
+      {/* Date range filter */}
+      <DateSearchBar />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>

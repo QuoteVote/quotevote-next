@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation } from '@apollo/client/react' // Using /react entry point as per project pattern
 import { Reference } from '@apollo/client'
-import { Smile, Link as LinkIcon, Trash2, Pencil } from 'lucide-react'
+import { Link as LinkIcon, Trash2, Pencil } from 'lucide-react'
 import { CommentInput } from './'
+import CommentReactions from './CommentReactions'
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ import { parseCommentDate } from '@/lib/utils/momentUtils'
 import { useAppStore } from '@/store/useAppStore'
 import { toast } from 'sonner'
 import { DELETE_COMMENT } from '@/graphql/mutations'
-import { CommentData } from '@/types/comment'
+import { CommentData, Reaction } from '@/types/comment'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
 
@@ -134,9 +135,10 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
       <CardFooter className="flex justify-start gap-1 p-2 px-12">
         {!isEditing && (
           <>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-              <Smile className="h-4 w-4" />
-            </Button>
+            <CommentReactions
+              actionId={_id}
+              reactions={(comment.reactions as Reaction[]) ?? []}
+            />
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleCopy}>
               <LinkIcon className="h-4 w-4" />
             </Button>
