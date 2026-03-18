@@ -2,20 +2,22 @@
 
 /**
  * Dashboard Layout Component
- * 
+ *
  * Migrated from Scoreboard.jsx to Next.js App Router layout.
  * Provides shared layout for all dashboard routes including:
  * - MainNavBar navigation
+ * - Sidebar (desktop persistent + mobile sheet)
  * - RequestInviteDialog
  * - Toast notifications (via sonner in root layout)
- * 
+ *
  * This layout wraps all dashboard pages and provides consistent UI structure.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAppStore } from '@/store';
 import { MainNavBar } from '@/components/Navbars/MainNavBar';
+import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { RequestInviteDialog } from '@/components/RequestInviteDialog';
 import { useAuthModal } from '@/context/AuthModalContext';
 
@@ -44,6 +46,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { isModalOpen, closeAuthModal } = useAuthModal();
   const setSelectedPage = useAppStore((state) => state.setSelectedPage);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Update selected page based on current route
   useEffect(() => {
@@ -62,9 +65,12 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <MainNavBar />
-      <main className="pt-16">
-        {children}
-      </main>
+      <div className="flex pt-16">
+        <Sidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
+        <main className="flex-1 min-h-[calc(100vh-4rem)]">
+          {children}
+        </main>
+      </div>
       <RequestInviteDialog open={isModalOpen} onClose={closeAuthModal} />
     </div>
   );

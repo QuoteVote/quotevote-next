@@ -36,49 +36,10 @@ import {
 } from '@/graphql/queries'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
+import VotingBoard from '@/components/VotingComponents/VotingBoard'
+import VotingPopup from '@/components/VotingComponents/VotingPopup'
 import type { Post, PostVote, PostProps } from '@/types/post'
-
-/**
- * TODO: VotingBoard and VotingPopup components need to be migrated separately.
- * These components handle text selection and voting functionality.
- * For now, displaying post text without voting highlights.
- */
-function VotingBoardPlaceholder({
-  content,
-  children,
-}: {
-  content: string
-  children?: (props: { text: string }) => React.ReactNode
-}) {
-  return (
-    <div className="flex-1 flex flex-col">
-      <div className="prose max-w-none text-base leading-relaxed whitespace-pre-wrap">
-        {content}
-      </div>
-      {children && children({ text: content })}
-    </div>
-  )
-}
-
-function VotingPopupPlaceholder({
-  onVote: _onVote,
-  onAddComment: _onAddComment,
-  onAddQuote: _onAddQuote,
-  hasVoted: _hasVoted,
-}: {
-  onVote: (obj: { type: string; tags?: string[] }) => void
-  onAddComment: (comment: string, withQuote?: boolean) => void
-  onAddQuote: () => void
-  hasVoted: boolean
-}) {
-  // Placeholder - actual VotingPopup needs to be migrated
-  // These props are intentionally unused until VotingPopup is migrated
-  void _onVote
-  void _onAddComment
-  void _onAddQuote
-  void _hasVoted
-  return null
-}
+import type { SelectedText, VotedByEntry, VoteType, VoteOption } from '@/types/voting'
 
 export default function Post({
   post,
@@ -95,15 +56,11 @@ export default function Post({
   const { _followingId = [] } = user
   const parsedCreated = moment(created).format('LLL')
 
-  // selectedText is used in handlers, but setSelectedText is not used until VotingBoard is migrated
-  const [selectedText, _setSelectedText] = useState<{
-    text: string
-    startIndex: number
-    endIndex: number
-  }>({
+  const [selectedText, setSelectedText] = useState<SelectedText>({
     text: '',
     startIndex: 0,
     endIndex: 0,
+    points: 0,
   })
   const [open, setOpen] = useState(false)
   const [openInvite, setOpenInvite] = useState(false)
@@ -436,7 +393,7 @@ export default function Post({
     }
   }
 
-  const handleVoting = async (obj: { type: string; tags?: string[] }) => {
+  const handleVoting = async (obj: { type: VoteType; tags: VoteOption }) => {
     if (!ensureAuth()) return
     if (hasVoted) {
       toast('You have already voted on this post')
@@ -618,16 +575,28 @@ export default function Post({
               {getUserVoteType() === 'up' ? 'upvoted' : 'downvoted'} this post
             </div>
           )}
-          <VotingBoardPlaceholder content={post.text || ''}>
-            {() => (
-              <VotingPopupPlaceholder
+          <VotingBoard
+            content={post.text || ''}
+            onSelect={setSelectedText}
+            highlights={true}
+            votes={post.votes || []}
+          >
+            {(selection) => (
+              <VotingPopup
+                votedBy={(post.votes || []).map((v: PostVote): VotedByEntry => ({
+                  userId: v.user?._id || '',
+                  type: (v.type as VoteType) || 'up',
+                  _id: v._id,
+                }))}
                 onVote={handleVoting}
                 onAddComment={handleAddComment}
                 onAddQuote={handleAddQuote}
+                selectedText={selection}
                 hasVoted={hasVoted}
+                userVoteType={getUserVoteType() as VoteType | null}
               />
             )}
-          </VotingBoardPlaceholder>
+          </VotingBoard>
         </CardContent>
 
         {user._id === userId && !post.enable_voting && (

@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { SubHeader } from '@/components/SubHeader';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { SidebarSearchView } from '@/components/SearchContainer';
+import SearchContainer from '@/components/SearchContainer/SearchContainer';
 
 export const metadata: Metadata = {
   title: 'Search - Quote.Vote',
@@ -15,21 +15,18 @@ export const dynamic = 'force-dynamic';
 /**
  * Search Page (Server Component)
  *
- * Dashboard page for searching content and creators.
- * The interactive search input and results are rendered
- * inside a Suspense boundary via the SidebarSearchView client component.
+ * Dashboard page for searching content.
+ * The interactive SearchContainer is wrapped in Suspense because it uses useSearchParams().
  *
  * Route: /dashboard/search
  */
 export default function SearchPage() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       <SubHeader headerName="Search" />
-      <div className="max-w-4xl">
-        <Suspense fallback={<LoadingSpinner />}>
-          <SidebarSearchView Display="block" />
-        </Suspense>
-      </div>
+      <Suspense fallback={<LoadingSpinner />}>
+        <SearchContainer />
+      </Suspense>
     </div>
   );
 }
