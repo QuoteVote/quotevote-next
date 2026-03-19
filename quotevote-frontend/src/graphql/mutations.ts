@@ -607,3 +607,19 @@ export const UPDATE_USER = gql`
     }
   }
 `
+
+/**
+ * Update user avatar mutation
+ * Used by AvatarEditor for updating avatar qualities (topType, hairColor, etc.)
+ */
+export const UPDATE_USER_AVATAR = gql`
+  mutation updateUserAvatar($user_id: String!, $avatarQualities: JSON) {
+    updateUserAvatar(user_id: $user_id, avatarQualities: $avatarQualities) {
+      _id
+      username
+      name
+      email
+      avatar
+    }
+  }
+`

@@ -146,7 +146,7 @@ export default function PostActionCard({
 
   const handleRedirectToProfile = () => {
     if (username) {
-      router.push(`/Profile/${username}`)
+      router.push(`/dashboard/profile/${username}`)
     }
   }
 

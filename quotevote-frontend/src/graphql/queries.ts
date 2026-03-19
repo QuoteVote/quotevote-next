@@ -20,7 +20,7 @@ export const GET_BUDDY_LIST = gql`
 
 /**
  * Get all messages for a chat room
- * Used by the conversation view (MessageItemList)
+ * Used by the conversation view (MessageItemList) and Discussion tab
  */
 export const GET_ROOM_MESSAGES = gql`
     query getRoomMessages($messageRoomId: String!) {
@@ -33,6 +33,12 @@ export const GET_ROOM_MESSAGES = gql`
         text
         created
         type
+        user {
+          _id
+          name
+          username
+          avatar
+        }
       }
     }
   `

@@ -65,7 +65,7 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
   }
 
   const handleRedirectToProfile = () => {
-    router.push(`/Profile/${username}`)
+    router.push(`/dashboard/profile/${username}`)
   }
 
   const senderName = name || username || 'Unknown'

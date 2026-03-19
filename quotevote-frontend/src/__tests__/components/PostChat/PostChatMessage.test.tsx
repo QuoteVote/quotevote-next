@@ -280,7 +280,7 @@ describe('PostChatMessage', () => {
     const avatar = screen.getByTestId('avatar')
     fireEvent.click(avatar)
 
-    expect(mockPush).toHaveBeenCalledWith('/Profile/otheruser')
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/otheruser')
   })
 
   it('renders with correct styling for default direction', () => {

@@ -655,7 +655,7 @@ describe('SettingsContent', () => {
       await user.click(avatarButton)
 
       expect(setOpen).toHaveBeenCalledWith(false)
-      expect(mockPush).toHaveBeenCalledWith('/Profile/testuser/avatar')
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/avatar')
     })
 
     it('handles missing avatar gracefully', () => {

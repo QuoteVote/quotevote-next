@@ -4,8 +4,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 
 import ChatContent from './ChatContent';
-// TODO: Migrate MobileDrawer component
-// import MobileDrawer from '../Notifications/MobileDrawer';
+import { MobileDrawer } from '@/components/Notifications/MobileDrawer';
 import { useAppStore } from '@/store';
 
 interface ChatMenuProps {
@@ -20,16 +19,6 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
   const toggleOpen = () => {
     setChatOpen(!open);
   };
-
-  // TODO: These styles will be used when MobileDrawer is migrated
-  // const appBarStyle = {
-  //   backgroundColor: 'transparent',
-  //   boxShadow: 'none',
-  // } as const;
-
-  // const backButtonStyle = {
-  //   color: '#ffffff',
-  // } as const;
 
   const width = fontSize === 'large' ? 49 : 32;
   const height = fontSize === 'large' ? 46 : 30;
@@ -52,26 +41,14 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
           className={isHovered || open ? 'opacity-100' : 'opacity-90'}
         />
       </button>
-      {/* TODO: Migrate MobileDrawer component */}
-      {open && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b p-4">
-              <h2 className="text-lg font-semibold">Chat</h2>
-              <button
-                type="button"
-                onClick={() => setChatOpen(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Close
-              </button>
-            </div>
-            <div className="flex-1 overflow-auto">
-              <ChatContent />
-            </div>
-          </div>
-        </div>
-      )}
+      <MobileDrawer
+        open={open}
+        onClose={() => setChatOpen(false)}
+        title="Chat"
+        anchor="right"
+      >
+        <ChatContent />
+      </MobileDrawer>
     </>
   );
 };

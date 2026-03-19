@@ -536,7 +536,7 @@ describe('PostActionCard', () => {
       const avatar = screen.getByTestId('avatar')
       fireEvent.click(avatar)
 
-      expect(mockPush).toHaveBeenCalledWith('/Profile/user1')
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/user1')
     })
 
     it('redirects to user profile on name click', () => {
@@ -553,7 +553,7 @@ describe('PostActionCard', () => {
       const nameButton = nameButtons.find((btn) => btn.tagName === 'BUTTON' && btn.className.includes('text-green-600')) || nameButtons[1] || nameButtons[0]
       fireEvent.click(nameButton)
 
-      expect(mockPush).toHaveBeenCalledWith('/Profile/user1')
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/user1')
     })
 
     it('toggles focused comment on card click', () => {

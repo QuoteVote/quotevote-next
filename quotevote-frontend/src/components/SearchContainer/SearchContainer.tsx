@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search as SearchIcon } from 'lucide-react'
+import { Search as SearchIcon, SearchX } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
@@ -16,9 +16,9 @@ import {
   SEARCH_USERNAMES,
 } from '@/graphql/queries'
 import { useAppStore } from '@/store'
-import DateSearchBar from '@/components/DateSearchBar/DateSearchBar'
 import UsernameResults from './UsernameResults'
 import SearchGuestSections from './SearchGuestSections'
+import { MOCK_POSTS } from '@/lib/mock-data'
 import type { Post, PostsListData } from '@/types/post'
 import type { UsernameSearchUser } from '@/types/components'
 
@@ -58,8 +58,42 @@ function PostsTab({
   }
 
   if (!posts.length) {
+    // When browsing (no search), show mock posts so the feed always has content
+    if (!searchKey) {
+      return (
+        <div className="space-y-4">
+          {MOCK_POSTS.map((post) => (
+            <PostCard
+              key={post._id}
+              _id={post._id}
+              text={post.text}
+              title={post.title}
+              url={post.url}
+              citationUrl={post.citationUrl}
+              bookmarkedBy={post.bookmarkedBy ?? []}
+              approvedBy={post.approvedBy ?? []}
+              rejectedBy={post.rejectedBy ?? []}
+              created={post.created}
+              creator={post.creator ?? undefined}
+              votes={post.votes ?? []}
+              comments={post.comments ?? []}
+              quotes={post.quotes ?? []}
+              messageRoom={post.messageRoom ?? undefined}
+              groupId={post.groupId}
+            />
+          ))}
+        </div>
+      )
+    }
+    // Search with no results
     return (
-      <p className="text-muted-foreground text-center py-8">No posts found.</p>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <SearchX className="h-12 w-12 text-muted-foreground/50 mb-4" />
+        <p className="text-base font-semibold text-foreground">No posts found</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Try a different search term
+        </p>
+      </div>
     )
   }
 
@@ -235,16 +269,16 @@ export default function SearchContainer() {
   const isLoggedIn = !!(user?._id || user?.id)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Search input */}
       <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Search posts..."
+          placeholder="Search posts, people, and more..."
           value={inputValue}
           onChange={handleInputChange}
-          className="pl-9"
+          className="pl-12 h-12 text-base rounded-xl bg-muted/50 border-0 focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-0"
           aria-label="Search posts"
         />
         {debouncedQuery && (
@@ -257,37 +291,63 @@ export default function SearchContainer() {
         )}
       </div>
 
-      {/* Date range filter */}
-      <DateSearchBar />
-
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList>
-          <TabsTrigger value="trending">Trending</TabsTrigger>
-          <TabsTrigger value="featured">Featured</TabsTrigger>
-          {isLoggedIn && <TabsTrigger value="friends">Friends</TabsTrigger>}
-          {q && <TabsTrigger value="search">Search</TabsTrigger>}
+        <TabsList
+          variant="line"
+          className="w-full justify-start border-b border-border rounded-none bg-transparent p-0"
+        >
+          <TabsTrigger
+            value="trending"
+            className="flex-1 rounded-none bg-transparent font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
+          >
+            Trending
+          </TabsTrigger>
+          <TabsTrigger
+            value="featured"
+            className="flex-1 rounded-none bg-transparent font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
+          >
+            Featured
+          </TabsTrigger>
+          {isLoggedIn && (
+            <TabsTrigger
+              value="friends"
+              className="flex-1 rounded-none bg-transparent font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
+            >
+              Friends
+            </TabsTrigger>
+          )}
+          {q && (
+            <TabsTrigger
+              value="search"
+              className="flex-1 rounded-none bg-transparent font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
+            >
+              Search
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        <TabsContent value="trending">
-          <TrendingTab from={from} to={to} />
-        </TabsContent>
-
-        <TabsContent value="featured">
-          <FeaturedTab from={from} to={to} />
-        </TabsContent>
-
-        {isLoggedIn && (
-          <TabsContent value="friends">
-            <FriendsTab from={from} to={to} />
+        <div className="mt-4">
+          <TabsContent value="trending">
+            <TrendingTab from={from} to={to} />
           </TabsContent>
-        )}
 
-        {q && (
-          <TabsContent value="search">
-            <SearchTab searchKey={q} from={from} to={to} />
+          <TabsContent value="featured">
+            <FeaturedTab from={from} to={to} />
           </TabsContent>
-        )}
+
+          {isLoggedIn && (
+            <TabsContent value="friends">
+              <FriendsTab from={from} to={to} />
+            </TabsContent>
+          )}
+
+          {q && (
+            <TabsContent value="search">
+              <SearchTab searchKey={q} from={from} to={to} />
+            </TabsContent>
+          )}
+        </div>
       </Tabs>
 
       <SearchGuestSections />

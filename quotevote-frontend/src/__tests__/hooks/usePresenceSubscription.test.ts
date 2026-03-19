@@ -1,12 +1,11 @@
 ﻿import { renderHook } from '@testing-library/react'
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useSubscription export
-import { useSubscription } from '@apollo/client'
+import { useSubscription } from '@apollo/client/react'
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription'
 import { useAppStore } from '@/store'
 
 // Mock Apollo Client
-jest.mock('@apollo/client', () => ({
-    ...jest.requireActual('@apollo/client'),
+jest.mock('@apollo/client/react', () => ({
+    ...jest.requireActual('@apollo/client/react'),
     useSubscription: jest.fn(),
 }))
 
@@ -35,7 +34,7 @@ describe('usePresenceSubscription', () => {
     })
 
     it('should subscribe to presence updates when user is logged in', () => {
-        const mockSubscription = useSubscription as jest.Mock
+        const mockSubscription = useSubscription as unknown as jest.Mock
         mockSubscription.mockReturnValue({
             data: null,
             error: null,
@@ -55,7 +54,7 @@ describe('usePresenceSubscription', () => {
 
     it('should skip subscription when user is not logged in', () => {
         mockUser = { data: {} }
-        const mockSubscription = useSubscription as jest.Mock
+        const mockSubscription = useSubscription as unknown as jest.Mock
         mockSubscription.mockReturnValue({
             data: null,
             error: null,
@@ -80,7 +79,7 @@ describe('usePresenceSubscription', () => {
             statusMessage: 'Hello',
         }
 
-        const mockSubscription = useSubscription as jest.Mock
+        const mockSubscription = useSubscription as unknown as jest.Mock
         mockSubscription.mockReturnValue({
             data: { presence: presenceData },
             error: null,
@@ -96,7 +95,7 @@ describe('usePresenceSubscription', () => {
     })
 
     it('should not update store when no presence data', () => {
-        const mockSubscription = useSubscription as jest.Mock
+        const mockSubscription = useSubscription as unknown as jest.Mock
         mockSubscription.mockReturnValue({
             data: null,
             error: null,
@@ -111,7 +110,7 @@ describe('usePresenceSubscription', () => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
         const testError = new Error('Subscription error')
 
-        const mockSubscription = useSubscription as jest.Mock
+        const mockSubscription = useSubscription as unknown as jest.Mock
         mockSubscription.mockReturnValue({
             data: null,
             error: testError,
@@ -137,7 +136,7 @@ describe('usePresenceSubscription', () => {
             lastSeen: '2024-01-01T01:00:00Z',
         }
 
-        const mockSubscription = useSubscription as jest.Mock
+        const mockSubscription = useSubscription as unknown as jest.Mock
         mockSubscription.mockReturnValue({
             data: { presence: presenceData1 },
             error: null,
