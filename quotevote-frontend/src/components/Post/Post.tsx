@@ -18,6 +18,7 @@ import { ApproveButton } from '../CustomButtons/ApproveButton'
 import { RejectButton } from '../CustomButtons/RejectButton'
 import { FollowButton } from '../CustomButtons/FollowButton'
 import { BookmarkIconButton } from '../CustomButtons/BookmarkIconButton'
+import { RequestInviteDialog } from '@/components/RequestInviteDialog'
 import {
   ADD_COMMENT,
   ADD_QUOTE,
@@ -437,7 +438,7 @@ export default function Post({
 
   const handleRedirectToProfile = () => {
     if (username) {
-      router.push(`/Profile/${username}`)
+      router.push(`/dashboard/profile/${username}`)
     }
   }
 
@@ -690,19 +691,7 @@ export default function Post({
             </DialogContent>
           </Dialog>
         )}
-        {/* TODO: RequestInviteDialog needs to be migrated or replaced with AuthModalContext */}
-        {openInvite && (
-          <Dialog open={openInvite} onOpenChange={setOpenInvite}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Authentication Required</DialogTitle>
-                <DialogDescription>
-                  Please sign in to continue.
-                </DialogDescription>
-              </DialogHeader>
-            </DialogContent>
-          </Dialog>
-        )}
+        <RequestInviteDialog open={openInvite} onClose={() => setOpenInvite(false)} />
       </Card>
     </>
   )

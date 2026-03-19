@@ -3,25 +3,21 @@
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { useMutation } from '@apollo/client/react';
 import { Button } from '@/components/ui/button';
+import useGuestGuard from '@/hooks/useGuestGuard';
 import { UPDATE_POST_BOOKMARK, CREATE_POST_MESSAGE_ROOM } from '@/graphql/mutations';
 import { GET_CHAT_ROOMS, GET_POST, GET_USER_ACTIVITY, GET_TOP_POSTS } from '@/graphql/queries';
 import type { BookmarkIconButtonProps } from '@/types/components';
 
 /**
  * BookmarkIconButton Component
- * 
+ *
  * Icon button for bookmarking/unbookmarking posts.
  * Creates a message room when bookmarking.
  */
 export function BookmarkIconButton({ post, user, limit = 5 }: BookmarkIconButtonProps) {
   const [updatePostBookmark] = useMutation(UPDATE_POST_BOOKMARK);
   const [createPostMessageRoom] = useMutation(CREATE_POST_MESSAGE_ROOM);
-
-  // Simple auth check - TODO: Replace with proper useGuestGuard hook when migrated
-  const ensureAuth = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    return !!token;
-  };
+  const ensureAuth = useGuestGuard();
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();

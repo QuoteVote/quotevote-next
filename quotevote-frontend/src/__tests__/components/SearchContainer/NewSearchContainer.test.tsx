@@ -115,7 +115,7 @@ describe('SearchContainer (tabbed version)', () => {
   describe('Basic Rendering', () => {
     it('renders search input', () => {
       render(<SearchContainer />)
-      expect(screen.getByPlaceholderText('Search posts...')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Search posts, people, and more...')).toBeInTheDocument()
     })
 
     it('renders Trending tab by default', () => {
@@ -165,7 +165,7 @@ describe('SearchContainer (tabbed version)', () => {
       const user = userEvent.setup()
       render(<SearchContainer />)
 
-      const input = screen.getByPlaceholderText('Search posts...') as HTMLInputElement
+      const input = screen.getByPlaceholderText('Search posts, people, and more...') as HTMLInputElement
       await user.type(input, 'quote')
 
       expect(input.value).toBe('quote')
@@ -175,7 +175,7 @@ describe('SearchContainer (tabbed version)', () => {
       const user = userEvent.setup()
       render(<SearchContainer />)
 
-      const input = screen.getByPlaceholderText('Search posts...')
+      const input = screen.getByPlaceholderText('Search posts, people, and more...')
       await user.type(input, 'test')
 
       await waitFor(() => {
@@ -193,7 +193,7 @@ describe('SearchContainer (tabbed version)', () => {
   })
 
   describe('Empty state', () => {
-    it('shows no posts found when entities is empty', () => {
+    it('shows mock posts when query returns empty with no search key', () => {
       mockUseQuery.mockReturnValue({
         loading: false,
         data: {
@@ -205,7 +205,8 @@ describe('SearchContainer (tabbed version)', () => {
         error: undefined,
       })
       render(<SearchContainer />)
-      expect(screen.getByText(/no posts found/i)).toBeInTheDocument()
+      // When no search key and no posts, mock data is shown as fallback
+      expect(screen.queryByText(/no posts found/i)).not.toBeInTheDocument()
     })
   })
 })

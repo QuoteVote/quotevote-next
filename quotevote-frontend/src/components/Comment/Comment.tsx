@@ -102,7 +102,7 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
         <Button 
           variant="ghost" 
           className="h-10 w-10 rounded-full p-0"
-          onClick={() => router.push(`/Profile/${username}`)}
+          onClick={() => router.push(`/dashboard/profile/${username}`)}
         >
           <Avatar>
             <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} alt={username} />

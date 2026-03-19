@@ -136,7 +136,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                 type="button"
                 onClick={() => {
                    if (setOpen) setOpen(false)
-                   router.push(`/Profile/${username}/avatar`)
+                   router.push(`/dashboard/profile/${username}/avatar`)
                 }}
                 className="group relative flex-shrink-0"
                 aria-label="Change avatar"

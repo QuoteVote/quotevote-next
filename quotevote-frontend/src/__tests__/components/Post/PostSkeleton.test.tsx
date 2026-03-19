@@ -31,7 +31,7 @@ describe('PostSkeleton Component', () => {
 
     it('renders skeleton for avatar', () => {
       const { container } = render(<PostSkeleton />)
-      const avatarSkeleton = container.querySelector('.rounded-full[class*="h-12"]')
+      const avatarSkeleton = container.querySelector('.rounded-full[class*="h-10"]')
       expect(avatarSkeleton).toBeInTheDocument()
     })
 
@@ -41,10 +41,11 @@ describe('PostSkeleton Component', () => {
       expect(contentSkeletons.length).toBeGreaterThan(0)
     })
 
-    it('renders skeleton for action buttons', () => {
+    it('renders skeleton for engagement bar', () => {
       const { container } = render(<PostSkeleton />)
-      const buttonSkeletons = container.querySelectorAll('[class*="h-8"]')
-      expect(buttonSkeletons.length).toBeGreaterThan(0)
+      // Engagement bar uses h-4 skeletons for icon+count pairs
+      const engagementSkeletons = container.querySelectorAll('[class*="h-4"][class*="w-10"]')
+      expect(engagementSkeletons.length).toBeGreaterThan(0)
     })
   })
 

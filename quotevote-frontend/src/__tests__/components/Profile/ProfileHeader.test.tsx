@@ -70,8 +70,10 @@ jest.mock('../../../components/Profile/ProfileBadge', () => ({
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
-  MessageCircle: () => <span data-testid="message-icon">💬</span>,
-  Flag: () => <span data-testid="flag-icon">🚩</span>,
+  MessageCircle: () => <span data-testid="message-icon">msg</span>,
+  Flag: () => <span data-testid="flag-icon">flag</span>,
+  MoreHorizontal: () => <span data-testid="more-icon">more</span>,
+  Pencil: () => <span data-testid="pencil-icon">edit</span>,
 }));
 
 const mockProfileUser: ProfileUser = {
@@ -225,7 +227,7 @@ describe('ProfileHeader Component', () => {
   });
 
   describe('Own Profile vs Other User Profile', () => {
-    it('shows "Change Photo" button for own profile', async () => {
+    it('shows "Edit Profile" button for own profile', async () => {
       const ownProfile: ProfileUser = {
         ...mockProfileUser,
         _id: 'currentuser',
@@ -240,7 +242,7 @@ describe('ProfileHeader Component', () => {
       });
       // Component may be caught by ErrorBoundary, so check for either button or error UI
       await waitFor(() => {
-        const button = screen.queryByText('Change Photo');
+        const button = screen.queryByText('Edit Profile');
         const errorUI = screen.queryByText(/Something went wrong/i);
         expect(button || errorUI).toBeTruthy();
       }, { timeout: 5000 });
@@ -264,7 +266,7 @@ describe('ProfileHeader Component', () => {
       }, { timeout: 5000 });
     });
 
-    it('navigates to avatar page when clicking Change Photo', async () => {
+    it('navigates to avatar page when clicking Edit Profile', async () => {
       const ownProfile: ProfileUser = {
         ...mockProfileUser,
         _id: 'currentuser',
@@ -279,17 +281,17 @@ describe('ProfileHeader Component', () => {
       });
       // Wait for component to render (own profile doesn't need chat/roster queries)
       await waitFor(() => {
-        const button = screen.queryByText('Change Photo');
+        const button = screen.queryByText('Edit Profile');
         const errorUI = screen.queryByText(/Something went wrong/i);
         expect(button || errorUI).toBeTruthy();
       }, { timeout: 5000 });
-      
-      const button = screen.queryByText('Change Photo');
+
+      const button = screen.queryByText('Edit Profile');
       if (button) {
         await act(async () => {
           fireEvent.click(button);
         });
-        expect(mockPush).toHaveBeenCalledWith('/profile/testuser/avatar');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/avatar');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();
@@ -805,7 +807,7 @@ describe('ProfileHeader Component', () => {
         await act(async () => {
           fireEvent.click(followersLink);
         });
-        expect(mockPush).toHaveBeenCalledWith('/profile/testuser/followers');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/followers');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();
@@ -832,7 +834,7 @@ describe('ProfileHeader Component', () => {
         await act(async () => {
           fireEvent.click(followingLink);
         });
-        expect(mockPush).toHaveBeenCalledWith('/profile/testuser/following');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/following');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();
