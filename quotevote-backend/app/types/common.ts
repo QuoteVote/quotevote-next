@@ -136,12 +136,13 @@ export interface Post {
 export interface Comment {
   _id: string;
   userId: string;
-  postId: string;
+  postId?: string;
   content: string;
-  startWordIndex?: number;
-  endWordIndex?: number;
+  startWordIndex: number;
+  endWordIndex: number;
   url?: string;
   reaction?: string;
+  deleted?: boolean;
   created: Date | string;
   updatedAt?: Date | string;
 }

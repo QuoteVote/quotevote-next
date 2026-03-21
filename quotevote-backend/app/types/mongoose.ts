@@ -75,11 +75,13 @@ export interface PostModel extends Model<PostDocument> {
 // ============================================================================
 
 export interface CommentDocument
-  extends BaseDocument, Omit<Common.Comment, '_id' | 'userId' | 'postId' | 'updatedAt'> {
+  extends BaseDocument, Omit<Common.Comment, '_id' | 'userId' | 'postId' | 'updatedAt' | 'created'> {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-  postId: Types.ObjectId;
+  postId?: Types.ObjectId;
+  created: Date;
 }
+
 
 export interface CommentModel extends Model<CommentDocument> {
   findByPostId(postId: string): Promise<CommentDocument[]>;
