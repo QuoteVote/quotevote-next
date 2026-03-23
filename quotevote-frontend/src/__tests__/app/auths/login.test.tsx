@@ -60,7 +60,7 @@ describe('LoginPageContent', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
     await waitFor(() => {
       expect(mockLoginUser).toHaveBeenCalledWith('test@example.com', 'password123')
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/search')
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/explore')
     })
   })
 

@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation'
 import { isEmpty } from 'lodash'
 import moment from 'moment'
 import { useQuery } from '@apollo/client/react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -14,8 +12,9 @@ import {
   ThumbsDown,
   MessageCircle,
   Quote,
-  Eye,
   ExternalLink,
+  Bookmark,
+  Share2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getDomain } from '@/lib/utils/sanitizeUrl'
@@ -27,27 +26,9 @@ import useGuestGuard from '@/hooks/useGuestGuard'
 import HighlightText from '@/components/HighlightText/HighlightText'
 import type { PostCardProps } from '@/types/post'
 
-/**
- * Helper function to limit string length
- */
 function stringLimit(text: string, limit: number): string {
   if (!text || text.length <= limit) return text
   return text.slice(0, limit) + '...'
-}
-
-/**
- * Get card background color class based on activity type
- */
-function getCardBgClass(activityType: string = 'POSTED'): string {
-  const bgMap: Record<string, string> = {
-    POSTED: 'border-l-4 border-l-blue-400',
-    COMMENTED: 'border-l-4 border-l-yellow-400',
-    UPVOTED: 'border-l-4 border-l-primary',
-    DOWNVOTED: 'border-l-4 border-l-destructive',
-    LIKED: 'border-l-4 border-l-blue-400',
-    QOUTED: 'border-l-4 border-l-purple-400',
-  }
-  return bgMap[activityType.toUpperCase()] || bgMap.POSTED
 }
 
 export default function PostCard({
@@ -60,7 +41,7 @@ export default function PostCard({
   rejectedBy = [],
   created,
   creator,
-  activityType = 'POSTED',
+  activityType: _activityType = 'POSTED',
   limitText = false,
   votes = [],
   comments = [],
@@ -76,24 +57,17 @@ export default function PostCard({
   const [isExpanded, setIsExpanded] = useState(false)
 
   const postText = text || ''
-  const contentLimit = limitText ? 20 : 200
+  const contentLimit = limitText ? 20 : 280
   const isContentTruncated = postText && postText.length > contentLimit
   const shouldShowButton = isContentTruncated && !limitText
 
-  // Determine what text to show based on expanded state
   let displayText: string | React.ReactNode = isExpanded || !shouldShowButton
     ? postText
     : stringLimit(postText, contentLimit)
 
-  let interactions: unknown[] = []
-
-  if (!isEmpty(comments)) {
-    interactions = interactions.concat(comments)
-  }
+  const interactions: unknown[] = []
 
   if (!isEmpty(votes)) {
-    interactions = interactions.concat(votes)
-    // Map PostVote[] to Vote[] format expected by getTopPostsVoteHighlights
     const mappedVotes = votes
       .filter((vote) => vote.startWordIndex != null && vote.endWordIndex != null)
       .map((vote) => ({
@@ -106,16 +80,11 @@ export default function PostCard({
     displayText = getTopPostsVoteHighlights(mappedVotes, displayText, postText)
   }
 
-  if (!isEmpty(quotes)) {
-    interactions = interactions.concat(quotes)
-  }
-
   const messages = messageRoom && 'messages' in messageRoom
     ? (messageRoom as { messages?: unknown[] }).messages || []
     : []
-  if (!isEmpty(messages)) {
-    interactions = interactions.concat(messages)
-  }
+
+  void [...interactions, ...comments, ...votes, ...quotes, ...messages]
 
   const handleRedirectToProfile = (username?: string | null) => {
     if (!username) return
@@ -124,7 +93,7 @@ export default function PostCard({
     }
   }
 
-  const { data: groupData, loading: groupLoading, error: groupError } = useQuery<{
+  const { data: groupData } = useQuery<{
     group?: { _id: string; title: string }
   }>(GET_GROUP, {
     variables: { groupId: groupId || '' },
@@ -149,167 +118,182 @@ export default function PostCard({
   const name = creator?.name || username
   const avatar = creator?.avatar
 
-  // Keep getCardBgClass reference alive (used by activity feed consumers)
-  void getCardBgClass
-  void activityType
+  const upvoteCount = approvedBy?.length || 0
+  const downvoteCount = rejectedBy?.length || 0
+  const commentCount = comments?.length || 0
+  const quoteCount = quotes?.length || 0
 
   return (
-    <Card
-      className={cn(
-        'bg-card rounded-xl border border-border',
-        'cursor-pointer hover:bg-accent/50',
-        'hover:shadow-md hover:-translate-y-0.5 transition-all duration-200',
-        'py-0 gap-0'
-      )}
+    <article
+      className="px-4 py-4 hover:bg-muted/30 transition-colors cursor-pointer"
       onClick={handleCardClick}
     >
-      <CardContent className="p-4 pb-0">
-        {/* Author row — Twitter style */}
-        <div className="flex items-center gap-3 mb-3">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleRedirectToProfile(username)
-            }}
-            className="flex-shrink-0 hover:opacity-80 transition-opacity"
-          >
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} />
-              <AvatarFallback>
-                <AvatarDisplay
-                  size={40}
-                  src={typeof avatar === 'string' ? avatar : undefined}
-                  alt={name || username}
-                  fallback={name || username}
-                />
-              </AvatarFallback>
-            </Avatar>
-          </button>
+      <div className="flex gap-3">
+        {/* Avatar column */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleRedirectToProfile(username)
+          }}
+          className="flex-shrink-0 mt-0.5"
+        >
+          <Avatar className="size-10">
+            <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} />
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+              <AvatarDisplay
+                size={40}
+                src={typeof avatar === 'string' ? avatar : undefined}
+                alt={name || username}
+                fallback={name || username}
+              />
+            </AvatarFallback>
+          </Avatar>
+        </button>
 
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+        {/* Content column */}
+        <div className="flex-1 min-w-0">
+          {/* Author line */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
                 handleRedirectToProfile(username)
               }}
-              className="flex items-center gap-1.5 min-w-0 hover:underline"
+              className="inline-flex items-center gap-1.5 min-w-0 hover:underline"
             >
-              <span className="text-sm font-bold text-foreground truncate">
+              <span className="text-[15px] font-bold text-foreground truncate">
                 {name}
               </span>
-              <span className="text-sm text-muted-foreground truncate">
+              <span className="text-[15px] text-muted-foreground truncate">
                 @{username}
               </span>
             </button>
-            <span className="text-muted-foreground text-sm">·</span>
-            <span className="text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
+            <span className="text-muted-foreground">·</span>
+            <time className="text-sm text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
               {moment(created).fromNow()}
-            </span>
+            </time>
+            {groupId && groupData?.group && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 h-4 text-primary border-primary/30 bg-primary/5 font-medium uppercase tracking-wider"
+              >
+                {groupData.group.title}
+              </Badge>
+            )}
           </div>
-        </div>
 
-        {/* Title + group badge */}
-        <div className="flex items-start gap-2 mb-1">
-          <h3 className="text-lg font-semibold text-foreground break-words min-w-0 flex-1">
+          {/* Title */}
+          <h3 className="text-[15px] font-semibold text-foreground mt-0.5 leading-snug">
             <HighlightText text={title || 'Untitled'} highlightTerms={searchKey || ''} />
           </h3>
-          {groupId && (
-            <Badge
-              variant="outline"
-              className="text-primary border-primary/30 bg-primary/10 text-xs font-medium uppercase tracking-wide flex-shrink-0 mt-0.5"
+
+          {/* Citation */}
+          {citationUrl && (
+            <a
+              href={citationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
             >
-              {groupData?.group
-                ? groupData.group.title
-                : groupLoading
-                  ? 'Loading...'
-                  : groupError
-                    ? '#GROUP'
-                    : ''
-              }
-            </Badge>
+              <ExternalLink className="size-3" />
+              {getDomain(citationUrl)}
+            </a>
           )}
-        </div>
 
-        {/* Citation link badge */}
-        {citationUrl && (
-          <a
-            href={citationUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-medium px-2.5 py-1 rounded-full bg-muted border border-border hover:text-primary hover:border-primary/30 transition-colors w-fit mb-2"
-          >
-            <ExternalLink className="h-3 w-3" />
-            {getDomain(citationUrl)}
-          </a>
-        )}
-
-        {/* Post body text */}
-        <div className="mt-1 mb-3">
-          <div
-            className={cn(
-              'text-base text-foreground/90 leading-relaxed',
-              shouldShowButton && !isExpanded && 'line-clamp-4'
+          {/* Body */}
+          <div className="mt-1.5">
+            <div
+              className={cn(
+                'text-[15px] text-foreground/90 leading-relaxed whitespace-pre-line',
+                shouldShowButton && !isExpanded && 'line-clamp-4'
+              )}
+            >
+              {displayText}
+            </div>
+            {shouldShowButton && (
+              <button
+                type="button"
+                className="text-primary text-sm font-medium hover:underline mt-0.5"
+                onClick={handleShowMoreToggle}
+              >
+                {isExpanded ? 'Show less' : 'Show more'}
+              </button>
             )}
-          >
-            {displayText}
           </div>
-          {shouldShowButton && (
-            <Button
-              variant="ghost"
-              className="text-primary hover:text-primary hover:bg-transparent hover:underline p-0 h-auto font-medium text-sm mt-1"
-              onClick={handleShowMoreToggle}
+
+          {/* Engagement actions — Twitter-style row */}
+          <div className="flex items-center justify-between mt-3 max-w-md">
+            {/* Comments */}
+            <button
+              type="button"
+              className="group flex items-center gap-1.5 -ml-2 px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
-              {isExpanded ? 'Show less' : 'Show more'}
-            </Button>
-          )}
-        </div>
-      </CardContent>
+              <MessageCircle className="size-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
+              <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors tabular-nums">
+                {commentCount || ''}
+              </span>
+            </button>
 
-      {/* Engagement bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-border">
-        <div className="flex items-center gap-5">
-          {/* Upvotes */}
-          <div className="flex items-center gap-1.5 group">
-            <ThumbsUp className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">
-              {approvedBy?.length || 0}
-            </span>
+            {/* Upvotes */}
+            <button
+              type="button"
+              className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-green-500/10 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ThumbsUp className="size-[18px] text-muted-foreground group-hover:text-green-600 transition-colors" />
+              <span className="text-xs text-muted-foreground group-hover:text-green-600 transition-colors tabular-nums">
+                {upvoteCount || ''}
+              </span>
+            </button>
+
+            {/* Downvotes */}
+            <button
+              type="button"
+              className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-red-500/10 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ThumbsDown className="size-[18px] text-muted-foreground group-hover:text-red-500 transition-colors" />
+              <span className="text-xs text-muted-foreground group-hover:text-red-500 transition-colors tabular-nums">
+                {downvoteCount || ''}
+              </span>
+            </button>
+
+            {/* Quotes */}
+            <button
+              type="button"
+              className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-purple-500/10 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Quote className="size-[18px] text-muted-foreground group-hover:text-purple-500 transition-colors" />
+              <span className="text-xs text-muted-foreground group-hover:text-purple-500 transition-colors tabular-nums">
+                {quoteCount || ''}
+              </span>
+            </button>
+
+            {/* Bookmark */}
+            <button
+              type="button"
+              className="group px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Bookmark className="size-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
+            </button>
+
+            {/* Share */}
+            <button
+              type="button"
+              className="group px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Share2 className="size-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
+            </button>
           </div>
-
-          {/* Downvotes */}
-          <div className="flex items-center gap-1.5 group">
-            <ThumbsDown className="h-4 w-4 text-muted-foreground group-hover:text-destructive transition-colors" />
-            <span className="text-sm text-muted-foreground group-hover:text-destructive transition-colors">
-              {rejectedBy?.length || 0}
-            </span>
-          </div>
-
-          {/* Comments */}
-          <div className="flex items-center gap-1.5 group">
-            <MessageCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">
-              {comments?.length || 0}
-            </span>
-          </div>
-
-          {/* Quotes */}
-          <div className="flex items-center gap-1.5 group">
-            <Quote className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">
-              {quotes?.length || 0}
-            </span>
-          </div>
-        </div>
-
-        {/* Total interactions */}
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Eye className="h-4 w-4" />
-          <span className="text-sm">{interactions.length}</span>
         </div>
       </div>
-    </Card>
+    </article>
   )
 }

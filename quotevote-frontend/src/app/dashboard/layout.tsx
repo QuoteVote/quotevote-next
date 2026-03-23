@@ -13,12 +13,14 @@ import {
   User,
   Settings2,
   ShieldCheck,
+  Mail,
   LogOut,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store';
 import { getApolloClient } from '@/lib/apollo';
+import { removeToken } from '@/lib/auth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
@@ -43,11 +45,12 @@ import {
 /* ------------------------------------------------------------------ */
 
 const NAV_PAGES = [
-  { path: '/dashboard/search', page: 'home' },
+  { path: '/dashboard/explore', page: 'home' },
   { path: '/dashboard/post', page: 'post' },
   { path: '/dashboard/profile', page: 'profile' },
   { path: '/dashboard/notifications', page: 'notifications' },
   { path: '/dashboard/settings', page: 'settings' },
+  { path: '/dashboard/manage-invites', page: 'manage-invites' },
   { path: '/dashboard/control-panel', page: 'control-panel' },
 ] as const;
 
@@ -121,7 +124,7 @@ export default function DashboardLayout({
   /* Logout handler */
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+      removeToken();
       const client = getApolloClient();
       client.stop();
       client.resetStore();
@@ -139,7 +142,7 @@ export default function DashboardLayout({
         <div className="flex h-full items-center justify-between max-w-5xl mx-auto px-4">
           {/* Left: Logo */}
           <Link
-            href="/dashboard/search"
+            href="/dashboard/explore"
             className="flex items-center gap-2.5 no-underline flex-shrink-0"
           >
             <Image
@@ -159,10 +162,10 @@ export default function DashboardLayout({
           <nav className="flex items-center gap-5">
             {/* Home */}
             <Link
-              href="/dashboard/search"
+              href="/dashboard/explore"
               className={cn(
                 'transition-colors',
-                isActive('/dashboard/search')
+                isActive('/dashboard/explore')
                   ? 'text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               )}
@@ -170,7 +173,7 @@ export default function DashboardLayout({
             >
               <House
                 className="size-6"
-                fill={isActive('/dashboard/search') ? 'currentColor' : 'none'}
+                fill={isActive('/dashboard/explore') ? 'currentColor' : 'none'}
               />
             </Link>
 
@@ -264,6 +267,13 @@ export default function DashboardLayout({
                     <Settings2 className="mr-2 size-4" />
                     Settings
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push('/dashboard/manage-invites')}
+                    className="cursor-pointer"
+                  >
+                    <Mail className="mr-2 size-4" />
+                    Manage Invites
+                  </DropdownMenuItem>
                   {isAdmin && (
                     <>
                       <DropdownMenuSeparator />
@@ -296,7 +306,7 @@ export default function DashboardLayout({
         <div className="flex h-full items-center justify-between px-4">
           {/* Left: Logo */}
           <Link
-            href="/dashboard/search"
+            href="/dashboard/explore"
             className="flex items-center no-underline"
           >
             <Image
@@ -351,10 +361,10 @@ export default function DashboardLayout({
         <div className="flex h-full items-center justify-around">
           {/* Home */}
           <Link
-            href="/dashboard/search"
+            href="/dashboard/explore"
             className={cn(
               'flex items-center justify-center flex-1 h-full transition-colors',
-              isActive('/dashboard/search')
+              isActive('/dashboard/explore')
                 ? 'text-foreground'
                 : 'text-muted-foreground'
             )}
@@ -362,13 +372,13 @@ export default function DashboardLayout({
           >
             <House
               className="size-6"
-              fill={isActive('/dashboard/search') ? 'currentColor' : 'none'}
+              fill={isActive('/dashboard/explore') ? 'currentColor' : 'none'}
             />
           </Link>
 
           {/* Search */}
           <Link
-            href="/dashboard/search"
+            href="/dashboard/explore"
             className={cn(
               'flex items-center justify-center flex-1 h-full transition-colors',
               'text-muted-foreground'
@@ -439,7 +449,7 @@ export default function DashboardLayout({
 
       {/* ── Main content ── */}
       <main className="min-h-screen pt-14 md:pt-16 pb-16 md:pb-0">
-        <div className="max-w-2xl mx-auto px-4">
+        <div className="mx-auto px-4" style={{ maxWidth: pathname.startsWith('/dashboard/explore') ? 'none' : '42rem' }}>
           {children}
         </div>
       </main>

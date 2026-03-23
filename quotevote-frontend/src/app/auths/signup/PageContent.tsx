@@ -99,7 +99,7 @@ export default function SignupPageContent() {
         if (result.data?.updateUser) {
           setUserData(result.data.updateUser as Record<string, unknown>)
           toast.success('Account set up! Redirecting...')
-          router.push('/dashboard/search')
+          router.push('/dashboard/explore')
           return
         }
       } else {
