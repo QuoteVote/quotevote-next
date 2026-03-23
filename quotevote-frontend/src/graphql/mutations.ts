@@ -520,6 +520,18 @@ export const REQUEST_USER_ACCESS_MUTATION = gql`
 `
 
 /**
+ * Update user invite status mutation (admin only)
+ */
+export const UPDATE_USER_INVITE_STATUS = gql`
+  mutation updateUserInviteStatus($userId: String!, $inviteStatus: String!) {
+    updateUserInviteStatus(userId: $userId, inviteStatus: $inviteStatus) {
+      _id
+      status
+    }
+  }
+`
+
+/**
  * Disable user account mutation (admin only)
  * Used for admin moderation tools
  */

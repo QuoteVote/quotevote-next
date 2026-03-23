@@ -41,31 +41,31 @@ describe('Middleware', () => {
 
   describe('Dashboard protection', () => {
     it('redirects unauthenticated users from /dashboard to /auths/login', () => {
-      middleware(createMockRequest('/dashboard/search'))
+      middleware(createMockRequest('/dashboard/explore'))
       expect(NextResponse.redirect).toHaveBeenCalled()
       const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
       expect(redirectUrl.pathname).toBe('/auths/login')
     })
 
     it('includes callbackUrl for dashboard redirect', () => {
-      middleware(createMockRequest('/dashboard/search'))
+      middleware(createMockRequest('/dashboard/explore'))
       const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
-      expect(redirectUrl.searchParams.get('callbackUrl')).toBe('/dashboard/search')
+      expect(redirectUrl.searchParams.get('callbackUrl')).toBe('/dashboard/explore')
     })
 
     it('allows authenticated users to pass through /dashboard', () => {
-      middleware(createMockRequest('/dashboard/search', 'valid-token'))
+      middleware(createMockRequest('/dashboard/explore', 'valid-token'))
       expect(NextResponse.next).toHaveBeenCalled()
       expect(NextResponse.redirect).not.toHaveBeenCalled()
     })
   })
 
   describe('Auth page redirect for authenticated users', () => {
-    it('redirects authenticated users from /auths/login to /dashboard/search', () => {
+    it('redirects authenticated users from /auths/login to /dashboard/explore', () => {
       middleware(createMockRequest('/auths/login', 'valid-token'))
       expect(NextResponse.redirect).toHaveBeenCalled()
       const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
-      expect(redirectUrl.pathname).toBe('/dashboard/search')
+      expect(redirectUrl.pathname).toBe('/dashboard/explore')
     })
 
     it('redirects authenticated users from /auths/signup', () => {

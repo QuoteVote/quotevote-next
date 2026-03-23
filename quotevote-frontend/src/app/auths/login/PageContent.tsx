@@ -38,7 +38,7 @@ export default function LoginPageContent() {
       const result = await loginUser(values.email, values.password)
       if (result.success && result.data) {
         setUserData(result.data.user as Record<string, unknown>)
-        router.push('/dashboard/search')
+        router.push('/dashboard/explore')
       } else {
         toast.error(result.error || 'Login failed')
       }

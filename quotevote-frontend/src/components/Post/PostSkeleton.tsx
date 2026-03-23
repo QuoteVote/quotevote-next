@@ -1,51 +1,34 @@
 'use client'
 
-import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-
-/**
- * PostSkeleton Component
- *
- * Loading skeleton that matches the redesigned PostCard layout:
- * Author row at top, title, body text, then engagement bar.
- */
 export default function PostSkeleton() {
   return (
-    <Card className="bg-card rounded-xl border border-border py-0 gap-0">
-      <CardContent className="p-4 pb-0">
-        {/* Author row skeleton */}
-        <div className="flex items-center gap-3 mb-3">
-          <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-16" />
+    <div className="px-4 py-4 animate-pulse">
+      <div className="flex gap-3">
+        <div className="size-10 rounded-full bg-muted flex-shrink-0" />
+        <div className="flex-1 space-y-2.5">
+          {/* Author line */}
+          <div className="flex items-center gap-2">
+            <div className="h-3.5 w-24 rounded bg-muted" />
+            <div className="h-3 w-20 rounded bg-muted" />
+            <div className="h-3 w-14 rounded bg-muted" />
+          </div>
+          {/* Title */}
+          <div className="h-4 w-4/5 rounded bg-muted" />
+          {/* Body lines */}
+          <div className="space-y-1.5">
+            <div className="h-3.5 w-full rounded bg-muted" />
+            <div className="h-3.5 w-full rounded bg-muted" />
+            <div className="h-3.5 w-3/4 rounded bg-muted" />
+          </div>
+          {/* Action bar */}
+          <div className="flex items-center gap-6 pt-1">
+            <div className="h-4 w-10 rounded bg-muted" />
+            <div className="h-4 w-10 rounded bg-muted" />
+            <div className="h-4 w-10 rounded bg-muted" />
+            <div className="h-4 w-10 rounded bg-muted" />
           </div>
         </div>
-
-        {/* Title skeleton */}
-        <div className="flex items-start gap-2 mb-2">
-          <Skeleton className="h-6 w-3/4" />
-        </div>
-
-        {/* Body text skeleton */}
-        <div className="mt-1 mb-3 space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      </CardContent>
-
-      {/* Engagement bar skeleton */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-border">
-        <div className="flex items-center gap-5">
-          <Skeleton className="h-4 w-10" />
-          <Skeleton className="h-4 w-10" />
-          <Skeleton className="h-4 w-10" />
-          <Skeleton className="h-4 w-10" />
-        </div>
-        <Skeleton className="h-4 w-10" />
       </div>
-    </Card>
+    </div>
   )
 }

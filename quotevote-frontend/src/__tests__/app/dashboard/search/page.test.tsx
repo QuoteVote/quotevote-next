@@ -1,39 +1,18 @@
-import { render, screen } from '@testing-library/react';
-import SearchPage from '@/app/dashboard/search/page';
+import { render, screen } from '@testing-library/react'
+import ExplorePage from '@/app/dashboard/explore/page'
 
-// Mock the LoadingSpinner
-jest.mock('@/components/LoadingSpinner', () => ({
-  LoadingSpinner: () => <div data-testid="loading-spinner">Loading...</div>,
-}));
-
-// Mock SearchContainer (uses useSearchParams, needs Suspense)
-jest.mock('@/components/SearchContainer/SearchContainer', () => ({
+// Mock the ExploreContent client component
+jest.mock('@/app/dashboard/explore/ExploreContent', () => ({
   __esModule: true,
   default: () => (
-    <div data-testid="search-container">Search Container</div>
+    <div data-testid="explore-content">Explore Content</div>
   ),
-}));
+}))
 
-describe('SearchPage', () => {
-  it('should render SearchContainer', async () => {
-    render(<SearchPage />);
-
-    const container = await screen.findByTestId('search-container');
-    expect(container).toBeInTheDocument();
-  });
-
-  it('should render the welcome hero section', () => {
-    render(<SearchPage />);
-
-    expect(screen.getByText('Discover Ideas')).toBeInTheDocument();
-  });
-
-  it('should render quick action cards', () => {
-    render(<SearchPage />);
-
-    expect(screen.getByText('Write')).toBeInTheDocument();
-    expect(screen.getByText('Trending')).toBeInTheDocument();
-    expect(screen.getByText('Featured')).toBeInTheDocument();
-    expect(screen.getByText('People')).toBeInTheDocument();
-  });
-});
+describe('ExplorePage (formerly SearchPage)', () => {
+  it('should render ExploreContent', async () => {
+    render(<ExplorePage />)
+    const content = await screen.findByTestId('explore-content')
+    expect(content).toBeInTheDocument()
+  })
+})

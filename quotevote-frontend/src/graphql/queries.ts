@@ -841,6 +841,48 @@ export const GET_CHECK_DUPLICATE_EMAIL = gql`
 `
 
 /**
+ * Get user invitation requests (admin only)
+ */
+export const USER_INVITE_REQUESTS = gql`
+  query userInviteRequests {
+    userInviteRequests {
+      joined
+      email
+      status
+      _id
+    }
+  }
+`
+
+/**
+ * Get user reports (admin only)
+ */
+export const GET_USER_REPORTS = gql`
+  query getUserReports {
+    getUserReports {
+      _id
+      reportedUser {
+        _id
+        username
+        name
+        avatar
+      }
+      reportedBy {
+        _id
+        username
+        name
+        avatar
+      }
+      reason
+      description
+      severity
+      created
+      status
+    }
+  }
+`
+
+/**
  * Get users reported as bots (admin only)
  * Used for admin moderation tools
  */

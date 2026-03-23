@@ -276,7 +276,7 @@ describe('LandingPage', () => {
       expect(screen.getByText(/search unavailable/i)).toBeInTheDocument();
     });
 
-    it('redirects to /dashboard/search when clicking a content result', async () => {
+    it('redirects to /dashboard/explore when clicking a content result', async () => {
       mockUseQuery.mockReturnValue({
         loading: false,
         error: undefined,
@@ -550,7 +550,7 @@ describe('LandingPage', () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('redirects authenticated users to /dashboard/search', async () => {
+    it('redirects authenticated users to /dashboard/explore', async () => {
       useAppStore.getState().setUserData({
         id: 'user-1',
         username: 'testuser',
@@ -560,7 +560,7 @@ describe('LandingPage', () => {
       renderLandingPage();
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/search');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/explore');
       });
     });
   });

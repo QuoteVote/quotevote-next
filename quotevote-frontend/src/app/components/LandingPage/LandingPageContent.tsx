@@ -103,7 +103,7 @@ export function LandingPageContent({
 
   useEffect(() => {
     if (user?.id) {
-      router.push('/dashboard/search');
+      router.push('/dashboard/explore');
     }
   }, [user, router]);
 
