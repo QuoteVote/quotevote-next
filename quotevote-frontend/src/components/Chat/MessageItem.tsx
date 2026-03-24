@@ -53,6 +53,8 @@ const MessageItem: FC<MessageItemProps> = ({ message }) => {
   const isOwnMessage = currentUserId
     ? normalizeId(message.userId) === currentUserId
     : false;
+  const isAdmin = currentUser?.admin === true;
+  const canDelete = isOwnMessage || isAdmin;
   const isDefaultDirection = !isOwnMessage;
 
   const [deleteMessage] = useMutation(DELETE_MESSAGE);
@@ -136,7 +138,7 @@ const MessageItem: FC<MessageItemProps> = ({ message }) => {
             </p>
           </div>
 
-          {isOwnMessage && (
+          {canDelete && (
             <button
               type="button"
               onClick={handleDelete}

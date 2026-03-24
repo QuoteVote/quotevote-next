@@ -136,7 +136,7 @@ describe('ProfileView', () => {
       expect(screen.getByText('Reputation')).toBeInTheDocument();
     });
 
-    it('shows activity placeholder when Activity tab is clicked', async () => {
+    it('shows activity filters when Activity tab is clicked', async () => {
       const user = userEvent.setup();
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
@@ -144,7 +144,7 @@ describe('ProfileView', () => {
       const activityTab = screen.getByRole('tab', { name: 'Activity' });
       await user.click(activityTab);
       await waitFor(() => {
-        expect(screen.getByText('Activity feed coming soon')).toBeInTheDocument();
+        expect(screen.getByText('All')).toBeInTheDocument();
       });
     });
 

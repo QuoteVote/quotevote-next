@@ -76,8 +76,9 @@ export default function UsernameResults({
       <CardContent className="p-0">
         <div className="divide-y divide-border">
           {users.map((user) => {
-            const handleClick = () => {
+            const handleClick = (e: React.MouseEvent) => {
               if (onUserSelect) {
+                e.preventDefault()
                 onUserSelect(user)
               }
             }
@@ -85,7 +86,7 @@ export default function UsernameResults({
             return (
               <Link
                 key={user._id}
-                href={`/${user.username}`}
+                href={onUserSelect ? '#' : `/dashboard/profile/${user.username}`}
                 onClick={handleClick}
                 className={cn(
                   'flex items-center gap-3 p-3',

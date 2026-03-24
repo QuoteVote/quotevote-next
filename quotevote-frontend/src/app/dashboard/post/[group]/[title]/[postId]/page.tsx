@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { useQuery, useMutation } from '@apollo/client/react'
+import { useQuery, useMutation, useSubscription } from '@apollo/client/react'
 import { MessageCircle, MessagesSquare } from 'lucide-react'
 import PostController from '@/components/Post/PostController'
 import { LatestQuotes } from '@/components/Quotes/LatestQuotes'
@@ -12,6 +12,7 @@ import PostChatMessage from '@/components/PostChat/PostChatMessage'
 import PostChatSend from '@/components/PostChat/PostChatSend'
 import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
 import { CREATE_POST_MESSAGE_ROOM } from '@/graphql/mutations'
+import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { PostQueryData } from '@/types/post'
 import type { CommentData } from '@/types/comment'
@@ -181,15 +182,24 @@ function DiscussionSection({ postId }: { postId: string }) {
     createRoom()
   }, [createRoom])
 
-  const { data: messagesData, loading } = useQuery<RoomMessagesData>(
+  const { data: messagesData, loading, refetch } = useQuery<RoomMessagesData>(
     GET_ROOM_MESSAGES,
     {
       variables: { messageRoomId: roomId },
       skip: !roomId,
-      pollInterval: roomId ? 3000 : 0,
       fetchPolicy: 'cache-and-network',
     }
   )
+
+  // Subscribe to new messages for real-time updates
+  useSubscription(NEW_MESSAGE_SUBSCRIPTION, {
+    variables: { messageRoomId: roomId },
+    skip: !roomId,
+    onData: () => {
+      // Refetch messages when a new message arrives via subscription
+      refetch()
+    },
+  })
 
   const rawMessages = messagesData?.messages || []
 
