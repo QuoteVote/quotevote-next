@@ -98,6 +98,8 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
     userBy: Notification['userBy'],
     post?: Notification['post']
   ): void => {
+    if (!ensureAuth()) return;
+
     if (notificationType === 'FOLLOW') {
       router.push(`/dashboard/profile/${userBy.username}`);
     } else if (post) {

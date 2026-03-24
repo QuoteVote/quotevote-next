@@ -1,18 +1,85 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import type { ProfileViewProps } from '@/types/profile';
+import type { ActivityEventType } from '@/types/activity';
 import { ProfileHeader } from './ProfileHeader';
 import { ReputationDisplay } from './ReputationDisplay';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { UserPosts } from '@/components/UserPosts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PaginatedActivityList } from '@/components/Activity/PaginatedActivityList';
+import { cn } from '@/lib/utils';
+
+const ACTIVITY_TYPES: ActivityEventType[] = ['POSTED', 'VOTED', 'COMMENTED', 'QUOTED'];
+
+function ActivityFilters({
+  selectedEvents,
+  onToggle,
+  onSelectAll,
+}: {
+  selectedEvents: ActivityEventType[];
+  onToggle: (event: ActivityEventType) => void;
+  onSelectAll: () => void;
+}) {
+  const allSelected = selectedEvents.length === ACTIVITY_TYPES.length;
+
+  return (
+    <div className="flex flex-wrap gap-2 mb-4">
+      <button
+        type="button"
+        onClick={onSelectAll}
+        className={cn(
+          'px-3 py-1.5 text-xs font-medium rounded-full border transition-colors',
+          allSelected
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'
+        )}
+      >
+        All
+      </button>
+      {ACTIVITY_TYPES.map((event) => (
+        <button
+          key={event}
+          type="button"
+          onClick={() => onToggle(event)}
+          className={cn(
+            'px-3 py-1.5 text-xs font-medium rounded-full border transition-colors capitalize',
+            selectedEvents.includes(event)
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'
+          )}
+        >
+          {event.toLowerCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function ProfileView({
   profileUser,
   loading,
 }: ProfileViewProps) {
+  const [activityEvents, setActivityEvents] = useState<ActivityEventType[]>([...ACTIVITY_TYPES]);
+
+  const handleToggleEvent = useCallback((event: ActivityEventType) => {
+    setActivityEvents((prev) => {
+      if (prev.includes(event)) {
+        // Don't allow deselecting all
+        if (prev.length === 1) return prev;
+        return prev.filter((e) => e !== event);
+      }
+      return [...prev, event];
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setActivityEvents([...ACTIVITY_TYPES]);
+  }, []);
+
   if (loading) return <LoadingSpinner />;
 
   if (!profileUser) {
@@ -49,11 +116,17 @@ export function ProfileView({
         </TabsContent>
 
         <TabsContent value="activity" className="mt-4">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">Activity feed coming soon</p>
-            </CardContent>
-          </Card>
+          <ActivityFilters
+            selectedEvents={activityEvents}
+            onToggle={handleToggleEvent}
+            onSelectAll={handleSelectAll}
+          />
+          <PaginatedActivityList
+            userId={profileUser._id}
+            activityEvent={activityEvents}
+            defaultPageSize={15}
+            maxVisiblePages={5}
+          />
         </TabsContent>
 
         <TabsContent value="about" className="mt-4">

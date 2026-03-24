@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Search as SearchIcon,
-  SearchX,
   TrendingUp,
   Star,
   Users,
@@ -16,198 +15,17 @@ import { useQuery } from '@apollo/client/react'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { useDebounce } from '@/hooks/useDebounce'
-import PostCard from '@/components/Post/PostCard'
-import PostSkeleton from '@/components/Post/PostSkeleton'
+import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
 import {
-  GET_TOP_POSTS,
   GET_FEATURED_POSTS,
-  GET_FRIENDS_POSTS,
   SEARCH_USERNAMES,
 } from '@/graphql/queries'
 import { useAppStore } from '@/store'
 import UsernameResults from '@/components/SearchContainer/UsernameResults'
 import SearchGuestSections from '@/components/SearchContainer/SearchGuestSections'
-import { MOCK_POSTS } from '@/lib/mock-data'
-import type { Post, PostsListData } from '@/types/post'
 import type { UsernameSearchUser } from '@/types/components'
-
-interface FeaturedPostsData {
-  featuredPosts: {
-    entities: Post[]
-    pagination: {
-      total_count: number
-      limit: number
-      offset: number
-    }
-  }
-}
-
-const LIMIT = 20
-
-/* ------------------------------------------------------------------ */
-/*  PostsTab                                                           */
-/* ------------------------------------------------------------------ */
-function PostsTab({
-  posts,
-  loading,
-  searchKey,
-}: {
-  posts: Post[]
-  loading: boolean
-  searchKey?: string
-}) {
-  if (loading) {
-    return (
-      <div>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="border-b border-border">
-            <PostSkeleton />
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  if (!posts.length) {
-    if (!searchKey) {
-      return (
-        <div>
-          {MOCK_POSTS.map((post) => (
-            <div key={post._id} className="border-b border-border">
-              <PostCard
-                _id={post._id}
-                text={post.text}
-                title={post.title}
-                url={post.url}
-                citationUrl={post.citationUrl}
-                bookmarkedBy={post.bookmarkedBy ?? []}
-                approvedBy={post.approvedBy ?? []}
-                rejectedBy={post.rejectedBy ?? []}
-                created={post.created}
-                creator={post.creator ?? undefined}
-                votes={post.votes ?? []}
-                comments={post.comments ?? []}
-                quotes={post.quotes ?? []}
-                messageRoom={post.messageRoom ?? undefined}
-                groupId={post.groupId}
-              />
-            </div>
-          ))}
-        </div>
-      )
-    }
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-        <div className="size-16 rounded-full bg-muted/60 flex items-center justify-center mb-4">
-          <SearchX className="size-8 text-muted-foreground/60" />
-        </div>
-        <p className="text-lg font-semibold text-foreground">No results found</p>
-        <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-          Try searching with different keywords or check your spelling
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      {posts.map((post) => (
-        <div key={post._id} className="border-b border-border">
-          <PostCard
-            _id={post._id}
-            text={post.text}
-            title={post.title}
-            url={post.url}
-            citationUrl={post.citationUrl}
-            bookmarkedBy={post.bookmarkedBy ?? []}
-            approvedBy={post.approvedBy ?? []}
-            rejectedBy={post.rejectedBy ?? []}
-            created={post.created}
-            creator={post.creator ?? undefined}
-            votes={post.votes ?? []}
-            comments={post.comments ?? []}
-            quotes={post.quotes ?? []}
-            messageRoom={post.messageRoom ?? undefined}
-            groupId={post.groupId}
-            searchKey={searchKey}
-          />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Tab data components                                                */
-/* ------------------------------------------------------------------ */
-function TrendingTab({ from, to }: { from: string; to: string }) {
-  const { loading, data } = useQuery<PostsListData>(GET_TOP_POSTS, {
-    variables: {
-      limit: LIMIT,
-      offset: 0,
-      searchKey: '',
-      startDateRange: from || undefined,
-      endDateRange: to || undefined,
-    },
-  })
-  return <PostsTab posts={data?.posts?.entities ?? []} loading={loading} />
-}
-
-function FeaturedTab({ from, to }: { from: string; to: string }) {
-  const { loading, data } = useQuery<FeaturedPostsData>(GET_FEATURED_POSTS, {
-    variables: {
-      limit: LIMIT,
-      offset: 0,
-      searchKey: '',
-      startDateRange: from || undefined,
-      endDateRange: to || undefined,
-    },
-  })
-  return <PostsTab posts={data?.featuredPosts?.entities ?? []} loading={loading} />
-}
-
-function FriendsTab({ from, to }: { from: string; to: string }) {
-  const { loading, data } = useQuery<PostsListData>(GET_FRIENDS_POSTS, {
-    variables: {
-      limit: LIMIT,
-      offset: 0,
-      searchKey: '',
-      startDateRange: from || undefined,
-      endDateRange: to || undefined,
-      friendsOnly: true,
-    },
-  })
-  return <PostsTab posts={data?.posts?.entities ?? []} loading={loading} />
-}
-
-function SearchTab({
-  searchKey,
-  from,
-  to,
-}: {
-  searchKey: string
-  from: string
-  to: string
-}) {
-  const { loading, data } = useQuery<PostsListData>(GET_TOP_POSTS, {
-    variables: {
-      limit: LIMIT,
-      offset: 0,
-      searchKey,
-      startDateRange: from || undefined,
-      endDateRange: to || undefined,
-    },
-    skip: !searchKey,
-  })
-  return (
-    <PostsTab
-      posts={data?.posts?.entities ?? []}
-      loading={loading && !!searchKey}
-      searchKey={searchKey}
-    />
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /*  ExploreContent — main component                                    */
@@ -224,10 +42,19 @@ export default function ExploreContent() {
 
   const [inputValue, setInputValue] = useState(q)
   const [searchFocused, setSearchFocused] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<UsernameSearchUser | null>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
   const debouncedQuery = useDebounce(inputValue, 400)
+
+  // Detect @username mode
+  const isUsernameSearch = inputValue.startsWith('@')
+  const usernameQuery = isUsernameSearch ? inputValue.slice(1) : ''
 
   // Sync debounced query to URL
   useEffect(() => {
+    // Don't sync username searches or when filtering by user
+    if (isUsernameSearch || selectedUser) return
+
     const params = new URLSearchParams(searchParams.toString())
     if (debouncedQuery) {
       params.set('q', debouncedQuery)
@@ -242,17 +69,30 @@ export default function ExploreContent() {
     }
     router.replace(`?${params.toString()}`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery])
+  }, [debouncedQuery, isUsernameSearch, selectedUser])
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setInputValue(e.target.value)
+      // Clear selected user when typing
+      if (selectedUser) setSelectedUser(null)
     },
-    []
+    [selectedUser]
   )
 
   const clearSearch = useCallback(() => {
     setInputValue('')
+    setSelectedUser(null)
+  }, [])
+
+  const handleUserSelect = useCallback((user: UsernameSearchUser) => {
+    setSelectedUser(user)
+    setInputValue('')
+    setSearchFocused(false)
+  }, [])
+
+  const clearSelectedUser = useCallback(() => {
+    setSelectedUser(null)
   }, [])
 
   const handleTabChange = useCallback(
@@ -264,17 +104,19 @@ export default function ExploreContent() {
     [router, searchParams]
   )
 
-  // Username search dropdown
+  // Username search dropdown — triggered by @prefix or general search
+  const searchQueryForUsers = isUsernameSearch ? usernameQuery : debouncedQuery
   const {
     loading: usersLoading,
     data: usersData,
     error: usersError,
   } = useQuery<{ searchUser: UsernameSearchUser[] }>(SEARCH_USERNAMES, {
-    variables: { query: debouncedQuery },
-    skip: !debouncedQuery,
+    variables: { query: searchQueryForUsers },
+    skip: !searchQueryForUsers,
   })
 
-  const activeTab = q ? tab : tab === 'search' ? 'trending' : tab
+  const hasSearch = q || selectedUser
+  const activeTab = hasSearch ? 'search' : tab === 'search' ? 'trending' : tab
   const isLoggedIn = !!(user?._id || user?.id)
 
   const tabs = [
@@ -283,7 +125,7 @@ export default function ExploreContent() {
     ...(isLoggedIn
       ? [{ value: 'friends', label: 'Friends', icon: Users }]
       : []),
-    ...(q
+    ...(hasSearch
       ? [{ value: 'search', label: 'Results', icon: SearchIcon }]
       : []),
   ]
@@ -293,11 +135,27 @@ export default function ExploreContent() {
       {/* ── Sticky search bar ── */}
       <div className="sticky top-14 md:top-16 z-30 bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-2xl mx-auto px-4 py-2.5">
-          <div className="relative">
+          {/* Selected user filter chip */}
+          {selectedUser && (
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="secondary" className="flex items-center gap-1.5 pl-2 pr-1 py-1">
+                <span className="text-xs">Posts by @{selectedUser.username}</span>
+                <button
+                  type="button"
+                  onClick={clearSelectedUser}
+                  className="ml-0.5 rounded-full hover:bg-muted p-0.5"
+                  aria-label="Clear user filter"
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
+            </div>
+          )}
+          <div className="relative" ref={searchRef}>
             <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground pointer-events-none" />
             <Input
               type="text"
-              placeholder="Search posts, people, topics..."
+              placeholder={selectedUser ? `Filter posts by @${selectedUser.username}...` : 'Search posts, @username, topics...'}
               value={inputValue}
               onChange={handleInputChange}
               onFocus={() => setSearchFocused(true)}
@@ -305,7 +163,7 @@ export default function ExploreContent() {
               className="pl-10 pr-10 h-10 text-sm rounded-full bg-muted/60 border-0 focus-visible:bg-card focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:shadow-sm transition-all"
               aria-label="Search posts"
             />
-            {inputValue && (
+            {(inputValue || selectedUser) && (
               <button
                 type="button"
                 onClick={clearSearch}
@@ -316,13 +174,14 @@ export default function ExploreContent() {
               </button>
             )}
 
-            {/* Username dropdown */}
-            {debouncedQuery && searchFocused && (
+            {/* Username dropdown — shown on @prefix or general search */}
+            {searchQueryForUsers && searchFocused && (
               <UsernameResults
                 users={usersData?.searchUser ?? []}
                 loading={usersLoading}
                 error={usersError ?? null}
-                query={debouncedQuery}
+                query={searchQueryForUsers}
+                onUserSelect={handleUserSelect}
               />
             )}
           </div>
@@ -394,22 +253,47 @@ export default function ExploreContent() {
 
         <div className="max-w-2xl mx-auto">
           <TabsContent value="trending" className="mt-0">
-            <TrendingTab from={from} to={to} />
+            <PaginatedPostsList
+              defaultPageSize={15}
+              maxVisiblePages={5}
+              startDateRange={from || undefined}
+              endDateRange={to || undefined}
+            />
           </TabsContent>
 
           <TabsContent value="featured" className="mt-0">
-            <FeaturedTab from={from} to={to} />
+            <PaginatedPostsList
+              query={GET_FEATURED_POSTS}
+              dataKey="featuredPosts"
+              defaultPageSize={15}
+              maxVisiblePages={5}
+              startDateRange={from || undefined}
+              endDateRange={to || undefined}
+            />
           </TabsContent>
 
           {isLoggedIn && (
             <TabsContent value="friends" className="mt-0">
-              <FriendsTab from={from} to={to} />
+              <PaginatedPostsList
+                defaultPageSize={15}
+                maxVisiblePages={5}
+                friendsOnly
+                startDateRange={from || undefined}
+                endDateRange={to || undefined}
+              />
             </TabsContent>
           )}
 
-          {q && (
+          {hasSearch && (
             <TabsContent value="search" className="mt-0">
-              <SearchTab searchKey={q} from={from} to={to} />
+              <PaginatedPostsList
+                defaultPageSize={15}
+                maxVisiblePages={5}
+                searchKey={q}
+                userId={selectedUser?._id}
+                startDateRange={from || undefined}
+                endDateRange={to || undefined}
+              />
             </TabsContent>
           )}
         </div>

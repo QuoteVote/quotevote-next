@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useQuery } from '@apollo/client/react'
+import type { DocumentNode } from '@apollo/client'
 import { PaginatedList } from '@/components/common/PaginatedList'
 import PostCard from './PostCard'
 import PostSkeleton from './PostSkeleton'
@@ -38,7 +39,9 @@ export default function PaginatedPostsList({
   className,
   contentClassName,
   paginationClassName,
-}: PaginatedPostsListProps) {
+  query,
+  dataKey = 'posts',
+}: PaginatedPostsListProps & { query?: DocumentNode; dataKey?: string }) {
   const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts) || []
 
   // Use pagination hook with filter dependencies
@@ -69,7 +72,7 @@ export default function PaginatedPostsList({
   })
 
   // Fetch data
-  const { loading, error, data, refetch } = useQuery<PaginatedPostsListData>(GET_TOP_POSTS, {
+  const { loading, error, data, refetch } = useQuery<PaginatedPostsListData>(query || GET_TOP_POSTS, {
     variables,
     fetchPolicy: 'cache-and-network',
     errorPolicy: 'all',
@@ -79,7 +82,7 @@ export default function PaginatedPostsList({
 
   // Ensure data is fetched when component mounts with page parameter
   useEffect(() => {
-    if (pagination.currentPage > 1 && (!data || !data.posts)) {
+    if (pagination.currentPage > 1 && (!data || !(data as unknown as Record<string, unknown>)[dataKey])) {
       refetch()
     }
   }, [pagination.currentPage, data, refetch])
@@ -100,7 +103,7 @@ export default function PaginatedPostsList({
   // Extract and process data
   const { data: entities, pagination: paginationData } = extractPaginationData<Post>(
     (data as unknown as Record<string, unknown>) || {},
-    'posts'
+    dataKey
   )
 
   // Notify parent of total count changes
