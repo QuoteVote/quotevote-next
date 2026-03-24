@@ -1,12 +1,11 @@
 import { renderHook } from '@testing-library/react'
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation export
-import { useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client/react'
 import { useRosterManagement } from '@/hooks/useRosterManagement'
 import { useAppStore } from '@/store'
 
 // Mock Apollo Client
-jest.mock('@apollo/client', () => ({
-    ...jest.requireActual('@apollo/client'),
+jest.mock('@apollo/client/react', () => ({
+    ...jest.requireActual('@apollo/client/react'),
     useMutation: jest.fn(),
 }))
 
@@ -49,7 +48,7 @@ describe('useRosterManagement', () => {
             removeBuddy: jest.fn(),
         }
 
-            ; (useMutation as jest.Mock).mockImplementation((mutation) => {
+            ; (useMutation as unknown as jest.Mock).mockImplementation((mutation) => {
                 const mutationName = mutation.definitions[0]?.name?.value || 'unknown'
                 const mockFn = mockMutations[mutationName.charAt(0).toLowerCase() + mutationName.slice(1)]
                 return [mockFn || jest.fn(), {}]

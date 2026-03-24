@@ -60,6 +60,7 @@ export function SignupForm({ user, token: _token, onSubmit, loading, signupError
         },
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch is safe here, compiler skips memoization
     const tosAccepted = watch('tos');
     const cocAccepted = watch('coc');
 

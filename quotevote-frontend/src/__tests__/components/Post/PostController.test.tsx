@@ -1,22 +1,24 @@
 /**
  * PostController Component Tests
- * 
+ *
  * Tests for the PostController component including:
- * - Component renders correctly
- * - Post ID extraction from params
- * - Page state management
- * - Edge cases
+ * - Loading state renders PostSkeleton
+ * - Error state redirects to /error
+ * - Successful data fetch renders Post component
+ * - Missing postId shows "Post not found"
+ * - Page state management via setSelectedPage
  */
 
 import { render, screen } from '../../utils/test-utils'
 import PostController from '../../../components/Post/PostController'
+import { GET_POST } from '@/graphql/queries'
 
-// Mock useParams
-const mockParams = { postId: 'test-post-id' }
+// Mock useRouter
+const mockPush = jest.fn()
 jest.mock('next/navigation', () => ({
-  useParams: () => mockParams,
+  useParams: () => ({ postId: 'test-post-id' }),
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
   }),
 }))
 
@@ -26,86 +28,84 @@ jest.mock('@/store', () => ({
   useAppStore: (selector: (state: unknown) => unknown) => {
     const state = {
       setSelectedPage: mockSetSelectedPage,
+      user: {
+        data: {
+          _id: 'user-123',
+          admin: false,
+          _followingId: [],
+        },
+      },
     }
     return selector(state)
   },
 }))
+
+// Mock PostSkeleton
+jest.mock('../../../components/Post/PostSkeleton', () => ({
+  __esModule: true,
+  default: () => <div data-testid="post-skeleton">Loading...</div>,
+}))
+
+// Mock Post component
+jest.mock('../../../components/Post/Post', () => ({
+  __esModule: true,
+  default: ({ post }: { post: { title?: string } }) => (
+    <div data-testid="post-component">{post.title}</div>
+  ),
+}))
+
+const mockPost = {
+  _id: 'test-post-id',
+  userId: 'user-123',
+  created: '2024-01-01',
+  title: 'Test Post',
+  text: 'Test content',
+  url: '/dashboard/post/group/test/test-post-id',
+  comments: [],
+  votes: [],
+  quotes: [],
+}
 
 describe('PostController Component', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
-  describe('Basic Rendering', () => {
-    it('renders controller component', () => {
+  describe('Loading State', () => {
+    it('renders PostSkeleton while loading', () => {
+      const mocks = [
+        {
+          request: {
+            query: GET_POST,
+            variables: { postId: 'test-post-id' },
+          },
+          result: {
+            data: { post: mockPost },
+          },
+          delay: 1000,
+        },
+      ]
+      render(<PostController postId="test-post-id" />, { mocks })
+      expect(screen.getByTestId('post-skeleton')).toBeInTheDocument()
+    })
+  })
+
+  describe('Missing postId', () => {
+    it('shows post not found when postId is empty', () => {
+      render(<PostController postId="" />)
+      expect(screen.getByText(/Post not found/i)).toBeInTheDocument()
+    })
+
+    it('shows post not found when postId is undefined', () => {
       render(<PostController />)
-      expect(screen.getByText(/PostController/)).toBeInTheDocument()
-    })
-
-    it('displays post ID from params', () => {
-      render(<PostController />)
-      expect(screen.getByText(/test-post-id/)).toBeInTheDocument()
-    })
-
-    it('displays post ID from prop when provided', () => {
-      render(<PostController postId="prop-post-id" />)
-      expect(screen.getByText(/prop-post-id/)).toBeInTheDocument()
-    })
-
-    it('prefers prop postId over params postId', () => {
-      render(<PostController postId="prop-post-id" />)
-      expect(screen.getByText(/prop-post-id/)).toBeInTheDocument()
-      expect(screen.queryByText(/test-post-id/)).not.toBeInTheDocument()
+      expect(screen.getByText(/Post not found/i)).toBeInTheDocument()
     })
   })
 
   describe('Page State Management', () => {
-    it('calls setSelectedPage on mount', () => {
-      render(<PostController />)
+    it('calls setSelectedPage with empty string on mount', () => {
+      render(<PostController postId="" />)
       expect(mockSetSelectedPage).toHaveBeenCalledWith('')
-    })
-
-    it('calls setSelectedPage when setSelectedPage changes', () => {
-      const { rerender } = render(<PostController />)
-      expect(mockSetSelectedPage).toHaveBeenCalledTimes(1)
-      
-      rerender(<PostController />)
-      // Should be called again on rerender if dependency changes
-      expect(mockSetSelectedPage).toHaveBeenCalled()
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('handles missing postId in params', () => {
-      mockParams.postId = undefined as unknown as string
-      render(<PostController />)
-      expect(screen.getByText(/PostController/)).toBeInTheDocument()
-    })
-
-    it('handles empty postId', () => {
-      mockParams.postId = ''
-      render(<PostController />)
-      expect(screen.getByText(/PostController/)).toBeInTheDocument()
-    })
-
-    it('handles missing params object', () => {
-      // Mock useParams to return empty object
-      jest.doMock('next/navigation', () => ({
-        useParams: () => ({}),
-        useRouter: () => ({
-          push: jest.fn(),
-        }),
-      }))
-      render(<PostController />)
-      expect(screen.getByText(/PostController/)).toBeInTheDocument()
-    })
-  })
-
-  describe('Placeholder Message', () => {
-    it('displays placeholder message about PostPage implementation', () => {
-      render(<PostController />)
-      expect(screen.getByText(/PostPage component should be implemented/)).toBeInTheDocument()
     })
   })
 })
-

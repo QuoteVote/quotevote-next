@@ -12,6 +12,15 @@ import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils
 import MessageItem from '@/components/Chat/MessageItem'
 import { useAppStore } from '@/store'
 import type { ChatMessage } from '@/types/chat'
+import { toast } from 'sonner'
+
+jest.mock('sonner', () => ({
+  toast: Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+  }),
+}))
 
 // Mock Zustand store
 jest.mock('@/store', () => ({
@@ -221,13 +230,7 @@ describe('MessageItem', () => {
     fireEvent.click(deleteButton)
 
     await waitFor(() => {
-      expect(setSnackbar).toHaveBeenCalledWith(
-        expect.objectContaining({
-          open: true,
-          message: 'Message deleted successfully',
-          type: 'success',
-        })
-      )
+      expect(toast.success).toHaveBeenCalledWith('Message deleted successfully')
     })
   })
 
@@ -251,12 +254,7 @@ describe('MessageItem', () => {
     fireEvent.click(deleteButton)
 
     await waitFor(() => {
-      expect(setSnackbar).toHaveBeenCalledWith(
-        expect.objectContaining({
-          open: true,
-          type: 'danger',
-        })
-      )
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Delete Error'))
     })
   })
 

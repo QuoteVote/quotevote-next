@@ -1,15 +1,15 @@
-/**
- * Forgot Password Page (Server Component Wrapper)
- * 
- * Server component wrapper for the forgot password page.
- * Migrated from legacy ForgotPasswordPage.jsx.
- */
+import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import ForgotPasswordPageContent from './PageContent'
 
-import ForgotPasswordPageContent from './PageContent';
-
-// Mark this route as dynamic to prevent static optimization issues
-export const dynamic = 'force-dynamic';
+export const metadata: Metadata = {
+  title: 'Reset Password — Quote.Vote',
+}
 
 export default function ForgotPasswordPage() {
-  return <ForgotPasswordPageContent />;
+  return (
+    <Suspense>
+      <ForgotPasswordPageContent />
+    </Suspense>
+  )
 }

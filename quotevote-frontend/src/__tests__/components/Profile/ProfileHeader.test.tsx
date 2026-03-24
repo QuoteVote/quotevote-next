@@ -18,6 +18,16 @@ import type { ProfileUser } from '@/types/profile';
 import { MockedProvider } from '@apollo/client/testing';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
+import { toast } from 'sonner';
+
+// Mock sonner toast
+jest.mock('sonner', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
+}));
 
 // Mock Next.js router
 const mockPush = jest.fn();
@@ -60,8 +70,10 @@ jest.mock('../../../components/Profile/ProfileBadge', () => ({
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
-  MessageCircle: () => <span data-testid="message-icon">💬</span>,
-  Flag: () => <span data-testid="flag-icon">🚩</span>,
+  MessageCircle: () => <span data-testid="message-icon">msg</span>,
+  Flag: () => <span data-testid="flag-icon">flag</span>,
+  MoreHorizontal: () => <span data-testid="more-icon">more</span>,
+  Pencil: () => <span data-testid="pencil-icon">edit</span>,
 }));
 
 const mockProfileUser: ProfileUser = {
@@ -121,7 +133,6 @@ describe('ProfileHeader Component', () => {
         loginError: null,
         data: mockLoggedInUser,
       },
-      setSnackbar: jest.fn(),
       setSelectedChatRoom: jest.fn(),
       setChatOpen: jest.fn(),
     });
@@ -216,7 +227,7 @@ describe('ProfileHeader Component', () => {
   });
 
   describe('Own Profile vs Other User Profile', () => {
-    it('shows "Change Photo" button for own profile', async () => {
+    it('shows "Edit Profile" button for own profile', async () => {
       const ownProfile: ProfileUser = {
         ...mockProfileUser,
         _id: 'currentuser',
@@ -231,7 +242,7 @@ describe('ProfileHeader Component', () => {
       });
       // Component may be caught by ErrorBoundary, so check for either button or error UI
       await waitFor(() => {
-        const button = screen.queryByText('Change Photo');
+        const button = screen.queryByText('Edit Profile');
         const errorUI = screen.queryByText(/Something went wrong/i);
         expect(button || errorUI).toBeTruthy();
       }, { timeout: 5000 });
@@ -255,7 +266,7 @@ describe('ProfileHeader Component', () => {
       }, { timeout: 5000 });
     });
 
-    it('navigates to avatar page when clicking Change Photo', async () => {
+    it('navigates to avatar page when clicking Edit Profile', async () => {
       const ownProfile: ProfileUser = {
         ...mockProfileUser,
         _id: 'currentuser',
@@ -270,17 +281,17 @@ describe('ProfileHeader Component', () => {
       });
       // Wait for component to render (own profile doesn't need chat/roster queries)
       await waitFor(() => {
-        const button = screen.queryByText('Change Photo');
+        const button = screen.queryByText('Edit Profile');
         const errorUI = screen.queryByText(/Something went wrong/i);
         expect(button || errorUI).toBeTruthy();
       }, { timeout: 5000 });
-      
-      const button = screen.queryByText('Change Photo');
+
+      const button = screen.queryByText('Edit Profile');
       if (button) {
         await act(async () => {
           fireEvent.click(button);
         });
-        expect(mockPush).toHaveBeenCalledWith('/profile/testuser/avatar');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/avatar');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();
@@ -430,11 +441,6 @@ describe('ProfileHeader Component', () => {
         },
       };
 
-      const setSnackbar = jest.fn();
-      useAppStore.setState({
-        setSnackbar,
-      });
-
       const mockChatRoom = {
         request: {
           query: GET_CHAT_ROOM,
@@ -469,12 +475,8 @@ describe('ProfileHeader Component', () => {
         });
 
         await waitFor(() => {
-          expect(setSnackbar).toHaveBeenCalledWith(
-            expect.objectContaining({
-              open: true,
-              type: 'warning',
-              message: expect.stringContaining('blocked'),
-            })
+          expect((toast.warning as jest.Mock)).toHaveBeenCalledWith(
+            expect.stringContaining('blocked')
           );
         }, { timeout: 3000 });
       } else {
@@ -530,11 +532,6 @@ describe('ProfileHeader Component', () => {
         },
       };
 
-      const setSnackbar = jest.fn();
-      useAppStore.setState({
-        setSnackbar,
-      });
-
       await act(async () => {
         render(
           <MockedProvider mocks={[...createMocks(), mockReportBot]} addTypename={false}>
@@ -568,12 +565,8 @@ describe('ProfileHeader Component', () => {
           });
 
           await waitFor(() => {
-            expect(setSnackbar).toHaveBeenCalledWith(
-              expect.objectContaining({
-                open: true,
-                type: 'success',
-                message: expect.stringContaining('reported successfully'),
-              })
+            expect((toast.success as jest.Mock)).toHaveBeenCalledWith(
+              expect.stringContaining('reported successfully')
             );
           }, { timeout: 3000 });
         }
@@ -594,11 +587,6 @@ describe('ProfileHeader Component', () => {
         },
         error: new Error('Failed to report user'),
       };
-
-      const setSnackbar = jest.fn();
-      useAppStore.setState({
-        setSnackbar,
-      });
 
       await act(async () => {
         render(
@@ -633,12 +621,7 @@ describe('ProfileHeader Component', () => {
           });
 
           await waitFor(() => {
-            expect(setSnackbar).toHaveBeenCalledWith(
-              expect.objectContaining({
-                open: true,
-                type: 'error',
-              })
-            );
+            expect((toast.error as jest.Mock)).toHaveBeenCalled();
           }, { timeout: 3000 });
         }
       } else {
@@ -824,7 +807,7 @@ describe('ProfileHeader Component', () => {
         await act(async () => {
           fireEvent.click(followersLink);
         });
-        expect(mockPush).toHaveBeenCalledWith('/profile/testuser/followers');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/followers');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();
@@ -851,7 +834,7 @@ describe('ProfileHeader Component', () => {
         await act(async () => {
           fireEvent.click(followingLink);
         });
-        expect(mockPush).toHaveBeenCalledWith('/profile/testuser/following');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/following');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();

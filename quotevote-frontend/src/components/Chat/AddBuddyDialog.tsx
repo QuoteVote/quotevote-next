@@ -11,6 +11,7 @@ import Avatar from '@/components/Avatar';
 import { SEARCH_USERNAMES } from '@/graphql/queries';
 import { useRosterManagement } from '@/hooks/useRosterManagement';
 import { useAppStore } from '@/store';
+import { toast } from 'sonner';
 import type { BuddySearchResult } from '@/types/chat';
 
 interface AddBuddyDialogProps {
@@ -33,7 +34,6 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
   const { addBuddy } = useRosterManagement();
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
 
-  const setSnackbar = useAppStore((state) => state.setSnackbar);
   const presenceMap = useAppStore((state) => state.chat.presenceMap);
 
   const { data, loading } = useQuery<SearchUserResponse, SearchUserVariables>(SEARCH_USERNAMES, {
@@ -45,20 +45,12 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
     try {
       setAddingUserId(userId);
       await addBuddy(userId);
-      setSnackbar({
-        open: true,
-        message: 'Buddy request sent successfully!',
-        type: 'success',
-      });
+      toast.success('Buddy request sent successfully!');
       // Optionally close dialog after successful request
       // onClose();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to send buddy request';
-      setSnackbar({
-        open: true,
-        message,
-        type: 'danger',
-      });
+      toast.error(message);
     } finally {
       setAddingUserId(null);
     }

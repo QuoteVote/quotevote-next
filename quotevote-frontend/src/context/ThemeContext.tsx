@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import type {
   ThemeContextValue,
@@ -43,7 +43,7 @@ export function ThemeContextProvider({
         if (savedTheme === 'light' || savedTheme === 'dark') {
           return savedTheme
         }
-      } catch (error) {
+      } catch (_error) {
         // ignore localStorage read errors
       }
     }
@@ -63,7 +63,7 @@ export function ThemeContextProvider({
         setThemeMode(userTheme)
         try {
           localStorage.setItem('themeMode', userTheme)
-        } catch (error) {
+        } catch (_error) {
           // ignore localStorage write errors
         }
       }
@@ -74,7 +74,7 @@ export function ThemeContextProvider({
         if (stored === 'light' || stored === 'dark') {
           savedTheme = stored
         }
-      } catch (error) {
+      } catch (_error) {
         // ignore localStorage read errors
       }
       setThemeMode(savedTheme)
@@ -88,7 +88,7 @@ export function ThemeContextProvider({
           localStorage.setItem('themeMode', currentTheme)
           setThemeMode(currentTheme)
         }
-      } catch (error) {
+      } catch (_error) {
         // ignore localStorage sync errors
       }
     }
@@ -100,17 +100,17 @@ export function ThemeContextProvider({
     [themeMode]
   )
 
-  const toggleTheme = (): ThemeMode => {
+  const toggleTheme = useCallback((): ThemeMode => {
     const newMode: ThemeMode = themeMode === 'light' ? 'dark' : 'light'
     setThemeMode(newMode)
     try {
       // Always update localStorage for immediate persistence
       localStorage.setItem('themeMode', newMode)
-    } catch (error) {
+    } catch (_error) {
       // ignore localStorage write errors
     }
     return newMode
-  }
+  }, [themeMode])
 
   const value = useMemo<ThemeContextValue>(
     () => ({

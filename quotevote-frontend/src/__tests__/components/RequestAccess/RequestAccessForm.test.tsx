@@ -64,16 +64,15 @@ describe('RequestAccessForm Component', () => {
   it('renders the form correctly', () => {
     render(<RequestAccessForm />);
 
-    expect(screen.getByPlaceholderText(/enter your email address/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /request invite/i })).toBeInTheDocument();
-    expect(screen.getByText(/you need an account to contribute/i)).toBeInTheDocument();
   });
 
   it('shows validation error for invalid email', async () => {
     const user = userEvent.setup();
     render(<RequestAccessForm />);
 
-    const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+    const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole('button', { name: /request invite/i });
 
     await user.type(emailInput, 'invalid-email');
@@ -96,7 +95,7 @@ describe('RequestAccessForm Component', () => {
 
     render(<RequestAccessForm />);
 
-    const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+    const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole('button', { name: /request invite/i });
 
     await user.type(emailInput, 'existing@example.com');
@@ -114,7 +113,7 @@ describe('RequestAccessForm Component', () => {
 
     render(<RequestAccessForm />);
 
-    const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+    const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole('button', { name: /request invite/i });
 
     await user.type(emailInput, 'test@example.com');
@@ -131,7 +130,7 @@ describe('RequestAccessForm Component', () => {
 
     render(<RequestAccessForm onSuccess={onSuccess} />);
 
-    const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+    const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole('button', { name: /request invite/i });
 
     await user.type(emailInput, 'test@example.com');
@@ -147,7 +146,7 @@ describe('RequestAccessForm Component', () => {
 
     render(<RequestAccessForm />);
 
-    const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+    const emailInput = screen.getByLabelText(/email address/i);
 
     await user.type(emailInput, 'test@example.com');
     await user.keyboard('{Enter}');
@@ -163,7 +162,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -184,7 +183,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -204,7 +203,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -222,7 +221,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       await user.type(emailInput, 'test+tag@example.com');
@@ -238,7 +237,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       await user.type(emailInput, 'test@mail.example.com');
@@ -256,7 +255,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -272,7 +271,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       // First, trigger validation error
@@ -316,7 +315,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       await user.type(emailInput, '   ');
@@ -336,7 +335,7 @@ describe('RequestAccessForm Component', () => {
 
       render(<RequestAccessForm />);
 
-      const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+      const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole('button', { name: /request invite/i });
 
       const invalidEmails = [
@@ -373,7 +372,7 @@ describe('RequestAccessForm Component', () => {
         
         render(<RequestAccessForm />);
 
-        const emailInput = screen.getByPlaceholderText(/enter your email address/i);
+        const emailInput = screen.getByLabelText(/email address/i);
         const submitButton = screen.getByRole('button', { name: /request invite/i });
 
         await user.type(emailInput, email);

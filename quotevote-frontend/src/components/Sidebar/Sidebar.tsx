@@ -16,47 +16,12 @@ import {
 } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Avatar from '@/components/Avatar';
+import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
+import ChatMenu from '@/components/Chat/ChatMenu';
+import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
 import { AdminIconButton } from '../CustomButtons/AdminIconButton';
 import { SettingsIconButton } from '../CustomButtons/SettingsIconButton';
 import type { SidebarProps, SidebarWrapperProps } from '@/types/components';
-
-// Placeholder components - TODO: Migrate these components
-const NotificationMenu = ({ fontSize }: { fontSize?: string }) => {
-  void fontSize;
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="Notifications"
-      className="text-[#0A2342] hover:text-[#52b274] transition-colors"
-    >
-      <div className="size-6" />
-    </Button>
-  );
-};
-
-const ChatMenu = ({ fontSize }: { fontSize?: string }) => {
-  void fontSize;
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="Chat"
-      className="text-[#0A2342] hover:text-[#52b274] transition-colors"
-    >
-      <div className="size-6" />
-    </Button>
-  );
-};
-
-const SubmitPost = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
-  return (
-    <div className="p-4">
-      <p>Submit Post Component - TODO: Migrate</p>
-      <Button onClick={() => setOpen(false)}>Close</Button>
-    </div>
-  );
-};
 
 /**
  * SidebarWrapper Component
@@ -372,8 +337,8 @@ export function Sidebar({
                 </Link>
               )}
               
-              <ChatMenu fontSize="default" />
-              <NotificationMenu fontSize="default" />
+              <ChatMenu fontSize="small" />
+              <NotificationMenu fontSize="small" />
               <AdminIconButton fontSize="default" onNavigate={() => handleDrawerToggle(false)} />
               <SettingsIconButton fontSize="default" />
             </div>

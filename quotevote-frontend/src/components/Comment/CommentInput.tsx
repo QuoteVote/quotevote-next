@@ -6,16 +6,14 @@ import { useMutation } from '@apollo/client/react'
 import { gql } from '@apollo/client'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { ADD_COMMENT, UPDATE_COMMENT } from '@/graphql/mutations'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ADD_COMMENT } from '@/graphql/mutations'
 import { useAppStore } from '@/store/useAppStore'
+import { toast } from 'sonner'
 import useGuestGuard from '@/hooks/useGuestGuard'
-import { cn } from '@/lib/utils'
 
 interface CommentInputProps {
-  actionId: string // The ID of the post/action being commented on
-  commentId?: string // If provided, we are editing this comment
-  initialContent?: string
-  onCancel?: () => void
+  actionId: string
   onSuccess?: () => void
 }
 
@@ -33,30 +31,22 @@ interface AddCommentData {
   }
 }
 
-interface UpdateCommentData {
-  updateComment: {
-    _id: string
-    content: string
-  }
-}
-
-export default function CommentInput({ 
-  actionId, 
-  commentId, 
-  initialContent = '', 
-  onCancel,
-  onSuccess 
+export default function CommentInput({
+  actionId,
+  onSuccess
 }: CommentInputProps) {
-  const [content, setContent] = useState(initialContent)
+  const [content, setContent] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const userId = useAppStore((state) => state.user.data.id || state.user.data._id)
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
+  const userData = useAppStore((state) => state.user.data)
   const ensureAuth = useGuestGuard()
 
-  const [addComment, { loading: adding }] = useMutation<AddCommentData>(ADD_COMMENT, {
+  const avatarSrc = typeof userData.avatar === 'string' ? userData.avatar : undefined
+  const displayName = (userData.name as string) || (userData.username as string) || ''
+
+  const [addComment, { loading }] = useMutation<AddCommentData>(ADD_COMMENT, {
     update(cache, { data }) {
       if (!data?.addComment) return
-      
       cache.modify({
         fields: {
           comments(existing = []) {
@@ -83,84 +73,81 @@ export default function CommentInput({
     }
   })
 
-  const [updateComment, { loading: updating }] = useMutation<UpdateCommentData>(UPDATE_COMMENT)
-  const loading = adding || updating
-
   const handleSubmit = async () => {
     if (!content.trim()) return
     if (!ensureAuth()) return
 
     try {
-      if (commentId) {
-        // Edit mode
-        await updateComment({
-          variables: {
-            commentId,
+      await addComment({
+        variables: {
+          comment: {
+            actionId,
+            userId,
             content
           }
-        })
-        setSnackbar({ open: true, message: 'Comment updated!', type: 'success' })
-      } else {
-        // Create mode
-        await addComment({
-          variables: {
-            comment: {
-              actionId,
-              userId,
-              content
-            }
-          }
-        })
-        setSnackbar({ open: true, message: 'Comment posted!', type: 'success' })
-        setContent('')
-      }
+        }
+      })
+      toast.success('Comment posted!')
+      setContent('')
+      setIsFocused(false)
       if (onSuccess) onSuccess()
     } catch (err: unknown) {
-      setSnackbar({ 
-        open: true, 
-        message: `Error: ${(err as Error).message}`, 
-        type: 'danger' 
-      })
+      toast.error(`Error: ${(err as Error).message}`)
     }
   }
 
-  const isEdgeCase = commentId && initialContent // Only for edit
-  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
   return (
-    <div className={cn(
-      "flex flex-col gap-2 w-full", 
-      isFocused && "ring-1 ring-ring rounded-md p-1"
-    )}>
-      <Textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => !content && setIsFocused(false)}
-        placeholder={commentId ? "Update your comment..." : "Write a comment..."}
-        className="min-h-[80px] resize-none border-none focus-visible:ring-0 bg-transparent"
-      />
-      
-      {(isFocused || content || isEdgeCase) && (
-        <div className="flex justify-end gap-2 px-2 pb-2">
-          {onCancel && (
-            <Button variant="ghost" size="sm" onClick={onCancel} disabled={loading}>
-              Cancel
+    <div className="flex gap-3">
+      {/* User avatar */}
+      <div className="flex-shrink-0 mt-1">
+        <Avatar className="size-8">
+          <AvatarImage src={avatarSrc} />
+          <AvatarFallback className="text-xs bg-muted font-medium">
+            {displayName.slice(0, 2).toUpperCase() || 'U'}
+          </AvatarFallback>
+        </Avatar>
+      </div>
+
+      {/* Input area */}
+      <div className="flex-1 min-w-0">
+        <Textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => !content && setIsFocused(false)}
+          onKeyDown={handleKeyDown}
+          placeholder="Post your reply..."
+          className="min-h-[44px] resize-none border-0 bg-transparent focus-visible:ring-0 px-0 text-[15px] placeholder:text-muted-foreground/60"
+          rows={isFocused ? 3 : 1}
+        />
+
+        {(isFocused || content) && (
+          <div className="flex justify-end pt-2 border-t border-border mt-2">
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={loading || !content.trim()}
+              className="rounded-full px-4 h-8 text-sm font-semibold"
+            >
+              {loading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  <Send className="size-3.5 mr-1.5" />
+                  Reply
+                </>
+              )}
             </Button>
-          )}
-          <Button 
-            size="sm" 
-            onClick={handleSubmit} 
-            disabled={loading || !content.trim()}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Send className="h-4 w-4 mr-2" />
-            )}
-            {commentId ? 'Update' : 'Post'}
-          </Button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
