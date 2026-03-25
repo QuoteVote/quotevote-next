@@ -1,23 +1,18 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useMutation } from '@apollo/client/react' // Using /react entry point as per project pattern
+import { useMutation } from '@apollo/client/react'
 import { Reference } from '@apollo/client'
-import { Smile, Link as LinkIcon, Trash2, Pencil } from 'lucide-react'
-import { CommentInput } from './'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardFooter,
-} from '@/components/ui/card'
+import { Link as LinkIcon, Trash2 } from 'lucide-react'
+import CommentReactions from './CommentReactions'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { parseCommentDate } from '@/lib/utils/momentUtils'
 import { useAppStore } from '@/store/useAppStore'
+import { toast } from 'sonner'
 import { DELETE_COMMENT } from '@/graphql/mutations'
-import { CommentData } from '@/types/comment'
+import { CommentData, Reaction } from '@/types/comment'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
 
@@ -33,7 +28,6 @@ interface DeleteCommentData {
   }
 }
 
-
 export default function Comment({ comment, postUrl, selected }: CommentProps) {
   const {
     user: commentUser,
@@ -41,14 +35,11 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
     created,
     _id,
   } = comment
-  const { username, avatar } = commentUser
-  const [isEditing, setIsEditing] = useState(false)
-
+  const { username, avatar, name } = commentUser
   const router = useRouter()
   const parsedDate = parseCommentDate(new Date(created))
-  
+
   const currentUser = useAppStore((state) => state.user.data)
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
   const setFocusedComment = useAppStore((state) => state.setFocusedComment)
   const ensureAuth = useGuestGuard()
 
@@ -71,28 +62,16 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
     if (!ensureAuth()) return
     try {
       await deleteComment({ variables: { commentId: _id } })
-      setSnackbar({
-        open: true,
-        message: 'Comment deleted successfully',
-        type: 'success',
-      })
+      toast.success('Comment deleted')
     } catch (err: unknown) {
-      setSnackbar({
-        open: true,
-        message: `Delete Error: ${(err as Error).message}`,
-        type: 'danger',
-      })
+      toast.error(`Error: ${(err as Error).message}`)
     }
   }
 
   const handleCopy = async () => {
     const baseUrl = window.location.origin
     await navigator.clipboard.writeText(`${baseUrl}${postUrl}/comment/#${_id}`)
-    setSnackbar({
-      open: true,
-      message: 'Comment URL copied!',
-      type: 'success',
-    })
+    toast.success('Link copied!')
   }
 
   const isOwner = currentUser.id === comment.userId || currentUser._id === comment.userId || currentUser.admin
@@ -104,77 +83,75 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
   }, [selected, _id, setFocusedComment])
 
   return (
-    <Card
+    <article
       onMouseEnter={() => setFocusedComment(_id)}
       onMouseLeave={() => setFocusedComment(selected ? _id : null)}
       className={cn(
-        "w-full transition-colors",
-        selected ? "bg-[#f1e8c1] dark:bg-yellow-900/20" : "bg-card"
+        'flex gap-3 py-3 transition-colors',
+        selected && 'bg-yellow-50 dark:bg-yellow-900/10 -mx-4 px-4 rounded-lg'
       )}
     >
-      <CardHeader className="flex flex-row items-center gap-4 p-4 pb-2">
-        <Button 
-          variant="ghost" 
-          className="h-10 w-10 rounded-full p-0"
-          onClick={() => router.push(`/Profile/${username}`)}
-        >
-          <Avatar>
-            <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} alt={username} />
-            <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-        </Button>
-        <div className="flex flex-col">
-          <span className="text-sm font-medium">@{username}</span>
-          <span className="text-xs text-muted-foreground" suppressHydrationWarning>{parsedDate}</span>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="px-14 py-2">
-        {isEditing ? (
-          <CommentInput 
-            actionId={(comment.actionId as string) || ""}
-            commentId={_id}
-            initialContent={content}
-            onCancel={() => setIsEditing(false)}
-            onSuccess={() => setIsEditing(false)}
-          />
-        ) : (
-          <p className="text-sm leading-relaxed">{content}</p>
-        )}
-      </CardContent>
+      {/* Avatar */}
+      <button
+        type="button"
+        className="flex-shrink-0 mt-0.5"
+        onClick={() => router.push(`/dashboard/profile/${username}`)}
+      >
+        <Avatar className="size-8">
+          <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} alt={username} />
+          <AvatarFallback className="text-xs bg-muted font-medium">
+            {(username || '').slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      </button>
 
-      <CardFooter className="flex justify-start gap-1 p-2 px-12">
-        {!isEditing && (
-          <>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-              <Smile className="h-4 w-4" />
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => router.push(`/dashboard/profile/${username}`)}
+            className="text-[13px] font-bold text-foreground hover:underline truncate"
+          >
+            {name || username}
+          </button>
+          <span className="text-[13px] text-muted-foreground truncate">@{username}</span>
+          <span className="text-muted-foreground">·</span>
+          <time className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
+            {parsedDate}
+          </time>
+        </div>
+
+        <p className="text-[14px] text-foreground/90 leading-relaxed mt-0.5 whitespace-pre-line">
+          {content}
+        </p>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 mt-1.5 -ml-2">
+          <CommentReactions
+            actionId={_id}
+            reactions={(comment.reactions as Reaction[]) ?? []}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 text-muted-foreground hover:text-foreground"
+            onClick={handleCopy}
+          >
+            <LinkIcon className="size-3.5" />
+          </Button>
+          {isOwner && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 text-muted-foreground hover:text-destructive"
+              onClick={handleDelete}
+            >
+              <Trash2 className="size-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleCopy}>
-              <LinkIcon className="h-4 w-4" />
-            </Button>
-            {isOwner && (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-muted-foreground hover:bg-muted"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={handleDelete}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-          </>
-        )}
-      </CardFooter>
-    </Card>
+          )}
+        </div>
+      </div>
+    </article>
   )
 }

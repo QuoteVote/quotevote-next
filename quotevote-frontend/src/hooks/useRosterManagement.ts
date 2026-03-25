@@ -1,8 +1,6 @@
 'use client'
 
-// TODO: Fix Apollo Client v4.0.9 type resolution issues
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation export
-import { useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client/react'
 import { useAppStore } from '@/store'
 import {
     ADD_BUDDY,
@@ -14,6 +12,15 @@ import {
 } from '@/graphql/mutations'
 import { GET_BUDDY_LIST, GET_ROSTER } from '@/graphql/queries'
 import type { RosterMutationResult, UseRosterManagementReturn } from '@/types/hooks'
+
+interface RosterMutationData {
+    addBuddy: RosterMutationResult
+    acceptBuddy: RosterMutationResult
+    declineBuddy: RosterMutationResult
+    blockBuddy: RosterMutationResult
+    unblockBuddy: RosterMutationResult
+    removeBuddy: RosterMutationResult
+}
 
 /**
  * Custom hook for roster management (buddy list operations)
@@ -55,10 +62,10 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
             const result = await addBuddyMutation({
                 variables: { roster: { buddyId } },
             })
-            addPendingRequest(result.data.addBuddy)
-            return result.data.addBuddy
+            const data = result.data as RosterMutationData
+            addPendingRequest(data.addBuddy)
+            return data.addBuddy
         } catch (error: unknown) {
-            // console.error('Add buddy error:', error)
             throw error
         }
     }
@@ -68,10 +75,10 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
             const result = await acceptBuddyMutation({
                 variables: { rosterId },
             })
+            const data = result.data as RosterMutationData
             removePendingRequest(rosterId)
-            return result.data.acceptBuddy
+            return data.acceptBuddy
         } catch (error: unknown) {
-            // console.error('Accept buddy error:', error)
             throw error
         }
     }
@@ -81,10 +88,10 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
             const result = await declineBuddyMutation({
                 variables: { rosterId },
             })
+            const data = result.data as RosterMutationData
             removePendingRequest(rosterId)
-            return result.data.declineBuddy
+            return data.declineBuddy
         } catch (error: unknown) {
-            // console.error('Decline buddy error:', error)
             throw error
         }
     }
@@ -94,10 +101,10 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
             const result = await blockBuddyMutation({
                 variables: { buddyId },
             })
+            const data = result.data as RosterMutationData
             addBlockedUser(buddyId)
-            return result.data.blockBuddy
+            return data.blockBuddy
         } catch (error: unknown) {
-            // console.error('Block buddy error:', error)
             throw error
         }
     }
@@ -107,10 +114,10 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
             const result = await unblockBuddyMutation({
                 variables: { buddyId },
             })
+            const data = result.data as RosterMutationData
             removeBlockedUser(buddyId)
-            return result.data.unblockBuddy
+            return data.unblockBuddy
         } catch (error: unknown) {
-            // console.error('Unblock buddy error:', error)
             throw error
         }
     }
@@ -120,9 +127,9 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
             const result = await removeBuddyMutation({
                 variables: { buddyId },
             })
-            return result.data.removeBuddy
+            const data = result.data as RosterMutationData
+            return data.removeBuddy
         } catch (error: unknown) {
-            // console.error('Remove buddy error:', error)
             throw error
         }
     }

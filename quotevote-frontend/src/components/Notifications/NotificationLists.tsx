@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useMutation, useApolloClient } from '@apollo/client/react';
 import moment from 'moment';
-import { X } from 'lucide-react';
+import { X, UserPlus, ArrowUp, ArrowDown, MessageSquare, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Avatar from '@/components/Avatar';
 import { DELETE_NOTIFICATION } from '@/graphql/mutations';
@@ -18,18 +18,35 @@ interface NotificationListsProps {
   pageView?: boolean;
 }
 
-const getBadgeIcon = (notificationType: Notification['notificationType']): string => {
+const getNotificationIcon = (notificationType: Notification['notificationType']) => {
   switch (notificationType) {
     case 'FOLLOW':
-      return '/assets/PlusSign.svg';
+      return <UserPlus className="h-4 w-4 text-primary" />;
     case 'UPVOTED':
-      return '/assets/UpVoteBadge.png';
+      return <ArrowUp className="h-4 w-4 text-primary" />;
     case 'DOWNVOTED':
-      return '/assets/DownVoteBadge.png';
+      return <ArrowDown className="h-4 w-4 text-destructive" />;
     case 'COMMENTED':
-      return '/assets/CommentBadge.png';
+      return <MessageSquare className="h-4 w-4 text-blue-500" />;
     case 'QUOTED':
-      return '/assets/QouteBadge.png';
+      return <Quote className="h-4 w-4 text-purple-500" />;
+    default:
+      return null;
+  }
+};
+
+const getNotificationActionText = (notificationType: Notification['notificationType']): string => {
+  switch (notificationType) {
+    case 'FOLLOW':
+      return 'started following you';
+    case 'UPVOTED':
+      return 'upvoted your post';
+    case 'DOWNVOTED':
+      return 'downvoted your post';
+    case 'COMMENTED':
+      return 'commented on your post';
+    case 'QUOTED':
+      return 'quoted your post';
     default:
       return '';
   }
@@ -38,6 +55,10 @@ const getBadgeIcon = (notificationType: Notification['notificationType']): strin
 const stringLimit = (str: string, limit: number): string => {
   if (str.length <= limit) return str;
   return `${str.slice(0, limit)}...`;
+};
+
+const formatTimeAgo = (created: string | number | Date): string => {
+  return moment(created).fromNow();
 };
 
 export function NotificationLists({ notifications, pageView = false }: NotificationListsProps) {
@@ -77,8 +98,10 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
     userBy: Notification['userBy'],
     post?: Notification['post']
   ): void => {
+    if (!ensureAuth()) return;
+
     if (notificationType === 'FOLLOW') {
-      router.push(`/Profile/${userBy.username}`);
+      router.push(`/dashboard/profile/${userBy.username}`);
     } else if (post) {
       setSelectedPost(post._id);
       router.push(post.url.replace(/\?/g, ''));
@@ -91,11 +114,12 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
         className={cn(
           'flex flex-col items-center justify-center',
           pageView ? 'h-full' : 'h-[30vh]',
-          'bg-[var(--color-white)]'
+          'bg-card rounded-lg'
         )}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/assets/ZeroNotificationsBG.png" alt="No notifications" />
-        <p className="text-sm text-[var(--color-text-secondary)] mt-4">
+        <p className="text-sm text-muted-foreground mt-4">
           Relax, you don&apos;t have any alerts right now.
         </p>
       </div>
@@ -105,24 +129,27 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
   return (
     <div
       className={cn(
-        'bg-[var(--color-white)] relative overflow-auto',
-        pageView ? 'w-full' : 'w-[350px]',
-        notifications.length < 5 ? 'min-h-0' : 'h-[75vh]'
+        'relative overflow-auto',
+        pageView ? 'w-full' : 'w-full max-w-sm',
+        notifications.length < 5 ? 'min-h-0' : 'max-h-[75vh]'
       )}
     >
-      <ul className="divide-y divide-[var(--color-gray-light)]">
+      <div className="space-y-2">
         {notifications.map((notification) => {
-          const badgeIcon = getBadgeIcon(notification.notificationType);
           const avatarUrl =
             notification.userBy.avatar?.url ||
             (typeof notification.userBy.avatar === 'string'
               ? notification.userBy.avatar
               : undefined);
 
+          const actionText = getNotificationActionText(notification.notificationType);
+          const icon = getNotificationIcon(notification.notificationType);
+          const displayName = notification.userBy.name || notification.userBy.username;
+
           return (
-            <li
+            <div
               key={notification._id}
-              className="flex items-start gap-3 p-3 hover:bg-[var(--color-gray-light)] transition-colors cursor-pointer group"
+              className="bg-card rounded-lg p-4 border border-border hover:bg-accent/50 transition-colors cursor-pointer group"
               onClick={() =>
                 handleNotificationClick(
                   notification.notificationType,
@@ -131,58 +158,52 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
                 )
               }
             >
-              <div className="relative flex-shrink-0">
-                <div className="relative">
+              <div className="flex items-start gap-3">
+                <div className="relative flex-shrink-0">
                   <Avatar
                     src={avatarUrl}
-                    alt={notification.userBy.name || notification.userBy.username}
+                    alt={displayName}
                     size="md"
                   />
-                  {badgeIcon && (
-                    <img
-                      src={badgeIcon}
-                      alt={notification.notificationType}
-                      className="absolute -bottom-1 -right-1 w-5 h-5"
-                    />
+                  {icon && (
+                    <div className="absolute -bottom-1 -right-1 bg-card rounded-full p-0.5 border border-border">
+                      {icon}
+                    </div>
                   )}
                 </div>
-              </div>
 
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-[var(--color-text-primary)]">
-                  <span className="font-semibold">{notification.notificationType}.</span>{' '}
-                  {`"${stringLimit(notification.label, pageView ? 1000 : 50)}"`}
-                </p>
-                <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                  {moment(notification.created).calendar(null, {
-                    sameDay: '[Today]',
-                    nextDay: '[Tomorrow]',
-                    nextWeek: 'dddd',
-                    lastDay: '[Yesterday]',
-                    lastWeek: '[Last] dddd',
-                    sameElse: 'MMM DD, YYYY',
-                  })}{' '}
-                  @ {moment(notification.created).format('h:mm A')}
-                </p>
-              </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold">{displayName}</span>{' '}
+                    <span className="text-muted-foreground">{actionText}</span>
+                  </p>
+                  {notification.notificationType !== 'FOLLOW' && notification.label && (
+                    <p className="text-sm text-muted-foreground mt-1 truncate">
+                      &ldquo;{stringLimit(notification.label, pageView ? 1000 : 50)}&rdquo;
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatTimeAgo(notification.created)}
+                  </p>
+                </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(notification._id);
-                }}
-                aria-label="Delete notification"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </li>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(notification._id);
+                  }}
+                  aria-label="Delete notification"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }
-

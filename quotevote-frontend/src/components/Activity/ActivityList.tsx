@@ -115,7 +115,7 @@ function LoadActivityCard({
   }
 
   const handleRedirectToProfile = (profileUsername: string) => {
-    router.push(`/Profile/${profileUsername}`)
+    router.push(`/dashboard/profile/${profileUsername}`)
   }
 
   const isLiked = currentUser?._id && typeof currentUser._id === 'string' ? bookmarkedBy.includes(currentUser._id) : false

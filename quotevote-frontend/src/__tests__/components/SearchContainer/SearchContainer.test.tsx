@@ -26,6 +26,14 @@ jest.mock('@apollo/client', () => {
   }
 })
 
+jest.mock('@apollo/client/react', () => {
+  const actual = jest.requireActual('@apollo/client/react')
+  return {
+    ...actual,
+    useQuery: jest.fn((...args: unknown[]) => mockUseQuery(...args)),
+  }
+})
+
 // Mock the SearchResults component
 jest.mock('@/components/SearchContainer/SearchResults', () => ({
   __esModule: true,

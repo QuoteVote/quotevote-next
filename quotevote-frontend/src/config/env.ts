@@ -1,97 +1,57 @@
 /**
- * Environment variable configuration and validation
- * 
- * This module validates that all required environment variables are set
- * and provides type-safe access to them.
+ * Environment variable validation with Zod.
+ *
+ * Validated eagerly at module load time so misconfiguration surfaces
+ * immediately on server start (or build), not at runtime.
  */
 
-/**
- * Get an environment variable with optional default value
- * Throws an error if the variable is required but not set
- * 
- * @param name - Environment variable name
- * @param defaultValue - Optional default value
- * @returns The environment variable value
- * @throws {Error} If the variable is required but not set
- */
-function getEnvVar(name: string, defaultValue?: string): string {
-  const value = process.env[name] || defaultValue;
-  
-  if (!value) {
-    throw new Error(
-      `Environment variable ${name} is required but not set.\n` +
-      `Please create a .env.local file in the project root and add:\n` +
-      `${name}=your_value_here\n\n` +
-      `Example for development:\n` +
-      `${name}=http://localhost:4000`
-    );
+import { z } from 'zod';
+
+const envSchema = z.object({
+  NEXT_PUBLIC_GRAPHQL_ENDPOINT: z.string().url().optional(),
+  NEXT_PUBLIC_SERVER_URL: z.string().url().optional(),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+});
+
+const parsed = envSchema.safeParse({
+  NEXT_PUBLIC_GRAPHQL_ENDPOINT: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
+  NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL,
+  NODE_ENV: process.env.NODE_ENV,
+});
+
+if (!parsed.success) {
+  throw new Error(
+    `Invalid environment variables:\n${JSON.stringify(parsed.error.flatten().fieldErrors, null, 2)}`
+  );
+}
+
+const _env = parsed.data;
+
+// Ensure at least one URL source is available
+if (!_env.NEXT_PUBLIC_GRAPHQL_ENDPOINT && !_env.NEXT_PUBLIC_SERVER_URL) {
+  throw new Error(
+    'NEXT_PUBLIC_SERVER_URL is required.\n' +
+    'Please set NEXT_PUBLIC_SERVER_URL or NEXT_PUBLIC_GRAPHQL_ENDPOINT in your .env.local file.\n\n' +
+    'Example:\nNEXT_PUBLIC_SERVER_URL=http://localhost:4000'
+  );
+}
+
+function getGraphqlEndpoint(): string {
+  if (_env.NEXT_PUBLIC_GRAPHQL_ENDPOINT) return _env.NEXT_PUBLIC_GRAPHQL_ENDPOINT;
+  return `${_env.NEXT_PUBLIC_SERVER_URL}/graphql`;
+}
+
+function getServerUrl(): string {
+  if (_env.NEXT_PUBLIC_GRAPHQL_ENDPOINT) {
+    return _env.NEXT_PUBLIC_GRAPHQL_ENDPOINT.replace(/\/graphql\/?$/, '');
   }
-  
-  return value;
+  return _env.NEXT_PUBLIC_SERVER_URL!;
 }
 
-/**
- * Get an optional environment variable
- * 
- * @param name - Environment variable name
- * @returns The environment variable value or undefined
- */
-function getOptionalEnvVar(name: string): string | undefined {
-  return process.env[name];
-}
-
-/**
- * Validated environment configuration
- * Variables are validated lazily when accessed
- */
 export const env = {
-  /**
-   * GraphQL endpoint URL
-   * Can be set directly or constructed from server URL
-   */
-  get graphqlEndpoint(): string {
-    // Check for explicit GraphQL endpoint first
-    const explicitEndpoint = getOptionalEnvVar('NEXT_PUBLIC_GRAPHQL_ENDPOINT');
-    if (explicitEndpoint) {
-      return explicitEndpoint;
-    }
-    
-    // Fallback: construct from base server URL
-    const serverUrl = getEnvVar('NEXT_PUBLIC_SERVER_URL');
-    
-    return `${serverUrl}/graphql`;
-  },
-  
-  /**
-   * Base server URL
-   * Derived from GraphQL endpoint or from NEXT_PUBLIC_SERVER_URL
-   */
-  get serverUrl(): string {
-    // If GraphQL endpoint is set, derive server URL from it
-    const graphqlEndpoint = getOptionalEnvVar('NEXT_PUBLIC_GRAPHQL_ENDPOINT');
-    if (graphqlEndpoint) {
-      // Remove /graphql suffix if present
-      return graphqlEndpoint.replace(/\/graphql\/?$/, '');
-    }
-    
-    // Fallback to explicit server URL
-    return getEnvVar('NEXT_PUBLIC_SERVER_URL');
-  },
-  
-  /**
-   * Node environment
-   */
-  nodeEnv: process.env.NODE_ENV || 'development',
-  
-  /**
-   * Whether we're in development mode
-   */
-  isDevelopment: process.env.NODE_ENV === 'development',
-  
-  /**
-   * Whether we're in production mode
-   */
-  isProduction: process.env.NODE_ENV === 'production',
+  graphqlEndpoint: getGraphqlEndpoint(),
+  serverUrl: getServerUrl(),
+  nodeEnv: _env.NODE_ENV,
+  isDevelopment: _env.NODE_ENV === 'development',
+  isProduction: _env.NODE_ENV === 'production',
 } as const;
-
-

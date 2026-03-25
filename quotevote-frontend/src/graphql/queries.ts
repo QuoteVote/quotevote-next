@@ -20,7 +20,7 @@ export const GET_BUDDY_LIST = gql`
 
 /**
  * Get all messages for a chat room
- * Used by the conversation view (MessageItemList)
+ * Used by the conversation view (MessageItemList) and Discussion tab
  */
 export const GET_ROOM_MESSAGES = gql`
     query getRoomMessages($messageRoomId: String!) {
@@ -33,6 +33,12 @@ export const GET_ROOM_MESSAGES = gql`
         text
         created
         type
+        user {
+          _id
+          name
+          username
+          avatar
+        }
       }
     }
   `
@@ -628,7 +634,7 @@ export const GET_CHAT_ROOMS = gql`
  */
 export const SEARCH_USERNAMES = gql`
   query searchUsernames($query: String!) {
-    searchUser(query: $query) {
+    searchUser(queryName: $query) {
       _id
       username
       name
@@ -831,6 +837,48 @@ export const GET_NOTIFICATIONS = gql`
 export const GET_CHECK_DUPLICATE_EMAIL = gql`
   query checkDuplicateEmail($email: String!) {
     checkDuplicateEmail(email: $email)
+  }
+`
+
+/**
+ * Get user invitation requests (admin only)
+ */
+export const USER_INVITE_REQUESTS = gql`
+  query userInviteRequests {
+    userInviteRequests {
+      joined
+      email
+      status
+      _id
+    }
+  }
+`
+
+/**
+ * Get user reports (admin only)
+ */
+export const GET_USER_REPORTS = gql`
+  query getUserReports {
+    getUserReports {
+      _id
+      reportedUser {
+        _id
+        username
+        name
+        avatar
+      }
+      reportedBy {
+        _id
+        username
+        name
+        avatar
+      }
+      reason
+      description
+      severity
+      created
+      status
+    }
   }
 `
 

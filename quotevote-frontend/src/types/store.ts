@@ -37,11 +37,6 @@ export interface UIState {
   };
   selectedPage: string;
   hiddenPosts: string[];
-  snackbar: {
-    open: boolean;
-    type: string;
-    message: string;
-  };
   selectedPlan: string;
   focusedComment: string | null;
   sharedComment: string | null;

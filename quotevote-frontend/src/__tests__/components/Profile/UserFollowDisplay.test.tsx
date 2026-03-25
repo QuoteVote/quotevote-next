@@ -76,7 +76,7 @@ describe('UserFollowDisplay', () => {
   it('has link to user profile', () => {
     render(<UserFollowDisplay {...mockUser} />);
     const link = screen.getByText('testuser').closest('a');
-    expect(link).toHaveAttribute('href', '/profile/testuser');
+    expect(link).toHaveAttribute('href', '/dashboard/profile/testuser');
   });
 
   it('handles object avatar structure', () => {

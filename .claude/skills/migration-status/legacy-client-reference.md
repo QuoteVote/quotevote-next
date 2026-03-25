@@ -1,0 +1,1 @@
+../migrate-component/legacy-client-reference.md

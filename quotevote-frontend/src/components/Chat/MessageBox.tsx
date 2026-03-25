@@ -10,6 +10,7 @@ import TypingIndicator from './TypingIndicator'
 import { useRosterManagement } from '@/hooks/useRosterManagement'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { useAppStore } from '@/store'
+import { toast } from 'sonner'
 import { GET_CHAT_ROOMS, GET_ROSTER } from '@/graphql/queries'
 import Avatar from '@/components/Avatar'
 import { Button } from '@/components/ui/button'
@@ -29,7 +30,6 @@ interface HeaderProps {
 function Header({ room }: HeaderProps) {
   const currentUser = useAppStore((state) => state.user.data)
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom)
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
 
   const { blockBuddy, unblockBuddy, removeBuddy } = useRosterManagement()
   const { refetch: refetchChatRooms } = useQuery<{ messageRooms: ChatRoom[] }>(
@@ -81,30 +81,17 @@ function Header({ room }: HeaderProps) {
       if (isBlocked) {
         await unblockBuddy(otherUserId)
         await refetchChatRooms()
-        setSnackbar({
-          open: true,
-          message: 'User unblocked successfully',
-          type: 'success',
-        })
+        toast.success('User unblocked successfully')
       } else {
         await blockBuddy(otherUserId)
         await refetchChatRooms()
-        setSnackbar({
-          open: true,
-          message:
-            'User blocked successfully. Chat history is preserved, but they cannot send new messages.',
-          type: 'success',
-        })
+        toast.success('User blocked successfully. Chat history is preserved, but they cannot send new messages.')
       }
     } catch (error: unknown) {
       const message =
         (error as { message?: string })?.message ||
         `Failed to ${isBlocked ? 'unblock' : 'block'} user`
-      setSnackbar({
-        open: true,
-        message,
-        type: 'danger',
-      })
+      toast.error(message)
     }
   }
 
@@ -114,29 +101,17 @@ function Header({ room }: HeaderProps) {
     try {
       await removeBuddy(otherUserId)
       await refetchChatRooms()
-      setSnackbar({
-        open: true,
-        message: 'Buddy removed successfully',
-        type: 'success',
-      })
+      toast.success('Buddy removed successfully')
     } catch (error: unknown) {
       const message =
         (error as { message?: string })?.message || 'Failed to remove buddy'
-      setSnackbar({
-        open: true,
-        message,
-        type: 'danger',
-      })
+      toast.error(message)
     }
   }
 
   const handleDeleteChat = () => {
     setSelectedChatRoom(null)
-    setSnackbar({
-      open: true,
-      message: 'Chat closed',
-      type: 'info',
-    })
+    toast('Chat closed')
   }
 
   const isUserRoom = messageType === 'USER'

@@ -1,40 +1,83 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { useQuery } from '@apollo/client/react'
 import { useAppStore } from '@/store'
-import type { PostControllerProps } from '@/types/post'
+import { GET_POST } from '@/graphql/queries'
+import Post from './Post'
+import PostSkeleton from './PostSkeleton'
+import type { PostControllerProps, PostQueryData } from '@/types/post'
 
 /**
  * PostController Component
- * 
+ *
  * Controller component for individual post pages.
- * Handles post selection and page state management.
- * 
- * Note: This component is a placeholder. The actual PostPage component
- * should be created in the app directory following Next.js App Router patterns.
+ * Fetches post data by ID and renders the Post component.
  */
-export default function PostController({ postId: propPostId }: PostControllerProps) {
-  const params = useParams()
-  const postId = propPostId || (params?.postId as string) || ''
+export default function PostController({ postId }: PostControllerProps) {
+  const router = useRouter()
+  const userData = useAppStore((state) => state.user.data)
   const setSelectedPage = useAppStore((state) => state.setSelectedPage)
+
+  const { loading, error, data, refetch } = useQuery<PostQueryData>(GET_POST, {
+    variables: { postId },
+    fetchPolicy: 'network-only',
+    skip: !postId,
+  })
 
   useEffect(() => {
     setSelectedPage('')
   }, [setSelectedPage])
 
-  // TODO: Implement PostPage component in app directory
-  // This should render the actual post page with Post component
-  // For now, this is a placeholder that can be used as a reference
-  
+  if (!postId) {
+    return (
+      <div className="container mx-auto p-4">
+        <p className="text-muted-foreground">Post not found</p>
+      </div>
+    )
+  }
+
+  if (loading) return <PostSkeleton />
+
+  if (error) {
+    router.push('/error')
+    return null
+  }
+
+  if (!data?.post) {
+    return (
+      <div className="container mx-auto p-4">
+        <p className="text-muted-foreground">Post not found</p>
+      </div>
+    )
+  }
+
+  const post = data.post
+
+  // Normalize user data to match PostProps.user shape
+  const user = {
+    _id: (userData._id as string | undefined) || userData.id,
+    admin: userData.admin,
+    _followingId: Array.isArray(userData._followingId)
+      ? (userData._followingId as string[])
+      : userData._followingId
+        ? [userData._followingId as string]
+        : [],
+  }
+
+  const postActions = [
+    ...(post.comments || []).map((c) => ({ ...c, __typename: 'Comment' })),
+    ...(post.votes || []).map((v) => ({ ...v, __typename: 'Vote' })),
+    ...(post.quotes || []).map((q) => ({ ...q, __typename: 'Quote' })),
+  ]
+
   return (
-    <div className="container mx-auto p-4">
-      <p className="text-muted-foreground">
-        PostController: Post ID {postId}
-        <br />
-        <small>PostPage component should be implemented in app directory</small>
-      </p>
-    </div>
+    <Post
+      post={post}
+      user={user}
+      postActions={postActions}
+      refetchPost={refetch}
+    />
   )
 }
-
