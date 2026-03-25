@@ -218,8 +218,8 @@ describe('Navigation Flow Integration', () => {
         const handleErrorNavigation = () => {
           try {
             router.push('/invalid-route');
-          } catch (error) {
-            console.error('Navigation error:', error);
+          } catch {
+            // navigation errors are handled silently in tests
           }
         };
 

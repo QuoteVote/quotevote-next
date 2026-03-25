@@ -1,6 +1,5 @@
 /**
  * Type declarations for react-scrollable-feed
- * TODO: Install @types/react-scrollable-feed or migrate to alternative
  */
 declare module 'react-scrollable-feed' {
   import type { ReactNode } from 'react';

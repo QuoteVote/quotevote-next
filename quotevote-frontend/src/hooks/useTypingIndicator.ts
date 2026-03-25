@@ -1,9 +1,7 @@
 'use client'
 
 import { useRef, useCallback, useEffect } from 'react'
-// TODO: Fix Apollo Client v4.0.9 type resolution issues
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation export
-import { useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client/react'
 import { UPDATE_TYPING } from '@/graphql/mutations'
 import type { UseTypingIndicatorReturn, TypingMutationVariables } from '@/types/hooks'
 

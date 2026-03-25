@@ -1,17 +1,26 @@
 export const getBaseServerUrl = (): string => {
-  let effectiveUrl = 'https://api.quote.vote'
-
-  // 1. Priority: Check process.env (allows manual override in Netlify UI)
+  // 1. Priority: Check NEXT_PUBLIC_SERVER_URL (the validated env var)
   try {
-    if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_SERVER) {
-      effectiveUrl = process.env.NEXT_PUBLIC_SERVER
-      return effectiveUrl
+    if (typeof process !== 'undefined' && process.env) {
+      const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || process.env.NEXT_PUBLIC_SERVER
+      if (serverUrl) {
+        return serverUrl
+      }
     }
   } catch (_e) {
     // ignore env access errors in non-Node environments
   }
 
-  // 2. Fallback: Use window.location to detect Netlify deploy preview
+  // 2. Check NEXT_PUBLIC_GRAPHQL_ENDPOINT and strip /graphql
+  try {
+    if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT) {
+      return process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT.replace(/\/graphql\/?$/, '')
+    }
+  } catch (_e) {
+    // ignore env access errors in non-Node environments
+  }
+
+  // 3. Fallback: Use window.location to detect Netlify deploy preview
   const currentUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
   if (currentUrl && currentUrl.includes('deploy-preview')) {
@@ -20,10 +29,11 @@ export const getBaseServerUrl = (): string => {
     const prMatch = currentUrl.match(/deploy-preview-(\d+)/)
     if (prMatch && prMatch[1]) {
       const PR_NUMBER = prMatch[1]
-      effectiveUrl = `https://quotevote-api-quotevote-monorepo-pr-${PR_NUMBER}.up.railway.app`
+      return `https://quotevote-api-quotevote-monorepo-pr-${PR_NUMBER}.up.railway.app`
     }
   }
-  return effectiveUrl
+
+  return 'https://api.quote.vote'
 }
 
 export const getGraphqlServerUrl = (): string => {

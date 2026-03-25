@@ -1,17 +1,85 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import type { ProfileViewProps } from '@/types/profile';
+import type { ActivityEventType } from '@/types/activity';
 import { ProfileHeader } from './ProfileHeader';
 import { ReputationDisplay } from './ReputationDisplay';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { UserPosts } from '@/components/UserPosts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PaginatedActivityList } from '@/components/Activity/PaginatedActivityList';
+import { cn } from '@/lib/utils';
+
+const ACTIVITY_TYPES: ActivityEventType[] = ['POSTED', 'VOTED', 'COMMENTED', 'QUOTED'];
+
+function ActivityFilters({
+  selectedEvents,
+  onToggle,
+  onSelectAll,
+}: {
+  selectedEvents: ActivityEventType[];
+  onToggle: (event: ActivityEventType) => void;
+  onSelectAll: () => void;
+}) {
+  const allSelected = selectedEvents.length === ACTIVITY_TYPES.length;
+
+  return (
+    <div className="flex flex-wrap gap-2 mb-4">
+      <button
+        type="button"
+        onClick={onSelectAll}
+        className={cn(
+          'px-3 py-1.5 text-xs font-medium rounded-full border transition-colors',
+          allSelected
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'
+        )}
+      >
+        All
+      </button>
+      {ACTIVITY_TYPES.map((event) => (
+        <button
+          key={event}
+          type="button"
+          onClick={() => onToggle(event)}
+          className={cn(
+            'px-3 py-1.5 text-xs font-medium rounded-full border transition-colors capitalize',
+            selectedEvents.includes(event)
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'
+          )}
+        >
+          {event.toLowerCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function ProfileView({
   profileUser,
   loading,
 }: ProfileViewProps) {
+  const [activityEvents, setActivityEvents] = useState<ActivityEventType[]>([...ACTIVITY_TYPES]);
+
+  const handleToggleEvent = useCallback((event: ActivityEventType) => {
+    setActivityEvents((prev) => {
+      if (prev.includes(event)) {
+        // Don't allow deselecting all
+        if (prev.length === 1) return prev;
+        return prev.filter((e) => e !== event);
+      }
+      return [...prev, event];
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setActivityEvents([...ACTIVITY_TYPES]);
+  }, []);
+
   if (loading) return <LoadingSpinner />;
 
   if (!profileUser) {
@@ -33,23 +101,49 @@ export function ProfileView({
   }
 
   return (
-    <div className="flex flex-col items-center p-5">
-      <div className="w-full max-w-4xl space-y-6">
-        <div className="w-full">
-          <ProfileHeader profileUser={profileUser} />
-        </div>
+    <div className="w-full py-6 space-y-6">
+      <ProfileHeader profileUser={profileUser} />
 
-        <div className="w-full space-y-4">
-          {profileUser.reputation && (
+      <Tabs defaultValue="posts" className="w-full">
+        <TabsList className="w-full">
+          <TabsTrigger value="posts" className="flex-1">Posts</TabsTrigger>
+          <TabsTrigger value="activity" className="flex-1">Activity</TabsTrigger>
+          <TabsTrigger value="about" className="flex-1">About</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="posts" className="mt-4">
+          <UserPosts userId={profileUser._id} />
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-4">
+          <ActivityFilters
+            selectedEvents={activityEvents}
+            onToggle={handleToggleEvent}
+            onSelectAll={handleSelectAll}
+          />
+          <PaginatedActivityList
+            userId={profileUser._id}
+            activityEvent={activityEvents}
+            defaultPageSize={15}
+            maxVisiblePages={5}
+          />
+        </TabsContent>
+
+        <TabsContent value="about" className="mt-4">
+          {profileUser.reputation ? (
             <ReputationDisplay
               reputation={profileUser.reputation}
               onRefresh={() => window.location.reload()}
             />
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-muted-foreground">No additional information available</p>
+              </CardContent>
+            </Card>
           )}
-          <UserPosts userId={profileUser._id} />
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
-

@@ -6,6 +6,7 @@
  */
 
 import { create } from 'zustand';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import type { AppState, UserState, UIState, ChatState, FilterState } from '@/types/store';
 
 // Initial state values
@@ -33,11 +34,6 @@ const initialUIState: UIState = {
   },
   selectedPage: 'home',
   hiddenPosts: [],
-  snackbar: {
-    open: false,
-    type: '',
-    message: '',
-  },
   selectedPlan: 'personal',
   focusedComment: null,
   sharedComment: null,
@@ -87,7 +83,6 @@ interface AppStore extends AppState {
   setSelectedPost: (postId: string | null) => void;
   setSelectedPage: (page: string) => void;
   addHiddenPost: (postId: string) => void;
-  setSnackbar: (snackbar: UIState['snackbar']) => void;
   setSelectedPlan: (plan: string) => void;
   setFocusedComment: (commentId: string | null) => void;
   setSharedComment: (commentId: string | null) => void;
@@ -120,7 +115,10 @@ interface AppStore extends AppState {
 }
 
 // Create the Zustand store
-export const useAppStore = create<AppStore>((set) => ({
+export const useAppStore = create<AppStore>()(
+  devtools(
+    persist(
+      (set) => ({
   // Initial state
   user: initialUserState,
   ui: initialUIState,
@@ -197,14 +195,6 @@ export const useAppStore = create<AppStore>((set) => ({
       },
     })),
 
-  setSnackbar: (snackbar) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        snackbar,
-      },
-    })),
-
   setSelectedPlan: (plan) =>
     set((state) => ({
       ui: {
@@ -275,7 +265,6 @@ export const useAppStore = create<AppStore>((set) => ({
 
   removePresence: (userId) =>
     set((state) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [userId]: _, ...rest } = state.chat.presenceMap;
       return {
         chat: {
@@ -434,5 +423,20 @@ export const useAppStore = create<AppStore>((set) => ({
       chat: initialChatState,
       filter: initialFilterState,
     }),
-}));
+      }),
+      {
+        name: 'qv-store',
+        storage: createJSONStorage(() =>
+          typeof window !== 'undefined' ? localStorage : ({} as Storage)
+        ),
+        // Only persist the user slice — UI, chat, and filter are ephemeral
+        partialize: (state) => ({ user: state.user }),
+      }
+    ),
+    {
+      name: 'QuoteVoteStore',
+      enabled: process.env.NODE_ENV === 'development',
+    }
+  )
+);
 

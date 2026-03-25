@@ -456,7 +456,7 @@ describe('Authentication Flow Integration', () => {
   describe('Logout Flow', () => {
     it('should handle logout workflow', async () => {
       const mockLogoutUser = authLib.logoutUser as jest.MockedFunction<typeof authLib.logoutUser>;
-      mockLogoutUser.mockResolvedValue({ success: true });
+      mockLogoutUser.mockReturnValue(undefined);
 
       // Set initial user state
       useAppStore.getState().setUserData({

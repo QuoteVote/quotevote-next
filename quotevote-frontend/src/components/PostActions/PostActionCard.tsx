@@ -15,6 +15,7 @@ import { Like } from '@/components/Icons/Like'
 import { Dislike } from '@/components/Icons/Dislike'
 import { parseCommentDate } from '@/lib/utils/momentUtils'
 import { useAppStore } from '@/store'
+import { toast } from 'sonner'
 import { DELETE_VOTE, DELETE_COMMENT, DELETE_QUOTE } from '@/graphql/mutations'
 import { GET_ACTION_REACTIONS } from '@/graphql/queries'
 import { cn } from '@/lib/utils'
@@ -36,7 +37,6 @@ export default function PostActionCard({
   const [open, setOpen] = useState(false)
   const router = useRouter()
   const user = useAppStore((state) => state.user.data)
-  const setSnackbar = useAppStore((state) => state.setSnackbar)
   const setFocusedComment = useAppStore((state) => state.setFocusedComment)
   const setSharedComment = useAppStore((state) => state.setSharedComment)
   const sharedComment = useAppStore((state) => state.ui.sharedComment)
@@ -60,11 +60,7 @@ export default function PostActionCard({
       await navigator.clipboard.writeText(`${baseUrl}${postUrl}/comment#${_id}`)
       setOpen(true)
     } catch {
-      setSnackbar({
-        open: true,
-        message: 'Failed to copy link',
-        type: 'danger',
-      })
+      toast.error('Failed to copy link')
     }
   }
 
@@ -121,36 +117,20 @@ export default function PostActionCard({
     try {
       if (type === 'Vote') {
         await deleteVote({ variables: { voteId: _id } })
-        setSnackbar({
-          open: true,
-          message: 'Vote deleted successfully',
-          type: 'success',
-        })
+        toast.success('Vote deleted successfully')
         if (refetchPost) refetchPost()
       } else if (type === 'Comment') {
         await deleteComment({ variables: { commentId: _id } })
-        setSnackbar({
-          open: true,
-          message: 'Comment deleted successfully',
-          type: 'success',
-        })
+        toast.success('Comment deleted successfully')
         if (refetchPost) refetchPost()
       } else if (type === 'Quote') {
         await deleteQuote({ variables: { quoteId: _id } })
-        setSnackbar({
-          open: true,
-          message: 'Quote deleted successfully',
-          type: 'success',
-        })
+        toast.success('Quote deleted successfully')
         if (refetchPost) refetchPost()
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      setSnackbar({
-        open: true,
-        message: `Delete Error: ${errorMessage}`,
-        type: 'danger',
-      })
+      toast.error(`Delete Error: ${errorMessage}`)
     }
   }
 
@@ -166,7 +146,7 @@ export default function PostActionCard({
 
   const handleRedirectToProfile = () => {
     if (username) {
-      router.push(`/Profile/${username}`)
+      router.push(`/dashboard/profile/${username}`)
     }
   }
 

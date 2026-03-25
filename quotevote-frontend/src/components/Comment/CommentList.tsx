@@ -1,14 +1,10 @@
 "use client"
 
 import { useEffect } from 'react'
-import { Filter } from '@/components/Icons'
 import moment from 'moment'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { MessageCircle } from 'lucide-react'
 import Comment from './Comment'
 import { CommentData } from '@/types/comment'
-import { cn } from '@/lib/utils'
 
 interface CommentListProps {
   comments?: CommentData[]
@@ -17,9 +13,6 @@ interface CommentListProps {
 }
 
 export default function CommentList({ comments = [], loading, postUrl }: CommentListProps) {
-  // Hash handling in Next.js app router is done via window.location usually or searching params if appropriate.
-  // We'll trust the classic window logic since hash isn't a search param.
-  
   useEffect(() => {
     const hash = window.location.hash
     if (!loading && comments.length && hash) {
@@ -34,54 +27,47 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-32 w-full rounded-lg" />
+          <div key={i} className="flex gap-3 animate-pulse">
+            <div className="size-8 rounded-full bg-muted flex-shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-32 rounded bg-muted" />
+              <div className="h-3 w-full rounded bg-muted" />
+              <div className="h-3 w-3/4 rounded bg-muted" />
+            </div>
+          </div>
         ))}
       </div>
     )
   }
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Comments</h3>
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-xl bg-black/5 hover:bg-black/10 hover:scale-105 transition-all shadow-sm"
-        >
-          <Filter className="h-4 w-4" />
-        </Button>
+  if (!comments.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <MessageCircle className="size-10 text-muted-foreground/30 mb-3" />
+        <p className="text-sm text-muted-foreground">
+          No comments yet. Start the conversation!
+        </p>
       </div>
+    )
+  }
 
-      {comments && comments.length > 0 ? (
-        <div className={cn(
-          "flex flex-col gap-2 w-full mt-2",
-          comments.length > 2 && "max-h-[75vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-rounded-md"
-        )}>
-          {comments
-            .slice() // create copy to sort
-            .sort((a, b) => moment(b.created).diff(moment(a.created)))
-            .map((comment) => (
-              <div
-                id={comment._id}
-                key={comment._id}
-                className="w-full"
-              >
-                <Comment
-                  comment={comment}
-                  postUrl={postUrl}
-                  selected={typeof window !== 'undefined' && window.location.hash === `#${comment._id}`}
-                />
-              </div>
-            ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            Start the discussion...
-          </CardContent>
-        </Card>
-      )}
+  return (
+    <div className="divide-y divide-border">
+      {comments
+        .slice()
+        .sort((a, b) => moment(b.created).diff(moment(a.created)))
+        .map((comment) => (
+          <div
+            id={comment._id}
+            key={comment._id}
+          >
+            <Comment
+              comment={comment}
+              postUrl={postUrl}
+              selected={typeof window !== 'undefined' && window.location.hash === `#${comment._id}`}
+            />
+          </div>
+        ))}
     </div>
   )
 }

@@ -12,6 +12,15 @@ import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils
 import PostChatMessage from '@/components/PostChat/PostChatMessage'
 import { useAppStore } from '@/store'
 import type { PostChatMessageProps } from '@/types/postChat'
+import { toast } from 'sonner'
+
+jest.mock('sonner', () => ({
+  toast: Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+  }),
+}))
 
 // Mock Zustand store
 jest.mock('@/store', () => ({
@@ -224,13 +233,7 @@ describe('PostChatMessage', () => {
     fireEvent.click(deleteButton)
 
     await waitFor(() => {
-      expect(setSnackbar).toHaveBeenCalledWith(
-        expect.objectContaining({
-          open: true,
-          message: 'Message deleted successfully',
-          type: 'success',
-        })
-      )
+      expect(toast.success).toHaveBeenCalledWith('Message deleted successfully')
     })
   })
 
@@ -260,12 +263,7 @@ describe('PostChatMessage', () => {
     fireEvent.click(deleteButton)
 
     await waitFor(() => {
-      expect(setSnackbar).toHaveBeenCalledWith(
-        expect.objectContaining({
-          open: true,
-          type: 'danger',
-        })
-      )
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Delete Error'))
     })
   })
 
@@ -282,7 +280,7 @@ describe('PostChatMessage', () => {
     const avatar = screen.getByTestId('avatar')
     fireEvent.click(avatar)
 
-    expect(mockPush).toHaveBeenCalledWith('/Profile/otheruser')
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/otheruser')
   })
 
   it('renders with correct styling for default direction', () => {

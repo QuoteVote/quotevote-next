@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { MessageCircle, Flag } from 'lucide-react';
+import { MessageCircle, Flag, MoreHorizontal, Pencil } from 'lucide-react';
 import { useAppStore } from '@/store';
+import { toast } from 'sonner';
 import type { ProfileUser } from '@/types/profile';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
@@ -19,6 +20,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { ProfileBadge, ProfileBadgeContainer } from './ProfileBadge';
 
 interface ProfileHeaderProps {
@@ -28,7 +35,6 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const router = useRouter();
   const loggedInUserId = useAppStore((state) => state.user.data._id || state.user.data.id);
-  const setSnackbar = useAppStore((state) => state.setSnackbar);
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
   const setChatOpen = useAppStore((state) => state.setChatOpen);
   const loggedInUserIdString = typeof loggedInUserId === 'string' ? loggedInUserId : String(loggedInUserId || '');
@@ -118,11 +124,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
         ? 'You have blocked this user. You cannot send messages to them.'
         : 'You have been blocked by this user. You cannot send messages.';
 
-      setSnackbar({
-        open: true,
-        message,
-        type: 'warning',
-      });
+      toast(message);
       return;
     }
 
@@ -142,18 +144,10 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           reporterId: loggedInUserIdString,
         },
       });
-      setSnackbar({
-        open: true,
-        message: 'User reported successfully. Thank you for helping keep our platform safe.',
-        type: 'success',
-      });
+      toast.success('User reported successfully. Thank you for helping keep our platform safe.');
       setReportDialogOpen(false);
     } catch (error) {
-      setSnackbar({
-        open: true,
-        message: error instanceof Error ? error.message : 'Failed to report user',
-        type: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to report user');
     }
   };
 
@@ -163,77 +157,102 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
       ? avatar
       : avatar?.url || undefined;
 
+  const followersCount = _followersId?.length || 0;
+  const followingCount = _followingId?.length || 0;
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-row items-center gap-4">
-        <Avatar
-          src={avatarSrc}
-          alt={username}
-          size={75}
-        />
-        <div className="flex-1 flex flex-col gap-1">
-          <h2 className="text-xl font-semibold truncate">{username}</h2>
-          <div className="flex gap-4 text-sm">
-            <button
-              onClick={() => router.push(`/profile/${username}/followers`)}
-              className="cursor-pointer hover:underline text-muted-foreground"
-            >
-              {_followersId?.length || 0} Followers
-            </button>
-            <button
-              onClick={() => router.push(`/profile/${username}/following`)}
-              className="cursor-pointer hover:underline text-muted-foreground"
-            >
-              {_followingId?.length || 0} Following
-            </button>
+    <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm">
+      {/* Cover banner */}
+      <div className="h-36 bg-gradient-to-r from-primary/80 to-primary/40" />
+
+      {/* Profile info section */}
+      <div className="px-6 pb-6">
+        {/* Avatar overlapping banner */}
+        <div className="flex items-end justify-between -mt-12 mb-4">
+          <div className="ring-4 ring-card rounded-full">
+            <Avatar
+              src={avatarSrc}
+              alt={username}
+              size={96}
+            />
           </div>
-          {contributorBadge && (
-            <div className="flex items-center mt-1">
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 pt-14">
+            {sameUser ? (
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/dashboard/profile/${username}/avatar`)}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Profile
+              </Button>
+            ) : (
+              <>
+                <FollowButton
+                  isFollowing={isFollowing}
+                  profileUserId={_id}
+                  username={username}
+                />
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={handleMessageUser}
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Message
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      className="text-destructive cursor-pointer"
+                      onClick={() => setReportDialogOpen(true)}
+                    >
+                      <Flag className="mr-2 h-4 w-4" />
+                      Report Bot
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Username + handle */}
+        <div className="space-y-1 mb-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-foreground">{username}</h2>
+            {contributorBadge && (
               <ProfileBadgeContainer>
                 <ProfileBadge type="contributor" />
               </ProfileBadgeContainer>
-            </div>
-          )}
+            )}
+          </div>
+          <p className="text-muted-foreground text-sm">@{username}</p>
         </div>
-      </div>
 
-      <div className="flex flex-wrap gap-2">
-        {sameUser ? (
-          <Button
-            variant="default"
-            onClick={() => router.push(`/profile/${username}/avatar`)}
-            className="w-[130px]"
+        {/* Stats row */}
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => router.push(`/dashboard/profile/${username}/followers`)}
+            className="cursor-pointer hover:underline text-sm text-foreground"
           >
-            Change Photo
-          </Button>
-        ) : (
-          <>
-            <FollowButton
-              isFollowing={isFollowing}
-              profileUserId={_id}
-              username={username}
-              className="w-[130px]"
-            />
-            <Button
-              variant="default"
-              size="default"
-              className="w-[130px]"
-              onClick={handleMessageUser}
-            >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Message
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              className="w-[130px]"
-              onClick={() => setReportDialogOpen(true)}
-            >
-              <Flag className="mr-2 h-4 w-4" />
-              Report Bot
-            </Button>
-          </>
-        )}
+            <span className="font-bold">{followersCount}</span>{' '}
+            <span className="text-muted-foreground">Followers</span>
+          </button>
+          <button
+            onClick={() => router.push(`/dashboard/profile/${username}/following`)}
+            className="cursor-pointer hover:underline text-sm text-foreground"
+          >
+            <span className="font-bold">{followingCount}</span>{' '}
+            <span className="text-muted-foreground">Following</span>
+          </button>
+        </div>
       </div>
 
       {/* Report Bot Confirmation Dialog */}
@@ -267,4 +286,3 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
     </div>
   );
 }
-

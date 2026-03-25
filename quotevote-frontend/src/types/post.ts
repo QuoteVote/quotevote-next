@@ -120,6 +120,7 @@ export interface PostCardProps {
   quotes?: PostQuote[]
   messageRoom?: PostMessageRoom
   groupId?: string | null
+  searchKey?: string
 }
 
 /**

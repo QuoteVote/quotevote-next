@@ -13,6 +13,15 @@ import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils
 import BuddyListWithPresence from '@/components/BuddyList/BuddyListWithPresence'
 import { useAppStore } from '@/store'
 import { GET_BUDDY_LIST, GET_ROSTER } from '@/graphql/queries'
+import { toast } from 'sonner'
+
+jest.mock('sonner', () => ({
+  toast: Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+  }),
+}))
 
 // Mock Zustand store
 jest.mock('@/store', () => ({
@@ -354,13 +363,7 @@ describe('BuddyListWithPresence', () => {
 
       await waitFor(() => {
         expect(mockAcceptBuddy).toHaveBeenCalledWith('req1')
-        expect(setSnackbar).toHaveBeenCalledWith(
-          expect.objectContaining({
-            open: true,
-            message: 'Buddy request accepted!',
-            type: 'success',
-          })
-        )
+        expect(toast.success).toHaveBeenCalledWith('Buddy request accepted!')
       })
     }
   })
@@ -415,13 +418,7 @@ describe('BuddyListWithPresence', () => {
 
       await waitFor(() => {
         expect(mockDeclineBuddy).toHaveBeenCalledWith('req1')
-        expect(setSnackbar).toHaveBeenCalledWith(
-          expect.objectContaining({
-            open: true,
-            message: 'Buddy request declined',
-            type: 'info',
-          })
-        )
+        expect(toast).toHaveBeenCalledWith('Buddy request declined')
       })
     }
   })
@@ -492,12 +489,7 @@ describe('BuddyListWithPresence', () => {
       fireEvent.click(acceptButtons[0])
 
       await waitFor(() => {
-        expect(setSnackbar).toHaveBeenCalledWith(
-          expect.objectContaining({
-            open: true,
-            type: 'danger',
-          })
-        )
+        expect(toast.error).toHaveBeenCalledWith(expect.any(String))
       })
     }
   })
