@@ -33,7 +33,7 @@ export function UserFollowDisplay({
       </div>
       <div className="flex-1 flex flex-col gap-1">
         <Link
-          href={`/profile/${username}`}
+          href={`/dashboard/profile/${username}`}
           className="font-medium hover:underline"
         >
           {username}

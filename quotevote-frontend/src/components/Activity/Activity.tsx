@@ -7,10 +7,11 @@ import { PaginatedActivityList } from './PaginatedActivityList'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import type { ActivityProps, ActivityEventType, DateRangeFilter } from '@/types/activity'
 
+const DEFAULT_CONDITIONS: ActivityEventType[] = ['POSTED']
+
 export function Activity({ showSubHeader = true, userId = '' }: ActivityProps) {
   const setFilterValue = useAppStore((state) => state.setFilterValue)
-  const conditions: ActivityEventType[] = ['POSTED']
-  const [selectedEvent] = useState<ActivityEventType[]>(conditions)
+  const [selectedEvent] = useState<ActivityEventType[]>(DEFAULT_CONDITIONS)
   const [dateRangeFilter] = useState<DateRangeFilter>({
     startDate: '',
     endDate: '',
@@ -19,7 +20,7 @@ export function Activity({ showSubHeader = true, userId = '' }: ActivityProps) {
   // Initialize filter value on mount
   useEffect(() => {
     if (setFilterValue) {
-      setFilterValue(conditions)
+      setFilterValue(DEFAULT_CONDITIONS)
     }
   }, [setFilterValue])
 

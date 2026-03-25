@@ -84,12 +84,14 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
           aria-label="Notifications"
         >
           {isHovered ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/assets/NotificationsActive.svg"
               alt="notifications active"
               style={{ width: `${iconSize}px`, height: `${iconHeight}px` }}
             />
           ) : (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/assets/Notifications.svg"
               alt="notifications"
@@ -121,12 +123,14 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
           aria-label="Notifications"
         >
           {isHovered ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/assets/NotificationsActive.svg"
               alt="notifications active"
               style={{ width: `${iconSize}px`, height: `${iconHeight}px` }}
             />
           ) : (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/assets/Notifications.svg"
               alt="notifications"

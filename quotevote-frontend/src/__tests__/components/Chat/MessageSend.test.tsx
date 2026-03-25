@@ -13,6 +13,15 @@ import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils
 import MessageSend from '@/components/Chat/MessageSend'
 import { useAppStore } from '@/store'
 import { GET_ROSTER } from '@/graphql/queries'
+import { toast } from 'sonner'
+
+jest.mock('sonner', () => ({
+  toast: Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+  }),
+}))
 
 // Mock useQuery and useMutation from Apollo Client
 const mockUseQuery = jest.fn()
@@ -334,12 +343,7 @@ describe('MessageSend', () => {
       fireEvent.click(sendButton)
 
       await waitFor(() => {
-        expect(setSnackbar).toHaveBeenCalledWith(
-          expect.objectContaining({
-            open: true,
-            type: 'danger',
-          })
-        )
+        expect(toast.error).toHaveBeenCalledWith(expect.any(String))
         expect(setChatSubmitting).toHaveBeenCalledWith(false)
       })
     } finally {

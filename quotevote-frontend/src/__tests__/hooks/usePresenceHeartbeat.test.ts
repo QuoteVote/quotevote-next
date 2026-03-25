@@ -1,12 +1,10 @@
 import { renderHook, act } from '@testing-library/react'
-// TODO: Fix Apollo Client v4.0.9 type resolution issues
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation export
-import { useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client/react'
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat'
 
 // Mock Apollo Client
-jest.mock('@apollo/client', () => ({
-    ...jest.requireActual('@apollo/client'),
+jest.mock('@apollo/client/react', () => ({
+    ...jest.requireActual('@apollo/client/react'),
     useMutation: jest.fn(),
 }))
 
@@ -20,7 +18,7 @@ describe('usePresenceHeartbeat', () => {
         mockHeartbeat = jest.fn().mockResolvedValue({ data: { heartbeat: { success: true } } })
         mockError = undefined
 
-            ; (useMutation as jest.Mock).mockReturnValue([mockHeartbeat, { error: mockError }])
+            ; (useMutation as unknown as jest.Mock).mockReturnValue([mockHeartbeat, { error: mockError }])
     })
 
     afterEach(() => {
@@ -183,7 +181,7 @@ describe('usePresenceHeartbeat', () => {
 
     it('should return error from mutation', () => {
         const testError = new Error('Test error')
-            ; (useMutation as jest.Mock).mockReturnValue([mockHeartbeat, { error: testError }])
+            ; (useMutation as unknown as jest.Mock).mockReturnValue([mockHeartbeat, { error: testError }])
 
         const { result } = renderHook(() => usePresenceHeartbeat())
 

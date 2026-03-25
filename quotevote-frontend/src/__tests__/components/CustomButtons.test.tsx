@@ -60,6 +60,7 @@ jest.mock('next/navigation', () => ({
 // Mock Apollo Client hooks
 const mockMutate = jest.fn().mockResolvedValue({ data: {} });
 jest.mock('@apollo/client/react', () => ({
+  ...jest.requireActual('@apollo/client/react'),
   useMutation: jest.fn(() => [
     mockMutate,
     { loading: false, error: null, data: null },

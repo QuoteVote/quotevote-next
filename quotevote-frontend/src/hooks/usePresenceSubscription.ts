@@ -2,9 +2,7 @@
 
 import { useEffect } from 'react'
 import { useAppStore } from '@/store'
-// TODO: Fix Apollo Client v4.0.9 type resolution issues
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useSubscription export
-import { useSubscription } from '@apollo/client'
+import { useSubscription } from '@apollo/client/react'
 import { PRESENCE_SUBSCRIPTION } from '@/graphql/subscriptions'
 import type { PresenceSubscriptionResult } from '@/types/hooks'
 

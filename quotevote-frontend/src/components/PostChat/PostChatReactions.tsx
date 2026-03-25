@@ -90,7 +90,7 @@ export default function PostChatReactions({
   }
 
   const handleRedirectToProfile = () => {
-    router.push(`/Profile/${username}`)
+    router.push(`/dashboard/profile/${username}`)
   }
 
   return (

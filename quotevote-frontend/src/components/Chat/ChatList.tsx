@@ -192,9 +192,9 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
                   </p>
                 </div>
 
-                {room.unreadMessages && room.unreadMessages > 0 && (
+                {(room.unreadMessages ?? 0) > 0 && (
                   <div className="ml-2 flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[11px] font-bold text-white shadow-md">
-                    {room.unreadMessages > 99 ? '99+' : room.unreadMessages}
+                    {(room.unreadMessages ?? 0) > 99 ? '99+' : room.unreadMessages}
                   </div>
                 )}
               </button>

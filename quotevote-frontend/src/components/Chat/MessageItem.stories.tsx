@@ -26,9 +26,10 @@ const message: ChatMessage & {
     readBy: [],
 };
 
-export default {
+const meta = {
     component: MessageItem,
     title: 'Chat/MessageItem',
 };
+export default meta;
 
 export const Message = () => <MessageItem message={message} />;

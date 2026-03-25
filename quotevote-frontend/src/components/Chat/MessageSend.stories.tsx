@@ -1,9 +1,10 @@
 import MessageSend from './MessageSend';
 
-export default {
+const meta = {
     component: MessageSend,
     title: 'Chat/MessageSend',
 };
+export default meta;
 
 const defaultProps = {
     messageRoomId: 'room-1',

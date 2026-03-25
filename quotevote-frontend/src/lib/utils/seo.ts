@@ -225,7 +225,7 @@ export const generatePaginationStructuredData = (
   }
 }
 
-export default {
+const seoUtils = {
   generateCanonicalUrl,
   generatePaginationUrls,
   generatePageTitle,
@@ -233,3 +233,4 @@ export default {
   extractUrlParams,
   generatePaginationStructuredData,
 }
+export default seoUtils

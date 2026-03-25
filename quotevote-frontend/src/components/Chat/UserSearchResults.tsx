@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { SEARCH_USERNAMES } from '@/graphql/queries';
 import { useRosterManagement } from '@/hooks/useRosterManagement';
 import { useAppStore } from '@/store';
+import { toast } from 'sonner';
 import type { BuddySearchResult } from '@/types/chat';
 
 interface UserSearchResultsProps {
@@ -30,7 +31,6 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
   const currentUser = useAppStore((state) => state.user.data) as
     | { _id?: string }
     | undefined;
-  const setSnackbar = useAppStore((state) => state.setSnackbar);
   const { addBuddy } = useRosterManagement();
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
 
@@ -48,21 +48,13 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
     try {
       setAddingUserId(userId);
       await addBuddy(userId);
-      setSnackbar({
-        open: true,
-        message: 'Buddy request sent successfully!',
-        type: 'success',
-      });
+      toast.success('Buddy request sent successfully!');
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : 'Failed to send buddy request';
-      setSnackbar({
-        open: true,
-        message,
-        type: 'danger',
-      });
+      toast.error(message);
     } finally {
       setAddingUserId(null);
     }

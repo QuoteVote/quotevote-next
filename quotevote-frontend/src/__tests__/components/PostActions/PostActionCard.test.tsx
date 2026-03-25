@@ -14,6 +14,15 @@ import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils
 import PostActionCard from '@/components/PostActions/PostActionCard'
 import type { PostAction } from '@/types/postActions'
 import * as storeModule from '@/store'
+import { toast } from 'sonner'
+
+jest.mock('sonner', () => ({
+  toast: Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+  }),
+}))
 
 // Mock Zustand store
 const mockSetSnackbar = jest.fn()
@@ -238,11 +247,7 @@ describe('PostActionCard', () => {
         expect(mockMutate).toHaveBeenCalledWith({
           variables: { voteId: 'vote1' },
         })
-        expect(mockSetSnackbar).toHaveBeenCalledWith({
-          open: true,
-          message: 'Vote deleted successfully',
-          type: 'success',
-        })
+        expect(toast.success).toHaveBeenCalledWith('Vote deleted successfully')
         expect(mockRefetchPost).toHaveBeenCalled()
       })
     })
@@ -276,11 +281,7 @@ describe('PostActionCard', () => {
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
-        expect(mockSetSnackbar).toHaveBeenCalledWith({
-          open: true,
-          message: 'Delete Error: Delete failed',
-          type: 'danger',
-        })
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Delete Error'))
       })
     })
   })
@@ -347,11 +348,7 @@ describe('PostActionCard', () => {
         expect(mockMutate).toHaveBeenCalledWith({
           variables: { commentId: 'comment1' },
         })
-        expect(mockSetSnackbar).toHaveBeenCalledWith({
-          open: true,
-          message: 'Comment deleted successfully',
-          type: 'success',
-        })
+        expect(toast.success).toHaveBeenCalledWith('Comment deleted successfully')
       })
     })
   })
@@ -418,11 +415,7 @@ describe('PostActionCard', () => {
         expect(mockMutate).toHaveBeenCalledWith({
           variables: { quoteId: 'quote1' },
         })
-        expect(mockSetSnackbar).toHaveBeenCalledWith({
-          open: true,
-          message: 'Quote deleted successfully',
-          type: 'success',
-        })
+        expect(toast.success).toHaveBeenCalledWith('Quote deleted successfully')
       })
     })
   })
@@ -513,11 +506,7 @@ describe('PostActionCard', () => {
       fireEvent.click(shareButton)
 
       await waitFor(() => {
-        expect(mockSetSnackbar).toHaveBeenCalledWith({
-          open: true,
-          message: 'Failed to copy link',
-          type: 'danger',
-        })
+        expect(toast.error).toHaveBeenCalledWith('Failed to copy link')
       })
     })
   })
@@ -547,7 +536,7 @@ describe('PostActionCard', () => {
       const avatar = screen.getByTestId('avatar')
       fireEvent.click(avatar)
 
-      expect(mockPush).toHaveBeenCalledWith('/Profile/user1')
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/user1')
     })
 
     it('redirects to user profile on name click', () => {
@@ -564,7 +553,7 @@ describe('PostActionCard', () => {
       const nameButton = nameButtons.find((btn) => btn.tagName === 'BUTTON' && btn.className.includes('text-green-600')) || nameButtons[1] || nameButtons[0]
       fireEvent.click(nameButton)
 
-      expect(mockPush).toHaveBeenCalledWith('/Profile/user1')
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/user1')
     })
 
     it('toggles focused comment on card click', () => {

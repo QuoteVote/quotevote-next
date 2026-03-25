@@ -1,46 +1,94 @@
 'use client'
 
-import { useEffect, useState, startTransition } from 'react'
 import { useQuery } from '@apollo/client/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { GET_LATEST_QUOTES } from '@/graphql/queries'
-import type { LatestQuotesProps, Quote } from '@/types/components'
+import { GET_TOP_POSTS } from '@/graphql/queries'
+import type { LatestQuotesProps } from '@/types/components'
 
+interface QuoteData {
+  _id: string
+  quote?: string
+  startWordIndex?: number
+  endWordIndex?: number
+  user?: {
+    _id: string
+    username: string
+  }
+}
+
+interface PostEntity {
+  _id: string
+  title: string
+  quotes?: QuoteData[]
+}
+
+interface TopPostsResponse {
+  posts: {
+    entities: PostEntity[]
+  }
+}
+
+/**
+ * LatestQuotes sidebar widget.
+ * Fetches recent posts and extracts their quotes to display.
+ */
 export function LatestQuotes({ limit = 5 }: LatestQuotesProps) {
-  const [quotes, setQuotes] = useState<Quote[]>([])
-  const { data } = useQuery(GET_LATEST_QUOTES, {
-    variables: { limit },
-    pollInterval: 3000,
-    fetchPolicy: 'network-only',
+  const { data } = useQuery<TopPostsResponse>(GET_TOP_POSTS, {
+    variables: {
+      limit: 10,
+      offset: 0,
+      searchKey: '',
+    },
+    fetchPolicy: 'cache-first',
   })
 
-  useEffect(() => {
-    if (data && (data as { latestQuotes?: Quote[] }).latestQuotes) {
-      const latestQuotes = (data as { latestQuotes: Quote[] }).latestQuotes
-      startTransition(() => {
-        setQuotes((prev) => {
-          const existingIds = prev.map((q) => q._id)
-          const fresh = latestQuotes.filter(
-            (q: Quote) => !existingIds.includes(q._id)
-          )
-          return [...fresh, ...prev]
-        })
-      })
+  // Extract quotes from the fetched posts
+  const quotes: (QuoteData & { postTitle: string })[] = []
+  if (data?.posts?.entities) {
+    for (const post of data.posts.entities) {
+      if (post.quotes) {
+        for (const q of post.quotes) {
+          if (q.quote || q._id) {
+            quotes.push({ ...q, postTitle: post.title })
+          }
+        }
+      }
+      if (quotes.length >= limit) break
     }
-  }, [data])
+  }
+
+  const displayQuotes = quotes.slice(0, limit)
+
+  if (!displayQuotes.length) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Latest Quotes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No quotes yet.</p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Latest Quotes</CardTitle>
+        <CardTitle className="text-base">Latest Quotes</CardTitle>
       </CardHeader>
       <CardContent>
         <ul className="space-y-4">
-          {quotes.map((q) => (
+          {displayQuotes.map((q) => (
             <li key={q._id} className="block">
-              <p className="text-sm">
-                <strong>{q.user?.username}</strong>: {q.quote}
+              <p className="text-sm italic text-muted-foreground border-l-2 border-primary/40 pl-2">
+                {q.quote || 'Quoted text'}
               </p>
+              {q.user?.username && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  — {q.user.username}
+                </p>
+              )}
             </li>
           ))}
         </ul>
@@ -48,4 +96,3 @@ export function LatestQuotes({ limit = 5 }: LatestQuotesProps) {
     </Card>
   )
 }
-

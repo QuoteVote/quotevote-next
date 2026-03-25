@@ -191,7 +191,7 @@ export const extractPaginationData = <T = unknown>(data: Record<string, unknown>
   }
 }
 
-export default {
+const paginationUtils = {
   pageToOffset,
   offsetToPage,
   calculatePagination,
@@ -200,3 +200,4 @@ export default {
   createGraphQLVariables,
   extractPaginationData,
 }
+export default paginationUtils

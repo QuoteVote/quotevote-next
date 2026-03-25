@@ -1,14 +1,15 @@
 /**
  * ProfileView Component Tests
- * 
+ *
  * Tests for the ProfileView component including:
  * - Rendering with profile data
  * - Loading state
  * - Empty/invalid user state
- * - Component composition
+ * - Component composition with tabs
  */
 
 import { render, screen, act, waitFor } from '../../utils/test-utils';
+import userEvent from '@testing-library/user-event';
 import { ProfileView } from '../../../components/Profile/ProfileView';
 import type { ProfileUser } from '@/types/profile';
 
@@ -31,6 +32,12 @@ jest.mock('../../../components/Profile/ReputationDisplay', () => ({
 
 jest.mock('@/components/LoadingSpinner', () => ({
   LoadingSpinner: () => <div data-testid="loading-spinner">Loading...</div>,
+}));
+
+jest.mock('@/components/UserPosts', () => ({
+  UserPosts: ({ userId }: { userId: string }) => (
+    <div data-testid="user-posts">Posts for {userId}</div>
+  ),
 }));
 
 const mockProfileUser: ProfileUser = {
@@ -88,45 +95,83 @@ describe('ProfileView', () => {
   describe('Valid Profile', () => {
     it('renders profile header', async () => {
       await act(async () => {
-      render(<ProfileView profileUser={mockProfileUser} />);
+        render(<ProfileView profileUser={mockProfileUser} />);
       });
       await waitFor(() => {
-      expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
       });
       expect(screen.getByText(/Header for testuser/)).toBeInTheDocument();
     });
 
-    it('renders reputation display when reputation exists', async () => {
+    it('renders tabs with Posts, Activity, and About', async () => {
       await act(async () => {
-      render(<ProfileView profileUser={mockProfileUser} />);
+        render(<ProfileView profileUser={mockProfileUser} />);
       });
       await waitFor(() => {
-      expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'Posts' })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'Activity' })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'About' })).toBeInTheDocument();
+      });
+    });
+
+    it('shows Posts tab content by default', async () => {
+      await act(async () => {
+        render(<ProfileView profileUser={mockProfileUser} />);
+      });
+      await waitFor(() => {
+        expect(screen.getByTestId('user-posts')).toBeInTheDocument();
+      });
+    });
+
+    it('shows reputation display when About tab is clicked', async () => {
+      const user = userEvent.setup();
+      await act(async () => {
+        render(<ProfileView profileUser={mockProfileUser} />);
+      });
+      const aboutTab = screen.getByRole('tab', { name: 'About' });
+      await user.click(aboutTab);
+      await waitFor(() => {
+        expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
       });
       expect(screen.getByText('Reputation')).toBeInTheDocument();
     });
 
-    it('does not render reputation display when reputation is missing', async () => {
+    it('shows activity filters when Activity tab is clicked', async () => {
+      const user = userEvent.setup();
+      await act(async () => {
+        render(<ProfileView profileUser={mockProfileUser} />);
+      });
+      const activityTab = screen.getByRole('tab', { name: 'Activity' });
+      await user.click(activityTab);
+      await waitFor(() => {
+        expect(screen.getByText('All')).toBeInTheDocument();
+      });
+    });
+
+    it('does not render reputation display when reputation is missing and About tab clicked', async () => {
+      const user = userEvent.setup();
       const userWithoutReputation: ProfileUser = {
         ...mockProfileUser,
         reputation: undefined,
       };
       await act(async () => {
-      render(<ProfileView profileUser={userWithoutReputation} />);
+        render(<ProfileView profileUser={userWithoutReputation} />);
       });
+      const aboutTab = screen.getByRole('tab', { name: 'About' });
+      await user.click(aboutTab);
       await waitFor(() => {
-      expect(screen.queryByTestId('reputation-display')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('reputation-display')).not.toBeInTheDocument();
+        expect(screen.getByText('No additional information available')).toBeInTheDocument();
       });
     });
 
     it('renders user posts placeholder', async () => {
       await act(async () => {
-      render(<ProfileView profileUser={mockProfileUser} />);
+        render(<ProfileView profileUser={mockProfileUser} />);
       });
       // UserPosts component is now rendered (not a placeholder)
-      // The actual component will be tested in UserPosts.test.tsx
       await waitFor(() => {
-      expect(
+        expect(
           screen.queryByText(/User posts will be displayed here/)
         ).not.toBeInTheDocument();
       });
@@ -140,17 +185,17 @@ describe('ProfileView', () => {
         const result = render(<ProfileView profileUser={mockProfileUser} />);
         container = result.container;
       });
-      const mainContainer = container!.querySelector('.flex.flex-col.items-center');
+      const mainContainer = container!.querySelector('.w-full');
       expect(mainContainer).toBeInTheDocument();
     });
 
-    it('has max-width constraint', async () => {
+    it('has vertical spacing', async () => {
       let container: HTMLElement;
       await act(async () => {
         const result = render(<ProfileView profileUser={mockProfileUser} />);
         container = result.container;
       });
-      const contentContainer = container!.querySelector('.max-w-4xl');
+      const contentContainer = container!.querySelector('.space-y-6');
       expect(contentContainer).toBeInTheDocument();
     });
   });
@@ -184,6 +229,7 @@ describe('ProfileView', () => {
     });
 
     it('handles profile user with null reputation gracefully', async () => {
+      const user = userEvent.setup();
       const userWithNullReputation: ProfileUser = {
         ...mockProfileUser,
         reputation: undefined,
@@ -191,36 +237,32 @@ describe('ProfileView', () => {
       await act(async () => {
         render(<ProfileView profileUser={userWithNullReputation} />);
       });
+      const aboutTab = screen.getByRole('tab', { name: 'About' });
+      await user.click(aboutTab);
       await waitFor(() => {
         expect(screen.queryByTestId('reputation-display')).not.toBeInTheDocument();
       });
     });
 
     it('renders UserPosts component with correct userId', async () => {
-      jest.mock('@/components/UserPosts', () => ({
-        UserPosts: ({ userId }: { userId: string }) => (
-          <div data-testid="user-posts">Posts for {userId}</div>
-        ),
-      }));
-
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
-      // UserPosts is rendered but mocked in this test
       await waitFor(() => {
-        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+        expect(screen.getByTestId('user-posts')).toBeInTheDocument();
+        expect(screen.getByText('Posts for user1')).toBeInTheDocument();
       });
     });
   });
 
   describe('Component Integration', () => {
-    it('renders all child components in correct order', async () => {
+    it('renders profile header and tabs together', async () => {
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
       await waitFor(() => {
         expect(screen.getByTestId('profile-header')).toBeInTheDocument();
-        expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
+        expect(screen.getByRole('tablist')).toBeInTheDocument();
       });
     });
 
@@ -230,9 +272,8 @@ describe('ProfileView', () => {
         const result = render(<ProfileView profileUser={mockProfileUser} />);
         container = result.container;
       });
-      const spaceYContainer = container!.querySelector('.space-y-4');
+      const spaceYContainer = container!.querySelector('.space-y-6');
       expect(spaceYContainer).toBeInTheDocument();
     });
   });
 });
-
