@@ -27,6 +27,7 @@ import type {
   SortByOption,
 } from '@/types/admin'
 import { AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 export default function BotListTab() {
@@ -53,13 +54,11 @@ export default function BotListTab() {
       await disableUser({
         variables: { userId },
       })
+      toast.success('User disabled successfully')
       refetch()
     } catch (err) {
-      // Error handling is done by Apollo Client
-      if (process.env.NODE_ENV === 'development') {
-         
-        console.error('Error disabling user:', err)
-      }
+      const message = err instanceof Error ? err.message : 'Failed to disable user'
+      toast.error(message)
     }
   }
 
@@ -68,13 +67,11 @@ export default function BotListTab() {
       await enableUser({
         variables: { userId },
       })
+      toast.success('User enabled successfully')
       refetch()
     } catch (err) {
-      // Error handling is done by Apollo Client
-      if (process.env.NODE_ENV === 'development') {
-         
-        console.error('Error enabling user:', err)
-      }
+      const message = err instanceof Error ? err.message : 'Failed to enable user'
+      toast.error(message)
     }
   }
 

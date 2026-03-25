@@ -30,8 +30,8 @@ export default function UsernameResults({
   // No results state
   if (!loading && (!users || users.length === 0) && query.length > 0) {
     return (
-      <Card className="absolute top-full left-0 right-0 max-h-[300px] overflow-y-auto z-[1000] mt-1 shadow-lg">
-        <CardContent className="p-4 text-center text-gray-500">
+      <Card className="absolute top-full left-0 right-0 max-h-[300px] overflow-y-auto z-[1000] mt-2 shadow-xl rounded-xl border border-border/50 ring-1 ring-border/10">
+        <CardContent className="p-4 text-center text-muted-foreground">
           <p className="text-sm">
             No users found matching &quot;{query}&quot;
           </p>
@@ -43,10 +43,10 @@ export default function UsernameResults({
   // Loading state
   if (loading) {
     return (
-      <Card className="absolute top-full left-0 right-0 max-h-[300px] overflow-y-auto z-[1000] mt-1 shadow-lg">
+      <Card className="absolute top-full left-0 right-0 max-h-[300px] overflow-y-auto z-[1000] mt-2 shadow-xl rounded-xl border border-border/50 ring-1 ring-border/10">
         <CardContent className="flex items-center justify-center p-4">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-          <p className="text-sm text-gray-600 ml-2">Searching users...</p>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground ml-2">Searching users...</p>
         </CardContent>
       </Card>
     )
@@ -55,7 +55,7 @@ export default function UsernameResults({
   // Error state
   if (error) {
     return (
-      <Card className="absolute top-full left-0 right-0 max-h-[300px] overflow-y-auto z-[1000] mt-1 shadow-lg">
+      <Card className="absolute top-full left-0 right-0 max-h-[300px] overflow-y-auto z-[1000] mt-2 shadow-xl rounded-xl border border-border/50 ring-1 ring-border/10">
         <CardContent className="p-4 text-center">
           <p className="text-sm text-destructive">
             Error searching users
@@ -72,12 +72,13 @@ export default function UsernameResults({
 
   // Results list
   return (
-    <Card className="absolute top-full left-0 right-0 max-h-[300px] overflow-y-auto z-[1000] mt-1 shadow-lg">
+    <Card className="absolute top-full left-0 right-0 max-h-[300px] overflow-y-auto z-[1000] mt-2 shadow-xl rounded-xl border border-border/50 ring-1 ring-border/10">
       <CardContent className="p-0">
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-border">
           {users.map((user) => {
-            const handleClick = () => {
+            const handleClick = (e: React.MouseEvent) => {
               if (onUserSelect) {
+                e.preventDefault()
                 onUserSelect(user)
               }
             }
@@ -85,11 +86,11 @@ export default function UsernameResults({
             return (
               <Link
                 key={user._id}
-                href={`/${user.username}`}
+                href={onUserSelect ? '#' : `/dashboard/profile/${user.username}`}
                 onClick={handleClick}
                 className={cn(
                   'flex items-center gap-3 p-3',
-                  'hover:bg-gray-50 transition-colors',
+                  'hover:bg-muted/50 transition-colors',
                   'cursor-pointer'
                 )}
               >
@@ -102,7 +103,7 @@ export default function UsernameResults({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       @{user.username}
                     </p>
                     {user.contributorBadge && (
@@ -112,7 +113,7 @@ export default function UsernameResults({
                     )}
                   </div>
                   {user.name && (
-                    <p className="text-sm text-gray-500 truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {user.name}
                     </p>
                   )}

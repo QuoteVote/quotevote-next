@@ -1,11 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
-// @ts-expect-error - Apollo Client v4.0.9 has type resolution issues with useMutation export
-import { useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client/react'
 import { useTypingIndicator } from '@/hooks/useTypingIndicator'
 
 // Mock Apollo Client
-jest.mock('@apollo/client', () => ({
-    ...jest.requireActual('@apollo/client'),
+jest.mock('@apollo/client/react', () => ({
+    ...jest.requireActual('@apollo/client/react'),
     useMutation: jest.fn(),
 }))
 
@@ -17,7 +16,7 @@ describe('useTypingIndicator', () => {
         jest.useFakeTimers()
         mockUpdateTyping = jest.fn().mockResolvedValue({ data: { updateTyping: { success: true } } })
 
-            ; (useMutation as jest.Mock).mockReturnValue([mockUpdateTyping, {}])
+            ; (useMutation as unknown as jest.Mock).mockReturnValue([mockUpdateTyping, {}])
     })
 
     afterEach(() => {

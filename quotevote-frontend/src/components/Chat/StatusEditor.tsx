@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAppStore } from '@/store';
+import { toast } from 'sonner';
 import { UPDATE_PRESENCE } from '@/graphql/mutations';
 import { cn } from '@/lib/utils';
 
@@ -45,7 +46,6 @@ const statusOptions: Array<{
 const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
   const chatState = useAppStore((state) => state.chat);
   const setUserStatus = useAppStore((state) => state.setUserStatus);
-  const setSnackbar = useAppStore((state) => state.setSnackbar);
 
   // Initialize state from chatState - reset when dialog opens using key prop
   const [status, setStatus] = useState<PresenceStatus>(
@@ -84,11 +84,7 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
       onClose();
     } catch (error) {
       console.error('Failed to update status:', error);
-      setSnackbar({
-        open: true,
-        type: 'danger',
-        message: 'Failed to update status. Please try again.',
-      });
+      toast.error('Failed to update status. Please try again.');
     }
   };
 

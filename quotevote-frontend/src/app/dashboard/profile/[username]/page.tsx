@@ -1,14 +1,21 @@
-'use client';
+import type { Metadata } from 'next';
+import { ProfileUsernamePage } from './ProfileUsernamePageContent';
 
-/**
- * Profile Page by Username
- * 
- * Dashboard profile page for viewing a specific user's profile.
- * Migrated from Profile component with username parameter.
- */
+interface Props {
+  params: Promise<{ username: string }>;
+}
 
-import { ProfileController } from '@/components/Profile/ProfileController';
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { username } = await params;
+  return {
+    title: `@${username} — Quote.Vote`,
+    description: `View ${username}'s profile on Quote.Vote`,
+  };
+}
 
-export default function ProfileUsernamePage(): React.ReactNode {
-  return <ProfileController />;
+export const dynamic = 'force-dynamic';
+
+export default async function ProfileByUsernamePage({ params }: Props) {
+  const { username } = await params;
+  return <ProfileUsernamePage username={username} />;
 }

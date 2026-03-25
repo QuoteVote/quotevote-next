@@ -24,7 +24,7 @@ describe('Login Component', () => {
     it('renders login component with header', () => {
         render(<Login onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByText('Welcome back')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument();
     });
 
     it('renders username/email input field', () => {
@@ -50,15 +50,15 @@ describe('Login Component', () => {
 
         const forgotPasswordLink = screen.getByText('Forgot password?');
         expect(forgotPasswordLink).toBeInTheDocument();
-        expect(forgotPasswordLink).toHaveAttribute('href', '/forgot-password');
+        expect(forgotPasswordLink).toHaveAttribute('href', '/auths/forgot-password');
     });
 
     it('renders request access link', () => {
         render(<Login onSubmit={mockOnSubmit} loading={false} />);
 
-        const requestAccessLink = screen.getByRole('link', { name: /request access/i });
+        const requestAccessLink = screen.getByRole('link', { name: /request an invite/i });
         expect(requestAccessLink).toBeInTheDocument();
-        expect(requestAccessLink).toHaveAttribute('href', '/request-access');
+        expect(requestAccessLink).toHaveAttribute('href', '/auths/request-access');
     });
 
     it('renders Terms of Service link', () => {
@@ -80,14 +80,14 @@ describe('Login Component', () => {
     it('applies background image styles', () => {
         const { container } = render(<Login onSubmit={mockOnSubmit} loading={false} />);
 
-        const backgroundDiv = container.querySelector('.object-cover');
+        const backgroundDiv = container.querySelector('.object-contain');
         expect(backgroundDiv).toBeInTheDocument();
     });
 
     it('uses default onSubmit when not provided', () => {
         render(<Login loading={false} />);
 
-        expect(screen.getByText('Welcome back')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument();
     });
 
     it('uses default loading state when not provided', () => {

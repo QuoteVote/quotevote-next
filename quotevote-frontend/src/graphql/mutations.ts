@@ -520,6 +520,18 @@ export const REQUEST_USER_ACCESS_MUTATION = gql`
 `
 
 /**
+ * Update user invite status mutation (admin only)
+ */
+export const UPDATE_USER_INVITE_STATUS = gql`
+  mutation updateUserInviteStatus($userId: String!, $inviteStatus: String!) {
+    updateUserInviteStatus(userId: $userId, inviteStatus: $inviteStatus) {
+      _id
+      status
+    }
+  }
+`
+
+/**
  * Disable user account mutation (admin only)
  * Used for admin moderation tools
  */
@@ -546,6 +558,48 @@ export const ENABLE_USER = gql`
 `
 
 /**
+ * Login mutation — authenticates a user and returns a token + user object.
+ */
+export const LOGIN_MUTATION = gql`
+  mutation login($username: String!, $password: String!) {
+    login(username: $username, password: $password) {
+      token
+      user {
+        _id
+        id
+        username
+        email
+        name
+        avatar
+        admin
+        accountStatus
+      }
+    }
+  }
+`
+
+/**
+ * Register/signup mutation — creates a new user account.
+ */
+export const SIGNUP_MUTATION = gql`
+  mutation register($username: String!, $email: String!, $password: String!) {
+    register(username: $username, email: $email, password: $password) {
+      token
+      user {
+        _id
+        id
+        username
+        email
+        name
+        avatar
+        admin
+        accountStatus
+      }
+    }
+  }
+`
+
+/**
  * Update user profile mutation
  * Used by Settings component for updating user information
  */
@@ -562,6 +616,22 @@ export const UPDATE_USER = gql`
       accountStatus
       created
       updated
+    }
+  }
+`
+
+/**
+ * Update user avatar mutation
+ * Used by AvatarEditor for updating avatar qualities (topType, hairColor, etc.)
+ */
+export const UPDATE_USER_AVATAR = gql`
+  mutation updateUserAvatar($user_id: String!, $avatarQualities: JSON) {
+    updateUserAvatar(user_id: $user_id, avatarQualities: $avatarQualities) {
+      _id
+      username
+      name
+      email
+      avatar
     }
   }
 `

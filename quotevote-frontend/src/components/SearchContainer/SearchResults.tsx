@@ -24,7 +24,7 @@ export default function SearchResultsView({
   // Show error state
   if (isError) {
     return (
-      <Card className="z-20 p-2">
+      <Card className="z-20 p-2" data-testid="search-error">
         <CardContent className="p-4">
           <p className="text-sm text-destructive">
             An error has occurred.
@@ -38,13 +38,13 @@ export default function SearchResultsView({
     <div className="z-10 overflow-y-scroll h-full max-h-full">
       {/* Loading state */}
       {isLoading ? (
-        <Card className="z-20 p-2">
+        <Card className="z-20 p-2" data-testid="search-loading">
           <CardContent className="flex items-center justify-center p-4">
             <LoadingSpinner size={24} />
           </CardContent>
         </Card>
       ) : (
-        <>
+        <div data-testid="search-results">
           {/* Iterate over search result categories */}
           {Object.keys(searchResults).map((resultCategory, id) => {
             const category = searchResults[resultCategory as keyof typeof searchResults]
@@ -125,7 +125,7 @@ export default function SearchResultsView({
           })}
           {/* End of results marker */}
           <div className="my-16 z-10">End of Results</div>
-        </>
+        </div>
       )}
     </div>
   )

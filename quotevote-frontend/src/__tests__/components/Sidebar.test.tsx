@@ -79,7 +79,6 @@ describe('Sidebar Component', () => {
         selectedPost: { id: null },
         selectedPage: 'home',
         hiddenPosts: [],
-        snackbar: { open: false, type: '', message: '' },
         selectedPlan: 'personal',
         focusedComment: null,
         sharedComment: null,

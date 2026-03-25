@@ -1,108 +1,95 @@
 /**
  * Test utilities for React Testing Library
- * 
- * Provides wrapper functions and helpers for testing Next.js App Router components
+ *
+ * Provides wrapper functions and helpers for testing Next.js App Router components.
+ * Uses MockLink from Apollo (Apollo 4 removed MockedProvider) so tests never hit the network.
  */
 
-import React, { type ReactElement } from 'react'
-import { render, type RenderOptions } from '@testing-library/react'
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client'
-import { ApolloProvider } from '@apollo/client/react'
-import { setContext } from '@apollo/client/link/context'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import React, { type ReactElement } from 'react';
+import { render, type RenderOptions } from '@testing-library/react';
+import { ApolloClient, InMemoryCache } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
+import { MockLink, type MockedResponse } from '@apollo/client/testing';
+import { Toaster } from 'sonner';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AuthModalProvider } from '@/context/AuthModalContext';
+import { useAppStore } from '@/store/useAppStore';
+
+export type { MockedResponse };
 
 /**
- * Create a test Apollo Client instance
- * This is a minimal client for testing purposes
+ * Reset Zustand store to initial state.
+ * Call this in `beforeEach` when testing components that read from the store.
  */
-function createTestApolloClient() {
-  const httpLink = createHttpLink({
-    uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql',
-    credentials: 'include',
-  })
+export function resetStore() {
+  useAppStore.getState().resetStore();
+}
 
-  const authLink = setContext((_, { headers }) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    return {
-      headers: {
-        ...headers,
-        authorization: token ? `Bearer ${token}` : '',
-      },
-    }
-  })
-
+/**
+ * Create an Apollo client backed by MockLink so tests never hit the network.
+ */
+export function createMockApolloClient(mocks: MockedResponse[] = []) {
   return new ApolloClient({
-    link: authLink.concat(httpLink),
+    link: new MockLink(mocks),
     cache: new InMemoryCache(),
     defaultOptions: {
-      watchQuery: {
-        errorPolicy: 'all',
-      },
-      query: {
-        errorPolicy: 'all',
-      },
+      watchQuery: { errorPolicy: 'all' },
+      query: { errorPolicy: 'all' },
     },
-  })
+  });
 }
 
-/**
- * All providers wrapper for testing
- * Includes: ErrorBoundary, ApolloProvider
- * Note: Zustand doesn't need a provider
- */
 interface AllTheProvidersProps {
-  children: React.ReactNode
-  apolloClient?: ApolloClient
+  children: React.ReactNode;
+  mocks?: MockedResponse[];
 }
 
-function AllTheProviders({ children, apolloClient }: AllTheProvidersProps) {
-  const client = apolloClient || createTestApolloClient()
-
+function AllTheProviders({ children, mocks = [] }: AllTheProvidersProps) {
+  const client = createMockApolloClient(mocks);
   return (
-    <ErrorBoundary>
-      <ApolloProvider client={client}>{children}</ApolloProvider>
-    </ErrorBoundary>
-  )
+    <ApolloProvider client={client}>
+      <AuthModalProvider>
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
+        {typeof Toaster === 'function' && <Toaster />}
+      </AuthModalProvider>
+    </ApolloProvider>
+  );
+}
+
+interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
+  mocks?: MockedResponse[];
 }
 
 /**
- * Custom render function that includes all providers
- * 
- * @param ui - The component to render
- * @param options - Render options including custom providers
- * @returns Render result with all queries
+ * Custom render function that wraps the component with all providers.
+ *
+ * @example
+ * render(<MyComponent />, { mocks: [myGraphQLMock] })
  */
-function customRender(
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'> & {
-    apolloClient?: ApolloClient
-  }
-) {
-  const { apolloClient, ...renderOptions } = options || {}
+function customRender(ui: ReactElement, options: CustomRenderOptions = {}) {
+  const { mocks, ...renderOptions } = options;
 
   return render(ui, {
     wrapper: ({ children }: { children: React.ReactNode }) => (
-      <AllTheProviders apolloClient={apolloClient}>{children}</AllTheProviders>
+      <AllTheProviders mocks={mocks}>
+        {children}
+      </AllTheProviders>
     ),
     ...renderOptions,
-  })
+  });
 }
 
 // Re-export everything from React Testing Library
-export * from '@testing-library/react'
-export { customRender as render }
+export * from '@testing-library/react';
+export { customRender as render };
 
 // Explicitly export commonly used testing utilities
-export {
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from '@testing-library/react'
+export { screen, fireEvent, waitFor, act } from '@testing-library/react';
 
-// Export test utilities
-export { createTestApolloClient, AllTheProviders }
+// Export providers and helpers
+export { AllTheProviders, AllTheProviders as TestWrapper };
 
-// Export TestWrapper as an alias for AllTheProviders for backward compatibility
-export { AllTheProviders as TestWrapper }
-
+// Backward-compatible alias — was `createTestApolloClient` in the original test-utils
+export { createMockApolloClient as createTestApolloClient };

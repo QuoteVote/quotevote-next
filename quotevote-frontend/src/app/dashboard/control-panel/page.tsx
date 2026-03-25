@@ -1,39 +1,13 @@
-import { Suspense } from 'react';
-import type { Metadata } from 'next';
-import { SubHeader } from '@/components/SubHeader';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import BotListTab from '@/components/Admin/BotListTab';
+import type { Metadata } from 'next'
+import ControlPanelClient from './ControlPanelClient'
 
 export const metadata: Metadata = {
-  title: 'Control Panel - Quote.Vote',
+  title: 'Control Panel — Quote.Vote',
   description: 'Administrative controls for Quote.Vote',
-};
+}
 
-// Mark as dynamic to prevent static optimization issues
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
-/**
- * Control Panel Page (Server Component)
- *
- * Dashboard page for administrative controls and settings.
- * Profile and Control Panel rely on client-side state,
- * so the interactive BotListTab is rendered as a Client Component
- * within a Suspense boundary.
- *
- * Route: /dashboard/control-panel
- */
 export default function ControlPanelPage() {
-  return (
-    <div className="space-y-4">
-      <SubHeader headerName="Control Panel" />
-      <div className="space-y-6">
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Bot Reports</h2>
-          <Suspense fallback={<LoadingSpinner />}>
-            <BotListTab />
-          </Suspense>
-        </section>
-      </div>
-    </div>
-  );
+  return <ControlPanelClient />
 }

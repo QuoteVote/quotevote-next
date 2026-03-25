@@ -7,6 +7,7 @@ import { Send } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
+import { toast } from 'sonner';
 import { GET_CHAT_ROOMS, GET_ROSTER } from '@/graphql/queries';
 import { SEND_MESSAGE } from '@/graphql/mutations';
 import useGuestGuard from '@/hooks/useGuestGuard';
@@ -22,7 +23,6 @@ export default function MessageSend({
 }: MessageSendProps) {
   const user = useAppStore((state) => state.user.data);
   const chatUser = user as ChatUser | undefined;
-  const setSnackbar = useAppStore((state) => state.setSnackbar);
   const setChatSubmitting = useAppStore((state) => state.setChatSubmitting);
   const selectedRoom = useAppStore((state) => state.chat.selectedRoom) as
     | SelectedRoomState
@@ -90,6 +90,7 @@ export default function MessageSend({
     if (currentUserBlockedOther) return 'blocker';
     if (otherUserBlockedCurrent) return 'blocked';
     return null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chatUser._id is covered by user (same reference)
   }, [type, normalizedSelectedRoom, rosterData, user]);
 
   const isBlocked = blockingStatus !== null;
@@ -112,17 +113,9 @@ export default function MessageSend({
           ? 'You have blocked this user. You cannot send messages to them.'
           : 'You have been blocked by this user. You cannot send messages.';
 
-        setSnackbar({
-          open: true,
-          message,
-          type: 'warning',
-        });
+        toast(message);
       } else {
-        setSnackbar({
-          open: true,
-          message: errorMessage,
-          type: 'danger',
-        });
+        toast.error(errorMessage);
       }
       setChatSubmitting(false);
     },
@@ -151,11 +144,7 @@ export default function MessageSend({
         ? 'You have blocked this user. You cannot send messages to them.'
         : 'You have been blocked by this user. You cannot send messages.';
 
-      setSnackbar({
-        open: true,
-        message,
-        type: 'warning',
-      });
+      toast(message);
       return;
     }
 

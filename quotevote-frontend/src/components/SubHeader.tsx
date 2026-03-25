@@ -2,9 +2,7 @@ import type { SubHeaderProps } from '@/types/components';
 
 export function SubHeader({
   headerName,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   showFilterIconButton: _showFilterIconButton = true,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setOffset: _setOffset,
 }: SubHeaderProps) {
   return (
