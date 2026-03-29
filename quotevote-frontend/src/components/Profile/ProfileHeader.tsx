@@ -163,7 +163,10 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   return (
     <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm">
       {/* Cover banner */}
-      <div className="h-36 bg-gradient-to-r from-primary/80 to-primary/40" />
+      <div className="h-36 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/60 to-primary/40 animate-gradient-x" />
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '20px 20px' }} />
+      </div>
 
       {/* Profile info section */}
       <div className="px-6 pb-6">
@@ -240,16 +243,16 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
         <div className="flex items-center gap-6">
           <button
             onClick={() => router.push(`/dashboard/profile/${username}/followers`)}
-            className="cursor-pointer hover:underline text-sm text-foreground"
+            className="cursor-pointer hover:underline text-sm text-foreground hover:scale-105 transition-transform"
           >
-            <span className="font-bold">{followersCount}</span>{' '}
+            <span className="font-extrabold text-base">{followersCount}</span>{' '}
             <span className="text-muted-foreground">Followers</span>
           </button>
           <button
             onClick={() => router.push(`/dashboard/profile/${username}/following`)}
-            className="cursor-pointer hover:underline text-sm text-foreground"
+            className="cursor-pointer hover:underline text-sm text-foreground hover:scale-105 transition-transform"
           >
-            <span className="font-bold">{followingCount}</span>{' '}
+            <span className="font-extrabold text-base">{followingCount}</span>{' '}
             <span className="text-muted-foreground">Following</span>
           </button>
         </div>

@@ -25,7 +25,7 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" aria-busy={true}>
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex gap-3 animate-pulse">
             <div className="size-8 rounded-full bg-muted flex-shrink-0" />
@@ -42,17 +42,18 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
 
   if (!comments.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <MessageCircle className="size-10 text-muted-foreground/30 mb-3" />
-        <p className="text-sm text-muted-foreground">
-          No comments yet. Start the conversation!
+      <div className="flex flex-col items-center justify-center py-12 text-center animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+        <MessageCircle className="size-10 text-muted-foreground/30 mb-3 animate-bounce" style={{ animationDuration: '2s' }} />
+        <p className="text-sm font-medium text-foreground mb-1">No comments yet</p>
+        <p className="text-xs text-muted-foreground">
+          Be the first to share your thoughts!
         </p>
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-y divide-border" role="list" aria-label="Comments">
       {comments
         .slice()
         .sort((a, b) => moment(b.created).diff(moment(a.created)))
@@ -60,6 +61,7 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
           <div
             id={comment._id}
             key={comment._id}
+            role="listitem"
           >
             <Comment
               comment={comment}

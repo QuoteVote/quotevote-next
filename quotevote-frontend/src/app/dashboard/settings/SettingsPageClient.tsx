@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useMutation } from '@apollo/client/react'
-import { Camera, Loader2, User, Lock, Shield } from 'lucide-react'
+import { Camera, Loader2, User, Lock, Shield, Sun, Moon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -28,6 +28,7 @@ import { UPDATE_USER } from '@/graphql/mutations'
 import { replaceGqlError } from '@/lib/utils/replaceGqlError'
 import { useAppStore } from '@/store/useAppStore'
 import { removeToken } from '@/lib/auth'
+import { useTheme } from '@/context/ThemeContext'
 import type { UserAvatar, SettingsUserData } from '@/types/settings'
 import type { UpdateUserResponse } from '@/types/test'
 
@@ -73,6 +74,7 @@ export default function SettingsPageClient() {
 
   const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined
   const setUserData = useAppStore((state) => state.setUserData)
+  const { toggleTheme, isDarkMode } = useTheme()
 
   const avatar = userData?.avatar as UserAvatar | string | undefined
   const username = userData?.username ?? ''
@@ -319,13 +321,40 @@ export default function SettingsPageClient() {
                     <p className="text-sm text-muted-foreground">@{username || 'N/A'}</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between py-3">
+                <div className="flex items-center justify-between py-3 border-b">
                   <div>
                     <p className="text-sm font-medium">Account Status</p>
                   </div>
                   <Badge variant={accountStatus === 'disabled' ? 'destructive' : 'default'}>
                     {accountStatus === 'disabled' ? 'Disabled' : 'Active'}
                   </Badge>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-sm font-medium">Theme</p>
+                    <p className="text-sm text-muted-foreground">
+                      {isDarkMode ? 'Dark mode is active' : 'Light mode is active'}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleTheme}
+                    className="flex items-center gap-2"
+                    aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+                  >
+                    {isDarkMode ? (
+                      <>
+                        <Moon className="size-4" />
+                        Dark
+                      </>
+                    ) : (
+                      <>
+                        <Sun className="size-4" />
+                        Light
+                      </>
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

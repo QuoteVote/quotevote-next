@@ -79,6 +79,69 @@ function scrollToSection(id: string): void {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 }
 
+/** Hook: returns [ref, isInView] — fires once when element enters viewport */
+function useInView<T extends HTMLElement = HTMLDivElement>(threshold = 0.15) {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry?.isIntersecting) { setInView(true); obs.disconnect(); } },
+      { threshold },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return [ref, inView] as const;
+}
+
+/** Scroll-reveal wrapper — fades/slides children in when scrolled into view */
+function ScrollReveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const [ref, inView] = useInView(0.12);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'translateY(0)' : 'translateY(24px)',
+        transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Animated counter — counts up from 0 to value when visible */
+function AnimatedCounter({ value, duration = 1200 }: { value: string; duration?: number }) {
+  const [display, setDisplay] = useState(value);
+  const [counterRef, isVisible] = useInView(0.3);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (!isVisible || hasAnimated.current) return;
+    // Extract numeric portion
+    const match = value.match(/^([^0-9]*)(\d+)(.*)$/);
+    if (!match) return;
+    const prefix = match[1];
+    const target = parseInt(match[2], 10);
+    const suffix = match[3];
+    hasAnimated.current = true;
+    const start = performance.now();
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setDisplay(`${prefix}${Math.round(target * eased)}${suffix}`);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [isVisible, value, duration]);
+
+  return <span ref={counterRef}>{display}</span>;
+}
+
 interface LandingPageContentProps {
   totalRaised?: string;
   progressPct?: number;
@@ -236,7 +299,7 @@ export function LandingPageContent({
             }}
           />
           <span
-            className="absolute font-serif leading-none"
+            className="absolute font-serif leading-none animate-[float_6s_ease-in-out_infinite]"
             style={{
               fontSize: 'clamp(18rem, 40vw, 36rem)',
               top: '-4rem',
@@ -385,7 +448,7 @@ export function LandingPageContent({
                   className="text-2xl sm:text-3xl font-extrabold tracking-tight"
                   style={{ color: '#fff' }}
                 >
-                  {value}
+                  <AnimatedCounter value={value} />
                 </span>
                 <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.40)' }}>
                   {label}
@@ -608,8 +671,9 @@ export function LandingPageContent({
           {/* Bento grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {/* Feature 01 — large */}
+            <ScrollReveal className="lg:col-span-2" delay={0}>
             <div
-              className="lg:col-span-2 rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all"
+              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all h-full"
               style={{
                 background: 'rgba(82,178,116,0.06)',
                 border: '1px solid rgba(82,178,116,0.18)',
@@ -643,10 +707,12 @@ export function LandingPageContent({
                 </span>
               </div>
             </div>
+            </ScrollReveal>
 
             {/* Feature 02 */}
+            <ScrollReveal delay={100}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all"
+              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all h-full"
               style={{
                 background: 'rgba(39,196,225,0.05)',
                 border: '1px solid rgba(39,196,225,0.18)',
@@ -680,10 +746,12 @@ export function LandingPageContent({
                 </span>
               </div>
             </div>
+            </ScrollReveal>
 
             {/* Feature 03 */}
+            <ScrollReveal delay={200}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all"
+              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all h-full"
               style={{
                 background: 'rgba(82,178,116,0.06)',
                 border: '1px solid rgba(82,178,116,0.18)',
@@ -717,10 +785,12 @@ export function LandingPageContent({
                 </span>
               </div>
             </div>
+            </ScrollReveal>
 
             {/* Feature 04 — wide */}
+            <ScrollReveal className="lg:col-span-2" delay={300}>
             <div
-              className="lg:col-span-2 rounded-3xl p-8 flex flex-col sm:flex-row items-start gap-8 hover:-translate-y-0.5 transition-all"
+              className="rounded-3xl p-8 flex flex-col sm:flex-row items-start gap-8 hover:-translate-y-0.5 transition-all h-full"
               style={{
                 background: 'rgba(245,81,69,0.05)',
                 border: '1px solid rgba(245,81,69,0.16)',
@@ -763,6 +833,7 @@ export function LandingPageContent({
                 ))}
               </div>
             </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>

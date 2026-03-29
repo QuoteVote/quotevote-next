@@ -287,11 +287,12 @@ export default function Post({
   const rejectCount = post.rejectedBy?.length || 0
 
   return (
-    <div className="px-4 py-4">
+    <div className="px-4 py-4" role="article" aria-label={title || 'Post'}>
       {/* Back button */}
       <button
         type="button"
         onClick={() => router.back()}
+        aria-label="Go back"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 -ml-1 transition-colors"
       >
         <ArrowLeft className="size-4" />
@@ -338,7 +339,7 @@ export default function Post({
         {/* More menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8 rounded-full">
+            <Button variant="ghost" size="icon" className="size-8 rounded-full" aria-label="More options">
               <MoreHorizontal className="size-5" />
             </Button>
           </DropdownMenuTrigger>
@@ -428,6 +429,7 @@ export default function Post({
                       variant="ghost"
                       size="sm"
                       onClick={handleApprove}
+                      aria-label="Support this post"
                       className={cn(
                         'gap-1.5 rounded-full',
                         hasApproved && 'text-green-600 bg-green-500/10 hover:bg-green-500/15'
@@ -450,6 +452,7 @@ export default function Post({
                       variant="ghost"
                       size="sm"
                       onClick={handleReject}
+                      aria-label="Disagree with this post"
                       className={cn(
                         'gap-1.5 rounded-full',
                         hasRejected && 'text-red-500 bg-red-500/10 hover:bg-red-500/15'

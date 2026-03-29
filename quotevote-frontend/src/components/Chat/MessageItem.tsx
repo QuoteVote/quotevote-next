@@ -6,6 +6,12 @@ import { useMutation } from '@apollo/client/react';
 import { Check, CheckCheck, Trash2 } from 'lucide-react';
 
 import Avatar from '@/components/Avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
 import { DELETE_MESSAGE } from '@/graphql/mutations';
@@ -130,7 +136,7 @@ const MessageItem: FC<MessageItemProps> = ({ message }) => {
               'relative rounded-2xl px-3 py-2 text-sm shadow-sm transition-all',
               isDefaultDirection
                 ? 'border border-border bg-background text-foreground'
-                : 'bg-emerald-500 text-white shadow-emerald-500/40'
+                : 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm shadow-emerald-500/40'
             )}
           >
             <p className="whitespace-pre-wrap break-words text-[0.94rem] leading-relaxed">
@@ -157,13 +163,22 @@ const MessageItem: FC<MessageItemProps> = ({ message }) => {
           )}
         >
           {isOwnMessage && (
-            <span className="inline-flex items-center">
-              {readState.isRead ? (
-                <CheckCheck className="mr-0.5 h-3 w-3 text-emerald-500" />
-              ) : (
-                <Check className="mr-0.5 h-3 w-3 text-muted-foreground" />
-              )}
-            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center">
+                    {readState.isRead ? (
+                      <CheckCheck className="mr-0.5 h-3 w-3 text-emerald-500" />
+                    ) : (
+                      <Check className="mr-0.5 h-3 w-3 text-muted-foreground" />
+                    )}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  {readState.isRead ? 'Read' : 'Sent'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           <span>{timeLabel}</span>
         </div>

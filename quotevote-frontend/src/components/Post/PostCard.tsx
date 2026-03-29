@@ -125,8 +125,12 @@ export default function PostCard({
 
   return (
     <article
-      className="px-4 py-4 hover:bg-muted/30 transition-colors cursor-pointer"
+      className="px-4 py-4 border-l-4 border-primary/60 hover:bg-muted/30 hover:shadow-md transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary"
       onClick={handleCardClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
+      tabIndex={0}
+      role="article"
+      aria-label={title || 'Post'}
     >
       <div className="flex gap-3">
         {/* Avatar column */}
@@ -232,7 +236,7 @@ export default function PostCard({
               className="group flex items-center gap-1.5 -ml-2 px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <MessageCircle className="size-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
+              <MessageCircle className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
               <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors tabular-nums">
                 {commentCount || ''}
               </span>
@@ -244,7 +248,7 @@ export default function PostCard({
               className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-green-500/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <ThumbsUp className="size-[18px] text-muted-foreground group-hover:text-green-600 transition-colors" />
+              <ThumbsUp className="size-[18px] text-muted-foreground group-hover:text-green-600 group-hover:scale-110 transition-all duration-200" />
               <span className="text-xs text-muted-foreground group-hover:text-green-600 transition-colors tabular-nums">
                 {upvoteCount || ''}
               </span>
@@ -256,7 +260,7 @@ export default function PostCard({
               className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-red-500/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <ThumbsDown className="size-[18px] text-muted-foreground group-hover:text-red-500 transition-colors" />
+              <ThumbsDown className="size-[18px] text-muted-foreground group-hover:text-red-500 group-hover:scale-110 transition-all duration-200" />
               <span className="text-xs text-muted-foreground group-hover:text-red-500 transition-colors tabular-nums">
                 {downvoteCount || ''}
               </span>
@@ -268,7 +272,7 @@ export default function PostCard({
               className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-purple-500/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <Quote className="size-[18px] text-muted-foreground group-hover:text-purple-500 transition-colors" />
+              <Quote className="size-[18px] text-muted-foreground group-hover:text-purple-500 group-hover:scale-110 transition-all duration-200" />
               <span className="text-xs text-muted-foreground group-hover:text-purple-500 transition-colors tabular-nums">
                 {quoteCount || ''}
               </span>
@@ -280,7 +284,7 @@ export default function PostCard({
               className="group px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <Bookmark className="size-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
+              <Bookmark className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
             </button>
 
             {/* Share */}
@@ -289,7 +293,7 @@ export default function PostCard({
               className="group px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <Share2 className="size-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
+              <Share2 className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
             </button>
           </div>
         </div>
