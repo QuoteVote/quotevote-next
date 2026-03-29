@@ -85,7 +85,7 @@ export default function PaginatedPostsList({
     if (pagination.currentPage > 1 && (!data || !(data as unknown as Record<string, unknown>)[dataKey])) {
       refetch()
     }
-  }, [pagination.currentPage, data, refetch])
+  }, [pagination.currentPage, data, refetch, dataKey])
 
   // Force refetch when component mounts with a page parameter from URL
   useEffect(() => {
