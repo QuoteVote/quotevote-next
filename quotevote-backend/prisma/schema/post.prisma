@@ -25,6 +25,7 @@ model Post {
   featuredSlot   Int?
   deleted        Boolean  @default(false)
   created        DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
@@ -64,6 +65,7 @@ model Comment {
   reaction       String?
   deleted        Boolean  @default(false)
   created        DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
@@ -79,24 +81,21 @@ model Comment {
 
 model Quote {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  quoterId       String   @map("quoter") @db.ObjectId
-  quotedId       String   @map("quoted") @db.ObjectId
+  userId         String   @db.ObjectId
   postId         String   @db.ObjectId
   quote          String
   startWordIndex Int?
   endWordIndex   Int?
-  deleted        Boolean  @default(false)
   created        DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
-  quoter     User       @relation("QuoterUser", fields: [quoterId], references: [id])
-  quoted     User       @relation("QuotedUser", fields: [quotedId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
   post       Post       @relation(fields: [postId], references: [id])
   activities Activity[] @relation("QuoteActivity")
 
-  @@index([quoterId])
-  @@index([quotedId])
+  @@index([userId])
   @@index([postId])
   @@index([created])
   @@map("quotes")
@@ -113,6 +112,7 @@ model Vote {
   content        String?
   deleted        Boolean  @default(false)
   created        DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
@@ -158,6 +158,8 @@ model Reaction {
   postMessageId String?      @db.ObjectId
   emoji         String
   created       DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   // Relations
   user        User         @relation(fields: [userId], references: [id])
@@ -166,5 +168,6 @@ model Reaction {
   @@index([userId])
   @@index([actionId])
   @@index([postMessageId])
+  @@index([userId, postMessageId])
   @@map("reactions")
 }
