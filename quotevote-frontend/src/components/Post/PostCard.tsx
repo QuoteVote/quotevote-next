@@ -222,6 +222,8 @@ export default function PostCard({
                 type="button"
                 className="text-primary text-sm font-medium hover:underline mt-0.5"
                 onClick={handleShowMoreToggle}
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? 'Show less content' : 'Show more content'}
               >
                 {isExpanded ? 'Show less' : 'Show more'}
               </button>
@@ -229,15 +231,16 @@ export default function PostCard({
           </div>
 
           {/* Engagement actions — Twitter-style row */}
-          <div className="flex items-center justify-between mt-3 max-w-md">
+          <div className="flex items-center justify-between mt-3 max-w-md" role="group" aria-label="Post engagement">
             {/* Comments */}
             <button
               type="button"
               className="group flex items-center gap-1.5 -ml-2 px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
+              aria-label={`${commentCount || 0} comments`}
             >
               <MessageCircle className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
-              <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors tabular-nums">
+              <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors tabular-nums" aria-hidden="true">
                 {commentCount || ''}
               </span>
             </button>
@@ -247,9 +250,10 @@ export default function PostCard({
               type="button"
               className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-green-500/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
+              aria-label={`${upvoteCount || 0} upvotes`}
             >
               <ThumbsUp className="size-[18px] text-muted-foreground group-hover:text-green-600 group-hover:scale-110 transition-all duration-200" />
-              <span className="text-xs text-muted-foreground group-hover:text-green-600 transition-colors tabular-nums">
+              <span className="text-xs text-muted-foreground group-hover:text-green-600 transition-colors tabular-nums" aria-hidden="true">
                 {upvoteCount || ''}
               </span>
             </button>
@@ -259,9 +263,10 @@ export default function PostCard({
               type="button"
               className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-red-500/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
+              aria-label={`${downvoteCount || 0} downvotes`}
             >
               <ThumbsDown className="size-[18px] text-muted-foreground group-hover:text-red-500 group-hover:scale-110 transition-all duration-200" />
-              <span className="text-xs text-muted-foreground group-hover:text-red-500 transition-colors tabular-nums">
+              <span className="text-xs text-muted-foreground group-hover:text-red-500 transition-colors tabular-nums" aria-hidden="true">
                 {downvoteCount || ''}
               </span>
             </button>
@@ -271,9 +276,10 @@ export default function PostCard({
               type="button"
               className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-purple-500/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
+              aria-label={`${quoteCount || 0} quotes`}
             >
               <Quote className="size-[18px] text-muted-foreground group-hover:text-purple-500 group-hover:scale-110 transition-all duration-200" />
-              <span className="text-xs text-muted-foreground group-hover:text-purple-500 transition-colors tabular-nums">
+              <span className="text-xs text-muted-foreground group-hover:text-purple-500 transition-colors tabular-nums" aria-hidden="true">
                 {quoteCount || ''}
               </span>
             </button>
@@ -283,6 +289,7 @@ export default function PostCard({
               type="button"
               className="group px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
+              aria-label="Bookmark"
             >
               <Bookmark className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
             </button>
@@ -292,6 +299,7 @@ export default function PostCard({
               type="button"
               className="group px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
               onClick={(e) => e.stopPropagation()}
+              aria-label="Share"
             >
               <Share2 className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
             </button>

@@ -409,7 +409,7 @@ export default function Post({
       </div>
 
       {/* Interaction count line */}
-      <div className="flex items-center gap-4 py-3 my-3 border-y border-border text-sm text-muted-foreground">
+      <div className="flex items-center gap-4 py-3 my-3 border-y border-border text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
         <span><strong className="text-foreground">{postActions?.length || 0}</strong> interactions</span>
         <span><strong className="text-foreground">{post.comments?.length || 0}</strong> comments</span>
         <span><strong className="text-foreground">{post.votes?.length || 0}</strong> votes</span>
@@ -417,7 +417,7 @@ export default function Post({
       </div>
 
       {/* Action bar */}
-      <div className="flex items-center justify-between py-2 border-b border-border">
+      <div className="flex items-center justify-between py-2 border-b border-border" role="toolbar" aria-label="Post actions">
         <div className="flex items-center gap-1">
           {/* Approve / Support */}
           {post.enable_voting && (

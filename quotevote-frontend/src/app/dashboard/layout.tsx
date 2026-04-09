@@ -135,6 +135,13 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip to content link — visible only on keyboard focus */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:text-sm focus:font-medium focus:shadow-lg"
+      >
+        Skip to content
+      </a>
       <DashboardClient />
 
       {/* ── Desktop top navbar (hidden on mobile) ── */}
@@ -357,7 +364,7 @@ export default function DashboardLayout({
       </header>
 
       {/* ── Mobile bottom navigation bar (hidden on desktop) ── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden h-14 border-t border-border bg-card">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden h-14 border-t border-border bg-card" aria-label="Mobile navigation">
         <div className="flex h-full items-center justify-around">
           {/* Home */}
           <Link
@@ -448,7 +455,7 @@ export default function DashboardLayout({
       </nav>
 
       {/* ── Main content ── */}
-      <main className="min-h-screen pt-14 md:pt-16 pb-16 md:pb-0">
+      <main id="main-content" className="min-h-screen pt-14 md:pt-16 pb-16 md:pb-0">
         <div className="mx-auto px-4" style={{ maxWidth: pathname.startsWith('/dashboard/explore') ? 'none' : '42rem' }}>
           {children}
         </div>

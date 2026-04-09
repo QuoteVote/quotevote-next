@@ -10,6 +10,8 @@ import CommentList from '@/components/Comment/CommentList'
 import CommentInput from '@/components/Comment/CommentInput'
 import PostChatMessage from '@/components/PostChat/PostChatMessage'
 import PostChatSend from '@/components/PostChat/PostChatSend'
+import SwipeDrawer from '@/components/SwipeDrawer/SwipeDrawer'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
 import { CREATE_POST_MESSAGE_ROOM } from '@/graphql/mutations'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
@@ -60,40 +62,56 @@ export default function PostDetailPage(): React.ReactNode {
 }
 
 function PostTabs({ postId }: { postId: string }) {
+  const isMobile = useIsMobile()
+
   return (
-    <Tabs defaultValue="comments" className="w-full">
-      <TabsList
-        variant="line"
-        className="w-full justify-start bg-transparent p-0 rounded-none border-b border-border h-auto"
-      >
-        <TabsTrigger
-          value="comments"
-          className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
-            data-[state=active]:text-foreground data-[state=active]:shadow-none
-            data-[state=active]:border-b-2 data-[state=active]:border-primary
-            hover:bg-muted/30 transition-colors"
+    <>
+      <Tabs defaultValue="comments" className="w-full">
+        <TabsList
+          variant="line"
+          className="w-full justify-start bg-transparent p-0 rounded-none border-b border-border h-auto"
         >
-          <MessageCircle className="size-4" />
-          Comments
-        </TabsTrigger>
-        <TabsTrigger
-          value="discussion"
-          className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
-            data-[state=active]:text-foreground data-[state=active]:shadow-none
-            data-[state=active]:border-b-2 data-[state=active]:border-primary
-            hover:bg-muted/30 transition-colors"
-        >
-          <MessagesSquare className="size-4" />
-          Discussion
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="comments" className="mt-0">
-        <CommentsSection postId={postId} />
-      </TabsContent>
-      <TabsContent value="discussion" className="mt-0">
-        <DiscussionSection postId={postId} />
-      </TabsContent>
-    </Tabs>
+          <TabsTrigger
+            value="comments"
+            className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
+              data-[state=active]:text-foreground data-[state=active]:shadow-none
+              data-[state=active]:border-b-2 data-[state=active]:border-primary
+              hover:bg-muted/30 transition-colors"
+          >
+            <MessageCircle className="size-4" />
+            Comments
+          </TabsTrigger>
+          {/* On mobile, Discussion lives in the swipe drawer — hide tab */}
+          {!isMobile && (
+            <TabsTrigger
+              value="discussion"
+              className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
+                data-[state=active]:text-foreground data-[state=active]:shadow-none
+                data-[state=active]:border-b-2 data-[state=active]:border-primary
+                hover:bg-muted/30 transition-colors"
+            >
+              <MessagesSquare className="size-4" />
+              Discussion
+            </TabsTrigger>
+          )}
+        </TabsList>
+        <TabsContent value="comments" className="mt-0">
+          <CommentsSection postId={postId} />
+        </TabsContent>
+        {!isMobile && (
+          <TabsContent value="discussion" className="mt-0">
+            <DiscussionSection postId={postId} />
+          </TabsContent>
+        )}
+      </Tabs>
+
+      {/* Mobile: Swipe-up drawer for Discussion */}
+      {isMobile && (
+        <SwipeDrawer title="Discussion">
+          <DiscussionSection postId={postId} />
+        </SwipeDrawer>
+      )}
+    </>
   )
 }
 

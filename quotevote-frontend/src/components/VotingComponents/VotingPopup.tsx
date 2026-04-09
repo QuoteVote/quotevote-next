@@ -220,6 +220,7 @@ export default function VotingPopup({
                       size="icon"
                       disabled
                       className="opacity-50"
+                      aria-label="Downvote"
                     >
                       <Dislike size={30} />
                     </Button>
@@ -232,7 +233,7 @@ export default function VotingPopup({
             ) : showDownvoteTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" aria-label="Downvote">
                     <Dislike size={30} />
                   </Button>
                 </TooltipTrigger>
@@ -244,6 +245,7 @@ export default function VotingPopup({
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Downvote"
                 onClick={() => {
                   if (!hasVoted) {
                     setExpand({
@@ -268,6 +270,7 @@ export default function VotingPopup({
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Comment"
               onClick={() =>
                 setExpand({
                   open: expand.type !== 'comment' || !expand.open,
@@ -289,6 +292,7 @@ export default function VotingPopup({
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Quote"
               onClick={() => {
                 const newQuote = expand.type !== 'quote'
                 setExpand({ open: false, type: newQuote ? 'quote' : '' })

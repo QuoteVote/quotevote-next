@@ -152,8 +152,16 @@ function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void 
 
     return (
         <li
-            className="relative flex items-center gap-3 px-4 py-3 m-1 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border border-transparent hover:border-gray-200 hover:shadow-sm"
+            className="relative flex items-center gap-3 px-4 py-3 m-1 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border border-transparent hover:border-gray-200 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+            role="button"
+            tabIndex={0}
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
         >
             <div className="relative">
                 <Avatar
