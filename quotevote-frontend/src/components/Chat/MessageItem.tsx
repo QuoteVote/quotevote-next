@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { useMutation } from '@apollo/client/react';
 import { Check, CheckCheck, Trash2 } from 'lucide-react';
 
@@ -52,7 +52,7 @@ const formatTime = (date?: string | number | Date): string => {
   });
 };
 
-const MessageItem: FC<MessageItemProps> = ({ message }) => {
+const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
   const currentUser = useAppStore((state) => state.user.data);
 
   const currentUserId = currentUser?._id ? normalizeId(currentUser._id) : null;
@@ -198,4 +198,5 @@ const MessageItem: FC<MessageItemProps> = ({ message }) => {
   );
 };
 
+const MessageItem = memo(MessageItemComponent);
 export default MessageItem;

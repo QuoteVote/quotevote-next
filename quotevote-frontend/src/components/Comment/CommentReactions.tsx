@@ -1,11 +1,21 @@
 "use client"
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, lazy, Suspense } from 'react'
 
-import { Smile } from 'lucide-react'
+import { Smile, Loader2 } from 'lucide-react'
 import { useMutation } from '@apollo/client/react'
-import data from '@emoji-mart/data'
-import Picker from '@emoji-mart/react'
+
+const EmojiPicker = lazy(() =>
+  Promise.all([
+    import('@emoji-mart/data'),
+    import('@emoji-mart/react'),
+  ]).then(([dataModule, pickerModule]) => ({
+    default: (props: { onEmojiSelect: (emoji: { native: string }) => void; theme?: string }) => {
+      const Picker = pickerModule.default
+      return <Picker data={dataModule.default} {...props} />
+    },
+  }))
+)
 import _ from 'lodash'
 import { ADD_ACTION_REACTION, UPDATE_ACTION_REACTION } from '@/graphql/mutations'
 import { GET_ACTION_REACTIONS } from '@/graphql/queries'
@@ -96,11 +106,12 @@ export default function CommentReactions({ actionId, reactions }: CommentReactio
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 border-none">
-          <Picker 
-            data={data} 
-            onEmojiSelect={handleEmojiSelect}
-            theme="light" // or dynamic based on system
-          />
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>}>
+            <EmojiPicker
+              onEmojiSelect={handleEmojiSelect}
+              theme="light"
+            />
+          </Suspense>
         </PopoverContent>
       </Popover>
     </div>

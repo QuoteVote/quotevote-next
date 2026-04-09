@@ -38,7 +38,7 @@ function Header({ room }: HeaderProps) {
       fetchPolicy: 'cache-and-network',
     },
   )
-  const { data: rosterData } = useQuery<{ roster: { blockedUsers?: Array<{ id?: string }> } }>(
+  const { data: rosterData } = useQuery<{ getRoster: Array<{ _id: string; userId: string; buddyId: string; status: string }> }>(
     GET_ROSTER,
     { skip: !currentUser },
   )
@@ -64,10 +64,17 @@ function Header({ room }: HeaderProps) {
         .find((id) => id !== currentUserIdForHeader) ?? null
       : null
 
-  const blockedUsers = rosterData?.roster?.blockedUsers ?? []
+  const rosterEntries = rosterData?.getRoster ?? []
+  const currentUserIdStr = currentUser?._id?.toString()
   const isBlocked = !!(
     otherUserId &&
-    blockedUsers.some((u) => u?.id && u.id.toString() === otherUserId)
+    currentUserIdStr &&
+    rosterEntries.some(
+      (r) => r.status === 'blocked' && (
+        (r.userId === currentUserIdStr && r.buddyId === otherUserId) ||
+        (r.userId === otherUserId && r.buddyId === currentUserIdStr)
+      )
+    )
   )
 
   const handleBack = () => {

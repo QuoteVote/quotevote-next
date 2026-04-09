@@ -71,41 +71,29 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
     skip: !loggedInUserIdString || sameUser,
   });
 
-  // Check blocking status
+  // Check blocking status — getRoster returns flat array of roster entries
   const { data: rosterData } = useQuery<{
-    roster?: {
-      buddies?: Array<{ userId?: string; buddyId?: string; status?: string }>;
-      blockedUsers?: Array<{ id?: string }>;
-    };
+    getRoster: Array<{ _id: string; userId: string; buddyId: string; status: string; initiatedBy: string }>;
   }>(GET_ROSTER, {
     skip: !loggedInUserIdString || sameUser,
   });
 
   const blockingStatus = useMemo(() => {
-    if (!rosterData?.roster || sameUser) return null;
+    if (!rosterData?.getRoster || sameUser) return null;
 
     const profileUserId = _id?.toString();
     const currentUserId = loggedInUserId?.toString();
 
-    const roster = rosterData.roster.buddies || [];
-    const blockedUsers = rosterData.roster.blockedUsers || [];
+    const entries = rosterData.getRoster;
 
     // Check if current user blocked the profile user
-    const currentUserBlockedProfile = roster.some(
-      (r: { userId?: string; buddyId?: string; status?: string }) => {
-        const rUserId = r.userId?.toString();
-        const rBuddyId = r.buddyId?.toString();
-        return rUserId === currentUserId && rBuddyId === profileUserId && r.status === 'blocked';
-      }
-    ) || blockedUsers.some((u: { id?: string }) => u.id === profileUserId);
+    const currentUserBlockedProfile = entries.some(
+      (r) => r.status === 'blocked' && r.userId?.toString() === currentUserId && r.buddyId?.toString() === profileUserId
+    );
 
     // Check if profile user blocked the current user
-    const profileUserBlockedCurrent = roster.some(
-      (r: { userId?: string; buddyId?: string; status?: string }) => {
-        const rUserId = r.userId?.toString();
-        const rBuddyId = r.buddyId?.toString();
-        return rUserId === profileUserId && rBuddyId === currentUserId && r.status === 'blocked';
-      }
+    const profileUserBlockedCurrent = entries.some(
+      (r) => r.status === 'blocked' && r.userId?.toString() === profileUserId && r.buddyId?.toString() === currentUserId
     );
 
     if (currentUserBlockedProfile) return 'blocker';

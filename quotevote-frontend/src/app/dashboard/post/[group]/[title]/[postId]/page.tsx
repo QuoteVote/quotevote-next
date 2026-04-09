@@ -11,7 +11,7 @@ import CommentInput from '@/components/Comment/CommentInput'
 import PostChatMessage from '@/components/PostChat/PostChatMessage'
 import PostChatSend from '@/components/PostChat/PostChatSend'
 import SwipeDrawer from '@/components/SwipeDrawer/SwipeDrawer'
-import { useIsMobile } from '@/hooks/useMediaQuery'
+import { useIsMobile, useIsLandscapeMobile } from '@/hooks/useMediaQuery'
 import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
 import { CREATE_POST_MESSAGE_ROOM } from '@/graphql/mutations'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
@@ -39,6 +39,36 @@ export default function PostDetailPage(): React.ReactNode {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
         <p className="text-muted-foreground">Post not found</p>
+      </div>
+    )
+  }
+
+  return <PostLayout postId={postId} />
+}
+
+function PostLayout({ postId }: { postId: string }) {
+  const isLandscape = useIsLandscapeMobile()
+
+  if (isLandscape) {
+    return (
+      <div className="flex h-[100dvh] overflow-hidden">
+        {/* Left: Post content + Comments */}
+        <div className="flex-1 overflow-y-auto border-r border-border">
+          <div className="border-b border-border">
+            <PostController postId={postId} />
+          </div>
+          <CommentsSection postId={postId} />
+        </div>
+        {/* Right: Discussion */}
+        <div className="w-[45%] flex flex-col overflow-hidden">
+          <div className="px-3 py-2 border-b border-border bg-background flex items-center gap-1.5">
+            <MessagesSquare className="size-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Discussion</span>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <DiscussionSection postId={postId} />
+          </div>
+        </div>
       </div>
     )
   }

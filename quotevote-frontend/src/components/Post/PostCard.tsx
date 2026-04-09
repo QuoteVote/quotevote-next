@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { isEmpty } from 'lodash'
 import moment from 'moment'
@@ -31,7 +31,7 @@ function stringLimit(text: string, limit: number): string {
   return text.slice(0, limit) + '...'
 }
 
-export default function PostCard({
+function PostCardComponent({
   _id,
   text,
   title,
@@ -309,3 +309,6 @@ export default function PostCard({
     </article>
   )
 }
+
+const PostCard = memo(PostCardComponent)
+export default PostCard

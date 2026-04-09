@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -13,6 +13,7 @@ import {
   ArrowUpDown,
   Zap,
   Quote,
+  Loader2,
 } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 
@@ -64,6 +65,12 @@ export default function ExploreContent() {
   const [interactions, setInteractions] = useState(interactionsParam)
   const searchRef = useRef<HTMLDivElement>(null)
   const debouncedQuery = useDebounce(inputValue, 400)
+
+  // Track whether debounce is still pending (user is typing)
+  const isDebouncePending = useMemo(
+    () => inputValue !== debouncedQuery && inputValue.length > 0,
+    [inputValue, debouncedQuery]
+  )
 
   // Detect @username mode
   const isUsernameSearch = inputValue.startsWith('@')
@@ -269,7 +276,12 @@ export default function ExploreContent() {
               className="pl-10 pr-10 h-10 text-sm rounded-full bg-muted/60 border-0 focus-visible:bg-card focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:shadow-sm transition-all"
               aria-label="Search posts"
             />
-            {(inputValue || selectedUser) && (
+            {/* Debounce spinner or clear button */}
+            {isDebouncePending && !isUsernameSearch ? (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-label="Processing search">
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : (inputValue || selectedUser) ? (
               <button
                 type="button"
                 onClick={clearSearch}
@@ -278,13 +290,22 @@ export default function ExploreContent() {
               >
                 <X className="size-4" />
               </button>
+            ) : null}
+
+            {/* Min character hint */}
+            {inputValue.length > 0 && inputValue.length < 2 && !isUsernameSearch && searchFocused && (
+              <div className="absolute top-full left-0 right-0 mt-1 z-[1000]">
+                <div className="bg-card border border-border rounded-lg shadow-md px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Type 2+ characters to search</p>
+                </div>
+              </div>
             )}
 
             {/* Username dropdown — shown on @prefix or general search */}
             {searchQueryForUsers && searchFocused && (
               <UsernameResults
                 users={usersData?.searchUser ?? []}
-                loading={usersLoading}
+                loading={usersLoading || isDebouncePending}
                 error={usersError ?? null}
                 query={searchQueryForUsers}
                 onUserSelect={handleUserSelect}

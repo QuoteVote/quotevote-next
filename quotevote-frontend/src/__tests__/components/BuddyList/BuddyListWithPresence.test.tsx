@@ -1,6 +1,6 @@
 /**
  * BuddyListWithPresence Component Tests
- * 
+ *
  * Tests for the BuddyListWithPresence component including:
  * - Buddy list rendering
  * - Presence indicators
@@ -70,9 +70,9 @@ jest.mock('@/components/LoadingSpinner', () => ({
 // Mock Avatar
 jest.mock('@/components/Avatar', () => ({
     __esModule: true,
-  default: ({ src, alt, fallback }: { 
-    src?: string; 
-    alt: string; 
+  default: ({ src, alt, fallback }: {
+    src?: string;
+    alt: string;
     fallback?: string;
   }) => (
     <div data-testid="avatar" data-src={src} data-alt={alt}>
@@ -89,87 +89,53 @@ const mockCurrentUser = {
   username: 'currentuser',
 }
 
-const mockBuddies = [
+const mockBuddyListEntries = [
   {
-    id: 'buddy1',
-    buddyId: 'user2',
-    status: 'accepted',
-    buddy: {
+    user: {
       _id: 'user2',
-      id: 'user2',
       username: 'buddy1',
       name: 'Buddy One',
       avatar: 'https://example.com/avatar1.jpg',
     },
+    presence: { status: 'online' },
   },
   {
-    id: 'buddy2',
-    buddyId: 'user3',
-    status: 'accepted',
-    buddy: {
+    user: {
       _id: 'user3',
-      id: 'user3',
       username: 'buddy2',
       name: 'Buddy Two',
       avatar: 'https://example.com/avatar2.jpg',
     },
+    presence: { status: 'away' },
   },
 ]
 
-// Mock query objects for reference (not used directly but kept for documentation)
-// const mockBuddyListQuery = {
-//   request: {
-//     query: GET_BUDDY_LIST,
-//   },
-//   result: {
-//     data: {
-//       buddyList: mockBuddies,
-//     },
-//   },
-// }
-
-// const mockRosterQuery = {
-//   request: {
-//     query: GET_ROSTER,
-//   },
-//   result: {
-//     data: {
-//       roster: {
-//         buddies: [],
-//         pendingRequests: [],
-//         blockedUsers: [],
-//       },
-//     },
-//   },
-// }
-
-const mockRosterWithPending = {
-  request: {
-    query: GET_ROSTER,
+const mockRosterEntries = [
+  {
+    _id: 'roster1',
+    userId: 'user2',
+    buddyId: 'user1',
+    status: 'accepted',
+    initiatedBy: 'user2',
+    buddy: { _id: 'user2', username: 'buddy1', avatar: null },
   },
-  result: {
-    data: {
-      roster: {
-        buddies: [],
-        pendingRequests: [
-          {
-            id: 'req1',
-            buddyId: 'user4',
-            status: 'pending',
-            buddy: {
-              _id: 'user4',
-              id: 'user4',
-              username: 'requester',
-              name: 'Requester User',
-              avatar: 'https://example.com/avatar3.jpg',
-            },
-          },
-        ],
-        blockedUsers: [],
-      },
+]
+
+const mockPendingRosterEntries = [
+  {
+    _id: 'req1',
+    userId: 'user4',
+    buddyId: 'user1',
+    status: 'pending',
+    initiatedBy: 'user4',
+    buddy: {
+      _id: 'user4',
+      username: 'requester',
+      name: 'Requester User',
+      avatar: 'https://example.com/avatar3.jpg',
     },
   },
-}
+]
 
 describe('BuddyListWithPresence', () => {
   beforeEach(() => {
@@ -179,7 +145,7 @@ describe('BuddyListWithPresence', () => {
     mockUseQuery.mockImplementation((query) => {
       if (query === GET_BUDDY_LIST) {
         return {
-          data: { buddyList: mockBuddies },
+          data: { getBuddyList: mockBuddyListEntries },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -187,7 +153,7 @@ describe('BuddyListWithPresence', () => {
                                 }
       if (query === GET_ROSTER) {
         return {
-          data: { roster: { buddies: [], pendingRequests: [], blockedUsers: [] } },
+          data: { getRoster: mockRosterEntries },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -288,7 +254,7 @@ describe('BuddyListWithPresence', () => {
     mockUseQuery.mockImplementation((query) => {
       if (query === GET_BUDDY_LIST) {
         return {
-          data: { buddyList: mockBuddies },
+          data: { getBuddyList: mockBuddyListEntries },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -296,7 +262,7 @@ describe('BuddyListWithPresence', () => {
       }
       if (query === GET_ROSTER) {
         return {
-          data: { roster: mockRosterWithPending.result.data.roster },
+          data: { getRoster: mockPendingRosterEntries },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -315,12 +281,12 @@ describe('BuddyListWithPresence', () => {
 
   it('accepts buddy request when accept button is clicked', async () => {
     const setSnackbar = jest.fn()
-    
+
     // Mock queries to return pending requests
     mockUseQuery.mockImplementation((query) => {
       if (query === GET_BUDDY_LIST) {
         return {
-          data: { buddyList: [] },
+          data: { getBuddyList: [] },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -328,7 +294,7 @@ describe('BuddyListWithPresence', () => {
       }
       if (query === GET_ROSTER) {
         return {
-          data: { roster: mockRosterWithPending.result.data.roster },
+          data: { getRoster: mockPendingRosterEntries },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -336,7 +302,7 @@ describe('BuddyListWithPresence', () => {
       }
       return { data: undefined, loading: false, error: undefined, refetch: jest.fn() }
     })
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -370,12 +336,12 @@ describe('BuddyListWithPresence', () => {
 
   it('declines buddy request when decline button is clicked', async () => {
     const setSnackbar = jest.fn()
-    
+
     // Mock queries to return pending requests
     mockUseQuery.mockImplementation((query) => {
       if (query === GET_BUDDY_LIST) {
         return {
-          data: { buddyList: [] },
+          data: { getBuddyList: [] },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -383,7 +349,7 @@ describe('BuddyListWithPresence', () => {
       }
       if (query === GET_ROSTER) {
         return {
-          data: { roster: mockRosterWithPending.result.data.roster },
+          data: { getRoster: mockPendingRosterEntries },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -391,7 +357,7 @@ describe('BuddyListWithPresence', () => {
       }
       return { data: undefined, loading: false, error: undefined, refetch: jest.fn() }
     })
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -448,7 +414,7 @@ describe('BuddyListWithPresence', () => {
     mockUseQuery.mockImplementation((query) => {
       if (query === GET_BUDDY_LIST) {
         return {
-          data: { buddyList: [] },
+          data: { getBuddyList: [] },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -456,7 +422,7 @@ describe('BuddyListWithPresence', () => {
       }
       if (query === GET_ROSTER) {
         return {
-          data: { roster: mockRosterWithPending.result.data.roster },
+          data: { getRoster: mockPendingRosterEntries },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -512,7 +478,12 @@ describe('BuddyListWithPresence', () => {
     )
 
     await waitFor(() => {
-      expect(setBuddyList).toHaveBeenCalledWith(mockBuddies)
+      expect(setBuddyList).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ buddyId: 'user2', status: 'accepted' }),
+          expect.objectContaining({ buddyId: 'user3', status: 'accepted' }),
+        ])
+      )
     })
   })
 })

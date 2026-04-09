@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { includes } from 'lodash'
 import moment from 'moment'
@@ -49,7 +49,7 @@ import {
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
 import VotingBoard from '@/components/VotingComponents/VotingBoard'
-import VotingPopup from '@/components/VotingComponents/VotingPopup'
+const VotingPopup = lazy(() => import('@/components/VotingComponents/VotingPopup'))
 import type { PostVote, PostProps } from '@/types/post'
 import type { SelectedText, VotedByEntry, VoteType, VoteOption } from '@/types/voting'
 
@@ -391,19 +391,21 @@ export default function Post({
           votes={post.votes || []}
         >
           {(selection) => (
-            <VotingPopup
-              votedBy={(post.votes || []).map((v: PostVote): VotedByEntry => ({
-                userId: v.user?._id || '',
-                type: (v.type as VoteType) || 'up',
-                _id: v._id,
-              }))}
-              onVote={handleVoting}
-              onAddComment={handleAddComment}
-              onAddQuote={handleAddQuote}
-              selectedText={selection}
-              hasVoted={hasVoted}
-              userVoteType={getUserVoteType() as VoteType | null}
-            />
+            <Suspense fallback={null}>
+              <VotingPopup
+                votedBy={(post.votes || []).map((v: PostVote): VotedByEntry => ({
+                  userId: v.user?._id || '',
+                  type: (v.type as VoteType) || 'up',
+                  _id: v._id,
+                }))}
+                onVote={handleVoting}
+                onAddComment={handleAddComment}
+                onAddQuote={handleAddQuote}
+                selectedText={selection}
+                hasVoted={hasVoted}
+                userVoteType={getUserVoteType() as VoteType | null}
+              />
+            </Suspense>
           )}
         </VotingBoard>
       </div>
