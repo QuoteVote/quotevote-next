@@ -183,7 +183,7 @@ export default function PaginatedPostsList({
 
   // Render individual post
   const renderPost = (post: Post & { rank?: number }) => (
-    <div key={post._id} className="w-full max-w-full overflow-x-hidden box-border mb-[-25px]">
+    <div key={post._id} className="w-full max-w-full overflow-x-hidden box-border ">
       <PostCard
         _id={post._id}
         text={post.text || ''}

@@ -74,14 +74,17 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
 
   if (loading) {
     return (
-      <div className="space-y-4" aria-busy={true}>
+      <div className="space-y-4 py-2" aria-busy={true}>
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex gap-3 animate-pulse">
-            <div className="size-8 rounded-full bg-muted flex-shrink-0" />
+            <div className="size-8 rounded-full bg-muted/60 flex-shrink-0" />
             <div className="flex-1 space-y-2">
-              <div className="h-3 w-32 rounded bg-muted" />
-              <div className="h-3 w-full rounded bg-muted" />
-              <div className="h-3 w-3/4 rounded bg-muted" />
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-20 rounded-full bg-muted/60" />
+                <div className="h-2.5 w-14 rounded-full bg-muted/40" />
+              </div>
+              <div className="h-3 w-full rounded-full bg-muted/50" />
+              <div className="h-3 w-3/4 rounded-full bg-muted/30" />
             </div>
           </div>
         ))}
@@ -91,10 +94,12 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
 
   if (!comments.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-        <MessageCircle className="size-10 text-muted-foreground/30 mb-3 animate-bounce" style={{ animationDuration: '2s' }} />
+      <div className="flex flex-col items-center justify-center py-14 text-center">
+        <div className="size-12 rounded-2xl bg-muted/40 flex items-center justify-center mb-4">
+          <MessageCircle className="size-6 text-muted-foreground/40" />
+        </div>
         <p className="text-sm font-medium text-foreground mb-1">No comments yet</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground/70">
           Be the first to share your thoughts!
         </p>
       </div>
@@ -104,11 +109,13 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
   return (
     <div>
       {/* Sort control */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-muted-foreground">{comments.length} comment{comments.length !== 1 ? 's' : ''}</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          {comments.length} comment{comments.length !== 1 ? 's' : ''}
+        </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-7 rounded-full">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-7 rounded-full text-muted-foreground">
               <ArrowUpDown className="size-3" />
               {SORT_LABELS[sortMode]}
             </Button>
@@ -118,7 +125,7 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
               <DropdownMenuItem
                 key={mode}
                 onClick={() => handleSortChange(mode)}
-                className={sortMode === mode ? 'bg-muted font-medium' : ''}
+                className={sortMode === mode ? 'bg-primary/5 text-primary font-medium' : ''}
               >
                 {SORT_LABELS[mode]}
               </DropdownMenuItem>
@@ -128,7 +135,7 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
       </div>
 
       {/* Comment list */}
-      <div className="divide-y divide-border" role="list" aria-label="Comments">
+      <div role="list" aria-label="Comments">
         {sortedComments.map((comment) => (
           <div
             id={comment._id}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -1944,13 +1944,13 @@ interface FeaturedPostsData {
   };
 }
 
-const subscribeNoop = () => () => {};
-const getServerNow = () => 0;
+// Capture once at module load — stable across renders, avoids impure-render lint
+const MODULE_NOW = typeof window !== 'undefined' ? Date.now() : 0;
 
 function FeaturedPostsSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const now = useSyncExternalStore(subscribeNoop, () => Date.now(), getServerNow);
+  const now = MODULE_NOW;
 
   const { data, loading } = useQuery<FeaturedPostsData>(GET_FEATURED_POSTS, {
     variables: { limit: 10, offset: 0 },

@@ -13,22 +13,22 @@ describe('PostSkeleton Component', () => {
     expect(animated).toBeInTheDocument()
   })
 
-  it('renders avatar skeleton (rounded-full)', () => {
+  it('renders vote column skeleton', () => {
     const { container } = render(<PostSkeleton />)
-    const avatar = container.querySelector('.rounded-full')
-    expect(avatar).toBeInTheDocument()
+    // Vote column has rounded square placeholders
+    const votePlaceholders = container.querySelectorAll('[class*="rounded"]')
+    expect(votePlaceholders.length).toBeGreaterThan(0)
   })
 
   it('renders multiple skeleton placeholder divs', () => {
     const { container } = render(<PostSkeleton />)
-    const skeletonDivs = container.querySelectorAll('.bg-muted')
+    const skeletonDivs = container.querySelectorAll('[class*="bg-muted"]')
     expect(skeletonDivs.length).toBeGreaterThan(5)
   })
 
   it('renders content area with body lines', () => {
     const { container } = render(<PostSkeleton />)
-    // Check for body text skeleton lines (rounded bg-muted elements)
-    const lines = container.querySelectorAll('.rounded')
+    const lines = container.querySelectorAll('[class*="rounded"]')
     expect(lines.length).toBeGreaterThan(3)
   })
 })

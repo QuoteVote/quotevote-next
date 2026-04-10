@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation'
 import { isEmpty } from 'lodash'
 import moment from 'moment'
 import { useQuery } from '@apollo/client/react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
-  ThumbsUp,
-  ThumbsDown,
+  ArrowBigUp,
+  ArrowBigDown,
   MessageCircle,
   Quote,
   ExternalLink,
@@ -19,7 +18,6 @@ import {
 import { cn } from '@/lib/utils'
 import { getDomain } from '@/lib/utils/sanitizeUrl'
 import { useAppStore } from '@/store'
-import AvatarDisplay from '@/components/Avatar'
 import { GET_GROUP } from '@/graphql/queries'
 import getTopPostsVoteHighlights from '@/lib/utils/getTopPostsVoteHighlights'
 import useGuestGuard from '@/hooks/useGuestGuard'
@@ -115,195 +113,181 @@ function PostCardComponent({
   }
 
   const username = creator?.username || 'Anonymous'
-  const name = creator?.name || username
-  const avatar = creator?.avatar
 
   const upvoteCount = approvedBy?.length || 0
   const downvoteCount = rejectedBy?.length || 0
+  const netVotes = upvoteCount - downvoteCount
   const commentCount = comments?.length || 0
   const quoteCount = quotes?.length || 0
 
   return (
     <article
-      className="px-4 py-4 border-l-4 border-primary/60 hover:bg-muted/30 hover:shadow-md transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary"
+      className="group/card flex bg-card hover:bg-accent/30 border-b border-border/40 transition-colors duration-150 cursor-pointer"
       onClick={handleCardClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
       tabIndex={0}
       role="article"
       aria-label={title || 'Post'}
     >
-      <div className="flex gap-3">
-        {/* Avatar column */}
+      {/* Vote column */}
+      <div
+        className="flex flex-col items-center py-4 px-2 sm:px-3 gap-0.5 flex-shrink-0 select-none"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleRedirectToProfile(username)
-          }}
-          className="flex-shrink-0 mt-0.5"
+          className={cn(
+            'p-0.5 rounded-md transition-colors',
+            upvoteCount > 0
+              ? 'text-[var(--color-upvote)]'
+              : 'text-muted-foreground/50 hover:text-[var(--color-upvote)] hover:bg-[var(--color-upvote)]/10'
+          )}
+          aria-label={`${upvoteCount} upvotes`}
         >
-          <Avatar className="size-10">
-            <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} />
-            <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-              <AvatarDisplay
-                size={40}
-                src={typeof avatar === 'string' ? avatar : undefined}
-                alt={name || username}
-                fallback={name || username}
-              />
-            </AvatarFallback>
-          </Avatar>
+          <ArrowBigUp className="size-6" strokeWidth={1.5} />
         </button>
+        <span
+          className={cn(
+            'text-xs font-bold tabular-nums leading-none',
+            netVotes > 0 && 'text-[var(--color-upvote)]',
+            netVotes < 0 && 'text-[var(--color-downvote)]',
+            netVotes === 0 && 'text-muted-foreground/70'
+          )}
+        >
+          {netVotes}
+        </span>
+        <button
+          type="button"
+          className={cn(
+            'p-0.5 rounded-md transition-colors',
+            downvoteCount > 0
+              ? 'text-[var(--color-downvote)]'
+              : 'text-muted-foreground/50 hover:text-[var(--color-downvote)] hover:bg-[var(--color-downvote)]/10'
+          )}
+          aria-label={`${downvoteCount} downvotes`}
+        >
+          <ArrowBigDown className="size-6" strokeWidth={1.5} />
+        </button>
+      </div>
 
-        {/* Content column */}
-        <div className="flex-1 min-w-0">
-          {/* Author line */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleRedirectToProfile(username)
-              }}
-              className="inline-flex items-center gap-1.5 min-w-0 hover:underline"
-            >
-              <span className="text-[15px] font-bold text-foreground truncate">
-                {name}
-              </span>
-              <span className="text-[15px] text-muted-foreground truncate">
-                @{username}
-              </span>
-            </button>
-            <span className="text-muted-foreground">·</span>
-            <time className="text-sm text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
-              {moment(created).fromNow()}
-            </time>
-            {groupId && groupData?.group && (
+      {/* Content area */}
+      <div className="flex-1 min-w-0 py-3.5 pr-4">
+        {/* Meta line: author + group + time */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap mb-1">
+          {groupId && groupData?.group && (
+            <>
               <Badge
-                variant="outline"
-                className="text-[10px] px-1.5 py-0 h-4 text-primary border-primary/30 bg-primary/5 font-medium uppercase tracking-wider"
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0 h-[17px] font-semibold bg-[var(--color-primary)]/8 text-[var(--color-primary)] border-0 rounded-sm"
               >
                 {groupData.group.title}
               </Badge>
-            )}
-          </div>
-
-          {/* Title */}
-          <h3 className="text-[15px] font-semibold text-foreground mt-0.5 leading-snug">
-            <HighlightText text={title || 'Untitled'} highlightTerms={searchKey || ''} />
-          </h3>
-
-          {/* Citation */}
-          {citationUrl && (
-            <a
-              href={citationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
-            >
-              <ExternalLink className="size-3" />
-              {getDomain(citationUrl)}
-            </a>
+              <span className="text-muted-foreground/30">|</span>
+            </>
           )}
+          <span className="text-muted-foreground/60">Posted by</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleRedirectToProfile(username)
+            }}
+            className="font-medium text-muted-foreground hover:text-[var(--color-primary)] hover:underline transition-colors"
+          >
+            @{username}
+          </button>
+          <span className="text-muted-foreground/30">·</span>
+          <time className="whitespace-nowrap text-muted-foreground/50" suppressHydrationWarning>
+            {moment(created).fromNow()}
+          </time>
+        </div>
 
-          {/* Body */}
-          <div className="mt-1.5">
-            <div
-              className={cn(
-                'text-[15px] text-foreground/90 leading-relaxed whitespace-pre-line',
-                shouldShowButton && !isExpanded && 'line-clamp-4'
-              )}
-            >
-              {displayText}
-            </div>
-            {shouldShowButton && (
-              <button
-                type="button"
-                className="text-primary text-sm font-medium hover:underline mt-0.5"
-                onClick={handleShowMoreToggle}
-                aria-expanded={isExpanded}
-                aria-label={isExpanded ? 'Show less content' : 'Show more content'}
-              >
-                {isExpanded ? 'Show less' : 'Show more'}
-              </button>
+        {/* Title */}
+        <h3 className="text-[9px] font-medium text-foreground leading-snug mb-1 group-hover/card:text-[var(--color-primary)] transition-colors">
+          <HighlightText text={title || 'Untitled'} highlightTerms={searchKey || ''} />
+        </h3>
+
+        {/* Citation */}
+        {citationUrl && (
+          <a
+            href={citationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-[11px] text-[var(--color-primary)]/70 hover:text-[var(--color-primary)] hover:underline mb-1 transition-colors"
+          >
+            <ExternalLink className="size-3" />
+            {getDomain(citationUrl)}
+          </a>
+        )}
+
+        {/* Body */}
+        <div className="mt-0.5">
+          <div
+            className={cn(
+              'text-[13px] text-foreground/70 leading-[1.65] whitespace-pre-line',
+              shouldShowButton && !isExpanded && 'line-clamp-3'
             )}
+          >
+            {displayText}
           </div>
-
-          {/* Engagement actions — Twitter-style row */}
-          <div className="flex items-center justify-between mt-3 max-w-md" role="group" aria-label="Post engagement">
-            {/* Comments */}
+          {shouldShowButton && (
             <button
               type="button"
-              className="group flex items-center gap-1.5 -ml-2 px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`${commentCount || 0} comments`}
+              className="text-[var(--color-primary)] text-[12px] font-semibold hover:underline mt-0.5"
+              onClick={handleShowMoreToggle}
+              aria-expanded={isExpanded}
+              aria-label={isExpanded ? 'Show less content' : 'Show more content'}
             >
-              <MessageCircle className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
-              <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors tabular-nums" aria-hidden="true">
-                {commentCount || ''}
-              </span>
+              {isExpanded ? 'Show less' : 'Show more'}
             </button>
+          )}
+        </div>
 
-            {/* Upvotes */}
-            <button
-              type="button"
-              className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-green-500/10 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`${upvoteCount || 0} upvotes`}
-            >
-              <ThumbsUp className="size-[18px] text-muted-foreground group-hover:text-green-600 group-hover:scale-110 transition-all duration-200" />
-              <span className="text-xs text-muted-foreground group-hover:text-green-600 transition-colors tabular-nums" aria-hidden="true">
-                {upvoteCount || ''}
-              </span>
-            </button>
+        {/* Bottom action bar */}
+        <div className="flex items-center gap-1 mt-2.5 -ml-1.5" role="group" aria-label="Post engagement">
+          <button
+            type="button"
+            className="group/btn inline-flex items-center gap-1 px-2 py-1 rounded-sm text-muted-foreground/60 hover:text-[var(--color-info)] hover:bg-[var(--color-info)]/8 text-xs transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`${commentCount || 0} comments`}
+          >
+            <MessageCircle className="size-3.5" />
+            <span className="font-medium tabular-nums">{commentCount}</span>
+            <span className="hidden sm:inline">Comments</span>
+          </button>
 
-            {/* Downvotes */}
-            <button
-              type="button"
-              className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-red-500/10 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`${downvoteCount || 0} downvotes`}
-            >
-              <ThumbsDown className="size-[18px] text-muted-foreground group-hover:text-red-500 group-hover:scale-110 transition-all duration-200" />
-              <span className="text-xs text-muted-foreground group-hover:text-red-500 transition-colors tabular-nums" aria-hidden="true">
-                {downvoteCount || ''}
-              </span>
-            </button>
+          <button
+            type="button"
+            className="group/btn inline-flex items-center gap-1 px-2 py-1 rounded-sm text-muted-foreground/60 hover:text-[var(--color-quoted)] hover:bg-[var(--color-quoted)]/8 text-xs transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`${quoteCount || 0} quotes`}
+          >
+            <Quote className="size-3.5" />
+            <span className="font-medium tabular-nums">{quoteCount}</span>
+            <span className="hidden sm:inline">Quotes</span>
+          </button>
 
-            {/* Quotes */}
-            <button
-              type="button"
-              className="group flex items-center gap-1.5 px-2 py-1.5 rounded-full hover:bg-purple-500/10 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`${quoteCount || 0} quotes`}
-            >
-              <Quote className="size-[18px] text-muted-foreground group-hover:text-purple-500 group-hover:scale-110 transition-all duration-200" />
-              <span className="text-xs text-muted-foreground group-hover:text-purple-500 transition-colors tabular-nums" aria-hidden="true">
-                {quoteCount || ''}
-              </span>
-            </button>
+          <button
+            type="button"
+            className="group/btn inline-flex items-center gap-1 px-2 py-1 rounded-sm text-muted-foreground/60 hover:text-[var(--color-warning)] hover:bg-[var(--color-warning)]/8 text-xs transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Bookmark"
+          >
+            <Bookmark className="size-3.5" />
+            <span className="hidden sm:inline">Save</span>
+          </button>
 
-            {/* Bookmark */}
-            <button
-              type="button"
-              className="group px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-              aria-label="Bookmark"
-            >
-              <Bookmark className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
-            </button>
-
-            {/* Share */}
-            <button
-              type="button"
-              className="group px-2 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-              aria-label="Share"
-            >
-              <Share2 className="size-[18px] text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-200" />
-            </button>
-          </div>
+          <button
+            type="button"
+            className="group/btn inline-flex items-center gap-1 px-2 py-1 rounded-sm text-muted-foreground/60 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/8 text-xs transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Share"
+          >
+            <Share2 className="size-3.5" />
+            <span className="hidden sm:inline">Share</span>
+          </button>
         </div>
       </div>
     </article>
