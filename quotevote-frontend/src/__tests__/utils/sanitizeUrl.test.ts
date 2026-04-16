@@ -54,8 +54,8 @@ describe('sanitizeUrl', () => {
       expect(sanitizeUrl('file:///etc/passwd')).toBeNull()
     })
 
-    it('rejects ftp: protocol', () => {
-      expect(sanitizeUrl('ftp://ftp.example.com')).toBeNull()
+    it('allows ftp: protocol (matches backend)', () => {
+      expect(sanitizeUrl('ftp://ftp.example.com')).toBe('ftp://ftp.example.com/')
     })
 
     it('rejects URLs with emojis', () => {

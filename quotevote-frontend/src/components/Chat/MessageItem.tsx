@@ -15,6 +15,7 @@ import {
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
 import { DELETE_MESSAGE } from '@/graphql/mutations';
+import useGuestGuard from '@/hooks/useGuestGuard';
 import type { MessageItemProps } from '@/types/chat';
 import { cn } from '@/lib/utils';
 
@@ -54,6 +55,7 @@ const formatTime = (date?: string | number | Date): string => {
 
 const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
   const currentUser = useAppStore((state) => state.user.data);
+  const ensureAuth = useGuestGuard();
 
   const currentUserId = currentUser?._id ? normalizeId(currentUser._id) : null;
   const isOwnMessage = currentUserId
@@ -78,6 +80,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
 
   const handleDelete = async () => {
     if (!message._id) return;
+    if (!ensureAuth()) return;
     try {
       await deleteMessage({ variables: { messageId: message._id } });
       toast.success('Message deleted successfully');

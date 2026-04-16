@@ -4,7 +4,7 @@ import { useState, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { isEmpty } from 'lodash'
 import moment from 'moment'
-import { useQuery } from '@apollo/client/react'
+import { useQuery, useMutation } from '@apollo/client/react'
 import { Badge } from '@/components/ui/badge'
 import {
   ArrowBigUp,
@@ -19,6 +19,8 @@ import { cn } from '@/lib/utils'
 import { getDomain } from '@/lib/utils/sanitizeUrl'
 import { useAppStore } from '@/store'
 import { GET_GROUP } from '@/graphql/queries'
+import { UPDATE_POST_BOOKMARK } from '@/graphql/mutations'
+import { toast } from 'sonner'
 import getTopPostsVoteHighlights from '@/lib/utils/getTopPostsVoteHighlights'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import HighlightText from '@/components/HighlightText/HighlightText'
@@ -34,7 +36,7 @@ function PostCardComponent({
   text,
   title,
   url,
-  bookmarkedBy: _bookmarkedBy = [],
+  bookmarkedBy = [],
   approvedBy = [],
   rejectedBy = [],
   created,
@@ -53,6 +55,28 @@ function PostCardComponent({
   const setSelectedPost = useAppStore((state) => state.setSelectedPost)
   const guestGuard = useGuestGuard()
   const [isExpanded, setIsExpanded] = useState(false)
+  const userId = useAppStore((state) => state.user.data?._id || state.user.data?.id) as string | undefined
+
+  const [updateBookmark] = useMutation(UPDATE_POST_BOOKMARK)
+  const isBookmarked = userId ? bookmarkedBy.includes(userId) : false
+
+  const handleBookmark = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!guestGuard()) return
+    if (!userId) return
+    try {
+      await updateBookmark({ variables: { postId: _id, userId } })
+    } catch {
+      toast.error('Failed to update bookmark')
+    }
+  }
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const postUrl = url ? `${window.location.origin}${url.replace(/\?/g, '')}` : window.location.href
+    await navigator.clipboard.writeText(postUrl)
+    toast.success('Link copied!')
+  }
 
   const postText = text || ''
   const contentLimit = limitText ? 20 : 280
@@ -271,18 +295,23 @@ function PostCardComponent({
 
           <button
             type="button"
-            className="group/btn inline-flex items-center gap-1 px-2 py-1 rounded-sm text-muted-foreground/60 hover:text-[var(--color-warning)] hover:bg-[var(--color-warning)]/8 text-xs transition-colors"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Bookmark"
+            className={cn(
+              "group/btn inline-flex items-center gap-1 px-2 py-1 rounded-sm text-xs transition-colors",
+              isBookmarked
+                ? "text-[var(--color-warning)]"
+                : "text-muted-foreground/60 hover:text-[var(--color-warning)] hover:bg-[var(--color-warning)]/8"
+            )}
+            onClick={handleBookmark}
+            aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
           >
-            <Bookmark className="size-3.5" />
-            <span className="hidden sm:inline">Save</span>
+            <Bookmark className="size-3.5" fill={isBookmarked ? 'currentColor' : 'none'} />
+            <span className="hidden sm:inline">{isBookmarked ? 'Saved' : 'Save'}</span>
           </button>
 
           <button
             type="button"
             className="group/btn inline-flex items-center gap-1 px-2 py-1 rounded-sm text-muted-foreground/60 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/8 text-xs transition-colors"
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleShare}
             aria-label="Share"
           >
             <Share2 className="size-3.5" />

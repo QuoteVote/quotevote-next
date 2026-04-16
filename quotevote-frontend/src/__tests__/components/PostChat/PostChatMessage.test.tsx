@@ -75,6 +75,11 @@ jest.mock('@/components/PostChat/PostChatReactions', () => ({
   ),
 }))
 
+jest.mock('@/hooks/useGuestGuard', () => ({
+  __esModule: true,
+  default: () => () => true,
+}))
+
 const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>
 
 const mockCurrentUser = {

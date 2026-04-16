@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useSubscription } from '@apollo/client/react'
-import { MessageCircle, MessagesSquare } from 'lucide-react'
+import { MessageCircle, MessagesSquare, WifiOff } from 'lucide-react'
 import PostController from '@/components/Post/PostController'
 import { LatestQuotes } from '@/components/Quotes/LatestQuotes'
 import CommentList from '@/components/Comment/CommentList'
@@ -209,6 +209,7 @@ interface RoomMessagesData {
 
 function DiscussionSection({ postId }: { postId: string }) {
   const [roomId, setRoomId] = useState<string | null>(null)
+  const [wsDisconnected, setWsDisconnected] = useState(false)
 
   const { data: postData } = useQuery<PostQueryData>(GET_POST, {
     variables: { postId },
@@ -244,10 +245,30 @@ function DiscussionSection({ postId }: { postId: string }) {
     variables: { messageRoomId: roomId },
     skip: !roomId,
     onData: () => {
-      // Refetch messages when a new message arrives via subscription
+      if (wsDisconnected) {
+        setWsDisconnected(false)
+      }
       refetch()
     },
+    onError: () => {
+      setWsDisconnected(true)
+    },
   })
+
+  // Auto-refetch when reconnected
+  useEffect(() => {
+    if (!wsDisconnected || !roomId) return
+
+    const interval = setInterval(() => {
+      refetch().then(() => {
+        setWsDisconnected(false)
+        clearInterval(interval)
+      }).catch(() => {
+        // still disconnected
+      })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [wsDisconnected, roomId, refetch])
 
   const rawMessages = messagesData?.messages || []
 
@@ -274,6 +295,13 @@ function DiscussionSection({ postId }: { postId: string }) {
 
   return (
     <div>
+      {/* WebSocket disconnection banner */}
+      {wsDisconnected && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/50 dark:border-amber-800/30 text-amber-700 dark:text-amber-400 text-xs">
+          <WifiOff className="size-3.5 flex-shrink-0" />
+          <span>Live updates paused. Reconnecting...</span>
+        </div>
+      )}
       <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
         {loading && messages.length === 0 && (
           <div className="flex items-center justify-center py-16">

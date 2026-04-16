@@ -19,6 +19,7 @@ import { toast } from 'sonner'
 import { DELETE_VOTE, DELETE_COMMENT, DELETE_QUOTE } from '@/graphql/mutations'
 import { GET_ACTION_REACTIONS } from '@/graphql/queries'
 import { cn } from '@/lib/utils'
+import useGuestGuard from '@/hooks/useGuestGuard'
 import type {
   PostActionCardProps,
   ActionReactionsData,
@@ -37,6 +38,7 @@ export default function PostActionCard({
   const [open, setOpen] = useState(false)
   const router = useRouter()
   const user = useAppStore((state) => state.user.data)
+  const ensureAuth = useGuestGuard()
   const setFocusedComment = useAppStore((state) => state.setFocusedComment)
   const setSharedComment = useAppStore((state) => state.setSharedComment)
   const sharedComment = useAppStore((state) => state.ui.sharedComment)
@@ -114,6 +116,7 @@ export default function PostActionCard({
   })
 
   const handleDelete = async () => {
+    if (!ensureAuth()) return
     try {
       if (type === 'Vote') {
         await deleteVote({ variables: { voteId: _id } })
