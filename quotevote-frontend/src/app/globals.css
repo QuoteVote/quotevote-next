@@ -287,3 +287,30 @@ p { line-height: 1.625; }
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom keyframes */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 6s ease infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-18px); }
+}
+
+/* Focus-visible outlines for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

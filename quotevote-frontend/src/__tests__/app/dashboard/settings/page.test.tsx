@@ -11,6 +11,17 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 
+// Mock ThemeContext
+const mockToggleTheme = jest.fn()
+jest.mock('@/context/ThemeContext', () => ({
+  useTheme: () => ({
+    themeMode: 'light',
+    toggleTheme: mockToggleTheme,
+    isDarkMode: false,
+    theme: { mode: 'light', palette: { background: '#ffffff', text: '#111827' } },
+  }),
+}))
+
 let SettingsPageClient: React.ComponentType
 beforeAll(async () => {
   const mod = await import('@/app/dashboard/settings/SettingsPageClient')

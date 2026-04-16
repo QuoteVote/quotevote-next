@@ -235,7 +235,7 @@ describe('PostChatReactions', () => {
     const nameButton = screen.getByRole('button', { name: 'Alice' })
     fireEvent.click(nameButton)
 
-    expect(mockPush).toHaveBeenCalledWith('/Profile/alice')
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/alice')
   })
 
   // ── Guest guard ───────────────────────────────────────────────────────────

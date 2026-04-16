@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useSubscription } from '@apollo/client/react'
-import { MessageCircle, MessagesSquare } from 'lucide-react'
+import { MessageCircle, MessagesSquare, WifiOff } from 'lucide-react'
 import PostController from '@/components/Post/PostController'
 import { LatestQuotes } from '@/components/Quotes/LatestQuotes'
 import CommentList from '@/components/Comment/CommentList'
 import CommentInput from '@/components/Comment/CommentInput'
 import PostChatMessage from '@/components/PostChat/PostChatMessage'
 import PostChatSend from '@/components/PostChat/PostChatSend'
+import SwipeDrawer from '@/components/SwipeDrawer/SwipeDrawer'
+import { useIsMobile, useIsLandscapeMobile } from '@/hooks/useMediaQuery'
 import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
 import { CREATE_POST_MESSAGE_ROOM } from '@/graphql/mutations'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
@@ -41,6 +43,36 @@ export default function PostDetailPage(): React.ReactNode {
     )
   }
 
+  return <PostLayout postId={postId} />
+}
+
+function PostLayout({ postId }: { postId: string }) {
+  const isLandscape = useIsLandscapeMobile()
+
+  if (isLandscape) {
+    return (
+      <div className="flex h-[100dvh] overflow-hidden">
+        {/* Left: Post content + Comments */}
+        <div className="flex-1 overflow-y-auto border-r border-border">
+          <div className="border-b border-border">
+            <PostController postId={postId} />
+          </div>
+          <CommentsSection postId={postId} />
+        </div>
+        {/* Right: Discussion */}
+        <div className="w-[45%] flex flex-col overflow-hidden">
+          <div className="px-3 py-2 border-b border-border bg-background flex items-center gap-1.5">
+            <MessagesSquare className="size-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Discussion</span>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <DiscussionSection postId={postId} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-3xl mx-auto">
       {/* Post content */}
@@ -60,40 +92,56 @@ export default function PostDetailPage(): React.ReactNode {
 }
 
 function PostTabs({ postId }: { postId: string }) {
+  const isMobile = useIsMobile()
+
   return (
-    <Tabs defaultValue="comments" className="w-full">
-      <TabsList
-        variant="line"
-        className="w-full justify-start bg-transparent p-0 rounded-none border-b border-border h-auto"
-      >
-        <TabsTrigger
-          value="comments"
-          className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
-            data-[state=active]:text-foreground data-[state=active]:shadow-none
-            data-[state=active]:border-b-2 data-[state=active]:border-primary
-            hover:bg-muted/30 transition-colors"
+    <>
+      <Tabs defaultValue="comments" className="w-full">
+        <TabsList
+          variant="line"
+          className="w-full justify-start bg-transparent p-0 rounded-none border-b border-border h-auto"
         >
-          <MessageCircle className="size-4" />
-          Comments
-        </TabsTrigger>
-        <TabsTrigger
-          value="discussion"
-          className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
-            data-[state=active]:text-foreground data-[state=active]:shadow-none
-            data-[state=active]:border-b-2 data-[state=active]:border-primary
-            hover:bg-muted/30 transition-colors"
-        >
-          <MessagesSquare className="size-4" />
-          Discussion
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="comments" className="mt-0">
-        <CommentsSection postId={postId} />
-      </TabsContent>
-      <TabsContent value="discussion" className="mt-0">
-        <DiscussionSection postId={postId} />
-      </TabsContent>
-    </Tabs>
+          <TabsTrigger
+            value="comments"
+            className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
+              data-[state=active]:text-foreground data-[state=active]:shadow-none
+              data-[state=active]:border-b-2 data-[state=active]:border-primary
+              hover:bg-muted/30 transition-colors"
+          >
+            <MessageCircle className="size-4" />
+            Comments
+          </TabsTrigger>
+          {/* On mobile, Discussion lives in the swipe drawer — hide tab */}
+          {!isMobile && (
+            <TabsTrigger
+              value="discussion"
+              className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
+                data-[state=active]:text-foreground data-[state=active]:shadow-none
+                data-[state=active]:border-b-2 data-[state=active]:border-primary
+                hover:bg-muted/30 transition-colors"
+            >
+              <MessagesSquare className="size-4" />
+              Discussion
+            </TabsTrigger>
+          )}
+        </TabsList>
+        <TabsContent value="comments" className="mt-0">
+          <CommentsSection postId={postId} />
+        </TabsContent>
+        {!isMobile && (
+          <TabsContent value="discussion" className="mt-0">
+            <DiscussionSection postId={postId} />
+          </TabsContent>
+        )}
+      </Tabs>
+
+      {/* Mobile: Swipe-up drawer for Discussion */}
+      {isMobile && (
+        <SwipeDrawer title="Discussion">
+          <DiscussionSection postId={postId} />
+        </SwipeDrawer>
+      )}
+    </>
   )
 }
 
@@ -161,6 +209,7 @@ interface RoomMessagesData {
 
 function DiscussionSection({ postId }: { postId: string }) {
   const [roomId, setRoomId] = useState<string | null>(null)
+  const [wsDisconnected, setWsDisconnected] = useState(false)
 
   const { data: postData } = useQuery<PostQueryData>(GET_POST, {
     variables: { postId },
@@ -196,10 +245,30 @@ function DiscussionSection({ postId }: { postId: string }) {
     variables: { messageRoomId: roomId },
     skip: !roomId,
     onData: () => {
-      // Refetch messages when a new message arrives via subscription
+      if (wsDisconnected) {
+        setWsDisconnected(false)
+      }
       refetch()
     },
+    onError: () => {
+      setWsDisconnected(true)
+    },
   })
+
+  // Auto-refetch when reconnected
+  useEffect(() => {
+    if (!wsDisconnected || !roomId) return
+
+    const interval = setInterval(() => {
+      refetch().then(() => {
+        setWsDisconnected(false)
+        clearInterval(interval)
+      }).catch(() => {
+        // still disconnected
+      })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [wsDisconnected, roomId, refetch])
 
   const rawMessages = messagesData?.messages || []
 
@@ -226,6 +295,13 @@ function DiscussionSection({ postId }: { postId: string }) {
 
   return (
     <div>
+      {/* WebSocket disconnection banner */}
+      {wsDisconnected && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/50 dark:border-amber-800/30 text-amber-700 dark:text-amber-400 text-xs">
+          <WifiOff className="size-3.5 flex-shrink-0" />
+          <span>Live updates paused. Reconnecting...</span>
+        </div>
+      )}
       <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
         {loading && messages.length === 0 && (
           <div className="flex items-center justify-center py-16">

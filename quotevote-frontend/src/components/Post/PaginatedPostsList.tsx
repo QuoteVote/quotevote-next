@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useQuery } from '@apollo/client/react'
 import type { DocumentNode } from '@apollo/client'
+import { Loader2 } from 'lucide-react'
 import { PaginatedList } from '@/components/common/PaginatedList'
+import { Button } from '@/components/ui/button'
 import PostCard from './PostCard'
 import PostSkeleton from './PostSkeleton'
 import { GET_TOP_POSTS } from '@/graphql/queries'
@@ -32,6 +34,7 @@ export default function PaginatedPostsList({
   showPageInfo = true,
   showFirstLast = true,
   maxVisiblePages = 5,
+  loadMoreMode = false,
   onPageChange,
   onPageSizeChange,
   onRefresh,
@@ -43,6 +46,11 @@ export default function PaginatedPostsList({
   dataKey = 'posts',
 }: PaginatedPostsListProps & { query?: DocumentNode; dataKey?: string }) {
   const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts) || []
+
+  // Load-more state
+  const [allLoadedPosts, setAllLoadedPosts] = useState<Post[]>([])
+  const [loadMorePage, setLoadMorePage] = useState(1)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   // Use pagination hook with filter dependencies
   const pagination = usePaginationWithFilters(
@@ -57,9 +65,10 @@ export default function PaginatedPostsList({
   )
 
   // Create GraphQL variables
+  const currentPage = loadMoreMode ? loadMorePage : pagination.currentPage
   const variables = createGraphQLVariables({
-    page: pagination.currentPage,
-    pageSize: pagination.pageSize,
+    page: currentPage,
+    pageSize: loadMoreMode ? defaultPageSize : pagination.pageSize,
     searchKey,
     startDateRange,
     endDateRange,
@@ -72,7 +81,7 @@ export default function PaginatedPostsList({
   })
 
   // Fetch data
-  const { loading, error, data, refetch } = useQuery<PaginatedPostsListData>(query || GET_TOP_POSTS, {
+  const { loading, error, data, refetch, fetchMore } = useQuery<PaginatedPostsListData>(query || GET_TOP_POSTS, {
     variables,
     fetchPolicy: 'cache-and-network',
     errorPolicy: 'all',
@@ -82,29 +91,48 @@ export default function PaginatedPostsList({
 
   // Ensure data is fetched when component mounts with page parameter
   useEffect(() => {
-    if (pagination.currentPage > 1 && (!data || !(data as unknown as Record<string, unknown>)[dataKey])) {
+    if (!loadMoreMode && pagination.currentPage > 1 && (!data || !(data as unknown as Record<string, unknown>)[dataKey])) {
       refetch()
     }
-  }, [pagination.currentPage, data, refetch])
+  }, [pagination.currentPage, data, refetch, dataKey, loadMoreMode])
 
   // Force refetch when component mounts with a page parameter from URL
   useEffect(() => {
-    if (pagination.currentPage > 1) {
+    if (!loadMoreMode && pagination.currentPage > 1) {
       refetch()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount - refetch is stable from useQuery
-
-  // Handle hide post (currently not used but kept for future use)
-  // const handleHidePost = (postId: string) => {
-  //   addHiddenPost(postId)
-  // }
 
   // Extract and process data
   const { data: entities, pagination: paginationData } = extractPaginationData<Post>(
     (data as unknown as Record<string, unknown>) || {},
     dataKey
   )
+
+  // Reset accumulated posts when filters change in load-more mode
+  useEffect(() => {
+    if (loadMoreMode) {
+      setAllLoadedPosts([])
+      setLoadMorePage(1)
+    }
+  }, [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved, loadMoreMode])
+
+  // Accumulate posts in load-more mode
+  useEffect(() => {
+    if (loadMoreMode && entities && entities.length > 0) {
+      if (loadMorePage === 1) {
+        setAllLoadedPosts(entities)
+      } else {
+        setAllLoadedPosts((prev) => {
+          const existingIds = new Set(prev.map((p) => p._id))
+          const newPosts = entities.filter((p) => !existingIds.has(p._id))
+          return [...prev, ...newPosts]
+        })
+      }
+      setIsLoadingMore(false)
+    }
+  }, [entities, loadMoreMode, loadMorePage])
 
   // Notify parent of total count changes
   useEffect(() => {
@@ -113,14 +141,49 @@ export default function PaginatedPostsList({
     }
   }, [paginationData?.total, onTotalCountChange])
 
+  // Load more handler
+  const handleLoadMore = useCallback(() => {
+    if (isLoadingMore || loading) return
+    setIsLoadingMore(true)
+    const nextPage = loadMorePage + 1
+    setLoadMorePage(nextPage)
+
+    const nextVariables = createGraphQLVariables({
+      page: nextPage,
+      pageSize: defaultPageSize,
+      searchKey,
+      startDateRange,
+      endDateRange,
+      friendsOnly,
+      interactions,
+      userId,
+      sortOrder,
+      groupId,
+      approved,
+    })
+
+    fetchMore({
+      variables: nextVariables,
+    }).catch(() => {
+      setIsLoadingMore(false)
+    })
+  }, [isLoadingMore, loading, loadMorePage, defaultPageSize, searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved, fetchMore])
+
+  // Determine which posts to display
+  const basePosts = loadMoreMode ? allLoadedPosts : (entities || [])
+
   // Filter out hidden posts and add rank
-  const processedPosts = (entities || [])
+  const processedPosts = basePosts
     .map((post, index) => ({ ...post, rank: index + 1 }))
     .filter((post) => !hiddenPosts.includes(post._id))
 
+  const hasMore = loadMoreMode && paginationData
+    ? loadMorePage < (paginationData.total > 0 ? Math.ceil(paginationData.total / defaultPageSize) : 1)
+    : false
+
   // Render individual post
   const renderPost = (post: Post & { rank?: number }) => (
-    <div key={post._id} className="w-full max-w-full overflow-x-hidden box-border mb-[-25px]">
+    <div key={post._id} className="w-full max-w-full overflow-x-hidden box-border ">
       <PostCard
         _id={post._id}
         text={post.text || ''}
@@ -171,7 +234,7 @@ export default function PaginatedPostsList({
     </div>
   )
 
-  // Render loading state
+  // Render loading state (skeleton)
   const renderLoading = () => (
     <div className="flex flex-col gap-4">
       <div className="w-full max-w-full overflow-x-hidden box-border">
@@ -180,6 +243,65 @@ export default function PaginatedPostsList({
     </div>
   )
 
+  // Load More mode — render without PaginatedList wrapper
+  if (loadMoreMode) {
+    if (loading && processedPosts.length === 0) {
+      return renderLoading()
+    }
+
+    if (error && processedPosts.length === 0) {
+      return renderError(error, onRefresh || refetch)
+    }
+
+    if (!loading && processedPosts.length === 0) {
+      return renderEmpty()
+    }
+
+    return (
+      <div className={className}>
+        <div className={contentClassName}>
+          <div className="flex flex-col gap-0">
+            {processedPosts.map(renderPost)}
+          </div>
+
+          {/* Load More button + skeleton loaders */}
+          {hasMore && (
+            <div className="flex flex-col items-center py-6 gap-4">
+              {isLoadingMore && (
+                <div className="w-full">
+                  <PostSkeleton />
+                  <PostSkeleton />
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="rounded-full px-8 gap-2"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More'
+                )}
+              </Button>
+              {paginationData && (
+                <p className="text-xs text-muted-foreground">
+                  Showing {processedPosts.length} of {paginationData.total} posts
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Default: paginated mode
   return (
     <PaginatedList
       data={processedPosts}

@@ -65,9 +65,12 @@ function LoadPostsList({ data, onLoadMore, loading = false }: LoadPostsListProps
   // Only show empty state when not loading and no data
   if (!loading && (!data || !data.posts || data.posts.entities.length === 0)) {
     return (
-      <div className="w-[90%] text-center py-8">
-        <span>No posts found.</span>
-        <br />
+      <div className="flex flex-col items-center justify-center py-16 text-center animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+        <div className="size-12 rounded-full bg-muted flex items-center justify-center mb-4 animate-bounce" style={{ animationDuration: '2s' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+        <p className="text-sm font-medium text-foreground mb-1">Nothing here yet</p>
+        <p className="text-xs text-muted-foreground">Start exploring or adjust your filters!</p>
       </div>
     )
   }

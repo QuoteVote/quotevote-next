@@ -5,14 +5,14 @@ import { gql } from '@apollo/client'
  */
 export const GET_BUDDY_LIST = gql`
   query GetBuddyList {
-    buddyList {
-      id
-      buddyId
-      status
-      buddy {
-        id
+    getBuddyList {
+      user {
+        _id
         username
         avatar
+      }
+      presence {
+        status
       }
     }
   }
@@ -48,29 +48,14 @@ export const GET_ROOM_MESSAGES = gql`
  */
 export const GET_ROSTER = gql`
   query GetRoster {
-    roster {
-      buddies {
-        id
-        buddyId
-        status
-        buddy {
-          id
-          username
-          avatar
-        }
-      }
-      pendingRequests {
-        id
-        buddyId
-        status
-        buddy {
-          id
-          username
-          avatar
-        }
-      }
-      blockedUsers {
-        id
+    getRoster {
+      _id
+      userId
+      buddyId
+      status
+      initiatedBy
+      buddy {
+        _id
         username
         avatar
       }
@@ -645,26 +630,30 @@ export const SEARCH_USERNAMES = gql`
 `
 
 /**
- * Search query for content and creators
+ * Search query for posts and users
+ * Uses posts(searchKey) for content and searchUser(queryName) for users
  */
 export const SEARCH = gql`
   query search($text: String!) {
-    searchContent(text: $text) {
-      _id
-      title
-      creatorId
-      domain {
-        key
+    posts(searchKey: $text, limit: 5, offset: 0) {
+      entities {
         _id
+        title
+        text
+        url
+        groupId
+        creator {
+          _id
+          name
+          username
+        }
       }
     }
-    searchCreator(text: $text) {
+    searchUser(queryName: $text) {
       _id
       name
+      username
       avatar
-      creator {
-        _id
-      }
     }
   }
 `

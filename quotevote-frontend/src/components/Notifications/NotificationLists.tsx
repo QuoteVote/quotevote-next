@@ -21,15 +21,35 @@ interface NotificationListsProps {
 const getNotificationIcon = (notificationType: Notification['notificationType']) => {
   switch (notificationType) {
     case 'FOLLOW':
-      return <UserPlus className="h-4 w-4 text-primary" />;
+      return (
+        <span className="flex items-center justify-center size-7 rounded-full bg-blue-100 dark:bg-blue-900/40 shadow-sm ring-1 ring-blue-200/50 dark:ring-blue-800/50">
+          <UserPlus className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+        </span>
+      );
     case 'UPVOTED':
-      return <ArrowUp className="h-4 w-4 text-primary" />;
+      return (
+        <span className="flex items-center justify-center size-7 rounded-full bg-green-100 dark:bg-green-900/40 shadow-sm ring-1 ring-green-200/50 dark:ring-green-800/50">
+          <ArrowUp className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+        </span>
+      );
     case 'DOWNVOTED':
-      return <ArrowDown className="h-4 w-4 text-destructive" />;
+      return (
+        <span className="flex items-center justify-center size-7 rounded-full bg-red-100 dark:bg-red-900/40 shadow-sm ring-1 ring-red-200/50 dark:ring-red-800/50">
+          <ArrowDown className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+        </span>
+      );
     case 'COMMENTED':
-      return <MessageSquare className="h-4 w-4 text-blue-500" />;
+      return (
+        <span className="flex items-center justify-center size-7 rounded-full bg-purple-100 dark:bg-purple-900/40 shadow-sm ring-1 ring-purple-200/50 dark:ring-purple-800/50">
+          <MessageSquare className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+        </span>
+      );
     case 'QUOTED':
-      return <Quote className="h-4 w-4 text-purple-500" />;
+      return (
+        <span className="flex items-center justify-center size-7 rounded-full bg-amber-100 dark:bg-amber-900/40 shadow-sm ring-1 ring-amber-200/50 dark:ring-amber-800/50">
+          <Quote className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+        </span>
+      );
     default:
       return null;
   }
@@ -58,7 +78,12 @@ const stringLimit = (str: string, limit: number): string => {
 };
 
 const formatTimeAgo = (created: string | number | Date): string => {
-  return moment(created).fromNow();
+  return moment(created).calendar(null, {
+    sameDay: '[Today at] h:mm A',
+    lastDay: '[Yesterday at] h:mm A',
+    lastWeek: '[Last] dddd [at] h:mm A',
+    sameElse: 'MMM D, YYYY [at] h:mm A',
+  });
 };
 
 export function NotificationLists({ notifications, pageView = false }: NotificationListsProps) {
@@ -112,14 +137,17 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
     return (
       <div
         className={cn(
-          'flex flex-col items-center justify-center',
+          'flex flex-col items-center justify-center animate-in fade-in-0 slide-in-from-bottom-2 duration-500',
           pageView ? 'h-full' : 'h-[30vh]',
           'bg-card rounded-lg'
         )}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/ZeroNotificationsBG.png" alt="No notifications" />
-        <p className="text-sm text-muted-foreground mt-4">
+        <img src="/assets/ZeroNotificationsBG.png" alt="No notifications" className="animate-bounce" style={{ animationDuration: '2.5s' }} />
+        <p className="text-sm font-medium text-foreground mt-4">
+          You&apos;re all caught up!
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
           Relax, you don&apos;t have any alerts right now.
         </p>
       </div>
@@ -149,7 +177,9 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
           return (
             <div
               key={notification._id}
-              className="bg-card rounded-lg p-4 border border-border hover:bg-accent/50 transition-colors cursor-pointer group"
+              className="bg-card rounded-lg p-4 border border-border hover:bg-accent/50 transition-colors cursor-pointer group focus-visible:ring-2 focus-visible:ring-primary"
+              role="button"
+              tabIndex={0}
               onClick={() =>
                 handleNotificationClick(
                   notification.notificationType,
@@ -157,6 +187,16 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
                   notification.post
                 )
               }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleNotificationClick(
+                    notification.notificationType,
+                    notification.userBy,
+                    notification.post
+                  );
+                }
+              }}
             >
               <div className="flex items-start gap-3">
                 <div className="relative flex-shrink-0">
@@ -166,7 +206,7 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
                     size="md"
                   />
                   {icon && (
-                    <div className="absolute -bottom-1 -right-1 bg-card rounded-full p-0.5 border border-border">
+                    <div className="absolute -bottom-1.5 -right-1.5">
                       {icon}
                     </div>
                   )}

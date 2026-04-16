@@ -150,7 +150,7 @@ describe('LandingPage', () => {
     });
 
     it('shows search dropdown when search form is submitted with a query', async () => {
-      mockUseQuery.mockReturnValue({ loading: false, error: undefined, data: { searchContent: [], searchCreator: [] } });
+      mockUseQuery.mockReturnValue({ loading: false, error: undefined, data: { posts: { entities: [] }, searchUser: [] } });
       const user = userEvent.setup();
       renderLandingPage();
 
@@ -199,11 +199,11 @@ describe('LandingPage', () => {
         loading: false,
         error: undefined,
         data: {
-          searchContent: [
-            { _id: '1', title: 'Climate Change Policy', creatorId: 'u1', domain: { key: 'politics', _id: 'd1' } },
-            { _id: '2', title: 'Green Energy Future', creatorId: 'u2', domain: { key: 'science', _id: 'd2' } },
-          ],
-          searchCreator: [],
+          posts: { entities: [
+            { _id: '1', title: 'Climate Change Policy', creator: { _id: 'u1', name: 'Author One' } },
+            { _id: '2', title: 'Green Energy Future', creator: { _id: 'u2', name: 'Author Two' } },
+          ] },
+          searchUser: [],
         },
       });
 
@@ -223,9 +223,9 @@ describe('LandingPage', () => {
         loading: false,
         error: undefined,
         data: {
-          searchContent: [],
-          searchCreator: [
-            { _id: 'c1', name: 'Jane Smith', avatar: null, creator: { _id: 'u1' } },
+          posts: { entities: [] },
+          searchUser: [
+            { _id: 'c1', name: 'Jane Smith', username: 'janesmith', avatar: null },
           ],
         },
       });
@@ -246,7 +246,7 @@ describe('LandingPage', () => {
       mockUseQuery.mockReturnValue({
         loading: false,
         error: undefined,
-        data: { searchContent: [], searchCreator: [] },
+        data: { posts: { entities: [] }, searchUser: [] },
       });
 
       const user = userEvent.setup();
@@ -281,10 +281,10 @@ describe('LandingPage', () => {
         loading: false,
         error: undefined,
         data: {
-          searchContent: [
-            { _id: '1', title: 'Democracy Matters', creatorId: 'u1', domain: null },
-          ],
-          searchCreator: [],
+          posts: { entities: [
+            { _id: '1', title: 'Democracy Matters', creator: { _id: 'u1', name: 'Author' } },
+          ] },
+          searchUser: [],
         },
       });
 

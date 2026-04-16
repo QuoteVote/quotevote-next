@@ -217,6 +217,9 @@ export interface PaginatedPostsListProps {
   onRefresh?: () => void
   onTotalCountChange?: (count: number) => void
   
+  // Load more mode (infinite scroll alternative)
+  loadMoreMode?: boolean
+
   // Styling
   className?: string
   contentClassName?: string

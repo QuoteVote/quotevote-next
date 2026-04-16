@@ -21,13 +21,13 @@ const ChatTabs: FC<ChatTabsProps> = ({
   onlineCount = 0,
 }) => {
   const baseTabClasses =
-    'flex flex-1 items-center justify-center gap-1.5 border-b-2 border-transparent px-3 py-3 text-xs font-medium tracking-wide text-muted-foreground transition-all hover:text-emerald-600 dark:hover:text-emerald-300';
+    'flex flex-1 items-center justify-center gap-1.5 border-b-[3px] border-transparent px-3 py-3 text-xs font-medium tracking-wide text-muted-foreground transition-all duration-200 hover:text-emerald-600 dark:hover:text-emerald-300';
 
   const activeTabClasses =
-    'border-emerald-500 bg-emerald-50/70 text-emerald-700 shadow-sm dark:border-emerald-400 dark:bg-emerald-900/40 dark:text-emerald-200';
+    'border-emerald-500 bg-emerald-50/70 text-emerald-700 shadow-sm dark:border-emerald-400 dark:bg-emerald-900/40 dark:text-emerald-200 [&>svg]:scale-110';
 
   const badgeClasses =
-    'inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-semibold text-white shadow-sm';
+    'inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-1.5 text-[10px] font-semibold text-white shadow-sm';
 
   return (
     <div className="flex border-b border-border bg-background/80 px-1">
@@ -37,7 +37,7 @@ const ChatTabs: FC<ChatTabsProps> = ({
         className={`${baseTabClasses} ${value === 'chats' ? activeTabClasses : ''
           }`}
       >
-        <MessageCircle className="h-4 w-4" />
+        <MessageCircle className="h-4 w-4 transition-transform duration-200" />
         <span>Chats</span>
         {dmCount > 0 && <span className={badgeClasses}>{dmCount}</span>}
       </button>
@@ -48,7 +48,7 @@ const ChatTabs: FC<ChatTabsProps> = ({
         className={`${baseTabClasses} ${value === 'groups' ? activeTabClasses : ''
           }`}
       >
-        <Users2 className="h-4 w-4" />
+        <Users2 className="h-4 w-4 transition-transform duration-200" />
         <span>Groups</span>
         {groupCount > 0 && (
           <span className={badgeClasses}>{groupCount}</span>
@@ -61,7 +61,7 @@ const ChatTabs: FC<ChatTabsProps> = ({
         className={`${baseTabClasses} ${value === 'buddies' ? activeTabClasses : ''
           }`}
       >
-        <UserRound className="h-4 w-4" />
+        <UserRound className="h-4 w-4 transition-transform duration-200" />
         <span>Buddies</span>
         {onlineCount > 0 && (
           <span className={badgeClasses}>{onlineCount}</span>

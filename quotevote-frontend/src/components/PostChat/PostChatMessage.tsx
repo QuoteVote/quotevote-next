@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { GET_MESSAGE_REACTIONS } from '@/graphql/queries'
 import { DELETE_MESSAGE } from '@/graphql/mutations'
 import { cn } from '@/lib/utils'
+import useGuestGuard from '@/hooks/useGuestGuard'
 import type { PostChatMessageProps, MessageReaction } from '@/types/postChat'
 
 interface MessageReactionsData {
@@ -28,6 +29,7 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
   const router = useRouter()
 
   const user = useAppStore((state) => state.user.data)
+  const ensureAuth = useGuestGuard()
 
   const userId = user._id || user.id
   const isDefaultDirection = message.userId !== userId
@@ -55,6 +57,7 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
   })
 
   const handleDelete = async () => {
+    if (!ensureAuth()) return
     try {
       await deleteMessage({ variables: { messageId: message._id } })
       toast.success('Message deleted successfully')

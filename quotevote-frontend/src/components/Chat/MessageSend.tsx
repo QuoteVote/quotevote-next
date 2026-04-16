@@ -2,13 +2,13 @@
 
 import { useState, useMemo, KeyboardEvent, ChangeEvent } from 'react';
 import { useMutation, useQuery } from '@apollo/client/react';
-import { Send } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
-import { GET_CHAT_ROOMS, GET_ROSTER } from '@/graphql/queries';
+import { GET_CHAT_ROOMS, GET_ROOM_MESSAGES, GET_ROSTER } from '@/graphql/queries';
 import { SEND_MESSAGE } from '@/graphql/mutations';
 import useGuestGuard from '@/hooks/useGuestGuard';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
@@ -31,9 +31,10 @@ export default function MessageSend({
   const ensureAuth = useGuestGuard();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
   // Check if current user is blocked (only for USER type rooms)
-  const { data: rosterData } = useQuery<{ roster: { buddies?: Array<{ id?: string; buddyId?: string; status?: string }>; blockedUsers?: Array<{ id?: string; username?: string }> } }>(GET_ROSTER, {
+  const { data: rosterData } = useQuery<{ getRoster: Array<{ _id: string; userId: string; buddyId: string; status: string; initiatedBy: string }> }>(GET_ROSTER, {
     skip: !user || type !== 'USER' || !selectedRoom,
   });
 
@@ -47,7 +48,7 @@ export default function MessageSend({
     if (
       type !== 'USER' ||
       !normalizedSelectedRoom ||
-      !rosterData?.roster ||
+      !rosterData?.getRoster ||
       !chatUser?._id
     )
       return null;
@@ -61,30 +62,25 @@ export default function MessageSend({
     if (!otherUserId) return null;
 
     const currentUserId = chatUser._id.toString();
+    const rosterEntries = rosterData.getRoster;
 
-    const { buddies = [], blockedUsers = [] } = rosterData.roster as {
-      buddies?: Array<{
-        id?: string;
-        buddyId?: string;
-        status?: string;
-      }>;
-      blockedUsers?: Array<{
-        id?: string;
-        username?: string;
-      }>;
-    };
-
-    // Current user blocked other user if there is a buddy entry with status === 'blocked'
-    const currentUserBlockedOther = buddies.some((r) => {
-      const rUserId = currentUserId;
-      const rBuddyId = r.buddyId?.toString();
-      return rUserId === currentUserId && rBuddyId === otherUserId && r.status === 'blocked';
+    // Current user blocked other user if there is a roster entry where
+    // current user initiated a 'blocked' status against the other user
+    const currentUserBlockedOther = rosterEntries.some((r) => {
+      return (
+        r.status === 'blocked' &&
+        r.userId?.toString() === currentUserId &&
+        r.buddyId?.toString() === otherUserId
+      );
     });
 
-    // Other user blocked current user if they appear in blockedUsers
-    const otherUserBlockedCurrent = blockedUsers.some((r) => {
-      const rUserId = r.id?.toString();
-      return rUserId === otherUserId;
+    // Other user blocked current user
+    const otherUserBlockedCurrent = rosterEntries.some((r) => {
+      return (
+        r.status === 'blocked' &&
+        r.userId?.toString() === otherUserId &&
+        r.buddyId?.toString() === currentUserId
+      );
     });
 
     if (currentUserBlockedOther) return 'blocker';
@@ -100,7 +96,7 @@ export default function MessageSend({
     messageRoomId || ''
   );
 
-  const [createMessage, { loading }] = useMutation<{ createMessage?: { __typename?: string; _id?: string; messageRoomId?: string; userName?: string; userId?: string; title?: string | null; text?: string; type?: string; created?: string } }>(SEND_MESSAGE, {
+  const [createMessage, { loading }] = useMutation<{ createMessage?: { __typename?: string; _id?: string; messageRoomId?: string; userName?: string; userId?: string; title?: string | null; text?: string; type?: string; created?: string; user?: { __typename?: string; _id?: string; name?: string; username?: string; avatar?: string } } }>(SEND_MESSAGE, {
     onError: (err) => {
       // Check if error is due to blocking
       const errorMessage = err.message || 'Failed to send message';
@@ -118,13 +114,39 @@ export default function MessageSend({
         toast.error(errorMessage);
       }
       setChatSubmitting(false);
+      setIsSending(false);
     },
     onCompleted: (data) => {
       setChatSubmitting(false);
+      setIsSending(false);
       setError(null);
 
       if (!messageRoomId && data?.createMessage?.messageRoomId) {
         // New room will be picked up via GET_CHAT_ROOMS refetch
+      }
+    },
+    update: (cache, { data: mutationData }) => {
+      if (!messageRoomId || !mutationData?.createMessage) return;
+
+      const existingData = cache.readQuery<{ messages: Array<{ _id: string; messageRoomId: string; userId: string; userName: string; title: string; text: string; created: string; type: string; user?: { _id?: string; name?: string; username?: string; avatar?: string } }> }>({
+        query: GET_ROOM_MESSAGES,
+        variables: { messageRoomId },
+      });
+
+      if (existingData) {
+        const alreadyExists = existingData.messages.some(
+          (m) => m._id === mutationData.createMessage?._id
+        );
+        if (!alreadyExists) {
+          cache.writeQuery({
+            query: GET_ROOM_MESSAGES,
+            variables: { messageRoomId },
+            data: {
+              ...existingData,
+              messages: [...existingData.messages, mutationData.createMessage],
+            },
+          });
+        }
       }
     },
     refetchQueries: [
@@ -150,6 +172,7 @@ export default function MessageSend({
 
     stopTyping();
     setChatSubmitting(true);
+    setIsSending(true);
 
     const payload = {
       title: title || null,
@@ -174,11 +197,19 @@ export default function MessageSend({
             text: text.trim(),
             type,
             created: dateSubmitted.toISOString(),
+            user: {
+              __typename: 'User',
+              _id: chatUser?._id,
+              name: chatUser?.name,
+              username: chatUser?.username,
+              avatar: chatUser?.avatar,
+            },
           },
         },
       });
     } catch (err) {
       console.error('Error creating message:', err);
+      setIsSending(false);
       return;
     }
 
@@ -218,7 +249,8 @@ export default function MessageSend({
       <div
         className={cn(
           'flex items-end rounded-2xl border border-border bg-background/80 px-3 py-2 shadow-sm transition-colors',
-          'focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/30'
+          'focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/30',
+          isSending && 'opacity-70'
         )}
       >
         <Textarea
@@ -226,7 +258,7 @@ export default function MessageSend({
           className="min-h-[40px] max-h-[140px] flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
           placeholder={placeholder}
           value={text}
-          disabled={isBlocked}
+          disabled={isBlocked || isSending}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           rows={1}
@@ -235,11 +267,15 @@ export default function MessageSend({
           type="button"
           size="icon"
           className="ml-2 h-9 w-9 rounded-full bg-emerald-500 text-white shadow-md hover:bg-emerald-600 disabled:opacity-50"
-          aria-label="Send message"
-          disabled={loading || !text.trim() || isBlocked}
+          aria-label={isSending ? 'Sending message' : 'Send message'}
+          disabled={loading || !text.trim() || isBlocked || isSending}
           onClick={() => void handleSubmit()}
         >
-          <Send className="h-4 w-4" />
+          {isSending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
         </Button>
       </div>
     </div>

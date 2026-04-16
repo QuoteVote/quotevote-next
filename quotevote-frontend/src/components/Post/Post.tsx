@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { includes } from 'lodash'
 import moment from 'moment'
@@ -10,14 +10,19 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Separator } from '@/components/ui/separator'
 import {
   Link2,
   Ban,
   Trash2,
-  ThumbsUp,
-  ThumbsDown,
+  ArrowBigUp,
+  ArrowBigDown,
   MoreHorizontal,
   ArrowLeft,
+  MessageCircle,
+  Quote,
+  Share2,
+  ExternalLink,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -49,7 +54,7 @@ import {
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
 import VotingBoard from '@/components/VotingComponents/VotingBoard'
-import VotingPopup from '@/components/VotingComponents/VotingPopup'
+const VotingPopup = lazy(() => import('@/components/VotingComponents/VotingPopup'))
 import type { PostVote, PostProps } from '@/types/post'
 import type { SelectedText, VotedByEntry, VoteType, VoteOption } from '@/types/voting'
 
@@ -57,7 +62,7 @@ export default function Post({
   post,
   user,
   postHeight,
-  postActions,
+  postActions: _postActions,
   refetchPost,
 }: PostProps) {
   const router = useRouter()
@@ -285,30 +290,33 @@ export default function Post({
 
   const approveCount = post.approvedBy?.length || 0
   const rejectCount = post.rejectedBy?.length || 0
+  const commentCount = post.comments?.length || 0
+  const quoteCount = post.quotes?.length || 0
 
   return (
-    <div className="px-4 py-4">
+    <div className="px-4 sm:px-6 py-5" role="article" aria-label={title || 'Post'}>
       {/* Back button */}
       <button
         type="button"
         onClick={() => router.back()}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 -ml-1 transition-colors"
+        aria-label="Go back"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 -ml-1 transition-colors rounded-lg px-2 py-1 hover:bg-muted/50"
       >
         <ArrowLeft className="size-4" />
         Back
       </button>
 
       {/* Author header */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-5">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => username && router.push(`/dashboard/profile/${username}`)}
             className="flex-shrink-0"
           >
-            <Avatar className="size-12">
+            <Avatar className="size-12 ring-2 ring-background shadow-md">
               <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-base">
                 <AvatarDisplay
                   size={48}
                   src={typeof avatar === 'string' ? avatar : undefined}
@@ -319,7 +327,7 @@ export default function Post({
             </Avatar>
           </button>
           <div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => username && router.push(`/dashboard/profile/${username}`)}
@@ -329,143 +337,10 @@ export default function Post({
               </button>
               <span className="text-sm text-muted-foreground">@{username}</span>
             </div>
-            <time className="text-sm text-muted-foreground" suppressHydrationWarning>
+            <time className="text-xs text-muted-foreground" suppressHydrationWarning>
               {moment(created).format('MMM D, YYYY · h:mm A')}
             </time>
           </div>
-        </div>
-
-        {/* More menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8 rounded-full">
-              <MoreHorizontal className="size-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleCopy}>
-              <Link2 className="size-4 mr-2" /> Copy link
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleReport} className="text-destructive focus:text-destructive">
-              <Ban className="size-4 mr-2" /> Report post
-            </DropdownMenuItem>
-            {(user._id === userId || user.admin) && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
-                  <Trash2 className="size-4 mr-2" /> Delete post
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Title */}
-      <h1 className="text-xl font-bold text-foreground leading-tight mb-3">
-        {title}
-      </h1>
-
-      {/* Vote status */}
-      {hasVoted && (
-        <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400 rounded-lg px-3 py-2 mb-3">
-          {getUserVoteType() === 'up' ? (
-            <ThumbsUp className="size-4" />
-          ) : (
-            <ThumbsDown className="size-4" />
-          )}
-          You {getUserVoteType() === 'up' ? 'upvoted' : 'downvoted'} this post
-        </div>
-      )}
-
-      {/* Post body with text selection */}
-      <div className={cn(
-        'text-[15px] leading-relaxed text-foreground/90',
-        postHeight && postHeight >= 742 && 'max-h-[60vh] overflow-y-auto'
-      )}>
-        <VotingBoard
-          content={post.text || ''}
-          onSelect={setSelectedText}
-          highlights={true}
-          votes={post.votes || []}
-        >
-          {(selection) => (
-            <VotingPopup
-              votedBy={(post.votes || []).map((v: PostVote): VotedByEntry => ({
-                userId: v.user?._id || '',
-                type: (v.type as VoteType) || 'up',
-                _id: v._id,
-              }))}
-              onVote={handleVoting}
-              onAddComment={handleAddComment}
-              onAddQuote={handleAddQuote}
-              selectedText={selection}
-              hasVoted={hasVoted}
-              userVoteType={getUserVoteType() as VoteType | null}
-            />
-          )}
-        </VotingBoard>
-      </div>
-
-      {/* Interaction count line */}
-      <div className="flex items-center gap-4 py-3 my-3 border-y border-border text-sm text-muted-foreground">
-        <span><strong className="text-foreground">{postActions?.length || 0}</strong> interactions</span>
-        <span><strong className="text-foreground">{post.comments?.length || 0}</strong> comments</span>
-        <span><strong className="text-foreground">{post.votes?.length || 0}</strong> votes</span>
-        <span><strong className="text-foreground">{post.quotes?.length || 0}</strong> quotes</span>
-      </div>
-
-      {/* Action bar */}
-      <div className="flex items-center justify-between py-2 border-b border-border">
-        <div className="flex items-center gap-1">
-          {/* Approve / Support */}
-          {post.enable_voting && (
-            <>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleApprove}
-                      className={cn(
-                        'gap-1.5 rounded-full',
-                        hasApproved && 'text-green-600 bg-green-500/10 hover:bg-green-500/15'
-                      )}
-                    >
-                      <ThumbsUp className="size-[18px]" />
-                      <span className="text-sm tabular-nums">{approveCount || ''}</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="whitespace-pre-line max-w-xs text-xs">
-                    {approveCount ? `${approveCount} approval(s)` : 'Support this post'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleReject}
-                      className={cn(
-                        'gap-1.5 rounded-full',
-                        hasRejected && 'text-red-500 bg-red-500/10 hover:bg-red-500/15'
-                      )}
-                    >
-                      <ThumbsDown className="size-[18px]" />
-                      <span className="text-sm tabular-nums">{rejectCount || ''}</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="whitespace-pre-line max-w-xs text-xs">
-                    {rejectCount ? `${rejectCount} rejection(s)` : 'Disagree with this post'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </>
-          )}
         </div>
 
         <div className="flex items-center gap-1">
@@ -475,16 +350,201 @@ export default function Post({
             username={username || ''}
             showIcon
           />
-          <BookmarkIconButton
-            post={{ _id: post._id, bookmarkedBy: post.bookmarkedBy || undefined }}
-            user={{ _id: user._id || '' }}
-          />
+          {/* More menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-9 rounded-full text-muted-foreground" aria-label="More options">
+                <MoreHorizontal className="size-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleCopy}>
+                <Link2 className="size-4 mr-2" /> Copy link
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleReport} className="text-destructive focus:text-destructive">
+                <Ban className="size-4 mr-2" /> Report post
+              </DropdownMenuItem>
+              {(user._id === userId || user.admin) && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
+                    <Trash2 className="size-4 mr-2" /> Delete post
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </div>
+
+      {/* Title */}
+      <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight mb-1">
+        {title}
+      </h1>
+
+      {/* Citation URL */}
+      {post.citationUrl && (
+        <a
+          href={post.citationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs text-primary/80 hover:text-primary px-2.5 py-1 bg-primary/5 rounded-md mb-3 mt-1 transition-colors"
+        >
+          <ExternalLink className="size-3" />
+          {post.citationUrl.replace(/^https?:\/\//, '').split('/')[0]}
+        </a>
+      )}
+
+      {/* Vote status */}
+      {hasVoted && (
+        <div
+          className="flex items-center gap-2 text-sm rounded-lg px-3.5 py-2.5 mb-4 mt-2 border"
+          style={{
+            background: getUserVoteType() === 'up' ? 'var(--color-upvote)' : 'var(--color-downvote)',
+            borderColor: 'transparent',
+            color: '#fff',
+            opacity: 0.9,
+          }}
+        >
+          {getUserVoteType() === 'up' ? (
+            <ArrowBigUp className="size-5" strokeWidth={1.5} />
+          ) : (
+            <ArrowBigDown className="size-5" strokeWidth={1.5} />
+          )}
+          <span className="font-medium">You {getUserVoteType() === 'up' ? 'upvoted' : 'downvoted'} this post</span>
+        </div>
+      )}
+
+      {/* Post body with text selection */}
+      <div className={cn(
+        'text-[15px] leading-[1.75] text-foreground/85 mt-3',
+        postHeight && postHeight >= 742 && 'max-h-[60vh] overflow-y-auto'
+      )}>
+        <VotingBoard
+          content={post.text || ''}
+          onSelect={setSelectedText}
+          highlights={true}
+          votes={post.votes || []}
+        >
+          {(selection) => (
+            <Suspense fallback={null}>
+              <VotingPopup
+                votedBy={(post.votes || []).map((v: PostVote): VotedByEntry => ({
+                  userId: v.user?._id || '',
+                  type: (v.type as VoteType) || 'up',
+                  _id: v._id,
+                }))}
+                onVote={handleVoting}
+                onAddComment={handleAddComment}
+                onAddQuote={handleAddQuote}
+                selectedText={selection}
+                hasVoted={hasVoted}
+                userVoteType={getUserVoteType() as VoteType | null}
+              />
+            </Suspense>
+          )}
+        </VotingBoard>
+      </div>
+
+      {/* Stats bar */}
+      <div className="flex items-center gap-5 py-3 mt-4 border-y border-border/60 text-[13px] text-muted-foreground" aria-live="polite" aria-atomic="true">
+        <span className="flex items-center gap-1.5">
+          <ArrowBigUp className="size-4 text-[var(--color-upvote)]" strokeWidth={1.5} />
+          <strong className="text-foreground font-semibold">{approveCount}</strong>
+          <ArrowBigDown className="size-4 text-[var(--color-downvote)]" strokeWidth={1.5} />
+          <strong className="text-foreground font-semibold">{rejectCount}</strong>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <MessageCircle className="size-3.5" />
+          <strong className="text-foreground font-semibold">{commentCount}</strong> comment{commentCount !== 1 ? 's' : ''}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Quote className="size-3.5" />
+          <strong className="text-foreground font-semibold">{quoteCount}</strong> quote{quoteCount !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Action bar */}
+      <div className="flex items-center py-2 -mx-1" role="toolbar" aria-label="Post actions">
+        {/* Approve / Reject */}
+        {post.enable_voting && (
+          <>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleApprove}
+                    aria-label="Upvote this post"
+                    className={cn(
+                      'gap-1 rounded-md h-9 px-2.5',
+                      hasApproved
+                        ? 'text-[var(--color-upvote)] bg-[var(--color-upvote)]/10 hover:bg-[var(--color-upvote)]/15'
+                        : 'text-muted-foreground hover:text-[var(--color-upvote)] hover:bg-[var(--color-upvote)]/10'
+                    )}
+                  >
+                    <ArrowBigUp className="size-5" strokeWidth={1.5} />
+                    <span className="text-sm font-semibold tabular-nums">{approveCount || ''}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{hasApproved ? 'Remove upvote' : 'Upvote this post'}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleReject}
+                    aria-label="Downvote this post"
+                    className={cn(
+                      'gap-1 rounded-md h-9 px-2.5',
+                      hasRejected
+                        ? 'text-[var(--color-downvote)] bg-[var(--color-downvote)]/10 hover:bg-[var(--color-downvote)]/15'
+                        : 'text-muted-foreground hover:text-[var(--color-downvote)] hover:bg-[var(--color-downvote)]/10'
+                    )}
+                  >
+                    <ArrowBigDown className="size-5" strokeWidth={1.5} />
+                    <span className="text-sm font-semibold tabular-nums">{rejectCount || ''}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{hasRejected ? 'Remove downvote' : 'Downvote this post'}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <Separator orientation="vertical" className="h-5 mx-1" />
+          </>
+        )}
+
+        <BookmarkIconButton
+          post={{ _id: post._id, bookmarkedBy: post.bookmarkedBy || undefined }}
+          user={{ _id: user._id || '' }}
+        />
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopy}
+                className="rounded-full size-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                aria-label="Share"
+              >
+                <Share2 className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Copy link</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Enable voting toggle (owner only) */}
       {user._id === userId && !post.enable_voting && (
-        <div className="flex items-center gap-2 py-3">
+        <div className="flex items-center gap-2.5 py-3 px-3 mt-2 bg-muted/30 rounded-lg border border-border/50">
           <Checkbox
             checked={post.enable_voting || false}
             onCheckedChange={() => {
@@ -495,7 +555,7 @@ export default function Post({
             }}
             id="enable-voting"
           />
-          <label htmlFor="enable-voting" className="text-sm text-muted-foreground">
+          <label htmlFor="enable-voting" className="text-sm text-muted-foreground cursor-pointer">
             Enable voting on this post
           </label>
         </div>

@@ -1,13 +1,11 @@
-// TODO: Install `stripe` package and restore typed import (issue 7.19+)
+import Stripe from 'stripe';
 import { logger } from '~/data/utils/logger';
 
 /**
  * Initialize and return an authenticated Stripe client.
  * Selects sandbox or live key based on STRIPE_ENVIRONMENT env var.
  */
-const getStripeAuth = (): unknown => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const Stripe = require('stripe') as new (key: string) => unknown;
+const getStripeAuth = (): Stripe => {
   const { SANDBOX_STRIPE_SECRET_KEY, LIVE_STRIPE_SECRET_KEY, STRIPE_ENVIRONMENT } = process.env;
   const isSandbox = STRIPE_ENVIRONMENT !== 'production';
 

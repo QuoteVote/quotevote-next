@@ -34,10 +34,10 @@ export const UPDATE_PRESENCE = gql`
 export const ADD_BUDDY = gql`
   mutation AddBuddy($roster: RosterInput!) {
     addBuddy(roster: $roster) {
-      id
+      _id
       buddyId
       status
-      createdAt
+      created
     }
   }
 `
@@ -46,11 +46,11 @@ export const ADD_BUDDY = gql`
  * Accept buddy request mutation
  */
 export const ACCEPT_BUDDY = gql`
-  mutation AcceptBuddy($rosterId: ID!) {
+  mutation AcceptBuddy($rosterId: String!) {
     acceptBuddy(rosterId: $rosterId) {
-      id
+      _id
       status
-      updatedAt
+      updated
     }
   }
 `
@@ -59,11 +59,9 @@ export const ACCEPT_BUDDY = gql`
  * Decline buddy request mutation
  */
 export const DECLINE_BUDDY = gql`
-  mutation DeclineBuddy($rosterId: ID!) {
+  mutation DeclineBuddy($rosterId: String!) {
     declineBuddy(rosterId: $rosterId) {
-      id
-      status
-      updatedAt
+      _id
     }
   }
 `
@@ -72,11 +70,11 @@ export const DECLINE_BUDDY = gql`
  * Block buddy mutation
  */
 export const BLOCK_BUDDY = gql`
-  mutation BlockBuddy($buddyId: ID!) {
+  mutation BlockBuddy($buddyId: String!) {
     blockBuddy(buddyId: $buddyId) {
-      id
+      _id
       status
-      updatedAt
+      updated
     }
   }
 `
@@ -85,11 +83,11 @@ export const BLOCK_BUDDY = gql`
  * Unblock buddy mutation
  */
 export const UNBLOCK_BUDDY = gql`
-  mutation UnblockBuddy($buddyId: ID!) {
+  mutation UnblockBuddy($buddyId: String!) {
     unblockBuddy(buddyId: $buddyId) {
-      id
+      _id
       status
-      updatedAt
+      updated
     }
   }
 `
@@ -98,10 +96,9 @@ export const UNBLOCK_BUDDY = gql`
  * Remove buddy mutation
  */
 export const REMOVE_BUDDY = gql`
-  mutation RemoveBuddy($buddyId: ID!) {
+  mutation RemoveBuddy($buddyId: String!) {
     removeBuddy(buddyId: $buddyId) {
-      success
-      message
+      _id
     }
   }
 `
@@ -182,7 +179,7 @@ export const SUBMIT_POST = gql`
  * Delete comment mutation
  */
 export const DELETE_COMMENT = gql`
-  mutation DeleteComment($commentId: ID!) {
+  mutation DeleteComment($commentId: String!) {
     deleteComment(commentId: $commentId) {
       _id
     }
@@ -212,7 +209,7 @@ export const ADD_COMMENT = gql`
  * Update comment mutation
  */
 export const UPDATE_COMMENT = gql`
-  mutation UpdateComment($commentId: ID!, $content: String!) {
+  mutation UpdateComment($commentId: String!, $content: String!) {
     updateComment(commentId: $commentId, content: $content) {
       _id
       content
@@ -238,7 +235,7 @@ export const ADD_ACTION_REACTION = gql`
  * Update action reaction mutation
  */
 export const UPDATE_ACTION_REACTION = gql`
-  mutation UpdateActionReaction($_id: ID!, $emoji: String!) {
+  mutation UpdateActionReaction($_id: String!, $emoji: String!) {
     updateActionReaction(_id: $_id, emoji: $emoji) {
       _id
       userId
@@ -523,11 +520,8 @@ export const REQUEST_USER_ACCESS_MUTATION = gql`
  * Update user invite status mutation (admin only)
  */
 export const UPDATE_USER_INVITE_STATUS = gql`
-  mutation updateUserInviteStatus($userId: String!, $inviteStatus: String!) {
-    updateUserInviteStatus(userId: $userId, inviteStatus: $inviteStatus) {
-      _id
-      status
-    }
+  mutation sendUserInviteApproval($userId: String!, $inviteStatus: String!) {
+    sendUserInviteApproval(userId: $userId, inviteStatus: $inviteStatus)
   }
 `
 

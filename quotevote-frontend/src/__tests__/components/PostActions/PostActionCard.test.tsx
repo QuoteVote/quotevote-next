@@ -107,6 +107,11 @@ jest.mock('@/components/Icons/Dislike', () => ({
   default: () => <div data-testid="dislike-icon">Dislike</div>,
 }))
 
+jest.mock('@/hooks/useGuestGuard', () => ({
+  __esModule: true,
+  default: () => () => true,
+}))
+
 // Mock clipboard API
 Object.assign(navigator, {
   clipboard: {

@@ -13,7 +13,7 @@ jest.mock('~/data/utils/logger', () => ({
   },
 }));
 
-// Mock the stripe module (loaded via require inside getStripeAuth)
+// Mock the stripe module
 const mockCustomersCreate = jest.fn();
 const mockPaymentMethodsCreate = jest.fn();
 const MockStripe = jest.fn().mockImplementation(() => ({
@@ -21,8 +21,7 @@ const MockStripe = jest.fn().mockImplementation(() => ({
   paymentMethods: { create: mockPaymentMethodsCreate },
 }));
 
-// Use virtual: true since stripe is not actually installed
-jest.mock('stripe', () => MockStripe, { virtual: true });
+jest.mock('stripe', () => ({ default: MockStripe, __esModule: true }));
 
 describe('stripe resolver utilities', () => {
   const originalEnv = { ...process.env };
@@ -51,7 +50,7 @@ describe('stripe resolver utilities', () => {
     it('should use live key when STRIPE_ENVIRONMENT is production', () => {
       process.env.STRIPE_ENVIRONMENT = 'production';
       jest.resetModules();
-      jest.mock('stripe', () => MockStripe, { virtual: true });
+      jest.mock('stripe', () => ({ default: MockStripe, __esModule: true }));
       jest.mock('~/data/utils/logger', () => ({
         logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
       }));
@@ -64,7 +63,7 @@ describe('stripe resolver utilities', () => {
     it('should throw when secret key is missing', () => {
       delete process.env.SANDBOX_STRIPE_SECRET_KEY;
       jest.resetModules();
-      jest.mock('stripe', () => MockStripe, { virtual: true });
+      jest.mock('stripe', () => ({ default: MockStripe, __esModule: true }));
       jest.mock('~/data/utils/logger', () => ({
         logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
       }));
@@ -77,7 +76,7 @@ describe('stripe resolver utilities', () => {
       process.env.STRIPE_ENVIRONMENT = 'production';
       delete process.env.LIVE_STRIPE_SECRET_KEY;
       jest.resetModules();
-      jest.mock('stripe', () => MockStripe, { virtual: true });
+      jest.mock('stripe', () => ({ default: MockStripe, __esModule: true }));
       jest.mock('~/data/utils/logger', () => ({
         logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
       }));

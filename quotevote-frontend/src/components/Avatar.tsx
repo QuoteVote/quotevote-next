@@ -123,6 +123,7 @@ export default function Avatar({
           alt={alt || 'User avatar'}
           width={sizeConfig.dimension}
           height={sizeConfig.dimension}
+          loading="lazy"
           className={cn(
             'object-cover w-full h-full',
             !imageLoaded && 'opacity-0'

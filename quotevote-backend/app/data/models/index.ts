@@ -16,6 +16,7 @@ export { default as Content } from './Content';
 export { default as Creator } from './Creator';
 export { default as Domain } from './Domain';
 export { default as Group } from './Group';
+export { default as User } from './User';
 export { default as UserInvite } from './UserInvite';
 export { default as UserReputation } from './UserReputation';
 export { default as UserReport } from './UserReport';

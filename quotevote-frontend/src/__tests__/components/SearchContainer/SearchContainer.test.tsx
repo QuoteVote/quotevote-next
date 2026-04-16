@@ -65,27 +65,27 @@ import userEvent from '@testing-library/user-event'
 import SidebarSearchView from '@/components/SearchContainer'
 
 const mockSearchResults = {
-  searchContent: [
-    {
-      _id: '1',
-      title: 'Test Content',
-      domain: {
-        key: 'test-domain',
-        _id: 'domain1',
+  posts: {
+    entities: [
+      {
+        _id: '1',
+        title: 'Test Content',
+        creator: { _id: 'u1', name: 'Author', username: 'author' },
       },
-    },
-  ],
-  searchCreator: [
+    ],
+  },
+  searchUser: [
     {
       _id: '2',
       name: 'Test User',
+      username: 'testuser',
     },
   ],
 }
 
 const mockEmptyResults = {
-  searchContent: [],
-  searchCreator: [],
+  posts: { entities: [] },
+  searchUser: [],
 }
 
 describe('SearchContainer Component', () => {

@@ -26,9 +26,13 @@ export interface BaseDocument extends Document {
 // ============================================================================
 
 export interface UserDocument
-  extends BaseDocument, Omit<Common.User, '_id' | 'createdAt' | 'updatedAt'> {
+  extends BaseDocument, Omit<Common.User, '_id' | 'createdAt' | 'updatedAt' | '_followingId' | '_followersId' | '_votesId' | 'blockedUserIds'> {
   _id: Types.ObjectId;
   password: string;
+  _followingId: Types.ObjectId[];
+  _followersId: Types.ObjectId[];
+  _votesId?: Types.ObjectId;
+  blockedUserIds: Types.ObjectId[];
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 

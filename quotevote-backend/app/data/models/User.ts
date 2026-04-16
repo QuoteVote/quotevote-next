@@ -8,11 +8,25 @@ const UserSchema = new Schema<UserDocument, UserModel>(
         username: { type: String, required: true, unique: true, trim: true },
         email: { type: String, required: true, unique: true, trim: true, lowercase: true },
         password: { type: String, required: true },
-        avatar: { type: String },
+        avatar: { type: Schema.Types.Mixed },
+        bio: { type: String },
+        location: { type: String },
+        website: { type: String },
+        companyName: { type: String },
+        plan: { type: String, trim: true, default: 'personal' },
+        status: { type: Number },
+        stripeCustomerId: { type: String, trim: true },
+        tokens: { type: Number, default: 0 },
+        _wallet: { type: String },
+        _votesId: { type: Schema.Types.ObjectId },
+        favorited: { type: [Schema.Types.Mixed], default: [] },
         contributorBadge: { type: Boolean, default: false },
         admin: { type: Boolean, default: false },
+        emailVerified: { type: Boolean, default: false },
+        isModerator: { type: Boolean, default: false },
         _followingId: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         _followersId: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+        blockedUserIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         upvotes: { type: Number, default: 0 },
         downvotes: { type: Number, default: 0 },
         accountStatus: {
@@ -22,6 +36,8 @@ const UserSchema = new Schema<UserDocument, UserModel>(
         },
         botReports: { type: Number, default: 0 },
         lastBotReportDate: { type: Date },
+        settings: { type: Schema.Types.Mixed },
+        lastLogin: { type: Date },
         joined: { type: Date, default: Date.now },
         reputation: {
             overallScore: { type: Number, default: 0 },
@@ -49,6 +65,10 @@ const UserSchema = new Schema<UserDocument, UserModel>(
         toObject: { virtuals: true },
     }
 );
+
+// Indexes
+UserSchema.index({ accountStatus: 1 });
+UserSchema.index({ botReports: -1, lastBotReportDate: -1 });
 
 // Pre-save hook: explicit 'this' and async
 UserSchema.pre('save', async function (this: UserDocument) {

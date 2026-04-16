@@ -87,8 +87,8 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
       onMouseEnter={() => setFocusedComment(_id)}
       onMouseLeave={() => setFocusedComment(selected ? _id : null)}
       className={cn(
-        'flex gap-3 py-3 transition-colors',
-        selected && 'bg-yellow-50 dark:bg-yellow-900/10 -mx-4 px-4 rounded-lg'
+        'group/comment flex gap-3 py-3.5 transition-all duration-200',
+        selected && 'bg-amber-50/60 dark:bg-amber-900/10 -mx-4 px-4 rounded-xl border border-amber-200/40 dark:border-amber-800/20'
       )}
     >
       {/* Avatar */}
@@ -97,17 +97,18 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
         className="flex-shrink-0 mt-0.5"
         onClick={() => router.push(`/dashboard/profile/${username}`)}
       >
-        <Avatar className="size-8">
+        <Avatar className="size-8 ring-1 ring-border/50">
           <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} alt={username} />
-          <AvatarFallback className="text-xs bg-muted font-medium">
-            {(username || '').slice(0, 2).toUpperCase()}
+          <AvatarFallback className="text-[11px] bg-muted font-semibold">
+            {(name || username || '').slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
       </button>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
+        {/* Author + time */}
+        <div className="flex items-center gap-1.5 mb-0.5">
           <button
             type="button"
             onClick={() => router.push(`/dashboard/profile/${username}`)}
@@ -115,19 +116,20 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
           >
             {name || username}
           </button>
-          <span className="text-[13px] text-muted-foreground truncate">@{username}</span>
-          <span className="text-muted-foreground">·</span>
-          <time className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
+          <span className="text-[12px] text-muted-foreground/70 truncate">@{username}</span>
+          <span className="text-muted-foreground/40 text-[10px]">·</span>
+          <time className="text-[11px] text-muted-foreground/60 whitespace-nowrap" suppressHydrationWarning>
             {parsedDate}
           </time>
         </div>
 
-        <p className="text-[14px] text-foreground/90 leading-relaxed mt-0.5 whitespace-pre-line">
+        {/* Comment text */}
+        <p className="text-[14px] text-foreground/85 leading-[1.6] whitespace-pre-line">
           {content}
         </p>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 mt-1.5 -ml-2">
+        {/* Actions — visible on hover */}
+        <div className="flex items-center gap-0.5 mt-1.5 -ml-1.5 opacity-60 group-hover/comment:opacity-100 transition-opacity">
           <CommentReactions
             actionId={_id}
             reactions={(comment.reactions as Reaction[]) ?? []}
@@ -135,19 +137,21 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="size-7 text-muted-foreground hover:text-foreground"
+            className="size-7 text-muted-foreground hover:text-foreground rounded-full"
             onClick={handleCopy}
+            aria-label="Copy comment link"
           >
-            <LinkIcon className="size-3.5" />
+            <LinkIcon className="size-3" />
           </Button>
           {isOwner && (
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 text-muted-foreground hover:text-destructive"
+              className="size-7 text-muted-foreground hover:text-destructive rounded-full"
               onClick={handleDelete}
+              aria-label="Delete comment"
             >
-              <Trash2 className="size-3.5" />
+              <Trash2 className="size-3" />
             </Button>
           )}
         </div>

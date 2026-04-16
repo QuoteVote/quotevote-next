@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
+import { useQuery } from '@apollo/client/react';
 import {
   House,
   Search,
@@ -27,6 +28,7 @@ import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { useRosterManagement } from '@/hooks/useRosterManagement';
 import { RequestInviteDialog } from '@/components/RequestInviteDialog';
 import ChatContent from '@/components/Chat/ChatContent';
+import { GET_NOTIFICATIONS } from '@/graphql/queries';
 import Avatar from '@/components/Avatar';
 import {
   Sheet,
@@ -111,6 +113,21 @@ export default function DashboardLayout({
     (typeof user?.username === 'string' ? user.username : undefined) ||
     'User';
 
+  /* Notification badge count */
+  const { data: notifData } = useQuery<{ notifications: Array<{ _id: string; status: string }> }>(
+    GET_NOTIFICATIONS,
+    {
+      skip: !loggedIn,
+      fetchPolicy: 'cache-and-network',
+      pollInterval: 60000, // re-check every 60 seconds
+    }
+  );
+
+  const unreadCount = useMemo(() => {
+    if (!notifData?.notifications) return 0;
+    return notifData.notifications.filter((n) => n.status === 'new').length;
+  }, [notifData]);
+
   /* Helper: is a given path the active route? */
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(path + '/');
@@ -135,6 +152,13 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip to content link — visible only on keyboard focus */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:text-sm focus:font-medium focus:shadow-lg"
+      >
+        Skip to content
+      </a>
       <DashboardClient />
 
       {/* ── Desktop top navbar (hidden on mobile) ── */}
@@ -195,17 +219,22 @@ export default function DashboardLayout({
             <Link
               href="/dashboard/notifications"
               className={cn(
-                'transition-colors',
+                'relative transition-colors',
                 isActive('/dashboard/notifications')
                   ? 'text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               )}
-              aria-label="Notifications"
+              aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
             >
               <Bell
                 className="size-6"
                 fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'}
               />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
 
             {/* Chat toggle */}
@@ -324,17 +353,22 @@ export default function DashboardLayout({
             <Link
               href="/dashboard/notifications"
               className={cn(
-                'transition-colors',
+                'relative transition-colors',
                 isActive('/dashboard/notifications')
                   ? 'text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               )}
-              aria-label="Notifications"
+              aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
             >
               <Bell
                 className="size-6"
                 fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'}
               />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
             <button
               type="button"
@@ -357,7 +391,7 @@ export default function DashboardLayout({
       </header>
 
       {/* ── Mobile bottom navigation bar (hidden on desktop) ── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden h-14 border-t border-border bg-card">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden h-14 border-t border-border bg-card" aria-label="Mobile navigation">
         <div className="flex h-full items-center justify-around">
           {/* Home */}
           <Link
@@ -406,17 +440,22 @@ export default function DashboardLayout({
           <Link
             href="/dashboard/notifications"
             className={cn(
-              'flex items-center justify-center flex-1 h-full transition-colors',
+              'relative flex items-center justify-center flex-1 h-full transition-colors',
               isActive('/dashboard/notifications')
                 ? 'text-foreground'
                 : 'text-muted-foreground'
             )}
-            aria-label="Notifications"
+            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
           >
             <Bell
               className="size-6"
               fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'}
             />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 left-1/2 ml-2 flex items-center justify-center min-w-[16px] h-[16px] px-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold leading-none">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Link>
 
           {/* Profile (avatar circle) */}
@@ -448,7 +487,7 @@ export default function DashboardLayout({
       </nav>
 
       {/* ── Main content ── */}
-      <main className="min-h-screen pt-14 md:pt-16 pb-16 md:pb-0">
+      <main id="main-content" className="min-h-screen pt-14 md:pt-16 pb-16 md:pb-0">
         <div className="mx-auto px-4" style={{ maxWidth: pathname.startsWith('/dashboard/explore') ? 'none' : '42rem' }}>
           {children}
         </div>
