@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { useDebounce } from '@/hooks/useDebounce'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
@@ -33,6 +34,7 @@ import UsernameResults from '@/components/SearchContainer/UsernameResults'
 import SearchGuestSections from '@/components/SearchContainer/SearchGuestSections'
 import DateRangeFilter from '@/components/SearchContainer/DateRangeFilter'
 import ActiveFilters from '@/components/SearchContainer/ActiveFilters'
+import { SubmitPost } from '@/components/SubmitPost/SubmitPost'
 import type { UsernameSearchUser } from '@/types/components'
 
 type SortOrder = 'desc' | 'asc' | ''
@@ -58,6 +60,7 @@ export default function ExploreContent() {
   const sortParam = (searchParams.get('sort') || '') as SortOrder
   const interactionsParam = searchParams.get('interactions') === 'true'
 
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
   const [inputValue, setInputValue] = useState(q)
   const [searchFocused, setSearchFocused] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UsernameSearchUser | null>(null)
@@ -361,13 +364,14 @@ export default function ExploreContent() {
       <div className="border-b border-border bg-background">
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            <Link
-              href="/dashboard/post"
+            <button
+              type="button"
+              onClick={() => setSubmitDialogOpen(true)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap shadow-sm"
             >
               <PenSquare className="size-3.5" />
               Write
-            </Link>
+            </button>
             <Link
               href="/dashboard/explore?tab=trending"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted/70 text-foreground/80 text-xs font-medium hover:bg-muted transition-colors whitespace-nowrap"
@@ -458,6 +462,13 @@ export default function ExploreContent() {
       <div className="max-w-2xl mx-auto px-4">
         <SearchGuestSections />
       </div>
+
+      {/* Create Quote Dialog */}
+      <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+        <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <SubmitPost setOpen={setSubmitDialogOpen} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

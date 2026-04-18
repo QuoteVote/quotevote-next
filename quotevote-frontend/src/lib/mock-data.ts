@@ -3,11 +3,57 @@
  * Used as a fallback in PostsTab when the API returns empty results.
  */
 import type { Post } from '@/types/post'
+import type { Group } from '@/types/components'
 
 // Helper to generate a realistic MongoDB ObjectId (24 hex chars)
 function oid(seed: string): string {
   return seed.padEnd(24, '0').slice(0, 24)
 }
+
+export const MOCK_GROUPS: Group[] = [
+  {
+    _id: oid('g1a2b3c4d5e6f7a8b9c0d1e2'),
+    title: 'General',
+    description: 'General discussion for all topics',
+    privacy: 'public',
+    allowedUserIds: [],
+  },
+  {
+    _id: oid('g2b3c4d5e6f7a8b9c0d1e2f3'),
+    title: 'Technology',
+    description: 'Tech news, software, and innovation',
+    privacy: 'public',
+    allowedUserIds: [],
+  },
+  {
+    _id: oid('g3c4d5e6f7a8b9c0d1e2f3a4'),
+    title: 'Philosophy',
+    description: 'Ideas, ethics, and ways of thinking',
+    privacy: 'public',
+    allowedUserIds: [],
+  },
+  {
+    _id: oid('g4d5e6f7a8b9c0d1e2f3a4b5'),
+    title: 'Politics & Society',
+    description: 'Civic discourse and social issues',
+    privacy: 'public',
+    allowedUserIds: [],
+  },
+  {
+    _id: oid('g5e6f7a8b9c0d1e2f3a4b5c6'),
+    title: 'Science',
+    description: 'Research, discoveries, and evidence-based discussion',
+    privacy: 'public',
+    allowedUserIds: [],
+  },
+  {
+    _id: oid('g6f7a8b9c0d1e2f3a4b5c6d7'),
+    title: 'Culture & Arts',
+    description: 'Literature, film, music, and creative work',
+    privacy: 'public',
+    allowedUserIds: [],
+  },
+]
 
 // Mock user IDs for interactions
 const userIds = {

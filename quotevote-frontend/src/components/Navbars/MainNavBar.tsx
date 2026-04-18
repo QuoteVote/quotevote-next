@@ -337,7 +337,7 @@ export function MainNavBar({}: MainNavBarProps) {
 
       {/* Create Quote Dialog */}
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        <DialogContent className={isMediumScreen ? 'max-w-md' : 'max-w-full h-full'}>
+        <DialogContent className={isMediumScreen ? 'max-w-md' : 'max-w-full h-full'} showCloseButton={false}>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>
       </Dialog>

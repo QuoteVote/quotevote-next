@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@apollo/client/react'
-import { X, Loader2, Link2, Info, AlertTriangle } from 'lucide-react'
+import { X, Loader2, Info, AlertTriangle } from 'lucide-react'
 import {
   Card,
   CardHeader,
@@ -18,7 +18,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   Tooltip,
   TooltipContent,
@@ -44,7 +43,6 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
   const [showAlert, setShowAlert] = useState(false)
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
-  const [isPasting, setIsPasting] = useState(false)
   const errorAlertRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -62,47 +60,24 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
     },
   })
 
-  // Auto-scroll to error alert when URL-in-body error appears
   useEffect(() => {
     if (errors.text?.message?.includes('Links are not allowed') && errorAlertRef.current) {
       errorAlertRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }, [errors.text])
 
-  const parseURLContent = async (url: string) => {
-    try {
-      // Note: The original code used cors-anywhere which may not be available
-      // This is a simplified version - you may need to implement a backend proxy
-      // Using no-cors mode limits what we can do, so we'll just set a basic title
-      await fetch(url, {
-        mode: 'no-cors', // Limited functionality
-      })
-
-      // Since we can't easily parse the response with no-cors,
-      // we'll just set a basic title
-      const title = 'Extracted Content'
-      setError(null)
-      reset({
-        title,
-        text: url,
-        group: undefined,
-      })
-    } catch (err) {
-      console.error('Error parsing URL:', err)
-      setError(new Error('Could not extract site content. Please try again.'))
-      setShowAlert(true)
-    }
-  }
-
   const onSubmit = async (values: SubmitPostFormValues) => {
     const { title, text, group, citationUrl } = values
 
-    // Sanitize citation URL before submission
     const sanitizedCitationUrl = citationUrl ? sanitizeUrl(citationUrl) : null
 
-    // Handle case where group might be a string (typed value)
-    const groupData =
-      typeof group === 'string' ? { title: group } : group
+    if (citationUrl && !sanitizedCitationUrl) {
+      setError({ message: 'Invalid URL format.' })
+      setShowAlert(true)
+      return
+    }
+
+    const groupData = typeof group === 'string' ? { title: group } : group
 
     try {
       let newGroup
@@ -111,9 +86,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
       if (isNewGroup) {
         setIsCreatingGroup(true)
         setNewGroupName(
-          typeof groupData === 'object' && 'title' in groupData
-            ? groupData.title
-            : ''
+          typeof groupData === 'object' && 'title' in groupData ? groupData.title : ''
         )
 
         const createGroupResult = await createGroup({
@@ -121,13 +94,9 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
             group: {
               creatorId: user._id,
               title:
-                typeof groupData === 'object' && 'title' in groupData
-                  ? groupData.title
-                  : '',
+                typeof groupData === 'object' && 'title' in groupData ? groupData.title : '',
               description: `Description for: ${
-                typeof groupData === 'object' && 'title' in groupData
-                  ? groupData.title
-                  : ''
+                typeof groupData === 'object' && 'title' in groupData ? groupData.title : ''
               } group`,
               privacy: 'public',
             },
@@ -157,7 +126,8 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
         },
       })
 
-      const { _id, url } = (submitResult.data as { addPost?: { _id: string; url: string } })?.addPost || {}
+      const { _id, url } =
+        (submitResult.data as { addPost?: { _id: string; url: string } })?.addPost || {}
       if (_id) {
         setSelectedPost(_id)
         setShareableLink(url || '')
@@ -167,9 +137,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
       setIsCreatingGroup(false)
       setNewGroupName('')
       setError(
-        err instanceof Error
-          ? err
-          : { message: 'An error occurred while creating your post' }
+        err instanceof Error ? err : { message: 'An error occurred while creating your post' }
       )
       setShowAlert(true)
     }
@@ -179,20 +147,6 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
     setShowAlert(false)
     setShareableLink('')
     reset()
-  }
-
-  const handlePaste = () => {
-    setIsPasting(true)
-  }
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const contentValue = e.target.value
-    const validURL =
-      /^(?:http(s)?:\/\/)([\w.-])+(?:[\w.-]+)+([\w\-._~:/?#[\]@!$&'()*+,;=.])+$/
-    if (isPasting && contentValue.match(validURL)) {
-      parseURLContent(contentValue)
-    }
-    setIsPasting(false)
   }
 
   return (
@@ -239,89 +193,74 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
               isMobile ? 'px-4' : 'px-5'
             )}
           >
-            <div className="space-y-4 flex-1 flex flex-col min-h-0">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Enter Title"
-                  {...register('title')}
-                  className={cn(errors.title && 'border-destructive')}
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* Title — no label, placeholder only (matches monorepo InputBase) */}
+              <Input
+                id="title"
+                placeholder="Enter Title"
+                {...register('title')}
+                className={cn('text-lg border-0 shadow-none px-0 focus-visible:ring-0 rounded-none', errors.title && 'border-b border-destructive')}
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive mt-1">{errors.title.message}</p>
+              )}
+
+              <div className="border-t my-2" />
+
+              {/* Content — scrollable, no label, placeholder only (matches monorepo) */}
+              <div className="flex-1 flex flex-col min-h-0 overflow-auto">
+                <Textarea
+                  id="text"
+                  placeholder="Enter your post content (no links allowed)"
+                  {...register('text')}
+                  className={cn(
+                    'h-full resize-none border-0 shadow-none focus-visible:ring-0 px-0 rounded-none',
+                    isMobile ? 'min-h-[50vh]' : 'min-h-[75vh]',
+                    errors.text && 'border border-destructive'
+                  )}
                 />
-                {errors.title && (
-                  <p className="text-sm text-destructive">{errors.title.message}</p>
+                {errors.text && (
+                  <div
+                    ref={errorAlertRef}
+                    className="flex items-center gap-2 bg-red-50 border border-red-400 rounded p-3 mt-2"
+                  >
+                    <AlertTriangle className="h-5 w-5 text-red-500 shrink-0" />
+                    <p className="text-sm text-red-600 font-medium">{errors.text.message}</p>
+                  </div>
                 )}
               </div>
 
-              {/* Citation URL Field */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Link2 className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="citationUrl">Citation URL <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
-                        >
-                          <Info className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
-                        <p>Optional: Add a citation link to credit the original source. No other URLs are allowed in the post body.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+              <div className="border-t my-4" />
+
+              {/* Citation URL — below content, with tooltip (matches monorepo layout) */}
+              <div className="flex items-center gap-2">
                 <Input
                   id="citationUrl"
-                  placeholder="https://example.com/article"
+                  placeholder="Source URL (e.g. https://wikipedia.org/wiki/...)"
                   {...register('citationUrl')}
-                  className={cn(errors.citationUrl && 'border-destructive')}
+                  className={cn('flex-1', errors.citationUrl && 'border-destructive')}
                 />
-                {errors.citationUrl && (
-                  <p className="text-sm text-destructive">{errors.citationUrl.message}</p>
-                )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-[#52b274] shrink-0"
+                      >
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <p>One citation per post. No other links allowed in the body.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-
-              <div className="border-t" />
-
-              <div className="flex-1 flex flex-col min-h-0 space-y-2">
-                <Label htmlFor="text">Content</Label>
-                <div className="flex-1 min-h-0">
-                  <Textarea
-                    id="text"
-                    placeholder="Enter text or URL here"
-                    {...register('text')}
-                    onPaste={handlePaste}
-                    onChange={(e) => {
-                      register('text').onChange(e)
-                      handleTextChange(e)
-                    }}
-                    className={cn(
-                      'h-full min-h-[50vh] resize-none',
-                      isMobile ? 'min-h-[40vh]' : 'min-h-[60vh]',
-                      errors.text && 'border-destructive'
-                    )}
-                  />
-                </div>
-                {errors.text && (
-                  errors.text.message?.includes('Links are not allowed') ? (
-                    <Alert ref={errorAlertRef} variant="destructive" className="mt-2">
-                      <AlertTriangle className="h-5 w-5" />
-                      <AlertTitle className="text-base font-semibold">⚠️ No Links Allowed in Body</AlertTitle>
-                      <AlertDescription className="text-sm">
-                        {errors.text.message}
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <p className="text-sm text-destructive">{errors.text.message}</p>
-                  )
-                )}
-              </div>
+              {errors.citationUrl && (
+                <p className="text-sm text-destructive mt-1">{errors.citationUrl.message}</p>
+              )}
             </div>
           </CardContent>
 
@@ -333,8 +272,8 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
           >
             <div
               className={cn(
-                'flex flex-col gap-4 w-full',
-                isMobile ? '' : 'flex-row items-center justify-between'
+                'flex w-full gap-4',
+                isMobile ? 'flex-col' : 'flex-row items-center justify-between'
               )}
             >
               <div className="flex items-center gap-2">
@@ -352,10 +291,12 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
                   control={control}
                   render={({ field }) => (
                     <Combobox
-                      options={options as Array<{ _id?: string; title: string; [key: string]: unknown }>}
+                      options={
+                        options as Array<{ _id?: string; title: string; [key: string]: unknown }>
+                      }
                       value={field.value || null}
                       onValueChange={field.onChange}
-                      placeholder="Select or create a group"
+                      placeholder="Select a group"
                       label=""
                       error={!!errors.group}
                       errorMessage={errors.group?.message}
@@ -392,4 +333,3 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
     </>
   )
 }
-
