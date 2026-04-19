@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@apollo/client/react'
+import { useMutation, useApolloClient } from '@apollo/client/react'
 import { X, Loader2, Info, AlertTriangle } from 'lucide-react'
 import {
   Card,
@@ -29,17 +30,19 @@ import { useResponsive } from '@/hooks/useResponsive'
 import { submitPostSchema, type SubmitPostFormValues } from '@/lib/validation/submitPostSchema'
 import { sanitizeUrl } from '@/lib/utils/sanitizeUrl'
 import { CREATE_GROUP, SUBMIT_POST } from '@/graphql/mutations'
+import { GROUPS_QUERY } from '@/graphql/queries'
 import { SubmitPostAlert } from './SubmitPostAlert'
 import type { SubmitPostFormProps } from '@/types/components'
 import { cn } from '@/lib/utils'
 
 export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormProps) {
+  const router = useRouter()
   const { isMobile } = useResponsive()
   const setSelectedPost = useAppStore((state) => state.setSelectedPost)
+  const apolloClient = useApolloClient()
   const [submitPost, { loading }] = useMutation(SUBMIT_POST)
   const [createGroup, { loading: loadingGroup }] = useMutation(CREATE_GROUP)
   const [error, setError] = useState<Error | { message?: string } | null>(null)
-  const [shareableLink, setShareableLink] = useState('')
   const [showAlert, setShowAlert] = useState(false)
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
@@ -80,39 +83,46 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
     const groupData = typeof group === 'string' ? { title: group } : group
 
     try {
-      let newGroup
+      let newGroup: { _id: string } | undefined
       const isNewGroup = groupData && !('_id' in groupData)
 
       if (isNewGroup) {
-        setIsCreatingGroup(true)
-        setNewGroupName(
+        const groupTitle =
           typeof groupData === 'object' && 'title' in groupData ? groupData.title : ''
-        )
+
+        setIsCreatingGroup(true)
+        setNewGroupName(groupTitle)
 
         const createGroupResult = await createGroup({
           variables: {
             group: {
               creatorId: user._id,
-              title:
-                typeof groupData === 'object' && 'title' in groupData ? groupData.title : '',
-              description: `Description for: ${
-                typeof groupData === 'object' && 'title' in groupData ? groupData.title : ''
-              } group`,
+              title: groupTitle,
+              description: `Description for: ${groupTitle} group`,
               privacy: 'public',
             },
           },
+          refetchQueries: [{ query: GROUPS_QUERY, variables: { limit: 0 } }],
         })
 
         newGroup = (createGroupResult.data as { createGroup?: { _id: string } })?.createGroup
         setIsCreatingGroup(false)
         setNewGroupName('')
+
+        if (!newGroup?._id) {
+          throw new Error('Group was not created. Please try again.')
+        }
       }
 
       const postGroupId = isNewGroup
-        ? newGroup?._id
-        : typeof groupData === 'object' && '_id' in groupData
-          ? groupData._id
-          : ''
+        ? newGroup!._id
+        : groupData && typeof groupData === 'object' && '_id' in groupData
+          ? (groupData as { _id: string })._id
+          : undefined
+
+      if (!postGroupId) {
+        throw new Error('Please select or create a group before posting.')
+      }
 
       const submitResult = await submitPost({
         variables: {
@@ -126,12 +136,14 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
         },
       })
 
-      const { _id, url } =
+      const { _id } =
         (submitResult.data as { addPost?: { _id: string; url: string } })?.addPost || {}
       if (_id) {
         setSelectedPost(_id)
-        setShareableLink(url || '')
-        setShowAlert(true)
+        apolloClient.cache.evict({ fieldName: 'posts' })
+        apolloClient.cache.gc()
+        setOpen(false)
+        router.push('/dashboard/explore')
       }
     } catch (err) {
       setIsCreatingGroup(false)
@@ -145,7 +157,6 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
 
   const hideAlert = () => {
     setShowAlert(false)
-    setShareableLink('')
     reset()
   }
 
@@ -154,7 +165,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
       {showAlert && (
         <SubmitPostAlert
           hideAlert={hideAlert}
-          shareableLink={shareableLink}
+          shareableLink=""
           error={error}
           setShowAlert={setShowAlert}
           setOpen={setOpen}
@@ -296,7 +307,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
                       }
                       value={field.value || null}
                       onValueChange={field.onChange}
-                      placeholder="Select a group"
+                      placeholder="Select or create a group"
                       label=""
                       error={!!errors.group}
                       errorMessage={errors.group?.message}
