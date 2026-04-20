@@ -13,7 +13,6 @@ export const submitPostSchema = z.object({
   text: z
     .string()
     .min(1, 'Post content is required')
-    .max(10000, 'Post content should be less than 10000 characters')
     .refine(
       (value) => !containsUrl(value),
       {

@@ -14,6 +14,17 @@ const nextConfig: NextConfig = {
   // Compress output
   compress: true,
 
+  // Redirect legacy /post/... URLs (stored in the database) to the app route
+  async redirects() {
+    return [
+      {
+        source: '/post/:path*',
+        destination: '/dashboard/post/:path*',
+        permanent: false,
+      },
+    ]
+  },
+
   // Security headers
   async headers() {
     return [

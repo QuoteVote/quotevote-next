@@ -7,7 +7,7 @@ import moment from 'moment'
 import { useQuery, useMutation } from '@apollo/client/react'
 import { Link2, Bookmark, Share2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getDomain } from '@/lib/utils/sanitizeUrl'
+import { getDomain, toAppPostUrl } from '@/lib/utils/sanitizeUrl'
 import { useAppStore } from '@/store'
 import { GET_GROUP } from '@/graphql/queries'
 import { UPDATE_POST_BOOKMARK } from '@/graphql/mutations'
@@ -78,7 +78,7 @@ function PostCardComponent({
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation()
     const postUrl = url
-      ? `${window.location.origin}${url.replace(/\?/g, '')}`
+      ? `${window.location.origin}${toAppPostUrl(url)}`
       : window.location.href
     await navigator.clipboard.writeText(postUrl)
     toast.success('Link copied!')
@@ -123,7 +123,7 @@ function PostCardComponent({
 
   const handleCardClick = () => {
     setSelectedPost(_id)
-    if (url) router.push(url.replace(/\?/g, ''))
+    if (url) router.push(toAppPostUrl(url))
   }
 
   const handleProfileClick = (e: React.MouseEvent) => {
