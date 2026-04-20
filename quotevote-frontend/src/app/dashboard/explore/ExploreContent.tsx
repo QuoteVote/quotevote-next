@@ -31,16 +31,15 @@ export default function ExploreContent() {
   const q = searchParams.get('q') || ''
   const from = searchParams.get('from') || ''
   const to = searchParams.get('to') || ''
-  const sortParam = (searchParams.get('sort') || '') as SortOrder
+  const sortOrder = (searchParams.get('sort') || '') as SortOrder
+  const interactions = searchParams.get('interactions') === 'true'
+  const friends = searchParams.get('friends') === 'true'
 
   // Local UI state
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
   const [inputValue, setInputValue] = useState(q)
   const [searchFocused, setSearchFocused] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UsernameSearchUser | null>(null)
-  const [sortOrder, setSortOrder] = useState<SortOrder>(sortParam)
-  const [interactions, setInteractions] = useState(false)
-  const [friends, setFriends] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
   const searchRef = useRef<HTMLDivElement>(null)
 
@@ -120,9 +119,16 @@ export default function ExploreContent() {
 
   const handleSortCycle = useCallback(() => {
     const next: SortOrder = sortOrder === '' ? 'desc' : sortOrder === 'desc' ? 'asc' : ''
-    setSortOrder(next)
     updateParams({ sort: next || null })
   }, [sortOrder, updateParams])
+
+  const handleToggleInteractions = useCallback(() => {
+    updateParams({ interactions: interactions ? null : 'true' })
+  }, [interactions, updateParams])
+
+  const handleToggleFriends = useCallback(() => {
+    updateParams({ friends: friends ? null : 'true' })
+  }, [friends, updateParams])
 
   // Username search — real-time, fires on every keystroke when @ is detected
   const {
@@ -243,7 +249,7 @@ export default function ExploreContent() {
             {isLoggedIn && (
               <button
                 type="button"
-                onClick={() => setFriends((f) => !f)}
+                onClick={handleToggleFriends}
                 title={friends ? 'Showing friends posts' : 'Show posts from people you follow'}
                 className={filterIconBtn(friends)}
               >
@@ -254,7 +260,7 @@ export default function ExploreContent() {
 
             <button
               type="button"
-              onClick={() => setInteractions((i) => !i)}
+              onClick={handleToggleInteractions}
               title="Sort by most interactions"
               className={filterIconBtn(interactions)}
             >

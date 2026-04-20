@@ -300,44 +300,7 @@ function createApolloClient(): ApolloClientType {
 
   return new ApolloClient({
     link,
-    cache: new InMemoryCache({
-      typePolicies: {
-        Query: {
-          fields: {
-            // Paginated post lists — merge pages so cache doesn't thrash on fetchMore
-            posts: {
-              keyArgs: ['filter', 'searchKey', 'startDateRange', 'friendsOnly'],
-              merge(existing = { data: [] }, incoming) {
-                return {
-                  ...incoming,
-                  data: [...(existing.data ?? []), ...(incoming.data ?? [])],
-                };
-              },
-            },
-            // Paginated comment lists
-            comments: {
-              keyArgs: ['postId'],
-              merge(existing = { data: [] }, incoming) {
-                return {
-                  ...incoming,
-                  data: [...(existing.data ?? []), ...(incoming.data ?? [])],
-                };
-              },
-            },
-            searchKey: {
-              read() {
-                return '';
-              },
-            },
-            startDateRange: {
-              read() {
-                return '';
-              },
-            },
-          },
-        },
-      },
-    }),
+    cache: new InMemoryCache(),
     // Enable SSR mode for Next.js
     ssrMode: typeof window === 'undefined',
     // Default options for queries
