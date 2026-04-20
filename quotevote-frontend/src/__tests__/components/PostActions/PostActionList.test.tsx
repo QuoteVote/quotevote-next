@@ -160,7 +160,7 @@ describe('PostActionList', () => {
         />,
       )
 
-      expect(screen.getByText('Start the discussion...')).toBeInTheDocument()
+      expect(screen.getByText('No activity yet')).toBeInTheDocument()
     })
 
     it('does not render empty state when loading', () => {
@@ -456,7 +456,7 @@ describe('PostActionList', () => {
         />,
       )
 
-      const listItem = container.querySelector('li[id="action1"]')
+      const listItem = container.querySelector('div[id="action1"]')
       expect(listItem).toBeInTheDocument()
     })
   })

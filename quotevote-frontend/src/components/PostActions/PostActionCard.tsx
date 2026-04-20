@@ -265,7 +265,7 @@ export default function PostActionCard({
               : 'border-l-red-400/60 text-foreground/80'
           )}>
             {content
-              ? <span>"{content}"</span>
+              ? <span>&ldquo;{content}&rdquo;</span>
               : <span className="italic text-muted-foreground/60">no text selected</span>
             }
           </blockquote>
