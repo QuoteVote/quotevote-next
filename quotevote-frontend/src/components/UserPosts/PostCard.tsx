@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 export function PostCard({ post, index }: PostCardProps) {
   const creator = post.creator
   const username = creator?.username || 'Unknown'
-  const avatar = creator?.avatar || undefined
+  const avatar = typeof creator?.avatar === 'string' ? creator.avatar : undefined
   const name = creator?.name || username
 
   // Format date

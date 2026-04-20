@@ -101,7 +101,7 @@ export default function MessageItemList({ room }: MessageItemListProps) {
         id: postCreator._id,
         username: postCreator.username || '',
         name: postCreator.name || undefined,
-        avatar: postCreator.avatar || undefined,
+        avatar: typeof postCreator.avatar === 'string' ? postCreator.avatar : undefined,
         contributorBadge: postCreator.contributorBadge || undefined,
       }
     : null

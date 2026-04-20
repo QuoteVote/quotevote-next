@@ -9,7 +9,6 @@ import type { Reference } from '@apollo/client'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import {
   Link2,
@@ -20,7 +19,6 @@ import {
   MoreHorizontal,
   ArrowLeft,
   MessageCircle,
-  Quote,
   ExternalLink,
 } from 'lucide-react'
 import {
@@ -31,6 +29,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 import AvatarDisplay from '@/components/Avatar'
+import { Avatar as AvataaarsAvatar, AvatarStyle } from 'avataaars'
+import type { AvataaarsData } from '@/types/post'
 import { FollowButton } from '../CustomButtons/FollowButton'
 import { BookmarkIconButton } from '../CustomButtons/BookmarkIconButton'
 import {
@@ -298,6 +298,8 @@ export default function Post({
   const rejectCount = post.rejectedBy?.length || 0
   const commentCount = post.comments?.length || 0
   const quoteCount = post.quotes?.length || 0
+  const voteCount = post.votes?.length || 0
+  const interactionCount = commentCount + quoteCount + voteCount
 
   return (
     <div className="flex flex-col" role="article" aria-label={title || 'Post'}>
@@ -322,19 +324,23 @@ export default function Post({
             <button
               type="button"
               onClick={() => username && router.push(`/dashboard/profile/${username}`)}
-              className="shrink-0"
+              className="shrink-0 rounded-full ring-2 ring-background shadow-md overflow-hidden"
+              style={{ width: 48, height: 48 }}
             >
-              <Avatar className="size-12 ring-2 ring-background shadow-md">
-                <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold text-base">
-                  <AvatarDisplay
-                    size={48}
-                    src={typeof avatar === 'string' ? avatar : undefined}
-                    alt={name || username || ''}
-                    fallback={name || username || ''}
-                  />
-                </AvatarFallback>
-              </Avatar>
+              {avatar && typeof avatar === 'object' ? (
+                <AvataaarsAvatar
+                  avatarStyle={AvatarStyle.Circle}
+                  {...(avatar as AvataaarsData)}
+                  style={{ width: 48, height: 48 }}
+                />
+              ) : (
+                <AvatarDisplay
+                  size={48}
+                  src={typeof avatar === 'string' ? avatar : undefined}
+                  alt={name || username || ''}
+                  fallback={(name || username || '?').charAt(0).toUpperCase()}
+                />
+              )}
             </button>
             <div>
               <div className="flex items-center gap-2">
@@ -569,13 +575,8 @@ export default function Post({
           </span>
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/40">
             <MessageCircle className="size-3" />
-            <strong className="text-foreground font-semibold tabular-nums">{commentCount}</strong>
-            {' '}comment{commentCount !== 1 ? 's' : ''}
-          </span>
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/40">
-            <Quote className="size-3" />
-            <strong className="text-foreground font-semibold tabular-nums">{quoteCount}</strong>
-            {' '}quote{quoteCount !== 1 ? 's' : ''}
+            <strong className="text-foreground font-semibold tabular-nums">{interactionCount}</strong>
+            {' '}interaction{interactionCount !== 1 ? 's' : ''}
           </span>
         </div>
       </div>

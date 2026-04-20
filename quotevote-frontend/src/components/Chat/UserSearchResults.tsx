@@ -103,7 +103,7 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
           className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40 hover:shadow-md"
         >
           <Avatar
-            src={user.avatar || undefined}
+            src={typeof user.avatar === 'string' ? user.avatar : undefined}
             alt={user.name || user.username}
             size={40}
           />

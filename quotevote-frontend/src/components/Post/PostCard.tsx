@@ -274,7 +274,7 @@ function PostCardComponent({
           onClick={handleProfileClick}
         >
           <AvatarDisplay
-            src={creator?.avatar || undefined}
+            src={typeof creator?.avatar === 'string' ? creator.avatar : undefined}
             alt={username}
             size="sm"
           />

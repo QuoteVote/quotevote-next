@@ -13,8 +13,8 @@ export interface ChatParticipant {
     username: string
     /** Optional display name */
     name?: string
-    /** Optional avatar URL */
-    avatar?: string
+    /** Optional avatar URL or avataaars data object */
+    avatar?: string | Record<string, unknown>
     /** Optional contributor badge or role */
     contributorBadge?: string
     /** Additional metadata */
