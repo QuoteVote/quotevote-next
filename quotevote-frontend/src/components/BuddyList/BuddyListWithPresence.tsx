@@ -54,14 +54,20 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
     const pendingRequests = useMemo(() => {
         if (!rosterData?.getRoster || !currentUser?._id) return [];
 
-        const currentUserId = currentUser._id?.toString() || currentUser.id?.toString();
-        // Pending requests are roster entries with status 'pending' where the current user
-        // is the buddyId (i.e., someone else sent the request to us)
+        const currentUserId = currentUser._id?.toString() || (currentUser.id as string | undefined);
+        if (!currentUserId) return [];
+
+        // Only show requests RECEIVED by the current user:
+        // buddyId is currentUser AND initiatedBy is someone else
         return rosterData.getRoster
-            .filter((entry) =>
-                entry.status === 'pending' &&
-                entry.buddyId?.toString() === currentUserId
-            )
+            .filter((entry) => {
+                if (entry.status !== 'pending') return false;
+                if (!entry.initiatedBy) return false;
+                return (
+                    entry.buddyId?.toString() === currentUserId &&
+                    entry.initiatedBy?.toString() !== currentUserId
+                );
+            })
             .map((entry) => ({
                 id: entry._id,
                 buddyId: entry.userId,
@@ -156,10 +162,10 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'online': return 'bg-green-500 shadow-green-500/20';
+            case 'online': return 'bg-[#52b274] shadow-[#52b274]/20';
             case 'away': return 'bg-amber-400 shadow-amber-400/20';
             case 'dnd': return 'bg-red-500 shadow-red-500/20';
-            default: return 'bg-gray-500';
+            default: return 'bg-gray-400';
         }
     };
 
@@ -172,7 +178,7 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
                         <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">
                             Pending Requests
                         </span>
-                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-green-500 text-white text-[10px] font-bold">
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#52b274] text-white text-[10px] font-bold">
                             {pendingRequests.length}
                         </span>
                     </div>
@@ -199,7 +205,7 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
                                     <div className="flex gap-1">
                                         <button
                                             onClick={() => handleAcceptBuddy(req.id)}
-                                            className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
+                                            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#52b274] text-white hover:bg-[#4a9e63] transition-colors"
                                             title="Accept"
                                         >
                                             <Check size={16} />

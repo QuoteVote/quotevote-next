@@ -107,7 +107,7 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
                 />
                 {presence && (
                   <span
-                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${isOnline ? 'bg-emerald-500' : 'bg-muted-foreground'
+                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${isOnline ? 'bg-[#52b274]' : 'bg-muted-foreground'
                       }`}
                     aria-label={isOnline ? 'Online' : 'Offline'}
                   />
@@ -127,7 +127,7 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
                 size="sm"
                 onClick={() => handleAddBuddy(user._id)}
                 disabled={addingUserId === user._id}
-                className="ml-auto"
+                className="ml-auto bg-[#52b274] text-white hover:bg-[#4a9e63]"
               >
                 {addingUserId === user._id ? 'Adding…' : 'Add'}
               </Button>
