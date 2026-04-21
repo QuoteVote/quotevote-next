@@ -59,7 +59,7 @@ function UserStatusDisplay() {
   const label = userStatusMessage || getStatusLabel(userStatus);
 
   let dotClass = 'bg-zinc-400';
-  if (userStatus === 'online') dotClass = 'bg-emerald-500';
+  if (userStatus === 'online') dotClass = 'bg-[#52b274]';
   else if (userStatus === 'away') dotClass = 'bg-amber-400';
   else if (userStatus === 'dnd') dotClass = 'bg-red-500';
 

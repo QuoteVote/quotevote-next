@@ -178,6 +178,18 @@ export interface TypingUser {
 }
 
 /**
+ * Staged (not yet persisted) DM room — used when starting a new conversation
+ * before the first message has been sent.
+ */
+export interface StagedChatRoom {
+  _id: null;
+  title: string;
+  avatar: string | null;
+  messageType: 'USER';
+  users: string[];
+}
+
+/**
  * Presence status type
  */
 export type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';

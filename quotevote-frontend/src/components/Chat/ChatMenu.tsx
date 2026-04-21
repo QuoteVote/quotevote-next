@@ -31,7 +31,7 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
         onClick={toggleOpen}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="relative inline-flex items-center justify-center rounded-full border border-transparent bg-background/80 p-1.5 text-muted-foreground shadow-sm transition-colors hover:border-emerald-400 hover:bg-emerald-50/80 dark:hover:border-emerald-500/40 dark:hover:bg-emerald-900/40"
+        className="relative inline-flex items-center justify-center rounded-full border border-transparent bg-background/80 p-1.5 text-muted-foreground shadow-sm transition-colors hover:border-[#52b274]/60 hover:bg-[#52b274]/8 dark:hover:border-[#52b274]/40 dark:hover:bg-[#52b274]/15"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

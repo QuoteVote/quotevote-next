@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import type { AppState, UserState, UIState, ChatState, FilterState } from '@/types/store';
+import type { StagedChatRoom } from '@/types/chat';
 
 // Initial state values
 const initialUserState: UserState = {
@@ -89,7 +90,7 @@ interface AppStore extends AppState {
 
   // Chat actions
   setChatSubmitting: (submitting: boolean) => void;
-  setSelectedChatRoom: (roomId: string | null) => void;
+  setSelectedChatRoom: (roomId: string | StagedChatRoom | null) => void;
   setChatOpen: (open: boolean) => void;
   setBuddyList: (buddyList: unknown[]) => void;
   updatePresence: (userId: string, presence: ChatState['presenceMap'][string]) => void;
@@ -228,7 +229,7 @@ export const useAppStore = create<AppStore>()(
       },
     })),
 
-  setSelectedChatRoom: (roomId) =>
+  setSelectedChatRoom: (roomId: string | StagedChatRoom | null) =>
     set((state) => ({
       chat: {
         ...state.chat,

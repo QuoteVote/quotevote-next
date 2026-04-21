@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { ChatRoom } from '@/types/chat'
+import type { ChatRoom, StagedChatRoom } from '@/types/chat'
 
 interface HeaderProps {
   room: ChatRoom | null
@@ -208,13 +208,31 @@ interface MessageBoxProps {
 function MessageBox({ roomOverride }: MessageBoxProps) {
   const ensureAuth = useGuestGuard()
   const selectedRoomId = useAppStore((state) => state.chat.selectedRoom)
+  const isStagedRoom = selectedRoomId !== null && typeof selectedRoomId === 'object'
 
   const { data: roomsData } = useQuery<{ messageRooms: ChatRoom[] }>(GET_CHAT_ROOMS, {
     fetchPolicy: 'cache-and-network',
+    skip: isStagedRoom,
   })
 
-  const room: ChatRoom | null =
-    roomOverride || roomsData?.messageRooms.find((r) => r._id === selectedRoomId) || null
+  const room: ChatRoom | null = (() => {
+    if (roomOverride) return roomOverride
+    if (isStagedRoom) {
+      const staged = selectedRoomId as StagedChatRoom
+      return {
+        // Empty string as sentinel — MessageSend treats falsy messageRoomId as "create new room"
+        _id: '',
+        title: staged.title,
+        avatar: staged.avatar,
+        messageType: staged.messageType,
+        users: staged.users,
+        created: new Date().toISOString(),
+      }
+    }
+    return typeof selectedRoomId === 'string'
+      ? (roomsData?.messageRooms.find((r) => r._id === selectedRoomId) ?? null)
+      : null
+  })()
 
   const messageRoomId = room?._id ?? null
   const messageType = room?.messageType ?? 'USER'

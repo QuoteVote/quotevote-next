@@ -8,6 +8,7 @@ export const GET_BUDDY_LIST = gql`
     getBuddyList {
       user {
         _id
+        name
         username
         avatar
       }
@@ -56,6 +57,7 @@ export const GET_ROSTER = gql`
       initiatedBy
       buddy {
         _id
+        name
         username
         avatar
       }

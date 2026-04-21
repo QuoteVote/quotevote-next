@@ -16,7 +16,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { BuddyItem, BuddyItemListProps, PresenceStatus } from '@/types/buddylist';
-import { ChatRoom } from '@/types/chat';
+import { ChatRoom, StagedChatRoom } from '@/types/chat';
 
 
 
@@ -97,8 +97,15 @@ export default function BuddyItemList({ buddyList, className }: BuddyItemListPro
                 if (data && data.messageRoom && data.messageRoom._id) {
                     setSelectedChatRoom(data.messageRoom._id);
                 } else {
-                    // Room does not exist. 
-                    // In new architecture, we might need a way to stage a new room.
+                    // No room yet — stage a new DM so MessageBox renders the compose view
+                    const staged: StagedChatRoom = {
+                        _id: null,
+                        title: item.user.name || item.user.username || 'Chat',
+                        avatar: typeof item.user.avatar === 'string' ? item.user.avatar : null,
+                        messageType: 'USER',
+                        users: [currentUser._id!.toString(), item.user._id],
+                    };
+                    setSelectedChatRoom(staged);
                 }
             } catch {
                 // Handle error silently or via toast
@@ -172,7 +179,7 @@ function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void 
                     className="border-2 border-white shadow-sm"
                 />
                 {item.unreadMessages && item.unreadMessages > 0 ? (
-                    <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 flex items-center justify-center bg-green-600 text-white text-[10px] font-bold rounded-full px-1 shadow-sm ring-2 ring-white">
+                    <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 flex items-center justify-center bg-[#52b274] text-white text-[10px] font-bold rounded-full px-1 shadow-sm ring-2 ring-white">
                         {item.unreadMessages > 99 ? '99+' : item.unreadMessages}
                     </span>
                 ) : null}
@@ -191,7 +198,7 @@ function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void 
                     <div
                         className={cn(
                             "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-white shrink-0",
-                            itemType === 'USER' ? "bg-green-600" : "bg-blue-600" // map theme.palette.success/secondary
+                            itemType === 'USER' ? "bg-[#52b274]" : "bg-blue-600" // map theme.palette.success/secondary
                         )}
                     >
                         {itemType === 'USER' ? (

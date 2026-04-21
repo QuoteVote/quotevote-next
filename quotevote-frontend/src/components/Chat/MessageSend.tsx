@@ -24,6 +24,7 @@ export default function MessageSend({
   const user = useAppStore((state) => state.user.data);
   const chatUser = user as ChatUser | undefined;
   const setChatSubmitting = useAppStore((state) => state.setChatSubmitting);
+  const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
   const selectedRoom = useAppStore((state) => state.chat.selectedRoom) as
     | SelectedRoomState
     | string
@@ -122,7 +123,7 @@ export default function MessageSend({
       setError(null);
 
       if (!messageRoomId && data?.createMessage?.messageRoomId) {
-        // New room will be picked up via GET_CHAT_ROOMS refetch
+        setSelectedChatRoom(data.createMessage.messageRoomId);
       }
     },
     update: (cache, { data: mutationData }) => {
