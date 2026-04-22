@@ -192,7 +192,7 @@ function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void 
                         <PresenceIcon status={item.presence.status as PresenceStatus} />
                     ) : null}
 
-                    <TruncatedText text={itemText} className="font-medium text-sm text-gray-900 flex-1 min-w-0" />
+                    <TruncatedText text={itemText} className="font-medium text-sm text-foreground flex-1 min-w-0" />
 
                     {/* Chip/Badge */}
                     <div

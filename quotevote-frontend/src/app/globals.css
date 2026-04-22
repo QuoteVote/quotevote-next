@@ -45,88 +45,58 @@
 
   --radius: 0.625rem;
 
-  --background: oklch(0.98 0.002 250);
-
-  --foreground: oklch(0.145 0 0);
-
-  --card: oklch(1 0 0);
-
-  --card-foreground: oklch(0.145 0 0);
-
-  --popover: oklch(1 0 0);
-
-  --popover-foreground: oklch(0.145 0 0);
-
-  --primary: oklch(0.68 0.115 152);
-
-  --primary-foreground: oklch(1 0 0);
-
-  --secondary: oklch(0.97 0 0);
-
-  --secondary-foreground: oklch(0.205 0 0);
-
-  --muted: oklch(0.97 0 0);
-
-  --muted-foreground: oklch(0.556 0 0);
-
-  --accent: oklch(0.97 0 0);
-
-  --accent-foreground: oklch(0.205 0 0);
-
-  --destructive: oklch(0.577 0.245 27.325);
-
-  --border: oklch(0.922 0 0);
-
-  --input: oklch(0.922 0 0);
-
-  --ring: oklch(0.68 0.115 152);
-
-  --chart-1: oklch(0.646 0.222 41.116);
-
-  --chart-2: oklch(0.6 0.118 184.704);
-
-  --chart-3: oklch(0.398 0.07 227.392);
-
-  --chart-4: oklch(0.828 0.189 84.429);
-
-  --chart-5: oklch(0.769 0.188 70.08);
-
-  --sidebar: oklch(0.985 0 0);
-
-  --sidebar-foreground: oklch(0.145 0 0);
-
-  --sidebar-primary: oklch(0.68 0.115 152);
-
-  --sidebar-primary-foreground: oklch(1 0 0);
-
-  --sidebar-accent: oklch(0.97 0 0);
-
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-
-  --sidebar-border: oklch(0.922 0 0);
-
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #f0f2f5;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #52b274;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #F55145;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #52b274;
+  --chart-1: #52b274;
+  --chart-2: #00BCD4;
+  --chart-3: #FDD835;
+  --chart-4: #E36DFA;
+  --chart-5: #F16C99;
+  --sidebar: #FAFBFC;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #52b274;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f4f5;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #e4e4e7;
+  --sidebar-ring: #52b274;
 }
 
 /* Tailwind v4 @theme inline block exposes CSS variables as Tailwind utilities */
 /* Colors defined here reference the :root variables above */
 @theme inline {
-  /* Background Colors */
-  --color-background: #FAFBFC;
-  --color-foreground: #000000;
+  /* Background Colors – reference :root vars so dark mode cascade works */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-white: #ffffff;
-  --color-background-off-white: #FAFAFA;
+  --color-background-off-white: var(--card);
 
   /* Primary Brand Colors */
-  --color-primary: #52b274;
-  --color-primary-contrast: #ffffff;
+  --color-primary: var(--primary);
+  --color-primary-contrast: var(--primary-foreground);
   --color-secondary: #E91E63;
   --color-secondary-contrast: #ffffff;
 
-  /* Text Colors */
-  --color-text-primary: #000000;
-  --color-text-secondary: #424556;
-  --color-text-muted: #454545;
+  /* Text Colors – reference :root vars so dark mode cascade works */
+  --color-text-primary: var(--foreground);
+  --color-text-secondary: var(--muted-foreground);
+  --color-text-muted: var(--muted-foreground);
   --color-text-light: #999999;
 
   /* Activity Colors */
@@ -220,37 +190,67 @@ body {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* === shadcn/ui component variables – matched to monorepo dark palette === */
+  --background: #0B0E11;
+  --foreground: #F0F6FC;
+  --card: #15191E;
+  --card-foreground: #F0F6FC;
+  --popover: #15191E;
+  --popover-foreground: #F0F6FC;
+  --primary: #52b274;
+  --primary-foreground: #ffffff;
+  --secondary: #1E2329;
+  --secondary-foreground: #F0F6FC;
+  --muted: #1E2329;
+  --muted-foreground: #8B949E;
+  --accent: #1E2329;
+  --accent-foreground: #F0F6FC;
+  --destructive: #EF5350;
+  --border: rgba(240, 246, 252, 0.1);
+  --input: rgba(240, 246, 252, 0.15);
+  --ring: #52b274;
+  --chart-1: #52b274;
+  --chart-2: #29B6F6;
+  --chart-3: #FFD54F;
+  --chart-4: #E36DFA;
+  --chart-5: #F06292;
+  --sidebar: #15191E;
+  --sidebar-foreground: #F0F6FC;
+  --sidebar-primary: #52b274;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1E2329;
+  --sidebar-accent-foreground: #F0F6FC;
+  --sidebar-border: rgba(240, 246, 252, 0.1);
+  --sidebar-ring: #52b274;
+
+  /* === QuoteVote custom variables – dark overrides === */
+  --color-background: #0B0E11;
+  --color-background-off-white: #15191E;
+  --color-white: #15191E;
+  --color-foreground: #F0F6FC;
+  --color-text-primary: #F0F6FC;
+  --color-text-secondary: #8B949E;
+  --color-text-muted: #8B949E;
+  --color-text-light: #6E7681;
+
+  /* Activity card colors – dark variants from monorepo */
+  --color-quoted: #E36DFA;
+  --color-commented: #FFD54F;
+  --color-upvote: #66BB6A;
+  --color-downvote: #EF5350;
+  --color-hearted: #F06292;
+  --color-trending: #29B6F6;
+
+  /* Status colors – dark variants from monorepo */
+  --color-success: #66BB6A;
+  --color-warning: #FFA726;
+  --color-danger: #EF5350;
+  --color-info: #29B6F6;
+
+  /* Additional surface colors */
+  --color-gray-inactive: #606060;
+  --color-gray-light: #2A2A2A;
+  --color-black-card: #2D2D2D;
 }
 
 /* Smooth scrolling */

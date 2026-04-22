@@ -617,6 +617,7 @@ export const UPDATE_USER = gql`
       avatar
       admin
       accountStatus
+      themePreference
       created
       updated
     }

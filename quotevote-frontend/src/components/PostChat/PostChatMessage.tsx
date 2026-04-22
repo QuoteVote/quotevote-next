@@ -95,7 +95,7 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
             // Speech bubble arrow
             "before:absolute before:top-0 before:border-10 before:border-transparent before:content-['']",
             isDefaultDirection
-              ? 'bg-white text-gray-700 before:-left-2.5 before:border-t-white'
+              ? 'bg-card text-card-foreground before:-left-2.5 before:border-t-card'
               : 'bg-emerald-500 text-white before:-right-2.5 before:border-t-emerald-500'
           )}
         >

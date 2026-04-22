@@ -157,7 +157,7 @@ export default function PostChatReactions({
               className={cn(
                 'h-8 w-8',
                 isDefaultDirection
-                  ? 'text-gray-500 hover:text-gray-700'
+                  ? 'text-muted-foreground hover:text-foreground'
                   : 'text-white hover:text-white/80'
               )}
               onClick={(e) => {

@@ -37,5 +37,6 @@ export interface SettingsUserData {
   avatar?: UserAvatar | string
   admin?: boolean
   _followingId?: string[]
+  themePreference?: 'light' | 'dark'
   [key: string]: unknown
 }

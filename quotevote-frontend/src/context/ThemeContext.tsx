@@ -54,6 +54,15 @@ export function ThemeContextProvider({
     getInitialThemeMode()
   )
 
+  // Apply dark class to <html> whenever themeMode changes
+  useEffect(() => {
+    if (themeMode === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [themeMode])
+
   // Update theme when user logs in/out or user preference changes
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {

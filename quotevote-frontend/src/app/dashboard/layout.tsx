@@ -106,14 +106,14 @@ function IconBtn({
         'relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-150 cursor-pointer border-0',
         active
           ? 'bg-[#e8f5ee] text-[#52b274]'
-          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+          : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
       )}
     >
       {children}
       {!!badge && badge > 0 && (
         <span
           className={cn(
-            'absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-white text-[9px] font-bold leading-none shadow ring-2 ring-white',
+            'absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-white text-[9px] font-bold leading-none shadow ring-2 ring-background',
             badgeColor === 'green' ? 'bg-[#52b274]' : 'bg-red-500'
           )}
         >
@@ -189,7 +189,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5]">
+    <div className="min-h-screen bg-background">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[#52b274] focus:text-white focus:rounded-md focus:text-sm focus:font-medium focus:shadow-lg"
@@ -201,7 +201,7 @@ export default function DashboardLayout({
       {/* ════════════════════════════════════════════════════════════════
           DESKTOP NAVBAR
       ════════════════════════════════════════════════════════════════ */}
-      <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-white shadow-[0_2px_4px_rgba(0,0,0,0.10)] items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] items-center">
         <div className="flex h-full w-full items-center px-4 gap-2">
 
           {/* ── Left: Logo + Search ── */}
@@ -220,9 +220,9 @@ export default function DashboardLayout({
               </span>
             </Link>
             <Suspense fallback={
-              <div className="flex items-center gap-2 h-[38px] w-[220px] rounded-full px-3.5 bg-[#f0f2f5]">
-                <Search className="size-[15px] text-gray-400" />
-                <span className="text-[13px] text-gray-400">Search…</span>
+              <div className="flex items-center gap-2 h-[38px] w-[220px] rounded-full px-3.5 bg-muted">
+                <Search className="size-[15px] text-muted-foreground" />
+                <span className="text-[13px] text-muted-foreground">Search…</span>
               </div>
             }>
               <NavSearch />
@@ -274,7 +274,7 @@ export default function DashboardLayout({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 h-9 pl-1.5 pr-2.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-all duration-150 cursor-pointer border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 group"
+                    className="flex items-center gap-1.5 h-9 pl-1.5 pr-2.5 rounded-full bg-muted hover:bg-muted/70 transition-all duration-150 cursor-pointer border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 group"
                     aria-label="Account menu"
                   >
                     <DisplayAvatar
@@ -284,7 +284,7 @@ export default function DashboardLayout({
                       className="size-7 flex-shrink-0"
                     />
                     <span className="text-[13px] font-semibold text-[#52b274] max-w-[90px] truncate">{username}</span>
-                    <ChevronDown className="size-3.5 text-gray-500 transition-transform group-data-[state=open]:rotate-180" />
+                    <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={6} className="w-[300px] p-0 overflow-hidden rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
@@ -296,7 +296,7 @@ export default function DashboardLayout({
                         avatar={user?.avatar as string | Record<string, unknown> | undefined}
                         username={username || undefined}
                         size={64}
-                        className="size-16 -mt-8 ring-4 ring-white shadow-md"
+                        className="size-16 -mt-8 ring-4 ring-card shadow-md"
                       />
                       <p className="mt-1 text-[15px] font-bold text-[#52b274]">{username}</p>
                     </div>
@@ -304,8 +304,8 @@ export default function DashboardLayout({
                   <DropdownMenuSeparator className="m-0" />
                   <div className="p-1.5">
                     <DropdownMenuItem onClick={() => router.push('/dashboard/profile')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-                        <User className="size-4 text-gray-600" />
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                        <User className="size-4 text-muted-foreground" />
                       </div>
                       <div>
                         <p className="text-[13px] font-semibold">Your Profile</p>
@@ -313,8 +313,8 @@ export default function DashboardLayout({
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-                        <Settings2 className="size-4 text-gray-600" />
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                        <Settings2 className="size-4 text-muted-foreground" />
                       </div>
                       <div>
                         <p className="text-[13px] font-semibold">Settings & Privacy</p>
@@ -322,8 +322,8 @@ export default function DashboardLayout({
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/dashboard/manage-invites')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-                        <Mail className="size-4 text-gray-600" />
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                        <Mail className="size-4 text-muted-foreground" />
                       </div>
                       <div>
                         <p className="text-[13px] font-semibold">Manage Invites</p>
@@ -342,8 +342,8 @@ export default function DashboardLayout({
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator className="my-1" />
-                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3 focus:bg-red-50">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-50">
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3 focus:bg-destructive/10">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-destructive/10">
                         <LogOut className="size-4 text-red-500" />
                       </div>
                       <div>
@@ -362,7 +362,7 @@ export default function DashboardLayout({
       {/* ════════════════════════════════════════════════════════════════
           MOBILE TOP BAR
       ════════════════════════════════════════════════════════════════ */}
-      <header className="fixed top-0 left-0 right-0 z-50 md:hidden h-[56px] bg-white shadow-[0_2px_4px_rgba(0,0,0,0.08)] flex items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 md:hidden h-[56px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] flex items-center">
         <div className="flex h-full w-full items-center justify-between px-4">
           <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline">
             <Image
@@ -404,7 +404,7 @@ export default function DashboardLayout({
           MOBILE BOTTOM NAV
       ════════════════════════════════════════════════════════════════ */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden h-[56px] bg-white border-t border-gray-200 flex items-center"
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden h-[56px] bg-card border-t border-border flex items-center"
         aria-label="Mobile navigation"
       >
         {/* Home */}
@@ -412,7 +412,7 @@ export default function DashboardLayout({
           href="/dashboard/explore"
           className={cn(
             'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-            isActive('/dashboard/explore') ? 'text-[#52b274]' : 'text-gray-500'
+            isActive('/dashboard/explore') ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
           aria-label="Home"
         >
@@ -423,7 +423,7 @@ export default function DashboardLayout({
         {/* Search */}
         <Link
           href="/dashboard/explore"
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-gray-500 transition-colors duration-150"
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-muted-foreground transition-colors duration-150"
           aria-label="Search"
         >
           <Search className="size-[22px]" />
@@ -450,14 +450,14 @@ export default function DashboardLayout({
           href="/dashboard/notifications"
           className={cn(
             'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-            isActive('/dashboard/notifications') ? 'text-[#52b274]' : 'text-gray-500'
+            isActive('/dashboard/notifications') ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
           aria-label="Notifications"
         >
           <div className="relative">
             <Bell className="size-[22px]" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-white">
+              <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -470,7 +470,7 @@ export default function DashboardLayout({
           href="/dashboard/profile"
           className={cn(
             'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-            isActive('/dashboard/profile') ? 'text-[#52b274]' : 'text-gray-500'
+            isActive('/dashboard/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
           aria-label="Profile"
         >
@@ -481,7 +481,7 @@ export default function DashboardLayout({
               size={24}
               className={cn(
                 'size-6 transition-all',
-                isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-gray-300'
+                isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
               )}
             />
           ) : (

@@ -86,7 +86,7 @@ export default function NavSearch() {
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         placeholder="Search…"
-        className="bg-transparent text-[13px] text-gray-900 placeholder:text-gray-500 outline-none border-none w-full"
+        className="bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground outline-none border-none w-full"
       />
       {isDebouncePending ? (
         <Loader2 className="size-3.5 flex-shrink-0 animate-spin text-gray-400" />

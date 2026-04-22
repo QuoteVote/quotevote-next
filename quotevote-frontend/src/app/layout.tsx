@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { ApolloProviderWrapper } from "@/lib/apollo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthModalProvider } from "@/context/AuthModalContext";
+import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { Eyebrow } from "./components/Eyebrow/Eyebrow";
@@ -52,16 +53,26 @@ export default function RootLayout({
 }>): ReactNode {
   return (
     <html lang="en">
+      {/* Inline script runs before paint to prevent dark-mode flash */}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=localStorage.getItem('themeMode');if(m==='dark')document.documentElement.classList.add('dark');}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body
         className={cn(inter.variable, "font-sans antialiased")}
       >
         <ErrorBoundary>
           <ApolloProviderWrapper>
-            <AuthModalProvider>
-              <Eyebrow />
-              {children}
-              <Toaster position="top-right" richColors />
-            </AuthModalProvider>
+            <ThemeContextProvider>
+              <AuthModalProvider>
+                <Eyebrow />
+                {children}
+                <Toaster position="top-right" richColors />
+              </AuthModalProvider>
+            </ThemeContextProvider>
           </ApolloProviderWrapper>
         </ErrorBoundary>
       </body>
