@@ -76,26 +76,26 @@ function LoadPostsList({ data, onLoadMore, loading = false }: LoadPostsListProps
   }
 
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-4 px-4 py-4">
       {rankedPosts.map((post) => (
-        <div key={post._id} className="mb-[-25px]">
-          <PostCard
-            _id={post._id}
-            text={post.text || ''}
-            title={post.title || ''}
-            url={post.url || ''}
-            bookmarkedBy={post.bookmarkedBy || []}
-            approvedBy={post.approvedBy || []}
-            rejectedBy={post.rejectedBy || []}
-            created={post.created}
-            creator={post.creator || undefined}
-            votes={post.votes || []}
-            comments={post.comments || []}
-            quotes={post.quotes || []}
-            messageRoom={post.messageRoom || undefined}
-            groupId={post.groupId || undefined}
-          />
-        </div>
+        <PostCard
+          key={post._id}
+          _id={post._id}
+          text={post.text || ''}
+          title={post.title || ''}
+          url={post.url || ''}
+          bookmarkedBy={post.bookmarkedBy || []}
+          approvedBy={post.approvedBy || []}
+          rejectedBy={post.rejectedBy || []}
+          created={post.created}
+          creator={post.creator || undefined}
+          votes={post.votes || []}
+          comments={post.comments || []}
+          quotes={post.quotes || []}
+          messageRoom={post.messageRoom || undefined}
+          groupId={post.groupId || undefined}
+          citationUrl={post.citationUrl || undefined}
+        />
       ))}
       {hasMore && (
         <div ref={loadMoreRef} className="flex justify-center py-4">

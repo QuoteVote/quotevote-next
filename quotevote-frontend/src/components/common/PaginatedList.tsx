@@ -4,7 +4,6 @@ import type { PaginatedListProps } from '@/types/components';
 import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from './Pagination';
 import { StickyPaginationWrapper } from './StickyPaginationWrapper';
-import { Loader } from './Loader';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -138,18 +137,10 @@ export function PaginatedList<T = unknown>({
           children || data?.map((item, index) => renderItem?.(item, index))
         )}
 
-        {/* Show loading overlay when loading with existing data (page change) */}
+        {/* Subtle top-bar while re-fetching with existing results visible */}
         {loading && data && data.length > 0 && (
-          <div className="absolute top-0 left-0 right-0 bottom-0 bg-transparent flex justify-center items-center z-50 flex-col pb-48 pointer-events-none">
-            <div className="flex flex-col items-center bg-white p-8 rounded-xl shadow-lg border-2 border-[var(--color-primary)] relative z-50 min-w-[200px] pointer-events-auto">
-              <Loader size={50} />
-              <h3 className="mt-5 text-lg font-semibold text-[var(--color-primary)]">
-                Loading new page...
-              </h3>
-              <p className="mt-2 text-sm text-[#666] text-center">
-                Please wait while we fetch the latest posts
-              </p>
-            </div>
+          <div className="absolute top-0 left-0 right-0 h-0.5 z-20 bg-primary/20 overflow-hidden">
+            <div className="h-full bg-primary animate-pulse" />
           </div>
         )}
       </div>

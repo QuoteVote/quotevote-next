@@ -13,7 +13,6 @@ export const submitPostSchema = z.object({
   text: z
     .string()
     .min(1, 'Post content is required')
-    .max(10000, 'Post content should be less than 10000 characters')
     .refine(
       (value) => !containsUrl(value),
       {
@@ -36,25 +35,20 @@ export const submitPostSchema = z.object({
         title: z.string(),
       }),
       z.object({
-        title: z.string().min(1, 'Group name is required'),
+        title: z.string().min(1, 'Group name cannot be empty'),
       }),
-      z.string().min(1, 'Group selection is required'),
+      z.string().min(1, 'Please select or create a group'),
     ])
     .optional()
     .refine(
       (value) => {
         if (!value) return false
-        if (typeof value === 'string') {
-          return value.trim().length > 0
-        }
-        if (value && 'title' in value) {
-          return value.title.trim().length > 0
-        }
+        if (typeof value === 'string') return value.trim().length > 0
+        if (typeof value === 'object' && 'title' in value)
+          return (value as { title: string }).title.trim().length > 0
         return false
       },
-      {
-        message: 'Group selection is required',
-      }
+      { message: 'Please select or create a group' }
     ),
 })
 

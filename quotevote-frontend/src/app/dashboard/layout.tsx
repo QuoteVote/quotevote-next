@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -8,7 +8,7 @@ import { useQuery } from '@apollo/client/react';
 import {
   House,
   Search,
-  PlusSquare,
+  Plus,
   Bell,
   MessageSquare,
   User,
@@ -16,7 +16,9 @@ import {
   ShieldCheck,
   Mail,
   LogOut,
+  ChevronDown,
 } from 'lucide-react';
+
 
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store';
@@ -28,12 +30,11 @@ import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { useRosterManagement } from '@/hooks/useRosterManagement';
 import { RequestInviteDialog } from '@/components/RequestInviteDialog';
 import ChatContent from '@/components/Chat/ChatContent';
-import { GET_NOTIFICATIONS } from '@/graphql/queries';
+import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from '@/graphql/queries';
 import Avatar from '@/components/Avatar';
-import {
-  Sheet,
-  SheetContent,
-} from '@/components/ui/sheet';
+import type { ChatRoom } from '@/types/chat';
+import NavSearch from '@/components/Navbars/NavSearch';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -44,8 +45,6 @@ import {
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
 
-/* ------------------------------------------------------------------ */
-/*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
 const NAV_PAGES = [
@@ -59,8 +58,6 @@ const NAV_PAGES = [
 ] as const;
 
 /* ------------------------------------------------------------------ */
-/*  DashboardClient – mounts real-time hooks on the client             */
-/* ------------------------------------------------------------------ */
 
 function DashboardClient() {
   usePresenceHeartbeat();
@@ -69,22 +66,61 @@ function DashboardClient() {
   return null;
 }
 
-/* ------------------------------------------------------------------ */
-/*  ChatPanel – right-side chat sheet                                  */
-/* ------------------------------------------------------------------ */
-
 function ChatPanel() {
   const chatOpen = useAppStore((s) => s.chat.open);
   const setChatOpen = useAppStore((s) => s.setChatOpen);
-
   return (
     <Sheet open={chatOpen} onOpenChange={setChatOpen}>
       <SheetContent side="right" className="w-full sm:w-[400px] p-0">
-        <div className="h-full">
-          <ChatContent />
-        </div>
+        <div className="h-full"><ChatContent /></div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Icon button with badge                                             */
+/* ------------------------------------------------------------------ */
+
+function IconBtn({
+  label,
+  badge,
+  badgeColor = 'red',
+  active,
+  onClick,
+  children,
+}: {
+  label: string;
+  badge?: number;
+  badgeColor?: 'red' | 'green';
+  active?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={cn(
+        'relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-150 cursor-pointer border-0',
+        active
+          ? 'bg-[#e8f5ee] text-[#52b274]'
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+      )}
+    >
+      {children}
+      {!!badge && badge > 0 && (
+        <span
+          className={cn(
+            'absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-white text-[9px] font-bold leading-none shadow ring-2 ring-white',
+            badgeColor === 'green' ? 'bg-[#52b274]' : 'bg-red-500'
+          )}
+        >
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -103,7 +139,6 @@ export default function DashboardLayout({
   const setSelectedPage = useAppStore((s) => s.setSelectedPage);
   const setChatOpen = useAppStore((s) => s.setChatOpen);
   const chatOpen = useAppStore((s) => s.chat.open);
-
   const user = useAppStore((s) => s.user.data);
   const logout = useAppStore((s) => s.logout);
 
@@ -116,33 +151,37 @@ export default function DashboardLayout({
     (typeof user?.name === 'string' ? user.name : undefined) ||
     (typeof user?.username === 'string' ? user.username : undefined) ||
     'User';
+  const username =
+    (typeof user?.username === 'string' ? user.username : undefined) || '';
 
-  /* Notification badge count */
   const { data: notifData } = useQuery<{ notifications: Array<{ _id: string; status: string }> }>(
     GET_NOTIFICATIONS,
-    {
-      skip: !loggedIn,
-      fetchPolicy: 'cache-and-network',
-      pollInterval: 60000, // re-check every 60 seconds
-    }
+    { skip: !loggedIn, fetchPolicy: 'cache-and-network', pollInterval: 60000 }
   );
 
-  const unreadCount = useMemo(() => {
-    if (!notifData?.notifications) return 0;
-    return notifData.notifications.filter((n) => n.status === 'new').length;
-  }, [notifData]);
+  const { data: roomsData } = useQuery<{ messageRooms: ChatRoom[] }>(GET_CHAT_ROOMS, {
+    skip: !loggedIn,
+    fetchPolicy: 'cache-and-network',
+    pollInterval: 8000,
+  });
 
-  /* Helper: is a given path the active route? */
-  const isActive = (path: string) =>
-    pathname === path || pathname.startsWith(path + '/');
+  const unreadCount = useMemo(
+    () => notifData?.notifications?.filter((n) => n.status === 'new').length ?? 0,
+    [notifData]
+  );
 
-  /* Sync selected page with URL */
+  const unreadChat = useMemo(
+    () => roomsData?.messageRooms?.reduce((s, r) => s + (r.unreadMessages ?? 0), 0) ?? 0,
+    [roomsData]
+  );
+
+  const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
+
   useEffect(() => {
     const match = NAV_PAGES.find((l) => pathname.startsWith(l.path));
     setSelectedPage(match?.page || 'home');
   }, [pathname, setSelectedPage]);
 
-  /* Logout handler */
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       removeToken();
@@ -155,353 +194,320 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Skip to content link — visible only on keyboard focus */}
+    <div className="min-h-screen bg-[#f0f2f5]">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:text-sm focus:font-medium focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[#52b274] focus:text-white focus:rounded-md focus:text-sm focus:font-medium focus:shadow-lg"
       >
         Skip to content
       </a>
       <DashboardClient />
 
-      {/* ── Desktop top navbar (hidden on mobile) ── */}
-      <header className="fixed top-0 left-0 right-0 z-40 hidden md:block h-16 border-b border-border bg-card">
-        <div className="flex h-full items-center justify-between max-w-5xl mx-auto px-4">
-          {/* Left: Logo */}
-          <Link
-            href="/dashboard/explore"
-            className="flex items-center gap-2.5 no-underline flex-shrink-0"
-          >
-            <Image
-              src="/icons/android-chrome-192x192.png"
-              alt="Quote.Vote"
-              width={28}
-              height={28}
-              className="object-contain"
-              crossOrigin="anonymous"
-            />
-            <span className="text-lg font-semibold text-foreground">
-              Quote.Vote
-            </span>
-          </Link>
+      {/* ════════════════════════════════════════════════════════════════
+          DESKTOP NAVBAR
+      ════════════════════════════════════════════════════════════════ */}
+      <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-white shadow-[0_2px_4px_rgba(0,0,0,0.10)] items-center">
+        <div className="flex h-full w-full items-center px-4 gap-2">
 
-          {/* Right: Nav icons + avatar */}
-          <nav className="flex items-center gap-5">
-            {/* Home */}
-            <Link
-              href="/dashboard/explore"
-              className={cn(
-                'transition-colors',
-                isActive('/dashboard/explore')
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              aria-label="Home"
-            >
-              <House
-                className="size-6"
-                fill={isActive('/dashboard/explore') ? 'currentColor' : 'none'}
+          {/* ── Left: Logo + Search ── */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline flex-shrink-0">
+              <Image
+                src="/icons/android-chrome-192x192.png"
+                alt="Quote.Vote"
+                width={36}
+                height={36}
+                className="object-contain rounded-full"
+                crossOrigin="anonymous"
               />
+              <span className="hidden lg:block text-[20px] font-extrabold tracking-tight text-[#52b274] select-none">
+                Quote.Vote
+              </span>
             </Link>
+            <Suspense fallback={
+              <div className="flex items-center gap-2 h-[38px] w-[220px] rounded-full px-3.5 bg-[#f0f2f5]">
+                <Search className="size-[15px] text-gray-400" />
+                <span className="text-[13px] text-gray-400">Search…</span>
+              </div>
+            }>
+              <NavSearch />
+            </Suspense>
+          </div>
 
+          {/* ── Spacer ── */}
+          <div className="flex-1" />
+
+          {/* ── Right: Actions ── */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Create */}
             <button
               type="button"
               onClick={() => setSubmitDialogOpen(true)}
-              className={cn(
-                'transition-colors rounded-md border p-0.5 bg-transparent cursor-pointer',
-                submitDialogOpen
-                  ? 'text-foreground border-foreground'
-                  : 'text-muted-foreground border-muted-foreground/40 hover:text-foreground hover:border-foreground'
-              )}
-              aria-label="Create post"
+              className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#52b274] text-white text-[13px] font-semibold shadow-[0_2px_6px_rgba(82,178,116,0.40)] hover:bg-[#4a9e63] hover:shadow-[0_3px_10px_rgba(82,178,116,0.50)] active:scale-95 transition-all duration-150 cursor-pointer border-0 flex-shrink-0"
+              aria-label="Create new quote"
             >
-              <PlusSquare className="size-5" />
+              <Plus className="size-4" strokeWidth={2.5} />
+              <span>Create</span>
             </button>
 
             {/* Notifications */}
-            <Link
-              href="/dashboard/notifications"
-              className={cn(
-                'relative transition-colors',
-                isActive('/dashboard/notifications')
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
-            >
-              <Bell
-                className="size-6"
-                fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'}
-              />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
+            <Link href="/dashboard/notifications" className="outline-none" aria-label="Notifications">
+              <IconBtn
+                label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+                badge={unreadCount}
+                badgeColor="red"
+                active={isActive('/dashboard/notifications')}
+              >
+                <Bell className="size-5" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
+              </IconBtn>
             </Link>
 
-            {/* Chat toggle */}
-            <button
-              type="button"
+            {/* Messages */}
+            <IconBtn
+              label="Messages"
+              badge={unreadChat}
+              badgeColor="green"
+              active={chatOpen}
               onClick={() => setChatOpen(!chatOpen)}
-              className={cn(
-                'transition-colors bg-transparent border-0 cursor-pointer p-0',
-                chatOpen
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              aria-label="Messages"
             >
-              <MessageSquare
-                className="size-6"
-                fill={chatOpen ? 'currentColor' : 'none'}
-              />
-            </button>
+              <MessageSquare className="size-5" fill={chatOpen ? 'currentColor' : 'none'} />
+            </IconBtn>
 
-            {/* User avatar dropdown */}
+            {/* Avatar dropdown */}
             {loggedIn && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="rounded-full ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-transparent border-0 cursor-pointer p-0"
-                    aria-label="User menu"
+                    className="flex items-center gap-1.5 h-9 pl-1.5 pr-2.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-all duration-150 cursor-pointer border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 group"
+                    aria-label="Account menu"
                   >
-                    <Avatar
-                      src={avatar}
-                      alt={displayName}
-                      size="sm"
-                      className="size-8"
-                    />
+                    <Avatar src={avatar} alt={displayName} size="sm" className="size-7 flex-shrink-0" />
+                    <span className="text-[13px] font-semibold text-gray-800 max-w-[90px] truncate">{displayName}</span>
+                    <ChevronDown className="size-3.5 text-gray-500 transition-transform group-data-[state=open]:rotate-180" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-semibold">{displayName}</p>
-                    {typeof user?.email === 'string' && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {user.email}
-                      </p>
-                    )}
+                <DropdownMenuContent align="end" sideOffset={6} className="w-[300px] p-0 overflow-hidden rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+                  {/* Profile card header */}
+                  <div className="relative">
+                    <div className="h-14 bg-gradient-to-r from-[#52b274] to-[#3a9e5f]" />
+                    <div className="px-4 pb-3">
+                      <Avatar src={avatar} alt={displayName} size="sm" className="size-16 -mt-8 ring-4 ring-white shadow-md" />
+                      <p className="mt-1 text-[15px] font-bold text-gray-900">{displayName}</p>
+                      {username && <p className="text-[12px] text-gray-500">@{username}</p>}
+                    </div>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => router.push('/dashboard/profile')}
-                    className="cursor-pointer"
-                  >
-                    <User className="mr-2 size-4" />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push('/dashboard/settings')}
-                    className="cursor-pointer"
-                  >
-                    <Settings2 className="mr-2 size-4" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push('/dashboard/manage-invites')}
-                    className="cursor-pointer"
-                  >
-                    <Mail className="mr-2 size-4" />
-                    Manage Invites
-                  </DropdownMenuItem>
-                  {isAdmin && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => router.push('/dashboard/control-panel')}
-                        className="cursor-pointer"
-                      >
-                        <ShieldCheck className="mr-2 size-4" />
-                        Admin
+                  <DropdownMenuSeparator className="m-0" />
+                  <div className="p-1.5">
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/profile')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+                        <User className="size-4 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold">Your Profile</p>
+                        <p className="text-[11px] text-muted-foreground">View and edit profile</p>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+                        <Settings2 className="size-4 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold">Settings & Privacy</p>
+                        <p className="text-[11px] text-muted-foreground">Manage your account</p>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/manage-invites')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+                        <Mail className="size-4 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold">Manage Invites</p>
+                        <p className="text-[11px] text-muted-foreground">Invite friends to join</p>
+                      </div>
+                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem onClick={() => router.push('/dashboard/control-panel')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#e8f5ee]">
+                          <ShieldCheck className="size-4 text-[#52b274]" />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-semibold text-[#52b274]">Admin Panel</p>
+                          <p className="text-[11px] text-muted-foreground">Manage the platform</p>
+                        </div>
                       </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="cursor-pointer text-destructive focus:text-destructive"
-                  >
-                    <LogOut className="mr-2 size-4" />
-                    Sign out
-                  </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator className="my-1" />
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3 focus:bg-red-50">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-50">
+                        <LogOut className="size-4 text-red-500" />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold text-red-500">Sign out</p>
+                        <p className="text-[11px] text-muted-foreground">See you next time!</p>
+                      </div>
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-          </nav>
-        </div>
-      </header>
-
-      {/* ── Mobile top bar (hidden on desktop) ── */}
-      <header className="fixed top-0 left-0 right-0 z-40 md:hidden h-14 border-b border-border bg-card">
-        <div className="flex h-full items-center justify-between px-4">
-          {/* Left: Logo */}
-          <Link
-            href="/dashboard/explore"
-            className="flex items-center no-underline"
-          >
-            <Image
-              src="/icons/android-chrome-192x192.png"
-              alt="Quote.Vote"
-              width={28}
-              height={28}
-              className="object-contain"
-              crossOrigin="anonymous"
-            />
-          </Link>
-
-          {/* Right: Bell + Chat */}
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard/notifications"
-              className={cn(
-                'relative transition-colors',
-                isActive('/dashboard/notifications')
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
-            >
-              <Bell
-                className="size-6"
-                fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'}
-              />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </Link>
-            <button
-              type="button"
-              onClick={() => setChatOpen(!chatOpen)}
-              className={cn(
-                'transition-colors bg-transparent border-0 cursor-pointer p-0',
-                chatOpen
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              aria-label="Messages"
-            >
-              <MessageSquare
-                className="size-6"
-                fill={chatOpen ? 'currentColor' : 'none'}
-              />
-            </button>
           </div>
         </div>
       </header>
 
-      {/* ── Mobile bottom navigation bar (hidden on desktop) ── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden h-14 border-t border-border bg-card" aria-label="Mobile navigation">
-        <div className="flex h-full items-center justify-around">
-          {/* Home */}
-          <Link
-            href="/dashboard/explore"
-            className={cn(
-              'flex items-center justify-center flex-1 h-full transition-colors',
-              isActive('/dashboard/explore')
-                ? 'text-foreground'
-                : 'text-muted-foreground'
-            )}
-            aria-label="Home"
-          >
-            <House
-              className="size-6"
-              fill={isActive('/dashboard/explore') ? 'currentColor' : 'none'}
+      {/* ════════════════════════════════════════════════════════════════
+          MOBILE TOP BAR
+      ════════════════════════════════════════════════════════════════ */}
+      <header className="fixed top-0 left-0 right-0 z-50 md:hidden h-[56px] bg-white shadow-[0_2px_4px_rgba(0,0,0,0.08)] flex items-center">
+        <div className="flex h-full w-full items-center justify-between px-4">
+          <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline">
+            <Image
+              src="/icons/android-chrome-192x192.png"
+              alt="Quote.Vote"
+              width={32}
+              height={32}
+              className="object-contain rounded-full"
+              crossOrigin="anonymous"
             />
+            <span className="text-[18px] font-extrabold tracking-tight text-[#52b274]">Quote.Vote</span>
           </Link>
 
-          {/* Search */}
-          <Link
-            href="/dashboard/explore"
-            className={cn(
-              'flex items-center justify-center flex-1 h-full transition-colors',
-              'text-muted-foreground'
-            )}
-            aria-label="Search"
-          >
-            <Search className="size-6" />
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <Link href="/dashboard/notifications" className="outline-none">
+              <IconBtn
+                label="Notifications"
+                badge={unreadCount}
+                badgeColor="red"
+                active={isActive('/dashboard/notifications')}
+              >
+                <Bell className="size-5" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
+              </IconBtn>
+            </Link>
+            <IconBtn
+              label="Messages"
+              badge={unreadChat}
+              badgeColor="green"
+              active={chatOpen}
+              onClick={() => setChatOpen(!chatOpen)}
+            >
+              <MessageSquare className="size-5" fill={chatOpen ? 'currentColor' : 'none'} />
+            </IconBtn>
+          </div>
+        </div>
+      </header>
 
-          {/* Create */}
-          <button
-            type="button"
-            onClick={() => setSubmitDialogOpen(true)}
-            className={cn(
-              'flex items-center justify-center flex-1 h-full transition-colors bg-transparent border-0 cursor-pointer',
-              submitDialogOpen ? 'text-foreground' : 'text-muted-foreground'
-            )}
-            aria-label="Create post"
-          >
-            <PlusSquare className="size-6" />
-          </button>
+      {/* ════════════════════════════════════════════════════════════════
+          MOBILE BOTTOM NAV
+      ════════════════════════════════════════════════════════════════ */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden h-[56px] bg-white border-t border-gray-200 flex items-center"
+        aria-label="Mobile navigation"
+      >
+        {/* Home */}
+        <Link
+          href="/dashboard/explore"
+          className={cn(
+            'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
+            isActive('/dashboard/explore') ? 'text-[#52b274]' : 'text-gray-500'
+          )}
+          aria-label="Home"
+        >
+          <House className="size-[22px]" fill={isActive('/dashboard/explore') ? 'currentColor' : 'none'} />
+          <span className="text-[10px] font-semibold">Home</span>
+        </Link>
 
-          {/* Notifications */}
-          <Link
-            href="/dashboard/notifications"
-            className={cn(
-              'relative flex items-center justify-center flex-1 h-full transition-colors',
-              isActive('/dashboard/notifications')
-                ? 'text-foreground'
-                : 'text-muted-foreground'
-            )}
-            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
-          >
-            <Bell
-              className="size-6"
-              fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'}
-            />
+        {/* Search */}
+        <Link
+          href="/dashboard/explore"
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-gray-500 transition-colors duration-150"
+          aria-label="Search"
+        >
+          <Search className="size-[22px]" />
+          <span className="text-[10px] font-semibold">Search</span>
+        </Link>
+
+        {/* Create — floating green circle */}
+        <button
+          type="button"
+          onClick={() => setSubmitDialogOpen(true)}
+          className="flex flex-col items-center justify-center flex-1 h-full cursor-pointer border-0 bg-transparent"
+          aria-label="Create"
+        >
+          <div className={cn(
+            'flex items-center justify-center w-12 h-12 rounded-full -mt-5 shadow-[0_4px_14px_rgba(82,178,116,0.50)] transition-all duration-150',
+            submitDialogOpen ? 'bg-[#4a9e63] scale-95' : 'bg-[#52b274] hover:bg-[#4a9e63] active:scale-90'
+          )}>
+            <Plus className="size-6 text-white" strokeWidth={2.5} />
+          </div>
+        </button>
+
+        {/* Notifications */}
+        <Link
+          href="/dashboard/notifications"
+          className={cn(
+            'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
+            isActive('/dashboard/notifications') ? 'text-[#52b274]' : 'text-gray-500'
+          )}
+          aria-label="Notifications"
+        >
+          <div className="relative">
+            <Bell className="size-[22px]" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 left-1/2 ml-2 flex items-center justify-center min-w-[16px] h-[16px] px-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold leading-none">
-                {unreadCount > 99 ? '99+' : unreadCount}
+              <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
-          </Link>
+          </div>
+          <span className="text-[10px] font-semibold">Activity</span>
+        </Link>
 
-          {/* Profile (avatar circle) */}
-          <Link
-            href="/dashboard/profile"
-            className={cn(
-              'flex items-center justify-center flex-1 h-full transition-colors',
-              isActive('/dashboard/profile')
-                ? 'text-foreground'
-                : 'text-muted-foreground'
-            )}
-            aria-label="Profile"
-          >
-            {loggedIn ? (
-              <Avatar
-                src={avatar}
-                alt={displayName}
-                size="sm"
-                className={cn(
-                  'size-7',
-                  isActive('/dashboard/profile') && 'ring-2 ring-foreground'
-                )}
-              />
-            ) : (
-              <User className="size-6" />
-            )}
-          </Link>
-        </div>
+        {/* Profile */}
+        <Link
+          href="/dashboard/profile"
+          className={cn(
+            'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
+            isActive('/dashboard/profile') ? 'text-[#52b274]' : 'text-gray-500'
+          )}
+          aria-label="Profile"
+        >
+          {loggedIn ? (
+            <Avatar
+              src={avatar}
+              alt={displayName}
+              size="sm"
+              className={cn(
+                'size-6 transition-all',
+                isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-gray-300'
+              )}
+            />
+          ) : (
+            <User className="size-[22px]" />
+          )}
+          <span className="text-[10px] font-semibold">Profile</span>
+        </Link>
       </nav>
 
-      {/* ── Main content ── */}
-      <main id="main-content" className="min-h-screen pt-14 md:pt-16 pb-16 md:pb-0">
-        <div className="mx-auto px-4" style={{ maxWidth: pathname.startsWith('/dashboard/explore') ? 'none' : '42rem' }}>
+      {/* ════════════════════════════════════════════════════════════════
+          MAIN CONTENT
+      ════════════════════════════════════════════════════════════════ */}
+      <main id="main-content" className="min-h-screen pt-[56px] md:pt-[60px] pb-[60px] md:pb-0">
+        <div
+          className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12')}
+          style={{
+            maxWidth: pathname.startsWith('/dashboard/explore')
+              ? 'none'
+              : pathname.startsWith('/dashboard/post/')
+                ? '1170px'
+                : '42rem',
+          }}
+        >
           {children}
         </div>
       </main>
 
-      {/* ── Overlays ── */}
       <ChatPanel />
       <RequestInviteDialog open={isModalOpen} onClose={closeAuthModal} />
 
-      {/* Create Quote Dialog */}
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <DialogContent className="max-w-md p-0" showCloseButton={false}>
           <SubmitPost setOpen={setSubmitDialogOpen} />

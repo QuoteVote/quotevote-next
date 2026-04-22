@@ -220,7 +220,7 @@ describe('ChatList', () => {
 
     await waitFor(() => {
       const roomButton = screen.getByText('Jane Doe').closest('button')
-      expect(roomButton?.className).toContain('border-emerald-500')
+      expect(roomButton?.className).toContain('border-[#52b274]')
     })
   })
 

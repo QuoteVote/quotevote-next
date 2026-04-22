@@ -193,11 +193,6 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* Accessibility: Focus styles for keyboard navigation */
-*:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
 
 /* Screen reader only class */
 .sr-only {
@@ -309,8 +304,10 @@ p { line-height: 1.625; }
 }
 
 /* Focus-visible outlines for keyboard navigation */
-*:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: 2px;
+@layer base {
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }

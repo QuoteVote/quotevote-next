@@ -434,6 +434,15 @@ export const DELETE_MESSAGE = gql`
   }
 `
 
+export const READ_MESSAGES = gql`
+  mutation updateMessageReadBy($messageRoomId: String!) {
+    updateMessageReadBy(messageRoomId: $messageRoomId) {
+      messageRoomId
+      readBy
+    }
+  }
+`
+
 /**
  * Add message reaction mutation
  * Used by PostChatReactions component

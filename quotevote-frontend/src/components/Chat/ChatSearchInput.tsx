@@ -83,16 +83,16 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
         onSubmit={handleSubmit}
         className={cn(
           'flex items-center rounded-xl border bg-muted/50 px-2 py-1.5 text-sm shadow-sm transition-all',
-          'focus-within:border-emerald-500 focus-within:bg-background focus-within:ring-2 focus-within:ring-emerald-500/20',
+          'focus-within:border-[#52b274] focus-within:bg-background focus-within:ring-2 focus-within:ring-[#52b274]/20',
           addBuddyMode &&
-          'border-emerald-500 bg-background ring-2 ring-emerald-500/15'
+          'border-[#52b274] bg-background ring-2 ring-[#52b274]/15'
         )}
       >
         {addBuddyMode && (
           <button
             type="button"
             onClick={toggleAddMode}
-            className="mr-1 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-900"
+            className="mr-1 inline-flex items-center gap-1 rounded-md bg-[#52b274]/10 px-2 py-0.5 text-[11px] font-semibold text-[#4a9e63] hover:bg-[#52b274]/20 dark:bg-[#52b274]/20 dark:text-[#52b274] dark:hover:bg-[#52b274]/30"
           >
             <UserPlus className="h-3.5 w-3.5" />
             <span>Add Buddy</span>
@@ -103,7 +103,7 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
           <button
             type="button"
             onClick={toggleAddMode}
-            className="mr-1 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-900"
+            className="mr-1 inline-flex items-center gap-1 rounded-md bg-[#52b274]/10 px-2 py-0.5 text-[11px] font-semibold text-[#4a9e63] hover:bg-[#52b274]/20 dark:bg-[#52b274]/20 dark:text-[#52b274] dark:hover:bg-[#52b274]/30"
             aria-label="add buddy mode"
           >
             <UserPlus className="h-3.5 w-3.5" />
@@ -113,7 +113,7 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
         <Search
           className={cn(
             'mr-1 h-4 w-4 flex-shrink-0 text-muted-foreground',
-            addBuddyMode && 'text-emerald-500'
+            addBuddyMode && 'text-[#52b274]'
           )}
         />
 

@@ -1,192 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import { useQuery, useMutation, useSubscription } from '@apollo/client/react'
-import { MessageCircle, MessagesSquare, WifiOff } from 'lucide-react'
+import { useQuery, useSubscription } from '@apollo/client/react'
+import { WifiOff } from 'lucide-react'
 import PostController from '@/components/Post/PostController'
-import { LatestQuotes } from '@/components/Quotes/LatestQuotes'
-import CommentList from '@/components/Comment/CommentList'
-import CommentInput from '@/components/Comment/CommentInput'
-import PostChatMessage from '@/components/PostChat/PostChatMessage'
+import PostActionList from '@/components/PostActions/PostActionList'
 import PostChatSend from '@/components/PostChat/PostChatSend'
 import SwipeDrawer from '@/components/SwipeDrawer/SwipeDrawer'
 import { useIsMobile, useIsLandscapeMobile } from '@/hooks/useMediaQuery'
+import { MessagesSquare } from 'lucide-react'
 import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
-import { CREATE_POST_MESSAGE_ROOM } from '@/graphql/mutations'
+import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { PostQueryData } from '@/types/post'
-import type { CommentData } from '@/types/comment'
-import type { PostChatMessageData } from '@/types/postChat'
-
-interface CreatePostMessageRoomData {
-  createPostMessageRoom: {
-    _id: string
-    users?: string[]
-    messageType?: string
-    created?: string
-    title?: string
-    avatar?: string
-  }
-}
-
-export default function PostDetailPage(): React.ReactNode {
-  const params = useParams<{ postId: string }>()
-  const postId = params?.postId
-
-  if (!postId) {
-    return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <p className="text-muted-foreground">Post not found</p>
-      </div>
-    )
-  }
-
-  return <PostLayout postId={postId} />
-}
-
-function PostLayout({ postId }: { postId: string }) {
-  const isLandscape = useIsLandscapeMobile()
-
-  if (isLandscape) {
-    return (
-      <div className="flex h-[100dvh] overflow-hidden">
-        {/* Left: Post content + Comments */}
-        <div className="flex-1 overflow-y-auto border-r border-border">
-          <div className="border-b border-border">
-            <PostController postId={postId} />
-          </div>
-          <CommentsSection postId={postId} />
-        </div>
-        {/* Right: Discussion */}
-        <div className="w-[45%] flex flex-col overflow-hidden">
-          <div className="px-3 py-2 border-b border-border bg-background flex items-center gap-1.5">
-            <MessagesSquare className="size-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Discussion</span>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <DiscussionSection postId={postId} />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="max-w-3xl mx-auto">
-      {/* Post content */}
-      <div className="border-b border-border">
-        <PostController postId={postId} />
-      </div>
-
-      {/* Tabs: Comments + Discussion */}
-      <PostTabs postId={postId} />
-
-      {/* Sidebar quotes on wider screens */}
-      <div className="hidden xl:block fixed right-8 top-24 w-72">
-        <LatestQuotes limit={5} />
-      </div>
-    </div>
-  )
-}
-
-function PostTabs({ postId }: { postId: string }) {
-  const isMobile = useIsMobile()
-
-  return (
-    <>
-      <Tabs defaultValue="comments" className="w-full">
-        <TabsList
-          variant="line"
-          className="w-full justify-start bg-transparent p-0 rounded-none border-b border-border h-auto"
-        >
-          <TabsTrigger
-            value="comments"
-            className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
-              data-[state=active]:text-foreground data-[state=active]:shadow-none
-              data-[state=active]:border-b-2 data-[state=active]:border-primary
-              hover:bg-muted/30 transition-colors"
-          >
-            <MessageCircle className="size-4" />
-            Comments
-          </TabsTrigger>
-          {/* On mobile, Discussion lives in the swipe drawer — hide tab */}
-          {!isMobile && (
-            <TabsTrigger
-              value="discussion"
-              className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
-                data-[state=active]:text-foreground data-[state=active]:shadow-none
-                data-[state=active]:border-b-2 data-[state=active]:border-primary
-                hover:bg-muted/30 transition-colors"
-            >
-              <MessagesSquare className="size-4" />
-              Discussion
-            </TabsTrigger>
-          )}
-        </TabsList>
-        <TabsContent value="comments" className="mt-0">
-          <CommentsSection postId={postId} />
-        </TabsContent>
-        {!isMobile && (
-          <TabsContent value="discussion" className="mt-0">
-            <DiscussionSection postId={postId} />
-          </TabsContent>
-        )}
-      </Tabs>
-
-      {/* Mobile: Swipe-up drawer for Discussion */}
-      {isMobile && (
-        <SwipeDrawer title="Discussion">
-          <DiscussionSection postId={postId} />
-        </SwipeDrawer>
-      )}
-    </>
-  )
-}
-
-function CommentsSection({ postId }: { postId: string }) {
-  const { loading, data } = useQuery<PostQueryData>(GET_POST, {
-    variables: { postId },
-    fetchPolicy: 'cache-first',
-  })
-  const post = data?.post
-
-  const comments: CommentData[] = (post?.comments || []).map((c) => ({
-    _id: c._id,
-    userId: c.userId,
-    content: c.content || '',
-    created: c.created,
-    user: {
-      _id: c.user?._id,
-      username: c.user?.username || '',
-      name: c.user?.name || undefined,
-      avatar: c.user?.avatar || '',
-    },
-    startWordIndex: c.startWordIndex,
-    endWordIndex: c.endWordIndex,
-    postId: c.postId,
-    url: c.url,
-    reaction: c.reaction,
-  }))
-
-  return (
-    <div className="divide-y divide-border">
-      {/* Comment input — sticky */}
-      <div className="p-4 bg-background">
-        <CommentInput actionId={postId} />
-      </div>
-      {/* Comments list */}
-      <div className="p-4">
-        <CommentList
-          comments={comments}
-          loading={loading}
-          postUrl={post?.url ?? undefined}
-        />
-      </div>
-    </div>
-  )
-}
+import type { PostAction, VoteAction, CommentAction, QuoteAction, MessageAction } from '@/types/postActions'
 
 interface RoomMessagesData {
   messages: Array<{
@@ -207,122 +35,201 @@ interface RoomMessagesData {
   }>
 }
 
-function DiscussionSection({ postId }: { postId: string }) {
-  const [roomId, setRoomId] = useState<string | null>(null)
-  const [wsDisconnected, setWsDisconnected] = useState(false)
+export default function PostDetailPage(): React.ReactNode {
+  const params = useParams<{ postId: string }>()
+  const postId = params?.postId
 
-  const { data: postData } = useQuery<PostQueryData>(GET_POST, {
-    variables: { postId },
-    fetchPolicy: 'cache-first',
-  })
-  const postTitle = postData?.post?.title
-
-  const [createRoom] = useMutation<CreatePostMessageRoomData>(CREATE_POST_MESSAGE_ROOM, {
-    variables: { postId },
-    onCompleted: (data) => {
-      const room = data?.createPostMessageRoom
-      if (room?._id) {
-        setRoomId(room._id)
-      }
-    },
-  })
-
-  useEffect(() => {
-    createRoom()
-  }, [createRoom])
-
-  const { data: messagesData, loading, refetch } = useQuery<RoomMessagesData>(
-    GET_ROOM_MESSAGES,
-    {
-      variables: { messageRoomId: roomId },
-      skip: !roomId,
-      fetchPolicy: 'cache-and-network',
-    }
-  )
-
-  // Subscribe to new messages for real-time updates
-  useSubscription(NEW_MESSAGE_SUBSCRIPTION, {
-    variables: { messageRoomId: roomId },
-    skip: !roomId,
-    onData: () => {
-      if (wsDisconnected) {
-        setWsDisconnected(false)
-      }
-      refetch()
-    },
-    onError: () => {
-      setWsDisconnected(true)
-    },
-  })
-
-  // Auto-refetch when reconnected
-  useEffect(() => {
-    if (!wsDisconnected || !roomId) return
-
-    const interval = setInterval(() => {
-      refetch().then(() => {
-        setWsDisconnected(false)
-        clearInterval(interval)
-      }).catch(() => {
-        // still disconnected
-      })
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [wsDisconnected, roomId, refetch])
-
-  const rawMessages = messagesData?.messages || []
-
-  const messages: PostChatMessageData[] = rawMessages.map((msg) => ({
-    _id: msg._id,
-    userId: msg.userId,
-    text: msg.text || '',
-    created: msg.created,
-    user: {
-      name: msg.user?.name || msg.userName || 'Unknown',
-      username: msg.user?.username || msg.userName || 'unknown',
-      avatar: msg.user?.avatar,
-    },
-  }))
-
-  if (!roomId) {
+  if (!postId) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading discussion...</span>
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <p className="text-muted-foreground">Post not found</p>
       </div>
     )
   }
 
+  return <PostLayout postId={postId} />
+}
+
+function PostLayout({ postId }: { postId: string }) {
+  const isMobile = useIsMobile()
+  const isLandscape = useIsLandscapeMobile()
+
+  if (isMobile && !isLandscape) {
+    return (
+      <div className="h-[100dvh] overflow-hidden relative">
+        <div className="h-full overflow-y-auto pb-16">
+          <PostController postId={postId} />
+        </div>
+        <SwipeDrawer title="Open Discussion">
+          <InteractionSection postId={postId} />
+        </SwipeDrawer>
+      </div>
+    )
+  }
+
+  const containerHeight = isLandscape ? 'h-[calc(100vh-80px)]' : 'h-[85vh]'
   return (
-    <div>
-      {/* WebSocket disconnection banner */}
+    <div className={`flex ${containerHeight} overflow-hidden`}>
+      {/* Left: Post content */}
+      <div className="flex-1 overflow-y-auto border-r border-border">
+        <PostController postId={postId} />
+      </div>
+      {/* Right: Unified discussion feed */}
+      <div className="w-[50%] flex flex-col overflow-hidden">
+        <InteractionSection postId={postId} />
+      </div>
+    </div>
+  )
+}
+
+function InteractionSection({ postId }: { postId: string }) {
+  const [wsDisconnected, setWsDisconnected] = useState(false)
+
+  const { loading: postLoading, data: postData, refetch: refetchPost } = useQuery<PostQueryData>(
+    GET_POST,
+    { variables: { postId }, fetchPolicy: 'cache-first' }
+  )
+
+  const post = postData?.post
+  const messageRoomId = post?.messageRoom?._id
+  const postTitle = post?.title
+  const postUrl = post?.url ? toAppPostUrl(post.url) : undefined
+
+  const { data: messagesData, refetch: refetchMessages } = useQuery<RoomMessagesData>(
+    GET_ROOM_MESSAGES,
+    {
+      variables: { messageRoomId },
+      skip: !messageRoomId,
+      fetchPolicy: 'cache-and-network',
+    }
+  )
+
+  useSubscription(NEW_MESSAGE_SUBSCRIPTION, {
+    variables: { messageRoomId },
+    skip: !messageRoomId,
+    onData: () => {
+      if (wsDisconnected) setWsDisconnected(false)
+      refetchMessages()
+    },
+    onError: () => setWsDisconnected(true),
+  })
+
+  useEffect(() => {
+    if (!wsDisconnected || !messageRoomId) return
+    const interval = setInterval(() => {
+      refetchMessages()
+        .then(() => { setWsDisconnected(false); clearInterval(interval) })
+        .catch(() => {})
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [wsDisconnected, messageRoomId, refetchMessages])
+
+  const postActions = useMemo<PostAction[]>(() => {
+    const actions: PostAction[] = []
+    const comments = post?.comments || []
+    const votes = post?.votes || []
+    const quotes = post?.quotes || []
+    const messages = messagesData?.messages || []
+
+    for (const c of comments) {
+      actions.push({
+        ...c,
+        __typename: 'Comment',
+        content: c.content || '',
+        created: c.created,
+        user: {
+          _id: c.user?._id || '',
+          username: c.user?.username || '',
+          name: c.user?.name ?? null,
+          avatar: c.user?.avatar ?? null,
+        },
+        commentQuote:
+          c.endWordIndex != null && c.startWordIndex != null && c.endWordIndex > c.startWordIndex
+            ? post?.text?.substring(c.startWordIndex, c.endWordIndex)?.replace(/(\r\n|\n|\r)/gm, '') ?? null
+            : null,
+      } as CommentAction)
+    }
+
+    for (const v of votes) {
+      actions.push({
+        ...v,
+        __typename: 'Vote',
+        created: v.created ?? new Date().toISOString(),
+        user: {
+          _id: v.user?._id || '',
+          username: v.user?.username || '',
+          name: v.user?.name ?? null,
+          avatar: v.user?.avatar ?? null,
+        },
+      } as VoteAction)
+    }
+
+    for (const q of quotes) {
+      actions.push({
+        ...q,
+        __typename: 'Quote',
+        created: q.created ?? new Date().toISOString(),
+        user: {
+          _id: q.user?._id || '',
+          username: q.user?.username || '',
+          name: q.user?.name ?? null,
+          avatar: q.user?.avatar ?? null,
+        },
+      } as QuoteAction)
+    }
+
+    for (const msg of messages) {
+      actions.push({
+        _id: msg._id,
+        __typename: 'Message',
+        text: msg.text || '',
+        created: msg.created,
+        userId: msg.userId,
+        content: msg.text || '',
+        user: {
+          _id: msg.user?._id || '',
+          username: msg.user?.username || msg.userName || '',
+          name: msg.user?.name ?? msg.userName ?? null,
+          avatar: msg.user?.avatar ?? null,
+        },
+      } as MessageAction)
+    }
+
+    return actions
+  }, [post, messagesData])
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Panel header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background shrink-0">
+        <MessagesSquare className="size-4 text-muted-foreground/50" />
+        <span className="text-sm font-semibold text-foreground/75">Open Discussion</span>
+        {postActions.length > 0 && (
+          <span className="ml-auto text-[11px] text-muted-foreground/50 bg-muted/50 px-2 py-0.5 rounded-full tabular-nums">
+            {postActions.length}
+          </span>
+        )}
+      </div>
+
       {wsDisconnected && (
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/50 dark:border-amber-800/30 text-amber-700 dark:text-amber-400 text-xs">
           <WifiOff className="size-3.5 flex-shrink-0" />
           <span>Live updates paused. Reconnecting...</span>
         </div>
       )}
-      <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
-        {loading && messages.length === 0 && (
-          <div className="flex items-center justify-center py-16">
-            <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-        {messages.length === 0 && !loading && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <MessagesSquare className="size-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground">No messages yet. Start the discussion!</p>
-          </div>
-        )}
-        {messages.map((msg) => (
-          <div key={msg._id} className="px-4 py-3">
-            <PostChatMessage message={msg} />
-          </div>
-        ))}
+      <div className="flex-1 overflow-y-auto">
+        <PostActionList
+          postActions={postActions}
+          loading={postLoading}
+          postUrl={postUrl ?? undefined}
+          refetchPost={() => refetchPost()}
+        />
       </div>
-      <div className="border-t border-border p-4 bg-background">
-        <PostChatSend messageRoomId={roomId} title={postTitle ?? undefined} postId={postId} />
-      </div>
+      {messageRoomId && (
+        <div className="border-t border-border px-4 py-3 bg-background shrink-0">
+          <PostChatSend messageRoomId={messageRoomId} title={postTitle ?? undefined} postId={postId} />
+        </div>
+      )}
     </div>
   )
 }

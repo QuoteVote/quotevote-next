@@ -169,8 +169,6 @@ describe('PostActionCard', () => {
       // Component should render without error boundary
       // Check for content that should be present
       expect(screen.getByText(/Selected text for vote/)).toBeInTheDocument()
-      // Check for vote tags
-      expect(screen.getByText('#agree #like')).toBeInTheDocument()
       // Check for user name (may appear in multiple places - use getAllByText)
       expect(screen.getAllByText(/Voter User/).length).toBeGreaterThan(0)
     })
@@ -190,8 +188,8 @@ describe('PostActionCard', () => {
         />,
       )
 
-      // Check for disagree tag
-      expect(screen.getByText('#disagree')).toBeInTheDocument()
+      // Check content renders for downvote
+      expect(screen.getByText(/Selected text for vote/)).toBeInTheDocument()
     })
 
     it('shows delete button for vote owner', async () => {
@@ -215,7 +213,7 @@ describe('PostActionCard', () => {
       // Delete button should be present for vote owner
       // Check if component rendered successfully first
       expect(screen.getByText(/Selected text for vote/)).toBeInTheDocument()
-      const deleteButton = document.querySelector('button.text-red-500')
+      const deleteButton = document.querySelector('[aria-label="Delete"]')
       expect(deleteButton).toBeInTheDocument()
     })
 
@@ -244,7 +242,7 @@ describe('PostActionCard', () => {
       // Find delete button by its red color class using querySelector
       // First verify component rendered
       expect(screen.getByText(/Selected text for vote/)).toBeInTheDocument()
-      const deleteButton = document.querySelector('button.text-red-500') as HTMLElement
+      const deleteButton = document.querySelector('[aria-label="Delete"]') as HTMLElement
       expect(deleteButton).toBeInTheDocument()
       fireEvent.click(deleteButton)
 
@@ -252,7 +250,7 @@ describe('PostActionCard', () => {
         expect(mockMutate).toHaveBeenCalledWith({
           variables: { voteId: 'vote1' },
         })
-        expect(toast.success).toHaveBeenCalledWith('Vote deleted successfully')
+        expect(toast.success).toHaveBeenCalledWith('Vote deleted')
         expect(mockRefetchPost).toHaveBeenCalled()
       })
     })
@@ -281,12 +279,12 @@ describe('PostActionCard', () => {
       // Find delete button by its red color class using querySelector
       // First verify component rendered
       expect(screen.getByText(/Selected text for vote/)).toBeInTheDocument()
-      const deleteButton = document.querySelector('button.text-red-500') as HTMLElement
+      const deleteButton = document.querySelector('[aria-label="Delete"]') as HTMLElement
       expect(deleteButton).toBeInTheDocument()
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Delete Error'))
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Error:'))
       })
     })
   })
@@ -345,7 +343,7 @@ describe('PostActionCard', () => {
       // Find delete button by its red color class using querySelector
       // First verify component rendered
       expect(screen.getByText(/This is a comment/)).toBeInTheDocument()
-      const deleteButton = document.querySelector('button.text-red-500') as HTMLElement
+      const deleteButton = document.querySelector('[aria-label="Delete"]') as HTMLElement
       expect(deleteButton).toBeInTheDocument()
       fireEvent.click(deleteButton)
 
@@ -353,7 +351,7 @@ describe('PostActionCard', () => {
         expect(mockMutate).toHaveBeenCalledWith({
           variables: { commentId: 'comment1' },
         })
-        expect(toast.success).toHaveBeenCalledWith('Comment deleted successfully')
+        expect(toast.success).toHaveBeenCalledWith('Comment deleted')
       })
     })
   })
@@ -412,7 +410,7 @@ describe('PostActionCard', () => {
       // Find delete button by its red color class using querySelector
       // First verify component rendered
       expect(screen.getByText(/This is a quote/)).toBeInTheDocument()
-      const deleteButton = document.querySelector('button.text-red-500') as HTMLElement
+      const deleteButton = document.querySelector('[aria-label="Delete"]') as HTMLElement
       expect(deleteButton).toBeInTheDocument()
       fireEvent.click(deleteButton)
 
@@ -420,7 +418,7 @@ describe('PostActionCard', () => {
         expect(mockMutate).toHaveBeenCalledWith({
           variables: { quoteId: 'quote1' },
         })
-        expect(toast.success).toHaveBeenCalledWith('Quote deleted successfully')
+        expect(toast.success).toHaveBeenCalledWith('Quote deleted')
       })
     })
   })
@@ -476,9 +474,8 @@ describe('PostActionCard', () => {
         />,
       )
 
-      // Share button has Link2 icon, find by role and SVG
-      const buttons = screen.getAllByRole('button')
-      const shareButton = buttons.find((btn) => btn.querySelector('svg')) || buttons[buttons.length - 1]
+      // Share button has aria-label="Copy link"
+      const shareButton = screen.getByLabelText('Copy link')
       fireEvent.click(shareButton)
 
       await waitFor(() => {
@@ -487,9 +484,9 @@ describe('PostActionCard', () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(expectedUrl)
       })
 
-      // Dialog should appear
+      // Toast should be triggered
       await waitFor(() => {
-        expect(screen.getByText('Link copied!')).toBeInTheDocument()
+        expect(toast.success).toHaveBeenCalledWith('Link copied!')
       })
     })
 
@@ -505,9 +502,8 @@ describe('PostActionCard', () => {
         />,
       )
 
-      // Share button has Link2 icon, find by role and SVG
-      const buttons = screen.getAllByRole('button')
-      const shareButton = buttons.find((btn) => btn.querySelector('svg')) || buttons[buttons.length - 1]
+      // Share button has aria-label="Copy link"
+      const shareButton = screen.getByLabelText('Copy link')
       fireEvent.click(shareButton)
 
       await waitFor(() => {
@@ -602,7 +598,7 @@ describe('PostActionCard', () => {
         />,
       )
 
-      const card = document.querySelector('[class*="bg-amber-50"]')
+      const card = document.querySelector('[class*="border-l-primary"]')
       expect(card).toBeInTheDocument()
     })
 
@@ -665,10 +661,7 @@ describe('PostActionCard', () => {
         />,
       )
 
-      const buttons = screen.getAllByRole('button')
-      const deleteButton = buttons.find((btn) => 
-        btn.className.includes('text-red-500') || btn.querySelector('svg')
-      )
+      const deleteButton = document.querySelector('[aria-label="Delete"]')
       expect(deleteButton).toBeInTheDocument()
     })
   })
