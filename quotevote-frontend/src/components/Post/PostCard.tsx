@@ -15,7 +15,7 @@ import { toast } from 'sonner'
 import getTopPostsVoteHighlights from '@/lib/utils/getTopPostsVoteHighlights'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import HighlightText from '@/components/HighlightText/HighlightText'
-import AvatarDisplay from '@/components/Avatar'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import type { PostCardProps } from '@/types/post'
 
 const ACTIVITY_BORDER: Record<string, string> = {
@@ -273,10 +273,10 @@ function PostCardComponent({
           className="flex items-center gap-2 group/author min-w-0"
           onClick={handleProfileClick}
         >
-          <AvatarDisplay
-            src={typeof creator?.avatar === 'string' ? creator.avatar : undefined}
-            alt={username}
-            size="sm"
+          <DisplayAvatar
+            avatar={creator?.avatar as string | Record<string, unknown> | undefined}
+            username={username}
+            size={32}
           />
           <span className="text-sm font-bold text-[#52b274] group-hover/author:underline truncate">
             {username}

@@ -77,19 +77,16 @@ describe('PostCard Component', () => {
 
     it('displays creator avatar when available', () => {
       const { container } = render(<PostCard post={mockPost} />)
-      // AvatarImage from Radix UI may not render as img in test environment
-      // Check that the avatar container exists and has the image src set
+      // DisplayAvatar renders an <img> with the avatar URL
       const avatarImage = container.querySelector('img[src="https://example.com/avatar.jpg"]')
-      // If image doesn't load, fallback will show, but we can verify the structure
-      const avatarContainer = container.querySelector('.rounded-full')
+      const avatarContainer = container.querySelector('img.rounded-full')
       expect(avatarContainer).toBeInTheDocument()
-      // In test environment, image may fail to load and show fallback, which is expected behavior
       if (avatarImage) {
-        expect(avatarImage).toHaveAttribute('alt', 'Test User')
+        expect(avatarImage).toHaveAttribute('alt', "testuser's avatar")
       }
     })
 
-    it('displays avatar fallback with initials when avatar is missing', () => {
+    it('displays a cartoon avatar (not initials) when avatar is missing', () => {
       const postWithoutAvatar: Post = {
         ...mockPost,
         creator: {
@@ -97,9 +94,11 @@ describe('PostCard Component', () => {
           avatar: undefined,
         },
       }
-      render(<PostCard post={postWithoutAvatar} />)
-      // Avatar fallback should show initials "TU" for "Test User"
-      expect(screen.getByText('TU')).toBeInTheDocument()
+      const { container } = render(<PostCard post={postWithoutAvatar} />)
+      // DisplayAvatar always renders a cartoon — never initials
+      const avatarImg = container.querySelector('img.rounded-full')
+      expect(avatarImg).toBeInTheDocument()
+      expect(avatarImg).toHaveAttribute('alt', "testuser's avatar")
     })
 
     it('uses username as fallback when name is missing', () => {
@@ -263,7 +262,7 @@ describe('PostCard Component', () => {
       expect(screen.getByText('minimaluser')).toBeInTheDocument()
     })
 
-    it('generates correct initials for multi-word names', () => {
+    it('shows cartoon avatar regardless of name format', () => {
       const postWithLongName: Post = {
         ...mockPost,
         creator: {
@@ -272,12 +271,12 @@ describe('PostCard Component', () => {
           avatar: undefined,
         },
       }
-      render(<PostCard post={postWithLongName} />)
-      // Should show "JM" (first letter of first two words)
-      expect(screen.getByText('JM')).toBeInTheDocument()
+      const { container } = render(<PostCard post={postWithLongName} />)
+      // DisplayAvatar always renders a cartoon — never initials
+      expect(container.querySelector('img.rounded-full')).toBeInTheDocument()
     })
 
-    it('generates correct initials for single-word names', () => {
+    it('shows cartoon avatar for single-word names', () => {
       const postWithSingleName: Post = {
         ...mockPost,
         creator: {
@@ -286,25 +285,18 @@ describe('PostCard Component', () => {
           avatar: undefined,
         },
       }
-      render(<PostCard post={postWithSingleName} />)
-      // Should show "T"
-      expect(screen.getByText('T')).toBeInTheDocument()
+      const { container } = render(<PostCard post={postWithSingleName} />)
+      expect(container.querySelector('img.rounded-full')).toBeInTheDocument()
     })
   })
 
   describe('Accessibility', () => {
     it('has proper alt text for avatar', () => {
       const { container } = render(<PostCard post={mockPost} />)
-      // AvatarImage may show fallback in test environment, but alt text should be set
-      const avatarImage = container.querySelector('img[alt="Test User"]')
-      // If image is present, verify alt text; if fallback shows, that's also valid
-      if (avatarImage) {
-        expect(avatarImage).toHaveAttribute('alt', 'Test User')
-      } else {
-        // Fallback is showing, which is acceptable - verify avatar container exists
-        const avatarContainer = container.querySelector('.rounded-full')
-        expect(avatarContainer).toBeInTheDocument()
-      }
+      // DisplayAvatar sets alt to "<username>'s avatar"
+      const avatarImg = container.querySelector('img.rounded-full')
+      expect(avatarImg).toBeInTheDocument()
+      expect(avatarImg).toHaveAttribute('alt', "testuser's avatar")
     })
 
     it('has proper link attributes for external URLs', () => {
