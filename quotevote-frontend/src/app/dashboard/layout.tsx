@@ -146,10 +146,6 @@ export default function DashboardLayout({
 
   const loggedIn = !!(user?.id || user?._id);
   const isAdmin = !!user?.admin;
-  const displayName =
-    (typeof user?.name === 'string' ? user.name : undefined) ||
-    (typeof user?.username === 'string' ? user.username : undefined) ||
-    'User';
   const username =
     (typeof user?.username === 'string' ? user.username : undefined) || '';
 
@@ -287,7 +283,7 @@ export default function DashboardLayout({
                       size={28}
                       className="size-7 flex-shrink-0"
                     />
-                    <span className="text-[13px] font-semibold text-gray-800 max-w-[90px] truncate">{displayName}</span>
+                    <span className="text-[13px] font-semibold text-[#52b274] max-w-[90px] truncate">{username}</span>
                     <ChevronDown className="size-3.5 text-gray-500 transition-transform group-data-[state=open]:rotate-180" />
                   </button>
                 </DropdownMenuTrigger>
@@ -302,8 +298,7 @@ export default function DashboardLayout({
                         size={64}
                         className="size-16 -mt-8 ring-4 ring-white shadow-md"
                       />
-                      <p className="mt-1 text-[15px] font-bold text-gray-900">{displayName}</p>
-                      {username && <p className="text-[12px] text-gray-500">@{username}</p>}
+                      <p className="mt-1 text-[15px] font-bold text-[#52b274]">{username}</p>
                     </div>
                   </div>
                   <DropdownMenuSeparator className="m-0" />
