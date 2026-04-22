@@ -1,17 +1,10 @@
 /**
  * UserFollowDisplay Component Tests
- * 
- * Tests for the UserFollowDisplay component including:
- * - Rendering user information
- * - Follow button integration
- * - Avatar display
- * - Link to user profile
  */
 
 import { render, screen } from '../../utils/test-utils';
 import { UserFollowDisplay } from '../../../components/Profile/UserFollowDisplay';
 
-// Mock FollowButton
 jest.mock('../../../components/CustomButtons/FollowButton', () => ({
   FollowButton: ({ isFollowing, username }: { isFollowing: boolean; username: string }) => (
     <button data-testid="follow-button" data-following={isFollowing}>
@@ -20,12 +13,23 @@ jest.mock('../../../components/CustomButtons/FollowButton', () => ({
   ),
 }));
 
-// Mock Avatar (default export)
-jest.mock('../../../components/Avatar', () => ({
-  __esModule: true,
-  default: ({ src, alt, size }: { src?: string; alt?: string; size?: number }) => (
-    <div data-testid="avatar" data-src={src} data-alt={alt} data-size={String(size)}>
-      Avatar
+jest.mock('../../../components/DisplayAvatar', () => ({
+  DisplayAvatar: ({
+    avatar,
+    username,
+    size,
+  }: {
+    avatar?: unknown;
+    username?: string;
+    size?: number;
+  }) => (
+    <div
+      data-testid="display-avatar"
+      data-avatar={JSON.stringify(avatar)}
+      data-username={username}
+      data-size={String(size)}
+    >
+      DisplayAvatar
     </div>
   ),
 }));
@@ -53,10 +57,10 @@ describe('UserFollowDisplay', () => {
 
   it('renders avatar with correct props', () => {
     const { getByTestId } = render(<UserFollowDisplay {...mockUser} />);
-    const avatar = getByTestId('avatar');
-    expect(avatar).toHaveAttribute('data-src', 'https://example.com/avatar.jpg');
-    expect(avatar).toHaveAttribute('data-alt', 'testuser');
+    const avatar = getByTestId('display-avatar');
+    expect(avatar).toHaveAttribute('data-username', 'testuser');
     expect(avatar).toHaveAttribute('data-size', '50');
+    expect(avatar).toHaveAttribute('data-avatar', '"https://example.com/avatar.jpg"');
   });
 
   it('renders follow button when not following', () => {
@@ -82,25 +86,22 @@ describe('UserFollowDisplay', () => {
   it('handles object avatar structure', () => {
     const userWithObjectAvatar = {
       ...mockUser,
-      avatar: {
-        url: 'https://example.com/avatar2.jpg',
-      },
+      avatar: { url: 'https://example.com/avatar2.jpg' },
     };
     const { getByTestId } = render(<UserFollowDisplay {...userWithObjectAvatar} />);
-    const avatar = getByTestId('avatar');
-    expect(avatar).toHaveAttribute('data-src', 'https://example.com/avatar2.jpg');
+    const avatar = getByTestId('display-avatar');
+    expect(avatar).toHaveAttribute(
+      'data-avatar',
+      JSON.stringify({ url: 'https://example.com/avatar2.jpg' })
+    );
   });
 
-    it('handles missing avatar gracefully', () => {
-      const userWithoutAvatar = {
-        ...mockUser,
-        avatar: undefined,
-      };
-      const { getByTestId } = render(<UserFollowDisplay {...userWithoutAvatar} />);
-      const avatar = getByTestId('avatar');
-      // Avatar src can be undefined or empty string
-      const src = avatar.getAttribute('data-src');
-      expect(src === '' || src === null || src === undefined).toBe(true);
-    });
+  it('handles missing avatar gracefully (shows default cartoon)', () => {
+    const { getByTestId } = render(
+      <UserFollowDisplay {...mockUser} avatar={undefined} />
+    );
+    // DisplayAvatar always renders — it generates a default when no avatar is set
+    expect(getByTestId('display-avatar')).toBeInTheDocument();
+    expect(getByTestId('display-avatar')).toHaveAttribute('data-username', 'testuser');
+  });
 });
-

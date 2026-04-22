@@ -85,7 +85,7 @@ export default function NavSearch() {
         onChange={(e) => setInputValue(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder="Search Quote.Vote…"
+        placeholder="Search…"
         className="bg-transparent text-[13px] text-gray-900 placeholder:text-gray-500 outline-none border-none w-full"
       />
       {isDebouncePending ? (

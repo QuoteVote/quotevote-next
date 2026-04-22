@@ -16,7 +16,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
 import ChatMenu from '@/components/Chat/ChatMenu';
 import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
@@ -41,8 +41,7 @@ export function MainNavBar({}: MainNavBarProps) {
   const user = useAppStore((state) => state.user.data);
   const setSelectedPage = useAppStore((state) => state.setSelectedPage);
   const loggedIn = !!user?._id;
-  const avatar = typeof user?.avatar === 'string' ? user.avatar : undefined;
-  const name = (typeof user?.name === 'string' ? user.name : undefined) || 
+  const name = (typeof user?.name === 'string' ? user.name : undefined) ||
                (typeof user?.username === 'string' ? user.username : undefined) || 
                'User';
 
@@ -168,10 +167,10 @@ export function MainNavBar({}: MainNavBarProps) {
                   onClick={handleProfileClick}
                   className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-[rgba(14,17,22,0.06)] transition-colors"
                 >
-                  <Avatar
-                    src={avatar}
-                    alt={name}
-                    size="sm"
+                  <DisplayAvatar
+                    avatar={user?.avatar as string | Record<string, unknown> | undefined}
+                    username={typeof user?.username === 'string' ? user.username : undefined}
+                    size={40}
                     className="size-10"
                   />
                   <span className="text-[#0A2342] font-semibold ml-1">{name}</span>
@@ -292,10 +291,10 @@ export function MainNavBar({}: MainNavBarProps) {
                     }}
                     className="w-full justify-start text-[#0A2342] font-medium hover:bg-[rgba(14,17,22,0.06)] transition-all"
                   >
-                    <Avatar
-                      src={avatar}
-                      alt={name}
-                      size="sm"
+                    <DisplayAvatar
+                      avatar={user?.avatar as string | Record<string, unknown> | undefined}
+                      username={typeof user?.username === 'string' ? user.username : undefined}
+                      size={36}
                       className="size-9 mr-2"
                     />
                     {name}

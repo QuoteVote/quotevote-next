@@ -15,7 +15,7 @@ import {
   SheetContent,
 } from '@/components/ui/sheet';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
 import ChatMenu from '@/components/Chat/ChatMenu';
 import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
@@ -58,8 +58,7 @@ export function Sidebar({
   const user = useAppStore((state) => state.user.data);
   const logout = useAppStore((state) => state.logout);
   const loggedIn = !!user?._id;
-  const avatar = typeof user?.avatar === 'string' ? user.avatar : undefined;
-  const name = (typeof user?.name === 'string' ? user.name : undefined) || 
+  const name = (typeof user?.name === 'string' ? user.name : undefined) ||
                (typeof user?.username === 'string' ? user.username : undefined) || 
                'Profile';
 
@@ -195,10 +194,10 @@ export function Sidebar({
           )}
           onClick={() => handleDrawerToggle(false)}
         >
-          <Avatar
-            src={avatar}
-            alt={name}
-            size="sm"
+          <DisplayAvatar
+            avatar={user?.avatar as string | Record<string, unknown> | undefined}
+            username={typeof user?.username === 'string' ? user.username : undefined}
+            size={32}
             className="size-8"
           />
           <span className="text-sm font-medium">{name || 'Profile'}</span>
