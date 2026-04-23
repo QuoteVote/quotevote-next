@@ -21,7 +21,7 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
   const { isMobile } = useResponsive();
   const [open, setOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const userId = useAppStore((state) => state.user.data.id);
+  const userId = useAppStore((state) => (state.user.data._id || state.user.data.id) as string | undefined);
 
   const { loading, data, refetch, error } = useQuery(GET_NOTIFICATIONS, {
     skip: !userId,
@@ -68,12 +68,14 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
       spacing={0}
     >
       <div className="relative">
-        <Badge
-          variant="destructive"
-          className="absolute -top-1 -right-1 z-10 min-w-[20px] h-5 flex items-center justify-center px-1"
-        >
-          {notifications.length > 0 ? notifications.length : null}
-        </Badge>
+        {notifications.length > 0 && (
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 z-10 min-w-[20px] h-5 flex items-center justify-center px-1"
+          >
+            {notifications.length}
+          </Badge>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -107,12 +109,14 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
   const mobileContent = (
     <>
       <div className="relative">
-        <Badge
-          variant="destructive"
-          className="absolute -top-1 -right-1 z-10 min-w-[20px] h-5 flex items-center justify-center px-1"
-        >
-          {notifications.length > 0 ? notifications.length : null}
-        </Badge>
+        {notifications.length > 0 && (
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 z-10 min-w-[20px] h-5 flex items-center justify-center px-1"
+          >
+            {notifications.length}
+          </Badge>
+        )}
         <Button
           variant="ghost"
           size="sm"

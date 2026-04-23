@@ -105,7 +105,7 @@ export default function SettingsPageClient() {
         setUserData({
           ...userData,
           ...updated,
-          avatar: userData?.avatar,
+          avatar: userData?.avatar as string | undefined,
           themePreference: localDarkMode ? 'dark' : 'light',
         })
         setOriginalDarkMode(localDarkMode)

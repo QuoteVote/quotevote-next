@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { Notification } from '@/types/notification';
 
 export function NotificationsPageContent() {
-  const userId = useAppStore((state) => state.user.data.id);
+  const userId = useAppStore((state) => (state.user.data._id || state.user.data.id) as string | undefined);
 
   const { loading, data, refetch, error } = useQuery(GET_NOTIFICATIONS, {
     skip: !userId,
