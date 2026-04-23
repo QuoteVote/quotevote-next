@@ -57,7 +57,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=localStorage.getItem('themeMode');if(m==='dark')document.documentElement.classList.add('dark');}catch(e){}})()`,
+            __html: `(function(){try{var m=localStorage.getItem('themeMode');if(m==='dark')document.documentElement.classList.add('dark');var n=localStorage.getItem('neoBrutalism');if(n==='on')document.documentElement.classList.add('neo-brutalism');}catch(e){}})()`,
           }}
         />
       </head>

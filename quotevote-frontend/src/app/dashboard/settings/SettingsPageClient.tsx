@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useMutation } from '@apollo/client/react'
-import { Camera, Loader2, Moon, Sun, LogOut } from 'lucide-react'
+import { Camera, Loader2, Moon, Sun, LogOut, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -50,7 +50,7 @@ export default function SettingsPageClient() {
   const router = useRouter()
   const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined
   const setUserData = useAppStore((state) => state.setUserData)
-  const { toggleTheme, isDarkMode } = useTheme()
+  const { toggleTheme, isDarkMode, neoBrutalism, toggleNeoBrutalism } = useTheme()
 
   const username = userData?.username ?? ''
   const email = userData?.email ?? ''
@@ -60,6 +60,7 @@ export default function SettingsPageClient() {
 
   const [localDarkMode, setLocalDarkMode] = useState(isDarkMode)
   const [originalDarkMode, setOriginalDarkMode] = useState(isDarkMode)
+  const [localBrutalism, setLocalBrutalism] = useState(neoBrutalism)
 
   const [updateUser, { loading }] = useMutation<UpdateUserResponse>(UPDATE_USER)
 
@@ -72,6 +73,11 @@ export default function SettingsPageClient() {
     const newMode = toggleTheme()
     setLocalDarkMode(newMode === 'dark')
   }, [toggleTheme])
+
+  const handleBrutalismToggle = useCallback(() => {
+    const next = toggleNeoBrutalism()
+    setLocalBrutalism(next)
+  }, [toggleNeoBrutalism])
 
   const themeDirty = localDarkMode !== originalDarkMode
   const isFormDirty = form.formState.isDirty || themeDirty
@@ -245,6 +251,27 @@ export default function SettingsPageClient() {
                     checked={localDarkMode}
                     onCheckedChange={handleThemeToggle}
                     aria-label="Toggle dark mode"
+                  />
+                </div>
+              </div>
+
+              {/* Neo-brutalism */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="neo-brutalism">Neo-Brutalism</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {localBrutalism
+                      ? 'Bold borders, hard shadows, chunky type'
+                      : 'Switch to a raw, high-contrast brutalist look'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="size-4 text-muted-foreground" />
+                  <Switch
+                    id="neo-brutalism"
+                    checked={localBrutalism}
+                    onCheckedChange={handleBrutalismToggle}
+                    aria-label="Toggle neo-brutalism theme"
                   />
                 </div>
               </div>

@@ -253,6 +253,1231 @@ body {
   --color-black-card: #2D2D2D;
 }
 
+/* ============================================================ */
+/* NEO-BRUTALISM THEME                                           */
+/* Multi-color OKLCH palette, bold borders, hard offset shadows  */
+/* Coexists with light or dark mode                              */
+/* ============================================================ */
+
+.neo-brutalism {
+  /* ——— Brutalist metrics ——— */
+  --radius: 0.25rem;
+  --nb-border-width: 2.5px;
+  --nb-border-color: oklch(0.15 0.02 260);
+  --nb-shadow-color: oklch(0.15 0.02 260);
+
+  /* Hard offset shadows (no blur) */
+  --nb-shadow-xs: 2px 2px 0 0 var(--nb-shadow-color);
+  --nb-shadow-sm: 3px 3px 0 0 var(--nb-shadow-color);
+  --nb-shadow: 5px 5px 0 0 var(--nb-shadow-color);
+  --nb-shadow-lg: 7px 7px 0 0 var(--nb-shadow-color);
+  --nb-shadow-xl: 10px 10px 0 0 var(--nb-shadow-color);
+
+  /* ——— Accent palette (OKLCH) — social-media vibrance ——— */
+  --nb-green: oklch(0.72 0.19 150);       /* brand lime-green */
+  --nb-green-deep: oklch(0.55 0.2 150);   /* pressed / text-on-light */
+  --nb-mint: oklch(0.9 0.11 160);         /* soft mint tint */
+  --nb-yellow: oklch(0.93 0.18 95);       /* sunny yellow */
+  --nb-orange: oklch(0.78 0.18 55);       /* tangerine */
+  --nb-coral: oklch(0.72 0.2 20);         /* warm coral */
+  --nb-pink: oklch(0.76 0.18 355);        /* hot pink */
+  --nb-purple: oklch(0.7 0.2 300);        /* vivid purple */
+  --nb-blue: oklch(0.72 0.17 240);        /* electric blue */
+  --nb-sky: oklch(0.88 0.1 230);          /* soft sky */
+  --nb-cream: oklch(0.98 0.02 95);        /* warm off-white */
+  --nb-ink: oklch(0.15 0.02 260);         /* near-black ink */
+  --nb-grey: oklch(0.55 0.01 260);
+  --nb-grey-soft: oklch(0.92 0.01 260);
+
+  /* ——— Base surface tokens ——— */
+  --background: oklch(0.96 0.03 150);        /* minty cream */
+  --foreground: oklch(0.15 0.02 260);
+  --card: oklch(1 0 0);                      /* pure white */
+  --card-foreground: oklch(0.15 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 260);
+  --primary: var(--nb-green);
+  --primary-foreground: oklch(0.15 0.02 260);
+  --secondary: var(--nb-yellow);
+  --secondary-foreground: oklch(0.15 0.02 260);
+  --muted: var(--nb-grey-soft);
+  --muted-foreground: oklch(0.4 0.01 260);
+  --accent: var(--nb-sky);
+  --accent-foreground: oklch(0.15 0.02 260);
+  --destructive: var(--nb-coral);
+  --border: oklch(0.15 0.02 260);
+  --input: oklch(0.15 0.02 260);
+  --ring: var(--nb-green);
+
+  /* ——— Chart colors (distinct hues) ——— */
+  --chart-1: var(--nb-green);
+  --chart-2: var(--nb-pink);
+  --chart-3: var(--nb-blue);
+  --chart-4: var(--nb-yellow);
+  --chart-5: var(--nb-purple);
+
+  /* ——— Activity colors ——— */
+  --color-quoted: var(--nb-purple);
+  --color-commented: var(--nb-yellow);
+  --color-upvote: var(--nb-green);
+  --color-downvote: var(--nb-coral);
+  --color-hearted: var(--nb-pink);
+  --color-trending: var(--nb-blue);
+
+  /* ——— Status ——— */
+  --color-success: var(--nb-green);
+  --color-warning: var(--nb-orange);
+  --color-danger: var(--nb-coral);
+  --color-info: var(--nb-blue);
+
+  /* ——— QuoteVote legacy tokens ——— */
+  --color-background: oklch(0.96 0.03 150);
+  --color-background-off-white: oklch(1 0 0);
+  --color-white: oklch(1 0 0);
+  --color-foreground: oklch(0.15 0.02 260);
+  --color-text-primary: oklch(0.15 0.02 260);
+  --color-text-secondary: oklch(0.35 0.01 260);
+  --color-text-muted: oklch(0.45 0.01 260);
+  --color-text-light: oklch(0.6 0.01 260);
+  --color-gray-inactive: oklch(0.7 0.01 260);
+  --color-gray-light: oklch(0.88 0.01 260);
+  --color-black-card: oklch(0.15 0.02 260);
+
+  /* ——— Sidebar ——— */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.15 0.02 260);
+  --sidebar-primary: var(--nb-green);
+  --sidebar-primary-foreground: oklch(0.15 0.02 260);
+  --sidebar-accent: var(--nb-yellow);
+  --sidebar-accent-foreground: oklch(0.15 0.02 260);
+  --sidebar-border: oklch(0.15 0.02 260);
+  --sidebar-ring: var(--nb-green);
+}
+
+/* Dark + neo-brutalism combo */
+.dark.neo-brutalism,
+.neo-brutalism.dark {
+  --nb-border-color: oklch(0.97 0.01 150);
+  --nb-shadow-color: oklch(0.62 0.2 150);
+
+  /* Boost accent saturation in dark */
+  --nb-green: oklch(0.78 0.22 150);
+  --nb-green-deep: oklch(0.72 0.22 150);
+  --nb-mint: oklch(0.75 0.15 160);
+  --nb-yellow: oklch(0.9 0.2 95);
+  --nb-orange: oklch(0.78 0.2 55);
+  --nb-coral: oklch(0.72 0.22 20);
+  --nb-pink: oklch(0.78 0.2 355);
+  --nb-purple: oklch(0.72 0.22 300);
+  --nb-blue: oklch(0.75 0.2 240);
+  --nb-sky: oklch(0.78 0.14 230);
+  --nb-cream: oklch(0.15 0.01 260);
+  --nb-ink: oklch(0.97 0.01 150);
+  --nb-grey: oklch(0.65 0.01 260);
+  --nb-grey-soft: oklch(0.25 0.01 260);
+
+  --background: oklch(0.18 0.02 150);
+  --foreground: oklch(0.97 0.01 150);
+  --card: oklch(0.22 0.02 150);
+  --card-foreground: oklch(0.97 0.01 150);
+  --popover: oklch(0.22 0.02 150);
+  --popover-foreground: oklch(0.97 0.01 150);
+  --primary: var(--nb-green);
+  --primary-foreground: oklch(0.15 0.02 260);
+  --secondary: var(--nb-yellow);
+  --secondary-foreground: oklch(0.15 0.02 260);
+  --muted: oklch(0.28 0.01 260);
+  --muted-foreground: oklch(0.75 0.01 260);
+  --accent: oklch(0.35 0.1 240);
+  --accent-foreground: oklch(0.97 0.01 150);
+  --destructive: var(--nb-coral);
+  --border: oklch(0.97 0.01 150);
+  --input: oklch(0.97 0.01 150);
+  --ring: var(--nb-green);
+
+  --color-background: oklch(0.18 0.02 150);
+  --color-background-off-white: oklch(0.22 0.02 150);
+  --color-white: oklch(0.22 0.02 150);
+  --color-foreground: oklch(0.97 0.01 150);
+  --color-text-primary: oklch(0.97 0.01 150);
+  --color-text-secondary: oklch(0.82 0.01 260);
+  --color-text-muted: oklch(0.7 0.01 260);
+  --color-text-light: oklch(0.55 0.01 260);
+
+  --sidebar: oklch(0.22 0.02 150);
+  --sidebar-foreground: oklch(0.97 0.01 150);
+  --sidebar-primary: var(--nb-green);
+  --sidebar-primary-foreground: oklch(0.15 0.02 260);
+  --sidebar-accent: oklch(0.3 0.05 260);
+  --sidebar-accent-foreground: oklch(0.97 0.01 150);
+  --sidebar-border: oklch(0.97 0.01 150);
+  --sidebar-ring: var(--nb-green);
+}
+
+/* ——— Global body — clean cream surface ——— */
+.neo-brutalism {
+  --background: var(--nb-cream);
+  --color-background: var(--nb-cream);
+}
+
+.neo-brutalism body {
+  background-color: var(--nb-cream);
+  font-weight: 500;
+}
+
+.dark.neo-brutalism,
+.neo-brutalism.dark {
+  --background: oklch(0.18 0.01 260);
+  --color-background: oklch(0.18 0.01 260);
+}
+
+.dark.neo-brutalism body,
+.neo-brutalism.dark body {
+  background-color: oklch(0.18 0.01 260);
+}
+
+/* ——— Typography ——— */
+.neo-brutalism h1,
+.neo-brutalism h2,
+.neo-brutalism h3,
+.neo-brutalism h4,
+.neo-brutalism h5,
+.neo-brutalism h6 {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.neo-brutalism ::selection {
+  background-color: var(--nb-yellow);
+  color: var(--nb-ink);
+}
+
+/* ——— Cards ——— */
+.neo-brutalism [data-slot="card"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--nb-shadow);
+  background-color: var(--card);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.neo-brutalism [data-slot="card"]:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-lg);
+}
+
+/* Colored shadow rotation on cards in a list */
+.neo-brutalism [data-slot="card"]:nth-of-type(4n+1) {
+  box-shadow: 5px 5px 0 0 var(--nb-green);
+}
+.neo-brutalism [data-slot="card"]:nth-of-type(4n+2) {
+  box-shadow: 5px 5px 0 0 var(--nb-pink);
+}
+.neo-brutalism [data-slot="card"]:nth-of-type(4n+3) {
+  box-shadow: 5px 5px 0 0 var(--nb-blue);
+}
+.neo-brutalism [data-slot="card"]:nth-of-type(4n) {
+  box-shadow: 5px 5px 0 0 var(--nb-yellow);
+}
+.neo-brutalism [data-slot="card"]:nth-of-type(4n+1):hover { box-shadow: 7px 7px 0 0 var(--nb-green); }
+.neo-brutalism [data-slot="card"]:nth-of-type(4n+2):hover { box-shadow: 7px 7px 0 0 var(--nb-pink); }
+.neo-brutalism [data-slot="card"]:nth-of-type(4n+3):hover { box-shadow: 7px 7px 0 0 var(--nb-blue); }
+.neo-brutalism [data-slot="card"]:nth-of-type(4n):hover   { box-shadow: 7px 7px 0 0 var(--nb-yellow); }
+
+.neo-brutalism [data-slot="card-header"] {
+  border-bottom: var(--nb-border-width) solid var(--nb-border-color);
+}
+
+.neo-brutalism [data-slot="card-footer"] {
+  border-top: var(--nb-border-width) solid var(--nb-border-color);
+}
+
+/* ——— Buttons ——— */
+.neo-brutalism [data-slot="button"] {
+  border-radius: var(--radius);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  transition: transform 100ms ease, box-shadow 100ms ease, background-color 100ms ease;
+}
+
+.neo-brutalism [data-slot="button"][data-variant="default"],
+.neo-brutalism [data-slot="button"][data-variant="destructive"],
+.neo-brutalism [data-slot="button"][data-variant="secondary"],
+.neo-brutalism [data-slot="button"][data-variant="outline"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-xs);
+}
+
+.neo-brutalism [data-slot="button"][data-variant="default"] {
+  background-color: var(--nb-green);
+  color: var(--nb-ink);
+}
+
+.neo-brutalism [data-slot="button"][data-variant="secondary"] {
+  background-color: var(--nb-yellow);
+  color: var(--nb-ink);
+}
+
+.neo-brutalism [data-slot="button"][data-variant="destructive"] {
+  background-color: var(--nb-coral);
+  color: var(--nb-ink);
+}
+
+.neo-brutalism [data-slot="button"][data-variant="outline"] {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
+.neo-brutalism [data-slot="button"][data-variant="default"]:hover,
+.neo-brutalism [data-slot="button"][data-variant="destructive"]:hover,
+.neo-brutalism [data-slot="button"][data-variant="secondary"]:hover,
+.neo-brutalism [data-slot="button"][data-variant="outline"]:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm);
+}
+
+.neo-brutalism [data-slot="button"][data-variant="default"]:active,
+.neo-brutalism [data-slot="button"][data-variant="destructive"]:active,
+.neo-brutalism [data-slot="button"][data-variant="secondary"]:active,
+.neo-brutalism [data-slot="button"][data-variant="outline"]:active {
+  transform: translate(0, 0);
+  box-shadow: 0 0 0 0 var(--nb-shadow-color);
+}
+
+.neo-brutalism [data-slot="button"][data-variant="ghost"]:hover,
+.neo-brutalism [data-slot="button"][data-variant="link"]:hover {
+  background-color: var(--nb-sky);
+  color: var(--nb-ink);
+}
+
+/* Text-only ghost buttons (not icon-sized) — show brutalism on hover */
+.neo-brutalism [data-slot="button"][data-variant="ghost"]:not([data-size="icon"]):not([data-size="icon-xs"]):not([data-size="icon-sm"]):not([data-size="icon-lg"]) {
+  border: var(--nb-border-width) solid transparent;
+  font-weight: 700;
+  transition: transform 100ms ease, box-shadow 100ms ease, border-color 100ms ease, background-color 100ms ease;
+}
+
+.neo-brutalism [data-slot="button"][data-variant="ghost"]:not([data-size="icon"]):not([data-size="icon-xs"]):not([data-size="icon-sm"]):not([data-size="icon-lg"]):hover {
+  border-color: var(--nb-border-color);
+  box-shadow: var(--nb-shadow-xs);
+  transform: translate(-1px, -1px);
+}
+
+.neo-brutalism [data-slot="button"][data-variant="ghost"][class*="hover:text-destructive"]:hover {
+  background-color: var(--nb-coral) !important;
+  border-color: var(--nb-border-color);
+}
+
+/* Icon-only buttons look cleaner without heavy shadows */
+.neo-brutalism [data-slot="button"][data-size="icon"],
+.neo-brutalism [data-slot="button"][data-size="icon-xs"],
+.neo-brutalism [data-slot="button"][data-size="icon-sm"],
+.neo-brutalism [data-slot="button"][data-size="icon-lg"] {
+  box-shadow: var(--nb-shadow-xs);
+}
+
+/* ——— Inputs & Textareas ——— */
+.neo-brutalism [data-slot="input"],
+.neo-brutalism [data-slot="textarea"],
+.neo-brutalism [data-slot="select-trigger"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--nb-shadow-xs);
+  background-color: var(--card);
+  font-weight: 500;
+  transition: transform 100ms ease, box-shadow 100ms ease, border-color 100ms ease;
+}
+
+.neo-brutalism [data-slot="input"]:focus-visible,
+.neo-brutalism [data-slot="textarea"]:focus-visible,
+.neo-brutalism [data-slot="select-trigger"]:focus-visible {
+  outline: none;
+  transform: translate(-1px, -1px);
+  box-shadow: var(--nb-shadow-sm);
+  border-color: var(--nb-green-deep);
+}
+
+/* ——— Switch ——— */
+.neo-brutalism [data-slot="switch"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-xs);
+  border-radius: 9999px;
+}
+
+.neo-brutalism [data-slot="switch-thumb"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  background-color: var(--card);
+}
+
+.neo-brutalism [data-slot="switch"][data-state="checked"] {
+  background-color: var(--nb-green) !important;
+}
+
+/* ——— Badges ——— */
+.neo-brutalism [data-slot="badge"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--radius);
+  font-weight: 800;
+  box-shadow: var(--nb-shadow-xs);
+  color: var(--nb-ink);
+}
+
+.neo-brutalism [data-slot="badge"]:nth-of-type(5n+1) { background-color: var(--nb-yellow); }
+.neo-brutalism [data-slot="badge"]:nth-of-type(5n+2) { background-color: var(--nb-pink); }
+.neo-brutalism [data-slot="badge"]:nth-of-type(5n+3) { background-color: var(--nb-sky); }
+.neo-brutalism [data-slot="badge"]:nth-of-type(5n+4) { background-color: var(--nb-mint); }
+.neo-brutalism [data-slot="badge"]:nth-of-type(5n)   { background-color: var(--nb-orange); }
+
+.neo-brutalism [data-slot="badge"][data-variant="destructive"] {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink);
+}
+
+/* ——— Avatars ——— */
+.neo-brutalism [data-slot="avatar"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-xs);
+}
+
+/* ——— Dialogs / Popovers / Sheets / Dropdowns ——— */
+.neo-brutalism [data-slot="dialog-content"],
+.neo-brutalism [data-slot="popover-content"],
+.neo-brutalism [data-slot="sheet-content"],
+.neo-brutalism [data-slot="dropdown-menu-content"],
+.neo-brutalism [data-slot="alert-dialog-content"],
+.neo-brutalism [data-slot="command"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--nb-shadow-lg);
+}
+
+.neo-brutalism [data-slot="dropdown-menu-item"]:focus,
+.neo-brutalism [data-slot="dropdown-menu-item"][data-highlighted] {
+  background-color: var(--nb-yellow);
+  color: var(--nb-ink);
+}
+
+/* ——— Radix DropdownMenu (no data-slot attrs) ——— */
+/* src/components/ui/dropdown-menu.tsx uses Radix primitives directly */
+.neo-brutalism [role="menu"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-lg) !important;
+  background-color: var(--popover) !important;
+  padding: 0.25rem !important;
+}
+
+.neo-brutalism [role="menuitem"] {
+  font-weight: 700 !important;
+  border-radius: var(--radius) !important;
+  padding: 0.5rem 0.75rem !important;
+  transition: background-color 100ms ease, transform 100ms ease;
+}
+
+.neo-brutalism [role="menuitem"]:focus,
+.neo-brutalism [role="menuitem"][data-highlighted] {
+  background-color: var(--nb-yellow) !important;
+  color: var(--nb-ink) !important;
+  outline: none;
+}
+
+/* Destructive menu item (e.g., Report Bot, Logout) */
+.neo-brutalism [role="menuitem"][class*="text-destructive"]:focus,
+.neo-brutalism [role="menuitem"][class*="text-destructive"][data-highlighted] {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+}
+
+.neo-brutalism [role="separator"] {
+  background-color: var(--nb-border-color) !important;
+  height: 2px !important;
+  margin: 0.25rem 0 !important;
+}
+
+.neo-brutalism [data-slot="tooltip-content"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--nb-shadow-sm);
+  background-color: var(--nb-yellow);
+  color: var(--nb-ink);
+  font-weight: 700;
+}
+
+/* ——— Tabs ——— */
+.neo-brutalism [data-slot="tabs-list"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--nb-shadow-xs);
+  background-color: var(--card);
+  gap: 0.25rem;
+}
+
+.neo-brutalism [data-slot="tabs-trigger"] {
+  font-weight: 700;
+}
+
+.neo-brutalism [data-slot="tabs-trigger"][data-state="active"] {
+  background-color: var(--nb-green);
+  color: var(--nb-ink);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--radius);
+}
+
+/* ——— Separator ——— */
+.neo-brutalism [data-slot="separator"] {
+  background-color: var(--nb-border-color);
+  height: 2px;
+}
+.neo-brutalism [data-slot="separator"][data-orientation="vertical"] {
+  width: 2px;
+  height: auto;
+}
+
+/* ——— Table ——— */
+.neo-brutalism [data-slot="table-container"] {
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--nb-shadow-sm);
+  overflow: hidden;
+}
+.neo-brutalism [data-slot="table-head"] {
+  background-color: var(--nb-yellow);
+  color: var(--nb-ink);
+  font-weight: 800;
+  border-bottom: var(--nb-border-width) solid var(--nb-border-color);
+}
+.neo-brutalism [data-slot="table-row"]:hover {
+  background-color: color-mix(in oklch, var(--nb-sky) 40%, transparent);
+}
+
+/* ——— Scrollbar polish ——— */
+.neo-brutalism ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.neo-brutalism ::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-left: 2px solid var(--nb-border-color);
+}
+.neo-brutalism ::-webkit-scrollbar-thumb {
+  background: var(--nb-green);
+  border: 2px solid var(--nb-border-color);
+}
+
+/* ——— Focus ring ——— */
+.neo-brutalism *:focus-visible {
+  outline: 2px solid var(--nb-border-color);
+  outline-offset: 2px;
+  border-radius: 0;
+}
+
+/* ============================================================ */
+/* BESPOKE COMPONENT RETROFITS                                   */
+/* Apply brutalism to components that don't use shadcn primitives */
+/* ============================================================ */
+
+/* PostCard (src/components/Post/PostCard.tsx) — uses .group\/card */
+.neo-brutalism .group\/card {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow) !important;
+  background-color: var(--card) !important;
+  transition: transform 150ms ease, box-shadow 150ms ease !important;
+}
+
+.neo-brutalism .group\/card:hover {
+  transform: translate(-3px, -3px) !important;
+  box-shadow: var(--nb-shadow-lg) !important;
+}
+
+/* Rotate shadow colors across the feed for variety */
+.neo-brutalism .group\/card:nth-of-type(5n+1) { box-shadow: 5px 5px 0 0 var(--nb-green) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n+2) { box-shadow: 5px 5px 0 0 var(--nb-pink) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n+3) { box-shadow: 5px 5px 0 0 var(--nb-blue) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n+4) { box-shadow: 5px 5px 0 0 var(--nb-yellow) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n)   { box-shadow: 5px 5px 0 0 var(--nb-purple) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n+1):hover { box-shadow: 8px 8px 0 0 var(--nb-green) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n+2):hover { box-shadow: 8px 8px 0 0 var(--nb-pink) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n+3):hover { box-shadow: 8px 8px 0 0 var(--nb-blue) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n+4):hover { box-shadow: 8px 8px 0 0 var(--nb-yellow) !important; }
+.neo-brutalism .group\/card:nth-of-type(5n):hover   { box-shadow: 8px 8px 0 0 var(--nb-purple) !important; }
+
+/* Chat message bubbles — flatten gradients, keep shape but add borders */
+.neo-brutalism [class*="rounded-[20px_20px_20px_6px]"],
+.neo-brutalism [class*="rounded-[20px_20px_6px_20px]"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  background-image: none !important;
+}
+.neo-brutalism [class*="rounded-[20px_20px_6px_20px]"] {
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+}
+.neo-brutalism [class*="rounded-[20px_20px_20px_6px]"] {
+  background-color: var(--card) !important;
+}
+
+/* Common surface polish: borders on anything with bg-card */
+.neo-brutalism .bg-card,
+.neo-brutalism .bg-background-off-white {
+  border-color: var(--nb-border-color);
+}
+
+/* Kill soft blurs that clash with hard shadows */
+.neo-brutalism .backdrop-blur,
+.neo-brutalism .backdrop-blur-sm,
+.neo-brutalism .backdrop-blur-md,
+.neo-brutalism .backdrop-blur-lg {
+  backdrop-filter: none !important;
+}
+
+/* Voting / sentiment toggle buttons in Post detail */
+.neo-brutalism [class*="from-[#52b274]"][class*="to-[#4a9e63]"],
+.neo-brutalism [class*="bg-gradient-to-br"][class*="#52b274"] {
+  background-image: none !important;
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-xs);
+}
+
+/* Gradient dividers (navbar) → flat ink line */
+.neo-brutalism [class*="bg-gradient-to-r"][class*="#2AE6B2"],
+.neo-brutalism [class*="bg-gradient-to-r"][class*="#27C4E1"],
+.neo-brutalism [class*="bg-gradient-to-r"][class*="#178BE1"] {
+  background-image: none !important;
+  background-color: var(--nb-border-color) !important;
+}
+
+/* Ring utility (avatars in chat) → brutalist border */
+.neo-brutalism .ring-2.ring-white,
+.neo-brutalism .ring-2.ring-border {
+  --tw-ring-color: var(--nb-border-color) !important;
+  box-shadow: 0 0 0 2px var(--nb-border-color) !important;
+}
+
+/* ============================================================ */
+/* NAVBAR — brutalist treatment                                  */
+/* Flattens inline gradients and border-images from MainNavBar   */
+/* ============================================================ */
+
+.neo-brutalism header.fixed {
+  background: var(--card) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--nb-border-color) !important;
+  border-image: none !important;
+  box-shadow: 0 4px 0 0 var(--nb-border-color);
+}
+
+.dark.neo-brutalism header.fixed,
+.neo-brutalism.dark header.fixed {
+  background: var(--card) !important;
+  box-shadow: 0 4px 0 0 var(--nb-shadow-color);
+}
+
+/* Gradient CTA buttons inside navbar → flat brutalist */
+.neo-brutalism [class*="from-[#2AE6B2]"],
+.neo-brutalism [class*="to-[#27C4E1]"],
+.neo-brutalism [class*="to-[#178BE1]"] {
+  background-image: none !important;
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+}
+
+/* "Create Quote" button in navbar — hardcoded #52b274 → brutalist green */
+.neo-brutalism [class*="bg-[#52b274]"] {
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-xs);
+  font-weight: 800;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+.neo-brutalism [class*="bg-[#52b274]"]:hover {
+  background-color: var(--nb-green) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm);
+}
+
+/* Navbar text color tokens → ink */
+.neo-brutalism [class*="text-[#0A2342]"],
+.neo-brutalism [class*="text-[#20b087]"] {
+  color: var(--foreground) !important;
+}
+
+/* Gradient dividers inside mobile drawer → solid ink */
+.neo-brutalism [class*="bg-gradient-to-r"][class*="from-[#2AE6B2]"] {
+  background-image: none !important;
+  background-color: var(--nb-border-color) !important;
+}
+
+/* Outline-style navbar buttons (Login) */
+.neo-brutalism [class*="border-[#2AE6B2]"] {
+  border-color: var(--nb-border-color) !important;
+  border-width: var(--nb-border-width) !important;
+  box-shadow: var(--nb-shadow-xs);
+  background-color: var(--card);
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+.neo-brutalism [class*="border-[#2AE6B2]"]:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm);
+}
+
+/* ---------- NavSearch (src/components/Navbars/NavSearch.tsx) ---------- */
+/* Pill search box → squared brutalist block with ink border */
+.neo-brutalism [class*="h-[38px]"][class*="rounded-full"][class*="transition-all"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  background-color: var(--card) !important;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease !important;
+}
+
+.neo-brutalism [class*="h-[38px]"][class*="rounded-full"][class*="transition-all"]:focus-within {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm) !important;
+  border-color: var(--nb-green-deep) !important;
+}
+
+/* Both the grey-unfocused bg and white-focused bg collapse to card color */
+.neo-brutalism [class*="bg-[#f0f2f5]"],
+.neo-brutalism [class*="bg-[#e4e6eb]"] {
+  background-color: var(--card) !important;
+}
+
+/* Focused soft green ring shadow → remove (we supply our own hard shadow) */
+.neo-brutalism [class*="shadow-[0_0_0_3px_rgba(82,178,116,0.15)]"] {
+  box-shadow: var(--nb-shadow-sm) !important;
+}
+
+/* Focused green border → ink */
+.neo-brutalism [class*="border-[#52b274]"] {
+  border-color: var(--nb-border-color) !important;
+}
+
+/* Search icon active-state green → deep brutalist green */
+.neo-brutalism [class*="text-[#52b274]"] {
+  color: var(--nb-green-deep) !important;
+}
+
+/* ============================================================ */
+/* AVATARS — DisplayAvatar is a bespoke <img class="rounded-full"> */
+/* Not a shadcn component, so target by class signature            */
+/* ============================================================ */
+
+.neo-brutalism img.rounded-full.object-cover {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  box-shadow: var(--nb-shadow-xs);
+  background-color: var(--card);
+}
+
+/* Avatars that already have a ring — keep them unified */
+.neo-brutalism img.rounded-full.object-cover[class*="ring-"] {
+  --tw-ring-color: transparent;
+}
+
+/* ============================================================ */
+/* PROFILE HEADER (src/components/Profile/ProfileHeader.tsx)     */
+/* Animated primary gradient cover → flat brutalist block        */
+/* ============================================================ */
+
+/* Cover banner — replace animated primary gradient with solid green + noise */
+.neo-brutalism [class*="from-primary/80"][class*="via-primary/60"],
+.neo-brutalism [class*="animate-gradient-x"] {
+  background-image: none !important;
+  background-color: var(--nb-green) !important;
+  animation: none !important;
+}
+
+/* Outer profile card — override rounded-xl and the thin border */
+.neo-brutalism [class*="bg-card"][class*="rounded-xl"][class*="border-border"][class*="shadow-sm"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow) !important;
+}
+
+/* Avatar ring-4 ring-card frame around big profile avatar → thick ink border */
+.neo-brutalism [class*="ring-4"][class*="ring-card"] {
+  --tw-ring-color: transparent !important;
+  border: 4px solid var(--nb-border-color) !important;
+  border-radius: 9999px;
+  background-color: var(--card);
+  box-shadow: var(--nb-shadow-sm);
+}
+
+/* ============================================================ */
+/* EYEBROW banner (src/app/components/Eyebrow/Eyebrow.tsx)       */
+/* ============================================================ */
+
+.neo-brutalism [class*="bg-white"][class*="shadow-sm"][class*="border-b"][class*="border-gray-200"] {
+  background-color: var(--card) !important;
+  border-bottom: var(--nb-border-width) solid var(--nb-border-color) !important;
+  box-shadow: none !important;
+}
+
+/* ============================================================ */
+/* NOTIFICATION LIST icons — colored rounded pills               */
+/* src/components/Notifications/NotificationLists.tsx           */
+/* ============================================================ */
+
+/* Pastel icon chips → solid brutalist chips with ink border */
+.neo-brutalism [class*="bg-blue-100"][class*="rounded-full"],
+.neo-brutalism [class*="bg-green-100"][class*="rounded-full"],
+.neo-brutalism [class*="bg-red-100"][class*="rounded-full"],
+.neo-brutalism [class*="bg-purple-100"][class*="rounded-full"],
+.neo-brutalism [class*="bg-amber-100"][class*="rounded-full"],
+.neo-brutalism [class*="bg-yellow-100"][class*="rounded-full"] {
+  border: 2px solid var(--nb-border-color) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  --tw-ring-color: transparent !important;
+}
+
+.neo-brutalism [class*="bg-blue-100"][class*="rounded-full"]    { background-color: var(--nb-sky) !important; }
+.neo-brutalism [class*="bg-green-100"][class*="rounded-full"]   { background-color: var(--nb-mint) !important; }
+.neo-brutalism [class*="bg-red-100"][class*="rounded-full"]     { background-color: var(--nb-coral) !important; }
+.neo-brutalism [class*="bg-purple-100"][class*="rounded-full"]  { background-color: var(--nb-purple) !important; }
+.neo-brutalism [class*="bg-amber-100"][class*="rounded-full"],
+.neo-brutalism [class*="bg-yellow-100"][class*="rounded-full"]  { background-color: var(--nb-yellow) !important; }
+
+/* Notification row card — rounded-lg border shadow → brutalist */
+.neo-brutalism [class*="bg-card"][class*="rounded-lg"][class*="border-border"][class*="hover:bg-accent"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.neo-brutalism [class*="bg-card"][class*="rounded-lg"][class*="border-border"][class*="hover:bg-accent"]:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm) !important;
+  background-color: var(--nb-yellow) !important;
+}
+
+/* ============================================================ */
+/* CHAT LIST — room item + DM/Group pills + unread counter       */
+/* src/components/Chat/ChatList.tsx                             */
+/* ============================================================ */
+
+/* Room card: rounded-2xl w/ soft border + shadow → squared brutalist */
+.neo-brutalism [class*="rounded-2xl"][class*="border-transparent"][class*="bg-background"][class*="shadow-sm"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease !important;
+}
+
+.neo-brutalism [class*="rounded-2xl"][class*="border-transparent"][class*="bg-background"][class*="shadow-sm"]:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm) !important;
+  background-color: var(--nb-yellow) !important;
+}
+
+/* Selected room */
+.neo-brutalism [class*="border-[#52b274]"][class*="bg-[#52b274]/8"],
+.neo-brutalism [class*="border-[#52b274]"][class*="bg-[#52b274]/10"] {
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+  border-color: var(--nb-border-color) !important;
+  box-shadow: var(--nb-shadow-sm) !important;
+}
+
+/* DM & Group pills — rounded-full px-2 py-0.5 with bg-*/10 tint */
+.neo-brutalism [class*="rounded-full"][class*="bg-[#52b274]/10"],
+.neo-brutalism [class*="rounded-full"][class*="bg-sky-500/10"] {
+  background-color: var(--nb-yellow) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs);
+  font-weight: 800 !important;
+}
+
+.neo-brutalism [class*="rounded-full"][class*="bg-sky-500/10"] {
+  background-color: var(--nb-sky) !important;
+}
+
+/* Unread count badge — rounded-full bg-[#52b274] shadow-md */
+.neo-brutalism [class*="rounded-full"][class*="bg-[#52b274]"][class*="shadow-md"],
+.neo-brutalism [class*="rounded-full"][class*="bg-[#52b274]"][class*="text-white"] {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+}
+
+/* ChatList empty state icon pill */
+.neo-brutalism [class*="rounded-full"][class*="bg-muted"][class*="p-3"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  background-color: var(--nb-sky) !important;
+  color: var(--nb-ink) !important;
+}
+
+/* ============================================================ */
+/* MESSAGE BOX header/footer — soft gradients → flat              */
+/* src/components/Chat/MessageBox.tsx                           */
+/* ============================================================ */
+
+.neo-brutalism [class*="bg-gradient-to-b"][class*="from-white"],
+.neo-brutalism [class*="bg-gradient-to-t"][class*="from-white"] {
+  background-image: none !important;
+  background-color: var(--card) !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  border-color: var(--nb-border-color) !important;
+}
+
+.neo-brutalism [class*="bg-gradient-to-b"][class*="from-white"] {
+  border-bottom: var(--nb-border-width) solid var(--nb-border-color) !important;
+}
+.neo-brutalism [class*="bg-gradient-to-t"][class*="from-white"] {
+  border-top: var(--nb-border-width) solid var(--nb-border-color) !important;
+}
+
+/* Repeating stripe pattern behind messages — remove (noisy against brutalism) */
+.neo-brutalism [style*="repeating-linear-gradient"] {
+  background-image: none !important;
+  background-color: var(--background) !important;
+}
+
+/* ============================================================ */
+/* VOTING POPUP — gradient toolbar + white shadow panel          */
+/* src/components/VotingComponents/VotingPopup.tsx              */
+/* ============================================================ */
+
+/* Inline linear-gradient toolbar → flat green with ink border */
+.neo-brutalism [style*="linear-gradient(to top"] {
+  background-image: none !important;
+  background-color: var(--nb-green) !important;
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  box-shadow: var(--nb-shadow-sm);
+}
+
+/* Expanded voting panel: bg-white p-4 shadow-lg → brutalist panel */
+.neo-brutalism [class*="bg-white"][class*="shadow-lg"],
+.neo-brutalism [class*="bg-white"][class*="shadow-xl"],
+.neo-brutalism [class*="bg-white"][class*="shadow-2xl"] {
+  background-color: var(--card) !important;
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  box-shadow: var(--nb-shadow-lg) !important;
+}
+
+/* ============================================================ */
+/* DASHBOARD LAYOUT — Create-Quote pill + search wrapper         */
+/* src/app/dashboard/layout.tsx                                 */
+/* ============================================================ */
+
+/* Pill CTA "Create Quote" with custom green glow shadow */
+.neo-brutalism [class*="rounded-full"][class*="bg-[#52b274]"][class*="shadow-[0_2px_6px_rgba(82,178,116"] {
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  font-weight: 800 !important;
+}
+
+.neo-brutalism [class*="rounded-full"][class*="bg-[#52b274]"][class*="shadow-[0_2px_6px_rgba(82,178,116"]:hover {
+  background-color: var(--nb-green) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm) !important;
+}
+
+/* Dashboard pill search wrapper (separate from NavSearch) */
+.neo-brutalism [class*="h-[38px]"][class*="w-[220px]"][class*="rounded-full"][class*="bg-muted"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  background-color: var(--card) !important;
+}
+
+/* Generic small circular avatar placeholders (w-8 h-8 rounded-full bg-muted) */
+.neo-brutalism [class*="w-8"][class*="h-8"][class*="rounded-full"][class*="bg-muted"] {
+  border: 2px solid var(--nb-border-color) !important;
+  background-color: var(--card) !important;
+}
+
+/* ============================================================ */
+/* PASSWORD RESET — pastel status circles + rounded-xl cards     */
+/* src/components/PasswordReset/PasswordReset.tsx               */
+/* ============================================================ */
+
+.neo-brutalism [class*="rounded-full"][class*="bg-green-50"][class*="border-green-200"] {
+  background-color: var(--nb-mint) !important;
+  border-color: var(--nb-border-color) !important;
+  border-width: var(--nb-border-width) !important;
+  box-shadow: var(--nb-shadow-xs);
+}
+
+.neo-brutalism [class*="rounded-full"][class*="bg-red-50"][class*="border-red-200"] {
+  background-color: var(--nb-coral) !important;
+  border-color: var(--nb-border-color) !important;
+  border-width: var(--nb-border-width) !important;
+  box-shadow: var(--nb-shadow-xs);
+}
+
+/* Password-reset alert surface (bg-red-50 border-red-200) */
+.neo-brutalism [class*="bg-red-50"][class*="border-red-200"]:not([class*="rounded-full"]) {
+  background-color: var(--nb-coral) !important;
+  border-color: var(--nb-border-color) !important;
+  border-width: var(--nb-border-width) !important;
+  box-shadow: var(--nb-shadow-xs);
+  color: var(--nb-ink);
+}
+
+/* Password-reset white card wrapper */
+.neo-brutalism [class*="bg-[var(--color-white)]"][class*="rounded-xl"][class*="shadow-md"] {
+  background-color: var(--card) !important;
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow) !important;
+}
+
+/* Small rounded-lg color-primary icon squares */
+.neo-brutalism [class*="rounded-lg"][class*="bg-[var(--color-primary)]"][class*="shadow-md"] {
+  background-color: var(--nb-green) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+}
+
+/* ============================================================ */
+/* ANIMATIONS that clash with raw brutalism                      */
+/* ============================================================ */
+
+.neo-brutalism .animate-pulse {
+  animation: none !important;
+}
+
+.neo-brutalism .animate-bounce {
+  animation: none !important;
+}
+
+.neo-brutalism .animate-gradient-x {
+  animation: none !important;
+  background-size: auto !important;
+}
+
+/* ============================================================ */
+/* GENERIC SOFT SHADOW CLASSES — convert to brutalist offsets    */
+/* Only targets elements that already have a border, to avoid    */
+/* over-shadowing things like buttons that have their own rules  */
+/* ============================================================ */
+
+.neo-brutalism [class*="shadow-md"]:not([data-slot]):not([role]):not(button):not(a) {
+  box-shadow: var(--nb-shadow-xs) !important;
+}
+
+/* ============================================================ */
+/* COMMENTS — unified neo-brutalism treatment                    */
+/* Existing comments (.group\/comment) + CommentInput            */
+/* ============================================================ */
+
+/* Existing comment row */
+.neo-brutalism .group\/comment {
+  padding: 0.875rem 0.75rem;
+  border-bottom: 2px solid color-mix(in oklch, var(--nb-border-color) 15%, transparent);
+}
+
+.neo-brutalism .group\/comment:last-child {
+  border-bottom: none;
+}
+
+/* Selected / focused comment highlight — amber states → brutalist yellow block */
+.neo-brutalism .group\/comment.bg-amber-50\/60,
+.neo-brutalism .group\/comment[class*="bg-amber"] {
+  background-color: var(--nb-yellow) !important;
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs);
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+.dark.neo-brutalism .group\/comment[class*="bg-amber"],
+.neo-brutalism.dark .group\/comment[class*="bg-amber"] {
+  background-color: color-mix(in oklch, var(--nb-yellow) 35%, var(--card)) !important;
+}
+
+/* Comment reply / delete icon buttons inside comment */
+.neo-brutalism .group\/comment [data-slot="button"][data-size="icon-sm"],
+.neo-brutalism .group\/comment [data-slot="button"][data-variant="ghost"] {
+  box-shadow: none;
+}
+
+/* CommentInput — both unfocused (rounded-full pill) and focused (rounded-xl box) */
+/* Force both states into a consistent brutalist box */
+.neo-brutalism [class*="rounded-xl"][class*="bg-card"][class*="overflow-hidden"][class*="shadow-sm"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-sm) !important;
+  background-color: var(--card) !important;
+}
+
+/* Unfocused pill textarea → brutalist rectangle */
+.neo-brutalism textarea[class*="rounded-full"][class*="bg-muted"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  background-color: var(--card) !important;
+}
+
+.neo-brutalism textarea[class*="rounded-full"][class*="bg-muted"]:focus,
+.neo-brutalism textarea[class*="rounded-full"][class*="bg-muted"]:focus-visible {
+  background-color: var(--card) !important;
+  --tw-ring-color: transparent !important;
+  box-shadow: var(--nb-shadow-sm) !important;
+  transform: translate(-1px, -1px);
+  border-color: var(--nb-green-deep) !important;
+}
+
+/* Comment submit (Post) button — inherits data-slot=button but loses pill radius */
+.neo-brutalism .group\/comment [data-slot="button"][class*="rounded-full"],
+.neo-brutalism [class*="rounded-xl"] [data-slot="button"][class*="rounded-full"] {
+  border-radius: var(--radius) !important;
+}
+
+/* ============================================================ */
+/* ALERTS (shadcn) — variant-colored brutalist blocks            */
+/* ============================================================ */
+
+.neo-brutalism [data-slot="alert"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-sm);
+  font-weight: 600;
+}
+
+.neo-brutalism [data-slot="alert"]:not([class*="border-destructive"]):not([class*="border-green"]):not([class*="border-yellow"]):not([class*="border-blue"]) {
+  background-color: var(--nb-sky) !important;
+  color: var(--nb-ink) !important;
+}
+
+.neo-brutalism [data-slot="alert"][class*="border-destructive"] {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+  border-color: var(--nb-border-color) !important;
+}
+
+.neo-brutalism [data-slot="alert"][class*="border-green"] {
+  background-color: var(--nb-mint) !important;
+  color: var(--nb-ink) !important;
+  border-color: var(--nb-border-color) !important;
+}
+
+.neo-brutalism [data-slot="alert"][class*="border-yellow"] {
+  background-color: var(--nb-yellow) !important;
+  color: var(--nb-ink) !important;
+  border-color: var(--nb-border-color) !important;
+}
+
+.neo-brutalism [data-slot="alert"][class*="border-blue"] {
+  background-color: var(--nb-sky) !important;
+  color: var(--nb-ink) !important;
+  border-color: var(--nb-border-color) !important;
+}
+
+.neo-brutalism [data-slot="alert-title"] {
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.neo-brutalism [data-slot="alert-description"] {
+  color: color-mix(in oklch, var(--nb-ink) 85%, transparent) !important;
+}
+
+/* ============================================================ */
+/* SONNER TOASTS — brutalist chips, color per variant            */
+/* ============================================================ */
+
+.neo-brutalism [data-sonner-toaster] {
+  --font-family: inherit;
+}
+
+.neo-brutalism [data-sonner-toast] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow) !important;
+  background-color: var(--card) !important;
+  color: var(--nb-ink) !important;
+  font-weight: 700 !important;
+}
+
+.neo-brutalism [data-sonner-toast][data-type="success"] {
+  background-color: var(--nb-mint) !important;
+  color: var(--nb-ink) !important;
+}
+
+.neo-brutalism [data-sonner-toast][data-type="error"] {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+}
+
+.neo-brutalism [data-sonner-toast][data-type="warning"] {
+  background-color: var(--nb-yellow) !important;
+  color: var(--nb-ink) !important;
+}
+
+.neo-brutalism [data-sonner-toast][data-type="info"] {
+  background-color: var(--nb-sky) !important;
+  color: var(--nb-ink) !important;
+}
+
+.neo-brutalism [data-sonner-toast] [data-title] {
+  font-weight: 900 !important;
+  letter-spacing: -0.01em;
+}
+
+.neo-brutalism [data-sonner-toast] [data-description] {
+  color: color-mix(in oklch, var(--nb-ink) 85%, transparent) !important;
+  font-weight: 500 !important;
+}
+
+.neo-brutalism [data-sonner-toast] [data-close-button] {
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  background-color: var(--card) !important;
+  color: var(--nb-ink) !important;
+}
+
+/* ============================================================ */
+/* DIALOGS & ALERT DIALOGS — add colored shadow for pop                 */
+/* ============================================================ */
+
+.neo-brutalism [data-slot="dialog-content"],
+.neo-brutalism [data-slot="alert-dialog-content"] {
+  box-shadow: 8px 8px 0 0 var(--nb-green);
+}
+
+.dark.neo-brutalism [data-slot="dialog-content"],
+.neo-brutalism.dark [data-slot="dialog-content"],
+.dark.neo-brutalism [data-slot="alert-dialog-content"],
+.neo-brutalism.dark [data-slot="alert-dialog-content"] {
+  box-shadow: 8px 8px 0 0 var(--nb-green);
+}
+
+.neo-brutalism [data-slot="dialog-overlay"],
+.neo-brutalism [data-slot="alert-dialog-overlay"] {
+  background-color: color-mix(in oklch, var(--nb-ink) 35%, transparent) !important;
+  backdrop-filter: none !important;
+}
+
+.neo-brutalism [data-slot="dialog-title"],
+.neo-brutalism [data-slot="alert-dialog-title"] {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+/* ——— Utility classes ——— */
+.neo-brutalism .nb-shadow { box-shadow: var(--nb-shadow); }
+.neo-brutalism .nb-shadow-lg { box-shadow: var(--nb-shadow-lg); }
+.neo-brutalism .nb-border { border: var(--nb-border-width) solid var(--nb-border-color); }
+
 /* Smooth scrolling */
 html { scroll-behavior: smooth; }
 
