@@ -461,7 +461,7 @@ describe('CustomButtons Components', () => {
         user: {
           loading: false,
           loginError: null,
-          data: { _followingId: '' },
+          data: { _followingId: [] },
         },
       });
     });

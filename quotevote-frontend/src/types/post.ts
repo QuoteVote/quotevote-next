@@ -3,10 +3,26 @@
  * Includes post data structure from GraphQL queries
  */
 
+export interface AvataaarsData {
+  topType?: string
+  accessoriesType?: string
+  hairColor?: string
+  facialHairType?: string
+  facialHairColor?: string
+  clotheType?: string
+  clotheColor?: string
+  graphicType?: string
+  eyeType?: string
+  eyebrowType?: string
+  mouthType?: string
+  skinColor?: string
+  hatColor?: string
+}
+
 export interface PostCreator {
   _id: string
   name?: string | null
-  avatar?: string | null
+  avatar?: string | AvataaarsData | null
   username?: string | null
   contributorBadge?: string | null
 }
@@ -110,7 +126,7 @@ export interface PostCardProps {
   creator?: {
     name?: string | null
     username?: string | null
-    avatar?: string | null
+    avatar?: string | AvataaarsData | null
     _id?: string | null
   }
   activityType?: string

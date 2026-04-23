@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import type { ProfileUser } from '@/types/profile';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { FollowButton } from '../CustomButtons/FollowButton';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,8 +50,8 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   } = profileUser;
 
   const sameUser = _id === loggedInUserIdString;
-  const followingArray = Array.isArray(_followingId) ? _followingId : typeof _followingId === 'string' ? [_followingId] : [];
-  const isFollowing = followingArray.includes(loggedInUserIdString);
+  const followersArray = Array.isArray(_followersId) ? _followersId : typeof _followersId === 'string' ? [_followersId] : [];
+  const isFollowing = followersArray.includes(loggedInUserIdString);
 
   const { data, loading: chatLoading } = useQuery<{
     messageRoom?: {
@@ -139,11 +139,6 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
     }
   };
 
-  // Handle avatar object structure
-  const avatarSrc =
-    typeof avatar === 'string'
-      ? avatar
-      : avatar?.url || undefined;
 
   const followersCount = _followersId?.length || 0;
   const followingCount = _followingId?.length || 0;
@@ -161,9 +156,9 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
         {/* Avatar overlapping banner */}
         <div className="flex items-end justify-between -mt-12 mb-4">
           <div className="ring-4 ring-card rounded-full">
-            <Avatar
-              src={avatarSrc}
-              alt={username}
+            <DisplayAvatar
+              avatar={avatar as string | Record<string, unknown> | undefined}
+              username={username}
               size={96}
             />
           </div>

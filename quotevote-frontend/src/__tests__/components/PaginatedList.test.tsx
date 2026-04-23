@@ -83,7 +83,7 @@ describe('PaginatedList Component', () => {
       expect(screen.getByText('Custom Loading')).toBeInTheDocument()
     })
 
-    it('shows loading overlay when loading with existing data', () => {
+    it('shows existing data while loading more (no blocking overlay)', () => {
       render(
         <PaginatedList
           data={mockData.slice(0, 10)}
@@ -93,8 +93,9 @@ describe('PaginatedList Component', () => {
         />
       )
 
-      expect(screen.getByText('Loading new page...')).toBeInTheDocument()
-      expect(screen.getByText('Please wait while we fetch the latest posts')).toBeInTheDocument()
+      // Existing items remain visible — no blocking overlay text
+      expect(screen.getByText(mockData[0].name)).toBeInTheDocument()
+      expect(screen.queryByText('Loading new page...')).not.toBeInTheDocument()
     })
   })
 

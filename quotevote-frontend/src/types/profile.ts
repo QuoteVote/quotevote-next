@@ -96,7 +96,6 @@ export interface UserFollowDisplayProps {
   numFollowing: number;
   id: string;
   isFollowing: boolean;
-  profileUserId: string;
 }
 
 export interface FollowInfoProps {

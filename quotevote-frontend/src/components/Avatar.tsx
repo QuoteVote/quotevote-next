@@ -130,7 +130,7 @@ export default function Avatar({
           )}
           onError={() => setImageError(true)}
           onLoad={() => setImageLoaded(true)}
-          {...(src?.startsWith('data:') || src?.startsWith('blob:')
+          {...(src?.startsWith('data:') || src?.startsWith('blob:') || src?.includes('avataaars.io')
             ? { unoptimized: true }
             : {})}
         />

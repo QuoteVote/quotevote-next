@@ -5,7 +5,6 @@
  * the Next.js edge middleware can read the token without accessing localStorage.
  */
 
-import { jwtDecode } from 'jwt-decode';
 import type { LoginResponse } from '@/types/login';
 import { env } from '@/config/env';
 
@@ -65,7 +64,7 @@ export async function loginUser(
             };
         }
 
-        const { token } = data;
+        const { token, user } = data;
 
         if (!token) {
             return { success: false, error: 'No token received from server.' };
@@ -74,10 +73,7 @@ export async function loginUser(
         // Persist token to localStorage + qv-token cookie for middleware
         setToken(token);
 
-        // Decode JWT to extract user data (same approach as original app)
-        const user = jwtDecode<Record<string, unknown>>(token);
-
-        return { success: true, data: { user, token } };
+        return { success: true, data: { user: user as Record<string, unknown>, token } };
     } catch (error) {
         return {
             success: false,

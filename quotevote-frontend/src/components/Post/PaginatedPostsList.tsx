@@ -183,24 +183,24 @@ export default function PaginatedPostsList({
 
   // Render individual post
   const renderPost = (post: Post & { rank?: number }) => (
-    <div key={post._id} className="w-full max-w-full overflow-x-hidden box-border ">
-      <PostCard
-        _id={post._id}
-        text={post.text || ''}
-        title={post.title || ''}
-        url={post.url || ''}
-        created={post.created}
-        creator={post.creator || undefined}
-        bookmarkedBy={post.bookmarkedBy || undefined}
-        approvedBy={post.approvedBy || undefined}
-        rejectedBy={post.rejectedBy || undefined}
-        votes={post.votes || undefined}
-        comments={post.comments || undefined}
-        quotes={post.quotes || undefined}
-        messageRoom={post.messageRoom || undefined}
-        groupId={post.groupId}
-      />
-    </div>
+    <PostCard
+      key={post._id}
+      _id={post._id}
+      text={post.text || ''}
+      title={post.title || ''}
+      url={post.url || ''}
+      created={post.created}
+      creator={post.creator || undefined}
+      bookmarkedBy={post.bookmarkedBy || undefined}
+      approvedBy={post.approvedBy || undefined}
+      rejectedBy={post.rejectedBy || undefined}
+      votes={post.votes || undefined}
+      comments={post.comments || undefined}
+      quotes={post.quotes || undefined}
+      messageRoom={post.messageRoom || undefined}
+      groupId={post.groupId}
+      citationUrl={post.citationUrl || undefined}
+    />
   )
 
   // Render empty state
@@ -234,14 +234,8 @@ export default function PaginatedPostsList({
     </div>
   )
 
-  // Render loading state (skeleton)
-  const renderLoading = () => (
-    <div className="flex flex-col gap-4">
-      <div className="w-full max-w-full overflow-x-hidden box-border">
-        <PostSkeleton />
-      </div>
-    </div>
-  )
+  // Render loading state — PostSkeleton already renders 3 cards
+  const renderLoading = () => <PostSkeleton />
 
   // Load More mode — render without PaginatedList wrapper
   if (loadMoreMode) {
@@ -260,19 +254,14 @@ export default function PaginatedPostsList({
     return (
       <div className={className}>
         <div className={contentClassName}>
-          <div className="flex flex-col gap-0">
+          <div className="flex flex-col gap-4 px-4 py-4">
             {processedPosts.map(renderPost)}
           </div>
 
           {/* Load More button + skeleton loaders */}
           {hasMore && (
             <div className="flex flex-col items-center py-6 gap-4">
-              {isLoadingMore && (
-                <div className="w-full">
-                  <PostSkeleton />
-                  <PostSkeleton />
-                </div>
-              )}
+              {isLoadingMore && <PostSkeleton />}
               <Button
                 variant="outline"
                 size="lg"
@@ -323,7 +312,7 @@ export default function PaginatedPostsList({
       contentClassName={contentClassName}
       paginationClassName={paginationClassName}
     >
-      <div className="flex flex-col gap-0">
+      <div className="flex flex-col gap-4 px-4 py-4">
         {processedPosts.map(renderPost)}
       </div>
     </PaginatedList>

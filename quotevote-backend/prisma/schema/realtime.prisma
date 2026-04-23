@@ -13,13 +13,16 @@ model Presence {
   userId        String         @unique @db.ObjectId
   status        PresenceStatus @default(offline)
   statusMessage String?
-  lastHeartbeat DateTime?
-  lastSeen      DateTime?
+  lastHeartbeat DateTime?      @default(now())
+  lastSeen      DateTime?      @default(now())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id])
 
   @@index([status])
+  @@index([lastHeartbeat])
   @@map("presences")
 }
 
@@ -27,8 +30,11 @@ model Typing {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   messageRoomId String   @db.ObjectId
   userId        String   @db.ObjectId
-  isTyping      Boolean  @default(false)
+  isTyping      Boolean  @default(true)
   timestamp     DateTime @default(now())
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
   messageRoom MessageRoom @relation(fields: [messageRoomId], references: [id])
@@ -36,5 +42,6 @@ model Typing {
 
   @@unique([messageRoomId, userId])
   @@index([messageRoomId])
+  @@index([expiresAt])
   @@map("typings")
 }

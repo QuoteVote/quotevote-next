@@ -8,6 +8,7 @@ export const GET_BUDDY_LIST = gql`
     getBuddyList {
       user {
         _id
+        name
         username
         avatar
       }
@@ -33,6 +34,7 @@ export const GET_ROOM_MESSAGES = gql`
         text
         created
         type
+        readBy
         user {
           _id
           name
@@ -56,6 +58,7 @@ export const GET_ROSTER = gql`
       initiatedBy
       buddy {
         _id
+        name
         username
         avatar
       }

@@ -78,15 +78,15 @@ describe('Settings Page', () => {
 
   it('renders settings page heading', () => {
     render(<SettingsPageClient />)
-    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /settings/i })).toBeInTheDocument()
   })
 
-  it('renders navigation buttons for Profile, Account, Password', () => {
+  it('renders unified form with all fields', () => {
     render(<SettingsPageClient />)
-    // Navigation buttons
-    expect(screen.getByRole('button', { name: 'Profile' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Account' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Password' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Display Name')).toBeInTheDocument()
+    expect(screen.getByLabelText('Username')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
   })
 
   it('renders profile form with user data by default', () => {
@@ -96,18 +96,15 @@ describe('Settings Page', () => {
     expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
   })
 
-  it('switches to account section when clicked', () => {
+  it('renders dark mode toggle', () => {
     render(<SettingsPageClient />)
-    fireEvent.click(screen.getByRole('button', { name: 'Account' }))
-    expect(screen.getByText('Account Status')).toBeInTheDocument()
+    expect(screen.getByText('Dark Mode')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: /toggle dark mode/i })).toBeInTheDocument()
   })
 
-  it('switches to password section when clicked', () => {
+  it('renders optional password field', () => {
     render(<SettingsPageClient />)
-    fireEvent.click(screen.getByRole('button', { name: 'Password' }))
-    expect(screen.getByText('Change Password')).toBeInTheDocument()
-    expect(screen.getByText('Current Password')).toBeInTheDocument()
-    expect(screen.getByText('New Password')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Leave blank to keep current password')).toBeInTheDocument()
   })
 
   it('shows save button as disabled when form is pristine', () => {
@@ -137,27 +134,19 @@ describe('Settings Page', () => {
     expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/avatar')
   })
 
-  it('shows account status as Active', () => {
+  it('renders sign out button', () => {
     render(<SettingsPageClient />)
-    fireEvent.click(screen.getByRole('button', { name: 'Account' }))
-    expect(screen.getByText('Active')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument()
   })
 
   it('validates password requirements', async () => {
     render(<SettingsPageClient />)
-    fireEvent.click(screen.getByRole('button', { name: 'Password' }))
 
-    const currentPw = screen.getByPlaceholderText('Enter current password')
-    fireEvent.change(currentPw, { target: { value: 'oldpass123' } })
+    const pwInput = screen.getByPlaceholderText('Leave blank to keep current password')
+    fireEvent.change(pwInput, { target: { value: 'short' } })
 
-    const newPw = screen.getByPlaceholderText('Enter new password')
-    fireEvent.change(newPw, { target: { value: 'short' } })
-
-    const confirmPw = screen.getByPlaceholderText('Confirm new password')
-    fireEvent.change(confirmPw, { target: { value: 'short' } })
-
-    const updateButton = screen.getByRole('button', { name: /update password/i })
-    fireEvent.click(updateButton)
+    const saveButton = screen.getByRole('button', { name: /save changes/i })
+    fireEvent.click(saveButton)
 
     await waitFor(() => {
       expect(screen.getByText(/at least 8 characters/i)).toBeInTheDocument()

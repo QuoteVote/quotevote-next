@@ -132,7 +132,7 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
       <ul className="flex flex-col gap-2 px-2">
         {sortedRooms.map((room) => {
           const displayInfo = getRoomDisplayInfo(room);
-          const isSelected = selectedRoomId === room._id;
+          const isSelected = typeof selectedRoomId === 'string' && selectedRoomId === room._id;
 
           const isDm = room.messageType === 'USER' && (room.users?.length ?? 0) === 2;
 
@@ -142,18 +142,19 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
                 type="button"
                 onClick={() => handleRoomClick(room)}
                 className={
-                  'flex w-full items-center gap-3 rounded-2xl border border-transparent bg-background px-3 py-3 text-left shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50/60 dark:hover:border-emerald-500/40 dark:hover:bg-emerald-950/30 ' +
+                  'flex w-full items-center gap-3 rounded-2xl border border-transparent bg-background px-3 py-3 text-left shadow-sm transition-all hover:border-[#52b274]/30 hover:bg-[#52b274]/5 hover:translate-x-[2px] dark:hover:border-[#52b274]/40 dark:hover:bg-[#52b274]/10 ' +
                   (isSelected
-                    ? 'border-emerald-500 bg-emerald-50/80 shadow-md dark:bg-emerald-950/40'
+                    ? 'border-[#52b274] bg-[#52b274]/8 shadow-md dark:bg-[#52b274]/10'
                     : '')
                 }
               >
-                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-muted shadow-sm">
+                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-muted shadow-sm ring-2 ring-white dark:ring-background">
                   {displayInfo.avatar ? (
                     <Avatar
                       src={displayInfo.avatar}
                       alt={displayInfo.name || 'Chat avatar'}
                       size={48}
+                      className="ring-0"
                     />
                   ) : displayInfo.isGroup ? (
                     <Users2 className="h-5 w-5 text-muted-foreground" />
@@ -175,7 +176,7 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
                       className={
                         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ' +
                         (isDm
-                          ? 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                          ? 'bg-[#52b274]/10 text-[#4a9e63] dark:bg-[#52b274]/20 dark:text-[#52b274]'
                           : 'bg-sky-500/10 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300')
                       }
                     >
@@ -193,7 +194,7 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
                 </div>
 
                 {(room.unreadMessages ?? 0) > 0 && (
-                  <div className="ml-2 flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[11px] font-bold text-white shadow-md">
+                  <div className="ml-2 flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-[#52b274] px-1.5 text-[11px] font-bold text-white shadow-md">
                     {(room.unreadMessages ?? 0) > 99 ? '99+' : room.unreadMessages}
                   </div>
                 )}

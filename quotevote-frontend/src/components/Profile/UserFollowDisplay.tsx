@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { UserFollowDisplayProps } from '@/types/profile';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { FollowButton } from '../CustomButtons/FollowButton';
 
 export function UserFollowDisplay({
@@ -13,21 +13,15 @@ export function UserFollowDisplay({
   id,
   isFollowing,
 }: UserFollowDisplayProps) {
-  // Handle avatar object structure
-  const avatarSrc =
-    typeof avatar === 'string'
-      ? avatar
-      : avatar?.url || undefined;
-
   return (
     <div
       className="flex flex-row items-center justify-center gap-4 p-4 border-b last:border-b-0"
       id="component-user-follow-display"
     >
       <div className="flex-shrink-0">
-        <Avatar
-          src={avatarSrc}
-          alt={username}
+        <DisplayAvatar
+          avatar={avatar as string | Record<string, unknown> | undefined}
+          username={username}
           size={50}
         />
       </div>

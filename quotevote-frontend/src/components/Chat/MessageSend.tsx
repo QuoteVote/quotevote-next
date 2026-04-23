@@ -4,7 +4,6 @@ import { useState, useMemo, KeyboardEvent, ChangeEvent } from 'react';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { Send, Loader2 } from 'lucide-react';
 
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
@@ -24,6 +23,7 @@ export default function MessageSend({
   const user = useAppStore((state) => state.user.data);
   const chatUser = user as ChatUser | undefined;
   const setChatSubmitting = useAppStore((state) => state.setChatSubmitting);
+  const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
   const selectedRoom = useAppStore((state) => state.chat.selectedRoom) as
     | SelectedRoomState
     | string
@@ -96,7 +96,7 @@ export default function MessageSend({
     messageRoomId || ''
   );
 
-  const [createMessage, { loading }] = useMutation<{ createMessage?: { __typename?: string; _id?: string; messageRoomId?: string; userName?: string; userId?: string; title?: string | null; text?: string; type?: string; created?: string; user?: { __typename?: string; _id?: string; name?: string; username?: string; avatar?: string } } }>(SEND_MESSAGE, {
+  const [createMessage, { loading }] = useMutation<{ createMessage?: { __typename?: string; _id?: string; messageRoomId?: string; userName?: string; userId?: string; title?: string | null; text?: string; type?: string; created?: string; readBy?: unknown[]; user?: { __typename?: string; _id?: string; name?: string; username?: string; avatar?: string } } }>(SEND_MESSAGE, {
     onError: (err) => {
       // Check if error is due to blocking
       const errorMessage = err.message || 'Failed to send message';
@@ -122,7 +122,7 @@ export default function MessageSend({
       setError(null);
 
       if (!messageRoomId && data?.createMessage?.messageRoomId) {
-        // New room will be picked up via GET_CHAT_ROOMS refetch
+        setSelectedChatRoom(data.createMessage.messageRoomId);
       }
     },
     update: (cache, { data: mutationData }) => {
@@ -197,6 +197,7 @@ export default function MessageSend({
             text: text.trim(),
             type,
             created: dateSubmitted.toISOString(),
+            readBy: [],
             user: {
               __typename: 'User',
               _id: chatUser?._id,
@@ -248,14 +249,14 @@ export default function MessageSend({
       )}
       <div
         className={cn(
-          'flex items-end rounded-2xl border border-border bg-background/80 px-3 py-2 shadow-sm transition-colors',
-          'focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/30',
+          'flex items-end rounded-[28px] border-2 border-gray-300 bg-white px-3 py-2 shadow-[0_2px_8px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300',
+          'focus-within:border-[#52b274] focus-within:-translate-y-px focus-within:shadow-[0_0_0_3px_rgba(82,178,116,0.25),0_4px_16px_rgba(82,178,116,0.15)]',
           isSending && 'opacity-70'
         )}
       >
-        <Textarea
+        <textarea
           aria-label="message input"
-          className="min-h-[40px] max-h-[140px] flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+          className="min-h-[40px] max-h-[140px] flex-1 resize-none border-0 bg-transparent p-0 text-[0.9375rem] leading-[1.5] outline-none focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground"
           placeholder={placeholder}
           value={text}
           disabled={isBlocked || isSending}
@@ -266,7 +267,7 @@ export default function MessageSend({
         <Button
           type="button"
           size="icon"
-          className="ml-2 h-9 w-9 rounded-full bg-emerald-500 text-white shadow-md hover:bg-emerald-600 disabled:opacity-50"
+          className="ml-2 h-9 w-9 flex-shrink-0 rounded-full bg-[#52b274] text-white shadow-[0_2px_8px_rgba(82,178,116,0.30)] transition-all duration-200 hover:bg-[#4a9e63] hover:scale-[1.08] hover:shadow-[0_4px_12px_rgba(82,178,116,0.40)] active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none"
           aria-label={isSending ? 'Sending message' : 'Send message'}
           disabled={loading || !text.trim() || isBlocked || isSending}
           onClick={() => void handleSubmit()}

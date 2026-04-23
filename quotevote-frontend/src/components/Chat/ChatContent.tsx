@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, ArrowLeft } from 'lucide-react';
 import { useQuery } from '@apollo/client/react';
 
 import ChatSearchInput from './ChatSearchInput';
@@ -59,7 +59,7 @@ function UserStatusDisplay() {
   const label = userStatusMessage || getStatusLabel(userStatus);
 
   let dotClass = 'bg-zinc-400';
-  if (userStatus === 'online') dotClass = 'bg-emerald-500';
+  if (userStatus === 'online') dotClass = 'bg-[#52b274]';
   else if (userStatus === 'away') dotClass = 'bg-amber-400';
   else if (userStatus === 'dnd') dotClass = 'bg-red-500';
 
@@ -81,6 +81,7 @@ function UserStatusDisplay() {
 
 function ChatContent() {
   const selectedRoomId = useAppStore((state) => state.chat.selectedRoom);
+  const setChatOpen = useAppStore((state) => state.setChatOpen);
   const buddyList = useAppStore(
     (state) => state.chat.buddyList
   ) as BuddyListItem[];
@@ -152,8 +153,17 @@ function ChatContent() {
     return (
       <div className="flex h-full w-full flex-col border-r bg-background shadow-lg lg:w-[400px]">
         {/* Header */}
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 px-4 py-3 text-white shadow-md">
-          <div className="flex items-center justify-between gap-3">
+        <div className="bg-gradient-to-br from-[#52b274] to-[#4a9e63] px-4 py-3 text-white shadow-md">
+          <div className="flex items-center gap-3">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="-ml-1 flex-shrink-0 text-white hover:bg-white/20 hover:scale-105 transition-all duration-200"
+              onClick={() => setChatOpen(false)}
+              aria-label="Close messages"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             <div className="min-w-0 flex-1">
               <h2 className="text-lg font-bold tracking-tight">Messages</h2>
               <div className="mt-1">
@@ -163,7 +173,7 @@ function ChatContent() {
             <Button
               size="icon"
               variant="outline"
-              className="border-white/40 bg-white/20 text-white hover:bg-white/30"
+              className="flex-shrink-0 mr-1 border-white/40 bg-white/20 text-white hover:bg-white/30"
               onClick={() => setStatusEditorOpen(true)}
               aria-label="Set status"
             >
@@ -196,7 +206,7 @@ function ChatContent() {
         {activeTab === 'buddies' && !addBuddyMode && (
           <div className="border-b bg-gradient-to-br from-background to-muted px-4 py-3">
             <Button
-              className="w-full justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md hover:from-emerald-600 hover:to-emerald-700"
+              className="w-full justify-center bg-gradient-to-r from-[#52b274] to-[#4a9e63] text-white shadow-md hover:from-[#4a9e63] hover:to-[#3d8854]"
               onClick={handleAddBuddyClick}
             >
               Add New Buddy

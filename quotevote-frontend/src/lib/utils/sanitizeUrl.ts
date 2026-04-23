@@ -71,6 +71,22 @@ export const sanitizeUrl = (url: string): string | null => {
 }
 
 /**
+ * Normalise a backend post URL to the Next.js app route.
+ *
+ * The backend stores post URLs as `/post/<group>/<title>/<id>` (monorepo
+ * format).  The Next.js app routes them under `/dashboard/post/...`, so
+ * every client-side navigation and every copy-link must use this helper.
+ *
+ * @example
+ * toAppPostUrl('/post/general/some-title/abc123')
+ * // '/dashboard/post/general/some-title/abc123'
+ */
+export const toAppPostUrl = (url: string): string => {
+  const clean = url.replace(/\?/g, '')
+  return clean.startsWith('/post/') ? `/dashboard${clean}` : clean
+}
+
+/**
  * Extract domain name from a URL for display
  * 
  * @param url - The URL to extract domain from

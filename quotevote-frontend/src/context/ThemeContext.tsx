@@ -50,9 +50,41 @@ export function ThemeContextProvider({
     return 'light'
   }
 
+  const getInitialNeoBrutalism = (): boolean => {
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem('neoBrutalism') === 'on'
+      } catch (_error) {
+        // ignore localStorage read errors
+      }
+    }
+    return false
+  }
+
   const [themeMode, setThemeMode] = useState<ThemeMode>(() =>
     getInitialThemeMode()
   )
+  const [neoBrutalism, setNeoBrutalism] = useState<boolean>(() =>
+    getInitialNeoBrutalism()
+  )
+
+  // Apply dark class to <html> whenever themeMode changes
+  useEffect(() => {
+    if (themeMode === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [themeMode])
+
+  // Apply neo-brutalism class to <html> whenever flag changes
+  useEffect(() => {
+    if (neoBrutalism) {
+      document.documentElement.classList.add('neo-brutalism')
+    } else {
+      document.documentElement.classList.remove('neo-brutalism')
+    }
+  }, [neoBrutalism])
 
   // Update theme when user logs in/out or user preference changes
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -112,14 +144,27 @@ export function ThemeContextProvider({
     return newMode
   }, [themeMode])
 
+  const toggleNeoBrutalism = useCallback((): boolean => {
+    const next = !neoBrutalism
+    setNeoBrutalism(next)
+    try {
+      localStorage.setItem('neoBrutalism', next ? 'on' : 'off')
+    } catch (_error) {
+      // ignore localStorage write errors
+    }
+    return next
+  }, [neoBrutalism])
+
   const value = useMemo<ThemeContextValue>(
     () => ({
       themeMode,
       theme,
       toggleTheme,
       isDarkMode: themeMode === 'dark',
+      neoBrutalism,
+      toggleNeoBrutalism,
     }),
-    [themeMode, theme, toggleTheme]
+    [themeMode, theme, toggleTheme, neoBrutalism, toggleNeoBrutalism]
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

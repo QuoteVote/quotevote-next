@@ -1,5 +1,5 @@
 import { ApolloClient, InMemoryCache, HttpLink, from, split, ApolloLink, type ApolloClient as ApolloClientType } from '@apollo/client';
-import { CombinedGraphQLErrors } from '@apollo/client/errors';
+import { CombinedGraphQLErrors, CombinedProtocolErrors } from '@apollo/client/errors';
 import { setContext } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
 import { getMainDefinition } from '@apollo/client/utilities';
@@ -207,13 +207,28 @@ function createErrorLink() {
           console.error(`[GraphQL error] op=${operation.operationName} code=${code}`, err);
         }
       }
-    } else {
-      // Network / protocol error
+    } else if (CombinedProtocolErrors.is(error)) {
+      // WebSocket protocol error — don't surface a misleading "network error" toast
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Protocol error]', operation.operationName, error);
+      }
+    } else if (
+      error instanceof Error &&
+      (error.message.includes('fetch') ||
+        error.message.includes('network') ||
+        error.message.includes('Failed to') ||
+        error.message.includes('Network request'))
+    ) {
+      // Genuine HTTP/network failure
       if (typeof window !== 'undefined') {
         toast.error('Network error — please check your connection.');
       }
       if (process.env.NODE_ENV === 'development') {
-        console.error('[Network error]', error);
+        console.error('[Network error]', operation.operationName, error);
+      }
+    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Unknown error]', operation.operationName, error);
       }
     }
   });
@@ -285,44 +300,7 @@ function createApolloClient(): ApolloClientType {
 
   return new ApolloClient({
     link,
-    cache: new InMemoryCache({
-      typePolicies: {
-        Query: {
-          fields: {
-            // Paginated post lists — merge pages so cache doesn't thrash on fetchMore
-            posts: {
-              keyArgs: ['filter', 'searchKey', 'startDateRange', 'friendsOnly'],
-              merge(existing = { data: [] }, incoming) {
-                return {
-                  ...incoming,
-                  data: [...(existing.data ?? []), ...(incoming.data ?? [])],
-                };
-              },
-            },
-            // Paginated comment lists
-            comments: {
-              keyArgs: ['postId'],
-              merge(existing = { data: [] }, incoming) {
-                return {
-                  ...incoming,
-                  data: [...(existing.data ?? []), ...(incoming.data ?? [])],
-                };
-              },
-            },
-            searchKey: {
-              read() {
-                return '';
-              },
-            },
-            startDateRange: {
-              read() {
-                return '';
-              },
-            },
-          },
-        },
-      },
-    }),
+    cache: new InMemoryCache(),
     // Enable SSR mode for Next.js
     ssrMode: typeof window === 'undefined',
     // Default options for queries
