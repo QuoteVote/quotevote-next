@@ -14,7 +14,7 @@ import {
   Sheet,
   SheetContent,
 } from '@/components/ui/sheet';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
 import ChatMenu from '@/components/Chat/ChatMenu';
@@ -366,6 +366,7 @@ export function Sidebar({
       {/* Create Quote Dialog */}
       <Dialog open={openCreateQuote} onOpenChange={setOpenCreateQuote}>
         <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quote</DialogTitle>
           <SubmitPost setOpen={setOpenCreateQuote} />
         </DialogContent>
       </Dialog>

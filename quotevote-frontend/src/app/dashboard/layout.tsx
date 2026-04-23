@@ -14,7 +14,6 @@ import {
   User,
   Settings2,
   ShieldCheck,
-  Mail,
   LogOut,
   ChevronDown,
 } from 'lucide-react';
@@ -42,7 +41,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
 
 /* ------------------------------------------------------------------ */
@@ -53,7 +52,6 @@ const NAV_PAGES = [
   { path: '/dashboard/profile', page: 'profile' },
   { path: '/dashboard/notifications', page: 'notifications' },
   { path: '/dashboard/settings', page: 'settings' },
-  { path: '/dashboard/manage-invites', page: 'manage-invites' },
   { path: '/dashboard/control-panel', page: 'control-panel' },
 ] as const;
 
@@ -321,15 +319,6 @@ export default function DashboardLayout({
                         <p className="text-[11px] text-muted-foreground">Manage your account</p>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/manage-invites')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
-                        <Mail className="size-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-semibold">Manage Invites</p>
-                        <p className="text-[11px] text-muted-foreground">Invite friends to join</p>
-                      </div>
-                    </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem onClick={() => router.push('/dashboard/control-panel')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#e8f5ee]">
@@ -514,6 +503,7 @@ export default function DashboardLayout({
 
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quote</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>
       </Dialog>

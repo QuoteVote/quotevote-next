@@ -610,7 +610,6 @@ export const UPDATE_USER = gql`
   mutation updateUser($user: UserInput!) {
     updateUser(user: $user) {
       _id
-      id
       username
       email
       name
@@ -618,8 +617,6 @@ export const UPDATE_USER = gql`
       admin
       accountStatus
       themePreference
-      created
-      updated
     }
   }
 `

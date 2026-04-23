@@ -73,7 +73,7 @@ async function startServer() {
           issuer: String
           message: String
       }
-      
+
       scalar JSON
 
       type PortableState {
@@ -85,7 +85,7 @@ async function startServer() {
           version: String
           collections: [JSON]
       }
-      
+
       input ActivityEventInput {
           type: String!
           payload: JSON!

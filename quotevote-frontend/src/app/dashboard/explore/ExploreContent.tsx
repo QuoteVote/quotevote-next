@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
 import { useAppStore } from '@/store'
 import SearchGuestSections from '@/components/SearchContainer/SearchGuestSections'
@@ -224,6 +224,7 @@ export default function ExploreContent() {
       {/* Create Quote Dialog */}
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quote</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>
       </Dialog>

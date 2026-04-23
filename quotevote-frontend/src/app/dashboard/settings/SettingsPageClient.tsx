@@ -56,7 +56,6 @@ export default function SettingsPageClient() {
   const email = userData?.email ?? ''
   const name = userData?.name ?? ''
   const userId = userData?.id ?? userData?._id ?? ''
-  const isAdmin = Boolean(userData?.admin)
 
   const [localDarkMode, setLocalDarkMode] = useState(isDarkMode)
   const [originalDarkMode, setOriginalDarkMode] = useState(isDarkMode)
@@ -100,20 +99,22 @@ export default function SettingsPageClient() {
 
     try {
       const result = await updateUser({ variables: { user: userInput } })
-      if (result.data?.updateUser) {
-        const avatarValue =
-          typeof userData?.avatar === 'string'
-            ? userData.avatar
-            : (userData?.avatar as { url?: string } | undefined)?.url
+      const updated = result.data?.updateUser
+      if (updated) {
         setUserData({
           ...userData,
-          avatar: avatarValue,
-          ...otherValues,
+          ...updated,
+          avatar: userData?.avatar as string | undefined,
           themePreference: localDarkMode ? 'dark' : 'light',
         })
         setOriginalDarkMode(localDarkMode)
         toast.success('Settings saved successfully')
-        form.reset({ ...otherValues, password: '' })
+        form.reset({
+          name: updated.name ?? otherValues.name,
+          username: updated.username ?? otherValues.username,
+          email: updated.email ?? otherValues.email,
+          password: '',
+        })
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save settings'
@@ -289,16 +290,7 @@ export default function SettingsPageClient() {
                   <LogOut className="size-4" />
                   Sign Out
                 </Button>
-                {isAdmin && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => router.push('/dashboard/invites')}
-                    className="text-muted-foreground"
-                  >
-                    Manage Invites
-                  </Button>
-                )}
+
                 <div className="ml-auto">
                   <Button type="submit" disabled={!isFormDirty || loading}>
                     {loading ? (

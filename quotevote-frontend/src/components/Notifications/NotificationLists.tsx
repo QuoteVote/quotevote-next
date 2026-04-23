@@ -5,7 +5,7 @@ import { useMutation, useApolloClient } from '@apollo/client/react';
 import moment from 'moment';
 import { X, UserPlus, ArrowUp, ArrowDown, MessageSquare, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { DELETE_NOTIFICATION } from '@/graphql/mutations';
 import { GET_NOTIFICATIONS } from '@/graphql/queries';
 import { useAppStore } from '@/store';
@@ -164,12 +164,6 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
     >
       <div className="space-y-2">
         {notifications.map((notification) => {
-          const avatarUrl =
-            notification.userBy.avatar?.url ||
-            (typeof notification.userBy.avatar === 'string'
-              ? notification.userBy.avatar
-              : undefined);
-
           const actionText = getNotificationActionText(notification.notificationType);
           const icon = getNotificationIcon(notification.notificationType);
           const displayName = notification.userBy.name || notification.userBy.username;
@@ -200,10 +194,10 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
             >
               <div className="flex items-start gap-3">
                 <div className="relative flex-shrink-0">
-                  <Avatar
-                    src={avatarUrl}
-                    alt={displayName}
-                    size="md"
+                  <DisplayAvatar
+                    avatar={notification.userBy.avatar as string | Record<string, unknown> | undefined}
+                    username={notification.userBy.username}
+                    size={40}
                   />
                   {icon && (
                     <div className="absolute -bottom-1.5 -right-1.5">
