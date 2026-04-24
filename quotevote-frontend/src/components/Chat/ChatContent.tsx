@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Settings, ArrowLeft } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useQuery } from '@apollo/client/react';
 
 import ChatSearchInput from './ChatSearchInput';
@@ -81,7 +81,6 @@ function UserStatusDisplay() {
 
 function ChatContent() {
   const selectedRoomId = useAppStore((state) => state.chat.selectedRoom);
-  const setChatOpen = useAppStore((state) => state.setChatOpen);
   const buddyList = useAppStore(
     (state) => state.chat.buddyList
   ) as BuddyListItem[];
@@ -151,19 +150,10 @@ function ChatContent() {
   // If no room is selected, show the sidebar view
   if (!selectedRoomId) {
     return (
-      <div className="flex h-full w-full flex-col border-r bg-background shadow-lg lg:w-[400px]">
+      <div className="flex h-full w-full flex-col bg-background">
         {/* Header */}
         <div className="bg-gradient-to-br from-[#52b274] to-[#4a9e63] px-4 py-3 text-white shadow-md">
           <div className="flex items-center gap-3">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="-ml-1 flex-shrink-0 text-white hover:bg-white/20 hover:scale-105 transition-all duration-200"
-              onClick={() => setChatOpen(false)}
-              aria-label="Close messages"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <div className="min-w-0 flex-1">
               <h2 className="text-lg font-bold tracking-tight">Messages</h2>
               <div className="mt-1">

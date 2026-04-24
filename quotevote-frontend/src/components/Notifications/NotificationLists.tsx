@@ -5,7 +5,6 @@ import { useMutation, useApolloClient } from '@apollo/client/react';
 import moment from 'moment';
 import { X, UserPlus, ArrowUp, ArrowDown, MessageSquare, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { DELETE_NOTIFICATION } from '@/graphql/mutations';
 import { GET_NOTIFICATIONS } from '@/graphql/queries';
 import { useAppStore } from '@/store';
@@ -135,21 +134,9 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
 
   if (!notifications || notifications.length === 0) {
     return (
-      <div
-        className={cn(
-          'flex flex-col items-center justify-center animate-in fade-in-0 slide-in-from-bottom-2 duration-500',
-          pageView ? 'h-full' : 'h-[30vh]',
-          'bg-card rounded-lg'
-        )}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/ZeroNotificationsBG.png" alt="No notifications" className="animate-bounce" style={{ animationDuration: '2.5s' }} />
-        <p className="text-sm font-medium text-foreground mt-4">
-          You&apos;re all caught up!
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Relax, you don&apos;t have any alerts right now.
-        </p>
+      <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
+        <p className="text-sm font-medium text-foreground">You&apos;re all caught up!</p>
+        <p className="text-xs text-muted-foreground mt-1">No alerts right now.</p>
       </div>
     );
   }
@@ -193,18 +180,11 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
               }}
             >
               <div className="flex items-start gap-3">
-                <div className="relative flex-shrink-0">
-                  <DisplayAvatar
-                    avatar={notification.userBy.avatar as string | Record<string, unknown> | undefined}
-                    username={notification.userBy.username}
-                    size={40}
-                  />
-                  {icon && (
-                    <div className="absolute -bottom-1.5 -right-1.5">
-                      {icon}
-                    </div>
-                  )}
-                </div>
+                {icon && (
+                  <div className="flex-shrink-0 mt-0.5">
+                    {icon}
+                  </div>
+                )}
 
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground">

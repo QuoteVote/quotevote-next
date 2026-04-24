@@ -146,13 +146,13 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   return (
     <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm">
       {/* Cover banner */}
-      <div className="h-36 relative overflow-hidden">
+      <div className="h-36 relative overflow-hidden z-0">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/60 to-primary/40 animate-gradient-x" />
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '20px 20px' }} />
       </div>
 
       {/* Profile info section */}
-      <div className="px-6 pb-6">
+      <div className="px-6 pb-6 relative z-10">
         {/* Avatar overlapping banner */}
         <div className="flex items-end justify-between -mt-12 mb-4">
           <div className="ring-4 ring-card rounded-full">

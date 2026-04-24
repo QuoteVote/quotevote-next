@@ -45,6 +45,16 @@ jest.mock('@/components/Avatar', () => ({
   ),
 }))
 
+// Mock DisplayAvatar component (used by MessageItem)
+jest.mock('@/components/DisplayAvatar', () => ({
+  __esModule: true,
+  DisplayAvatar: ({ username, size }: { avatar?: unknown; username: string; size: number; className?: string }) => (
+    <div data-testid="avatar" data-username={username} data-size={size}>
+      DisplayAvatar
+    </div>
+  ),
+}))
+
 jest.mock('@/hooks/useGuestGuard', () => ({
   __esModule: true,
   default: () => () => true,

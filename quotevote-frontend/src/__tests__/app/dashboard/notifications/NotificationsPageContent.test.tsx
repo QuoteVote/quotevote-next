@@ -98,6 +98,6 @@ describe('NotificationsPageContent', () => {
     mockLoading = false;
     mockData = { notifications: [] };
     render(<NotificationsPageContent />);
-    expect(screen.getByText(/don't have any alerts/i)).toBeInTheDocument();
+    expect(screen.getByText(/you're all caught up/i)).toBeInTheDocument();
   });
 });

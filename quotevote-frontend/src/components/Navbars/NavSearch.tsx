@@ -66,10 +66,10 @@ export default function NavSearch() {
   return (
     <div
       className={cn(
-        'flex items-center gap-2 h-[38px] rounded-full px-3.5 transition-all duration-200 border',
+        'flex items-center gap-2 h-[38px] w-full rounded-full px-3.5 transition-all duration-200 border',
         focused
-          ? 'bg-white border-[#52b274] shadow-[0_0_0_3px_rgba(82,178,116,0.15)] w-[280px]'
-          : 'bg-[#f0f2f5] border-transparent hover:bg-[#e4e6eb] w-[220px]'
+          ? 'bg-white dark:bg-card border-[#52b274] shadow-[0_0_0_3px_rgba(82,178,116,0.15)]'
+          : 'bg-[#f0f2f5] dark:bg-muted border-transparent hover:bg-[#e4e6eb] dark:hover:bg-muted/70'
       )}
     >
       <Search
