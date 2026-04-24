@@ -76,7 +76,7 @@ export default function Avatar({
     return null;
   }, [alt, fallback]);
 
-  const showImage = src && !imageError;
+  const showImage = !!src && typeof src === 'string' && !imageError;
   const showFallback = !showImage;
 
   const baseClasses = cn(

@@ -6,7 +6,7 @@ import { MessageSquare, Users } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { GET_CHAT_ROOM } from '@/graphql/queries';
 import { cn } from '@/lib/utils';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import PresenceIcon from '@/components/Chat/PresenceIcon';
 import StatusMessage from '@/components/Chat/StatusMessage';
 import {
@@ -152,10 +152,7 @@ function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void 
     // index.jsx maps item.messageType to item.type.
     const itemType = item.type || item.messageType || (item.user ? 'USER' : 'POST');
 
-    // Avatar source resolution
-    // Old code: <AvatarDisplay ... {...item.avatar} /> or item.user.avatar
     const rawAvatar = item.avatar || item.user?.avatar || item.room?.avatar;
-    const avatarSrc = typeof rawAvatar === 'string' ? rawAvatar : rawAvatar?.url || undefined;
 
     return (
         <li
@@ -171,11 +168,10 @@ function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void 
             }}
         >
             <div className="relative">
-                <Avatar
-                    src={typeof avatarSrc === 'string' ? avatarSrc : undefined}
-                    alt={itemText}
-                    fallback={itemText[0]}
-                    size="md"
+                <DisplayAvatar
+                    avatar={rawAvatar as string | Record<string, unknown> | undefined}
+                    username={itemText}
+                    size={40}
                     className="border-2 border-white shadow-sm"
                 />
                 {item.unreadMessages && item.unreadMessages > 0 ? (

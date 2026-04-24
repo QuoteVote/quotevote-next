@@ -10,7 +10,7 @@ import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { useRosterManagement } from '@/hooks/useRosterManagement';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import Avatar from '@/components/Avatar'; // Import our new Avatar
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import BuddyItemList from './BuddyItemList';
 import { Buddy, BuddyItem, BuddyListWithPresenceProps, Presence, GetBuddyListData, GetRosterData } from '@/types/buddylist';
 
@@ -188,11 +188,10 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
                             if (!buddy) return null;
                             return (
                                 <div key={req.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
-                                    <Avatar
-                                        src={buddy.avatar || undefined}
-                                        alt={buddy.username}
-                                        fallback={buddy.username?.[0]}
-                                        size="sm"
+                                    <DisplayAvatar
+                                        avatar={buddy.avatar as string | Record<string, unknown> | undefined}
+                                        username={buddy.username}
+                                        size={32}
                                     />
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-semibold truncate">

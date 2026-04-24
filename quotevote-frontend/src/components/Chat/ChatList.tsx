@@ -7,7 +7,8 @@ import { MessageCircle, Users2 } from 'lucide-react';
 import { GET_CHAT_ROOMS } from '@/graphql/queries';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '../LoadingSpinner';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
+import { parseAvatarToUrl } from '@/lib/avatar';
 import type { ChatRoom } from '@/types/chat';
 
 type ChatListFilter = 'chats' | 'groups';
@@ -77,32 +78,32 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
     setSelectedChatRoom(room._id);
   };
 
+  const resolveAvatar = (raw: ChatRoom['avatar']): string | null =>
+    parseAvatarToUrl(raw as string | Record<string, unknown> | undefined) || null;
+
   const getRoomDisplayInfo = (room: ChatRoom) => {
     if (room.messageType === 'USER' && room.users?.length === 2) {
-      // Direct message - use avatar from GraphQL response (resolved by server)
       return {
         name: room.title || 'Direct Message',
-        avatar: room.avatar || null, // Use avatar from room (resolved by messageRoomRelationship)
+        avatar: resolveAvatar(room.avatar),
         subtitle: `${room.users?.length || 0} participants`,
       };
     } else if (room.messageType === 'POST') {
-      // Group chat for post - show post title
       const postTitle = room.postDetails?.title || room.title || 'Quote Discussion';
       const postText = room.postDetails?.text || '';
       const preview = postText.length > 50 ? `${postText.substring(0, 50)}...` : postText;
       return {
         name: postTitle,
-        avatar: room.avatar || null, // Use avatar from room (will be set by server resolver for group chats)
+        avatar: resolveAvatar(room.avatar),
         subtitle: preview || `${room.users?.length || 0} participants`,
-        isGroup: true, // Flag to show group icon if no avatar
+        isGroup: true,
       };
     } else {
-      // Other group chat - show title or default
       return {
-        name: room.title || `Group Chat`,
-        avatar: room.avatar || null, // Use avatar from room
+        name: room.title || 'Group Chat',
+        avatar: resolveAvatar(room.avatar),
         subtitle: `${room.users?.length || 0} members`,
-        isGroup: true, // Flag to show group icon if no avatar
+        isGroup: true,
       };
     }
   };
@@ -148,24 +149,12 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
                     : '')
                 }
               >
-                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-muted shadow-sm ring-2 ring-white dark:ring-background">
-                  {displayInfo.avatar ? (
-                    <Avatar
-                      src={displayInfo.avatar}
-                      alt={displayInfo.name || 'Chat avatar'}
-                      size={48}
-                      className="ring-0"
-                    />
-                  ) : displayInfo.isGroup ? (
-                    <Users2 className="h-5 w-5 text-muted-foreground" />
-                  ) : displayInfo.name ? (
-                    <span className="text-base font-semibold text-foreground">
-                      {displayInfo.name[0]?.toUpperCase() || '?'}
-                    </span>
-                  ) : (
-                    <span className="text-base font-semibold text-foreground">?</span>
-                  )}
-                </div>
+                <DisplayAvatar
+                  avatar={displayInfo.avatar}
+                  username={displayInfo.name || ''}
+                  size={48}
+                  className="ring-2 ring-white dark:ring-background shadow-sm"
+                />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
