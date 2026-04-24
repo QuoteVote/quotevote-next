@@ -5,7 +5,7 @@ import { useMemo, memo } from 'react';
 import { useMutation } from '@apollo/client/react';
 import { Check, CheckCheck, Trash2 } from 'lucide-react';
 
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import {
   Tooltip,
   TooltipContent,
@@ -101,10 +101,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
     message.userName ||
     'Unknown';
 
-  const avatarSrc =
-    typeof message.user?.avatar === 'string'
-      ? message.user.avatar
-      : undefined;
+  const avatarRaw = message.user?.avatar;
 
   const timeLabel = formatTime(message.created);
 
@@ -117,11 +114,10 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
     >
       {isDefaultDirection && (
         <div className="mr-2.5 flex h-10 w-10 flex-shrink-0 items-center justify-center">
-          <Avatar
-            src={avatarSrc}
-            alt={senderName}
+          <DisplayAvatar
+            avatar={avatarRaw as string | Record<string, unknown> | undefined}
+            username={senderName}
             size={40}
-            fallback={senderName[0]?.toUpperCase() || '?'}
             className="ring-2 ring-white shadow-sm"
           />
         </div>
@@ -190,11 +186,10 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
 
       {!isDefaultDirection && (
         <div className="ml-2.5 flex h-10 w-10 flex-shrink-0 items-center justify-center">
-          <Avatar
-            src={avatarSrc}
-            alt={senderName}
+          <DisplayAvatar
+            avatar={avatarRaw as string | Record<string, unknown> | undefined}
+            username={senderName}
             size={40}
-            fallback={senderName[0]?.toUpperCase() || '?'}
             className="ring-2 ring-white shadow-sm"
           />
         </div>

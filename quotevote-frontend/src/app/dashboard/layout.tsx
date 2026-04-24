@@ -200,10 +200,10 @@ export default function DashboardLayout({
           DESKTOP NAVBAR
       ════════════════════════════════════════════════════════════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] items-center">
-        <div className="flex h-full w-full items-center px-4 gap-2">
+        <div className="relative flex h-full w-full items-center px-4">
 
-          {/* ── Left: Logo + Search ── */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* ── Left: Logo ── */}
+          <div className="flex items-center gap-2 flex-shrink-0 z-10">
             <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline flex-shrink-0">
               <Image
                 src="/icons/android-chrome-192x192.png"
@@ -217,21 +217,24 @@ export default function DashboardLayout({
                 Quote.Vote
               </span>
             </Link>
-            <Suspense fallback={
-              <div className="flex items-center gap-2 h-[38px] w-[220px] rounded-full px-3.5 bg-muted">
-                <Search className="size-[15px] text-muted-foreground" />
-                <span className="text-[13px] text-muted-foreground">Search…</span>
-              </div>
-            }>
-              <NavSearch />
-            </Suspense>
           </div>
 
-          {/* ── Spacer ── */}
-          <div className="flex-1" />
+          {/* ── Center: Search (truly centered) ── */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="pointer-events-auto w-[440px] xl:w-[560px] 2xl:w-[640px]">
+              <Suspense fallback={
+                <div className="flex items-center gap-2 h-[38px] w-full rounded-full px-3.5 bg-muted">
+                  <Search className="size-[15px] text-muted-foreground" />
+                  <span className="text-[13px] text-muted-foreground">Search…</span>
+                </div>
+              }>
+                <NavSearch />
+              </Suspense>
+            </div>
+          </div>
 
           {/* ── Right: Actions ── */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 ml-auto flex-shrink-0 z-10">
             {/* Create */}
             <button
               type="button"
