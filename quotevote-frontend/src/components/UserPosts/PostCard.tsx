@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import type { PostCardProps } from '@/types/userPosts'
 import { cn } from '@/lib/utils'
 
@@ -18,8 +18,6 @@ import { cn } from '@/lib/utils'
 export function PostCard({ post, index }: PostCardProps) {
   const creator = post.creator
   const username = creator?.username || 'Unknown'
-  const avatar = typeof creator?.avatar === 'string' ? creator.avatar : undefined
-  const name = creator?.name || username
 
   // Format date
   const createdDate = post.created
@@ -30,16 +28,6 @@ export function PostCard({ post, index }: PostCardProps) {
       })
     : ''
 
-  // Get initials for avatar fallback
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
   return (
     <Card
       className={cn(
@@ -49,10 +37,11 @@ export function PostCard({ post, index }: PostCardProps) {
     >
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={avatar} alt={name} />
-            <AvatarFallback>{getInitials(name)}</AvatarFallback>
-          </Avatar>
+          <DisplayAvatar
+            avatar={creator?.avatar as string | Record<string, unknown> | undefined}
+            username={username}
+            size={40}
+          />
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base font-semibold truncate">
               {post.title || 'Untitled Post'}

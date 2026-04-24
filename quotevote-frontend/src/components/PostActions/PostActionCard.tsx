@@ -6,7 +6,7 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { get } from 'lodash'
 import { Link2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import Avatar from '@/components/Avatar'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import CommentReactions from '@/components/Comment/CommentReactions'
 import PostChatMessage from '@/components/PostChat/PostChatMessage'
 import { parseCommentDate } from '@/lib/utils/momentUtils'
@@ -190,7 +190,7 @@ export default function PostActionCard({
           user: {
             username,
             name: name || username || 'Unknown',
-            avatar: typeof avatar === 'string' ? avatar : undefined,
+            avatar: avatar as string | Record<string, unknown> | undefined,
           },
         }}
       />
@@ -199,7 +199,6 @@ export default function PostActionCard({
 
   const userId = user?._id || user?.id
   const isOwner = userId === actionUser?._id || user?.admin
-  const avatarSrc = typeof avatar === 'string' ? avatar : undefined
   const displayName = name || username || 'Unknown'
 
   const quoteContent = type === 'Quote'
@@ -230,11 +229,10 @@ export default function PostActionCard({
         onClick={handleProfileClick}
         className="shrink-0 mt-0.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
-        <Avatar
-          src={avatarSrc}
-          alt={displayName}
+        <DisplayAvatar
+          avatar={avatar as string | Record<string, unknown> | undefined}
+          username={username}
           size={32}
-          fallback={displayName[0]?.toUpperCase() || '?'}
           className="cursor-pointer"
         />
       </button>

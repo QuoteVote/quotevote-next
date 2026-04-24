@@ -71,7 +71,7 @@ describe('FollowButton', () => {
     fireEvent.click(screen.getByText('Follow'));
 
     await waitFor(() => {
-      expect(mockUpdateFollowing).toHaveBeenCalledWith('profile-user-id');
+      expect(mockUpdateFollowing).toHaveBeenCalledWith(['profile-user-id']);
     });
   });
 

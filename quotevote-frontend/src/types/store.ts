@@ -15,7 +15,7 @@ export interface UserState {
     email?: string;
     avatar?: string;
     admin?: boolean;
-    _followingId?: string;
+    _followingId?: string[];
     [key: string]: unknown;
   };
 }

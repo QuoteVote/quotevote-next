@@ -69,7 +69,6 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
   const email = userData?.email ?? ''
   const name = userData?.name ?? ''
   const userId = userData?.id ?? userData?._id ?? ''
-  const admin = userData?.admin ?? false
 
   const [updateUser, { loading, error }] = useMutation<UpdateUserResponse>(UPDATE_USER)
 
@@ -267,19 +266,6 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
               Sign Out
             </Button>
 
-            {admin && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                    router.push('/dashboard/control-panel')
-                    if (setOpen) setOpen(false)
-                }}
-                disabled={loading}
-              >
-                Manage Invites
-              </Button>
-            )}
 
             <Button type="submit" disabled={!form.formState.isDirty || loading}>
               {loading ? (

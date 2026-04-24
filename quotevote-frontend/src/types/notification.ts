@@ -5,10 +5,7 @@
 export interface NotificationUser {
   _id: string;
   name: string;
-  avatar?: {
-    url?: string;
-    [key: string]: unknown;
-  };
+  avatar?: string | Record<string, unknown>;
   username: string;
   contributorBadge?: boolean;
 }

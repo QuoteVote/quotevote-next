@@ -77,9 +77,10 @@ jest.mock('@apollo/client/react', () => {
 })
 
 // Mock child components
-jest.mock('@/components/Avatar', () => ({
-  __esModule: true,
-  default: ({ alt }: { alt: string }) => <div data-testid="avatar">{alt}</div>,
+jest.mock('@/components/DisplayAvatar', () => ({
+  DisplayAvatar: ({ username }: { username?: string }) => (
+    <div data-testid="avatar">{username}</div>
+  ),
 }))
 
 jest.mock('@/components/Comment/CommentReactions', () => ({

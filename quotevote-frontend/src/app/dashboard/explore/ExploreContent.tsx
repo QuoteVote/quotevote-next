@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
 import { useAppStore } from '@/store'
 import SearchGuestSections from '@/components/SearchContainer/SearchGuestSections'
@@ -77,14 +77,19 @@ export default function ExploreContent() {
     <div className="-mx-4 -mt-6 md:-mx-4">
       {/* ── Logo + tagline ── */}
       <div className="flex flex-col items-center py-8 px-4 border-b border-border">
+        {/* Light mode: PNG logo */}
         <Image
           src="/assets/QuoteVoteLogo.png"
           alt="QuoteVote"
           width={220}
           height={66}
-          className="mb-3"
+          className="mb-3 dark:hidden"
           priority
         />
+        {/* Dark mode: white text logo */}
+        <span className="hidden dark:block mb-3 text-[2.75rem] font-black tracking-tight text-white leading-none select-none">
+          QUOTE.VOTE
+        </span>
         <p className="text-sm text-muted-foreground text-center">
           No algorithms. No ads. Just conversations.
         </p>
@@ -219,6 +224,7 @@ export default function ExploreContent() {
       {/* Create Quote Dialog */}
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quote</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>
       </Dialog>

@@ -44,25 +44,14 @@ jest.mock('next/navigation', () => ({
   }),
 }))
 
-// Mock Avatar component
-jest.mock('@/components/Avatar', () => ({
-  __esModule: true,
-  default: ({ src, alt, size, onClick, className }: { 
-    src?: string; 
-    alt: string; 
-    size: number;
-    onClick?: () => void;
+// Mock DisplayAvatar component
+jest.mock('@/components/DisplayAvatar', () => ({
+  DisplayAvatar: ({ username, className }: {
+    username?: string;
     className?: string;
   }) => (
-    <div 
-      data-testid="avatar" 
-      data-src={src} 
-      data-alt={alt} 
-      data-size={size}
-      onClick={onClick}
-      className={className}
-    >
-      Avatar
+    <div data-testid="avatar" className={className}>
+      {username}
     </div>
   ),
 }))

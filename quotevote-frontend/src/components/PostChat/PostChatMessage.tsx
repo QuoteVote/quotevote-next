@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useQuery, useMutation } from '@apollo/client/react'
 import { Trash2 } from 'lucide-react'
 
-import Avatar from '@/components/Avatar'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import PostChatReactions from './PostChatReactions'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
@@ -71,9 +71,6 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
     router.push(`/dashboard/profile/${username}`)
   }
 
-  const senderName = name || username || 'Unknown'
-  const avatarSrc = typeof message.user.avatar === 'string' ? message.user.avatar : undefined
-
   return (
     <div
       className={cn(
@@ -82,14 +79,11 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
       )}
     >
       {/* Avatar */}
-      <div className="shrink-0">
-        <Avatar
-          src={avatarSrc}
-          alt={senderName}
+      <div className="shrink-0 cursor-pointer" onClick={handleRedirectToProfile}>
+        <DisplayAvatar
+          avatar={message.user.avatar}
+          username={username}
           size={50}
-          fallback={senderName[0]?.toUpperCase() || '?'}
-          onClick={handleRedirectToProfile}
-          className="cursor-pointer"
         />
       </div>
 
@@ -101,7 +95,7 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
             // Speech bubble arrow
             "before:absolute before:top-0 before:border-10 before:border-transparent before:content-['']",
             isDefaultDirection
-              ? 'bg-white text-gray-700 before:-left-2.5 before:border-t-white'
+              ? 'bg-card text-card-foreground before:-left-2.5 before:border-t-card'
               : 'bg-emerald-500 text-white before:-right-2.5 before:border-t-emerald-500'
           )}
         >

@@ -28,9 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
-import AvatarDisplay from '@/components/Avatar'
-import { Avatar as AvataaarsAvatar, AvatarStyle } from 'avataaars'
-import type { AvataaarsData } from '@/types/post'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { FollowButton } from '../CustomButtons/FollowButton'
 import { BookmarkIconButton } from '../CustomButtons/BookmarkIconButton'
 import {
@@ -325,22 +323,12 @@ export default function Post({
               type="button"
               onClick={() => username && router.push(`/dashboard/profile/${username}`)}
               className="shrink-0 rounded-full ring-2 ring-background shadow-md overflow-hidden"
-              style={{ width: 48, height: 48 }}
             >
-              {avatar && typeof avatar === 'object' ? (
-                <AvataaarsAvatar
-                  avatarStyle={AvatarStyle.Circle}
-                  {...(avatar as AvataaarsData)}
-                  style={{ width: 48, height: 48 }}
-                />
-              ) : (
-                <AvatarDisplay
-                  size={48}
-                  src={typeof avatar === 'string' ? avatar : undefined}
-                  alt={name || username || ''}
-                  fallback={(name || username || '?').charAt(0).toUpperCase()}
-                />
-              )}
+              <DisplayAvatar
+                avatar={avatar as string | Record<string, unknown> | undefined}
+                username={username ?? undefined}
+                size={48}
+              />
             </button>
             <div>
               <div className="flex items-center gap-2">

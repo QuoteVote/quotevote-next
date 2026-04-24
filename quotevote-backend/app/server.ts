@@ -86,7 +86,7 @@ async function startServer() {
           version: String
           collections: [JSON]
       }
-      
+
       input ActivityEventInput {
           type: String!
           payload: JSON!

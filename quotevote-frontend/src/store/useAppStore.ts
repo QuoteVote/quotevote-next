@@ -78,7 +78,7 @@ interface AppStore extends AppState {
   setLoginError: (error: string | null) => void;
   logout: () => void;
   updateAvatar: (avatar: string) => void;
-  updateFollowing: (followingId: string) => void;
+  updateFollowing: (followingId: string[]) => void;
 
   // UI actions
   setSelectedPost: (postId: string | null) => void;

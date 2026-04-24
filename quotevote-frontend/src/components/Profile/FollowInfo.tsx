@@ -60,7 +60,6 @@ export function FollowInfo({ filter }: FollowInfoProps) {
       );
     }
 
-    const currentUserId = userData?._id || '';
     const followingId = userData?._followingId || [];
     const followingArray = Array.isArray(followingId)
       ? followingId
@@ -98,7 +97,6 @@ export function FollowInfo({ filter }: FollowInfoProps) {
           }) => (
             <UserFollowDisplay
               key={f.id}
-              profileUserId={currentUserId}
               isFollowing={followingArray.includes(f.id)}
               id={f.id}
               username={f.username}

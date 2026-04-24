@@ -91,7 +91,7 @@ describe('FollowInfo', () => {
         loginError: null,
         data: {
           _id: 'currentuser',
-          _followingId: 'user1',
+          _followingId: ['user1'],
         },
       },
     });

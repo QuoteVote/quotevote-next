@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useApolloClient } from '@apollo/client/react'
@@ -136,13 +137,14 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
         },
       })
 
-      const { _id } =
-        (submitResult.data as { addPost?: { _id: string; url: string } })?.addPost || {}
+      const addPostResult = (submitResult.data as { addPost?: { _id: string; url: string } })?.addPost
+      const { _id } = addPostResult || {}
       if (_id) {
         setSelectedPost(_id)
         apolloClient.cache.evict({ fieldName: 'posts' })
         apolloClient.cache.gc()
         setOpen(false)
+        toast.success('Post created!', { description: 'Your quote has been published.' })
         router.push('/dashboard/explore')
       }
     } catch (err) {
@@ -157,12 +159,13 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
 
   const hideAlert = () => {
     setShowAlert(false)
+    setError(null)
     reset()
   }
 
   return (
     <>
-      {showAlert && (
+      {showAlert && error && (
         <SubmitPostAlert
           hideAlert={hideAlert}
           shareableLink=""

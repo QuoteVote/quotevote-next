@@ -1,35 +1,28 @@
 /**
  * ProfileAvatar Component Tests
- * 
- * Tests for the ProfileAvatar component including:
- * - Rendering with different sizes
- * - Avatar source handling
- * - Store integration
  */
 
 import { render } from '../../utils/test-utils';
 import { ProfileAvatar } from '../../../components/Profile/ProfileAvatar';
 import { useAppStore } from '@/store';
 
-// Mock the Avatar component (default export)
-jest.mock('../../../components/Avatar', () => ({
-  __esModule: true,
-  default: ({ src, alt, size }: { src?: string; alt?: string; size?: string | number }) => (
-    <div data-testid="avatar" data-src={src} data-alt={alt} data-size={String(size)}>
-      Avatar
+jest.mock('../../../components/DisplayAvatar', () => ({
+  DisplayAvatar: ({ avatar, username, size }: { avatar?: unknown; username?: string; size?: number }) => (
+    <div
+      data-testid="display-avatar"
+      data-avatar={JSON.stringify(avatar)}
+      data-username={username}
+      data-size={String(size)}
+    >
+      DisplayAvatar
     </div>
   ),
 }));
 
 describe('ProfileAvatar', () => {
   beforeEach(() => {
-    // Reset store before each test
     useAppStore.setState({
-      user: {
-        loading: false,
-        loginError: null,
-        data: {},
-      },
+      user: { loading: false, loginError: null, data: {} },
     });
   });
 
@@ -38,67 +31,68 @@ describe('ProfileAvatar', () => {
     expect(container).toBeInTheDocument();
   });
 
-  it('renders with default size', () => {
+  it('renders with default size (md → 40px)', () => {
     const { getByTestId } = render(<ProfileAvatar />);
-    const avatar = getByTestId('avatar');
-    expect(avatar).toHaveAttribute('data-size', 'md');
+    expect(getByTestId('display-avatar')).toHaveAttribute('data-size', '40');
   });
 
-  it('renders with custom size', () => {
+  it('renders with lg size (64px)', () => {
     const { getByTestId } = render(<ProfileAvatar size="lg" />);
-    const avatar = getByTestId('avatar');
-    expect(avatar).toHaveAttribute('data-size', 'lg');
+    expect(getByTestId('display-avatar')).toHaveAttribute('data-size', '64');
   });
 
-  it('handles string avatar from store', () => {
+  it('renders with numeric size', () => {
+    const { getByTestId } = render(<ProfileAvatar size={80} />);
+    expect(getByTestId('display-avatar')).toHaveAttribute('data-size', '80');
+  });
+
+  it('passes username from store to DisplayAvatar', () => {
     useAppStore.setState({
       user: {
         loading: false,
         loginError: null,
-        data: {
-          avatar: 'https://example.com/avatar.jpg',
-        },
+        data: { username: 'testuser' },
       },
     });
-
     const { getByTestId } = render(<ProfileAvatar />);
-    const avatar = getByTestId('avatar');
-    expect(avatar).toHaveAttribute('data-src', 'https://example.com/avatar.jpg');
+    expect(getByTestId('display-avatar')).toHaveAttribute('data-username', 'testuser');
   });
 
-    it('handles object avatar with url from store', () => {
-      useAppStore.setState({
-        user: {
-          loading: false,
-          loginError: null,
-          data: {
-            // @ts-expect-error - Testing avatar as object even though store type is string
-            avatar: {
-              url: 'https://example.com/avatar.jpg',
-            },
-          },
-        },
-      });
-
-    const { getByTestId } = render(<ProfileAvatar />);
-    const avatar = getByTestId('avatar');
-    expect(avatar).toHaveAttribute('data-src', 'https://example.com/avatar.jpg');
-  });
-
-    it('handles missing avatar gracefully', () => {
-      useAppStore.setState({
-        user: {
-          loading: false,
-          loginError: null,
-          data: {},
-        },
-      });
-
-      const { getByTestId } = render(<ProfileAvatar />);
-      const avatar = getByTestId('avatar');
-      // Avatar src can be undefined or empty string
-      const src = avatar.getAttribute('data-src');
-      expect(src === '' || src === null || src === undefined).toBe(true);
+  it('passes avatar qualities object to DisplayAvatar', () => {
+    const qualities = { topType: 'ShortHairShortFlat', skinColor: 'Light' };
+    useAppStore.setState({
+      user: {
+        loading: false,
+        loginError: null,
+        // @ts-expect-error - avatar as object in test
+        data: { avatar: qualities },
+      },
     });
-});
+    const { getByTestId } = render(<ProfileAvatar />);
+    expect(getByTestId('display-avatar')).toHaveAttribute(
+      'data-avatar',
+      JSON.stringify(qualities)
+    );
+  });
 
+  it('passes string avatar URL to DisplayAvatar', () => {
+    useAppStore.setState({
+      user: {
+        loading: false,
+        loginError: null,
+        data: { avatar: 'https://example.com/avatar.jpg' },
+      },
+    });
+    const { getByTestId } = render(<ProfileAvatar />);
+    expect(getByTestId('display-avatar')).toHaveAttribute(
+      'data-avatar',
+      '"https://example.com/avatar.jpg"'
+    );
+  });
+
+  it('renders without avatar (shows default cartoon)', () => {
+    const { getByTestId } = render(<ProfileAvatar />);
+    // Should still render — DisplayAvatar will generate a default
+    expect(getByTestId('display-avatar')).toBeInTheDocument();
+  });
+});
