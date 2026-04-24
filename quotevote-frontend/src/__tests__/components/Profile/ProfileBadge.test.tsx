@@ -82,6 +82,22 @@ describe('ProfileBadge', () => {
       const badge = container.querySelector('[tabindex="0"]');
       expect(badge).toBeInTheDocument();
     });
+
+    it('handles Enter key without error', () => {
+      const { container } = render(<ProfileBadge type="contributor" />);
+      const badge = container.querySelector('[tabindex="0"]') as HTMLElement;
+      expect(() => {
+        badge.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      }).not.toThrow();
+    });
+
+    it('handles Space key without error', () => {
+      const { container } = render(<ProfileBadge type="contributor" />);
+      const badge = container.querySelector('[tabindex="0"]') as HTMLElement;
+      expect(() => {
+        badge.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      }).not.toThrow();
+    });
   });
 });
 

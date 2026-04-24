@@ -98,16 +98,15 @@ export default function SearchResultsView({
                 </CardHeader>
                 <CardContent className="w-full table-cell bg-white border-l border-gray-300 border-b-2 border-gray-200 rounded-b-md">
                   {category.map((content) => {
-                    const result = isUser
-                      ? (content as { name: string }).name
-                      : (content as { title: string }).title
+                    const item = content as { _id: string; title?: string; name?: string; username?: string }
+                    const result = isUser ? item.name : item.title
                     const link = isUser
-                      ? `/${(content as { name: string }).name.replace(/\s/g, '')}`
-                      : `/boards/${(content as { domain: { key: string; _id: string } }).domain.key}/content/${(content as { domain: { _id: string } }).domain._id}`
+                      ? `/dashboard/profile/${item.username || item.name?.replace(/\s/g, '') || ''}`
+                      : `/dashboard/explore?q=${encodeURIComponent(item.title || '')}&tab=search`
 
                     return (
                       <Link
-                        key={(content as { _id: string })._id}
+                        key={item._id}
                         href={link}
                         className={cn(
                           'block p-5 border-b border-gray-100',

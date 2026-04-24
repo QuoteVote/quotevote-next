@@ -139,6 +139,7 @@ export default function VotingPopup({
     <TooltipProvider>
       <div
         className="relative z-[1]"
+        aria-expanded={expand.open}
         style={{
           backgroundImage: 'linear-gradient(to top, #1bb5d8, #4066ec)',
           width: checkWindowWidth ? 285 : 240,
@@ -146,7 +147,7 @@ export default function VotingPopup({
           left: 20,
         }}
       >
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-4" role="group" aria-label="Voting options">
           {/* Upvote Button */}
           <div
             className={cn(
@@ -163,6 +164,7 @@ export default function VotingPopup({
                       size="icon"
                       disabled
                       className="opacity-50"
+                      aria-label="Upvote"
                     >
                       <Like size={30} />
                     </Button>
@@ -175,7 +177,7 @@ export default function VotingPopup({
             ) : showUpvoteTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" aria-label="Upvote">
                     <Like size={30} />
                   </Button>
                 </TooltipTrigger>
@@ -187,6 +189,7 @@ export default function VotingPopup({
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Upvote"
                 onClick={() => {
                   if (!hasVoted) {
                     setExpand({
@@ -217,6 +220,7 @@ export default function VotingPopup({
                       size="icon"
                       disabled
                       className="opacity-50"
+                      aria-label="Downvote"
                     >
                       <Dislike size={30} />
                     </Button>
@@ -229,7 +233,7 @@ export default function VotingPopup({
             ) : showDownvoteTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" aria-label="Downvote">
                     <Dislike size={30} />
                   </Button>
                 </TooltipTrigger>
@@ -241,6 +245,7 @@ export default function VotingPopup({
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Downvote"
                 onClick={() => {
                   if (!hasVoted) {
                     setExpand({
@@ -265,6 +270,7 @@ export default function VotingPopup({
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Comment"
               onClick={() =>
                 setExpand({
                   open: expand.type !== 'comment' || !expand.open,
@@ -286,6 +292,7 @@ export default function VotingPopup({
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Quote"
               onClick={() => {
                 const newQuote = expand.type !== 'quote'
                 setExpand({ open: false, type: newQuote ? 'quote' : '' })
@@ -304,7 +311,7 @@ export default function VotingPopup({
       <div
         id="popButtons"
         className={cn(
-          'absolute bg-white p-4 shadow-lg transition-all duration-200',
+          'absolute bg-white p-4 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
           expand.open
             ? 'opacity-100 scale-100'
             : 'opacity-0 scale-95 pointer-events-none',
@@ -339,13 +346,14 @@ export default function VotingPopup({
         ) : (
           <div className="flex flex-col items-center gap-2">
             <div className="flex gap-1">
-              {voteOptions.map((option) => (
+              {voteOptions.map((option, i) => (
                 <Button
                   key={option}
                   variant="ghost"
                   size="sm"
                   onClick={() => handleVote(option)}
-                  className="normal-case"
+                  className="normal-case animate-in fade-in-0 zoom-in-95 active:scale-90 transition-transform"
+                  style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
                 >
                   {option}
                 </Button>

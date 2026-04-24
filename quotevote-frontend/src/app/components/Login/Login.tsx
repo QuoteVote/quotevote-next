@@ -97,7 +97,7 @@ export function Login({ onSubmit = () => {}, loading = false }: LoginProps) {
             </Link>
 
             {/* Card — plain div, no shadcn sub-component padding conflicts */}
-            <div style={cardStyle} className="p-8">
+            <div style={cardStyle} className="p-8 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
               {/* Card header */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-1.5">

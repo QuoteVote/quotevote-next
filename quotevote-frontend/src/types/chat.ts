@@ -13,8 +13,8 @@ export interface ChatParticipant {
     username: string
     /** Optional display name */
     name?: string
-    /** Optional avatar URL */
-    avatar?: string
+    /** Optional avatar URL or avataaars data object */
+    avatar?: string | Record<string, unknown>
     /** Optional contributor badge or role */
     contributorBadge?: string
     /** Additional metadata */
@@ -175,6 +175,18 @@ export interface TypingUser {
     username?: string | null;
   } | null;
   timestamp: string;
+}
+
+/**
+ * Staged (not yet persisted) DM room — used when starting a new conversation
+ * before the first message has been sent.
+ */
+export interface StagedChatRoom {
+  _id: null;
+  title: string;
+  avatar: string | null;
+  messageType: 'USER';
+  users: string[];
 }
 
 /**

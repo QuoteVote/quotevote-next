@@ -183,11 +183,23 @@ beforeAll(() => {
       (errorString.includes('priority') && errorString.includes('non-boolean attribute')) ||
       (errorString.includes('unoptimized') && errorString.includes('non-boolean attribute'))
     
-    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError || isFillAttributeWarning || isNextImageAttributeWarning) {
+    // Check if this is a React async Client Component warning (expected in test environment for Server Components)
+    const isAsyncClientComponentWarning =
+      errorString.includes('is an async Client Component') ||
+      errorString.includes('Only Server Components can be async')
+
+    // Check if this is a React act() / suspended resource warning (expected in test environment)
+    const isActSuspenseWarning =
+      errorString.includes('suspended resource finished loading inside a test') ||
+      errorString.includes('was not wrapped in act(...)') ||
+      errorString.includes('component suspended inside an `act` scope') ||
+      errorString.includes('the `act` call was not awaited')
+
+    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError || isFillAttributeWarning || isNextImageAttributeWarning || isAsyncClientComponentWarning || isActSuspenseWarning) {
       // Suppress these expected errors - they're caught by ErrorBoundary or are test environment warnings
       return
     }
-    
+
     // Log all other errors normally
     originalError(...args)
   })
@@ -208,7 +220,13 @@ beforeAll(() => {
     if (warnString.includes('Missing `Description`') && warnString.includes('DialogContent')) {
       return
     }
-    
+
+    // Suppress Apollo MockLink "No more mocked responses" warnings
+    // These occur when components fire queries not covered by test mocks
+    if (warnString.includes('No more mocked responses for the query')) {
+      return
+    }
+
     // Log all other warnings normally
     originalWarn(...args)
   })

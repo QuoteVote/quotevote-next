@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { ChatRoom } from '@/types/chat'
+import type { ChatRoom, StagedChatRoom } from '@/types/chat'
 
 interface HeaderProps {
   room: ChatRoom | null
@@ -38,7 +38,7 @@ function Header({ room }: HeaderProps) {
       fetchPolicy: 'cache-and-network',
     },
   )
-  const { data: rosterData } = useQuery<{ roster: { blockedUsers?: Array<{ id?: string }> } }>(
+  const { data: rosterData } = useQuery<{ getRoster: Array<{ _id: string; userId: string; buddyId: string; status: string }> }>(
     GET_ROSTER,
     { skip: !currentUser },
   )
@@ -64,10 +64,17 @@ function Header({ room }: HeaderProps) {
         .find((id) => id !== currentUserIdForHeader) ?? null
       : null
 
-  const blockedUsers = rosterData?.roster?.blockedUsers ?? []
+  const rosterEntries = rosterData?.getRoster ?? []
+  const currentUserIdStr = currentUser?._id?.toString()
   const isBlocked = !!(
     otherUserId &&
-    blockedUsers.some((u) => u?.id && u.id.toString() === otherUserId)
+    currentUserIdStr &&
+    rosterEntries.some(
+      (r) => r.status === 'blocked' && (
+        (r.userId === currentUserIdStr && r.buddyId === otherUserId) ||
+        (r.userId === otherUserId && r.buddyId === currentUserIdStr)
+      )
+    )
   )
 
   const handleBack = () => {
@@ -117,31 +124,32 @@ function Header({ room }: HeaderProps) {
   const isUserRoom = messageType === 'USER'
 
   return (
-    <div className="border-b bg-gradient-to-b from-background to-muted px-4 py-3 shadow-sm">
+    <div className="sticky top-0 z-10 border-b bg-gradient-to-b from-white to-[#fafbfc] px-4 py-3 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)]">
       <div className="flex items-center gap-3">
         <Button
           type="button"
           variant="ghost"
           size="icon"
           onClick={handleBack}
-          className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted"
+          className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted hover:scale-105 transition-all duration-200"
           aria-label="Back to conversations"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <Avatar
             src={typeof avatar === 'string' ? avatar : undefined}
             alt={title || 'Chat avatar'}
             size={44}
+            className="flex-shrink-0 ring-2 ring-white shadow-sm"
           />
 
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-foreground">
+            <div className="truncate text-base font-bold text-foreground" style={{ letterSpacing: '-0.01em' }}>
               {title || 'Chat'}
             </div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
+            <div className="mt-0.5 text-[0.8125rem] text-muted-foreground">
               {isUserRoom ? 'Direct Message' : 'Group Chat'}
             </div>
           </div>
@@ -153,7 +161,7 @@ function Header({ room }: HeaderProps) {
               type="button"
               variant="ghost"
               size="icon"
-              className="ml-auto h-8 w-8 rounded-full text-muted-foreground hover:bg-muted"
+              className="ml-auto h-8 w-8 rounded-full text-muted-foreground hover:bg-muted hover:text-[#52b274] hover:scale-105 transition-all duration-200"
               aria-label="Chat settings"
             >
               <Settings className="h-4 w-4" />
@@ -200,13 +208,31 @@ interface MessageBoxProps {
 function MessageBox({ roomOverride }: MessageBoxProps) {
   const ensureAuth = useGuestGuard()
   const selectedRoomId = useAppStore((state) => state.chat.selectedRoom)
+  const isStagedRoom = selectedRoomId !== null && typeof selectedRoomId === 'object'
 
   const { data: roomsData } = useQuery<{ messageRooms: ChatRoom[] }>(GET_CHAT_ROOMS, {
     fetchPolicy: 'cache-and-network',
+    skip: isStagedRoom,
   })
 
-  const room: ChatRoom | null =
-    roomOverride || roomsData?.messageRooms.find((r) => r._id === selectedRoomId) || null
+  const room: ChatRoom | null = (() => {
+    if (roomOverride) return roomOverride
+    if (isStagedRoom) {
+      const staged = selectedRoomId as StagedChatRoom
+      return {
+        // Empty string as sentinel — MessageSend treats falsy messageRoomId as "create new room"
+        _id: '',
+        title: staged.title,
+        avatar: staged.avatar,
+        messageType: staged.messageType,
+        users: staged.users,
+        created: new Date().toISOString(),
+      }
+    }
+    return typeof selectedRoomId === 'string'
+      ? (roomsData?.messageRooms.find((r) => r._id === selectedRoomId) ?? null)
+      : null
+  })()
 
   const messageRoomId = room?._id ?? null
   const messageType = room?.messageType ?? 'USER'
@@ -229,12 +255,19 @@ function MessageBox({ roomOverride }: MessageBoxProps) {
   return (
     <div className="flex h-full flex-col bg-background">
       <Header room={room} />
-      <div className="flex flex-1 flex-col bg-gradient-to-b from-background via-background to-muted/40">
+      <div
+        className="flex flex-1 flex-col overflow-hidden"
+        style={{
+          backgroundColor: '#f7f8fa',
+          backgroundImage:
+            'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px)',
+        }}
+      >
         <div className="flex-1 overflow-hidden px-2 py-1">
           <MessageItemList room={room} />
         </div>
       </div>
-      <div className="border-t bg-background/95 px-4 py-3 shadow-[0_-2px_8px_rgba(15,23,42,0.08)]">
+      <div className="border-t bg-gradient-to-t from-white to-[#fafbfc] px-4 py-3 shadow-[0_-2px_12px_rgba(0,0,0,0.06),0_-1px_4px_rgba(0,0,0,0.04)]">
         <div className="space-y-1">
           {messageRoomId && <TypingIndicator messageRoomId={messageRoomId} />}
           <MessageSend

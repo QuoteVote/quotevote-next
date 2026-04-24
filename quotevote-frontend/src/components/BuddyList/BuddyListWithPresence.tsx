@@ -36,45 +36,44 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
     // Subscribe to presence updates
     usePresenceSubscription();
 
-    // Sync buddy list to store
+    // Sync buddy list to store — transform getBuddyList to the shape the store expects
     useEffect(() => {
-        if (data?.buddyList) {
-            setBuddyList(data.buddyList);
+        if (data?.getBuddyList) {
+            const buddies = data.getBuddyList.map((entry) => ({
+                id: entry.user._id,
+                buddyId: entry.user._id,
+                status: 'accepted',
+                buddy: entry.user,
+                presence: entry.presence,
+            }));
+            setBuddyList(buddies);
         }
     }, [data, setBuddyList]);
 
-    // Derived state: Pending Requests
+    // Derived state: Pending Requests from flat roster array
     const pendingRequests = useMemo(() => {
-        if (!rosterData?.roster || !currentUser?._id) return [];
+        if (!rosterData?.getRoster || !currentUser?._id) return [];
 
-        // roster structure: { buddies: [], pendingRequests: [], blockedUsers: [] } based on GET_ROSTER query in queries.ts
-        // Wait, queries.ts says:
-        // roster { buddies {...}, pendingRequests {...}, blockedUsers {...} }
-        // OR roster is an array?
-        // Let's re-read GET_ROSTER in Step 66.
-        // It returns object `roster` with fields `buddies`, `pendingRequests`, `blockedUsers`.
-        // The old code did `rosterData.getRoster.filter(...)`. That implies `getRoster` returned an array?
-        // Step 66: 
-        // query GetRoster { roster { buddies [...] ... } }
-        // So rosterData.roster is the object.
+        const currentUserId = currentUser._id?.toString() || (currentUser.id as string | undefined);
+        if (!currentUserId) return [];
 
-        // However, the OLD code imported GET_ROSTER from `../../graphql/query`. Maybe it was different.
-        // I should adapt to the NEW query structure in queries.ts.
-        // New query returns `roster` object with `pendingRequests` array.
-        // So I can just use `rosterData.roster.pendingRequests`.
-
-        const requests = rosterData.roster?.pendingRequests || [];
-        return requests.filter(() => {
-            // We only want RECEIVED requests.
-            // If the API puts them in `pendingRequests`, they might be mixed sent/received?
-            // Usually `pendingRequests` in a roster query implies "requests waiting for ME".
-            // Or "requests I sent".
-            // Let's assume the API handles it or verify fields.
-            // Fields available: id, buddyId, status, buddy.
-            // Assuming `buddy` is the OTHER person.
-            // If I am the receiver, `buddy` should be the sender? Or `buddy` field is always "the other guy".
-            return true; // For now show all pending, usually filtered by API or context.
-        });
+        // Only show requests RECEIVED by the current user:
+        // buddyId is currentUser AND initiatedBy is someone else
+        return rosterData.getRoster
+            .filter((entry) => {
+                if (entry.status !== 'pending') return false;
+                if (!entry.initiatedBy) return false;
+                return (
+                    entry.buddyId?.toString() === currentUserId &&
+                    entry.initiatedBy?.toString() !== currentUserId
+                );
+            })
+            .map((entry) => ({
+                id: entry._id,
+                buddyId: entry.userId,
+                status: entry.status,
+                buddy: entry.buddy,
+            }));
     }, [rosterData, currentUser]);
 
     const handleAcceptBuddy = async (rosterId: string) => {
@@ -117,7 +116,7 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
         );
     }
 
-    const buddies = (data?.buddyList || []) as Buddy[];
+    const buddyEntries = data?.getBuddyList || [];
 
     // Group by presence
     const groupedBuddies: Record<string, BuddyItem[]> = {
@@ -127,19 +126,18 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
         offline: [],
     };
 
-    buddies.forEach((rosterItem) => {
-        const buddyUser = rosterItem.buddy;
+    buddyEntries.forEach((entry) => {
+        const buddyUser = entry.user;
         if (!buddyUser) return;
 
         // Presence key might be buddy ID
-        const presence = presenceMap[buddyUser._id] || rosterItem.presence;
+        const presence = presenceMap[buddyUser._id] || entry.presence;
         const status = presence?.status || 'offline';
 
         if (status === 'invisible') return;
 
         const buddyWithPresence = {
-            ...rosterItem,
-            user: buddyUser, // BuddyItemList expects 'user'
+            user: buddyUser,
             presence: presence || { status: 'offline' },
             Text: buddyUser.name || buddyUser.username || 'Unknown',
             statusMessage: presence?.statusMessage || '',
@@ -164,10 +162,10 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'online': return 'bg-green-500 shadow-green-500/20';
+            case 'online': return 'bg-[#52b274] shadow-[#52b274]/20';
             case 'away': return 'bg-amber-400 shadow-amber-400/20';
             case 'dnd': return 'bg-red-500 shadow-red-500/20';
-            default: return 'bg-gray-500';
+            default: return 'bg-gray-400';
         }
     };
 
@@ -180,7 +178,7 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
                         <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">
                             Pending Requests
                         </span>
-                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-green-500 text-white text-[10px] font-bold">
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#52b274] text-white text-[10px] font-bold">
                             {pendingRequests.length}
                         </span>
                     </div>
@@ -207,7 +205,7 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
                                     <div className="flex gap-1">
                                         <button
                                             onClick={() => handleAcceptBuddy(req.id)}
-                                            className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
+                                            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#52b274] text-white hover:bg-[#4a9e63] transition-colors"
                                             title="Accept"
                                         >
                                             <Check size={16} />

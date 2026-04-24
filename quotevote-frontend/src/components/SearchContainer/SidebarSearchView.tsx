@@ -12,28 +12,25 @@ import SearchResultsView from './SearchResults'
 import type { SidebarSearchViewProps } from '@/types/components'
 import { cn } from '@/lib/utils'
 
-interface SearchContent {
+interface SearchPost {
   _id: string
   title: string
-  creatorId: string
-  domain: {
-    key: string
-    _id: string
-  }
+  text?: string
+  url?: string
+  groupId?: string
+  creator?: { _id: string; name?: string; username?: string }
 }
 
-interface SearchCreator {
+interface SearchUser {
   _id: string
   name: string
+  username?: string
   avatar?: string
-  creator: {
-    _id: string
-  }
 }
 
 interface SearchQueryData {
-  searchContent: SearchContent[]
-  searchCreator: SearchCreator[]
+  posts: { entities: SearchPost[] }
+  searchUser: SearchUser[]
 }
 
 /**
@@ -85,7 +82,18 @@ export default function SidebarSearchView({ Display = 'block' }: SidebarSearchVi
       </Card>
       {data && (
         <SearchResultsView
-          searchResults={data}
+          searchResults={{
+            searchContent: (data.posts?.entities || []).map((p) => ({
+              _id: p._id,
+              title: p.title,
+              name: p.creator?.name,
+            })),
+            searchCreator: (data.searchUser || []).map((u) => ({
+              _id: u._id,
+              name: u.name || u.username || '',
+              username: u.username,
+            })),
+          }}
           isLoading={loading}
           isError={error || null}
         />

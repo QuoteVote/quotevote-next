@@ -110,7 +110,7 @@ describe('MessageSend', () => {
     mockUseQuery.mockImplementation((query) => {
       if (query === GET_ROSTER) {
         return {
-          data: { roster: { buddies: [], pendingRequests: [], blockedUsers: [] } },
+          data: { getRoster: [] },
           loading: false,
           error: undefined,
         }
@@ -268,14 +268,12 @@ describe('MessageSend', () => {
   })
 
   it('disables input and shows blocked message when user is blocked', async () => {
-    // Mock useQuery to return blocked user
+    // Mock useQuery to return blocked user via flat roster array
     mockUseQuery.mockReturnValueOnce({
       data: {
-        roster: {
-          buddies: [],
-          pendingRequests: [],
-          blockedUsers: [{ id: 'user2', username: 'blockeduser' }],
-        },
+        getRoster: [
+          { _id: 'r1', userId: 'user2', buddyId: 'user1', status: 'blocked', initiatedBy: 'user2' },
+        ],
       },
       loading: false,
       error: undefined,

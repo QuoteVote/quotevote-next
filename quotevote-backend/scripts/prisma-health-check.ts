@@ -34,7 +34,7 @@ async function main() {
       'VoteLog',
       'Quote',
       'Reaction',
-      'PostMessage',
+      'Message',
       'DirectMessage',
       'MessageRoom',
       'Notification',

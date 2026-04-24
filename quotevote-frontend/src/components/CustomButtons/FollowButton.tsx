@@ -38,29 +38,18 @@ export function FollowButton({
     if (!ensureAuth()) return;
 
     // Optimistic local state update
-    let newFollowingArray: string[];
-    if (action === 'un-follow') {
-      newFollowingArray = followingArray.filter((id) => id !== profileUserId);
-    } else {
-      newFollowingArray = [...followingArray, profileUserId];
-    }
+    const newFollowingArray =
+      action === 'un-follow'
+        ? followingArray.filter((id) => id !== profileUserId)
+        : [...followingArray, profileUserId];
 
-    if (newFollowingArray.length > 0) {
-      updateFollowing(newFollowingArray[0]);
-    } else {
-      updateFollowing('');
-    }
+    updateFollowing(newFollowingArray);
 
     try {
       await followMutation({ variables: { user_id: profileUserId, action } });
     } catch {
       // Revert on error
-      if (action === 'un-follow') {
-        updateFollowing(profileUserId);
-      } else {
-        const reverted = followingArray.filter((id) => id !== profileUserId);
-        updateFollowing(reverted.length > 0 ? reverted[0] : '');
-      }
+      updateFollowing(followingArray);
     }
   }
 

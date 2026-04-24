@@ -119,23 +119,20 @@ describe('PostChatSend', () => {
   it('renders message input and send button', () => {
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    expect(screen.getByPlaceholderText('type a message...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Add to the discussion...')).toBeInTheDocument()
     expect(screen.getByLabelText('Send message')).toBeInTheDocument()
   })
 
-  it('displays chat label on larger screens', () => {
+  it('renders send button with correct aria-label', () => {
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    // Chat label should be present (hidden on mobile)
-    const chatLabel = screen.queryByText('Chat')
-    // May be hidden with CSS, but should exist in DOM
-    expect(chatLabel).toBeInTheDocument()
+    expect(screen.getByLabelText('Send message')).toBeInTheDocument()
   })
 
   it('updates input value when typing', () => {
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('type a message...')
+    const input = screen.getByPlaceholderText('Add to the discussion...')
     fireEvent.change(input, { target: { value: 'Hello world' } })
 
     expect(input).toHaveValue('Hello world')
@@ -154,7 +151,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('type a message...')
+    const input = screen.getByPlaceholderText('Add to the discussion...')
     const sendButton = screen.getByLabelText('Send message')
 
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -184,7 +181,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('type a message...')
+    const input = screen.getByPlaceholderText('Add to the discussion...')
     fireEvent.change(input, { target: { value: 'Test message' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
 
@@ -206,7 +203,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('type a message...')
+    const input = screen.getByPlaceholderText('Add to the discussion...')
     fireEvent.change(input, { target: { value: 'Test message' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: true })
 
@@ -226,7 +223,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('type a message...')
+    const input = screen.getByPlaceholderText('Add to the discussion...')
     fireEvent.change(input, { target: { value: '   ' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
 
@@ -258,7 +255,7 @@ describe('PostChatSend', () => {
 
       render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-      const input = screen.getByPlaceholderText('type a message...')
+      const input = screen.getByPlaceholderText('Add to the discussion...')
       const sendButton = screen.getByLabelText('Send message')
 
       fireEvent.change(input, { target: { value: 'Test message' } })
@@ -297,7 +294,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId={null} title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('type a message...')
+    const input = screen.getByPlaceholderText('Add to the discussion...')
     const sendButton = screen.getByLabelText('Send message')
 
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -321,7 +318,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('type a message...')
+    const input = screen.getByPlaceholderText('Add to the discussion...')
     const sendButton = screen.getByLabelText('Send message')
 
     fireEvent.change(input, { target: { value: 'Test message' } })

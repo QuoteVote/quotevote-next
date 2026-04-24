@@ -42,8 +42,7 @@ describe('Quote Model', () => {
       const postId = new mongoose.Types.ObjectId().toHexString();
       const findSpy = jest.spyOn(Quote, 'find').mockReturnValue({
         sort: jest.fn().mockResolvedValue([]),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      } as unknown as ReturnType<typeof Quote.find>);
 
       await Quote.findByPostId(postId);
 
@@ -56,8 +55,7 @@ describe('Quote Model', () => {
       const sortMock = jest.fn().mockReturnValue({ limit: limitMock });
       const findSpy = jest.spyOn(Quote, 'find').mockReturnValue({
         sort: sortMock,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      } as unknown as ReturnType<typeof Quote.find>);
 
       await Quote.findLatest(5);
 

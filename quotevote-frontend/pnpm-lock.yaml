@@ -56,6 +56,9 @@ importers:
       '@testing-library/user-event':
         specifier: ^14.6.1
         version: 14.6.1(@testing-library/dom@10.4.1)
+      avataaars:
+        specifier: ^2.0.0
+        version: 2.0.0(react@19.2.3)
       axios:
         specifier: ^1.13.2
         version: 1.13.2
@@ -2164,6 +2167,11 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
+
+  avataaars@2.0.0:
+    resolution: {integrity: sha512-VBS14dAvTe1l/HEwSoR5LArV7OqXgbhksBCS3CZZLIOQfv+oM3yVgy0d5QKz/KYqNMmS8emSzD9znlrOhbg2fA==}
+    peerDependencies:
+      react: ^17.0.0
 
   axe-core@4.11.0:
     resolution: {integrity: sha512-ilYanEU8vxxBexpJd8cWM4ElSQq4QctCLKih0TSfjIfCQTeyH/6zVrmIJfLPrKTKJRbiG+cfnZbQIjAlJmF1jQ==}
@@ -6463,6 +6471,12 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
+
+  avataaars@2.0.0(react@19.2.3):
+    dependencies:
+      lodash: 4.17.21
+      prop-types: 15.8.1
+      react: 19.2.3
 
   axe-core@4.11.0: {}
 

@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/app/server.js",
     "test": "jest --passWithNoTests",
+    "test:prisma": "tsx scripts/check-replica-set.ts && jest --testPathPattern='prisma-.*\\.test\\.ts$' --testPathIgnorePatterns='[]'",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -16,9 +17,12 @@
     "prisma:generate": "prisma generate --schema=./prisma/schema",
     "prisma:validate": "prisma validate --schema=./prisma/schema",
     "prisma:format": "prisma format --schema=./prisma/schema",
-    "prisma:studio": "prisma db push --schema=./prisma/schema",
+    "prisma:push": "prisma db push --schema=./prisma/schema",
+    "prisma:studio": "prisma studio --schema=./prisma/schema",
+    "prisma:sync": "pnpm prisma:push && pnpm prisma:generate",
     "prisma:health": "tsx scripts/prisma-health-check.ts",
-    "prisma:test": "tsx scripts/prisma-crud-test.ts",
+    "prisma:test": "tsx scripts/check-replica-set.ts && tsx scripts/prisma-crud-test.ts",
+    "prisma:parity": "tsx scripts/check-replica-set.ts && tsx scripts/prisma-mongoose-parity.ts",
     "postinstall": "prisma generate --schema=./prisma/schema"
   },
   "prisma": {

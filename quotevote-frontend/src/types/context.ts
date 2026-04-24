@@ -42,6 +42,8 @@ export interface ThemeContextValue {
   theme: Theme
   toggleTheme: () => ThemeMode
   isDarkMode: boolean
+  neoBrutalism: boolean
+  toggleNeoBrutalism: () => boolean
 }
 
 /**

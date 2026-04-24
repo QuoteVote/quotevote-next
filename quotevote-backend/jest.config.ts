@@ -14,7 +14,7 @@ const config: Config = {
     '^~/(.*)$': '<rootDir>/app/$1',
   },
 
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/.next/'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/.next/', '_helpers\\.ts$', 'prisma-.*\\.test\\.ts$'],
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 

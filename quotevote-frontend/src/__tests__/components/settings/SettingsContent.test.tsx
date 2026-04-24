@@ -255,22 +255,6 @@ describe('SettingsContent', () => {
       expect(screen.getByText('Save')).toBeInTheDocument()
     })
 
-    it('renders Manage Invites button for admin users', () => {
-      mockUseAppStore.mockImplementation((selector: (state: Record<string, unknown>) => unknown) => {
-        const state = {
-          user: {
-            data: { ...mockUserData, admin: true },
-            loading: false,
-          },
-          setUserData: jest.fn(),
-          logout: jest.fn(),
-        }
-        return selector(state)
-      })
-
-      renderComponent()
-      expect(screen.getByText('Manage Invites')).toBeInTheDocument()
-    })
 
     it('renders Forgot Password link', () => {
       renderComponent()

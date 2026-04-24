@@ -28,7 +28,8 @@ export const INVALID_URL_CHARS_REGEX = /[^a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]/
  */
 export const containsUrl = (text: string): boolean => {
   // Using a fresh regex instance each time to avoid global flag state issues
-  const urlPattern = /(?:https?:\/\/|www\.)[^\s/$.?#].[^\s]*/i
+  // Matches backend's URL_REGEX: handles http, https, ftp, www
+  const urlPattern = /(?:https?:\/\/|ftp:\/\/|www\.)[^\s/$.?#].[^\s]*/i
   return urlPattern.test(text)
 }
 
@@ -57,8 +58,8 @@ export const sanitizeUrl = (url: string): string | null => {
   try {
     const parsed = new URL(trimmedUrl)
 
-    // Only allow http and https protocols
-    if (!['http:', 'https:'].includes(parsed.protocol)) return null
+    // Only allow http, https, and ftp protocols (matches backend)
+    if (!['http:', 'https:', 'ftp:'].includes(parsed.protocol)) return null
 
     // Require valid hostname
     if (!parsed.hostname || parsed.hostname.length < 3) return null
@@ -67,6 +68,22 @@ export const sanitizeUrl = (url: string): string | null => {
   } catch {
     return null
   }
+}
+
+/**
+ * Normalise a backend post URL to the Next.js app route.
+ *
+ * The backend stores post URLs as `/post/<group>/<title>/<id>` (monorepo
+ * format).  The Next.js app routes them under `/dashboard/post/...`, so
+ * every client-side navigation and every copy-link must use this helper.
+ *
+ * @example
+ * toAppPostUrl('/post/general/some-title/abc123')
+ * // '/dashboard/post/general/some-title/abc123'
+ */
+export const toAppPostUrl = (url: string): string => {
+  const clean = url.replace(/\?/g, '')
+  return clean.startsWith('/post/') ? `/dashboard${clean}` : clean
 }
 
 /**

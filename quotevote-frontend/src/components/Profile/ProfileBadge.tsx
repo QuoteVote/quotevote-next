@@ -116,6 +116,11 @@ export function ProfileBadge({
             role="img"
             aria-label={`${label}: ${description}`}
             tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+              }
+            }}
           >
             {renderBadgeContent()}
           </div>

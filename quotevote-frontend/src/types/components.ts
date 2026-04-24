@@ -925,21 +925,15 @@ export type PlansProps = Record<string, never>;
 export interface SearchContentResult {
   _id: string;
   title: string;
-  creatorId: string;
-  domain: {
-    key: string;
-    _id: string;
-  };
+  name?: string;
   __typename?: string;
 }
 
 export interface SearchCreatorResult {
   _id: string;
   name: string;
+  username?: string;
   avatar?: string;
-  creator?: {
-    _id: string;
-  };
   __typename?: string;
 }
 
