@@ -1,5 +1,5 @@
 // User and authentication related models
-//User model - Core user entity
+// User model - Core user entity
 
 model User {
   id                String        @id @default(auto()) @map("_id") @db.ObjectId
@@ -7,7 +7,6 @@ model User {
   username          String        @unique
   name              String?
   password          String?
-  hashPassword      String?       @map("hash_password")
   avatar            Json?
   bio               String?
   location          String?
@@ -23,27 +22,28 @@ model User {
   contributorBadge  Boolean       @default(false)
   accountStatus     AccountStatus @default(active)
   emailVerified     Boolean       @default(false)
-  isAdmin           Boolean       @default(false)
+  isAdmin           Boolean       @default(false) @map("admin")
   isModerator       Boolean       @default(false)
   botReports        Int           @default(0)
   lastBotReportDate DateTime?
   upvotes           Int           @default(0)
   downvotes         Int           @default(0)
-  followingIds      String[]      @db.ObjectId
-  followerIds       String[]      @db.ObjectId
+  followingIds      String[]      @map("_followingId") @db.ObjectId
+  followerIds       String[]      @map("_followersId") @db.ObjectId
   blockedUserIds    String[]      @db.ObjectId
   settings          Json?
   lastLogin         DateTime?
   joined            DateTime      @default(now())
-  updated           DateTime      @updatedAt
+  reputation        EmbeddedReputation?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
-  //Relations
+  // Relations
   posts               Post[]
   comments            Comment[]
   votes               Vote[]
-  quotesAsQuoter      Quote[]         @relation("QuoterUser")
-  quotesAsQuoted      Quote[]         @relation("QuotedUser")
-  postMessages        PostMessage[]   @relation("PostMessages")
+  quotes              Quote[]
+  messages            Message[]      @relation("Messages")
   directMessages      DirectMessage[] @relation("DirectMessages")
   notifications       Notification[]  @relation("NotificationRecipient")
   notificationsFrom   Notification[]  @relation("NotificationSender")
@@ -55,7 +55,6 @@ model User {
   presence            Presence?
   typingIndicators    Typing[]
   inviteSent          UserInvite[]    @relation("InviteSender")
-  inviteReceived      UserInvite[]    @relation("InviteRecipient")
   userReportsMade     UserReport[]    @relation("Reporter")
   userReportsReceived UserReport[]    @relation("ReportedUser")
   botReportsMade      BotReport[]     @relation("BotReporter")
@@ -63,6 +62,7 @@ model User {
   createdGroups       Group[]         @relation("GroupCreator")
   memberOfGroups      String[]        @db.ObjectId
   voteLog             VoteLog[]
+  collections         Collection[]
 
   @@index([accountStatus])
   @@index([botReports, lastBotReportDate])

@@ -67,10 +67,15 @@ export function ProfileView({
 
   const handleToggleEvent = useCallback((event: ActivityEventType) => {
     setActivityEvents((prev) => {
+      const allSelected = prev.length === ACTIVITY_TYPES.length;
+      if (allSelected) {
+        // When everything is selected, clicking one type isolates it
+        return [event];
+      }
       if (prev.includes(event)) {
-        // Don't allow deselecting all
-        if (prev.length === 1) return prev;
-        return prev.filter((e) => e !== event);
+        // Deselect this type; if it would leave nothing selected, reset to all
+        const next = prev.filter((e) => e !== event);
+        return next.length === 0 ? [...ACTIVITY_TYPES] : next;
       }
       return [...prev, event];
     });

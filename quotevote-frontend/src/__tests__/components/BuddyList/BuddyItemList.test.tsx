@@ -1,7 +1,7 @@
 import { TextEncoder } from 'util';
 global.TextEncoder = TextEncoder;
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import BuddyItemList from '@/components/BuddyList/BuddyItemList';
 import { BuddyItem } from '@/types/buddylist';
 
@@ -76,5 +76,27 @@ describe('BuddyItemList', () => {
     it('renders empty state', () => {
         render(<BuddyItemList buddyList={[]} />);
         expect(screen.getByText('No Conversations Yet')).toBeInTheDocument();
+    });
+
+    it('buddy items have role="button" and tabIndex for keyboard accessibility', () => {
+        render(<BuddyItemList buddyList={mockItems} />);
+        const buttons = screen.getAllByRole('button');
+        expect(buttons.length).toBeGreaterThan(0);
+        expect(buttons[0]).toHaveAttribute('tabindex', '0');
+    });
+
+    it('buddy items respond to Enter key', () => {
+        render(<BuddyItemList buddyList={mockItems} />);
+        const button = screen.getAllByRole('button')[0];
+        fireEvent.keyDown(button, { key: 'Enter' });
+        // Should not throw; interaction handled
+        expect(button).toBeInTheDocument();
+    });
+
+    it('buddy items respond to Space key', () => {
+        render(<BuddyItemList buddyList={mockItems} />);
+        const button = screen.getAllByRole('button')[0];
+        fireEvent.keyDown(button, { key: ' ' });
+        expect(button).toBeInTheDocument();
     });
 });

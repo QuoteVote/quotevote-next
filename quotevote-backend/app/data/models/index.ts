@@ -22,3 +22,6 @@ export { default as UserInvite } from './UserInvite';
 export { default as UserReputation } from './UserReputation';
 export { default as UserReport } from './UserReport';
 export { default as VoteLog } from './VoteLog';
+export { default as Reaction } from './Reaction';
+export { default as Roster } from './Roster';
+export { default as Typing } from './Typing';

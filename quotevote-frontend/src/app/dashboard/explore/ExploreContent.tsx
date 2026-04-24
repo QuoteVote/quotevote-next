@@ -1,308 +1,233 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import {
-  Search as SearchIcon,
-  TrendingUp,
-  Star,
-  Users,
-  PenSquare,
-  X,
-} from 'lucide-react'
-import { useQuery } from '@apollo/client/react'
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { useDebounce } from '@/hooks/useDebounce'
+import Image from 'next/image'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
-import {
-  GET_FEATURED_POSTS,
-  SEARCH_USERNAMES,
-} from '@/graphql/queries'
 import { useAppStore } from '@/store'
-import UsernameResults from '@/components/SearchContainer/UsernameResults'
 import SearchGuestSections from '@/components/SearchContainer/SearchGuestSections'
-import type { UsernameSearchUser } from '@/types/components'
+import DateRangeFilter from '@/components/SearchContainer/DateRangeFilter'
+import { SubmitPost } from '@/components/SubmitPost/SubmitPost'
+import { cn } from '@/lib/utils'
 
-/* ------------------------------------------------------------------ */
-/*  ExploreContent — main component                                    */
-/* ------------------------------------------------------------------ */
+type SortOrder = 'desc' | 'asc' | ''
+
 export default function ExploreContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const user = useAppStore((state) => state.user.data)
+  const isLoggedIn = !!(user?._id || user?.id)
 
+  // URL-driven state
   const q = searchParams.get('q') || ''
-  const tab = searchParams.get('tab') || 'trending'
   const from = searchParams.get('from') || ''
   const to = searchParams.get('to') || ''
+  const sortOrder = (searchParams.get('sort') || '') as SortOrder
+  const interactions = searchParams.get('interactions') === 'true'
+  const friends = searchParams.get('friends') === 'true'
 
-  const [inputValue, setInputValue] = useState(q)
-  const [searchFocused, setSearchFocused] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<UsernameSearchUser | null>(null)
-  const searchRef = useRef<HTMLDivElement>(null)
-  const debouncedQuery = useDebounce(inputValue, 400)
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
+  const [totalCount, setTotalCount] = useState(0)
 
-  // Detect @username mode
-  const isUsernameSearch = inputValue.startsWith('@')
-  const usernameQuery = isUsernameSearch ? inputValue.slice(1) : ''
-
-  // Sync debounced query to URL
-  useEffect(() => {
-    // Don't sync username searches or when filtering by user
-    if (isUsernameSearch || selectedUser) return
-
-    const params = new URLSearchParams(searchParams.toString())
-    if (debouncedQuery) {
-      params.set('q', debouncedQuery)
-      if (params.get('tab') !== 'search') {
-        params.set('tab', 'search')
-      }
-    } else {
-      params.delete('q')
-      if (params.get('tab') === 'search') {
-        params.set('tab', 'trending')
-      }
-    }
-    router.replace(`?${params.toString()}`)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery, isUsernameSearch, selectedUser])
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInputValue(e.target.value)
-      // Clear selected user when typing
-      if (selectedUser) setSelectedUser(null)
-    },
-    [selectedUser]
-  )
-
-  const clearSearch = useCallback(() => {
-    setInputValue('')
-    setSelectedUser(null)
-  }, [])
-
-  const handleUserSelect = useCallback((user: UsernameSearchUser) => {
-    setSelectedUser(user)
-    setInputValue('')
-    setSearchFocused(false)
-  }, [])
-
-  const clearSelectedUser = useCallback(() => {
-    setSelectedUser(null)
-  }, [])
-
-  const handleTabChange = useCallback(
-    (value: string) => {
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString())
-      params.set('tab', value)
+      Object.entries(updates).forEach(([key, val]) => {
+        if (val) params.set(key, val)
+        else params.delete(key)
+      })
       router.replace(`?${params.toString()}`)
     },
     [router, searchParams]
   )
 
-  // Username search dropdown — triggered by @prefix or general search
-  const searchQueryForUsers = isUsernameSearch ? usernameQuery : debouncedQuery
-  const {
-    loading: usersLoading,
-    data: usersData,
-    error: usersError,
-  } = useQuery<{ searchUser: UsernameSearchUser[] }>(SEARCH_USERNAMES, {
-    variables: { query: searchQueryForUsers },
-    skip: !searchQueryForUsers,
-  })
+  const handleDateChange = useCallback(
+    (newFrom: string, newTo: string) => {
+      updateParams({ from: newFrom || null, to: newTo || null })
+    },
+    [updateParams]
+  )
 
-  const hasSearch = q || selectedUser
-  const activeTab = hasSearch ? 'search' : tab === 'search' ? 'trending' : tab
-  const isLoggedIn = !!(user?._id || user?.id)
+  const handleSortCycle = useCallback(() => {
+    const next: SortOrder = sortOrder === '' ? 'desc' : sortOrder === 'desc' ? 'asc' : ''
+    updateParams({ sort: next || null })
+  }, [sortOrder, updateParams])
 
-  const tabs = [
-    { value: 'trending', label: 'Trending', icon: TrendingUp },
-    { value: 'featured', label: 'Featured', icon: Star },
-    ...(isLoggedIn
-      ? [{ value: 'friends', label: 'Friends', icon: Users }]
-      : []),
-    ...(hasSearch
-      ? [{ value: 'search', label: 'Results', icon: SearchIcon }]
-      : []),
-  ]
+  const handleToggleInteractions = useCallback(() => {
+    updateParams({ interactions: interactions ? null : 'true' })
+  }, [interactions, updateParams])
+
+  const handleToggleFriends = useCallback(() => {
+    updateParams({ friends: friends ? null : 'true' })
+  }, [friends, updateParams])
+
+  const hasDateFilter = !!(from || to)
+  const hasAnyFilter = interactions || friends || sortOrder !== '' || hasDateFilter || !!q
+
+  const filterIconBtn = (active: boolean) =>
+    cn(
+      'flex flex-col items-center gap-1 px-4 py-2.5 rounded-xl border transition-all shadow-sm min-w-[60px] hover:scale-[1.02] cursor-pointer',
+      active
+        ? 'border-primary bg-primary/10'
+        : 'border-border bg-muted/30 hover:bg-muted/60 hover:border-primary/40'
+    )
 
   return (
     <div className="-mx-4 -mt-6 md:-mx-4">
-      {/* ── Sticky search bar ── */}
+      {/* ── Logo + tagline ── */}
+      <div className="flex flex-col items-center py-8 px-4 border-b border-border">
+        {/* Light mode: PNG logo */}
+        <Image
+          src="/assets/QuoteVoteLogo.png"
+          alt="QuoteVote"
+          width={220}
+          height={66}
+          className="mb-3 dark:hidden"
+          priority
+        />
+        {/* Dark mode: white text logo */}
+        <span className="hidden dark:block mb-3 text-[2.75rem] font-black tracking-tight text-white leading-none select-none">
+          QUOTE.VOTE
+        </span>
+        <p className="text-sm text-muted-foreground text-center">
+          No algorithms. No ads. Just conversations.
+        </p>
+      </div>
+
+      {/* ── Sticky filters ── */}
       <div className="sticky top-14 md:top-16 z-30 bg-background/80 backdrop-blur-xl border-b border-border">
-        <div className="max-w-2xl mx-auto px-4 py-2.5">
-          {/* Selected user filter chip */}
-          {selectedUser && (
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" className="flex items-center gap-1.5 pl-2 pr-1 py-1">
-                <span className="text-xs">Posts by @{selectedUser.username}</span>
-                <button
-                  type="button"
-                  onClick={clearSelectedUser}
-                  className="ml-0.5 rounded-full hover:bg-muted p-0.5"
-                  aria-label="Clear user filter"
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
-            </div>
-          )}
-          <div className="relative" ref={searchRef}>
-            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground pointer-events-none" />
-            <Input
-              type="text"
-              placeholder={selectedUser ? `Filter posts by @${selectedUser.username}...` : 'Search posts, @username, topics...'}
-              value={inputValue}
-              onChange={handleInputChange}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-              className="pl-10 pr-10 h-10 text-sm rounded-full bg-muted/60 border-0 focus-visible:bg-card focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:shadow-sm transition-all"
-              aria-label="Search posts"
-            />
-            {(inputValue || selectedUser) && (
+        <div className="max-w-2xl mx-auto px-4 py-3">
+
+          {/* ── Filter icon buttons ── */}
+          <div className="flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSubmitDialogOpen(true)}
+              title="Create a quote"
+              className={filterIconBtn(false)}
+            >
+              <span className="text-lg leading-none">✍️</span>
+              <span className="text-[10px] text-muted-foreground font-medium">Write</span>
+            </button>
+
+            {isLoggedIn && (
               <button
                 type="button"
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Clear search"
+                onClick={handleToggleFriends}
+                title={friends ? 'Showing friends posts' : 'Show posts from people you follow'}
+                className={filterIconBtn(friends)}
               >
-                <X className="size-4" />
+                <span className="text-lg leading-none">👥</span>
+                <span className="text-[10px] font-medium">Friends</span>
               </button>
             )}
 
-            {/* Username dropdown — shown on @prefix or general search */}
-            {searchQueryForUsers && searchFocused && (
-              <UsernameResults
-                users={usersData?.searchUser ?? []}
-                loading={usersLoading}
-                error={usersError ?? null}
-                query={searchQueryForUsers}
-                onUserSelect={handleUserSelect}
-              />
-            )}
+            <button
+              type="button"
+              onClick={handleToggleInteractions}
+              title="Sort by most interactions"
+              className={filterIconBtn(interactions)}
+            >
+              <span className="text-lg leading-none">🧲</span>
+              <span className="text-[10px] font-medium">Popular</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSortCycle}
+              title={
+                sortOrder === ''
+                  ? 'Default order'
+                  : sortOrder === 'desc'
+                    ? 'Newest first'
+                    : 'Oldest first'
+              }
+              className={filterIconBtn(sortOrder !== '')}
+            >
+              <span className="text-lg leading-none">{sortOrder === 'asc' ? '⏳' : '⌛'}</span>
+              <span className="text-[10px] font-medium">
+                {sortOrder === 'asc' ? 'Oldest' : sortOrder === 'desc' ? 'Newest' : 'Sort'}
+              </span>
+            </button>
+
+            <DateRangeFilter startDate={from} endDate={to} onDateChange={handleDateChange} />
           </div>
+
+          {/* Active filter summary pills */}
+          {hasAnyFilter && (
+            <div className="mt-3 flex flex-wrap gap-1.5 justify-center text-xs">
+              {q && (
+                <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
+                  🔍 &quot;{q}&quot;
+                </span>
+              )}
+              {friends && (
+                <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
+                  👥 Friends Only
+                </span>
+              )}
+              {interactions && (
+                <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
+                  🧲 By Interactions
+                </span>
+              )}
+              {sortOrder === 'desc' && (
+                <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
+                  ⌛ Newest First
+                </span>
+              )}
+              {sortOrder === 'asc' && (
+                <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
+                  ⏳ Oldest First
+                </span>
+              )}
+              {hasDateFilter && (
+                <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
+                  📅 {from || '…'} — {to || '…'}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Quick actions (compact pill row) ── */}
-      <div className="border-b border-border bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-3">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            <Link
-              href="/dashboard/post"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap shadow-sm"
-            >
-              <PenSquare className="size-3.5" />
-              Write
-            </Link>
-            <Link
-              href="/dashboard/explore?tab=trending"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted/70 text-foreground/80 text-xs font-medium hover:bg-muted transition-colors whitespace-nowrap"
-            >
-              <TrendingUp className="size-3.5" />
-              Trending
-            </Link>
-            <Link
-              href="/dashboard/explore?tab=featured"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted/70 text-foreground/80 text-xs font-medium hover:bg-muted transition-colors whitespace-nowrap"
-            >
-              <Star className="size-3.5" />
-              Featured
-            </Link>
-            {isLoggedIn && (
-              <Link
-                href="/dashboard/explore?tab=friends"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted/70 text-foreground/80 text-xs font-medium hover:bg-muted transition-colors whitespace-nowrap"
-              >
-                <Users className="size-3.5" />
-                Friends
-              </Link>
-            )}
-          </div>
+      {/* ── Result count ── */}
+      {totalCount > 0 && hasAnyFilter && (
+        <div className="max-w-2xl mx-auto px-4 pt-3">
+          <p className="text-sm font-medium text-muted-foreground text-center">
+            {totalCount.toLocaleString()} {totalCount === 1 ? 'result' : 'results'} found
+          </p>
         </div>
+      )}
+
+      {/* ── Posts feed ── */}
+      <div className="max-w-2xl mx-auto">
+        <PaginatedPostsList
+          defaultPageSize={20}
+          maxVisiblePages={5}
+          searchKey={q}
+          startDateRange={from || undefined}
+          endDateRange={to || undefined}
+          sortOrder={sortOrder || undefined}
+          interactions={interactions}
+          friendsOnly={isLoggedIn ? friends : false}
+          onTotalCountChange={setTotalCount}
+        />
       </div>
 
-      {/* ── Tabs + feed ── */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <div className="sticky top-[105px] md:top-[113px] z-20 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="max-w-2xl mx-auto">
-            <TabsList
-              variant="line"
-              className="w-full justify-start bg-transparent p-0 rounded-none h-auto"
-            >
-              {tabs.map(({ value, label, icon: Icon }) => (
-                <TabsTrigger
-                  key={value}
-                  value={value}
-                  className="flex-1 gap-1.5 py-3 rounded-none bg-transparent text-sm font-medium text-muted-foreground
-                    data-[state=active]:text-foreground data-[state=active]:shadow-none
-                    data-[state=active]:border-b-2 data-[state=active]:border-primary
-                    hover:text-foreground hover:bg-muted/30 transition-colors"
-                >
-                  <Icon className="size-4 hidden sm:inline-block" />
-                  {label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-        </div>
-
-        <div className="max-w-2xl mx-auto">
-          <TabsContent value="trending" className="mt-0">
-            <PaginatedPostsList
-              defaultPageSize={15}
-              maxVisiblePages={5}
-              startDateRange={from || undefined}
-              endDateRange={to || undefined}
-            />
-          </TabsContent>
-
-          <TabsContent value="featured" className="mt-0">
-            <PaginatedPostsList
-              query={GET_FEATURED_POSTS}
-              dataKey="featuredPosts"
-              defaultPageSize={15}
-              maxVisiblePages={5}
-              startDateRange={from || undefined}
-              endDateRange={to || undefined}
-            />
-          </TabsContent>
-
-          {isLoggedIn && (
-            <TabsContent value="friends" className="mt-0">
-              <PaginatedPostsList
-                defaultPageSize={15}
-                maxVisiblePages={5}
-                friendsOnly
-                startDateRange={from || undefined}
-                endDateRange={to || undefined}
-              />
-            </TabsContent>
-          )}
-
-          {hasSearch && (
-            <TabsContent value="search" className="mt-0">
-              <PaginatedPostsList
-                defaultPageSize={15}
-                maxVisiblePages={5}
-                searchKey={q}
-                userId={selectedUser?._id}
-                startDateRange={from || undefined}
-                endDateRange={to || undefined}
-              />
-            </TabsContent>
-          )}
-        </div>
-      </Tabs>
-
-      {/* Guest CTA */}
+      {/* Guest sections */}
       <div className="max-w-2xl mx-auto px-4">
         <SearchGuestSections />
       </div>
+
+      {/* Create Quote Dialog */}
+      <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+        <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quote</DialogTitle>
+          <SubmitPost setOpen={setSubmitDialogOpen} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

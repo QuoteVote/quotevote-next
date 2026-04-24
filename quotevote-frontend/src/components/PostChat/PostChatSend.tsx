@@ -55,13 +55,14 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
     }
 
     const dateSubmitted = new Date()
+    const tempId = Array.from({ length: 24 }, () => Math.floor(Math.random() * 16).toString(16)).join('')
 
     await createMessage({
       variables: { message },
       optimisticResponse: {
         createMessage: {
           __typename: 'Message' as const,
-          _id: dateSubmitted.toISOString(),
+          _id: tempId,
           messageRoomId: messageRoomId || '',
           userName: (user.name as string) || '',
           userId: ((user._id || user.id) as string) || '',
@@ -110,38 +111,32 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
   }
 
   return (
-    <div className="flex items-center gap-3 p-2.5 sm:p-3">
-      {/* Chat label - hidden on mobile */}
-      <span className="hidden text-sm font-semibold text-gray-500 sm:block sm:w-16">Chat</span>
-
-      {/* Input area */}
-      <div className="flex flex-1 items-end gap-2">
-        <Textarea
-          ref={textareaRef}
-          placeholder="type a message..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className={cn(
-            'min-h-[45px] max-h-[75px] flex-1 resize-none rounded-md',
-            'border border-border bg-muted/50',
-            'px-3 py-2 text-sm',
-            'placeholder:text-muted-foreground/70',
-            'focus:bg-background focus:ring-2 focus:ring-primary/20',
-            !text.trim() && 'min-h-[65px]'
-          )}
-          rows={1}
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleSubmit}
-          className="h-10 w-10 text-primary hover:bg-primary/10"
-          aria-label="Send message"
-        >
-          <Send className="h-5 w-5" />
-        </Button>
-      </div>
+    <div className="flex items-end gap-2">
+      <Textarea
+        ref={textareaRef}
+        placeholder="Add to the discussion..."
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className={cn(
+          'min-h-[40px] max-h-[120px] flex-1 resize-none rounded-xl',
+          'border border-border bg-muted/50',
+          'px-3 py-2.5 text-sm',
+          'placeholder:text-muted-foreground/50',
+          'focus:bg-background focus:ring-2 focus:ring-primary/20',
+        )}
+        rows={1}
+      />
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleSubmit}
+        disabled={!text.trim()}
+        className="h-10 w-10 shrink-0 text-primary hover:bg-primary/10 disabled:opacity-30"
+        aria-label="Send message"
+      >
+        <Send className="h-4.5 w-4.5" />
+      </Button>
     </div>
   )
 }

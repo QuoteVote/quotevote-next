@@ -8,13 +8,14 @@ enum AccountStatus {
 }
 
 enum VoteType {
-  upvote
-  downvote
+  up
+  down
 }
 
 enum RosterStatus {
   pending
   accepted
+  declined
   blocked
 }
 
@@ -32,6 +33,8 @@ enum NotificationType {
   MESSAGE
   MENTION
   SYSTEM
+  UPVOTED
+  DOWNVOTED
 }
 
 enum ActivityEventType {
@@ -47,7 +50,7 @@ enum ActivityEventType {
 enum GroupPrivacy {
   public
   private
-  invite_only
+  restricted
 }
 
 enum InviteStatus {
@@ -62,4 +65,19 @@ enum ReportStatus {
   reviewed
   resolved
   dismissed
+}
+
+enum ReportSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum ReportReason {
+  spam
+  harassment
+  inappropriate_content
+  fake_account
+  other
 }

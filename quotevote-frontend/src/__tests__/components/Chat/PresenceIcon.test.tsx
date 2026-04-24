@@ -24,7 +24,7 @@ describe('PresenceIcon', () => {
     const { container } = render(<PresenceIcon status="online" />)
     const icon = getIcon(container)
     expect(icon).toBeInTheDocument()
-    expect(icon.className).toContain('bg-emerald-500')
+    expect(icon.className).toContain('bg-[#52b274]')
   })
 
   it('applies amber (yellow) class for "away" status', () => {

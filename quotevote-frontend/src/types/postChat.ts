@@ -11,8 +11,8 @@ export interface PostChatUser {
   name: string
   /** Username handle */
   username: string
-  /** Avatar URL */
-  avatar?: string
+  /** Avatar — avataaars qualities object, JSON string, URL, or undefined */
+  avatar?: string | Record<string, unknown>
 }
 
 /**

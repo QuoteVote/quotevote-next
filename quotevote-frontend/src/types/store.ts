@@ -3,6 +3,8 @@
  * These types define the structure of state that will be managed by Zustand
  */
 
+import type { StagedChatRoom } from './chat';
+
 // User state interface
 export interface UserState {
   loading: boolean;
@@ -13,7 +15,7 @@ export interface UserState {
     email?: string;
     avatar?: string;
     admin?: boolean;
-    _followingId?: string;
+    _followingId?: string[];
     [key: string]: unknown;
   };
 }
@@ -45,7 +47,7 @@ export interface UIState {
 // Chat state interface
 export interface ChatState {
   submitting: boolean;
-  selectedRoom: string | null;
+  selectedRoom: string | StagedChatRoom | null;
   open: boolean;
   buddyList: unknown[];
   presenceMap: Record<string, {

@@ -1,10 +1,34 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import moment from 'moment'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, ArrowUpDown } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 import Comment from './Comment'
 import { CommentData } from '@/types/comment'
+
+type SortMode = 'newest' | 'oldest' | 'reactions'
+
+const SORT_LABELS: Record<SortMode, string> = {
+  newest: 'Newest',
+  oldest: 'Oldest',
+  reactions: 'Most Reactions',
+}
+
+const STORAGE_KEY = 'qv-comment-sort'
+
+function getStoredSort(): SortMode {
+  if (typeof window === 'undefined') return 'newest'
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored === 'newest' || stored === 'oldest' || stored === 'reactions') return stored
+  return 'newest'
+}
 
 interface CommentListProps {
   comments?: CommentData[]
@@ -13,6 +37,13 @@ interface CommentListProps {
 }
 
 export default function CommentList({ comments = [], loading, postUrl }: CommentListProps) {
+  const [sortMode, setSortMode] = useState<SortMode>(getStoredSort)
+
+  const handleSortChange = (mode: SortMode) => {
+    setSortMode(mode)
+    localStorage.setItem(STORAGE_KEY, mode)
+  }
+
   useEffect(() => {
     const hash = window.location.hash
     if (!loading && comments.length && hash) {
@@ -23,16 +54,37 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
     }
   }, [loading, comments])
 
+  const sortedComments = useMemo(() => {
+    const list = comments.slice()
+    switch (sortMode) {
+      case 'oldest':
+        return list.sort((a, b) => moment(a.created).diff(moment(b.created)))
+      case 'reactions': {
+        return list.sort((a, b) => {
+          const aReactions = Array.isArray(a.reaction) ? a.reaction.length : 0
+          const bReactions = Array.isArray(b.reaction) ? b.reaction.length : 0
+          return bReactions - aReactions
+        })
+      }
+      case 'newest':
+      default:
+        return list.sort((a, b) => moment(b.created).diff(moment(a.created)))
+    }
+  }, [comments, sortMode])
+
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 py-2" aria-busy={true}>
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex gap-3 animate-pulse">
-            <div className="size-8 rounded-full bg-muted flex-shrink-0" />
+            <div className="size-8 rounded-full bg-muted/60 flex-shrink-0" />
             <div className="flex-1 space-y-2">
-              <div className="h-3 w-32 rounded bg-muted" />
-              <div className="h-3 w-full rounded bg-muted" />
-              <div className="h-3 w-3/4 rounded bg-muted" />
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-20 rounded-full bg-muted/60" />
+                <div className="h-2.5 w-14 rounded-full bg-muted/40" />
+              </div>
+              <div className="h-3 w-full rounded-full bg-muted/50" />
+              <div className="h-3 w-3/4 rounded-full bg-muted/30" />
             </div>
           </div>
         ))}
@@ -42,24 +94,53 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
 
   if (!comments.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <MessageCircle className="size-10 text-muted-foreground/30 mb-3" />
-        <p className="text-sm text-muted-foreground">
-          No comments yet. Start the conversation!
+      <div className="flex flex-col items-center justify-center py-14 text-center">
+        <div className="size-12 rounded-2xl bg-muted/40 flex items-center justify-center mb-4">
+          <MessageCircle className="size-6 text-muted-foreground/40" />
+        </div>
+        <p className="text-sm font-medium text-foreground mb-1">No comments yet</p>
+        <p className="text-xs text-muted-foreground/70">
+          Be the first to share your thoughts!
         </p>
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-border">
-      {comments
-        .slice()
-        .sort((a, b) => moment(b.created).diff(moment(a.created)))
-        .map((comment) => (
+    <div>
+      {/* Sort control */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          {comments.length} comment{comments.length !== 1 ? 's' : ''}
+        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-7 rounded-full text-muted-foreground">
+              <ArrowUpDown className="size-3" />
+              {SORT_LABELS[sortMode]}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            {(Object.keys(SORT_LABELS) as SortMode[]).map((mode) => (
+              <DropdownMenuItem
+                key={mode}
+                onClick={() => handleSortChange(mode)}
+                className={sortMode === mode ? 'bg-primary/5 text-primary font-medium' : ''}
+              >
+                {SORT_LABELS[mode]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Comment list */}
+      <div role="list" aria-label="Comments">
+        {sortedComments.map((comment) => (
           <div
             id={comment._id}
             key={comment._id}
+            role="listitem"
           >
             <Comment
               comment={comment}
@@ -68,6 +149,7 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
             />
           </div>
         ))}
+      </div>
     </div>
   )
 }

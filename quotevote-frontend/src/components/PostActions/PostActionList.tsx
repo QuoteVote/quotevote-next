@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { isEmpty } from 'lodash'
 import moment from 'moment'
-import { Card, CardContent } from '@/components/ui/card'
+import { MessagesSquare } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import PostActionCard from './PostActionCard'
 import { useAppStore } from '@/store'
@@ -45,37 +45,35 @@ export default function PostActionList({
   return (
     <div className="w-full">
       {loading && (
-        <div className="space-y-4">
-          <Skeleton className="h-[118px] w-full" data-testid="skeleton-loader" />
-          <Skeleton className="h-[118px] w-full" data-testid="skeleton-loader" />
-          <Skeleton className="h-[118px] w-full" data-testid="skeleton-loader" />
+        <div className="divide-y divide-border/60">
+          <Skeleton className="h-[80px] w-full rounded-none" data-testid="skeleton-loader" />
+          <Skeleton className="h-[80px] w-full rounded-none" data-testid="skeleton-loader" />
+          <Skeleton className="h-[80px] w-full rounded-none" data-testid="skeleton-loader" />
         </div>
       )}
 
       {!isEmpty(sortedActions) ? (
-        <ul className="space-y-4">
+        <div className="divide-y divide-border/60">
           {sortedActions.map((action) => (
-            <li
-              key={action._id}
-              id={action._id}
-              className="w-full"
-            >
+            <div key={action._id} id={action._id}>
               <PostActionCard
                 postAction={action}
                 postUrl={postUrl}
                 selected={`#${action._id}` === hash}
                 refetchPost={refetchPost}
               />
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       ) : (
         !loading && (
-          <Card>
-            <CardContent className="p-6 text-center text-gray-500">
-              Start the discussion...
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <MessagesSquare className="size-10 text-muted-foreground/20" />
+            <div>
+              <p className="text-sm font-medium text-muted-foreground/50">No activity yet</p>
+              <p className="text-xs text-muted-foreground/35 mt-0.5">Be the first to vote, comment, or quote</p>
+            </div>
+          </div>
         )
       )}
     </div>

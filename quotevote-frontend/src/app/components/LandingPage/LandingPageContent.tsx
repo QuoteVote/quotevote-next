@@ -13,6 +13,7 @@ import {
   ArrowRight,
   MessageSquareQuote,
   ThumbsUp,
+  ThumbsDown,
   Zap,
   ShieldOff,
   Search,
@@ -24,28 +25,35 @@ import {
   Globe,
   Heart,
   ChevronRight,
+  ChevronLeft,
+  Star,
+  Loader2,
+  MessageCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/store';
-import { SEARCH } from '@/graphql/queries';
+import { SEARCH, GET_FEATURED_POSTS } from '@/graphql/queries';
 import { useDebounce } from '@/hooks/useDebounce';
+import type { Post } from '@/types/post';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface ContentResult {
   _id: string;
   title: string;
-  creatorId: string;
-  domain?: { key: string; _id: string };
+  text?: string;
+  url?: string;
+  groupId?: string;
+  creator?: { _id: string; name?: string; username?: string };
 }
 
 interface CreatorResult {
   _id: string;
   name: string;
+  username?: string;
   avatar?: string;
-  creator?: { _id: string };
 }
 
 // ── Static data ─────────────────────────────────────────────────────────────
@@ -77,6 +85,69 @@ const baseStats = [
 
 function scrollToSection(id: string): void {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+/** Hook: returns [ref, isInView] — fires once when element enters viewport */
+function useInView<T extends HTMLElement = HTMLDivElement>(threshold = 0.15) {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry?.isIntersecting) { setInView(true); obs.disconnect(); } },
+      { threshold },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return [ref, inView] as const;
+}
+
+/** Scroll-reveal wrapper — fades/slides children in when scrolled into view */
+function ScrollReveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const [ref, inView] = useInView(0.12);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'translateY(0)' : 'translateY(24px)',
+        transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Animated counter — counts up from 0 to value when visible */
+function AnimatedCounter({ value, duration = 1200 }: { value: string; duration?: number }) {
+  const [display, setDisplay] = useState(value);
+  const [counterRef, isVisible] = useInView(0.3);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (!isVisible || hasAnimated.current) return;
+    // Extract numeric portion
+    const match = value.match(/^([^0-9]*)(\d+)(.*)$/);
+    if (!match) return;
+    const prefix = match[1];
+    const target = parseInt(match[2], 10);
+    const suffix = match[3];
+    hasAnimated.current = true;
+    const start = performance.now();
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setDisplay(`${prefix}${Math.round(target * eased)}${suffix}`);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [isVisible, value, duration]);
+
+  return <span ref={counterRef}>{display}</span>;
 }
 
 interface LandingPageContentProps {
@@ -236,7 +307,7 @@ export function LandingPageContent({
             }}
           />
           <span
-            className="absolute font-serif leading-none"
+            className="absolute font-serif leading-none animate-[float_6s_ease-in-out_infinite]"
             style={{
               fontSize: 'clamp(18rem, 40vw, 36rem)',
               top: '-4rem',
@@ -385,7 +456,7 @@ export function LandingPageContent({
                   className="text-2xl sm:text-3xl font-extrabold tracking-tight"
                   style={{ color: '#fff' }}
                 >
-                  {value}
+                  <AnimatedCounter value={value} />
                 </span>
                 <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.40)' }}>
                   {label}
@@ -395,6 +466,9 @@ export function LandingPageContent({
           </div>
         </div>
       </div>
+
+      {/* ── Featured Posts ────────────────────────────────────── */}
+      <FeaturedPostsSection />
 
       {/* ── Mission / About ───────────────────────────────────── */}
       <section
@@ -608,8 +682,9 @@ export function LandingPageContent({
           {/* Bento grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {/* Feature 01 — large */}
+            <ScrollReveal className="lg:col-span-2" delay={0}>
             <div
-              className="lg:col-span-2 rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all"
+              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all h-full"
               style={{
                 background: 'rgba(82,178,116,0.06)',
                 border: '1px solid rgba(82,178,116,0.18)',
@@ -643,10 +718,12 @@ export function LandingPageContent({
                 </span>
               </div>
             </div>
+            </ScrollReveal>
 
             {/* Feature 02 */}
+            <ScrollReveal delay={100}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all"
+              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all h-full"
               style={{
                 background: 'rgba(39,196,225,0.05)',
                 border: '1px solid rgba(39,196,225,0.18)',
@@ -680,10 +757,12 @@ export function LandingPageContent({
                 </span>
               </div>
             </div>
+            </ScrollReveal>
 
             {/* Feature 03 */}
+            <ScrollReveal delay={200}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all"
+              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-0.5 transition-all h-full"
               style={{
                 background: 'rgba(82,178,116,0.06)',
                 border: '1px solid rgba(82,178,116,0.18)',
@@ -717,10 +796,12 @@ export function LandingPageContent({
                 </span>
               </div>
             </div>
+            </ScrollReveal>
 
             {/* Feature 04 — wide */}
+            <ScrollReveal className="lg:col-span-2" delay={300}>
             <div
-              className="lg:col-span-2 rounded-3xl p-8 flex flex-col sm:flex-row items-start gap-8 hover:-translate-y-0.5 transition-all"
+              className="rounded-3xl p-8 flex flex-col sm:flex-row items-start gap-8 hover:-translate-y-0.5 transition-all h-full"
               style={{
                 background: 'rgba(245,81,69,0.05)',
                 border: '1px solid rgba(245,81,69,0.16)',
@@ -763,6 +844,7 @@ export function LandingPageContent({
                 ))}
               </div>
             </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -1643,13 +1725,16 @@ function HeroSearch({ router }: HeroSearchProps) {
 
   const debouncedQuery = useDebounce(query, 300);
 
-  const { data, loading, error } = useQuery<{ searchContent: ContentResult[]; searchCreator: CreatorResult[] }>(SEARCH, {
+  const { data, loading, error } = useQuery<{
+    posts: { entities: ContentResult[] };
+    searchUser: CreatorResult[];
+  }>(SEARCH, {
     variables: { text: debouncedQuery },
     skip: !debouncedQuery.trim(),
   });
 
-  const contentResults: ContentResult[] = data?.searchContent ?? [];
-  const creatorResults: CreatorResult[] = data?.searchCreator ?? [];
+  const contentResults: ContentResult[] = data?.posts?.entities ?? [];
+  const creatorResults: CreatorResult[] = data?.searchUser ?? [];
   const hasResults = contentResults.length > 0 || creatorResults.length > 0;
   const showDropdown = isOpen && debouncedQuery.trim().length > 0;
 
@@ -1792,8 +1877,8 @@ function HeroSearch({ router }: HeroSearchProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                        {item.domain?.key && (
-                          <p className="text-xs text-gray-500 truncate">{item.domain.key}</p>
+                        {item.creator?.name && (
+                          <p className="text-xs text-gray-500 truncate">by {item.creator.name}</p>
                         )}
                       </div>
                     </button>
@@ -1846,6 +1931,346 @@ function HeroSearch({ router }: HeroSearchProps) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Featured Posts Section ─────────────────────────────────────────────────
+
+interface FeaturedPostsData {
+  featuredPosts: {
+    entities: Post[];
+    pagination: { total_count: number; limit: number; offset: number };
+  };
+}
+
+// Capture once at module load — stable across renders, avoids impure-render lint
+const MODULE_NOW = typeof window !== 'undefined' ? Date.now() : 0;
+
+function FeaturedPostsSection() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const now = MODULE_NOW;
+
+  const { data, loading } = useQuery<FeaturedPostsData>(GET_FEATURED_POSTS, {
+    variables: { limit: 10, offset: 0 },
+    fetchPolicy: 'cache-first',
+    errorPolicy: 'all',
+  });
+
+  const posts = data?.featuredPosts?.entities || [];
+
+  const scrollToIndex = (index: number) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const cards = container.children;
+    if (cards[index]) {
+      (cards[index] as HTMLElement).scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+    setActiveIndex(index);
+  };
+
+  const handlePrev = () => {
+    const next = Math.max(0, activeIndex - 1);
+    scrollToIndex(next);
+  };
+
+  const handleNext = () => {
+    const next = Math.min(posts.length - 1, activeIndex + 1);
+    scrollToIndex(next);
+  };
+
+  // Update active index on scroll
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollLeft, clientWidth } = container;
+      const cardWidth = clientWidth * 0.85;
+      const index = Math.round(scrollLeft / cardWidth);
+      setActiveIndex(Math.min(index, posts.length - 1));
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [posts.length]);
+
+  // Don't render section if no posts and not loading
+  if (!loading && posts.length === 0) return null;
+
+  return (
+    <section
+      className="py-24 sm:py-32 relative overflow-hidden"
+      style={{ background: '#080f1a' }}
+      aria-labelledby="featured-heading"
+    >
+      {/* Ambient glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(82,178,116,0.08) 0%, transparent 70%)',
+        }}
+        aria-hidden
+      />
+
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <p
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-4"
+            style={{ color: '#52b274' }}
+          >
+            Community Highlights
+          </p>
+          <h2
+            id="featured-heading"
+            className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight"
+          >
+            Featured{' '}
+            <span
+              style={{
+                background: 'linear-gradient(100deg, #52b274 0%, #9de8b8 60%, #52b274 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Posts
+            </span>
+          </h2>
+          <p className="text-base mt-4 max-w-lg mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            See what the community is talking about right now.
+          </p>
+        </div>
+
+        {/* Loading state */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <Loader2
+              className="animate-spin mb-4"
+              size={32}
+              style={{ color: '#52b274' }}
+            />
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              Loading featured posts...
+            </p>
+          </div>
+        )}
+
+        {/* Carousel */}
+        {!loading && posts.length > 0 && (
+          <div className="relative">
+            {/* Navigation arrows */}
+            {posts.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  disabled={activeIndex === 0}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
+                  style={{
+                    background: 'rgba(82,178,116,0.15)',
+                    border: '1px solid rgba(82,178,116,0.30)',
+                  }}
+                  aria-label="Previous featured post"
+                >
+                  <ChevronLeft size={20} style={{ color: '#8de0a8' }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={activeIndex === posts.length - 1}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
+                  style={{
+                    background: 'rgba(82,178,116,0.15)',
+                    border: '1px solid rgba(82,178,116,0.30)',
+                  }}
+                  aria-label="Next featured post"
+                >
+                  <ChevronRight size={20} style={{ color: '#8de0a8' }} />
+                </button>
+              </>
+            )}
+
+            {/* Scrollable card row */}
+            <div
+              ref={scrollRef}
+              className="flex gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 px-1"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              role="list"
+              aria-label="Featured posts carousel"
+            >
+              {posts.map((post) => (
+                <FeaturedPostCard key={post._id} post={post} timeAgo={now ? formatTimeAgo(post.created, now) : ''} />
+              ))}
+            </div>
+
+            {/* Dot indicators */}
+            {posts.length > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6" role="tablist" aria-label="Featured post navigation">
+                {posts.map((post, i) => (
+                  <button
+                    key={post._id}
+                    type="button"
+                    onClick={() => scrollToIndex(i)}
+                    className="w-2 h-2 rounded-full transition-all"
+                    style={{
+                      background:
+                        i === activeIndex
+                          ? '#52b274'
+                          : 'rgba(255,255,255,0.20)',
+                      transform: i === activeIndex ? 'scale(1.4)' : 'scale(1)',
+                    }}
+                    role="tab"
+                    aria-selected={i === activeIndex}
+                    aria-label={`Go to featured post ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CTA */}
+        {!loading && posts.length > 0 && (
+          <div className="text-center mt-10">
+            <Link
+              href="/auths/login"
+              className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
+              style={{ color: '#8de0a8' }}
+            >
+              Join to see more and participate
+              <ChevronRight size={16} aria-hidden />
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function formatTimeAgo(created: string | undefined, now: number): string {
+  if (!created) return '';
+  const diff = now - new Date(created).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days < 1) return 'Today';
+  if (days === 1) return '1d ago';
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return months === 1 ? '1mo ago' : `${months}mo ago`;
+}
+
+function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
+  const creatorName = post.creator?.name || post.creator?.username || 'Anonymous';
+  const username = post.creator?.username || 'anonymous';
+  const upvotes = post.approvedBy?.length || 0;
+  const downvotes = post.rejectedBy?.length || 0;
+  const commentCount = post.comments?.length || 0;
+  const quoteCount = post.quotes?.length || 0;
+
+  const displayText = post.text
+    ? post.text.length > 200
+      ? post.text.slice(0, 200) + '...'
+      : post.text
+    : '';
+
+  return (
+    <div
+      className="flex-shrink-0 w-[85%] sm:w-[420px] snap-center"
+      role="listitem"
+    >
+      <div
+        className="rounded-2xl p-6 h-full flex flex-col transition-all hover:-translate-y-1"
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(82,178,116,0.15)',
+        }}
+      >
+        {/* Header: author + star badge */}
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
+            style={{
+              background: 'rgba(82,178,116,0.15)',
+              color: '#8de0a8',
+            }}
+          >
+            {creatorName[0]?.toUpperCase() || '?'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{creatorName}</p>
+            <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              @{username} · {timeAgo}
+            </p>
+          </div>
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
+            style={{
+              background: 'rgba(82,178,116,0.10)',
+              border: '1px solid rgba(82,178,116,0.20)',
+            }}
+          >
+            <Star size={12} style={{ color: '#52b274' }} aria-hidden />
+            <span className="text-[10px] font-bold" style={{ color: '#8de0a8' }}>
+              Featured
+            </span>
+          </div>
+        </div>
+
+        {/* Title */}
+        {post.title && (
+          <h3 className="text-base font-bold text-white mb-2 leading-snug line-clamp-2">
+            {post.title}
+          </h3>
+        )}
+
+        {/* Body */}
+        {displayText && (
+          <p
+            className="text-sm leading-relaxed mb-4 flex-1 line-clamp-4"
+            style={{ color: 'rgba(255,255,255,0.55)' }}
+          >
+            {displayText}
+          </p>
+        )}
+
+        {/* Engagement stats */}
+        <div
+          className="flex items-center gap-4 pt-4 mt-auto"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <div className="flex items-center gap-1.5">
+            <ThumbsUp size={14} style={{ color: 'rgba(82,178,116,0.70)' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {upvotes}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <ThumbsDown size={14} style={{ color: 'rgba(245,81,69,0.60)' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {downvotes}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <MessageCircle size={14} style={{ color: 'rgba(39,196,225,0.70)' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {commentCount}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <MessageSquareQuote size={14} style={{ color: 'rgba(200,160,60,0.70)' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {quoteCount}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

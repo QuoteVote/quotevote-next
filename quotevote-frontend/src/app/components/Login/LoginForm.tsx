@@ -213,7 +213,7 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
       {/* Submit */}
       <Button
         type="submit"
-        className="w-full h-11 text-sm font-semibold mt-2 rounded-xl border-0 text-white group transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full h-11 text-sm font-semibold mt-2 rounded-xl border-0 text-white group transition-all disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden relative"
         style={{
           background: 'linear-gradient(135deg, #52b274 0%, #3a9058 100%)',
           boxShadow: '0 4px 20px rgba(82,178,116,0.30)',
@@ -221,10 +221,13 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
         disabled={loading || !tosAccepted || !cocAccepted}
       >
         {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <Loader size={18} absolutelyPositioned={false} />
-            <span>Signing in…</span>
-          </span>
+          <>
+            <span className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <span className="relative flex items-center justify-center gap-2">
+              <Loader size={18} absolutelyPositioned={false} />
+              <span>Signing in…</span>
+            </span>
+          </>
         ) : (
           <span className="flex items-center justify-center gap-2">
             <span>Sign in</span>

@@ -12,19 +12,20 @@ model Post {
   downvotes      Int      @default(0)
   reported       Int      @default(0)
   approved       Int?
-  votedBy        Json?    @default("[]")
+  votedBy        String[]
   dayPoints      Int      @default(0)
   pointTimestamp DateTime @default(now())
-  approvedBy     String[] @db.ObjectId
-  rejectedBy     String[] @db.ObjectId
-  reportedBy     String[] @db.ObjectId
-  bookmarkedBy   String[] @db.ObjectId
-  enableVoting   Boolean  @default(false)
+  approvedBy     String[]
+  rejectedBy     String[]
+  reportedBy     String[]
+  bookmarkedBy   String[]
+  enableVoting   Boolean  @default(false) @map("enable_voting")
   messageRoomId  String?
   urlId          String?
   featuredSlot   Int?
   deleted        Boolean  @default(false)
   created        DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
@@ -64,6 +65,7 @@ model Comment {
   reaction       String?
   deleted        Boolean  @default(false)
   created        DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
@@ -79,24 +81,21 @@ model Comment {
 
 model Quote {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  quoterId       String   @map("quoter") @db.ObjectId
-  quotedId       String   @map("quoted") @db.ObjectId
+  userId         String   @db.ObjectId
   postId         String   @db.ObjectId
   quote          String
   startWordIndex Int?
   endWordIndex   Int?
-  deleted        Boolean  @default(false)
   created        DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
-  quoter     User       @relation("QuoterUser", fields: [quoterId], references: [id])
-  quoted     User       @relation("QuotedUser", fields: [quotedId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
   post       Post       @relation(fields: [postId], references: [id])
   activities Activity[] @relation("QuoteActivity")
 
-  @@index([quoterId])
-  @@index([quotedId])
+  @@index([userId])
   @@index([postId])
   @@index([created])
   @@map("quotes")
@@ -109,10 +108,11 @@ model Vote {
   type           VoteType
   startWordIndex Int?
   endWordIndex   Int?
-  tags           String
+  tags           String[]
   content        String?
   deleted        Boolean  @default(false)
   created        DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
@@ -127,35 +127,47 @@ model Vote {
 }
 
 model VoteLog {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  postId  String   @db.ObjectId
-  userId  String   @db.ObjectId
-  type    VoteType
-  created DateTime @default(now())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  voteId      String   @db.ObjectId
+  postId      String   @db.ObjectId
+  title       String?
+  author      String?
+  description String
+  action      String?
+  type        VoteType
+  tokens      Int
+  created     DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id])
   post Post @relation(fields: [postId], references: [id])
 
-  @@index([postId])
   @@index([userId])
+  @@index([voteId])
+  @@index([postId])
   @@map("votelogs")
 }
 
 model Reaction {
-  id            String       @id @default(auto()) @map("_id") @db.ObjectId
-  userId        String       @db.ObjectId
-  actionId      String?      @db.ObjectId
-  postMessageId String?      @db.ObjectId
-  emoji         String
-  created       DateTime     @default(now())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  actionId  String?  @db.ObjectId
+  messageId String?  @db.ObjectId
+  emoji     String
+  created   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  user        User         @relation(fields: [userId], references: [id])
-  postMessage PostMessage? @relation(fields: [postMessageId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  message Message? @relation(fields: [messageId], references: [id])
 
   @@index([userId])
   @@index([actionId])
-  @@index([postMessageId])
+  @@index([messageId])
+  @@index([userId, messageId])
   @@map("reactions")
 }

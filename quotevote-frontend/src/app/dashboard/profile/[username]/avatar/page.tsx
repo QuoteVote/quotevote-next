@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { Dices, Save, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { UPDATE_USER_AVATAR } from '@/graphql/mutations';
+import { buildAvatarUrl, type AvatarQualities } from '@/lib/avatar';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -275,8 +276,6 @@ const avatarOptions: AvatarOption[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-type AvatarQualities = Record<string, string>;
-
 /** Pick one random option for each avatar property. */
 function getRandomAvatar(): AvatarQualities {
   const result: AvatarQualities = {};
@@ -285,18 +284,6 @@ function getRandomAvatar(): AvatarQualities {
     result[opt.name] = opt.options[idx];
   });
   return result;
-}
-
-/**
- * Build an avataaars.io preview URL from the current avatar qualities.
- * avataaars.io accepts the same property names used by the avataaars npm package.
- */
-function buildAvatarUrl(qualities: AvatarQualities): string {
-  const params = new URLSearchParams({ avatarStyle: 'Circle' });
-  Object.entries(qualities).forEach(([key, value]) => {
-    if (value) params.set(key, value);
-  });
-  return `https://avataaars.io/?${params.toString()}`;
 }
 
 /**

@@ -55,13 +55,21 @@ export interface GetChatRoomsData {
 }
 
 export interface GetBuddyListData {
-    buddyList: Buddy[];
+    getBuddyList: Array<{
+        user: BuddyUser;
+        presence?: Presence;
+    }>;
+}
+
+export interface RosterEntry {
+    _id: string;
+    userId: string;
+    buddyId: string;
+    status: string;
+    initiatedBy: string;
+    buddy?: BuddyUser;
 }
 
 export interface GetRosterData {
-    roster: {
-        pendingRequests: Buddy[];
-        buddies: Buddy[];
-        blockedUsers: Buddy[];
-    };
+    getRoster: RosterEntry[];
 }

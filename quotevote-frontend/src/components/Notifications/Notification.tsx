@@ -31,7 +31,7 @@ export function Notification({
     if (setOpenPopUp) {
       setOpenPopUp();
     }
-    router.push('/Notifications');
+    router.push('/dashboard/notifications');
   };
 
   return (

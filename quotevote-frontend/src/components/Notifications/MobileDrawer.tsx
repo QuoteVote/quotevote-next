@@ -15,6 +15,7 @@ interface MobileDrawerProps {
   title: string;
   children: React.ReactNode;
   anchor?: 'left' | 'right' | 'top' | 'bottom';
+  showHeader?: boolean;
 }
 
 export function MobileDrawer({
@@ -23,26 +24,34 @@ export function MobileDrawer({
   title,
   children,
   anchor = 'right',
+  showHeader = true,
 }: MobileDrawerProps) {
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent side={anchor} className="w-full max-w-[400px] sm:w-[400px] p-0 flex flex-col">
-        <SheetHeader className="px-4 py-3 border-b border-[var(--color-gray-light)]">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="p-2"
-              aria-label="Back"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <SheetTitle className="text-lg font-semibold text-[var(--color-text-primary)]">
-              {title}
-            </SheetTitle>
-          </div>
-        </SheetHeader>
+      <SheetContent
+        side={anchor}
+        className="w-full max-w-[400px] sm:w-[400px] p-0 flex flex-col"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
+        {showHeader && (
+          <SheetHeader className="px-4 py-3 border-b border-[var(--color-gray-light)]">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="p-2"
+                aria-label="Back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <SheetTitle className="text-lg font-semibold text-[var(--color-text-primary)]">
+                {title}
+              </SheetTitle>
+            </div>
+          </SheetHeader>
+        )}
         <div className="flex-1 overflow-auto">{children}</div>
       </SheetContent>
     </Sheet>

@@ -1,11 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation } from '@apollo/client/react'
-import { Smile } from 'lucide-react'
-import data from '@emoji-mart/data'
-import Picker from '@emoji-mart/react'
+import { Smile, Loader2 } from 'lucide-react'
+
+const EmojiPicker = lazy(() =>
+  Promise.all([
+    import('@emoji-mart/data'),
+    import('@emoji-mart/react'),
+  ]).then(([dataModule, pickerModule]) => ({
+    default: (props: { onEmojiSelect: (emoji: { native: string }) => void; theme?: string; previewPosition?: string; skinTonePosition?: string }) => {
+      const Picker = pickerModule.default
+      return <Picker data={dataModule.default} {...props} />
+    },
+  }))
+)
 import _ from 'lodash'
 
 import { Button } from '@/components/ui/button'
@@ -147,7 +157,7 @@ export default function PostChatReactions({
               className={cn(
                 'h-8 w-8',
                 isDefaultDirection
-                  ? 'text-gray-500 hover:text-gray-700'
+                  ? 'text-muted-foreground hover:text-foreground'
                   : 'text-white hover:text-white/80'
               )}
               onClick={(e) => {
@@ -160,13 +170,14 @@ export default function PostChatReactions({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto border-none p-0" align="end">
-            <Picker
-              data={data}
-              onEmojiSelect={handleEmojiSelect}
-              theme="light"
-              previewPosition="none"
-              skinTonePosition="none"
-            />
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>}>
+              <EmojiPicker
+                onEmojiSelect={handleEmojiSelect}
+                theme="light"
+                previewPosition="none"
+                skinTonePosition="none"
+              />
+            </Suspense>
           </PopoverContent>
         </Popover>
       </div>

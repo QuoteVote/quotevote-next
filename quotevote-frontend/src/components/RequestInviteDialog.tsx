@@ -125,11 +125,11 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
         {submitted ? (
           <div className="flex flex-col items-center space-y-4 py-4">
             <DialogHeader>
-              <DialogTitle className="text-center text-xl font-semibold text-gray-900">
+              <DialogTitle className="text-center text-xl font-semibold text-foreground">
                 Thank you for joining us
               </DialogTitle>
             </DialogHeader>
-            <DialogDescription className="text-center text-gray-600 text-sm leading-relaxed">
+            <DialogDescription className="text-center text-muted-foreground text-sm leading-relaxed">
               When an account becomes available, an invite will be sent to the
               email provided.
             </DialogDescription>
@@ -137,7 +137,7 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
         ) : (
           <div className="flex flex-col space-y-4">
             <DialogHeader>
-              <DialogTitle className="text-center text-base font-medium text-gray-900 leading-relaxed">
+              <DialogTitle className="text-center text-base font-medium text-foreground leading-relaxed">
                 You need an account to contribute. Viewing is public, but
                 posting, voting, and quoting require an invite.
               </DialogTitle>
@@ -156,7 +156,7 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                  className="relative bg-transparent border-none outline-none w-full text-base sm:text-lg text-gray-800 font-medium placeholder:text-gray-500 focus:ring-0 focus-visible:ring-0"
+                  className="relative bg-transparent border-none outline-none w-full text-base sm:text-lg text-foreground font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0"
                 />
               </div>
             </div>

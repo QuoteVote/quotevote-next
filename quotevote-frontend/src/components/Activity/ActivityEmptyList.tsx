@@ -17,7 +17,7 @@ export function ActivityEmptyList({}: ActivityEmptyListProps) {
   }
 
   return (
-    <div className="w-full sm:w-[90%] text-center mx-auto my-5 sm:my-0">
+    <div className="w-full sm:w-[90%] text-center mx-auto my-5 sm:my-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
       <Card className="bg-transparent border-0 shadow-none">
         <CardContent className="pt-6">
           <p className="w-full sm:w-[45%] mx-auto mb-5 sm:mt-5 text-base text-muted-foreground">

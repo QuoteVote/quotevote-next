@@ -1,32 +1,24 @@
 'use client';
 
 import { useAppStore } from '@/store';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import type { ProfileAvatarProps } from '@/types/profile';
 
-export function ProfileAvatar({
-  size = 'md',
-  className,
-}: ProfileAvatarProps) {
-  const avatar = useAppStore((state) => state.user.data.avatar);
+const SIZE_MAP: Record<string, number> = { sm: 32, md: 40, lg: 64, xl: 96 };
 
-  // Handle avatar object structure
-  let avatarSrc: string | undefined;
-  if (typeof avatar === 'string') {
-    avatarSrc = avatar;
-  } else if (avatar && typeof avatar === 'object' && 'url' in avatar) {
-    const avatarObj = avatar as { url?: string };
-    avatarSrc = typeof avatarObj.url === 'string' ? avatarObj.url : undefined;
-  }
+export function ProfileAvatar({ size = 'md', className }: ProfileAvatarProps) {
+  const avatar = useAppStore((state) => state.user.data.avatar);
+  const username = useAppStore((state) => state.user.data.username as string | undefined);
+
+  const px = typeof size === 'number' ? size : (SIZE_MAP[size] ?? 40);
 
   return (
     <div className={className}>
-      <Avatar
-        src={avatarSrc}
-        alt="User avatar"
-        size={size}
+      <DisplayAvatar
+        avatar={avatar as string | Record<string, unknown> | undefined}
+        username={username}
+        size={px}
       />
     </div>
   );
 }
-

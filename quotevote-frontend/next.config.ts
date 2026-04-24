@@ -9,10 +9,28 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "avataaars.io",
+        pathname: "/**",
+      },
+    ],
   },
 
   // Compress output
   compress: true,
+
+  // Redirect legacy /post/... URLs (stored in the database) to the app route
+  async redirects() {
+    return [
+      {
+        source: '/post/:path*',
+        destination: '/dashboard/post/:path*',
+        permanent: false,
+      },
+    ]
+  },
 
   // Security headers
   async headers() {
