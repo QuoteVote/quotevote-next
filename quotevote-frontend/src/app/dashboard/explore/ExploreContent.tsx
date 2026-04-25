@@ -53,7 +53,7 @@ function FilterPanel({
   ]
 
   return (
-    <div className="shrink-0 border-t border-border px-4 py-4 space-y-4 bg-background">
+    <div className="bg-card rounded-xl border border-border shadow-sm shrink-0 px-4 py-4 space-y-4">
       {/* Section header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -151,12 +151,12 @@ function LeftSidebar(props: LeftSidebarProps) {
 
   return (
     /* No overflow-hidden here so DateRangeFilter dropdown can escape */
-    <div className="sticky top-[60px] h-[calc(100vh-60px)] flex flex-col">
+    <div className="sticky top-[60px] h-[calc(100vh-60px)] flex flex-col gap-3 p-3">
 
-      {/* ── Notifications ── */}
+      {/* ── Notifications card ── */}
       {userId && (
-        <>
-          <div className="shrink-0 flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background">
+        <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="shrink-0 flex items-center gap-2 px-4 py-3 border-b border-border/60">
             <Bell className="size-4 text-muted-foreground/60" />
             <span className="text-sm font-semibold text-foreground/80">Notifications</span>
             {notifications.length > 0 && (
@@ -165,7 +165,7 @@ function LeftSidebar(props: LeftSidebarProps) {
               </span>
             )}
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 bg-background">
+          <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2">
             <Notification
               loading={loading}
               notifications={notifications}
@@ -173,10 +173,10 @@ function LeftSidebar(props: LeftSidebarProps) {
               pageView
             />
           </div>
-        </>
+        </div>
       )}
 
-      {/* ── Filters ── (always visible, pushes to bottom when notifications present) */}
+      {/* ── Filters card ── */}
       <FilterPanel {...filterProps} />
     </div>
   )
