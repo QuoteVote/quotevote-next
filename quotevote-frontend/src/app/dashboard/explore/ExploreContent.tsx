@@ -173,7 +173,7 @@ function LeftSidebar(props: LeftSidebarProps) {
               pageView
             />
           </div>
-        </div>
+        </>
       )}
 
       {/* ── Filters card ── */}

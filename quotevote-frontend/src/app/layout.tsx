@@ -52,7 +52,7 @@ export default function RootLayout({
   children: ReactNode;
 }>): ReactNode {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       {/* Inline script runs before paint to prevent dark-mode flash */}
       <head>
         <script
