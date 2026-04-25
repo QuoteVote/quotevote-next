@@ -111,7 +111,7 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
   }
 
   return (
-    <div className="flex items-end gap-2">
+    <div data-post-chat-send="true" className="flex items-end gap-2">
       <Textarea
         ref={textareaRef}
         placeholder="Add to the discussion..."

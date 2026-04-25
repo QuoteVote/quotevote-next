@@ -90,6 +90,10 @@ export interface PostActionCardProps {
    * Callback to refetch the post data after mutations
    */
   refetchPost?: () => void
+  /**
+   * The author id of the parent post — used to flag actions made by the original poster (OP)
+   */
+  postOwnerId?: string
 }
 
 /**
@@ -112,6 +116,10 @@ export interface PostActionListProps {
    * Callback to refetch the post data after mutations
    */
   refetchPost?: () => void
+  /**
+   * The author id of the parent post — used to flag actions made by the original poster (OP)
+   */
+  postOwnerId?: string
 }
 
 /**

@@ -14,6 +14,7 @@ export default function PostActionList({
   loading = false,
   postUrl = '',
   refetchPost,
+  postOwnerId,
 }: PostActionListProps) {
   const setFocusedComment = useAppStore((state) => state.setFocusedComment)
   const setSharedComment = useAppStore((state) => state.setSharedComment)
@@ -61,6 +62,7 @@ export default function PostActionList({
                 postUrl={postUrl}
                 selected={`#${action._id}` === hash}
                 refetchPost={refetchPost}
+                postOwnerId={postOwnerId}
               />
             </div>
           ))}

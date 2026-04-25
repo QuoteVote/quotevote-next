@@ -14,6 +14,7 @@ import ChatContent from '@/components/Chat/ChatContent'
 import { GET_NOTIFICATIONS } from '@/graphql/queries'
 import { NEW_NOTIFICATION_SUBSCRIPTION } from '@/graphql/subscriptions'
 import type { Notification as NotificationType } from '@/types/notification'
+import { cn } from '@/lib/utils'
 
 type SortOrder = 'desc' | 'asc' | ''
 
@@ -53,9 +54,9 @@ function FilterPanel({
   ]
 
   return (
-    <div className="shrink-0 border-t border-border px-4 py-4 space-y-4 bg-background">
+    <div data-explore-section="filters" className="shrink-0 border-t border-border px-4 py-4 space-y-4 bg-background">
       {/* Section header */}
-      <div className="flex items-center justify-between">
+      <div data-explore-section-header="filters" className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="size-4 text-muted-foreground/60" />
           <span className="text-sm font-semibold text-foreground/80">Filters</span>
@@ -150,13 +151,12 @@ function LeftSidebar(props: LeftSidebarProps) {
       : (data as { notifications?: NotificationType[] }).notifications || []
 
   return (
-    /* No overflow-hidden here so DateRangeFilter dropdown can escape */
-    <div className="sticky top-[60px] h-[calc(100vh-60px)] flex flex-col">
+    <div className="flex flex-col flex-1 min-h-0">
 
       {/* ── Notifications ── */}
       {userId && (
         <>
-          <div className="shrink-0 flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background">
+          <div data-explore-section-header="notifications" className="shrink-0 flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background">
             <Bell className="size-4 text-muted-foreground/60" />
             <span className="text-sm font-semibold text-foreground/80">Notifications</span>
             {notifications.length > 0 && (
@@ -252,15 +252,24 @@ export default function ExploreContent() {
   }
 
   return (
-    <div className="-mx-4 -mt-6 md:-mx-4 flex min-h-screen">
+    <div
+      className={cn(
+        '-mx-4 md:-mx-4 min-h-[calc(100vh-60px)]',
+        'lg:pl-[300px] xl:pl-[340px]',
+        isLoggedIn && 'xl:pr-[360px] 2xl:pr-[420px]'
+      )}
+    >
 
-      {/* ── Left: Notifications + Filters ────────────────────────────── */}
-      <aside className="hidden lg:block w-[300px] xl:w-[340px] shrink-0 border-r border-border bg-background">
+      {/* ── Left: Notifications + Filters (fixed under navbar) ──────── */}
+      <aside
+        data-explore-aside="left"
+        className="hidden lg:flex flex-col fixed top-[60px] left-0 w-[300px] xl:w-[340px] h-[calc(100vh-60px)] border-r border-border bg-background overflow-hidden z-30"
+      >
         <LeftSidebar userId={isLoggedIn ? userId : undefined} {...filterProps} />
       </aside>
 
       {/* ── Center: Posts feed ────────────────────────────────────────── */}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0">
 
         {/* Posts feed */}
         <PaginatedPostsList
@@ -280,12 +289,13 @@ export default function ExploreContent() {
         </div>
       </div>
 
-      {/* ── Right: Messaging panel (xl+ only) ────────────────────────── */}
+      {/* ── Right: Messaging panel (fixed under navbar, xl+ only) ───── */}
       {isLoggedIn && (
-        <aside className="hidden xl:flex flex-col w-[360px] 2xl:w-[420px] shrink-0 border-l border-border bg-background">
-          <div className="sticky top-[60px] h-[calc(100vh-60px)] overflow-hidden flex flex-col">
-            <ChatContent />
-          </div>
+        <aside
+          data-explore-aside="right"
+          className="hidden xl:flex flex-col fixed top-[60px] right-0 w-[360px] 2xl:w-[420px] h-[calc(100vh-60px)] border-l border-border bg-background overflow-hidden z-30"
+        >
+          <ChatContent />
         </aside>
       )}
 

@@ -62,6 +62,7 @@ export default function PostActionCard({
   postUrl = '',
   selected = false,
   refetchPost,
+  postOwnerId,
 }: PostActionCardProps) {
   const [commentSelected, setCommentSelected] = useState(false)
   const router = useRouter()
@@ -199,6 +200,7 @@ export default function PostActionCard({
 
   const userId = user?._id || user?.id
   const isOwner = userId === actionUser?._id || user?.admin
+  const isPostOwner = !!postOwnerId && !!actionUser?._id && actionUser._id === postOwnerId
   const displayName = name || username || 'Unknown'
 
   const quoteContent = type === 'Quote'
@@ -214,6 +216,10 @@ export default function PostActionCard({
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
+      data-post-action="true"
+      data-action-type={type}
+      data-post-owner={isPostOwner ? 'true' : undefined}
+      data-current-user={isOwner && !isPostOwner ? 'true' : undefined}
       className={cn(
         'group relative flex gap-3 px-4 py-3.5 cursor-pointer transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
@@ -249,6 +255,15 @@ export default function PostActionCard({
           >
             {displayName}
           </button>
+          {isPostOwner && (
+            <span
+              data-op-badge="true"
+              className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 leading-none"
+              title="Original poster"
+            >
+              OP
+            </span>
+          )}
           <span className="text-muted-foreground/40 text-xs leading-none">·</span>
           <time className="text-[11px] text-muted-foreground leading-none">{parsedDate}</time>
           <ActionTypeBadge type={type} voteType={voteType} />
