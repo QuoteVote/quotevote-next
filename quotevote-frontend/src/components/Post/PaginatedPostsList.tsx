@@ -172,8 +172,24 @@ export default function PaginatedPostsList({
   // Determine which posts to display
   const basePosts = loadMoreMode ? allLoadedPosts : (entities || [])
 
+  // When "Most Popular" is active, sort by total interaction count using actual returned data
+  const sortedPosts = interactions
+    ? [...basePosts].sort((a, b) => {
+        const countInteractions = (p: Post) =>
+          (p.approvedBy?.length ?? 0) +
+          (p.rejectedBy?.length ?? 0) +
+          (p.comments?.length ?? 0) +
+          (p.votes?.length ?? 0) +
+          (p.quotes?.length ?? 0) +
+          (p.messageRoom && 'messages' in p.messageRoom
+            ? ((p.messageRoom as { messages?: unknown[] }).messages?.length ?? 0)
+            : 0)
+        return countInteractions(b) - countInteractions(a)
+      })
+    : basePosts
+
   // Filter out hidden posts and add rank
-  const processedPosts = basePosts
+  const processedPosts = sortedPosts
     .map((post, index) => ({ ...post, rank: index + 1 }))
     .filter((post) => !hiddenPosts.includes(post._id))
 

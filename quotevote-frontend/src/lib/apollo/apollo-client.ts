@@ -300,7 +300,13 @@ function createApolloClient(): ApolloClientType {
 
   return new ApolloClient({
     link,
-    cache: new InMemoryCache(),
+    cache: new InMemoryCache({
+      typePolicies: {
+        Post: {
+          keyFields: ['_id'],
+        },
+      },
+    }),
     // Enable SSR mode for Next.js
     ssrMode: typeof window === 'undefined',
     // Default options for queries

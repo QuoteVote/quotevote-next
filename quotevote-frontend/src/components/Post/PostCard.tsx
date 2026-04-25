@@ -139,7 +139,12 @@ function PostCardComponent({
       : []
 
   const interactionCount =
-    comments.length + votes.length + quotes.length + messages.length
+    (approvedBy?.length ?? 0) +
+    (rejectedBy?.length ?? 0) +
+    comments.length +
+    votes.length +
+    quotes.length +
+    messages.length
 
   const { data: groupData } = useQuery<{ group?: { _id: string; title: string } }>(GET_GROUP, {
     variables: { groupId: groupId || '' },
