@@ -9,6 +9,7 @@ import { DELETE_NOTIFICATION } from '@/graphql/mutations';
 import { GET_NOTIFICATIONS } from '@/graphql/queries';
 import { useAppStore } from '@/store';
 import useGuestGuard from '@/hooks/useGuestGuard';
+import { toAppPostUrl } from '@/lib/utils/sanitizeUrl';
 import type { Notification } from '@/types/notification';
 import { cn } from '@/lib/utils';
 
@@ -128,7 +129,7 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
       router.push(`/dashboard/profile/${userBy.username}`);
     } else if (post) {
       setSelectedPost(post._id);
-      router.push(post.url.replace(/\?/g, ''));
+      router.push(toAppPostUrl(post.url));
     }
   };
 

@@ -13,7 +13,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useMutation } from '@apollo/client/react';
 import { toast } from 'sonner';
 import { Dices, Save, ArrowLeft, Loader2 } from 'lucide-react';
@@ -343,8 +343,6 @@ interface UpdateUserAvatarData {
 
 export default function AvatarEditorPage(): React.ReactNode {
   const router = useRouter();
-  const params = useParams();
-  const username = params.username as string;
 
   const userData = useAppStore((state) => state.user.data);
   const updateStoreAvatar = useAppStore((state) => state.updateAvatar);
@@ -393,17 +391,17 @@ export default function AvatarEditorPage(): React.ReactNode {
       }
 
       toast.success('Avatar updated successfully!');
-      router.push(`/dashboard/profile/${username}`);
+      router.back();
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to update avatar.';
       toast.error(message);
     }
-  }, [userId, avatar, updateUserAvatar, updateStoreAvatar, router, username]);
+  }, [userId, avatar, updateUserAvatar, updateStoreAvatar, router]);
 
   const handleBack = useCallback(() => {
-    router.push(`/dashboard/profile/${username}`);
-  }, [router, username]);
+    router.back();
+  }, [router]);
 
   // ---- Render -------------------------------------------------------------
 

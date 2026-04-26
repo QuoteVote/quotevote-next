@@ -187,10 +187,10 @@ export function Sidebar({
       <div className="flex flex-col gap-1 p-4">
         {/* Profile Section */}
         <Link
-          href="/Profile"
+          href={`/dashboard/profile/${user?.username}`}
           className={cn(
             "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-            isActiveRoute('/Profile') ? "bg-accent" : "hover:bg-accent"
+            isActiveRoute('/dashboard/profile') ? "bg-accent" : "hover:bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >
@@ -220,10 +220,10 @@ export function Sidebar({
 
         {/* Profile (simplified) */}
         <Link
-          href="/Profile"
+          href={`/dashboard/profile/${user?.username}`}
           className={cn(
             "flex items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md transition-colors",
-            isActiveRoute('/Profile') ? "bg-accent" : "hover:bg-accent"
+            isActiveRoute('/dashboard/profile') ? "bg-accent" : "hover:bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >

@@ -296,7 +296,9 @@ export default function UserReportsTab() {
                         <div className="flex items-center gap-1.5">
                           <User className="size-3.5 text-muted-foreground" />
                           <span className="text-sm font-medium">
-                            {reporter ? `@${reporter.username}` : `…${report._reporterId.slice(-6)}`}
+                            {reporter
+                              ? `@${reporter.username}`
+                              : `…${report._reporterId.slice(-6)}`}
                           </span>
                         </div>
                         <ReasonBadge reason={report.reason} />

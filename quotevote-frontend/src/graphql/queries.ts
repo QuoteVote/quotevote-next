@@ -247,6 +247,7 @@ export const GET_TOP_POSTS = gql`
         rejectedBy
         approvedBy
         enable_voting
+        featuredSlot
         creator {
           name
           username
@@ -323,6 +324,7 @@ export const GET_PAGINATED_POSTS = gql`
         rejectedBy
         approvedBy
         enable_voting
+        featuredSlot
         creator {
           name
           username
@@ -861,6 +863,7 @@ export const GET_USER_REPORTS = gql`
       description
       severity
       status
+      adminNotes
       createdAt
     }
   }

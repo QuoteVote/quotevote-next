@@ -25,7 +25,7 @@ import type { InviteRequest } from '@/types/admin'
 
 interface UserInviteRequestsTabProps {
   data: InviteRequest[]
-  onRefresh: () => void
+  onRefresh: () => Promise<void>
 }
 
 function getStatusConfig(status: string) {
@@ -48,15 +48,15 @@ function ActionButtons({
 }: {
   status: string
   id: string
-  onActionComplete: () => void
+  onActionComplete: () => Promise<void>
 }) {
   const [updateStatus, { loading }] = useMutation(UPDATE_USER_INVITE_STATUS)
 
   const handleAction = async (inviteStatus: number, successMessage: string) => {
     try {
       await updateStatus({ variables: { userId: id, inviteStatus: String(inviteStatus) } })
+      await onActionComplete()
       toast.success(successMessage)
-      onActionComplete()
     } catch (err) {
       toast.error(replaceGqlError(err instanceof Error ? err.message : 'Failed to update status'))
     }
@@ -131,7 +131,7 @@ export default function UserInviteRequestsTab({ data, onRefresh }: UserInviteReq
     setSortDir(sortKey === key && sortDir === 'asc' ? 'desc' : 'asc')
     setSortKey(key)
   }
-  const handleActionComplete = useCallback(() => onRefresh(), [onRefresh])
+  const handleActionComplete = useCallback(async () => { await onRefresh() }, [onRefresh])
 
   const filtered = data.filter((r) =>
     r.email.toLowerCase().includes(emailFilter.toLowerCase())

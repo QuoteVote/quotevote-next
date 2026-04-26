@@ -621,6 +621,7 @@ export const UPDATE_USER = gql`
       admin
       accountStatus
       themePreference
+      contributorBadge
     }
   }
 `

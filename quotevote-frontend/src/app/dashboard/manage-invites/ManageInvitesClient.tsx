@@ -58,7 +58,7 @@ function InviteActionButton({
   onComplete,
 }: {
   invite: InviteRequest
-  onComplete: () => void
+  onComplete: () => Promise<void>
 }) {
   const [updateStatus, { loading }] = useMutation(UPDATE_USER_INVITE_STATUS)
 
@@ -67,8 +67,8 @@ function InviteActionButton({
       await updateStatus({
         variables: { userId: invite._id, inviteStatus: String(newStatus) },
       })
+      await onComplete()
       toast.success(message)
-      onComplete()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to update'
       toast.error(replaceGqlError(msg))
@@ -153,7 +153,7 @@ function InviteTable({
   onRefresh,
 }: {
   invites: InviteRequest[]
-  onRefresh: () => void
+  onRefresh: () => Promise<void>
 }) {
   if (invites.length === 0) {
     return (
@@ -285,7 +285,7 @@ export default function ManageInvitesClient() {
                 <CardTitle className="text-base">Received Requests</CardTitle>
               </CardHeader>
               <CardContent>
-                <InviteTable invites={receivedRequests} onRefresh={refetch} />
+                <InviteTable invites={receivedRequests} onRefresh={async () => { await refetch() }} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -296,7 +296,7 @@ export default function ManageInvitesClient() {
                 <CardTitle className="text-base">Sent Invites</CardTitle>
               </CardHeader>
               <CardContent>
-                <InviteTable invites={sentInvites} onRefresh={refetch} />
+                <InviteTable invites={sentInvites} onRefresh={async () => { await refetch() }} />
               </CardContent>
             </Card>
           </TabsContent>

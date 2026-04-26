@@ -109,7 +109,7 @@ export default function ControlPanelClient() {
       case 'statistics':
         return <Suspense fallback={<TabSkeleton />}><StatisticsTab inviteData={inviteData} /></Suspense>
       case 'invites':
-        return <Suspense fallback={<TabSkeleton />}><UserInviteRequestsTab data={inviteData} onRefresh={refetch} /></Suspense>
+        return <Suspense fallback={<TabSkeleton />}><UserInviteRequestsTab data={inviteData} onRefresh={async () => { await refetch() }} /></Suspense>
       case 'featured':
         return <Suspense fallback={<TabSkeleton />}><FeaturedPostsTab /></Suspense>
       case 'users':

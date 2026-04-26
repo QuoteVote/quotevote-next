@@ -96,6 +96,7 @@ export interface UserReport {
   description?: string
   severity: string
   status: string
+  adminNotes?: string
   createdAt: string
 }
 

@@ -305,6 +305,9 @@ function createApolloClient(): ApolloClientType {
         Post: {
           keyFields: ['_id'],
         },
+        User: {
+          keyFields: ['_id'],
+        },
       },
     }),
     // Enable SSR mode for Next.js

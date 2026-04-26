@@ -88,12 +88,15 @@ export default function FeaturedPostsTab() {
   })
 
   const handleSave = async (id: string) => {
-    const slot = selection[id]
+    const post = posts.find((p) => p._id === id)
+    const selected = selection[id]
+    // Fall back to the post's current slot if admin didn't touch the dropdown
+    const effectiveSlot = selected !== undefined ? selected : (post?.featuredSlot ? String(post.featuredSlot) : 'none')
     try {
       await updateSlot({
-        variables: { postId: id, featuredSlot: slot && slot !== 'none' ? Number(slot) : null },
+        variables: { postId: id, featuredSlot: effectiveSlot && effectiveSlot !== 'none' ? Number(effectiveSlot) : null },
       })
-      toast.success(slot && slot !== 'none' ? `Post assigned to slot ${slot}` : 'Post removed from featured')
+      toast.success(effectiveSlot && effectiveSlot !== 'none' ? `Post assigned to slot ${effectiveSlot}` : 'Post removed from featured')
       setSelection((s) => { const next = { ...s }; delete next[id]; return next })
       refetch()
     } catch (err) {
