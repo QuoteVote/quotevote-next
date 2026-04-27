@@ -391,10 +391,11 @@ export function LandingPageContent({
               asChild
               size="lg"
               variant="outline"
-              className="rounded-xl px-8 font-semibold text-sm w-full sm:w-auto bg-transparent hover:bg-white/8 hover:text-white"
+              className="rounded-xl px-8 font-semibold text-sm w-full sm:w-auto"
               style={{
-                borderColor: 'rgba(255,255,255,0.18)',
-                color: 'rgba(255,255,255,0.72)',
+                background: 'rgba(82,178,116,0.08)',
+                borderColor: 'rgba(82,178,116,0.35)',
+                color: '#8de0a8',
               }}
             >
               <Link href="/auths/login" aria-label="Login to your account">
