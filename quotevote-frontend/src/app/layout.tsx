@@ -8,7 +8,6 @@ import { AuthModalProvider } from "@/context/AuthModalContext";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
 import "./globals.css";
-import { Eyebrow } from "./components/Eyebrow/Eyebrow";
 
 /**
  * Global Providers Setup:
@@ -68,7 +67,6 @@ export default function RootLayout({
           <ApolloProviderWrapper>
             <ThemeContextProvider>
               <AuthModalProvider>
-                <Eyebrow />
                 {children}
                 <Toaster position="top-right" richColors />
               </AuthModalProvider>
