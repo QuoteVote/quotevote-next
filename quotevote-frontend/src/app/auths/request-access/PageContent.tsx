@@ -5,18 +5,17 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation } from '@apollo/client/react'
-import { useFormStatus } from 'react-dom'
-import { toast } from 'sonner'
+import { useApolloClient, useMutation } from '@apollo/client/react'
 import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations'
+import { GET_CHECK_DUPLICATE_EMAIL } from '@/graphql/queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { replaceGqlError } from '@/lib/utils/replaceGqlError'
 
 type Step = 'plan' | 'personal' | 'business' | 'payment'
+type PlanType = 'personal' | 'business'
 
 const personalSchema = z.object({
   firstName: z.string().min(1, 'Required'),
@@ -31,16 +30,6 @@ const businessSchema = z.object({
 
 type PersonalData = z.infer<typeof personalSchema>
 type BusinessData = z.infer<typeof businessSchema>
-
-function SubmitButton({ label }: { label: string }) {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
-      {label}
-    </Button>
-  )
-}
 
 function StepIndicator({ step }: { step: Step }) {
   const steps: Step[] = ['plan', 'personal', 'payment']
@@ -57,7 +46,7 @@ function StepIndicator({ step }: { step: Step }) {
   )
 }
 
-function PlanStep({ onSelect }: { onSelect: (type: 'personal' | 'business') => void }) {
+function PlanStep({ onSelect }: { onSelect: (type: PlanType) => void }) {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold text-center">Choose a Plan</h2>
@@ -92,8 +81,9 @@ function PersonalFormStep({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<PersonalData>({ resolver: zodResolver(personalSchema) })
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold">Personal Information</h2>
@@ -117,7 +107,10 @@ function PersonalFormStep({
           <Input type="email" {...register('email')} />
           {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
-        <SubmitButton label="Continue" />
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+          Continue
+        </Button>
       </form>
       <button
         onClick={onBack}
@@ -139,8 +132,9 @@ function BusinessFormStep({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<BusinessData>({ resolver: zodResolver(businessSchema) })
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold">Business Information</h2>
@@ -164,7 +158,10 @@ function BusinessFormStep({
           <Input type="email" {...register('email')} />
           {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
-        <SubmitButton label="Continue" />
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+          Continue
+        </Button>
       </form>
       <button
         onClick={onBack}
@@ -179,10 +176,13 @@ function BusinessFormStep({
 function PaymentStep({
   onBack,
   onSubmit: onFinalSubmit,
+  loading,
+  errorMessage,
 }: {
-  email: string
   onBack: () => void
   onSubmit: () => void
+  loading: boolean
+  errorMessage: string
 }) {
   return (
     <div className="space-y-6">
@@ -195,7 +195,11 @@ function PaymentStep({
           Credit card input (Stripe — wired in Phase 5)
         </p>
       </div>
-      <Button className="w-full" onClick={onFinalSubmit}>
+      {errorMessage && (
+        <p className="text-sm text-destructive">{errorMessage}</p>
+      )}
+      <Button className="w-full" onClick={onFinalSubmit} disabled={loading}>
+        {loading && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
         Submit Request
       </Button>
       <button
@@ -208,37 +212,88 @@ function PaymentStep({
   )
 }
 
+function SuccessView({ planType }: { planType: PlanType }) {
+  const router = useRouter()
+  return (
+    <div className="text-center space-y-6 py-4">
+      <h2 className="text-2xl font-bold">
+        Thank you for <span className="text-primary">joining us</span>
+      </h2>
+      <p className="text-muted-foreground leading-relaxed">
+        {planType === 'business'
+          ? 'You selected the Business Plan, and we are excited to talk with you. When an account becomes available, an invite will be sent to the email address you provided.'
+          : 'When an account becomes available, an invite will be sent to the email address you provided.'}
+      </p>
+      <Button onClick={() => router.push('/')} variant="outline" className="mt-4">
+        Back to Home
+      </Button>
+    </div>
+  )
+}
+
 export function RequestAccessPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const step = (searchParams.get('step') ?? 'plan') as Step
-  const [requestAccess] = useMutation(REQUEST_USER_ACCESS_MUTATION)
-  const [formData, setFormData] = useState<{ email?: string }>({})
+
+  const client = useApolloClient()
+  const [requestAccess, { loading }] = useMutation(REQUEST_USER_ACCESS_MUTATION)
+
+  const [formData, setFormData] = useState<{ email?: string; planType?: PlanType }>({})
+  const [errorMessage, setErrorMessage] = useState('')
+  const [success, setSuccess] = useState(false)
 
   const goToStep = (s: Step) => router.push(`?step=${s}`)
 
-  const handlePlanSelect = (type: 'personal' | 'business') => goToStep(type)
+  const handlePlanSelect = (type: PlanType) => {
+    setFormData((prev) => ({ ...prev, planType: type }))
+    goToStep(type)
+  }
 
   const handlePersonalNext = (data: PersonalData) => {
-    setFormData({ email: data.email })
+    setFormData((prev) => ({ ...prev, email: data.email, planType: 'personal' }))
     goToStep('payment')
   }
 
   const handleBusinessNext = (data: BusinessData) => {
-    setFormData({ email: data.email })
+    setFormData((prev) => ({ ...prev, email: data.email, planType: 'business' }))
     goToStep('payment')
   }
 
   const handleFinalSubmit = async () => {
+    setErrorMessage('')
+    const email = formData.email ?? ''
+
     try {
-      await requestAccess({
-        variables: { requestUserAccessInput: { email: formData.email ?? '' } },
+      // Check for duplicate email before submitting — matches monorepo behaviour
+      const { data } = await client.query({
+        query: GET_CHECK_DUPLICATE_EMAIL,
+        variables: { email },
+        fetchPolicy: 'network-only',
       })
-      toast.success('Request submitted! We will be in touch.')
-      router.push('/')
-    } catch (error) {
-      toast.error(replaceGqlError(error instanceof Error ? error.message : 'Request failed'))
+      const hasDuplicate =
+        ((data as { checkDuplicateEmail?: unknown[] })?.checkDuplicateEmail?.length ?? 0) > 0
+      if (hasDuplicate) {
+        setErrorMessage('This email address has already been used to request an invite.')
+        return
+      }
+
+      await requestAccess({
+        variables: { requestUserAccessInput: { email } },
+      })
+      setSuccess(true)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Request failed'
+      if (message.includes('email: Path `email` is required.')) {
+        setErrorMessage('Email is required')
+      } else {
+        setErrorMessage('An unexpected error occurred. Please try again later.')
+      }
     }
+  }
+
+  if (success) {
+    return <SuccessView planType={formData.planType ?? 'personal'} />
   }
 
   return (
@@ -253,9 +308,10 @@ export function RequestAccessPageContent() {
       )}
       {step === 'payment' && (
         <PaymentStep
-          email={formData.email ?? ''}
-          onBack={() => goToStep('personal')}
+          onBack={() => goToStep(formData.planType ?? 'personal')}
           onSubmit={handleFinalSubmit}
+          loading={loading}
+          errorMessage={errorMessage}
         />
       )}
       <p className="text-center text-sm text-muted-foreground mt-6">

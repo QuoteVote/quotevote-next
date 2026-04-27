@@ -7,6 +7,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { GraphQLError } from 'graphql';
 import { solidResolvers } from './data/resolvers/solidResolvers';
+import { featuredPostsResolver } from './data/resolvers/featuredPostsResolver';
+import { heartbeatResolver } from './data/resolvers/heartbeatResolver';
 import type { GraphQLContext, PubSub } from './types/graphql';
 import { requireAuth } from './data/utils/requireAuth';
 import { pubsub } from './data/utils/pubsub';
@@ -48,6 +50,7 @@ async function startServer() {
         hello: String
         status: String
         solidConnectionStatus: SolidConnectionStatus
+        featuredPosts(limit: Int, offset: Int): Posts
       }
 
       type Mutation {
@@ -57,6 +60,54 @@ async function startServer() {
           solidPullPortableState: PortableState
           solidPushPortableState(input: PortableStateInput!): Boolean
           solidAppendActivityEvent(input: ActivityEventInput!): Boolean
+          heartbeat: HeartbeatResponse
+      }
+
+      type Post {
+        _id: String
+        userId: String
+        groupId: String
+        title: String
+        text: String
+        citationUrl: String
+        url: String
+        deleted: Boolean
+        upvotes: Int
+        downvotes: Int
+        featuredSlot: Int
+        enable_voting: Boolean
+        dayPoints: Int
+        pointTimestamp: String
+        votedBy: [String]
+        bookmarkedBy: [String]
+        approvedBy: [String]
+        rejectedBy: [String]
+        reportedBy: [String]
+        created: String
+        creator: PostCreator
+      }
+
+      type PostCreator {
+        _id: String
+        name: String
+        username: String
+        avatar: String
+      }
+
+      type Pagination {
+        total_count: Int
+        limit: Int
+        offset: Int
+      }
+
+      type Posts {
+        entities: [Post]
+        pagination: Pagination
+      }
+
+      type HeartbeatResponse {
+        success: Boolean!
+        timestamp: String!
       }
 
       type SolidConnectionStatus {
@@ -99,7 +150,9 @@ async function startServer() {
           status: () => 'Active',
         },
       },
-      solidResolvers
+      solidResolvers,
+      featuredPostsResolver,
+      heartbeatResolver,
     ],
   });
 

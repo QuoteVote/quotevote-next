@@ -70,7 +70,7 @@ export function MainNavBar({}: MainNavBarProps) {
           <Link
             href="/search"
             onClick={handleQuoteVote}
-            className="flex items-center no-underline hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 no-underline hover:opacity-90 transition-opacity"
           >
             <Image
               src="/icons/android-chrome-192x192.png"
@@ -80,6 +80,9 @@ export function MainNavBar({}: MainNavBarProps) {
               className="object-contain"
               crossOrigin="anonymous"
             />
+            <span className="font-extrabold text-lg tracking-wide hidden sm:block select-none" style={{ color: '#0A2342' }}>
+              Quote.Vote
+            </span>
           </Link>
 
           {/* Desktop Actions - Not Logged In */}

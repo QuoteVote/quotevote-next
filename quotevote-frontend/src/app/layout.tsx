@@ -7,8 +7,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthModalProvider } from "@/context/AuthModalContext";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
-import "./globals.css";
 import { Eyebrow } from "./components/Eyebrow/Eyebrow";
+import "./globals.css";
 
 /**
  * Global Providers Setup:
