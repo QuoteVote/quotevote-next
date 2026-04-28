@@ -26,7 +26,7 @@ export function PublicNavbar({ showLogin = true, showRequestInvite = false }: Pu
       aria-label="Main navigation"
       style={{ borderImage: 'linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1' }}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="w-full px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link
           href="/"
