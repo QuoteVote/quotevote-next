@@ -30,7 +30,6 @@ import {
   Loader2,
   MessageCircle,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/store';
@@ -292,23 +291,9 @@ export function LandingPageContent({
         </div>
 
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-20 pb-24 sm:pt-28 sm:pb-32 text-center">
-          <div className="flex justify-center mb-7">
-            <Badge
-              className="gap-2 px-4 py-1.5 text-sm font-medium rounded-full"
-              style={{
-                background: '#f0fdf4',
-                border: '1px solid #bbf7d0',
-                color: '#16a34a',
-              }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse"
-                style={{ background: '#16a34a' }}
-                aria-hidden
-              />
-              No algorithms. No ads. Just conversations.
-            </Badge>
-          </div>
+          <p className="text-sm mb-7" style={{ color: '#64748b' }}>
+            No algorithms. No ads. Just conversations.
+          </p>
 
           <h1
             id="hero-heading"
