@@ -178,7 +178,7 @@ export function LandingPageContent({
   }, [user, router]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#ffffff' }} data-testid="landing-page">
+    <div className="min-h-screen flex flex-col" style={{ background: '#eef4f9' }} data-testid="landing-page">
       {/* ── Navbar ────────────────────────────────────────────── */}
       <nav
         className="sticky top-0 z-50 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
@@ -277,7 +277,7 @@ export function LandingPageContent({
       <section
         className="relative flex-shrink-0 overflow-hidden"
         aria-labelledby="hero-heading"
-        style={{ background: '#ffffff' }}
+        style={{ background: '#eef4f9' }}
       >
         {/* Background atmosphere */}
         <div className="absolute inset-0 pointer-events-none select-none" aria-hidden>
@@ -379,7 +379,7 @@ export function LandingPageContent({
       <div
         className="border-y"
         style={{
-          background: '#f8fafc',
+          background: '#eef4f9',
           borderColor: '#e2e8f0',
         }}
       >
@@ -419,7 +419,7 @@ export function LandingPageContent({
       <section
         id="about-section"
         className="relative overflow-hidden py-24 sm:py-32"
-        style={{ background: '#ffffff' }}
+        style={{ background: '#eef4f9' }}
         aria-labelledby="about-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -560,7 +560,7 @@ export function LandingPageContent({
       {/* ── Features — Bento Grid ─────────────────────────────── */}
       <section
         className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#f8fafc' }}
+        style={{ background: '#eef4f9' }}
         aria-labelledby="features-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -768,7 +768,7 @@ export function LandingPageContent({
       {/* ── Product Showcase — Voting UI ──────────────────────── */}
       <section
         className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#ffffff' }}
+        style={{ background: '#eef4f9' }}
         aria-labelledby="showcase-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -863,7 +863,7 @@ export function LandingPageContent({
       {/* ── Product Showcase — At Any Time ────────────────────── */}
       <section
         className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#f8fafc' }}
+        style={{ background: '#eef4f9' }}
         aria-labelledby="anytime-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -925,7 +925,7 @@ export function LandingPageContent({
       {/* ── Product Showcase — Track Conversations ────────────── */}
       <section
         className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#ffffff' }}
+        style={{ background: '#eef4f9' }}
         aria-labelledby="track-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -1003,7 +1003,7 @@ export function LandingPageContent({
       {/* ── How It Works — 3 steps ────────────────────────────── */}
       <section
         className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#f8fafc' }}
+        style={{ background: '#eef4f9' }}
         aria-labelledby="how-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
@@ -1089,20 +1089,9 @@ export function LandingPageContent({
       {/* ── Full-width CTA Banner ─────────────────────────────── */}
       <section
         className="relative overflow-hidden py-24 sm:py-28"
-        style={{
-          background: 'linear-gradient(135deg, #052e16 0%, #14532d 100%)',
-        }}
+        style={{ background: '#eef4f9' }}
         aria-label="Call to action"
       >
-        {/* Glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(ellipse 70% 80% at 50% 50%, rgba(22,163,74,0.18) 0%, transparent 70%)',
-          }}
-          aria-hidden
-        />
         {/* Decorative large quote */}
         <span
           className="absolute select-none pointer-events-none font-serif"
@@ -1122,17 +1111,18 @@ export function LandingPageContent({
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <p
             className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
-            style={{ color: 'rgba(134,239,172,0.80)' }}
+            style={{ color: '#16a34a' }}
           >
             Ready to join?
           </p>
           <h2
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6"
+            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6"
+            style={{ color: '#0f172a' }}
           >
             The future of{' '}
             <span
               style={{
-                background: 'linear-gradient(100deg, #4ade80 0%, #86efac 60%, #4ade80 100%)',
+                background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 60%, #16a34a 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -1144,7 +1134,7 @@ export function LandingPageContent({
           </h2>
           <p
             className="text-lg leading-relaxed mb-10 max-w-2xl mx-auto"
-            style={{ color: 'rgba(255,255,255,0.60)' }}
+            style={{ color: '#475569' }}
           >
             Join a growing community of thinkers, builders, and changemakers who believe
             great conversations can change the world.
@@ -1155,7 +1145,7 @@ export function LandingPageContent({
               className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-white text-base transition-all hover:opacity-90 hover:-translate-y-0.5 w-full sm:w-auto"
               style={{
                 background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                boxShadow: '0 6px 30px rgba(22,163,74,0.40)',
+                boxShadow: '0 6px 30px rgba(22,163,74,0.25)',
               }}
               aria-label="Request an invite to join Quote.Vote"
             >
@@ -1165,7 +1155,7 @@ export function LandingPageContent({
             <Link
               href="/#about-section"
               className="inline-flex items-center gap-2 text-base font-semibold transition-all hover:opacity-80"
-              style={{ color: '#86efac' }}
+              style={{ color: '#16a34a' }}
             >
               Read our mission
               <ChevronRight size={18} aria-hidden />
@@ -1177,7 +1167,7 @@ export function LandingPageContent({
       {/* ── Discover & Share — two-column ─────────────────────── */}
       <section
         className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#ffffff' }}
+        style={{ background: '#eef4f9' }}
         aria-labelledby="discover-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -1302,7 +1292,7 @@ export function LandingPageContent({
       {/* ── Donate ────────────────────────────────────────────── */}
       <section
         className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#f8fafc' }}
+        style={{ background: '#eef4f9' }}
         aria-labelledby="donate-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -1876,36 +1866,27 @@ function FeaturedPostsSection() {
   return (
     <section
       className="py-24 sm:py-32 relative overflow-hidden"
-      style={{ background: '#080f1a' }}
+      style={{ background: '#eef4f9' }}
       aria-labelledby="featured-heading"
     >
-      {/* Ambient glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(82,178,116,0.08) 0%, transparent 70%)',
-        }}
-        aria-hidden
-      />
-
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center mb-12">
           <p
             className="text-xs font-bold uppercase tracking-[0.25em] mb-4"
-            style={{ color: '#52b274' }}
+            style={{ color: '#16a34a' }}
           >
             Community Highlights
           </p>
           <h2
             id="featured-heading"
-            className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight"
+            className="text-4xl sm:text-5xl font-extrabold tracking-tight"
+            style={{ color: '#0f172a' }}
           >
             Featured{' '}
             <span
               style={{
-                background: 'linear-gradient(100deg, #52b274 0%, #9de8b8 60%, #52b274 100%)',
+                background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 60%, #16a34a 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -1914,7 +1895,7 @@ function FeaturedPostsSection() {
               Posts
             </span>
           </h2>
-          <p className="text-base mt-4 max-w-lg mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-base mt-4 max-w-lg mx-auto" style={{ color: '#475569' }}>
             See what the community is talking about right now.
           </p>
         </div>
@@ -1925,9 +1906,9 @@ function FeaturedPostsSection() {
             <Loader2
               className="animate-spin mb-4"
               size={32}
-              style={{ color: '#52b274' }}
+              style={{ color: '#16a34a' }}
             />
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <p className="text-sm" style={{ color: '#64748b' }}>
               Loading featured posts...
             </p>
           </div>
@@ -1945,12 +1926,12 @@ function FeaturedPostsSection() {
                   disabled={activeIndex === 0}
                   className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
                   style={{
-                    background: 'rgba(82,178,116,0.15)',
-                    border: '1px solid rgba(82,178,116,0.30)',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
                   }}
                   aria-label="Previous featured post"
                 >
-                  <ChevronLeft size={20} style={{ color: '#8de0a8' }} />
+                  <ChevronLeft size={20} style={{ color: '#16a34a' }} />
                 </button>
                 <button
                   type="button"
@@ -1958,12 +1939,12 @@ function FeaturedPostsSection() {
                   disabled={activeIndex === posts.length - 1}
                   className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
                   style={{
-                    background: 'rgba(82,178,116,0.15)',
-                    border: '1px solid rgba(82,178,116,0.30)',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
                   }}
                   aria-label="Next featured post"
                 >
-                  <ChevronRight size={20} style={{ color: '#8de0a8' }} />
+                  <ChevronRight size={20} style={{ color: '#16a34a' }} />
                 </button>
               </>
             )}
@@ -1993,8 +1974,8 @@ function FeaturedPostsSection() {
                     style={{
                       background:
                         i === activeIndex
-                          ? '#52b274'
-                          : 'rgba(255,255,255,0.20)',
+                          ? '#16a34a'
+                          : '#e2e8f0',
                       transform: i === activeIndex ? 'scale(1.4)' : 'scale(1)',
                     }}
                     role="tab"
@@ -2013,7 +1994,7 @@ function FeaturedPostsSection() {
             <Link
               href="/auths/login"
               className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
-              style={{ color: '#8de0a8' }}
+              style={{ color: '#16a34a' }}
             >
               Join to see more and participate
               <ChevronRight size={16} aria-hidden />
@@ -2058,8 +2039,9 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
       <div
         className="rounded-2xl p-6 h-full flex flex-col transition-all hover:-translate-y-1"
         style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(82,178,116,0.15)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
         }}
       >
         {/* Header: author + star badge */}
@@ -2067,27 +2049,27 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
             style={{
-              background: 'rgba(82,178,116,0.15)',
-              color: '#8de0a8',
+              background: '#f0fdf4',
+              color: '#16a34a',
             }}
           >
             {creatorName[0]?.toUpperCase() || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{creatorName}</p>
-            <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <p className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{creatorName}</p>
+            <p className="text-xs truncate" style={{ color: '#94a3b8' }}>
               @{username} · {timeAgo}
             </p>
           </div>
           <div
             className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
             style={{
-              background: 'rgba(82,178,116,0.10)',
-              border: '1px solid rgba(82,178,116,0.20)',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
             }}
           >
-            <Star size={12} style={{ color: '#52b274' }} aria-hidden />
-            <span className="text-[10px] font-bold" style={{ color: '#8de0a8' }}>
+            <Star size={12} style={{ color: '#16a34a' }} aria-hidden />
+            <span className="text-[10px] font-bold" style={{ color: '#16a34a' }}>
               Featured
             </span>
           </div>
@@ -2095,7 +2077,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
 
         {/* Title */}
         {post.title && (
-          <h3 className="text-base font-bold text-white mb-2 leading-snug line-clamp-2">
+          <h3 className="text-base font-bold mb-2 leading-snug line-clamp-2" style={{ color: '#0f172a' }}>
             {post.title}
           </h3>
         )}
@@ -2104,7 +2086,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
         {displayText && (
           <p
             className="text-sm leading-relaxed mb-4 flex-1 line-clamp-4"
-            style={{ color: 'rgba(255,255,255,0.55)' }}
+            style={{ color: '#475569' }}
           >
             {displayText}
           </p>
@@ -2113,29 +2095,29 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
         {/* Engagement stats */}
         <div
           className="flex items-center gap-4 pt-4 mt-auto"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ borderTop: '1px solid #e2e8f0' }}
         >
           <div className="flex items-center gap-1.5">
-            <ThumbsUp size={14} style={{ color: 'rgba(82,178,116,0.70)' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <ThumbsUp size={14} style={{ color: '#16a34a' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
               {upvotes}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <ThumbsDown size={14} style={{ color: 'rgba(245,81,69,0.60)' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <ThumbsDown size={14} style={{ color: '#ef4444' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
               {downvotes}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <MessageCircle size={14} style={{ color: 'rgba(39,196,225,0.70)' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <MessageCircle size={14} style={{ color: '#27C4E1' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
               {commentCount}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <MessageSquareQuote size={14} style={{ color: 'rgba(200,160,60,0.70)' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <MessageSquareQuote size={14} style={{ color: '#c8a03c' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
               {quoteCount}
             </span>
           </div>
@@ -2194,51 +2176,43 @@ function BeInTouchSection() {
   return (
     <section
       className="py-24 sm:py-32 relative overflow-hidden"
-      style={{ background: '#0d1f10' }}
+      style={{ background: '#eef4f9' }}
       aria-labelledby="touch-heading"
     >
-      {/* Ambient glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 60% at 50% 100%, rgba(82,178,116,0.10) 0%, transparent 70%)',
-        }}
-        aria-hidden
-      />
-
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6">
         <div
           className="rounded-3xl p-10 sm:p-14 text-center"
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(82,178,116,0.15)',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
           }}
         >
           {/* Icon */}
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-8"
             style={{
-              background: 'rgba(82,178,116,0.10)',
-              border: '1px solid rgba(82,178,116,0.20)',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
             }}
           >
-            <Mail size={26} style={{ color: '#52b274' }} aria-hidden />
+            <Mail size={26} style={{ color: '#16a34a' }} aria-hidden />
           </div>
 
           <h2
             id="touch-heading"
-            className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4"
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4"
+            style={{ color: '#0f172a' }}
           >
             Stay in the loop
           </h2>
           <p
             className="text-base leading-relaxed max-w-lg mx-auto mb-10"
-            style={{ color: 'rgba(255,255,255,0.50)' }}
+            style={{ color: '#475569' }}
           >
             Our team is made up of volunteers from around the world. Sign up for our newsletter
             and we&apos;ll send updates as we make progress.{' '}
-            <span className="text-white font-semibold">
+            <span className="font-semibold" style={{ color: '#0f172a' }}>
               Every contribution, big or small, is appreciated.
             </span>
           </p>
@@ -2252,9 +2226,8 @@ function BeInTouchSection() {
             <div
               className="flex items-center rounded-2xl overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1.5px solid rgba(82,178,116,0.22)',
-                backdropFilter: 'blur(8px)',
+                background: '#f8fafc',
+                border: '1.5px solid #bbf7d0',
               }}
             >
               <label htmlFor="touch-email" className="sr-only">
@@ -2266,7 +2239,7 @@ function BeInTouchSection() {
                 placeholder="your@email.com"
                 value={email}
                 onChange={handleEmailChange}
-                className="flex-1 border-none outline-none text-base px-5 py-4 bg-transparent text-white placeholder:text-white/35"
+                className="flex-1 border-none outline-none text-base px-5 py-4 bg-transparent text-gray-900 placeholder:text-gray-400"
                 aria-invalid={!!errorMessage}
                 aria-describedby={
                   errorMessage ? 'touch-error' : successMessage ? 'touch-success' : undefined
@@ -2308,7 +2281,7 @@ function BeInTouchSection() {
             )}
           </form>
 
-          <p className="mt-6 text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <p className="mt-6 text-xs" style={{ color: '#94a3b8' }}>
             No spam. Unsubscribe any time.
           </p>
         </div>
