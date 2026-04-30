@@ -237,6 +237,16 @@ export function LandingPageContent({
               Donate
             </a>
 
+            <a
+              href="https://github.com/QuoteVote/quotevote-next"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg transition-all hover:scale-110 text-[#0A2342] hover:text-[#2AE6B2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2AE6B2]"
+              aria-label="GitHub repository (opens in new tab)"
+            >
+              <Github size={20} />
+            </a>
+
             <div
               className="w-px h-5 mx-1 hidden sm:block"
               style={{ background: '#e2e8f0' }}

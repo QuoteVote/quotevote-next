@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { Github } from 'lucide-react';
 
 interface PublicNavbarProps {
   /** Show the Login button (hide when already on the login page) */
@@ -68,6 +69,17 @@ export function PublicNavbar({ showLogin = true, showRequestInvite = false }: Pu
             aria-label="Donate to Quote.Vote (opens in new tab)"
           >
             Donate
+          </a>
+
+          <a
+            href="https://github.com/QuoteVote/quotevote-next"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-lg transition-all hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a]"
+            style={{ color: '#475569' }}
+            aria-label="GitHub repository (opens in new tab)"
+          >
+            <Github size={20} />
           </a>
 
           {hasButtons && (
