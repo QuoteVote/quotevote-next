@@ -290,8 +290,8 @@ export function LandingPageContent({
           />
         </div>
 
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-20 pb-24 sm:pt-28 sm:pb-32 text-center">
-          <p className="text-sm mb-7" style={{ color: '#64748b' }}>
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-12 pb-14 sm:pt-16 sm:pb-20 text-center">
+          <p className="text-sm mb-4" style={{ color: '#64748b' }}>
             No algorithms. No ads. Just conversations.
           </p>
 
@@ -307,14 +307,14 @@ export function LandingPageContent({
             on What Matters.
           </h1>
 
-          <p className="text-base sm:text-lg leading-relaxed mb-9 max-w-lg mx-auto" style={{ color: '#64748b' }}>
+          <p className="text-base sm:text-lg leading-relaxed mb-6 max-w-lg mx-auto" style={{ color: '#64748b' }}>
             An open-source, text-first platform for thoughtful dialogue. Quote,
             vote, and engage in real conversations.
           </p>
 
           <HeroSearch router={router} />
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-5">
             <Button
               asChild
               size="lg"
@@ -348,7 +348,7 @@ export function LandingPageContent({
             </Button>
           </div>
 
-          <div className="flex items-center justify-center mt-10 gap-0">
+          <div className="flex items-center justify-center mt-6 gap-0">
             {(['Open Source', 'Ad-Free', 'Community-Driven', 'No Tracking'] as const).map(
               (label, i, arr) => (
                 <React.Fragment key={label}>
@@ -418,16 +418,16 @@ export function LandingPageContent({
       {/* ── Mission / About ───────────────────────────────────── */}
       <section
         id="about-section"
-        className="relative overflow-hidden py-24 sm:py-32"
+        className="relative overflow-hidden py-14 sm:py-20"
         style={{ background: '#eef4f9' }}
         aria-labelledby="about-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-10 items-start">
             {/* Left — headline */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
                 style={{ color: '#2ecc71' }}
               >
                 Our Mission
@@ -445,7 +445,7 @@ export function LandingPageContent({
                 </span>
               </h2>
               <p
-                className="text-lg leading-relaxed mb-10"
+                className="text-lg leading-relaxed mb-6"
                 style={{ color: '#475569' }}
               >
                 A non-profit platform where every voice counts. Donate your time or
@@ -465,7 +465,7 @@ export function LandingPageContent({
                 </p>
               </blockquote>
 
-              <div className="flex flex-wrap gap-3 mt-10">
+              <div className="flex flex-wrap gap-3 mt-6">
                 <Link
                   href="/auths/request-access"
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 hover:-translate-y-0.5"
@@ -496,7 +496,7 @@ export function LandingPageContent({
             </div>
 
             {/* Right — pillars */}
-            <div className="flex flex-col gap-5 lg:pt-16">
+            <div className="flex flex-col gap-4">
               {[
                 {
                   emoji: '🗣️',
@@ -554,14 +554,14 @@ export function LandingPageContent({
 
       {/* ── Features — Bento Grid ─────────────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden"
         style={{ background: '#eef4f9' }}
         aria-labelledby="features-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <p
-              className="text-xs font-bold uppercase tracking-[0.25em] mb-4"
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
               style={{ color: '#2ecc71' }}
             >
               Platform Features
@@ -586,7 +586,7 @@ export function LandingPageContent({
             {/* Feature 01 — large */}
             <ScrollReveal className="lg:col-span-2" delay={0}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -594,7 +594,7 @@ export function LandingPageContent({
               }}
             >
               <div>
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <span
                     className="text-5xl font-extrabold leading-none tracking-tight"
                     style={{ color: '#e2e8f0' }}
@@ -626,7 +626,7 @@ export function LandingPageContent({
             {/* Feature 02 */}
             <ScrollReveal delay={100}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -634,7 +634,7 @@ export function LandingPageContent({
               }}
             >
               <div>
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <span
                     className="text-5xl font-extrabold leading-none tracking-tight"
                     style={{ color: '#e2e8f0' }}
@@ -666,7 +666,7 @@ export function LandingPageContent({
             {/* Feature 03 */}
             <ScrollReveal delay={200}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -674,7 +674,7 @@ export function LandingPageContent({
               }}
             >
               <div>
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <span
                     className="text-5xl font-extrabold leading-none tracking-tight"
                     style={{ color: '#e2e8f0' }}
@@ -714,7 +714,7 @@ export function LandingPageContent({
               }}
             >
               <div className="flex-1">
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <span
                     className="text-5xl font-extrabold leading-none tracking-tight"
                     style={{ color: '#e2e8f0' }}
@@ -757,16 +757,16 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — Voting UI ──────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden"
         style={{ background: '#eef4f9' }}
         aria-labelledby="showcase-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             {/* Text side */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
                 style={{ color: '#2ecc71' }}
               >
                 See it in action
@@ -783,11 +783,11 @@ export function LandingPageContent({
                   are saying
                 </span>
               </h2>
-              <p className="text-base leading-relaxed mb-8" style={{ color: '#475569' }}>
+              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
                 For a project as small as your household, or around the world, Quote.Vote
                 can host the next conversation in your life — and knock it out of the park.
               </p>
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {[
                   'Quote any passage for targeted discussion',
                   'Vote up the ideas that matter most',
@@ -847,12 +847,12 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — At Any Time ────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden"
         style={{ background: '#eef4f9' }}
         aria-labelledby="anytime-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+          <div className="mb-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <p
                 className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
@@ -904,12 +904,12 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — Track Conversations ────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden"
         style={{ background: '#eef4f9' }}
         aria-labelledby="track-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             {/* Image side — left */}
             <div
               className="rounded-3xl overflow-hidden order-last lg:order-first"
@@ -930,7 +930,7 @@ export function LandingPageContent({
             {/* Text side — right */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
                 style={{ color: '#2ecc71' }}
               >
                 Stay informed
@@ -947,11 +947,11 @@ export function LandingPageContent({
                   Conversation
                 </span>
               </h2>
-              <p className="text-base leading-relaxed mb-8" style={{ color: '#475569' }}>
+              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
                 Never lose track of a discussion. See where conversations are heading,
                 follow the threads that matter, and engage when it counts.
               </p>
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {[
                   'See engagement and vote counts at a glance',
                   'Filter by keyword, date, or people you follow',
@@ -977,13 +977,13 @@ export function LandingPageContent({
 
       {/* ── How It Works — 3 steps ────────────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden"
         style={{ background: '#eef4f9' }}
         aria-labelledby="how-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
             style={{ color: '#2ecc71' }}
           >
             Simple by design
@@ -995,7 +995,7 @@ export function LandingPageContent({
           >
             How it works
           </h2>
-          <p className="text-base mb-16 max-w-lg mx-auto" style={{ color: '#475569' }}>
+          <p className="text-base mb-10 max-w-lg mx-auto" style={{ color: '#475569' }}>
             Three steps to joining a community built on thoughtful discourse.
           </p>
 
@@ -1029,7 +1029,7 @@ export function LandingPageContent({
             ].map(({ step, icon: Icon, title, body }) => (
               <div
                 key={step}
-                className="flex flex-col items-center text-center px-4 py-8 rounded-3xl transition-all hover:-translate-y-1"
+                className="flex flex-col items-center text-center px-5 py-6 rounded-3xl transition-all hover:-translate-y-1"
                 style={{
                   background: '#ffffff',
                   border: '1px solid #e2e8f0',
@@ -1037,7 +1037,7 @@ export function LandingPageContent({
                 }}
               >
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
                   style={{
                     background: '#f0fdf4',
                     border: '1px solid #bbf7d0',
@@ -1063,7 +1063,7 @@ export function LandingPageContent({
 
       {/* ── Full-width CTA Banner ─────────────────────────────── */}
       <section
-        className="relative overflow-hidden py-24 sm:py-28"
+        className="relative overflow-hidden py-14 sm:py-20"
         style={{ background: '#eef4f9' }}
         aria-label="Call to action"
       >
@@ -1085,7 +1085,7 @@ export function LandingPageContent({
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
             style={{ color: '#2ecc71' }}
           >
             Ready to join?
@@ -1103,7 +1103,7 @@ export function LandingPageContent({
             is here.
           </h2>
           <p
-            className="text-lg leading-relaxed mb-10 max-w-2xl mx-auto"
+            className="text-lg leading-relaxed mb-6 max-w-2xl mx-auto"
             style={{ color: '#475569' }}
           >
             Join a growing community of thinkers, builders, and changemakers who believe
@@ -1136,14 +1136,14 @@ export function LandingPageContent({
 
       {/* ── Discover & Share — two-column ─────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden"
         style={{ background: '#eef4f9' }}
         aria-labelledby="discover-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <p
-              className="text-xs font-bold uppercase tracking-[0.25em] mb-4"
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
               style={{ color: '#2ecc71' }}
             >
               For everyone
@@ -1160,7 +1160,7 @@ export function LandingPageContent({
           <div className="grid sm:grid-cols-2 gap-6">
             {/* Discover card */}
             <div
-              className="rounded-3xl p-10"
+              className="rounded-3xl p-7"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -1168,7 +1168,7 @@ export function LandingPageContent({
               }}
             >
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-8"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
                 style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
               >
                 <Search size={24} style={{ color: '#2ecc71' }} aria-hidden />
@@ -1204,7 +1204,7 @@ export function LandingPageContent({
 
             {/* Share card */}
             <div
-              className="rounded-3xl p-10"
+              className="rounded-3xl p-7"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -1212,7 +1212,7 @@ export function LandingPageContent({
               }}
             >
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-8"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
                 style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
               >
                 <TrendingUp size={24} style={{ color: '#2ecc71' }} aria-hidden />
@@ -1251,16 +1251,16 @@ export function LandingPageContent({
 
       {/* ── Donate ────────────────────────────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden"
         style={{ background: '#eef4f9' }}
         aria-labelledby="donate-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             {/* Left */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
                 style={{ color: '#2ecc71' }}
               >
                 Support the mission
@@ -1300,7 +1300,7 @@ export function LandingPageContent({
                 </div>
               </div>
 
-              <p className="text-base leading-relaxed mb-8" style={{ color: '#475569' }}>
+              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
                 Join us in creating a truly open and equal community where civil conversation is
                 the main objective. If you fork our project, kindly consider contributing back.
               </p>
@@ -1345,7 +1345,7 @@ export function LandingPageContent({
               ].map(({ icon: Icon, value, label, color, bg, border }) => (
                 <div
                   key={label}
-                  className="rounded-2xl p-6 flex flex-col items-center text-center"
+                  className="rounded-2xl p-5 flex flex-col items-center text-center"
                   style={{
                     background: bg,
                     border: `1px solid ${border}`,
@@ -1385,9 +1385,9 @@ export function LandingPageContent({
           aria-hidden
         />
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-8">
           {/* Logo row */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
             <Link
               href="/"
               className="flex items-center gap-3"
@@ -1409,11 +1409,11 @@ export function LandingPageContent({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             {/* About */}
             <div className="col-span-2 md:col-span-1">
               <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
                 style={{ color: 'rgba(74,222,128,0.70)' }}
               >
                 Company
@@ -1432,12 +1432,12 @@ export function LandingPageContent({
             {/* Quick Links */}
             <div>
               <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
                 style={{ color: 'rgba(74,222,128,0.70)' }}
               >
                 Quick Links
               </h3>
-              <ul className="space-y-3" role="list">
+              <ul className="space-y-2" role="list">
                 {quickLinks.map(({ href, label, external }) => (
                   <li key={label}>
                     <a
@@ -1457,12 +1457,12 @@ export function LandingPageContent({
             {/* Resources */}
             <div>
               <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
                 style={{ color: 'rgba(74,222,128,0.70)' }}
               >
                 Resources
               </h3>
-              <ul className="space-y-3" role="list">
+              <ul className="space-y-2" role="list">
                 {resourceLinks.map(({ href, label }) => (
                   <li key={label}>
                     <a
@@ -1480,7 +1480,7 @@ export function LandingPageContent({
             {/* Connect */}
             <div>
               <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
                 style={{ color: 'rgba(74,222,128,0.70)' }}
               >
                 Connect
@@ -1509,7 +1509,7 @@ export function LandingPageContent({
 
           {/* Bottom row */}
           <div
-            className="border-t pt-8 flex flex-col sm:flex-row items-center justify-between gap-3"
+            className="border-t pt-6 flex flex-col sm:flex-row items-center justify-between gap-3"
             style={{ borderColor: 'rgba(255,255,255,0.08)' }}
           >
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>
@@ -1820,15 +1820,15 @@ function FeaturedPostsSection() {
 
   return (
     <section
-      className="py-24 sm:py-32 relative overflow-hidden"
+      className="py-14 sm:py-20 relative overflow-hidden"
       style={{ background: '#eef4f9' }}
       aria-labelledby="featured-heading"
     >
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-4"
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
             style={{ color: '#2ecc71' }}
           >
             Community Highlights
@@ -1940,7 +1940,7 @@ function FeaturedPostsSection() {
 
         {/* CTA */}
         {!loading && posts.length > 0 && (
-          <div className="text-center mt-10">
+          <div className="text-center mt-6">
             <Link
               href="/auths/login"
               className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
@@ -2125,13 +2125,13 @@ function BeInTouchSection() {
 
   return (
     <section
-      className="py-24 sm:py-32 relative overflow-hidden"
+      className="py-14 sm:py-20 relative overflow-hidden"
       style={{ background: '#eef4f9' }}
       aria-labelledby="touch-heading"
     >
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6">
         <div
-          className="rounded-3xl p-10 sm:p-14 text-center"
+          className="rounded-3xl p-8 sm:p-10 text-center"
           style={{
             background: '#ffffff',
             border: '1px solid #e2e8f0',
@@ -2140,7 +2140,7 @@ function BeInTouchSection() {
         >
           {/* Icon */}
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-8"
+            className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
             style={{
               background: '#f0fdf4',
               border: '1px solid #bbf7d0',
@@ -2154,16 +2154,17 @@ function BeInTouchSection() {
             className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4"
             style={{ color: '#0f172a' }}
           >
-            Stay in the loop
+            Please Be{' '}
+            <span style={{ color: '#2ecc71' }}>in Touch!</span>
           </h2>
           <p
-            className="text-base leading-relaxed max-w-lg mx-auto mb-10"
+            className="text-base leading-relaxed max-w-lg mx-auto mb-6"
             style={{ color: '#475569' }}
           >
-            Our team is made up of volunteers from around the world. Sign up for our newsletter
-            and we&apos;ll send updates as we make progress.{' '}
+            Our team is made up of volunteer contributors from around the world.
+            We will send updates as we make progress.{' '}
             <span className="font-semibold" style={{ color: '#0f172a' }}>
-              Every contribution, big or small, is appreciated.
+              Your contributions, as simple as a contact or as great as a donation, everything is much appreciated.
             </span>
           </p>
 
@@ -2171,7 +2172,7 @@ function BeInTouchSection() {
             onSubmit={handleSubmit}
             noValidate
             className="max-w-md mx-auto"
-            aria-label="Stay in touch email form"
+            aria-label="Be in touch email form"
           >
             <div
               className="flex items-center rounded-2xl overflow-hidden"
@@ -2205,7 +2206,7 @@ function BeInTouchSection() {
                   boxShadow: '0 2px 12px rgba(82,178,116,0.30)',
                 }}
               >
-                {isSubmitting ? 'Sending…' : 'Subscribe'}
+                {isSubmitting ? 'Submitting...' : 'Contact'}
               </button>
             </div>
 
@@ -2231,9 +2232,6 @@ function BeInTouchSection() {
             )}
           </form>
 
-          <p className="mt-6 text-xs" style={{ color: '#94a3b8' }}>
-            No spam. Unsubscribe any time.
-          </p>
         </div>
       </div>
     </section>
