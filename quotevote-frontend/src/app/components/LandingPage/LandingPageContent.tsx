@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
   Github,
   Twitter,
@@ -33,6 +33,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/store';
 import { SEARCH, GET_FEATURED_POSTS } from '@/graphql/queries';
+import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Post } from '@/types/post';
 
@@ -2078,6 +2079,8 @@ function BeInTouchSection() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [requestUserAccess] = useMutation(REQUEST_USER_ACCESS_MUTATION);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMessage('');
@@ -2092,17 +2095,16 @@ function BeInTouchSection() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/auth/check-email?email=${encodeURIComponent(trimmed)}`);
-      const result = await res.json();
-
-      if (result.status === 'registered') {
-        setSuccessMessage("You're already part of the community!");
+      await requestUserAccess({ variables: { requestUserAccessInput: { email: trimmed } } });
+      setSuccessMessage("Thank you for requesting access! We'll be in touch soon.");
+      setEmail('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('Email already exists')) {
+        setErrorMessage('This email is already registered.');
       } else {
-        setSuccessMessage("Thank you for reaching out! We'll be in touch soon.");
-        setEmail('');
+        setErrorMessage('Failed to submit request. Please try again.');
       }
-    } catch {
-      setErrorMessage('Failed to submit. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
