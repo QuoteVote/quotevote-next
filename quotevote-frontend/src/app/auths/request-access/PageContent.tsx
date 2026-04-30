@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useApolloClient, useMutation } from '@apollo/client/react'
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations'
@@ -31,15 +31,12 @@ export function RequestAccessPageContent() {
   const client = useApolloClient()
   const [requestAccess, { loading }] = useMutation(REQUEST_USER_ACCESS_MUTATION)
 
-  const [bgImage, setBgImage] = useState<string | null>(null)
+  const [bgImage] = useState<string>(
+    () => BG_IMAGES[Math.floor(Math.random() * BG_IMAGES.length)]
+  )
   const [userDetails, setUserDetails] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [requestInviteSuccessful, setRequestInviteSuccessful] = useState(false)
-
-  useEffect(() => {
-    const idx = Math.floor(Math.random() * BG_IMAGES.length)
-    setBgImage(BG_IMAGES[idx])
-  }, [])
 
   const onSubmit = async () => {
     setErrorMessage('')

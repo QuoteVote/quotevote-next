@@ -22,46 +22,38 @@ describe('RequestAccessPageContent', () => {
     })
   })
 
-  describe('Plan step (initial)', () => {
-    it('renders the plan selection step by default', () => {
+  describe('Email request form (initial)', () => {
+    it('renders the email input', () => {
       render(<RequestAccessPageContent />)
-      // Plan step should show Personal and Business options
       expect(
-        screen.queryByText(/personal/i) || screen.queryByText(/plan/i) || screen.queryByText(/business/i)
+        screen.queryByPlaceholderText(/enter email/i) ||
+        screen.queryByRole('textbox')
       ).toBeTruthy()
     })
 
-    it('renders step indicator', () => {
-      const { container } = render(<RequestAccessPageContent />)
-      // Step indicator uses rounded bars
-      const indicators = container.querySelectorAll('.rounded-full')
-      expect(indicators.length).toBeGreaterThan(0)
+    it('renders the Request Invite button', () => {
+      render(<RequestAccessPageContent />)
+      expect(
+        screen.queryByText(/request invite/i)
+      ).toBeTruthy()
     })
   })
 
   describe('Step navigation via URL', () => {
-    it('shows personal step when ?step=personal', () => {
+    it('handles ?step param without crashing', () => {
       ;(useSearchParams as jest.Mock).mockReturnValue({
         get: (key: string) => (key === 'step' ? 'personal' : null),
       })
-      render(<RequestAccessPageContent />)
-      expect(
-        screen.queryByLabelText(/first name/i) ||
-        screen.queryByText(/first name/i) ||
-        screen.queryByPlaceholderText(/jane/i)
-      ).toBeTruthy()
+      const { container } = render(<RequestAccessPageContent />)
+      expect(container).toBeInTheDocument()
     })
 
-    it('shows business step when ?step=business', () => {
+    it('handles ?step=business without crashing', () => {
       ;(useSearchParams as jest.Mock).mockReturnValue({
         get: (key: string) => (key === 'step' ? 'business' : null),
       })
-      render(<RequestAccessPageContent />)
-      expect(
-        screen.queryByLabelText(/company/i) ||
-        screen.queryByText(/company/i) ||
-        screen.queryByPlaceholderText(/acme/i)
-      ).toBeTruthy()
+      const { container } = render(<RequestAccessPageContent />)
+      expect(container).toBeInTheDocument()
     })
   })
 
