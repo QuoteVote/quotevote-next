@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useApolloClient, useMutation } from '@apollo/client/react'
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations'
 import { GET_CHECK_DUPLICATE_EMAIL } from '@/graphql/queries'
 import { PersonalForm } from '@/components/RequestAccess/PersonalForm/PersonalForm'
+import Link from 'next/link'
+import Image from 'next/image'
 
 const BG_IMAGES = [
   'viviana-rishe-UC8fvOyG5pU-unsplash.jpg',
@@ -22,6 +24,7 @@ const BG_IMAGES = [
 ]
 
 export function RequestAccessPageContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const wasRedirected = !!searchParams.get('from')
 
@@ -95,10 +98,48 @@ export function RequestAccessPageContent() {
         alignItems: 'center',
         justifyContent: 'flex-start',
         color: 'white',
-        padding: '40px 16px',
+        padding: '0 0 40px 0',
       }}
     >
-      {/* Logo */}
+      {/* Header: Logo icon (left) | Go back + Login (right) */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          padding: '0 24px',
+          height: 64,
+          flexShrink: 0,
+          boxSizing: 'border-box',
+        }}
+      >
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <Image src="/icons/android-chrome-192x192.png" alt="Quote.Vote" width={32} height={32} />
+        </Link>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              color: 'white',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              padding: 0,
+            }}
+          >
+            Go back
+          </button>
+
+          <Link href="/auths/login" style={{ color: 'white', fontSize: '1rem', textDecoration: 'none' }}>
+            Login
+          </Link>
+        </div>
+      </div>
+
+      {/* QUOTE.VOTE title in body, centered above the form */}
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <span
           style={{
@@ -108,11 +149,11 @@ export function RequestAccessPageContent() {
             letterSpacing: '0.12em',
             fontFamily: 'Montserrat, Inter, sans-serif',
             textTransform: 'uppercase',
+            WebkitTextStroke: '1.5px black',
+            paintOrder: 'stroke fill',
           }}
         >
-          Quote
-          <span style={{ color: '#00cf6e' }}>.</span>
-          Vote
+          Quote<span style={{ WebkitTextStroke: '1.5px black' }}>.</span>Vote
         </span>
       </div>
 
