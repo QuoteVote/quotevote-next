@@ -305,7 +305,7 @@ export function LandingPageContent({
           />
         </div>
 
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-12 pb-14 sm:pt-16 sm:pb-20 text-center">
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-20 pb-14 sm:pt-20 sm:pb-20 text-center">
           <p className="text-sm mb-4" style={{ color: '#64748b' }}>
             No algorithms. No ads. Just conversations.
           </p>
