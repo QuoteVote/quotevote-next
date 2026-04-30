@@ -27,7 +27,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Star,
-  Loader2,
   MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -1815,8 +1814,7 @@ function FeaturedPostsSection() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [posts.length]);
 
-  // Don't render section if no posts and not loading
-  if (!loading && posts.length === 0) return null;
+  if (loading || posts.length === 0) return null;
 
   return (
     <section
@@ -1850,23 +1848,7 @@ function FeaturedPostsSection() {
           </p>
         </div>
 
-        {/* Loading state */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2
-              className="animate-spin mb-4"
-              size={32}
-              style={{ color: '#2ecc71' }}
-            />
-            <p className="text-sm" style={{ color: '#64748b' }}>
-              Loading featured posts...
-            </p>
-          </div>
-        )}
-
-        {/* Carousel */}
-        {!loading && posts.length > 0 && (
-          <div className="relative">
+        <div className="relative">
             {/* Navigation arrows */}
             {posts.length > 1 && (
               <>
@@ -1922,10 +1904,7 @@ function FeaturedPostsSection() {
                     onClick={() => scrollToIndex(i)}
                     className="w-2 h-2 rounded-full transition-all"
                     style={{
-                      background:
-                        i === activeIndex
-                          ? '#16a34a'
-                          : '#e2e8f0',
+                      background: i === activeIndex ? '#2ecc71' : '#e2e8f0',
                       transform: i === activeIndex ? 'scale(1.4)' : 'scale(1)',
                     }}
                     role="tab"
@@ -1936,21 +1915,17 @@ function FeaturedPostsSection() {
               </div>
             )}
           </div>
-        )}
 
-        {/* CTA */}
-        {!loading && posts.length > 0 && (
-          <div className="text-center mt-6">
-            <Link
-              href="/auths/login"
-              className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
-              style={{ color: '#2ecc71' }}
-            >
-              Join to see more and participate
-              <ChevronRight size={16} aria-hidden />
-            </Link>
-          </div>
-        )}
+        <div className="text-center mt-6">
+          <Link
+            href="/auths/login"
+            className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
+            style={{ color: '#2ecc71' }}
+          >
+            Join to see more and participate
+            <ChevronRight size={16} aria-hidden />
+          </Link>
+        </div>
       </div>
     </section>
   );
