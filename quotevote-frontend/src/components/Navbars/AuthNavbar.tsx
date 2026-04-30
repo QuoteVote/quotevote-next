@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 export function AuthNavbar() {
   return (
     <header className="bg-card border-b border-border">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="w-full px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="/icons/android-chrome-192x192.png"

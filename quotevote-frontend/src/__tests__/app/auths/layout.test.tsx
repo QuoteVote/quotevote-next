@@ -22,23 +22,13 @@ describe('AuthLayout', () => {
     expect(screen.getByTestId('child-content')).toBeInTheDocument()
   })
 
-  it('renders AuthNavbar', () => {
+  it('does not render AuthNavbar (moved to card sub-layout)', () => {
     render(
       <AuthLayout>
         <div>Content</div>
       </AuthLayout>
     )
-    expect(screen.getByTestId('auth-navbar')).toBeInTheDocument()
-  })
-
-  it('renders white card container', () => {
-    const { container } = render(
-      <AuthLayout>
-        <div>Content</div>
-      </AuthLayout>
-    )
-    const card = container.querySelector('.bg-card')
-    expect(card).toBeInTheDocument()
+    expect(screen.queryByTestId('auth-navbar')).not.toBeInTheDocument()
   })
 
   it('renders with full min-height screen', () => {
@@ -49,14 +39,5 @@ describe('AuthLayout', () => {
     )
     const wrapper = container.querySelector('.min-h-screen')
     expect(wrapper).toBeInTheDocument()
-  })
-
-  it('renders main element for content', () => {
-    render(
-      <AuthLayout>
-        <div data-testid="page-content">Page</div>
-      </AuthLayout>
-    )
-    expect(screen.getByRole('main')).toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, type MockedResponse } from '../../utils/test-utils'
-import ForgotPasswordPageContent from '@/app/auths/forgot-password/PageContent'
+import ForgotPasswordPageContent from '@/app/auths/(card)/forgot-password/PageContent'
 import { SEND_PASSWORD_RESET_EMAIL } from '@/graphql/mutations'
 
 jest.mock('next/navigation', () => ({

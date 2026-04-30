@@ -5,10 +5,10 @@
  * with appropriate title and description fields.
  */
 
-import { metadata as loginMetadata } from '@/app/auths/login/page'
-import { metadata as signupMetadata } from '@/app/auths/signup/page'
-import { metadata as forgotPasswordMetadata } from '@/app/auths/forgot-password/page'
-import { metadata as passwordResetMetadata } from '@/app/auths/password-reset/page'
+import { metadata as loginMetadata } from '@/app/auths/(card)/login/page'
+import { metadata as signupMetadata } from '@/app/auths/(card)/signup/page'
+import { metadata as forgotPasswordMetadata } from '@/app/auths/(card)/forgot-password/page'
+import { metadata as passwordResetMetadata } from '@/app/auths/(card)/password-reset/page'
 import { metadata as requestAccessMetadata } from '@/app/auths/request-access/page'
 import { metadata as aboutMetadata } from '@/app/about/page'
 import { metadata as planMetadata } from '@/app/plan/page'

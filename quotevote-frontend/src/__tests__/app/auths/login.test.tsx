@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '../../utils/test-utils'
-import LoginPageContent from '@/app/auths/login/PageContent'
+import LoginPageContent from '@/app/auths/(card)/login/PageContent'
 
 const mockPush = jest.fn()
 jest.mock('next/navigation', () => ({

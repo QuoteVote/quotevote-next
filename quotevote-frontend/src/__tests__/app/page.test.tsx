@@ -34,11 +34,13 @@ jest.mock('next/image', () => ({
   ),
 }));
 
-// Apollo mock — override useQuery from @apollo/client/react
+// Apollo mock — override useQuery and useMutation from @apollo/client/react
 const mockUseQuery = jest.fn();
+const mockUseMutation = jest.fn(() => [jest.fn(), { loading: false }]);
 jest.mock('@apollo/client/react', () => ({
   ...jest.requireActual('@apollo/client/react'),
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
+  useMutation: (..._args: unknown[]) => mockUseMutation(),
 }));
 
 // useDebounce mock — returns value immediately (no delay in tests)
@@ -491,13 +493,13 @@ describe('LandingPage', () => {
       ).toBeInTheDocument();
     });
 
-    it('renders "Stay in the loop" section with email form', () => {
+    it('renders "Please Be in Touch" section with email form', () => {
       renderLandingPage();
       expect(
-        screen.getByRole('heading', { name: /stay in the loop/i })
+        screen.getByRole('heading', { name: /please be in touch/i })
       ).toBeInTheDocument();
       expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /subscribe/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /contact/i })).toBeInTheDocument();
     });
   });
 
@@ -508,7 +510,7 @@ describe('LandingPage', () => {
       const user = userEvent.setup();
       renderLandingPage();
 
-      const submitBtn = screen.getByRole('button', { name: /subscribe/i });
+      const submitBtn = screen.getByRole('button', { name: /contact/i });
       await user.click(submitBtn);
 
       expect(
@@ -521,7 +523,7 @@ describe('LandingPage', () => {
       renderLandingPage();
 
       await user.type(screen.getByLabelText(/email address/i), 'not-an-email');
-      await user.click(screen.getByRole('button', { name: /subscribe/i }));
+      await user.click(screen.getByRole('button', { name: /contact/i }));
 
       expect(
         await screen.findByText(/please enter a valid email address/i)
@@ -532,7 +534,7 @@ describe('LandingPage', () => {
       const user = userEvent.setup();
       renderLandingPage();
 
-      await user.click(screen.getByRole('button', { name: /subscribe/i }));
+      await user.click(screen.getByRole('button', { name: /contact/i }));
       await screen.findByText(/please enter a valid email address/i);
 
       await user.type(screen.getByLabelText(/email address/i), 'a');

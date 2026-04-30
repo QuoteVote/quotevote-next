@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
   Github,
   Twitter,
@@ -27,14 +27,13 @@ import {
   ChevronRight,
   ChevronLeft,
   Star,
-  Loader2,
   MessageCircle,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/store';
 import { SEARCH, GET_FEATURED_POSTS } from '@/graphql/queries';
+import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Post } from '@/types/post';
 
@@ -179,7 +178,7 @@ export function LandingPageContent({
   }, [user, router]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#ffffff' }} data-testid="landing-page">
+    <div className="min-h-screen flex flex-col" style={{ background: '#eef4f9' }} data-testid="landing-page">
       {/* ── Navbar ────────────────────────────────────────────── */}
       <nav
         className="sticky top-0 z-50 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
@@ -187,7 +186,7 @@ export function LandingPageContent({
         aria-label="Main navigation"
         style={{ borderImage: 'linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1' }}
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        <div className="w-full px-4 h-16 flex items-center justify-between gap-4">
           <Link
             href="/"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded-lg"
@@ -239,6 +238,21 @@ export function LandingPageContent({
               Donate
             </a>
 
+            <a
+              href="https://github.com/QuoteVote/quotevote-next"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg transition-all hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2AE6B2]"
+              style={{ color: '#0A2342', display: 'inline-flex', alignItems: 'center' }}
+              aria-label="GitHub repository (opens in new tab)"
+              onMouseEnter={e => (e.currentTarget.style.color = '#2AE6B2')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#0A2342')}
+            >
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+              </svg>
+            </a>
+
             <div
               className="w-px h-5 mx-1 hidden sm:block"
               style={{ background: '#e2e8f0' }}
@@ -249,7 +263,7 @@ export function LandingPageContent({
               href="/auths/login"
               className="px-4 py-2 text-sm font-semibold rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:ring-offset-2"
               style={{
-                color: '#16a34a',
+                color: '#2ecc71',
                 border: '1.5px solid #bbf7d0',
                 background: '#f0fdf4',
               }}
@@ -278,7 +292,7 @@ export function LandingPageContent({
       <section
         className="relative flex-shrink-0 overflow-hidden"
         aria-labelledby="hero-heading"
-        style={{ background: '#ffffff' }}
+        style={{ background: '#eef4f9' }}
       >
         {/* Background atmosphere */}
         <div className="absolute inset-0 pointer-events-none select-none" aria-hidden>
@@ -291,24 +305,10 @@ export function LandingPageContent({
           />
         </div>
 
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-20 pb-24 sm:pt-28 sm:pb-32 text-center">
-          <div className="flex justify-center mb-7">
-            <Badge
-              className="gap-2 px-4 py-1.5 text-sm font-medium rounded-full"
-              style={{
-                background: '#f0fdf4',
-                border: '1px solid #bbf7d0',
-                color: '#16a34a',
-              }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse"
-                style={{ background: '#16a34a' }}
-                aria-hidden
-              />
-              No algorithms. No ads. Just conversations.
-            </Badge>
-          </div>
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-20 pb-14 sm:pt-20 sm:pb-20 text-center">
+          <p className="text-sm mb-4" style={{ color: '#64748b' }}>
+            No algorithms. No ads. Just conversations.
+          </p>
 
           <h1
             id="hero-heading"
@@ -316,20 +316,20 @@ export function LandingPageContent({
             style={{ color: '#0f172a' }}
           >
             Share Ideas.{' '}
-            <span style={{ color: '#16a34a' }}>
+            <span style={{ color: '#2ecc71' }}>
               Vote
             </span>{' '}
             on What Matters.
           </h1>
 
-          <p className="text-base sm:text-lg leading-relaxed mb-9 max-w-lg mx-auto" style={{ color: '#64748b' }}>
+          <p className="text-base sm:text-lg leading-relaxed mb-6 max-w-lg mx-auto" style={{ color: '#64748b' }}>
             An open-source, text-first platform for thoughtful dialogue. Quote,
             vote, and engage in real conversations.
           </p>
 
           <HeroSearch router={router} />
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-5">
             <Button
               asChild
               size="lg"
@@ -354,7 +354,7 @@ export function LandingPageContent({
               style={{
                 background: '#f0fdf4',
                 borderColor: '#bbf7d0',
-                color: '#16a34a',
+                color: '#2ecc71',
               }}
             >
               <Link href="/auths/login" aria-label="Login to your account">
@@ -363,7 +363,7 @@ export function LandingPageContent({
             </Button>
           </div>
 
-          <div className="flex items-center justify-center mt-10 gap-0">
+          <div className="flex items-center justify-center mt-6 gap-0">
             {(['Open Source', 'Ad-Free', 'Community-Driven', 'No Tracking'] as const).map(
               (label, i, arr) => (
                 <React.Fragment key={label}>
@@ -394,7 +394,7 @@ export function LandingPageContent({
       <div
         className="border-y"
         style={{
-          background: '#f8fafc',
+          background: '#eef4f9',
           borderColor: '#e2e8f0',
         }}
       >
@@ -410,7 +410,7 @@ export function LandingPageContent({
                 }}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <Icon size={14} style={{ color: '#16a34a' }} aria-hidden />
+                  <Icon size={14} style={{ color: '#2ecc71' }} aria-hidden />
                 </div>
                 <span
                   className="text-2xl sm:text-3xl font-extrabold tracking-tight"
@@ -433,17 +433,17 @@ export function LandingPageContent({
       {/* ── Mission / About ───────────────────────────────────── */}
       <section
         id="about-section"
-        className="relative overflow-hidden py-24 sm:py-32"
-        style={{ background: '#ffffff' }}
+        className="relative overflow-hidden py-14 sm:py-20"
+        style={{ background: '#eef4f9' }}
         aria-labelledby="about-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-10 items-start">
             {/* Left — headline */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
-                style={{ color: '#16a34a' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                style={{ color: '#2ecc71' }}
               >
                 Our Mission
               </p>
@@ -454,18 +454,13 @@ export function LandingPageContent({
               >
                 Welcome to{' '}
                 <span
-                  style={{
-                    background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 60%, #16a34a 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
+                  style={{ color: '#2ecc71' }}
                 >
                   Quote.Vote
                 </span>
               </h2>
               <p
-                className="text-lg leading-relaxed mb-10"
+                className="text-lg leading-relaxed mb-6"
                 style={{ color: '#475569' }}
               >
                 A non-profit platform where every voice counts. Donate your time or
@@ -485,7 +480,7 @@ export function LandingPageContent({
                 </p>
               </blockquote>
 
-              <div className="flex flex-wrap gap-3 mt-10">
+              <div className="flex flex-wrap gap-3 mt-6">
                 <Link
                   href="/auths/request-access"
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 hover:-translate-y-0.5"
@@ -504,7 +499,7 @@ export function LandingPageContent({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5"
                   style={{
-                    color: '#16a34a',
+                    color: '#2ecc71',
                     border: '1.5px solid #bbf7d0',
                     background: '#f0fdf4',
                   }}
@@ -516,7 +511,7 @@ export function LandingPageContent({
             </div>
 
             {/* Right — pillars */}
-            <div className="flex flex-col gap-5 lg:pt-16">
+            <div className="flex flex-col gap-4">
               {[
                 {
                   emoji: '🗣️',
@@ -549,7 +544,7 @@ export function LandingPageContent({
                   <div className="flex-shrink-0 mt-1">
                     <span
                       className="text-xs font-bold tracking-widest"
-                      style={{ color: '#16a34a' }}
+                      style={{ color: '#2ecc71' }}
                     >
                       {num}
                     </span>
@@ -574,15 +569,15 @@ export function LandingPageContent({
 
       {/* ── Features — Bento Grid ─────────────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#f8fafc' }}
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
         aria-labelledby="features-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <p
-              className="text-xs font-bold uppercase tracking-[0.25em] mb-4"
-              style={{ color: '#16a34a' }}
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+              style={{ color: '#2ecc71' }}
             >
               Platform Features
             </p>
@@ -593,12 +588,7 @@ export function LandingPageContent({
             >
               Built for{' '}
               <span
-                style={{
-                  background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 60%, #16a34a 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
+                style={{ color: '#2ecc71' }}
               >
                 Meaningful
               </span>{' '}
@@ -611,7 +601,7 @@ export function LandingPageContent({
             {/* Feature 01 — large */}
             <ScrollReveal className="lg:col-span-2" delay={0}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -619,7 +609,7 @@ export function LandingPageContent({
               }}
             >
               <div>
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <span
                     className="text-5xl font-extrabold leading-none tracking-tight"
                     style={{ color: '#e2e8f0' }}
@@ -630,7 +620,7 @@ export function LandingPageContent({
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: '#f0fdf4' }}
                   >
-                    <MessageSquareQuote size={22} style={{ color: '#16a34a' }} aria-hidden />
+                    <MessageSquareQuote size={22} style={{ color: '#2ecc71' }} aria-hidden />
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Targeted Feedback</h3>
@@ -640,8 +630,8 @@ export function LandingPageContent({
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#16a34a' }} />
-                <span className="text-xs font-medium" style={{ color: '#16a34a' }}>
+                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
+                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
                   Precision quoting on any passage
                 </span>
               </div>
@@ -651,7 +641,7 @@ export function LandingPageContent({
             {/* Feature 02 */}
             <ScrollReveal delay={100}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -659,7 +649,7 @@ export function LandingPageContent({
               }}
             >
               <div>
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <span
                     className="text-5xl font-extrabold leading-none tracking-tight"
                     style={{ color: '#e2e8f0' }}
@@ -670,7 +660,7 @@ export function LandingPageContent({
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: '#f0fdf4' }}
                   >
-                    <Zap size={22} style={{ color: '#16a34a' }} aria-hidden />
+                    <Zap size={22} style={{ color: '#2ecc71' }} aria-hidden />
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Live Chat Threads</h3>
@@ -680,8 +670,8 @@ export function LandingPageContent({
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#16a34a' }} />
-                <span className="text-xs font-medium" style={{ color: '#16a34a' }}>
+                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
+                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
                   Real-time public threads
                 </span>
               </div>
@@ -691,7 +681,7 @@ export function LandingPageContent({
             {/* Feature 03 */}
             <ScrollReveal delay={200}>
             <div
-              className="rounded-3xl p-8 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -699,7 +689,7 @@ export function LandingPageContent({
               }}
             >
               <div>
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <span
                     className="text-5xl font-extrabold leading-none tracking-tight"
                     style={{ color: '#e2e8f0' }}
@@ -710,7 +700,7 @@ export function LandingPageContent({
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: '#f0fdf4' }}
                   >
-                    <ThumbsUp size={22} style={{ color: '#16a34a' }} aria-hidden />
+                    <ThumbsUp size={22} style={{ color: '#2ecc71' }} aria-hidden />
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Voting Mechanics</h3>
@@ -720,8 +710,8 @@ export function LandingPageContent({
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#16a34a' }} />
-                <span className="text-xs font-medium" style={{ color: '#16a34a' }}>
+                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
+                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
                   Transparent democratic voting
                 </span>
               </div>
@@ -739,7 +729,7 @@ export function LandingPageContent({
               }}
             >
               <div className="flex-1">
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <span
                     className="text-5xl font-extrabold leading-none tracking-tight"
                     style={{ color: '#e2e8f0' }}
@@ -750,7 +740,7 @@ export function LandingPageContent({
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: '#f0fdf4' }}
                   >
-                    <ShieldOff size={22} style={{ color: '#16a34a' }} aria-hidden />
+                    <ShieldOff size={22} style={{ color: '#2ecc71' }} aria-hidden />
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Ad-Free &amp; Algorithm-Free</h3>
@@ -766,7 +756,7 @@ export function LandingPageContent({
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
                     style={{
                       background: '#f0fdf4',
-                      color: '#16a34a',
+                      color: '#2ecc71',
                       border: '1px solid #bbf7d0',
                     }}
                   >
@@ -782,17 +772,17 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — Voting UI ──────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#ffffff' }}
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
         aria-labelledby="showcase-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             {/* Text side */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
-                style={{ color: '#16a34a' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                style={{ color: '#2ecc71' }}
               >
                 See it in action
               </p>
@@ -803,21 +793,16 @@ export function LandingPageContent({
               >
                 What people{' '}
                 <span
-                  style={{
-                    background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 60%, #16a34a 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
+                  style={{ color: '#2ecc71' }}
                 >
                   are saying
                 </span>
               </h2>
-              <p className="text-base leading-relaxed mb-8" style={{ color: '#475569' }}>
+              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
                 For a project as small as your household, or around the world, Quote.Vote
                 can host the next conversation in your life — and knock it out of the park.
               </p>
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {[
                   'Quote any passage for targeted discussion',
                   'Vote up the ideas that matter most',
@@ -828,7 +813,7 @@ export function LandingPageContent({
                       className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background: '#f0fdf4' }}
                     >
-                      <CheckCircle2 size={12} style={{ color: '#16a34a' }} aria-hidden />
+                      <CheckCircle2 size={12} style={{ color: '#2ecc71' }} aria-hidden />
                     </div>
                     <span className="text-sm" style={{ color: '#475569' }}>
                       {item}
@@ -877,16 +862,16 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — At Any Time ────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#f8fafc' }}
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
         aria-labelledby="anytime-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+          <div className="mb-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <p
                 className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#16a34a' }}
+                style={{ color: '#2ecc71' }}
               >
                 Any time, anywhere
               </p>
@@ -897,12 +882,7 @@ export function LandingPageContent({
               >
                 Put your{' '}
                 <span
-                  style={{
-                    background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 60%, #16a34a 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
+                  style={{ color: '#2ecc71' }}
                 >
                   Quote
                 </span>{' '}
@@ -912,7 +892,7 @@ export function LandingPageContent({
             <Link
               href="/auths/request-access"
               className="inline-flex items-center gap-2 text-sm font-semibold shrink-0"
-              style={{ color: '#16a34a' }}
+              style={{ color: '#2ecc71' }}
               aria-label="Request an invite to join"
             >
               Start sharing <ChevronRight size={16} aria-hidden />
@@ -939,12 +919,12 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — Track Conversations ────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#ffffff' }}
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
         aria-labelledby="track-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             {/* Image side — left */}
             <div
               className="rounded-3xl overflow-hidden order-last lg:order-first"
@@ -965,8 +945,8 @@ export function LandingPageContent({
             {/* Text side — right */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
-                style={{ color: '#16a34a' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                style={{ color: '#2ecc71' }}
               >
                 Stay informed
               </p>
@@ -977,21 +957,16 @@ export function LandingPageContent({
               >
                 Track every{' '}
                 <span
-                  style={{
-                    background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 60%, #16a34a 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
+                  style={{ color: '#2ecc71' }}
                 >
                   Conversation
                 </span>
               </h2>
-              <p className="text-base leading-relaxed mb-8" style={{ color: '#475569' }}>
+              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
                 Never lose track of a discussion. See where conversations are heading,
                 follow the threads that matter, and engage when it counts.
               </p>
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {[
                   'See engagement and vote counts at a glance',
                   'Filter by keyword, date, or people you follow',
@@ -1002,7 +977,7 @@ export function LandingPageContent({
                       className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background: '#f0fdf4' }}
                     >
-                      <CheckCircle2 size={12} style={{ color: '#16a34a' }} aria-hidden />
+                      <CheckCircle2 size={12} style={{ color: '#2ecc71' }} aria-hidden />
                     </div>
                     <span className="text-sm" style={{ color: '#475569' }}>
                       {item}
@@ -1017,14 +992,14 @@ export function LandingPageContent({
 
       {/* ── How It Works — 3 steps ────────────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#f8fafc' }}
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
         aria-labelledby="how-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
-            style={{ color: '#16a34a' }}
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+            style={{ color: '#2ecc71' }}
           >
             Simple by design
           </p>
@@ -1035,7 +1010,7 @@ export function LandingPageContent({
           >
             How it works
           </h2>
-          <p className="text-base mb-16 max-w-lg mx-auto" style={{ color: '#475569' }}>
+          <p className="text-base mb-10 max-w-lg mx-auto" style={{ color: '#475569' }}>
             Three steps to joining a community built on thoughtful discourse.
           </p>
 
@@ -1069,7 +1044,7 @@ export function LandingPageContent({
             ].map(({ step, icon: Icon, title, body }) => (
               <div
                 key={step}
-                className="flex flex-col items-center text-center px-4 py-8 rounded-3xl transition-all hover:-translate-y-1"
+                className="flex flex-col items-center text-center px-5 py-6 rounded-3xl transition-all hover:-translate-y-1"
                 style={{
                   background: '#ffffff',
                   border: '1px solid #e2e8f0',
@@ -1077,17 +1052,17 @@ export function LandingPageContent({
                 }}
               >
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
                   style={{
                     background: '#f0fdf4',
                     border: '1px solid #bbf7d0',
                   }}
                 >
-                  <Icon size={26} style={{ color: '#16a34a' }} aria-hidden />
+                  <Icon size={26} style={{ color: '#2ecc71' }} aria-hidden />
                 </div>
                 <span
                   className="text-xs font-bold tracking-[0.2em] uppercase mb-2"
-                  style={{ color: '#16a34a' }}
+                  style={{ color: '#2ecc71' }}
                 >
                   Step {step}
                 </span>
@@ -1103,21 +1078,10 @@ export function LandingPageContent({
 
       {/* ── Full-width CTA Banner ─────────────────────────────── */}
       <section
-        className="relative overflow-hidden py-24 sm:py-28"
-        style={{
-          background: 'linear-gradient(135deg, #052e16 0%, #14532d 100%)',
-        }}
+        className="relative overflow-hidden py-14 sm:py-20"
+        style={{ background: '#eef4f9' }}
         aria-label="Call to action"
       >
-        {/* Glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(ellipse 70% 80% at 50% 50%, rgba(22,163,74,0.18) 0%, transparent 70%)',
-          }}
-          aria-hidden
-        />
         {/* Decorative large quote */}
         <span
           className="absolute select-none pointer-events-none font-serif"
@@ -1136,30 +1100,26 @@ export function LandingPageContent({
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
-            style={{ color: 'rgba(134,239,172,0.80)' }}
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+            style={{ color: '#2ecc71' }}
           >
             Ready to join?
           </p>
           <h2
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6"
+            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6"
+            style={{ color: '#0f172a' }}
           >
             The future of{' '}
             <span
-              style={{
-                background: 'linear-gradient(100deg, #4ade80 0%, #86efac 60%, #4ade80 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
+              style={{ color: '#2ecc71' }}
             >
               thoughtful discourse
             </span>{' '}
             is here.
           </h2>
           <p
-            className="text-lg leading-relaxed mb-10 max-w-2xl mx-auto"
-            style={{ color: 'rgba(255,255,255,0.60)' }}
+            className="text-lg leading-relaxed mb-6 max-w-2xl mx-auto"
+            style={{ color: '#475569' }}
           >
             Join a growing community of thinkers, builders, and changemakers who believe
             great conversations can change the world.
@@ -1170,7 +1130,7 @@ export function LandingPageContent({
               className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-white text-base transition-all hover:opacity-90 hover:-translate-y-0.5 w-full sm:w-auto"
               style={{
                 background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                boxShadow: '0 6px 30px rgba(22,163,74,0.40)',
+                boxShadow: '0 6px 30px rgba(22,163,74,0.25)',
               }}
               aria-label="Request an invite to join Quote.Vote"
             >
@@ -1180,7 +1140,7 @@ export function LandingPageContent({
             <Link
               href="/#about-section"
               className="inline-flex items-center gap-2 text-base font-semibold transition-all hover:opacity-80"
-              style={{ color: '#86efac' }}
+              style={{ color: '#2ecc71' }}
             >
               Read our mission
               <ChevronRight size={18} aria-hidden />
@@ -1191,15 +1151,15 @@ export function LandingPageContent({
 
       {/* ── Discover & Share — two-column ─────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#ffffff' }}
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
         aria-labelledby="discover-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <p
-              className="text-xs font-bold uppercase tracking-[0.25em] mb-4"
-              style={{ color: '#16a34a' }}
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+              style={{ color: '#2ecc71' }}
             >
               For everyone
             </p>
@@ -1215,7 +1175,7 @@ export function LandingPageContent({
           <div className="grid sm:grid-cols-2 gap-6">
             {/* Discover card */}
             <div
-              className="rounded-3xl p-10"
+              className="rounded-3xl p-7"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -1223,20 +1183,15 @@ export function LandingPageContent({
               }}
             >
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-8"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
                 style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
               >
-                <Search size={24} style={{ color: '#16a34a' }} aria-hidden />
+                <Search size={24} style={{ color: '#2ecc71' }} aria-hidden />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{ color: '#0f172a' }}>
                 Discover{' '}
                 <span
-                  style={{
-                    background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
+                  style={{ color: '#2ecc71' }}
                 >
                   without bias
                 </span>
@@ -1252,7 +1207,7 @@ export function LandingPageContent({
                 {['No algorithmic curation', 'Historical event search', 'Follow-based filtering'].map(
                   (item) => (
                     <li key={item} className="flex items-center gap-2.5">
-                      <ChevronRight size={14} style={{ color: '#16a34a' }} aria-hidden />
+                      <ChevronRight size={14} style={{ color: '#2ecc71' }} aria-hidden />
                       <span className="text-sm" style={{ color: '#475569' }}>
                         {item}
                       </span>
@@ -1264,7 +1219,7 @@ export function LandingPageContent({
 
             {/* Share card */}
             <div
-              className="rounded-3xl p-10"
+              className="rounded-3xl p-7"
               style={{
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -1272,20 +1227,15 @@ export function LandingPageContent({
               }}
             >
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-8"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
                 style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
               >
-                <TrendingUp size={24} style={{ color: '#16a34a' }} aria-hidden />
+                <TrendingUp size={24} style={{ color: '#2ecc71' }} aria-hidden />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{ color: '#0f172a' }}>
                 Share{' '}
                 <span
-                  style={{
-                    background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
+                  style={{ color: '#2ecc71' }}
                 >
                   your ideas
                 </span>
@@ -1301,7 +1251,7 @@ export function LandingPageContent({
                 {['Public and private circles', 'Quote-based responses', 'Democratic voting on ideas'].map(
                   (item) => (
                     <li key={item} className="flex items-center gap-2.5">
-                      <ChevronRight size={14} style={{ color: '#16a34a' }} aria-hidden />
+                      <ChevronRight size={14} style={{ color: '#2ecc71' }} aria-hidden />
                       <span className="text-sm" style={{ color: '#475569' }}>
                         {item}
                       </span>
@@ -1316,17 +1266,17 @@ export function LandingPageContent({
 
       {/* ── Donate ────────────────────────────────────────────── */}
       <section
-        className="py-24 sm:py-32 relative overflow-hidden"
-        style={{ background: '#f8fafc' }}
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
         aria-labelledby="donate-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             {/* Left */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-5"
-                style={{ color: '#16a34a' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                style={{ color: '#2ecc71' }}
               >
                 Support the mission
               </p>
@@ -1337,12 +1287,7 @@ export function LandingPageContent({
               >
                 Donate{' '}
                 <span
-                  style={{
-                    background: 'linear-gradient(100deg, #16a34a 0%, #4ade80 60%, #16a34a 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
+                  style={{ color: '#2ecc71' }}
                 >
                   what you can
                 </span>
@@ -1370,7 +1315,7 @@ export function LandingPageContent({
                 </div>
               </div>
 
-              <p className="text-base leading-relaxed mb-8" style={{ color: '#475569' }}>
+              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
                 Join us in creating a truly open and equal community where civil conversation is
                 the main objective. If you fork our project, kindly consider contributing back.
               </p>
@@ -1395,7 +1340,7 @@ export function LandingPageContent({
                   className="inline-flex items-center justify-center px-6 py-4 rounded-2xl font-bold text-sm transition-all hover:-translate-y-0.5"
                   style={{
                     background: '#f0fdf4',
-                    color: '#16a34a',
+                    color: '#2ecc71',
                     border: '1.5px solid #bbf7d0',
                   }}
                   aria-label="Donate to Quote.Vote today (opens in new tab)"
@@ -1409,13 +1354,13 @@ export function LandingPageContent({
             <div className="grid grid-cols-2 gap-4">
               {[
                 { icon: Heart, value: totalRaised, label: 'Total Raised', color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
-                { icon: Users, value: '∞', label: 'Community Members', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+                { icon: Users, value: '∞', label: 'Community Members', color: '#2ecc71', bg: '#f0fdf4', border: '#bbf7d0' },
                 { icon: Globe, value: '100%', label: 'Open Source', color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' },
-                { icon: ShieldOff, value: '0', label: 'Ads or Trackers', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+                { icon: ShieldOff, value: '0', label: 'Ads or Trackers', color: '#2ecc71', bg: '#f0fdf4', border: '#bbf7d0' },
               ].map(({ icon: Icon, value, label, color, bg, border }) => (
                 <div
                   key={label}
-                  className="rounded-2xl p-6 flex flex-col items-center text-center"
+                  className="rounded-2xl p-5 flex flex-col items-center text-center"
                   style={{
                     background: bg,
                     border: `1px solid ${border}`,
@@ -1455,9 +1400,9 @@ export function LandingPageContent({
           aria-hidden
         />
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-8">
           {/* Logo row */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
             <Link
               href="/"
               className="flex items-center gap-3"
@@ -1470,7 +1415,7 @@ export function LandingPageContent({
                 height={32}
                 className="object-contain"
               />
-              <span className="font-extrabold text-base tracking-wide" style={{ color: '#4ade80' }}>
+              <span className="font-extrabold text-base tracking-wide" style={{ color: '#2ecc71' }}>
                 QUOTE.VOTE
               </span>
             </Link>
@@ -1479,11 +1424,11 @@ export function LandingPageContent({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             {/* About */}
             <div className="col-span-2 md:col-span-1">
               <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
                 style={{ color: 'rgba(74,222,128,0.70)' }}
               >
                 Company
@@ -1502,12 +1447,12 @@ export function LandingPageContent({
             {/* Quick Links */}
             <div>
               <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
                 style={{ color: 'rgba(74,222,128,0.70)' }}
               >
                 Quick Links
               </h3>
-              <ul className="space-y-3" role="list">
+              <ul className="space-y-2" role="list">
                 {quickLinks.map(({ href, label, external }) => (
                   <li key={label}>
                     <a
@@ -1527,12 +1472,12 @@ export function LandingPageContent({
             {/* Resources */}
             <div>
               <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
                 style={{ color: 'rgba(74,222,128,0.70)' }}
               >
                 Resources
               </h3>
-              <ul className="space-y-3" role="list">
+              <ul className="space-y-2" role="list">
                 {resourceLinks.map(({ href, label }) => (
                   <li key={label}>
                     <a
@@ -1550,7 +1495,7 @@ export function LandingPageContent({
             {/* Connect */}
             <div>
               <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
                 style={{ color: 'rgba(74,222,128,0.70)' }}
               >
                 Connect
@@ -1579,7 +1524,7 @@ export function LandingPageContent({
 
           {/* Bottom row */}
           <div
-            className="border-t pt-8 flex flex-col sm:flex-row items-center justify-between gap-3"
+            className="border-t pt-6 flex flex-col sm:flex-row items-center justify-between gap-3"
             style={{ borderColor: 'rgba(255,255,255,0.08)' }}
           >
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>
@@ -1885,72 +1830,41 @@ function FeaturedPostsSection() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [posts.length]);
 
-  // Don't render section if no posts and not loading
-  if (!loading && posts.length === 0) return null;
+  if (loading || posts.length === 0) return null;
 
   return (
     <section
-      className="py-24 sm:py-32 relative overflow-hidden"
-      style={{ background: '#080f1a' }}
+      className="py-14 sm:py-20 relative overflow-hidden"
+      style={{ background: '#eef4f9' }}
       aria-labelledby="featured-heading"
     >
-      {/* Ambient glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(82,178,116,0.08) 0%, transparent 70%)',
-        }}
-        aria-hidden
-      />
-
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-4"
-            style={{ color: '#52b274' }}
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+            style={{ color: '#2ecc71' }}
           >
             Community Highlights
           </p>
           <h2
             id="featured-heading"
-            className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight"
+            className="text-4xl sm:text-5xl font-extrabold tracking-tight"
+            style={{ color: '#0f172a' }}
           >
             Featured{' '}
             <span
-              style={{
-                background: 'linear-gradient(100deg, #52b274 0%, #9de8b8 60%, #52b274 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
+              style={{ color: '#2ecc71' }}
             >
               Posts
             </span>
           </h2>
-          <p className="text-base mt-4 max-w-lg mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-base mt-4 max-w-lg mx-auto" style={{ color: '#475569' }}>
             See what the community is talking about right now.
           </p>
         </div>
 
-        {/* Loading state */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2
-              className="animate-spin mb-4"
-              size={32}
-              style={{ color: '#52b274' }}
-            />
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              Loading featured posts...
-            </p>
-          </div>
-        )}
-
-        {/* Carousel */}
-        {!loading && posts.length > 0 && (
-          <div className="relative">
+        <div className="relative">
             {/* Navigation arrows */}
             {posts.length > 1 && (
               <>
@@ -1960,12 +1874,12 @@ function FeaturedPostsSection() {
                   disabled={activeIndex === 0}
                   className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
                   style={{
-                    background: 'rgba(82,178,116,0.15)',
-                    border: '1px solid rgba(82,178,116,0.30)',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
                   }}
                   aria-label="Previous featured post"
                 >
-                  <ChevronLeft size={20} style={{ color: '#8de0a8' }} />
+                  <ChevronLeft size={20} style={{ color: '#2ecc71' }} />
                 </button>
                 <button
                   type="button"
@@ -1973,12 +1887,12 @@ function FeaturedPostsSection() {
                   disabled={activeIndex === posts.length - 1}
                   className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
                   style={{
-                    background: 'rgba(82,178,116,0.15)',
-                    border: '1px solid rgba(82,178,116,0.30)',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
                   }}
                   aria-label="Next featured post"
                 >
-                  <ChevronRight size={20} style={{ color: '#8de0a8' }} />
+                  <ChevronRight size={20} style={{ color: '#2ecc71' }} />
                 </button>
               </>
             )}
@@ -2006,10 +1920,7 @@ function FeaturedPostsSection() {
                     onClick={() => scrollToIndex(i)}
                     className="w-2 h-2 rounded-full transition-all"
                     style={{
-                      background:
-                        i === activeIndex
-                          ? '#52b274'
-                          : 'rgba(255,255,255,0.20)',
+                      background: i === activeIndex ? '#2ecc71' : '#e2e8f0',
                       transform: i === activeIndex ? 'scale(1.4)' : 'scale(1)',
                     }}
                     role="tab"
@@ -2020,21 +1931,17 @@ function FeaturedPostsSection() {
               </div>
             )}
           </div>
-        )}
 
-        {/* CTA */}
-        {!loading && posts.length > 0 && (
-          <div className="text-center mt-10">
-            <Link
-              href="/auths/login"
-              className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
-              style={{ color: '#8de0a8' }}
-            >
-              Join to see more and participate
-              <ChevronRight size={16} aria-hidden />
-            </Link>
-          </div>
-        )}
+        <div className="text-center mt-6">
+          <Link
+            href="/auths/login"
+            className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
+            style={{ color: '#2ecc71' }}
+          >
+            Join to see more and participate
+            <ChevronRight size={16} aria-hidden />
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -2073,8 +1980,9 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
       <div
         className="rounded-2xl p-6 h-full flex flex-col transition-all hover:-translate-y-1"
         style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(82,178,116,0.15)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
         }}
       >
         {/* Header: author + star badge */}
@@ -2082,27 +1990,27 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
             style={{
-              background: 'rgba(82,178,116,0.15)',
-              color: '#8de0a8',
+              background: '#f0fdf4',
+              color: '#2ecc71',
             }}
           >
             {creatorName[0]?.toUpperCase() || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{creatorName}</p>
-            <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <p className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{creatorName}</p>
+            <p className="text-xs truncate" style={{ color: '#94a3b8' }}>
               @{username} · {timeAgo}
             </p>
           </div>
           <div
             className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
             style={{
-              background: 'rgba(82,178,116,0.10)',
-              border: '1px solid rgba(82,178,116,0.20)',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
             }}
           >
-            <Star size={12} style={{ color: '#52b274' }} aria-hidden />
-            <span className="text-[10px] font-bold" style={{ color: '#8de0a8' }}>
+            <Star size={12} style={{ color: '#2ecc71' }} aria-hidden />
+            <span className="text-[10px] font-bold" style={{ color: '#2ecc71' }}>
               Featured
             </span>
           </div>
@@ -2110,7 +2018,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
 
         {/* Title */}
         {post.title && (
-          <h3 className="text-base font-bold text-white mb-2 leading-snug line-clamp-2">
+          <h3 className="text-base font-bold mb-2 leading-snug line-clamp-2" style={{ color: '#0f172a' }}>
             {post.title}
           </h3>
         )}
@@ -2119,7 +2027,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
         {displayText && (
           <p
             className="text-sm leading-relaxed mb-4 flex-1 line-clamp-4"
-            style={{ color: 'rgba(255,255,255,0.55)' }}
+            style={{ color: '#475569' }}
           >
             {displayText}
           </p>
@@ -2128,29 +2036,29 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
         {/* Engagement stats */}
         <div
           className="flex items-center gap-4 pt-4 mt-auto"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ borderTop: '1px solid #e2e8f0' }}
         >
           <div className="flex items-center gap-1.5">
-            <ThumbsUp size={14} style={{ color: 'rgba(82,178,116,0.70)' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <ThumbsUp size={14} style={{ color: '#2ecc71' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
               {upvotes}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <ThumbsDown size={14} style={{ color: 'rgba(245,81,69,0.60)' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <ThumbsDown size={14} style={{ color: '#ef4444' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
               {downvotes}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <MessageCircle size={14} style={{ color: 'rgba(39,196,225,0.70)' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <MessageCircle size={14} style={{ color: '#27C4E1' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
               {commentCount}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <MessageSquareQuote size={14} style={{ color: 'rgba(200,160,60,0.70)' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <MessageSquareQuote size={14} style={{ color: '#c8a03c' }} aria-hidden />
+            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
               {quoteCount}
             </span>
           </div>
@@ -2171,6 +2079,8 @@ function BeInTouchSection() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [requestUserAccess] = useMutation(REQUEST_USER_ACCESS_MUTATION);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMessage('');
@@ -2185,17 +2095,16 @@ function BeInTouchSection() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/auth/check-email?email=${encodeURIComponent(trimmed)}`);
-      const result = await res.json();
-
-      if (result.status === 'registered') {
-        setSuccessMessage("You're already part of the community!");
+      await requestUserAccess({ variables: { requestUserAccessInput: { email: trimmed } } });
+      setSuccessMessage("Thank you for requesting access! We'll be in touch soon.");
+      setEmail('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('Email already exists')) {
+        setErrorMessage('This email is already registered.');
       } else {
-        setSuccessMessage("Thank you for reaching out! We'll be in touch soon.");
-        setEmail('');
+        setErrorMessage('Failed to submit request. Please try again.');
       }
-    } catch {
-      setErrorMessage('Failed to submit. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -2208,53 +2117,46 @@ function BeInTouchSection() {
 
   return (
     <section
-      className="py-24 sm:py-32 relative overflow-hidden"
-      style={{ background: '#0d1f10' }}
+      className="py-14 sm:py-20 relative overflow-hidden"
+      style={{ background: '#eef4f9' }}
       aria-labelledby="touch-heading"
     >
-      {/* Ambient glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 60% at 50% 100%, rgba(82,178,116,0.10) 0%, transparent 70%)',
-        }}
-        aria-hidden
-      />
-
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6">
         <div
-          className="rounded-3xl p-10 sm:p-14 text-center"
+          className="rounded-3xl p-8 sm:p-10 text-center"
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(82,178,116,0.15)',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
           }}
         >
           {/* Icon */}
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-8"
+            className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
             style={{
-              background: 'rgba(82,178,116,0.10)',
-              border: '1px solid rgba(82,178,116,0.20)',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
             }}
           >
-            <Mail size={26} style={{ color: '#52b274' }} aria-hidden />
+            <Mail size={26} style={{ color: '#2ecc71' }} aria-hidden />
           </div>
 
           <h2
             id="touch-heading"
-            className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4"
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4"
+            style={{ color: '#0f172a' }}
           >
-            Stay in the loop
+            Please Be{' '}
+            <span style={{ color: '#2ecc71' }}>in Touch!</span>
           </h2>
           <p
-            className="text-base leading-relaxed max-w-lg mx-auto mb-10"
-            style={{ color: 'rgba(255,255,255,0.50)' }}
+            className="text-base leading-relaxed max-w-lg mx-auto mb-6"
+            style={{ color: '#475569' }}
           >
-            Our team is made up of volunteers from around the world. Sign up for our newsletter
-            and we&apos;ll send updates as we make progress.{' '}
-            <span className="text-white font-semibold">
-              Every contribution, big or small, is appreciated.
+            Our team is made up of volunteer contributors from around the world.
+            We will send updates as we make progress.{' '}
+            <span className="font-semibold" style={{ color: '#0f172a' }}>
+              Your contributions, as simple as a contact or as great as a donation, everything is much appreciated.
             </span>
           </p>
 
@@ -2262,14 +2164,13 @@ function BeInTouchSection() {
             onSubmit={handleSubmit}
             noValidate
             className="max-w-md mx-auto"
-            aria-label="Stay in touch email form"
+            aria-label="Be in touch email form"
           >
             <div
               className="flex items-center rounded-2xl overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1.5px solid rgba(82,178,116,0.22)',
-                backdropFilter: 'blur(8px)',
+                background: '#f8fafc',
+                border: '1.5px solid #bbf7d0',
               }}
             >
               <label htmlFor="touch-email" className="sr-only">
@@ -2281,7 +2182,7 @@ function BeInTouchSection() {
                 placeholder="your@email.com"
                 value={email}
                 onChange={handleEmailChange}
-                className="flex-1 border-none outline-none text-base px-5 py-4 bg-transparent text-white placeholder:text-white/35"
+                className="flex-1 border-none outline-none text-base px-5 py-4 bg-transparent text-gray-900 placeholder:text-gray-400"
                 aria-invalid={!!errorMessage}
                 aria-describedby={
                   errorMessage ? 'touch-error' : successMessage ? 'touch-success' : undefined
@@ -2297,7 +2198,7 @@ function BeInTouchSection() {
                   boxShadow: '0 2px 12px rgba(82,178,116,0.30)',
                 }}
               >
-                {isSubmitting ? 'Sending…' : 'Subscribe'}
+                {isSubmitting ? 'Submitting...' : 'Contact'}
               </button>
             </div>
 
@@ -2323,9 +2224,6 @@ function BeInTouchSection() {
             )}
           </form>
 
-          <p className="mt-6 text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
-            No spam. Unsubscribe any time.
-          </p>
         </div>
       </div>
     </section>
