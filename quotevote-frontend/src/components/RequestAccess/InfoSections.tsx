@@ -342,13 +342,15 @@ export function InfoSections() {
               />
             </div>
 
-            <Image
-              src="/assets/group-image.svg"
-              alt="Group"
-              width={1200}
-              height={400}
-              className="w-full h-auto"
-            />
+            <div className="w-full max-w-5xl mx-auto">
+              <Image
+                src="/assets/group-image.svg"
+                alt="Group"
+                width={1200}
+                height={400}
+                className="w-full h-auto"
+              />
+            </div>
           </div>
         </section>
       </main>

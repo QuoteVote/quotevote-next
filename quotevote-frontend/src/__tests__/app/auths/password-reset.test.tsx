@@ -3,7 +3,7 @@
  */
 
 import { render, screen, fireEvent, waitFor, type MockedResponse } from '../../utils/test-utils'
-import PasswordResetPageContent from '@/app/auths/password-reset/PageContent'
+import PasswordResetPageContent from '@/app/auths/(card)/password-reset/PageContent'
 import { VERIFY_PASSWORD_RESET_TOKEN } from '@/graphql/queries'
 import { UPDATE_USER_PASSWORD } from '@/graphql/mutations'
 
