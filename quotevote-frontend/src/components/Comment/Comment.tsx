@@ -86,6 +86,8 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
     <article
       onMouseEnter={() => setFocusedComment(_id)}
       onMouseLeave={() => setFocusedComment(selected ? _id : null)}
+      data-comment-card="true"
+      data-current-user={isOwner ? 'true' : undefined}
       className={cn(
         'group/comment flex gap-3 py-3.5 transition-all duration-200',
         selected && 'bg-amber-50/60 dark:bg-amber-900/10 -mx-4 px-4 rounded-xl border border-amber-200/40 dark:border-amber-800/20'

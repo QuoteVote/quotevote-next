@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { getDomain, toAppPostUrl } from '@/lib/utils/sanitizeUrl'
 import { useAppStore } from '@/store'
 import { GET_GROUP } from '@/graphql/queries'
-import { UPDATE_POST_BOOKMARK } from '@/graphql/mutations'
+import { UPDATE_POST_BOOKMARK, APPROVE_POST, REJECT_POST } from '@/graphql/mutations'
 import { toast } from 'sonner'
 import getTopPostsVoteHighlights from '@/lib/utils/getTopPostsVoteHighlights'
 import useGuestGuard from '@/hooks/useGuestGuard'
@@ -62,7 +62,12 @@ function PostCardComponent({
   ) as string | undefined
 
   const [updateBookmark] = useMutation(UPDATE_POST_BOOKMARK)
+  const [approvePost, { loading: approvingPost }] = useMutation(APPROVE_POST)
+  const [rejectPost, { loading: rejectingPost }] = useMutation(REJECT_POST)
+
   const isBookmarked = userId ? bookmarkedBy.includes(userId) : false
+  const hasApproved = userId ? (approvedBy || []).includes(userId) : false
+  const hasRejected = userId ? (rejectedBy || []).includes(userId) : false
 
   const handleBookmark = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -82,6 +87,28 @@ function PostCardComponent({
       : window.location.href
     await navigator.clipboard.writeText(postUrl)
     toast.success('Link copied!')
+  }
+
+  const handleApprove = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!guestGuard()) return
+    if (!userId) return
+    try {
+      await approvePost({ variables: { postId: _id, userId, remove: hasApproved } })
+    } catch {
+      toast.error('Failed to update vote')
+    }
+  }
+
+  const handleReject = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!guestGuard()) return
+    if (!userId) return
+    try {
+      await rejectPost({ variables: { postId: _id, userId, remove: hasRejected } })
+    } catch {
+      toast.error('Failed to update vote')
+    }
   }
 
   const postText = text || ''
@@ -112,7 +139,12 @@ function PostCardComponent({
       : []
 
   const interactionCount =
-    comments.length + votes.length + quotes.length + messages.length
+    (approvedBy?.length ?? 0) +
+    (rejectedBy?.length ?? 0) +
+    comments.length +
+    votes.length +
+    quotes.length +
+    messages.length
 
   const { data: groupData } = useQuery<{ group?: { _id: string; title: string } }>(GET_GROUP, {
     variables: { groupId: groupId || '' },
@@ -170,14 +202,36 @@ function PostCardComponent({
       {/* ── Vote + interactions row ── */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b border-border/30">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-muted/50 text-sm">
-            <span className="font-bold text-[#52b274]">↑</span>
-            <span className="font-semibold tabular-nums text-foreground">{upvoteCount}</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-muted/50 text-sm">
-            <span className="font-bold text-[#ff6060]">↓</span>
-            <span className="font-semibold tabular-nums text-foreground">{downvoteCount}</span>
-          </div>
+          <button
+            type="button"
+            onClick={handleApprove}
+            disabled={approvingPost || rejectingPost}
+            aria-label={hasApproved ? 'Remove support' : 'Support this post'}
+            className={cn(
+              'flex items-center gap-1 px-2 py-0.5 rounded text-sm font-semibold transition-colors disabled:opacity-60',
+              hasApproved
+                ? 'bg-[#52b274] text-white'
+                : 'bg-muted/50 text-foreground hover:bg-[#52b274]/15 hover:text-[#52b274]'
+            )}
+          >
+            <span className={cn('font-bold', hasApproved ? 'text-white' : 'text-[#52b274]')}>↑</span>
+            <span className="tabular-nums">{upvoteCount}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleReject}
+            disabled={approvingPost || rejectingPost}
+            aria-label={hasRejected ? 'Remove disagreement' : 'Disagree with this post'}
+            className={cn(
+              'flex items-center gap-1 px-2 py-0.5 rounded text-sm font-semibold transition-colors disabled:opacity-60',
+              hasRejected
+                ? 'bg-[#ff6060] text-white'
+                : 'bg-muted/50 text-foreground hover:bg-[#ff6060]/15 hover:text-[#ff6060]'
+            )}
+          >
+            <span className={cn('font-bold', hasRejected ? 'text-white' : 'text-[#ff6060]')}>↓</span>
+            <span className="tabular-nums">{downvoteCount}</span>
+          </button>
           <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted/30">
             {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}
           </span>

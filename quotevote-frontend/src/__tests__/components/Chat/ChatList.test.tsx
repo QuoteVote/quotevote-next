@@ -38,6 +38,15 @@ jest.mock('@/components/Avatar', () => ({
   ),
 }))
 
+// ─── DisplayAvatar mock (used by ChatList) ─────────────────────────────────
+jest.mock('@/components/DisplayAvatar', () => ({
+  __esModule: true,
+  DisplayAvatar: ({ avatar, username }: { avatar?: string | Record<string, unknown>; username: string; size?: number; className?: string }) => {
+    const src = typeof avatar === 'string' ? avatar : `https://avataaars.io/?seed=${username}`
+    return <img data-testid="avatar" src={src} alt={`${username}'s avatar`} />
+  },
+}))
+
 // ─── LoadingSpinner mock ───────────────────────────────────────────────────
 jest.mock('@/components/LoadingSpinner', () => ({
   LoadingSpinner: ({ size }: { size: number }) => (
@@ -328,8 +337,8 @@ describe('ChatList', () => {
     render(<ChatList filterType="chats" />)
 
     await waitFor(() => {
-      // When no avatar, the first letter of the room title is displayed
-      expect(screen.getByText('J')).toBeInTheDocument()
+      // When no avatar, DisplayAvatar still renders a cartoon avatar image
+      expect(screen.getByTestId('avatar')).toBeInTheDocument()
     })
   })
 

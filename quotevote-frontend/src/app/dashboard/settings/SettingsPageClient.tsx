@@ -212,8 +212,8 @@ export default function SettingsPageClient() {
                 )}
               />
 
-              {/* Password (optional) */}
-              <FormField
+              {/* Password field hidden for now */}
+              {/* <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
@@ -229,7 +229,7 @@ export default function SettingsPageClient() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
 
               <Separator />
 

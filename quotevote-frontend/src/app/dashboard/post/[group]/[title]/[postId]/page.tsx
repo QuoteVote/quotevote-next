@@ -71,11 +71,11 @@ function PostLayout({ postId }: { postId: string }) {
   return (
     <div className={`flex ${containerHeight} overflow-hidden`}>
       {/* Left: Post content */}
-      <div className="flex-1 overflow-y-auto border-r border-border">
+      <div data-post-detail-pane="content" className="flex-1 overflow-y-auto border-r border-border">
         <PostController postId={postId} />
       </div>
       {/* Right: Unified discussion feed */}
-      <div className="w-[50%] flex flex-col overflow-hidden">
+      <div data-post-detail-pane="discussion" className="w-[50%] flex flex-col overflow-hidden">
         <InteractionSection postId={postId} />
       </div>
     </div>
@@ -201,7 +201,7 @@ function InteractionSection({ postId }: { postId: string }) {
   return (
     <div className="flex flex-col h-full">
       {/* Panel header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background shrink-0">
+      <div data-discussion-header className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background shrink-0">
         <MessagesSquare className="size-4 text-muted-foreground/50" />
         <span className="text-sm font-semibold text-foreground/75">Open Discussion</span>
         {postActions.length > 0 && (
@@ -217,12 +217,13 @@ function InteractionSection({ postId }: { postId: string }) {
           <span>Live updates paused. Reconnecting...</span>
         </div>
       )}
-      <div className="flex-1 overflow-y-auto">
+      <div data-discussion-scroll="true" className="flex-1 overflow-y-auto">
         <PostActionList
           postActions={postActions}
           loading={postLoading}
           postUrl={postUrl ?? undefined}
           refetchPost={() => refetchPost()}
+          postOwnerId={post?.userId}
         />
       </div>
       {messageRoomId && (

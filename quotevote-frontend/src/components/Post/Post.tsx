@@ -410,7 +410,6 @@ export default function Post({
                   : 'bg-transparent border-destructive/40 text-destructive hover:bg-destructive/5 hover:border-destructive'
               )}
             >
-              <span aria-hidden>❌</span>
               Disagree{rejectCount > 0 ? ` (${rejectCount})` : ''}
             </Button>
             <Button
@@ -424,7 +423,6 @@ export default function Post({
                   : 'bg-[#2e7d32] text-white hover:bg-[#1b5e20] shadow-[0_4px_14px_rgba(46,125,50,0.39)]'
               )}
             >
-              <span aria-hidden>✅</span>
               Support{approveCount > 0 ? ` (${approveCount})` : ''}
             </Button>
           </div>
@@ -432,12 +430,14 @@ export default function Post({
 
         {/* Utilities: follow, bookmark, voting toggle (owner), delete (owner/admin) */}
         <div className="flex items-center gap-1 ml-auto">
-          <FollowButton
-            isFollowing={isFollowing}
-            profileUserId={userId}
-            username={username || ''}
-            showIcon
-          />
+          {!isOwner && (
+            <FollowButton
+              isFollowing={isFollowing}
+              profileUserId={userId}
+              username={username || ''}
+              showIcon
+            />
+          )}
 
           <BookmarkIconButton
             post={{ _id: post._id, bookmarkedBy: post.bookmarkedBy || undefined }}

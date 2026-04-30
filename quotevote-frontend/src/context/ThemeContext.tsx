@@ -61,12 +61,8 @@ export function ThemeContextProvider({
     return false
   }
 
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() =>
-    getInitialThemeMode()
-  )
-  const [neoBrutalism, setNeoBrutalism] = useState<boolean>(() =>
-    getInitialNeoBrutalism()
-  )
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialThemeMode)
+  const [neoBrutalism, setNeoBrutalism] = useState<boolean>(getInitialNeoBrutalism)
 
   // Apply dark class to <html> whenever themeMode changes
   useEffect(() => {

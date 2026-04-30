@@ -1,6 +1,6 @@
 /**
  * Pagination Component Tests
- * 
+ *
  * Tests that verify:
  * - Component renders correctly with various props
  * - Page navigation works correctly
@@ -9,7 +9,7 @@
  * - Component shows/hides correctly based on totalPages
  */
 
-import { render, screen, fireEvent, waitFor, act } from '../utils/test-utils'
+import { render, screen, fireEvent, waitFor } from '../utils/test-utils'
 import { Pagination } from '@/components/common/Pagination'
 
 describe('Pagination Component', () => {
@@ -23,15 +23,6 @@ describe('Pagination Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.useFakeTimers()
-  })
-
-  afterEach(() => {
-    // Wrap timer operations in act() to handle state updates
-    act(() => {
-      jest.runOnlyPendingTimers()
-    })
-    jest.useRealTimers()
   })
 
   describe('Rendering', () => {
@@ -60,10 +51,10 @@ describe('Pagination Component', () => {
     it('renders page numbers correctly', () => {
       render(<Pagination {...defaultProps} currentPage={5} maxVisiblePages={5} />)
 
-      // Should show pages 3, 4, 5, 6, 7 (may appear in both desktop and mobile layouts)
-      const page3Buttons = screen.getAllByLabelText('Go to page 3')
-      const page5Buttons = screen.getAllByLabelText('Go to page 5')
-      const page7Buttons = screen.getAllByLabelText('Go to page 7')
+      // Should show pages 3, 4, 5, 6, 7
+      const page3Buttons = screen.getAllByLabelText('Page 3')
+      const page5Buttons = screen.getAllByLabelText('Page 5')
+      const page7Buttons = screen.getAllByLabelText('Page 7')
       expect(page3Buttons.length).toBeGreaterThan(0)
       expect(page5Buttons.length).toBeGreaterThan(0)
       expect(page7Buttons.length).toBeGreaterThan(0)
@@ -72,13 +63,13 @@ describe('Pagination Component', () => {
     it('shows page info when showPageInfo is true', () => {
       render(<Pagination {...defaultProps} showPageInfo={true} />)
 
-      expect(screen.getByText(/1-10 of 100/)).toBeInTheDocument()
+      expect(screen.getByText(/1–10 of 100/)).toBeInTheDocument()
     })
 
     it('hides page info when showPageInfo is false', () => {
       render(<Pagination {...defaultProps} showPageInfo={false} />)
 
-      expect(screen.queryByText(/1-10 of 100/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/1–10 of 100/)).not.toBeInTheDocument()
     })
   })
 
@@ -87,8 +78,7 @@ describe('Pagination Component', () => {
       const onPageChange = jest.fn()
       render(<Pagination {...defaultProps} onPageChange={onPageChange} />)
 
-      // Get first instance (desktop layout)
-      const nextButtons = screen.getAllByLabelText('Go to next page')
+      const nextButtons = screen.getAllByLabelText('Next page')
       fireEvent.click(nextButtons[0]!)
 
       await waitFor(() => {
@@ -106,8 +96,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Get first instance (desktop layout)
-      const prevButtons = screen.getAllByLabelText('Go to previous page')
+      const prevButtons = screen.getAllByLabelText('Previous page')
       fireEvent.click(prevButtons[0]!)
 
       await waitFor(() => {
@@ -125,8 +114,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Get the first button (desktop layout)
-      const pageButtons = screen.getAllByLabelText('Go to page 2')
+      const pageButtons = screen.getAllByLabelText('Page 2')
       fireEvent.click(pageButtons[0]!)
 
       await waitFor(() => {
@@ -145,8 +133,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Get first instance (desktop layout)
-      const firstButtons = screen.getAllByLabelText('Go to first page')
+      const firstButtons = screen.getAllByLabelText('First page')
       fireEvent.click(firstButtons[0]!)
 
       await waitFor(() => {
@@ -165,8 +152,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Get first instance (desktop layout)
-      const lastButtons = screen.getAllByLabelText('Go to last page')
+      const lastButtons = screen.getAllByLabelText('Last page')
       fireEvent.click(lastButtons[0]!)
 
       await waitFor(() => {
@@ -184,8 +170,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Click the first instance (desktop layout)
-      const currentPageButtons = screen.getAllByLabelText('Go to page 2')
+      const currentPageButtons = screen.getAllByLabelText('Page 2')
       fireEvent.click(currentPageButtons[0]!)
 
       expect(onPageChange).not.toHaveBeenCalled()
@@ -201,8 +186,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Get first instance (desktop layout)
-      const nextButtons = screen.getAllByLabelText('Go to next page')
+      const nextButtons = screen.getAllByLabelText('Next page')
       fireEvent.click(nextButtons[0]!)
 
       expect(onPageChange).not.toHaveBeenCalled()
@@ -213,16 +197,14 @@ describe('Pagination Component', () => {
     it('disables previous button on first page', () => {
       render(<Pagination {...defaultProps} currentPage={1} />)
 
-      // Check first instance (desktop layout)
-      const prevButtons = screen.getAllByLabelText('Go to previous page')
+      const prevButtons = screen.getAllByLabelText('Previous page')
       expect(prevButtons[0]).toBeDisabled()
     })
 
     it('disables next button on last page', () => {
       render(<Pagination {...defaultProps} currentPage={10} />)
 
-      // Check first instance (desktop layout)
-      const nextButtons = screen.getAllByLabelText('Go to next page')
+      const nextButtons = screen.getAllByLabelText('Next page')
       expect(nextButtons[0]).toBeDisabled()
     })
 
@@ -235,8 +217,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Check first instance (desktop layout)
-      const firstButtons = screen.getAllByLabelText('Go to first page')
+      const firstButtons = screen.getAllByLabelText('First page')
       expect(firstButtons[0]).toBeDisabled()
     })
 
@@ -249,17 +230,15 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Check first instance (desktop layout)
-      const lastButtons = screen.getAllByLabelText('Go to last page')
+      const lastButtons = screen.getAllByLabelText('Last page')
       expect(lastButtons[0]).toBeDisabled()
     })
 
     it('highlights current page', () => {
       render(<Pagination {...defaultProps} currentPage={3} />)
 
-      const currentPageButtons = screen.getAllByLabelText('Go to page 3')
-      // At least one should have aria-current
-      const hasCurrent = currentPageButtons.some(btn => 
+      const currentPageButtons = screen.getAllByLabelText('Page 3')
+      const hasCurrent = currentPageButtons.some(btn =>
         btn.getAttribute('aria-current') === 'page'
       )
       expect(hasCurrent).toBe(true)
@@ -276,8 +255,8 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Should show ellipsis before page numbers
-      const ellipsis = screen.getByText('...')
+      // Component renders unicode ellipsis character
+      const ellipsis = screen.getByText('…')
       expect(ellipsis).toBeInTheDocument()
     })
 
@@ -290,8 +269,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Should show ellipsis after page numbers
-      const ellipsis = screen.getAllByText('...')
+      const ellipsis = screen.getAllByText('…')
       expect(ellipsis.length).toBeGreaterThan(0)
     })
 
@@ -304,7 +282,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      const ellipsis = screen.queryByText('...')
+      const ellipsis = screen.queryByText('…')
       expect(ellipsis).not.toBeInTheDocument()
     })
   })
@@ -313,62 +291,29 @@ describe('Pagination Component', () => {
     it('calculates page info correctly for first page', () => {
       render(<Pagination {...defaultProps} currentPage={1} />)
 
-      expect(screen.getByText('1-10 of 100')).toBeInTheDocument()
+      expect(screen.getByText(/1–10 of 100/)).toBeInTheDocument()
     })
 
     it('calculates page info correctly for middle page', () => {
       render(<Pagination {...defaultProps} currentPage={5} />)
 
-      expect(screen.getByText('41-50 of 100')).toBeInTheDocument()
+      expect(screen.getByText(/41–50 of 100/)).toBeInTheDocument()
     })
 
     it('calculates page info correctly for last page', () => {
       render(<Pagination {...defaultProps} currentPage={10} />)
 
-      expect(screen.getByText('91-100 of 100')).toBeInTheDocument()
+      expect(screen.getByText(/91–100 of 100/)).toBeInTheDocument()
     })
   })
 
   describe('Loading State', () => {
-    it('shows loading indicator when changing page', async () => {
-      const onPageChange = jest.fn()
-      render(<Pagination {...defaultProps} onPageChange={onPageChange} />)
-
-      // Get first instance (desktop layout)
-      const nextButtons = screen.getAllByLabelText('Go to next page')
-      fireEvent.click(nextButtons[0]!)
-
-      await waitFor(() => {
-        // Loading text appears in both desktop and mobile layouts
-        const loadingTexts = screen.getAllByText('Loading...')
-        expect(loadingTexts.length).toBeGreaterThan(0)
-      })
+    it.skip('shows loading indicator when changing page', async () => {
+      // Loading state was removed from the Pagination component
     })
 
-    it('hides loading indicator after timeout', async () => {
-      const onPageChange = jest.fn()
-      render(<Pagination {...defaultProps} onPageChange={onPageChange} />)
-
-      // Get first instance (desktop layout)
-      const nextButtons = screen.getAllByLabelText('Go to next page')
-      fireEvent.click(nextButtons[0]!)
-
-      await waitFor(() => {
-        // Loading text appears in both desktop and mobile layouts
-        const loadingTexts = screen.getAllByText('Loading...')
-        expect(loadingTexts.length).toBeGreaterThan(0)
-      })
-
-      // Wrap timer advance in act() to handle state updates
-      act(() => {
-        jest.advanceTimersByTime(2000)
-      })
-
-      await waitFor(() => {
-        // After timeout, all loading indicators should be removed
-        const loadingTexts = screen.queryAllByText('Loading...')
-        expect(loadingTexts.length).toBe(0)
-      })
+    it.skip('hides loading indicator after timeout', async () => {
+      // Loading state was removed from the Pagination component
     })
   })
 
@@ -382,8 +327,8 @@ describe('Pagination Component', () => {
         />
       )
 
-      expect(screen.queryByLabelText('Go to first page')).not.toBeInTheDocument()
-      expect(screen.queryByLabelText('Go to last page')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('First page')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('Last page')).not.toBeInTheDocument()
     })
 
     it('shows first/last buttons when showFirstLast is true', () => {
@@ -395,9 +340,8 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Buttons appear in both desktop and mobile layouts
-      const firstButtons = screen.getAllByLabelText('Go to first page')
-      const lastButtons = screen.getAllByLabelText('Go to last page')
+      const firstButtons = screen.getAllByLabelText('First page')
+      const lastButtons = screen.getAllByLabelText('Last page')
       expect(firstButtons.length).toBeGreaterThan(0)
       expect(lastButtons.length).toBeGreaterThan(0)
     })
@@ -407,13 +351,12 @@ describe('Pagination Component', () => {
     it('has proper aria-labels for all buttons', () => {
       render(<Pagination {...defaultProps} showFirstLast={true} />)
 
-      // All buttons appear in both desktop and mobile layouts
-      const firstButtons = screen.getAllByLabelText('Go to first page')
-      const prevButtons = screen.getAllByLabelText('Go to previous page')
-      const nextButtons = screen.getAllByLabelText('Go to next page')
-      const lastButtons = screen.getAllByLabelText('Go to last page')
-      const page1Buttons = screen.getAllByLabelText('Go to page 1')
-      
+      const firstButtons = screen.getAllByLabelText('First page')
+      const prevButtons = screen.getAllByLabelText('Previous page')
+      const nextButtons = screen.getAllByLabelText('Next page')
+      const lastButtons = screen.getAllByLabelText('Last page')
+      const page1Buttons = screen.getAllByLabelText('Page 1')
+
       expect(firstButtons.length).toBeGreaterThan(0)
       expect(prevButtons.length).toBeGreaterThan(0)
       expect(nextButtons.length).toBeGreaterThan(0)
@@ -424,10 +367,8 @@ describe('Pagination Component', () => {
     it('has aria-current for current page', () => {
       render(<Pagination {...defaultProps} currentPage={2} />)
 
-      // Get all instances (desktop and mobile layouts)
-      const currentPageButtons = screen.getAllByLabelText('Go to page 2')
-      // At least one should have aria-current
-      const hasCurrent = currentPageButtons.some(btn => 
+      const currentPageButtons = screen.getAllByLabelText('Page 2')
+      const hasCurrent = currentPageButtons.some(btn =>
         btn.getAttribute('aria-current') === 'page'
       )
       expect(hasCurrent).toBe(true)
@@ -445,7 +386,7 @@ describe('Pagination Component', () => {
         />
       )
 
-      const page500Buttons = screen.getAllByLabelText('Go to page 500')
+      const page500Buttons = screen.getAllByLabelText('Page 500')
       expect(page500Buttons.length).toBeGreaterThan(0)
     })
 
@@ -458,14 +399,12 @@ describe('Pagination Component', () => {
         />
       )
 
-      // Use getAllByLabelText since buttons appear in both desktop and mobile layouts
-      const page1Buttons = screen.getAllByLabelText('Go to page 1')
-      const page2Buttons = screen.getAllByLabelText('Go to page 2')
-      const page3Buttons = screen.getAllByLabelText('Go to page 3')
+      const page1Buttons = screen.getAllByLabelText('Page 1')
+      const page2Buttons = screen.getAllByLabelText('Page 2')
+      const page3Buttons = screen.getAllByLabelText('Page 3')
       expect(page1Buttons.length).toBeGreaterThan(0)
       expect(page2Buttons.length).toBeGreaterThan(0)
       expect(page3Buttons.length).toBeGreaterThan(0)
     })
   })
 })
-

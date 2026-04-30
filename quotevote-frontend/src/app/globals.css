@@ -1473,6 +1473,585 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* ============================================================ */
+/* EXPLORE PAGE — sidebars, section headers, filters             */
+/* src/app/dashboard/explore/ExploreContent.tsx                  */
+/* ============================================================ */
+
+/* Replace the thin border-r/border-l "lines" between columns
+   with a chunky double-stripe ink rule + faint shadow that reads
+   as a brutalist column divider rather than a hairline border. */
+.neo-brutalism aside[data-explore-aside="left"] {
+  border-right: var(--nb-border-width) solid var(--nb-border-color) !important;
+  background-color: var(--card) !important;
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(100% - 8px),
+      var(--nb-border-color) calc(100% - 8px),
+      var(--nb-border-color) calc(100% - 6px),
+      transparent calc(100% - 6px),
+      transparent calc(100% - 3px),
+      var(--nb-border-color) calc(100% - 3px),
+      var(--nb-border-color) calc(100% - 1px),
+      transparent calc(100% - 1px)
+    );
+}
+
+.neo-brutalism aside[data-explore-aside="right"] {
+  border-left: var(--nb-border-width) solid var(--nb-border-color) !important;
+  background-color: var(--card) !important;
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 0,
+      transparent 1px,
+      var(--nb-border-color) 1px,
+      var(--nb-border-color) 3px,
+      transparent 3px,
+      transparent 6px,
+      var(--nb-border-color) 6px,
+      var(--nb-border-color) 8px,
+      transparent 8px
+    );
+}
+
+/* Dark + brutalism: invert the gradient stripes to ink-on-ink contrast */
+.dark.neo-brutalism aside[data-explore-aside="left"],
+.neo-brutalism.dark aside[data-explore-aside="left"],
+.dark.neo-brutalism aside[data-explore-aside="right"],
+.neo-brutalism.dark aside[data-explore-aside="right"] {
+  background-color: var(--card) !important;
+}
+
+/* Section headers ("Notifications", "Filters", "Open Discussion")
+   become bold yellow blocks with a hard ink underline */
+.neo-brutalism [data-explore-section-header],
+.neo-brutalism [data-discussion-header] {
+  background-color: var(--nb-yellow) !important;
+  color: var(--nb-ink) !important;
+  border-bottom: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-top: var(--nb-border-width) solid var(--nb-border-color) !important;
+  margin-top: -1px;
+  padding-top: 0.625rem !important;
+  padding-bottom: 0.625rem !important;
+  font-weight: 800;
+  box-shadow: 0 3px 0 0 var(--nb-border-color);
+  position: relative;
+  z-index: 1;
+}
+
+/* Give the Open Discussion scroll container breathing room at the top
+   so the first card's border + offset shadow clear the header underline
+   and aren't clipped by overflow-y-auto. */
+.neo-brutalism [data-discussion-scroll="true"] {
+  padding-top: 1rem;
+}
+
+.neo-brutalism [data-explore-section-header] span,
+.neo-brutalism [data-discussion-header] span {
+  color: var(--nb-ink) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
+}
+
+.neo-brutalism [data-explore-section-header] svg,
+.neo-brutalism [data-discussion-header] svg {
+  color: var(--nb-ink) !important;
+  opacity: 1 !important;
+}
+
+/* Notification count badge (red dot) in the sidebar header → coral chip */
+.neo-brutalism [data-explore-section-header="notifications"] [class*="bg-red-500"] {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+}
+
+/* Filter panel: cream surface with a heavy top rule and inner shadow */
+.neo-brutalism [data-explore-section="filters"] {
+  background-color: var(--card) !important;
+  border-top: var(--nb-border-width) solid var(--nb-border-color) !important;
+  box-shadow: inset 0 4px 0 0 var(--nb-yellow);
+  padding-top: 1.25rem !important;
+}
+
+/* "Filters" label + clear-all action inside the filter panel header */
+.neo-brutalism [data-explore-section="filters"] [data-explore-section-header="filters"] {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 0 0.5rem 0 !important;
+}
+
+.neo-brutalism [data-explore-section="filters"] [data-explore-section-header="filters"] span {
+  text-transform: uppercase;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  color: var(--nb-ink) !important;
+}
+
+.neo-brutalism [data-explore-section="filters"] [data-explore-section-header="filters"] svg {
+  color: var(--nb-green-deep) !important;
+}
+
+/* Sort/date subsection mini-labels — uppercase chips */
+.neo-brutalism [data-explore-section="filters"] p.uppercase {
+  background-color: var(--nb-mint);
+  border: 2px solid var(--nb-border-color);
+  border-radius: var(--radius);
+  padding: 0.125rem 0.375rem;
+  display: inline-block;
+  color: var(--nb-ink) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em;
+  box-shadow: var(--nb-shadow-xs);
+}
+
+/* "Clear all" action button → coral chip */
+.neo-brutalism [data-explore-section="filters"] button[type="button"]:has(.lucide-x),
+.neo-brutalism [data-explore-section="filters"] button.text-muted-foreground:hover {
+  border: 2px solid var(--nb-border-color) !important;
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+  border-radius: var(--radius) !important;
+  padding: 0.125rem 0.5rem !important;
+  font-weight: 800 !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+}
+
+/* Filter checkbox rows: faint dashed underline so they read as a list */
+.neo-brutalism [data-explore-section="filters"] label.cursor-pointer {
+  padding: 0.375rem 0.25rem;
+  border-bottom: 2px dashed color-mix(in oklch, var(--nb-border-color) 25%, transparent);
+}
+
+.neo-brutalism [data-explore-section="filters"] label.cursor-pointer:last-child {
+  border-bottom: none;
+}
+
+/* Date range — quick-range pills + From/To inputs */
+.neo-brutalism [data-explore-section="filters"] input[type="date"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  background-color: var(--card) !important;
+  color: var(--nb-ink) !important;
+  font-weight: 600;
+  padding: 0.375rem 0.5rem !important;
+}
+
+.neo-brutalism [data-explore-section="filters"] input[type="date"]:focus,
+.neo-brutalism [data-explore-section="filters"] input[type="date"]:focus-visible {
+  outline: none !important;
+  transform: translate(-1px, -1px);
+  box-shadow: var(--nb-shadow-sm) !important;
+  border-color: var(--nb-green-deep) !important;
+}
+
+.neo-brutalism [data-explore-section="filters"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: contrast(1.4);
+  cursor: pointer;
+}
+
+/* Quick-range pills — formal brutalist chips */
+.neo-brutalism [data-explore-section="filters"] button[aria-pressed] {
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  background-color: var(--card) !important;
+  color: var(--nb-ink) !important;
+  font-weight: 700 !important;
+  box-shadow: var(--nb-shadow-xs);
+  transition: transform 100ms ease, box-shadow 100ms ease, background-color 100ms ease;
+}
+
+.neo-brutalism [data-explore-section="filters"] button[aria-pressed]:hover {
+  transform: translate(-1px, -1px);
+  background-color: var(--nb-sky) !important;
+  box-shadow: var(--nb-shadow-sm);
+}
+
+.neo-brutalism [data-explore-section="filters"] button[aria-pressed="true"] {
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+}
+
+.neo-brutalism [data-explore-section="filters"] button[aria-pressed="true"]:hover {
+  background-color: var(--nb-green) !important;
+}
+
+/* ============================================================ */
+/* POST DETAIL — discussion column divider + comment cards       */
+/* src/app/dashboard/post/[group]/[title]/[postId]/page.tsx     */
+/* ============================================================ */
+
+/* The "border-r border-border" between post body and discussion
+   becomes a brutalist double-stripe ink column for clearer separation. */
+.neo-brutalism [data-post-detail-pane="content"] {
+  border-right: var(--nb-border-width) solid var(--nb-border-color) !important;
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(100% - 8px),
+      var(--nb-border-color) calc(100% - 8px),
+      var(--nb-border-color) calc(100% - 6px),
+      transparent calc(100% - 6px),
+      transparent calc(100% - 3px),
+      var(--nb-border-color) calc(100% - 3px),
+      var(--nb-border-color) calc(100% - 1px),
+      transparent calc(100% - 1px)
+    );
+}
+
+.neo-brutalism [data-post-detail-pane="discussion"] {
+  background-color: var(--card) !important;
+}
+
+/* ============================================================ */
+/* POST ACTION CARDS (comments / votes / quotes in discussion)   */
+/* src/components/PostActions/PostActionCard.tsx                 */
+/* Targets [data-post-action="true"]                             */
+/* ============================================================ */
+
+/* Each row becomes a clean brutalist card with ink border + offset
+   shadow. Removes the inherited divide-y and left-3px accent rail. */
+.neo-brutalism [data-post-action="true"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  background-color: var(--card) !important;
+  box-shadow: var(--nb-shadow-xs);
+  margin: 0.625rem 0.75rem !important;
+  padding-left: 0.875rem !important;
+  padding-right: 0.875rem !important;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.neo-brutalism [data-post-action="true"]:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm);
+  background-color: var(--card) !important;
+}
+
+/* Comment cards — the strongest brutalist treatment (thicker shadow, card-like padding) */
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"] {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+  box-shadow: var(--nb-shadow-sm);
+  background-color: var(--card) !important;
+}
+
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: var(--nb-shadow);
+}
+
+/* Default rotation of shadow colors across successive comment cards for
+   visual variety (overridden by post-owner / current-user variants below). */
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:nth-of-type(4n+1):not([data-post-owner]):not([data-current-user]) {
+  box-shadow: 4px 4px 0 0 var(--nb-sky);
+}
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:nth-of-type(4n+2):not([data-post-owner]):not([data-current-user]) {
+  box-shadow: 4px 4px 0 0 var(--nb-pink);
+}
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:nth-of-type(4n+3):not([data-post-owner]):not([data-current-user]) {
+  box-shadow: 4px 4px 0 0 var(--nb-yellow);
+}
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:nth-of-type(4n):not([data-post-owner]):not([data-current-user]) {
+  box-shadow: 4px 4px 0 0 var(--nb-mint);
+}
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:nth-of-type(4n+1):not([data-post-owner]):not([data-current-user]):hover { box-shadow: 6px 6px 0 0 var(--nb-sky); }
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:nth-of-type(4n+2):not([data-post-owner]):not([data-current-user]):hover { box-shadow: 6px 6px 0 0 var(--nb-pink); }
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:nth-of-type(4n+3):not([data-post-owner]):not([data-current-user]):hover { box-shadow: 6px 6px 0 0 var(--nb-yellow); }
+.neo-brutalism [data-post-action="true"][data-action-type="Comment"]:nth-of-type(4n):not([data-post-owner]):not([data-current-user]):hover   { box-shadow: 6px 6px 0 0 var(--nb-mint); }
+
+/* Selected state — yellow block with stronger shadow */
+.neo-brutalism [data-post-action="true"][class*="bg-primary/[0.04]"],
+.neo-brutalism [data-post-action="true"].bg-primary\/\[0\.04\] {
+  background-color: var(--nb-yellow) !important;
+  box-shadow: var(--nb-shadow-sm) !important;
+}
+
+/* Remove the parent "divide-y" hairlines so only the card border shows */
+.neo-brutalism .divide-y > :is(div, article) {
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+}
+
+.neo-brutalism [data-post-action="true"] + [data-post-action="true"] {
+  margin-top: 0.75rem !important;
+}
+
+/* Standalone Comment component (src/components/Comment/Comment.tsx) — when
+   rendered outside of the discussion feed, still give each comment a
+   proper brutalist card treatment. */
+.neo-brutalism [data-comment-card="true"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  background-color: var(--card) !important;
+  box-shadow: var(--nb-shadow-xs);
+  padding: 0.875rem 0.875rem !important;
+  margin: 0.625rem 0 !important;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.neo-brutalism [data-comment-card="true"]:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm);
+}
+
+.neo-brutalism [data-comment-card="true"][data-current-user="true"] {
+  border-color: var(--nb-blue) !important;
+  box-shadow: 4px 4px 0 0 var(--nb-sky);
+}
+
+.neo-brutalism [data-comment-card="true"][data-current-user="true"]:hover {
+  box-shadow: 6px 6px 0 0 var(--nb-sky);
+}
+
+/* ============================================================ */
+/* POST CHAT — "Add to the discussion…" messages & input         */
+/* src/components/PostChat/PostChatMessage.tsx                   */
+/* src/components/PostChat/PostChatSend.tsx                      */
+/* ============================================================ */
+
+/* Kill the soft speech-bubble arrow — it clashes with hard borders */
+.neo-brutalism [data-post-chat-bubble="true"]::before {
+  display: none !important;
+}
+
+/* Give the message container ring padding so the card has room to breathe */
+.neo-brutalism [data-post-chat-message="true"] {
+  margin-left: 0.5rem !important;
+  margin-right: 0.5rem !important;
+  margin-bottom: 0.875rem !important;
+}
+
+/* Each chat bubble → brutalist card (ink border + hard offset shadow) */
+.neo-brutalism [data-post-chat-bubble="true"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  font-weight: 500;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.neo-brutalism [data-post-chat-bubble="true"]:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm) !important;
+}
+
+/* Incoming messages (other users) — cream card with ink border */
+.neo-brutalism [data-post-chat-bubble="true"][data-bubble-direction="incoming"] {
+  background-color: var(--card) !important;
+  color: var(--nb-ink) !important;
+}
+
+/* Outgoing messages (current user) — solid green block with ink border */
+.neo-brutalism [data-post-chat-bubble="true"][data-bubble-direction="outgoing"] {
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+}
+
+/* Delete button floating over the bubble → coral brutalist chip */
+.neo-brutalism [data-post-chat-message="true"] button[aria-label="Delete message"] {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+}
+
+.neo-brutalism [data-post-chat-message="true"] button[aria-label="Delete message"]:hover {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+  transform: translate(-1px, -1px);
+  box-shadow: var(--nb-shadow-sm) !important;
+}
+
+/* "Add to the discussion…" textarea → brutalist input block */
+.neo-brutalism [data-post-chat-send="true"] textarea,
+.neo-brutalism [data-post-chat-send="true"] [data-slot="textarea"] {
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  background-color: var(--card) !important;
+  font-weight: 500;
+}
+
+.neo-brutalism [data-post-chat-send="true"] textarea:focus,
+.neo-brutalism [data-post-chat-send="true"] textarea:focus-visible,
+.neo-brutalism [data-post-chat-send="true"] [data-slot="textarea"]:focus-visible {
+  outline: none !important;
+  transform: translate(-1px, -1px);
+  box-shadow: var(--nb-shadow-sm) !important;
+  border-color: var(--nb-green-deep) !important;
+  background-color: var(--card) !important;
+  --tw-ring-color: transparent !important;
+}
+
+/* Send button in the discussion composer → solid green brutalist block */
+.neo-brutalism [data-post-chat-send="true"] button[aria-label="Send message"] {
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+  border: var(--nb-border-width) solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  font-weight: 800 !important;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.neo-brutalism [data-post-chat-send="true"] button[aria-label="Send message"]:hover:not(:disabled) {
+  background-color: var(--nb-green) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--nb-shadow-sm) !important;
+}
+
+.neo-brutalism [data-post-chat-send="true"] button[aria-label="Send message"]:disabled {
+  background-color: var(--nb-grey-soft) !important;
+  color: var(--nb-grey) !important;
+  box-shadow: var(--nb-shadow-xs) !important;
+  opacity: 1 !important;
+}
+
+/* Reactions row underneath the bubble → inherit ink color for readability */
+.neo-brutalism [data-post-chat-bubble="true"] [class*="text-white/70"],
+.neo-brutalism [data-post-chat-bubble="true"] [class*="text-muted-foreground"] {
+  color: color-mix(in oklch, var(--nb-ink) 70%, transparent) !important;
+}
+
+/* ── Post owner (OP) comments — distinct green-shadow brutalist block ── */
+.neo-brutalism [data-post-action="true"][data-post-owner="true"] {
+  border-color: var(--nb-green-deep) !important;
+  background-color: color-mix(in oklch, var(--nb-mint) 45%, var(--card)) !important;
+  box-shadow: 5px 5px 0 0 var(--nb-green) !important;
+}
+
+.neo-brutalism [data-post-action="true"][data-post-owner="true"]:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 7px 7px 0 0 var(--nb-green) !important;
+}
+
+.dark.neo-brutalism [data-post-action="true"][data-post-owner="true"],
+.neo-brutalism.dark [data-post-action="true"][data-post-owner="true"] {
+  background-color: color-mix(in oklch, var(--nb-green) 25%, var(--card)) !important;
+}
+
+/* Post-owner author name → bolder ink */
+.neo-brutalism [data-post-action="true"][data-post-owner="true"] button[class*="text-[#52b274]"] {
+  color: var(--nb-ink) !important;
+  font-weight: 900 !important;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--nb-green-deep);
+}
+
+/* OP badge — solid green pill with ink border */
+.neo-brutalism [data-op-badge="true"] {
+  background-color: var(--nb-green) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  padding: 0.125rem 0.375rem !important;
+  box-shadow: var(--nb-shadow-xs);
+  font-weight: 900 !important;
+  letter-spacing: 0.04em;
+}
+
+/* ── Current-user (non-OP) comments — soft sky-shadow brutalist block ── */
+.neo-brutalism [data-post-action="true"][data-current-user="true"] {
+  border-color: var(--nb-blue) !important;
+  box-shadow: 5px 5px 0 0 var(--nb-sky) !important;
+}
+
+.neo-brutalism [data-post-action="true"][data-current-user="true"]:hover {
+  box-shadow: 7px 7px 0 0 var(--nb-sky) !important;
+}
+
+/* Action type badges (Agree / Disagree / Quote / Comment) → brutalist chips */
+.neo-brutalism [data-post-action="true"] [class*="bg-emerald-100"] {
+  background-color: var(--nb-mint) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 800 !important;
+  box-shadow: var(--nb-shadow-xs);
+}
+
+.neo-brutalism [data-post-action="true"] [class*="bg-red-100"] {
+  background-color: var(--nb-coral) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 800 !important;
+  box-shadow: var(--nb-shadow-xs);
+}
+
+.neo-brutalism [data-post-action="true"] [class*="bg-violet-100"] {
+  background-color: var(--nb-purple) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 800 !important;
+  box-shadow: var(--nb-shadow-xs);
+}
+
+.neo-brutalism [data-post-action="true"] [class*="bg-sky-100"] {
+  background-color: var(--nb-sky) !important;
+  color: var(--nb-ink) !important;
+  border: 2px solid var(--nb-border-color) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 800 !important;
+  box-shadow: var(--nb-shadow-xs);
+}
+
+/* Vote / Quote / Comment blockquotes — flat ink left rule */
+.neo-brutalism [data-post-action="true"] blockquote {
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
+  background-color: color-mix(in oklch, var(--nb-yellow) 25%, transparent);
+  padding: 0.5rem 0.625rem !important;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.neo-brutalism [data-post-action="true"] blockquote[class*="border-l-emerald-400"] {
+  border-left-color: var(--nb-green-deep) !important;
+  background-color: color-mix(in oklch, var(--nb-mint) 35%, transparent);
+}
+
+.neo-brutalism [data-post-action="true"] blockquote[class*="border-l-red-400"] {
+  border-left-color: var(--nb-coral) !important;
+  background-color: color-mix(in oklch, var(--nb-coral) 22%, transparent);
+}
+
+.neo-brutalism [data-post-action="true"] blockquote[class*="border-l-violet-400"] {
+  border-left-color: var(--nb-purple) !important;
+  background-color: color-mix(in oklch, var(--nb-purple) 18%, transparent);
+}
+
+.neo-brutalism [data-post-action="true"] blockquote[class*="border-l-sky-400"] {
+  border-left-color: var(--nb-blue) !important;
+  background-color: color-mix(in oklch, var(--nb-sky) 35%, transparent);
+}
+
+/* "No activity yet" empty-state icon block */
+.neo-brutalism [data-post-action="true"] ~ * .text-muted-foreground\/20,
+.neo-brutalism :where(.flex.flex-col.items-center) > svg.text-muted-foreground\/20 {
+  color: var(--nb-green-deep) !important;
+  opacity: 0.6;
+}
+
+/* Reduce InteractionSection's "divide-y" so cards sit cleanly */
+.neo-brutalism [data-post-action="true"]:has(~ *) {
+  /* keep margins; rely on per-card border instead of divider */
+}
+
 /* ——— Utility classes ——— */
 .neo-brutalism .nb-shadow { box-shadow: var(--nb-shadow); }
 .neo-brutalism .nb-shadow-lg { box-shadow: var(--nb-shadow-lg); }

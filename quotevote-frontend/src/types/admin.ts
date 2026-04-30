@@ -87,25 +87,16 @@ export interface FeaturedPost {
   featuredSlot?: number
 }
 
-// User report types
+// User report types — fields match the backend UserReport GraphQL type
 export interface UserReport {
   _id: string
-  reportedUser: {
-    _id: string
-    username: string
-    name?: string
-    avatar?: string
-  }
-  reportedBy: {
-    _id: string
-    username: string
-    name?: string
-    avatar?: string
-  }
+  _reporterId: string
+  _reportedUserId: string
   reason: string
   description?: string
-  severity?: string
-  created: string
-  status?: string
+  severity: string
+  status: string
+  adminNotes?: string
+  createdAt: string
 }
 

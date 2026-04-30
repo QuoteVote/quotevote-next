@@ -111,7 +111,9 @@ describe('PostModerationTab', () => {
     render(<PostModerationTab />, { mocks: [postsMock] })
 
     await waitFor(() => {
-      expect(screen.getByText(/1 pending/)).toBeInTheDocument()
+      // Pending count and label are rendered in separate spans
+      expect(screen.getByText('posts pending review')).toBeInTheDocument()
+      expect(screen.getByText('1')).toBeInTheDocument()
     })
   })
 

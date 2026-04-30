@@ -12,7 +12,7 @@ import useGuestGuard from '@/hooks/useGuestGuard'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
 import { GET_CHAT_ROOMS, GET_ROSTER } from '@/graphql/queries'
-import Avatar from '@/components/Avatar'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -138,9 +138,9 @@ function Header({ room }: HeaderProps) {
         </Button>
 
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <Avatar
-            src={typeof avatar === 'string' ? avatar : undefined}
-            alt={title || 'Chat avatar'}
+          <DisplayAvatar
+            avatar={avatar as string | Record<string, unknown> | undefined}
+            username={title || ''}
             size={44}
             className="flex-shrink-0 ring-2 ring-white shadow-sm"
           />

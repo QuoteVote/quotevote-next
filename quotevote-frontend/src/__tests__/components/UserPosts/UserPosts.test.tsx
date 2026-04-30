@@ -39,9 +39,10 @@ jest.mock('@/components/ErrorBoundary', () => ({
 }))
 
 // Mock child components
-jest.mock('@/components/UserPosts/PostCard', () => ({
-  PostCard: ({ post }: { post: Post }) => (
-    <div data-testid={`post-card-${post._id}`}>{post.title}</div>
+jest.mock('@/components/Post/PostCard', () => ({
+  __esModule: true,
+  default: ({ _id, title }: { _id: string; title: string }) => (
+    <div data-testid={`post-card-${_id}`}>{title}</div>
   ),
 }))
 

@@ -70,7 +70,7 @@ export function MainNavBar({}: MainNavBarProps) {
           <Link
             href="/search"
             onClick={handleQuoteVote}
-            className="flex items-center no-underline hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 no-underline hover:opacity-90 transition-opacity"
           >
             <Image
               src="/icons/android-chrome-192x192.png"
@@ -80,6 +80,9 @@ export function MainNavBar({}: MainNavBarProps) {
               className="object-contain"
               crossOrigin="anonymous"
             />
+            <span className="font-extrabold text-lg tracking-wide hidden sm:block select-none" style={{ color: '#0A2342' }}>
+              Quote.Vote
+            </span>
           </Link>
 
           {/* Desktop Actions - Not Logged In */}
@@ -161,7 +164,7 @@ export function MainNavBar({}: MainNavBarProps) {
                   <Github className="size-5" />
                 </a>
               </Button>
-              <Link href="/Profile" className="no-underline">
+              <Link href={`/dashboard/profile/${user?.username}`} className="no-underline">
                 <Button
                   variant="ghost"
                   onClick={handleProfileClick}
@@ -282,7 +285,7 @@ export function MainNavBar({}: MainNavBarProps) {
 
                 <div className="h-0.5 bg-gradient-to-r from-[#2AE6B2] via-[#27C4E1] to-[#178BE1] my-4" />
 
-                <Link href="/Profile" className="w-full no-underline" onClick={closeDrawer}>
+                <Link href={`/dashboard/profile/${user?.username}`} className="w-full no-underline" onClick={closeDrawer}>
                   <Button
                     variant="ghost"
                     onClick={() => {

@@ -53,8 +53,7 @@ describe('StickyPaginationWrapper Component', () => {
         </StickyPaginationWrapper>
       )
 
-      // Pagination renders both desktop and mobile layouts, so buttons appear twice
-      const nextButtons = screen.getAllByLabelText('Go to next page')
+      const nextButtons = screen.getAllByLabelText('Next page')
       expect(nextButtons.length).toBeGreaterThan(0)
     })
 
@@ -65,7 +64,7 @@ describe('StickyPaginationWrapper Component', () => {
         </StickyPaginationWrapper>
       )
 
-      expect(screen.queryByLabelText('Go to next page')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('Next page')).not.toBeInTheDocument()
     })
 
     it('renders with custom className', () => {
@@ -89,7 +88,7 @@ describe('StickyPaginationWrapper Component', () => {
       )
 
       const wrapper = container.firstChild as HTMLElement
-      expect(wrapper).toHaveClass('flex', 'flex-col', 'min-h-screen', 'relative')
+      expect(wrapper).toHaveClass('flex', 'flex-col')
     })
 
     it('applies correct content area classes', () => {
@@ -99,29 +98,23 @@ describe('StickyPaginationWrapper Component', () => {
         </StickyPaginationWrapper>
       )
 
-      const content = container.querySelector('.pb-48') as HTMLElement
+      const content = container.querySelector('.flex-1') as HTMLElement
       expect(content).toBeInTheDocument()
-      expect(content).toHaveClass('flex-1', 'pb-48', 'mb-8', 'overflow-auto')
+      expect(content).toHaveClass('flex-1')
     })
 
-    it('applies correct pagination container classes', () => {
+    it('renders pagination inline below content (not fixed)', () => {
       render(
         <StickyPaginationWrapper pagination={mockPagination}>
           <div>Content</div>
         </StickyPaginationWrapper>
       )
 
-      // Get first instance (desktop layout) and find its fixed container
-      const nextButtons = screen.getAllByLabelText('Go to next page')
-      const paginationContainer = nextButtons[0]!.closest('.fixed')
-      expect(paginationContainer).toBeInTheDocument()
-      expect(paginationContainer).toHaveClass(
-        'fixed',
-        'bottom-0',
-        'left-0',
-        'right-0',
-        'z-[1000]'
-      )
+      const nextButtons = screen.getAllByLabelText('Next page')
+      expect(nextButtons.length).toBeGreaterThan(0)
+      // Pagination should not be fixed positioned
+      const fixedContainer = nextButtons[0]!.closest('.fixed')
+      expect(fixedContainer).toBeNull()
     })
   })
 
@@ -149,8 +142,7 @@ describe('StickyPaginationWrapper Component', () => {
 
       const wrapper = container.firstChild as HTMLElement
       const content = wrapper.querySelector('[data-testid="content"]')
-      // Pagination renders both desktop and mobile layouts
-      const nextButtons = screen.getAllByLabelText('Go to next page')
+      const nextButtons = screen.getAllByLabelText('Next page')
 
       expect(wrapper).toBeInTheDocument()
       expect(content).toBeInTheDocument()

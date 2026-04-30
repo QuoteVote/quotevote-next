@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@/__tests__/utils/test-utils'
+import { render, screen, waitFor, fireEvent } from '@/__tests__/utils/test-utils'
 import { resetStore } from '@/__tests__/utils/test-utils'
 import { useAppStore } from '@/store/useAppStore'
 import { USER_INVITE_REQUESTS } from '@/graphql/queries'
@@ -71,28 +71,40 @@ describe('Control Panel Page', () => {
     render(<ControlPanelClient />, { mocks: [inviteRequestsMock] })
 
     await waitFor(() => {
-      expect(screen.getByText('Control Panel')).toBeInTheDocument()
+      // "Control Panel" appears in both mobile bar and desktop sidebar
+      const titles = screen.getAllByText('Control Panel')
+      expect(titles.length).toBeGreaterThan(0)
     })
   })
 
-  it('shows all tabs for admin user', async () => {
+  it('shows all nav items for admin user', async () => {
     useAppStore.getState().setUserData(adminUser)
     render(<ControlPanelClient />, { mocks: [inviteRequestsMock] })
 
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /invites/i })).toBeInTheDocument()
-      expect(screen.getByRole('tab', { name: /statistics/i })).toBeInTheDocument()
-      expect(screen.getByRole('tab', { name: /featured/i })).toBeInTheDocument()
-      expect(screen.getByRole('tab', { name: /users/i })).toBeInTheDocument()
-      expect(screen.getByRole('tab', { name: /moderation/i })).toBeInTheDocument()
-      expect(screen.getByRole('tab', { name: /reports/i })).toBeInTheDocument()
-      expect(screen.getByRole('tab', { name: /bots/i })).toBeInTheDocument()
+      // Nav labels appear in both mobile and desktop layouts
+      expect(screen.getAllByText('Invites').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Statistics').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Featured').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Users').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Moderation').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Reports').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Bots').length).toBeGreaterThan(0)
     })
   })
 
-  it('renders invite data in the default invites tab', async () => {
+  it('renders invite data after navigating to invites tab', async () => {
     useAppStore.getState().setUserData(adminUser)
     render(<ControlPanelClient />, { mocks: [inviteRequestsMock] })
+
+    // Navigate to invites tab (appears in both mobile and desktop)
+    await waitFor(() => {
+      const invitesButtons = screen.getAllByText('Invites')
+      expect(invitesButtons.length).toBeGreaterThan(0)
+    })
+
+    const invitesButtons = screen.getAllByText('Invites')
+    fireEvent.click(invitesButtons[0]!)
 
     await waitFor(() => {
       const matches = screen.getAllByText('invited@example.com')
@@ -100,12 +112,22 @@ describe('Control Panel Page', () => {
     })
   })
 
-  it('shows invite count in the invites tab', async () => {
+  it('shows invite count after navigating to invites tab', async () => {
     useAppStore.getState().setUserData(adminUser)
     render(<ControlPanelClient />, { mocks: [inviteRequestsMock] })
 
     await waitFor(() => {
-      expect(screen.getByText(/User Invitation Requests \(2\)/)).toBeInTheDocument()
+      const invitesButtons = screen.getAllByText('Invites')
+      expect(invitesButtons.length).toBeGreaterThan(0)
+    })
+
+    const invitesButtons = screen.getAllByText('Invites')
+    fireEvent.click(invitesButtons[0]!)
+
+    await waitFor(() => {
+      // Content renders in both mobile and desktop layouts
+      const matches = screen.getAllByText('2 total requests')
+      expect(matches.length).toBeGreaterThan(0)
     })
   })
 })

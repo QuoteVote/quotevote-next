@@ -267,7 +267,7 @@ describe('PaginatedList Component', () => {
       )
 
       // Pagination renders both desktop and mobile layouts, so buttons appear twice
-      const nextButtons = screen.getAllByLabelText('Go to next page')
+      const nextButtons = screen.getAllByLabelText('Next page')
       expect(nextButtons.length).toBeGreaterThan(0)
     })
 
@@ -281,7 +281,7 @@ describe('PaginatedList Component', () => {
         />
       )
 
-      expect(screen.queryByLabelText('Go to next page')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('Next page')).not.toBeInTheDocument()
     })
 
     it('calls onPageChange when pagination changes', async () => {
@@ -297,7 +297,7 @@ describe('PaginatedList Component', () => {
       )
 
       // Get first instance (desktop layout) and click it
-      const nextButtons = screen.getAllByLabelText('Go to next page')
+      const nextButtons = screen.getAllByLabelText('Next page')
       fireEvent.click(nextButtons[0]!)
 
       await waitFor(() => {

@@ -72,8 +72,9 @@ describe('BotListTab', () => {
     render(<BotListTab />, { mocks: [botReportsMock] })
 
     await waitFor(() => {
-      expect(screen.getByText('botuser')).toBeInTheDocument()
-      expect(screen.getByText('bot@example.com')).toBeInTheDocument()
+      // Both desktop table and mobile cards render each user, so use getAllByText
+      expect(screen.getAllByText('botuser').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('bot@example.com').length).toBeGreaterThan(0)
     })
   })
 
@@ -81,8 +82,9 @@ describe('BotListTab', () => {
     render(<BotListTab />, { mocks: [botReportsMock] })
 
     await waitFor(() => {
-      expect(screen.getByText('7')).toBeInTheDocument()
-      expect(screen.getByText('3')).toBeInTheDocument()
+      // Report counts appear in both desktop and mobile layouts
+      expect(screen.getAllByText('7').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('3').length).toBeGreaterThan(0)
     })
   })
 
@@ -108,7 +110,7 @@ describe('BotListTab', () => {
     render(<BotListTab />, { mocks: [emptyBotReportsMock] })
 
     await waitFor(() => {
-      expect(screen.getByText('No bot reports found')).toBeInTheDocument()
+      expect(screen.getByText('No bot reports')).toBeInTheDocument()
     })
   })
 
@@ -116,7 +118,8 @@ describe('BotListTab', () => {
     render(<BotListTab />, { mocks: [botReportsMock] })
 
     await waitFor(() => {
-      expect(screen.getByText('Sort By:')).toBeInTheDocument()
+      // Sort select trigger renders the current sort option label
+      expect(screen.getByText('Most Reports')).toBeInTheDocument()
     })
   })
 })

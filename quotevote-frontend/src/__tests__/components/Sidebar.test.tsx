@@ -302,7 +302,7 @@ describe('Sidebar Component', () => {
     });
 
     it('highlights profile route when on profile page', () => {
-      mockPathname.mockReturnValue('/Profile');
+      mockPathname.mockReturnValue('/dashboard/profile/testuser');
       useAppStore.setState({
         user: {
           loading: false,

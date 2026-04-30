@@ -252,6 +252,8 @@ export const APPROVE_POST = gql`
   mutation approvePost($postId: String!, $userId: String!, $remove: Boolean) {
     approvePost(postId: $postId, userId: $userId, remove: $remove) {
       _id
+      approvedBy
+      rejectedBy
     }
   }
 `
@@ -263,6 +265,8 @@ export const REJECT_POST = gql`
   mutation rejectPost($postId: String!, $userId: String!, $remove: Boolean) {
     rejectPost(postId: $postId, userId: $userId, remove: $remove) {
       _id
+      approvedBy
+      rejectedBy
     }
   }
 `
@@ -617,6 +621,7 @@ export const UPDATE_USER = gql`
       admin
       accountStatus
       themePreference
+      contributorBadge
     }
   }
 `

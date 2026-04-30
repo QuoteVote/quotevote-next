@@ -73,6 +73,8 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
 
   return (
     <div
+      data-post-chat-message="true"
+      data-current-user={!isDefaultDirection ? 'true' : undefined}
       className={cn(
         'mb-3 flex w-full items-start gap-3 px-2',
         isDefaultDirection ? 'flex-row' : 'flex-row-reverse'
@@ -90,6 +92,8 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
       {/* Message Bubble */}
       <div className="group relative max-w-[75%] min-w-[120px]">
         <div
+          data-post-chat-bubble="true"
+          data-bubble-direction={isDefaultDirection ? 'incoming' : 'outgoing'}
           className={cn(
             'relative rounded-md px-3.5 py-3.5 pb-1 text-base leading-relaxed shadow-sm',
             // Speech bubble arrow

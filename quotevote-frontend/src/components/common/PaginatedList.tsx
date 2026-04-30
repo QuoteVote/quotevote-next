@@ -78,8 +78,8 @@ export function PaginatedList<T = unknown>({
   ) : null;
 
   return (
-    <StickyPaginationWrapper 
-      className={className} 
+    <StickyPaginationWrapper
+      className={className}
       pagination={paginationComponent}
       {...otherProps}
     >

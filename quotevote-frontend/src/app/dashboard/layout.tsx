@@ -200,10 +200,10 @@ export default function DashboardLayout({
           DESKTOP NAVBAR
       ════════════════════════════════════════════════════════════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] items-center">
-        <div className="flex h-full w-full items-center px-4 gap-2">
+        <div className="relative flex h-full w-full items-center px-4">
 
-          {/* ── Left: Logo + Search ── */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* ── Left: Logo ── */}
+          <div className="flex items-center gap-2 flex-shrink-0 z-10">
             <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline flex-shrink-0">
               <Image
                 src="/icons/android-chrome-192x192.png"
@@ -217,21 +217,24 @@ export default function DashboardLayout({
                 Quote.Vote
               </span>
             </Link>
-            <Suspense fallback={
-              <div className="flex items-center gap-2 h-[38px] w-[220px] rounded-full px-3.5 bg-muted">
-                <Search className="size-[15px] text-muted-foreground" />
-                <span className="text-[13px] text-muted-foreground">Search…</span>
-              </div>
-            }>
-              <NavSearch />
-            </Suspense>
           </div>
 
-          {/* ── Spacer ── */}
-          <div className="flex-1" />
+          {/* ── Center: Search (truly centered) ── */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="pointer-events-auto w-[440px] xl:w-[560px] 2xl:w-[640px]">
+              <Suspense fallback={
+                <div className="flex items-center gap-2 h-[38px] w-full rounded-full px-3.5 bg-muted">
+                  <Search className="size-[15px] text-muted-foreground" />
+                  <span className="text-[13px] text-muted-foreground">Search…</span>
+                </div>
+              }>
+                <NavSearch />
+              </Suspense>
+            </div>
+          </div>
 
           {/* ── Right: Actions ── */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 ml-auto flex-shrink-0 z-10">
             {/* Create */}
             <button
               type="button"
@@ -242,29 +245,6 @@ export default function DashboardLayout({
               <Plus className="size-4" strokeWidth={2.5} />
               <span>Create</span>
             </button>
-
-            {/* Notifications */}
-            <Link href="/dashboard/notifications" className="outline-none" aria-label="Notifications">
-              <IconBtn
-                label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
-                badge={unreadCount}
-                badgeColor="red"
-                active={isActive('/dashboard/notifications')}
-              >
-                <Bell className="size-5" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
-              </IconBtn>
-            </Link>
-
-            {/* Messages */}
-            <IconBtn
-              label="Messages"
-              badge={unreadChat}
-              badgeColor="green"
-              active={chatOpen}
-              onClick={() => setChatOpen(!chatOpen)}
-            >
-              <MessageSquare className="size-5" fill={chatOpen ? 'currentColor' : 'none'} />
-            </IconBtn>
 
             {/* Avatar dropdown */}
             {loggedIn && (
@@ -366,16 +346,6 @@ export default function DashboardLayout({
           </Link>
 
           <div className="flex items-center gap-1.5">
-            <Link href="/dashboard/notifications" className="outline-none">
-              <IconBtn
-                label="Notifications"
-                badge={unreadCount}
-                badgeColor="red"
-                active={isActive('/dashboard/notifications')}
-              >
-                <Bell className="size-5" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
-              </IconBtn>
-            </Link>
             <IconBtn
               label="Messages"
               badge={unreadChat}
@@ -409,15 +379,26 @@ export default function DashboardLayout({
           <span className="text-[10px] font-semibold">Home</span>
         </Link>
 
-        {/* Search */}
-        <Link
-          href="/dashboard/explore"
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-muted-foreground transition-colors duration-150"
-          aria-label="Search"
+        {/* Messages */}
+        <button
+          type="button"
+          onClick={() => setChatOpen(!chatOpen)}
+          className={cn(
+            'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
+            chatOpen ? 'text-[#52b274]' : 'text-muted-foreground'
+          )}
+          aria-label="Messages"
         >
-          <Search className="size-[22px]" />
-          <span className="text-[10px] font-semibold">Search</span>
-        </Link>
+          <div className="relative">
+            <MessageSquare className="size-[22px]" fill={chatOpen ? 'currentColor' : 'none'} />
+            {unreadChat > 0 && (
+              <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-[#52b274] text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
+                {unreadChat > 9 ? '9+' : unreadChat}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-semibold">Messages</span>
+        </button>
 
         {/* Create — floating green circle */}
         <button
@@ -487,7 +468,7 @@ export default function DashboardLayout({
         <div
           className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12')}
           style={{
-            maxWidth: pathname.startsWith('/dashboard/explore')
+            maxWidth: pathname.startsWith('/dashboard/explore') || pathname.startsWith('/dashboard/control-panel')
               ? 'none'
               : pathname.startsWith('/dashboard/post/')
                 ? '1170px'
