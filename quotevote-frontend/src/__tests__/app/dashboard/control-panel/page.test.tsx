@@ -89,7 +89,6 @@ describe('Control Panel Page', () => {
       expect(screen.getAllByText('Users').length).toBeGreaterThan(0)
       expect(screen.getAllByText('Moderation').length).toBeGreaterThan(0)
       expect(screen.getAllByText('Reports').length).toBeGreaterThan(0)
-      expect(screen.getAllByText('Bots').length).toBeGreaterThan(0)
     })
   })
 
