@@ -5,7 +5,7 @@
  * with appropriate title and description fields.
  */
 
-import { metadata as loginMetadata } from '@/app/auths/(card)/login/page'
+import { metadata as loginMetadata } from '@/app/auths/(split)/login/page'
 import { metadata as signupMetadata } from '@/app/auths/(card)/signup/page'
 import { metadata as forgotPasswordMetadata } from '@/app/auths/(card)/forgot-password/page'
 import { metadata as passwordResetMetadata } from '@/app/auths/(card)/password-reset/page'
