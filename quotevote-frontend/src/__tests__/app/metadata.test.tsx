@@ -7,7 +7,7 @@
 
 import { metadata as loginMetadata } from '@/app/auths/(split)/login/page'
 import { metadata as signupMetadata } from '@/app/auths/(card)/signup/page'
-import { metadata as forgotPasswordMetadata } from '@/app/auths/(card)/forgot-password/page'
+import { metadata as forgotPasswordMetadata } from '@/app/auths/(split)/forgot-password/page'
 import { metadata as passwordResetMetadata } from '@/app/auths/(card)/password-reset/page'
 import { metadata as requestAccessMetadata } from '@/app/auths/request-access/page'
 import { metadata as aboutMetadata } from '@/app/about/page'
