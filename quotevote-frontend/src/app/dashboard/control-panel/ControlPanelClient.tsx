@@ -10,7 +10,6 @@ import {
   Star,
   Users,
   FileText,
-  Flag,
   Bot,
   ChevronRight,
 } from 'lucide-react'
@@ -25,13 +24,12 @@ import type { SettingsUserData } from '@/types/settings'
 
 import BotListTab from '@/components/Admin/BotListTab'
 import UserInviteRequestsTab from '@/components/Admin/UserInviteRequestsTab'
-import UserReportsTab from '@/components/Admin/UserReportsTab'
 import PostModerationTab from '@/components/Admin/PostModerationTab'
 import FeaturedPostsTab from '@/components/Admin/FeaturedPostsTab'
 import UserManagementTab from '@/components/Admin/UserManagementTab'
 import StatisticsTab from '@/components/Admin/StatisticsTab'
 
-type TabId = 'statistics' | 'invites' | 'featured' | 'users' | 'moderation' | 'reports' | 'bots'
+type TabId = 'statistics' | 'invites' | 'featured' | 'users' | 'moderation' | 'bots'
 
 const NAV_ITEMS: {
   id: TabId
@@ -44,8 +42,7 @@ const NAV_ITEMS: {
   { id: 'featured', label: 'Featured', icon: Star, description: 'Manage featured posts' },
   { id: 'users', label: 'Users', icon: Users, description: 'Manage user accounts' },
   { id: 'moderation', label: 'Moderation', icon: FileText, description: 'Review pending posts' },
-  { id: 'reports', label: 'Reports', icon: Flag, description: 'User reports queue' },
-  { id: 'bots', label: 'Bots', icon: Bot, description: 'Bot-flagged accounts' },
+  { id: 'bots', label: 'Reports', icon: Bot, description: 'Bot-flagged accounts' },
 ]
 
 function TabSkeleton() {
@@ -116,8 +113,6 @@ export default function ControlPanelClient() {
         return <Suspense fallback={<TabSkeleton />}><UserManagementTab /></Suspense>
       case 'moderation':
         return <Suspense fallback={<TabSkeleton />}><PostModerationTab /></Suspense>
-      case 'reports':
-        return <Suspense fallback={<TabSkeleton />}><UserReportsTab /></Suspense>
       case 'bots':
         return <Suspense fallback={<TabSkeleton />}><BotListTab /></Suspense>
       default:

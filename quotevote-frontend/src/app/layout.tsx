@@ -7,7 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthModalProvider } from "@/context/AuthModalContext";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "./components/Eyebrow/Eyebrow";
+// import { Eyebrow } from "./components/Eyebrow/Eyebrow";
 import "./globals.css";
 
 /**
@@ -68,7 +68,7 @@ export default function RootLayout({
           <ApolloProviderWrapper>
             <ThemeContextProvider>
               <AuthModalProvider>
-                <Eyebrow />
+                {/* <Eyebrow /> */}
                 {children}
                 <Toaster position="top-right" richColors />
               </AuthModalProvider>
