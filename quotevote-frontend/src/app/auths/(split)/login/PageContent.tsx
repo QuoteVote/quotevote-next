@@ -101,7 +101,7 @@ export default function LoginPageContent() {
       </div>
 
       {/* Right panel — login form */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white">
+      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12" style={{ background: '#eef4f9' }}>
         {/* Mobile logo */}
         <div className="lg:hidden mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
