@@ -7,8 +7,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { GraphQLError } from 'graphql';
 import { solidResolvers } from './data/resolvers/solidResolvers';
-import { featuredPostsResolver } from './data/resolvers/featuredPostsResolver';
-import { heartbeatResolver } from './data/resolvers/heartbeatResolver';
+import { domainTypeDefs } from './data/types';
 import type { GraphQLContext, PubSub } from './types/graphql';
 import { requireAuth } from './data/utils/requireAuth';
 import { pubsub } from './data/utils/pubsub';
@@ -46,6 +45,8 @@ async function startServer() {
   // 2. Apollo Server Setup (v4/v5 Syntax)
   const server = new ApolloServer<GraphQLContext>({
     typeDefs: `
+      ${domainTypeDefs}
+
       type Query {
         hello: String
         status: String
@@ -125,8 +126,6 @@ async function startServer() {
           message: String
       }
 
-      scalar JSON
-
       type PortableState {
           version: String
           collections: [JSON]
@@ -151,8 +150,6 @@ async function startServer() {
         },
       },
       solidResolvers,
-      featuredPostsResolver,
-      heartbeatResolver,
     ],
   });
 
