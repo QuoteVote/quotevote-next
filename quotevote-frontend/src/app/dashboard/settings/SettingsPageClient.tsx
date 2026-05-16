@@ -123,7 +123,7 @@ export default function SettingsPageClient() {
   }
 
   return (
-    <div className="py-6 max-w-2xl mx-auto space-y-4">
+    <div className="py-6 space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings & Privacy</h1>
         <p className="text-muted-foreground text-sm mt-1">

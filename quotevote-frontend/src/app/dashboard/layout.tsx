@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
+import { DashboardSidebars } from '@/components/DashboardSidebars';
 
 /* ------------------------------------------------------------------ */
 
@@ -465,18 +466,37 @@ export default function DashboardLayout({
           MAIN CONTENT
       ════════════════════════════════════════════════════════════════ */}
       <main id="main-content" className="min-h-screen pt-[56px] md:pt-[60px] pb-[60px] md:pb-0">
-        <div
-          className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12')}
-          style={{
-            maxWidth: pathname.startsWith('/dashboard/explore') || pathname.startsWith('/dashboard/control-panel')
-              ? 'none'
-              : pathname.startsWith('/dashboard/post/')
-                ? '1170px'
-                : '42rem',
-          }}
-        >
-          {children}
-        </div>
+        {pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/settings') ? (
+          /* Profile and Settings & Privacy align with the Home feed column:
+             apply the same fixed left-sidebar / right-chat offsets as
+             /dashboard/explore so the content's left and right edges match the
+             Home page (no horizontal jump when switching tabs), and render the
+             Notifications + Messages sidebars. */
+          <div
+            className={cn(
+              'lg:pl-[300px] xl:pl-[340px]',
+              loggedIn && 'xl:pr-[360px] 2xl:pr-[420px]'
+            )}
+          >
+            <DashboardSidebars />
+            <div className="mx-auto w-full max-w-2xl px-0 md:px-4">
+              {children}
+            </div>
+          </div>
+        ) : (
+          <div
+            className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12')}
+            style={{
+              maxWidth: pathname.startsWith('/dashboard/explore') || pathname.startsWith('/dashboard/control-panel')
+                ? 'none'
+                : pathname.startsWith('/dashboard/post/')
+                  ? '1170px'
+                  : '42rem',
+            }}
+          >
+            {children}
+          </div>
+        )}
       </main>
 
       <ChatPanel />
