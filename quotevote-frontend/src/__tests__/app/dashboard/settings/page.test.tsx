@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
 import { resetStore } from '@/__tests__/utils/test-utils'
+import { installMemoryStorage, restoreStorage } from '@/__tests__/utils/memoryStorage'
 import { useAppStore } from '@/store/useAppStore'
 import { UPDATE_USER } from '@/graphql/mutations'
 
@@ -155,6 +156,45 @@ describe('Settings Page', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/at least 8 characters/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('Profile Background', () => {
+    beforeEach(() => {
+      installMemoryStorage()
+    })
+
+    afterEach(() => {
+      restoreStorage()
+    })
+
+    it('renders the profile background section with pattern options', () => {
+      render(<SettingsPageClient />)
+      expect(screen.getByText('Profile Background')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Zigzag' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Profile background preview')).toBeInTheDocument()
+    })
+
+    it('persists the selected pattern', async () => {
+      render(<SettingsPageClient />)
+      fireEvent.click(screen.getByRole('button', { name: 'Zigzag' }))
+
+      await waitFor(() => {
+        expect(localStorage.getItem('profileBgPattern')).toBe('zigzag')
+      })
+      expect(screen.getByRole('button', { name: 'Zigzag' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      )
+    })
+
+    it('persists the selected color swatch', async () => {
+      render(<SettingsPageClient />)
+      fireEvent.click(screen.getByLabelText('Background color #3b82f6'))
+
+      await waitFor(() => {
+        expect(localStorage.getItem('profileBgColor')).toBe('#3b82f6')
+      })
     })
   })
 })

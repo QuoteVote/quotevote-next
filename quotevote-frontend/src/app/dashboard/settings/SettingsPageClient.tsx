@@ -29,6 +29,13 @@ import { replaceGqlError } from '@/lib/utils/replaceGqlError'
 import { useAppStore } from '@/store/useAppStore'
 import { removeToken } from '@/lib/auth'
 import { useTheme } from '@/context/ThemeContext'
+import { useProfileBackground } from '@/hooks/useProfileBackground'
+import {
+  getProfileBackgroundStyle,
+  PROFILE_BG_COLORS,
+  PROFILE_BG_PATTERNS,
+} from '@/lib/utils/profileBackground'
+import { cn } from '@/lib/utils'
 import type { SettingsUserData } from '@/types/settings'
 import type { UpdateUserResponse } from '@/types/test'
 
@@ -51,6 +58,12 @@ export default function SettingsPageClient() {
   const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined
   const setUserData = useAppStore((state) => state.setUserData)
   const { toggleTheme, isDarkMode, neoBrutalism, toggleNeoBrutalism } = useTheme()
+  const {
+    color: profileBgColor,
+    pattern: profileBgPattern,
+    setColor: setProfileBgColor,
+    setPattern: setProfileBgPattern,
+  } = useProfileBackground()
 
   const username = userData?.username ?? ''
   const email = userData?.email ?? ''
@@ -274,6 +287,86 @@ export default function SettingsPageClient() {
                     onCheckedChange={handleBrutalismToggle}
                     aria-label="Toggle neo-brutalism theme"
                   />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Profile Background */}
+              <div className="space-y-3">
+                <div className="space-y-0.5">
+                  <Label>Profile Background</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Customize your profile banner color and pattern
+                  </p>
+                </div>
+
+                {/* Live preview */}
+                <div
+                  className="h-20 w-full rounded-md border border-border"
+                  style={getProfileBackgroundStyle(profileBgColor, profileBgPattern)}
+                  aria-label="Profile background preview"
+                  role="img"
+                />
+
+                {/* Color */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Color</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {PROFILE_BG_COLORS.map((c) => {
+                      const selected =
+                        profileBgColor.toLowerCase() === c.toLowerCase()
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setProfileBgColor(c)}
+                          aria-label={`Background color ${c}`}
+                          aria-pressed={selected}
+                          className={cn(
+                            'h-7 w-7 rounded-full border transition-transform hover:scale-110',
+                            selected
+                              ? 'ring-2 ring-offset-2 ring-primary border-transparent'
+                              : 'border-border'
+                          )}
+                          style={{ backgroundColor: c }}
+                        />
+                      )
+                    })}
+                    <label className="ml-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                      <span>Custom</span>
+                      <input
+                        type="color"
+                        value={profileBgColor}
+                        onChange={(e) => setProfileBgColor(e.target.value)}
+                        aria-label="Custom background color"
+                        className="h-7 w-9 cursor-pointer rounded border border-border bg-transparent p-0"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Pattern */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Pattern</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PROFILE_BG_PATTERNS.map((p) => (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setProfileBgPattern(p.value)}
+                        aria-pressed={profileBgPattern === p.value}
+                        className={cn(
+                          'rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
+                          profileBgPattern === p.value
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border text-foreground/80 hover:bg-muted'
+                        )}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

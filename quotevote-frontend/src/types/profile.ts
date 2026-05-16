@@ -152,3 +152,25 @@ export interface ProfileControllerProps {
   username?: string;
 }
 
+/**
+ * Profile banner background customization
+ */
+export type ProfileBackgroundPattern =
+  | 'none'
+  | 'zigzag'
+  | 'dots'
+  | 'stripes'
+  | 'grid';
+
+export interface ProfileBackgroundPatternOption {
+  value: ProfileBackgroundPattern;
+  label: string;
+}
+
+export interface ProfileBackground {
+  color: string;
+  pattern: ProfileBackgroundPattern;
+  setColor: (color: string) => void;
+  setPattern: (pattern: ProfileBackgroundPattern) => void;
+}
+

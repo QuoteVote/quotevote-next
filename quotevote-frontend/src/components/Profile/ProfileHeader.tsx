@@ -28,6 +28,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ProfileBadge, ProfileBadgeContainer } from './ProfileBadge';
 import { cn } from '@/lib/utils';
+import { useProfileBackground } from '@/hooks/useProfileBackground';
+import { getProfileBackgroundStyle } from '@/lib/utils/profileBackground';
 
 interface ProfileHeaderProps {
   profileUser: ProfileUser;
@@ -54,6 +56,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const setChatOpen = useAppStore((state) => state.setChatOpen);
   const userStatus = useAppStore((state) => state.chat.userStatus || 'online');
   const userStatusMessage = useAppStore((state) => state.chat.userStatusMessage || '');
+  const { color: profileBgColor, pattern: profileBgPattern } = useProfileBackground();
   const loggedInUserIdString = typeof loggedInUserId === 'string' ? loggedInUserId : String(loggedInUserId || '');
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
@@ -162,10 +165,20 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
 
   return (
     <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm">
-      {/* Cover banner */}
+      {/* Cover banner — customizable color + pattern on your own profile */}
       <div className="h-28 relative overflow-hidden z-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/60 to-primary/40 animate-gradient-x" />
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '20px 20px' }} />
+        {sameUser ? (
+          <div
+            className="absolute inset-0"
+            style={getProfileBackgroundStyle(profileBgColor, profileBgPattern)}
+            data-testid="profile-cover"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/60 to-primary/40 animate-gradient-x" />
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '20px 20px' }} />
+          </>
+        )}
       </div>
 
       {/* Profile info section */}
