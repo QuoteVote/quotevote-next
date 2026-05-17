@@ -1,13 +1,15 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
+import { useState } from 'react';
 import type { NoFollowersProps } from '@/types/profile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
 
 export function NoFollowers({ filter }: NoFollowersProps) {
   const isFollowing = filter === 'following';
+  const [submitOpen, setSubmitOpen] = useState(false);
 
   return (
     <Card id="component-followers-display">
@@ -20,40 +22,37 @@ export function NoFollowers({ filter }: NoFollowersProps) {
                 : 'Here you are going to see people that like your ideas. Start writing to attract people to follow you.'}
             </p>
           </div>
-          <div id="component-empty-follow-image" className="relative w-64 h-64">
-            <Image
-              alt={isFollowing ? 'EmptyFollowing' : 'EmptyFollowers'}
-              src={
-                isFollowing
-                  ? '/assets/EmptyFollowing.png'
-                  : '/assets/EmptyFollowers.png'
-              }
-              fill
-              className="object-contain"
-            />
-          </div>
           <div
             id="component-empty-follow-actions"
             className="flex gap-4 flex-wrap justify-center"
           >
             {isFollowing ? (
-              <>
-                <Button variant="secondary" asChild>
-                  <Link href="/search">Find Friends</Link>
-                </Button>
-                <Button variant="default" asChild>
-                  <Link href="/search">Go to Search</Link>
-                </Button>
-              </>
+              // Find Friends / Go to Search are intentionally hidden for now.
+              // <>
+              //   <Button variant="secondary" asChild>
+              //     <Link href="/search">Find Friends</Link>
+              //   </Button>
+              //   <Button variant="default" asChild>
+              //     <Link href="/search">Go to Search</Link>
+              //   </Button>
+              // </>
+              null
             ) : (
-              <Button variant="secondary" asChild>
-                <Link href="/submit">Create a Post</Link>
+              <Button variant="default" onClick={() => setSubmitOpen(true)}>
+                Create a Post
               </Button>
             )}
           </div>
         </div>
       </CardContent>
+
+      {/* Create Quote dialog — same flow as the navbar's create button */}
+      <Dialog open={submitOpen} onOpenChange={setSubmitOpen}>
+        <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quote</DialogTitle>
+          <SubmitPost setOpen={setSubmitOpen} />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
-

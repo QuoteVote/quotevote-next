@@ -309,7 +309,10 @@ export default function Post({
             >
               <DisplayAvatar
                 avatar={avatar as string | Record<string, unknown> | undefined}
-                username={username ?? undefined}
+                /* Seed the default avatar with the same value the profile/chat
+                   use (display name, falling back to username) so an unset
+                   avatar looks identical across the post, profile and messages. */
+                username={name || username || undefined}
                 size={48}
               />
             </button>
@@ -424,6 +427,43 @@ export default function Post({
             user={{ _id: user._id || '' }}
           />
 
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="flex items-center gap-1 px-2 h-8 rounded-md bg-muted/40 text-[12px] text-muted-foreground"
+                  aria-label={`${approveCount} support, ${rejectCount} disagree`}
+                >
+                  <ArrowBigUp className="size-3.5 text-[var(--color-upvote)]" strokeWidth={1.5} />
+                  <strong className="text-foreground font-semibold tabular-nums">{approveCount}</strong>
+                  <span className="text-muted-foreground/30 mx-0.5">/</span>
+                  <ArrowBigDown className="size-3.5 text-[var(--color-downvote)]" strokeWidth={1.5} />
+                  <strong className="text-foreground font-semibold tabular-nums">{rejectCount}</strong>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {approveCount} support · {rejectCount} disagree
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="flex items-center gap-1 px-2 h-8 rounded-md bg-muted/40 text-[12px] text-muted-foreground"
+                  aria-label={`${interactionCount} interaction${interactionCount !== 1 ? 's' : ''}`}
+                >
+                  <MessageCircle className="size-3.5" />
+                  <strong className="text-foreground font-semibold tabular-nums">{interactionCount}</strong>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {(isOwner || admin) && (
             <>
               <Separator orientation="vertical" className="h-5 mx-0.5" />
@@ -501,26 +541,6 @@ export default function Post({
               </Suspense>
             )}
           </VotingBoard>
-        </div>
-
-        {/* Stats bar */}
-        <div
-          className="flex items-center flex-wrap gap-2 py-3 mt-4 border-y border-border/60 text-[12px] text-muted-foreground"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-muted/40">
-            <ArrowBigUp className="size-3.5 text-[var(--color-upvote)]" strokeWidth={1.5} />
-            <strong className="text-foreground font-semibold tabular-nums">{approveCount}</strong>
-            <span className="text-muted-foreground/30 mx-0.5">/</span>
-            <ArrowBigDown className="size-3.5 text-[var(--color-downvote)]" strokeWidth={1.5} />
-            <strong className="text-foreground font-semibold tabular-nums">{rejectCount}</strong>
-          </span>
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/40">
-            <MessageCircle className="size-3" />
-            <strong className="text-foreground font-semibold tabular-nums">{interactionCount}</strong>
-            {' '}interaction{interactionCount !== 1 ? 's' : ''}
-          </span>
         </div>
       </div>
 

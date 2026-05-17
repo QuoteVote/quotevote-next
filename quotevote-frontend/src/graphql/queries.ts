@@ -567,16 +567,12 @@ export const GET_USER = gql`
 /**
  * Get user follow info (followers or following)
  */
+// Backend schema: `getUserFollowInfo(username, filter): JSON` — it returns a
+// JSON scalar (an array of { id, username, avatar, numFollowers,
+// numFollowing }), so the query must NOT have a selection set.
 export const GET_FOLLOW_INFO = gql`
-  query getUserFollowInfo($username: String!, $filter: String!) {
-    getUserFollowInfo(username: $username, filter: $filter) {
-      id
-      username
-      name
-      avatar
-      numFollowers
-      numFollowing
-    }
+  query getUserFollowInfo($username: String!, $filter: String) {
+    getUserFollowInfo(username: $username, filter: $filter)
   }
 `
 

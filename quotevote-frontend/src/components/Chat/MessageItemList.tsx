@@ -4,7 +4,6 @@ import ScrollableFeed from 'react-scrollable-feed'
 
 import MessageItem from './MessageItem'
 import QuoteHeaderMessage from './QuoteHeaderMessage'
-import { LoadingSpinner } from '../LoadingSpinner'
 import { GET_ROOM_MESSAGES, GET_POST } from '@/graphql/queries'
 import { READ_MESSAGES } from '@/graphql/mutations'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
@@ -23,7 +22,6 @@ export default function MessageItemList({ room }: MessageItemListProps) {
   const postId = postDetails?._id ?? null
 
   const {
-    loading,
     error,
     data,
     refetch,
@@ -130,7 +128,10 @@ export default function MessageItemList({ room }: MessageItemListProps) {
     )
   }
 
-  const messageData: ChatMessage[] = (!loading && data?.messages) || []
+  // Render straight from `data` (which stays populated from the cache during
+  // the 3s background poll). Gating on `loading` would blank the list on every
+  // poll and make the messages blink.
+  const messageData: ChatMessage[] = data?.messages || []
   const post = postData?.post
   const postCreator = post?.creator
 
@@ -151,7 +152,6 @@ export default function MessageItemList({ room }: MessageItemListProps) {
     <div className="relative h-full w-full bg-transparent">
       <ScrollableFeed>
         <div className="flex flex-col gap-1 py-1">
-          {loading && <LoadingSpinner size={50} />}
           {showQuoteHeader && quoteData && (
             <QuoteHeaderMessage postDetails={quoteData} postCreator={chatParticipantCreator} />
           )}

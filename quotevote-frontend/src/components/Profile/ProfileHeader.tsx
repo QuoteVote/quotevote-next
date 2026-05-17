@@ -7,6 +7,7 @@ import { MessageCircle, Flag, MoreHorizontal, Pencil } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
 import type { ProfileUser } from '@/types/profile';
+import type { StagedChatRoom } from '@/types/chat';
 import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
@@ -29,7 +30,11 @@ import {
 import { ProfileBadge, ProfileBadgeContainer } from './ProfileBadge';
 import { cn } from '@/lib/utils';
 import { useProfileBackground } from '@/hooks/useProfileBackground';
-import { getProfileBackgroundStyle } from '@/lib/utils/profileBackground';
+import {
+  getProfileBackgroundStyle,
+  DEFAULT_PROFILE_BG_COLOR,
+  DEFAULT_PROFILE_BG_PATTERN,
+} from '@/lib/utils/profileBackground';
 
 interface ProfileHeaderProps {
   profileUser: ProfileUser;
@@ -62,6 +67,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
 
   const {
     username,
+    name,
     _id,
     _followingId = [],
     _followersId = [],
@@ -136,10 +142,25 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
       return;
     }
 
-    if (room) {
+    if (room && room._id) {
+      // Existing DM — open the conversation in the right-side panel.
       setSelectedChatRoom(room._id);
-      setChatOpen(true);
+    } else {
+      // No DM yet — stage a new conversation so the right-side MessageBox
+      // opens the compose view directly (same flow as the chat buddy list).
+      const staged: StagedChatRoom = {
+        _id: null,
+        title: name || username || 'Chat',
+        avatar:
+          typeof avatar === 'string'
+            ? avatar
+            : (avatar?.url ?? null),
+        messageType: 'USER',
+        users: [loggedInUserIdString, _id],
+      };
+      setSelectedChatRoom(staged);
     }
+    setChatOpen(true);
   };
 
   const [reportBot, { loading: reportLoading }] = useMutation(REPORT_BOT);
@@ -165,20 +186,21 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
 
   return (
     <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm">
-      {/* Cover banner — customizable color + pattern on your own profile */}
+      {/* Cover banner — customizable color + pattern on your own profile;
+          other users default to the brand green zigzag. */}
       <div className="h-28 relative overflow-hidden z-0">
-        {sameUser ? (
-          <div
-            className="absolute inset-0"
-            style={getProfileBackgroundStyle(profileBgColor, profileBgPattern)}
-            data-testid="profile-cover"
-          />
-        ) : (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/60 to-primary/40 animate-gradient-x" />
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '20px 20px' }} />
-          </>
-        )}
+        <div
+          className="absolute inset-0"
+          style={
+            sameUser
+              ? getProfileBackgroundStyle(profileBgColor, profileBgPattern)
+              : getProfileBackgroundStyle(
+                  DEFAULT_PROFILE_BG_COLOR,
+                  DEFAULT_PROFILE_BG_PATTERN
+                )
+          }
+          data-testid="profile-cover"
+        />
       </div>
 
       {/* Profile info section */}
@@ -188,7 +210,10 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           <div className="ring-4 ring-card rounded-full">
             <DisplayAvatar
               avatar={avatar as string | Record<string, unknown> | undefined}
-              username={username}
+              /* Seed the default avatar with the same value the chat/message
+                 header uses (the room title = the user's display name), so an
+                 unset avatar looks identical in the profile and in messages. */
+              username={name || username}
               size={96}
             />
           </div>

@@ -172,7 +172,7 @@ export function MainNavBar({}: MainNavBarProps) {
                 >
                   <DisplayAvatar
                     avatar={user?.avatar as string | Record<string, unknown> | undefined}
-                    username={typeof user?.username === 'string' ? user.username : undefined}
+                    username={name}
                     size={40}
                     className="size-10"
                   />
@@ -296,7 +296,7 @@ export function MainNavBar({}: MainNavBarProps) {
                   >
                     <DisplayAvatar
                       avatar={user?.avatar as string | Record<string, unknown> | undefined}
-                      username={typeof user?.username === 'string' ? user.username : undefined}
+                      username={name}
                       size={36}
                       className="size-9 mr-2"
                     />

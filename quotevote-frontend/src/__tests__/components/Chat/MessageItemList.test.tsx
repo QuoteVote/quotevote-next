@@ -170,7 +170,7 @@ describe('MessageItemList', () => {
     expect(screen.getByText('Select a conversation to view messages')).toBeInTheDocument()
   })
 
-  it('renders loading spinner while fetching messages', () => {
+  it('does not show any loading indicator while fetching messages', () => {
     mockUseQuery.mockReturnValue({
       data: undefined,
       loading: true,
@@ -178,9 +178,11 @@ describe('MessageItemList', () => {
       refetch: jest.fn(),
     })
 
-    render(<MessageItemList room={mockRoom} />)
+    const { container } = render(<MessageItemList room={mockRoom} />)
 
-    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
+    // The automatic message loading spinner is intentionally hidden.
+    expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument()
+    expect(container.querySelector('.animate-spin')).toBeNull()
   })
 
   it('renders error message when query fails', async () => {

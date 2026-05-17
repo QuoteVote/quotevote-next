@@ -196,7 +196,7 @@ export function Sidebar({
         >
           <DisplayAvatar
             avatar={user?.avatar as string | Record<string, unknown> | undefined}
-            username={typeof user?.username === 'string' ? user.username : undefined}
+            username={name}
             size={32}
             className="size-8"
           />

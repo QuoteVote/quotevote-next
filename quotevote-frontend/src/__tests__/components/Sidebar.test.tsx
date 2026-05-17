@@ -193,8 +193,10 @@ describe('Sidebar Component', () => {
     it('displays user avatar and name in sidebar', () => {
       render(<Sidebar open={true} onOpenChange={jest.fn()} />);
 
-      // DisplayAvatar sets alt to "<username>'s avatar"
-      const avatar = screen.getByAltText("testuser's avatar");
+      // Avatar is seeded by the display name (name || username), consistent
+      // with the profile / post card / post detail. DisplayAvatar sets alt
+      // to "<seed>'s avatar".
+      const avatar = screen.getByAltText("Test User's avatar");
       expect(avatar).toBeInTheDocument();
       expect(screen.getByText('Test User')).toBeInTheDocument();
     });

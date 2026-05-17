@@ -7,8 +7,14 @@
  * - Action buttons
  */
 
-import { render, screen } from '../../utils/test-utils';
+import { render, screen, fireEvent } from '../../utils/test-utils';
 import { NoFollowers } from '../../../components/Profile/NoFollowers';
+
+// Stub the create-post form so the dialog content is assertable without
+// pulling in SubmitPost's heavy data dependencies.
+jest.mock('@/components/SubmitPost/SubmitPost', () => ({
+  SubmitPost: () => <div data-testid="submit-post" />,
+}));
 
 describe('NoFollowers', () => {
   describe('Followers Filter', () => {
@@ -19,17 +25,22 @@ describe('NoFollowers', () => {
       ).toBeInTheDocument();
     });
 
-    it('displays correct image for followers', () => {
+    it('does not render an empty-state image for followers', () => {
       const { container } = render(<NoFollowers filter="followers" />);
-      const image = container.querySelector('img[alt="EmptyFollowers"]');
-      expect(image).toBeInTheDocument();
+      expect(container.querySelector('img')).toBeNull();
     });
 
-    it('shows create post button for followers', () => {
+    it('opens the create-post dialog (navbar flow) for followers', () => {
       render(<NoFollowers filter="followers" />);
-      const button = screen.getByRole('link', { name: /Create a Post/i });
+      const button = screen.getByRole('button', { name: /Create a Post/i });
       expect(button).toBeInTheDocument();
-      expect(button).toHaveAttribute('href', '/submit');
+      // Not a navigation link anymore
+      expect(screen.queryByRole('link', { name: /Create a Post/i })).toBeNull();
+
+      // Dialog is closed until the button is clicked
+      expect(screen.queryByTestId('submit-post')).not.toBeInTheDocument();
+      fireEvent.click(button);
+      expect(screen.getByTestId('submit-post')).toBeInTheDocument();
     });
   });
 
@@ -41,22 +52,17 @@ describe('NoFollowers', () => {
       ).toBeInTheDocument();
     });
 
-    it('displays correct image for following', () => {
+    it('does not render an empty-state image for following', () => {
       const { container } = render(<NoFollowers filter="following" />);
-      const image = container.querySelector('img[alt="EmptyFollowing"]');
-      expect(image).toBeInTheDocument();
+      expect(container.querySelector('img')).toBeNull();
     });
 
-    it('shows find friends and search buttons for following', () => {
+    it('does not show Find Friends / Go to Search buttons for following', () => {
       render(<NoFollowers filter="following" />);
-      const findFriendsButton = screen.getByRole('link', { name: /Find Friends/i });
-      const searchButton = screen.getByRole('link', { name: /Go to Search/i });
-      
-      expect(findFriendsButton).toBeInTheDocument();
-      expect(findFriendsButton).toHaveAttribute('href', '/search');
-      
-      expect(searchButton).toBeInTheDocument();
-      expect(searchButton).toHaveAttribute('href', '/search');
+      expect(screen.queryByRole('link', { name: /Find Friends/i })).toBeNull();
+      expect(screen.queryByRole('link', { name: /Go to Search/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Find Friends/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Go to Search/i })).toBeNull();
     });
   });
 

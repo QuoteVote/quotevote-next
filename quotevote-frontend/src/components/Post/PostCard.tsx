@@ -212,6 +212,10 @@ function PostCardComponent({
   }
 
   const username = creator?.username || 'Anonymous'
+  // Seed the default avatar with the same value the profile/chat use
+  // (display name, falling back to username) so an unset avatar looks
+  // identical across the post card, profile and messages.
+  const avatarSeed = creator?.name || username
   const upvoteCount = localApprovedBy.length
   const downvoteCount = localRejectedBy.length
 
@@ -400,7 +404,7 @@ function PostCardComponent({
         >
           <DisplayAvatar
             avatar={creator?.avatar as string | Record<string, unknown> | undefined}
-            username={username}
+            username={avatarSeed}
             size={32}
           />
           <span className="text-sm font-bold text-[#52b274] group-hover/author:underline truncate">
