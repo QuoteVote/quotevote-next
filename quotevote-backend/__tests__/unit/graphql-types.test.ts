@@ -127,6 +127,9 @@ describe('GraphQL domain typedefs (7.28 migration)', () => {
       const quoteFields = QuoteType.getFields();
       expect(quoteFields.postId.type).toBe(GraphQLID);
 
+      const userFields = UserType.getFields();
+      expect(userFields._votesId.type).toBe(GraphQLString);
+
       const messageFields = MessageType.getFields();
       expect(messageFields.readBy.type).toBeInstanceOf(GraphQLList);
       expect((messageFields.readBy.type as GraphQLList<GraphQLOutputType>).ofType).toBe(

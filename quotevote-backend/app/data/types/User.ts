@@ -41,13 +41,8 @@ export const UserType: GraphQLObjectType<Common.User, GraphQLContext> = new Grap
       resolve: (u) => u._followingId ?? [],
     },
     _votesId: {
-      type: GraphQLInt,
-      resolve: (u) => {
-        const raw = u._votesId;
-        if (raw == null) return null;
-        const n = Number(raw);
-        return Number.isFinite(n) ? n : null;
-      },
+      type: GraphQLString,
+      resolve: (u) => u._votesId ?? null,
     },
     favorited: {
       type: GraphQLInt,
