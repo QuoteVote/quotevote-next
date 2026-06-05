@@ -97,7 +97,7 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
         if (!isOpen) onClose();
       }}
     >
-      <DialogContent className="max-w-md space-y-4">
+      <DialogContent className="sm:max-w-md space-y-4">
         <DialogHeader>
           <DialogTitle>Set Your Status</DialogTitle>
         </DialogHeader>
