@@ -169,7 +169,10 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    // Mobile = fixed app shell: the viewport itself never scrolls, so the
+    // fixed top bar and bottom nav are always visible and only <main> scrolls.
+    // Desktop (md+) keeps normal page (body) scrolling.
+    <div className="bg-background h-[100dvh] overflow-hidden md:h-auto md:min-h-screen md:overflow-visible">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[#52b274] focus:text-white focus:rounded-md focus:text-sm focus:font-medium focus:shadow-lg"
@@ -435,7 +438,10 @@ export default function DashboardLayout({
       {/* ════════════════════════════════════════════════════════════════
           MAIN CONTENT
       ════════════════════════════════════════════════════════════════ */}
-      <main id="main-content" className="min-h-screen pt-[56px] md:pt-[60px] pb-[60px] md:pb-0">
+      <main
+        id="main-content"
+        className="h-full overflow-y-auto overscroll-contain pt-[56px] md:pt-[60px] pb-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible"
+      >
         {pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/settings') ? (
           /* Profile and Settings & Privacy align with the Home feed column:
              apply the same fixed left-sidebar / right-chat offsets as
@@ -457,7 +463,7 @@ export default function DashboardLayout({
           </div>
         ) : (
           <div
-            className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12')}
+            className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12 h-full md:h-auto')}
             style={{
               maxWidth: pathname.startsWith('/dashboard/explore') || pathname.startsWith('/dashboard/control-panel')
                 ? 'none'

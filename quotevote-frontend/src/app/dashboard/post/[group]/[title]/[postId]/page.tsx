@@ -56,7 +56,9 @@ function PostLayout({ postId }: { postId: string }) {
 
   if (isMobile && !isLandscape) {
     return (
-      <div className="h-[100dvh] overflow-hidden relative">
+      // h-full fills the scrollable <main> area (between the fixed top bar and
+      // bottom nav); the post body scrolls internally so both bars stay fixed.
+      <div className="h-full overflow-hidden relative">
         <div className="h-full overflow-y-auto pb-16">
           <PostController postId={postId} />
         </div>
