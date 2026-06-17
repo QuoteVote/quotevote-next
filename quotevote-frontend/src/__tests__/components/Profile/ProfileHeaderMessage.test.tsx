@@ -49,6 +49,12 @@ jest.mock('@/hooks/useProfileBackground', () => ({
   useProfileBackground: () => ({ color: '#fff', pattern: 'none' }),
 }));
 
+const mockEnsureAuth = jest.fn(() => true);
+jest.mock('@/hooks/useGuestGuard', () => ({
+  __esModule: true,
+  default: () => mockEnsureAuth,
+}));
+
 const mockUseQuery = jest.fn();
 const mockUseMutation = jest.fn();
 jest.mock('@apollo/client/react', () => ({
@@ -85,6 +91,7 @@ describe('ProfileHeader — Message button', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockEnsureAuth.mockReturnValue(true);
     mockUseMutation.mockReturnValue([jest.fn(), { loading: false, error: undefined }]);
     setSelectedChatRoom = jest.fn();
     setChatOpen = jest.fn();
@@ -153,6 +160,23 @@ describe('ProfileHeader — Message button', () => {
     render(<ProfileHeader profileUser={mockProfileUser} />);
     fireEvent.click(screen.getByRole('button', { name: /message/i }));
 
+    expect(setSelectedChatRoom).not.toHaveBeenCalled();
+    expect(setChatOpen).not.toHaveBeenCalled();
+  });
+
+  it('opens auth gate instead of chat when guest clicks Message', () => {
+    mockEnsureAuth.mockReturnValue(false);
+    setupQueries(null);
+    useAppStore.setState({
+      user: { loading: false, loginError: null, data: {} },
+      setSelectedChatRoom,
+      setChatOpen,
+    });
+
+    render(<ProfileHeader profileUser={mockProfileUser} />);
+    fireEvent.click(screen.getByRole('button', { name: /message/i }));
+
+    expect(mockEnsureAuth).toHaveBeenCalled();
     expect(setSelectedChatRoom).not.toHaveBeenCalled();
     expect(setChatOpen).not.toHaveBeenCalled();
   });

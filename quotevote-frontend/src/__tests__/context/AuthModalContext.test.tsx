@@ -7,7 +7,7 @@ function TestComponent() {
   return (
     <div>
       <div data-testid="modal-state">{isModalOpen ? 'open' : 'closed'}</div>
-      <button data-testid="open-button" onClick={openAuthModal}>
+      <button data-testid="open-button" onClick={() => openAuthModal()}>
         Open
       </button>
       <button data-testid="close-button" onClick={closeAuthModal}>

@@ -735,6 +735,10 @@ export interface RequestInviteDialogProps {
    * Callback function called when dialog should close
    */
   onClose: () => void;
+  /**
+   * Which panel to show when the dialog opens
+   */
+  view?: 'invite' | 'login';
 }
 
 export interface CardDetails {

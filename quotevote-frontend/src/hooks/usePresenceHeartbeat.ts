@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useMutation } from '@apollo/client/react'
 import { HEARTBEAT } from '@/graphql/mutations'
+import { isAuthenticated } from '@/lib/utils/auth'
 import type { UsePresenceHeartbeatReturn } from '@/types/hooks'
 
 /**
@@ -16,6 +17,10 @@ export const usePresenceHeartbeat = (interval: number = 45000): UsePresenceHeart
     const backoffMultiplier = 2
 
     useEffect(() => {
+        if (!isAuthenticated()) {
+            return
+        }
+
         const getRetryDelay = (attempt: number): number => {
             return Math.min(interval * Math.pow(backoffMultiplier, attempt), 300000)
         }

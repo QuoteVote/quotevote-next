@@ -104,7 +104,7 @@ describe('RequestInviteDialog', () => {
       screen.getByPlaceholderText(/enter your email address/i)
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /request invite/i })
+      screen.getByRole('button', { name: /^Request Invite$/ })
     ).toBeInTheDocument();
   });
 
@@ -133,7 +133,7 @@ describe('RequestInviteDialog', () => {
     render(<RequestInviteDialog {...defaultProps} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
-    const submitButton = screen.getByRole('button', { name: /request invite/i });
+    const submitButton = screen.getByRole('button', { name: /^Request Invite$/ });
 
     await user.type(emailInput, 'invalid-email');
     await user.click(submitButton);
@@ -149,7 +149,7 @@ describe('RequestInviteDialog', () => {
     const user = userEvent.setup({ delay: null });
     render(<RequestInviteDialog {...defaultProps} />);
 
-    const submitButton = screen.getByRole('button', { name: /request invite/i });
+    const submitButton = screen.getByRole('button', { name: /^Request Invite$/ });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -170,7 +170,7 @@ describe('RequestInviteDialog', () => {
     render(<RequestInviteDialog {...defaultProps} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
-    const submitButton = screen.getByRole('button', { name: /request invite/i });
+    const submitButton = screen.getByRole('button', { name: /^Request Invite$/ });
 
     await user.type(emailInput, 'existing@example.com');
     await user.click(submitButton);
@@ -187,7 +187,7 @@ describe('RequestInviteDialog', () => {
     render(<RequestInviteDialog {...defaultProps} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
-    const submitButton = screen.getByRole('button', { name: /request invite/i });
+    const submitButton = screen.getByRole('button', { name: /^Request Invite$/ });
 
     await user.type(emailInput, 'test@example.com');
     await user.click(submitButton);
@@ -221,7 +221,7 @@ describe('RequestInviteDialog', () => {
     render(<RequestInviteDialog {...defaultProps} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
-    const submitButton = screen.getByRole('button', { name: /request invite/i });
+    const submitButton = screen.getByRole('button', { name: /^Request Invite$/ });
 
     await user.type(emailInput, 'test@example.com');
     await user.click(submitButton);
@@ -246,7 +246,7 @@ describe('RequestInviteDialog', () => {
     render(<RequestInviteDialog open={true} onClose={onClose} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
-    const submitButton = screen.getByRole('button', { name: /request invite/i });
+    const submitButton = screen.getByRole('button', { name: /^Request Invite$/ });
 
     await user.type(emailInput, 'test@example.com');
     await user.click(submitButton);
@@ -282,7 +282,7 @@ describe('RequestInviteDialog', () => {
     render(<RequestInviteDialog {...defaultProps} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
-    const submitButton = screen.getByRole('button', { name: /request invite/i });
+    const submitButton = screen.getByRole('button', { name: /^Request Invite$/ });
 
     await user.type(emailInput, 'test@example.com');
     await user.click(submitButton);
@@ -359,10 +359,10 @@ describe('RequestInviteDialog', () => {
 
     render(<RequestInviteDialog {...defaultProps} />);
 
-    const loginLink = screen.getByRole('link', { name: /login/i });
+    const loginLink = screen.getByRole('link', { name: /open full login page/i });
     expect(loginLink).toHaveAttribute(
       'href',
-      expect.stringContaining('/login?redirect=')
+      expect.stringContaining('/auths/login?callbackUrl=')
     );
   });
 
@@ -370,9 +370,9 @@ describe('RequestInviteDialog', () => {
     render(<RequestInviteDialog {...defaultProps} />);
 
     const missionLink = screen.getByRole('link', {
-      name: /learn more about our mission here/i,
+      name: /learn more about our mission/i,
     });
-    expect(missionLink).toHaveAttribute('href', '/auth/request-access#mission');
+    expect(missionLink).toHaveAttribute('href', '/auths/request-access#mission');
   });
 
   it('cleans up timeout on unmount', async () => {
@@ -381,7 +381,7 @@ describe('RequestInviteDialog', () => {
     const { unmount } = render(<RequestInviteDialog {...defaultProps} />);
 
     const emailInput = screen.getByPlaceholderText(/enter your email address/i);
-    const submitButton = screen.getByRole('button', { name: /request invite/i });
+    const submitButton = screen.getByRole('button', { name: /^Request Invite$/ });
 
     await user.type(emailInput, 'test@example.com');
     await user.click(submitButton);

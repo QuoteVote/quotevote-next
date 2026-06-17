@@ -26,11 +26,17 @@ export interface Theme {
 }
 
 /**
+ * Auth modal view modes
+ */
+export type AuthModalView = 'invite' | 'login'
+
+/**
  * AuthModal context value interface
  */
 export interface AuthModalContextValue {
   isModalOpen: boolean
-  openAuthModal: () => void
+  modalView: AuthModalView
+  openAuthModal: (options?: { view?: AuthModalView }) => void
   closeAuthModal: () => void
 }
 

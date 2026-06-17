@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { ApolloProviderWrapper } from "@/lib/apollo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthModalProvider } from "@/context/AuthModalContext";
+import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
 // import { Eyebrow } from "./components/Eyebrow/Eyebrow";
@@ -70,6 +71,7 @@ export default function RootLayout({
               <AuthModalProvider>
                 {/* <Eyebrow /> */}
                 {children}
+                <AuthGateDialog />
                 <Toaster position="top-right" richColors />
               </AuthModalProvider>
             </ThemeContextProvider>

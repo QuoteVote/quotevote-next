@@ -11,6 +11,7 @@ import { env } from '@/config/env';
 import { getGraphqlWsServerUrl } from '@/lib/utils/getServerUrl';
 import { serializeObjectIds } from '@/lib/utils/objectIdSerializer';
 import { getToken, removeToken } from '@/lib/auth';
+import { triggerAuthGate } from '@/lib/auth-gate';
 
 /**
  * Get the GraphQL endpoint URL from validated environment configuration
@@ -191,7 +192,7 @@ function createErrorLink() {
         if (code === 'UNAUTHENTICATED') {
           if (typeof window !== 'undefined') {
             removeToken();
-            window.location.href = '/auths/login';
+            triggerAuthGate({ view: 'login' });
           }
           return;
         }

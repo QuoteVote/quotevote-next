@@ -11,7 +11,7 @@ export default function useGuestGuard() {
 
     return useCallback(() => {
         if (!isAuthenticated()) {
-            openAuthModal()
+            openAuthModal({ view: 'login' })
             return false
         }
         return true

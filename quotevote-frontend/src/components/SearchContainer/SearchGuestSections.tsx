@@ -105,7 +105,7 @@ export default function SearchGuestSections() {
                 only takes a moment to get started.
               </p>
               <Button
-                onClick={openAuthModal}
+                onClick={() => openAuthModal()}
                 size="lg"
                 className="gap-2"
               >

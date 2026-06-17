@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -36,6 +36,8 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/dashboard/explore'
   const setUserData = useAppStore((s) => s.setUserData)
   const [submitting, setSubmitting] = useState(false)
   const [tosAccepted, setTosAccepted] = useState(false)
@@ -60,7 +62,7 @@ export default function LoginPageContent() {
       const result = await loginUser(values.email, values.password)
       if (result.success && result.data) {
         setUserData(result.data.user as Record<string, unknown>)
-        router.push('/dashboard/explore')
+        router.push(callbackUrl.startsWith('/') ? callbackUrl : '/dashboard/explore')
       } else {
         toast.error(result.error || 'Login failed')
       }

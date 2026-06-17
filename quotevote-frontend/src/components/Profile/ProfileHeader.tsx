@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ProfileBadge, ProfileBadgeContainer } from './ProfileBadge';
 import { cn } from '@/lib/utils';
+import useGuestGuard from '@/hooks/useGuestGuard';
 import { useProfileBackground } from '@/hooks/useProfileBackground';
 import {
   getProfileBackgroundStyle,
@@ -64,6 +65,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const { color: profileBgColor, pattern: profileBgPattern } = useProfileBackground();
   const loggedInUserIdString = typeof loggedInUserId === 'string' ? loggedInUserId : String(loggedInUserId || '');
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const ensureAuth = useGuestGuard();
 
   const {
     username,
@@ -132,6 +134,8 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const room = !chatLoading && data?.messageRoom;
 
   const handleMessageUser = async () => {
+    if (!ensureAuth()) return;
+
     if (isBlocked) {
       const isBlocker = blockingStatus === 'blocker';
       const message = isBlocker

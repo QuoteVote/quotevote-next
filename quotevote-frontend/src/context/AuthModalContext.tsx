@@ -1,9 +1,10 @@
 'use client'
 
-import { createContext, useState, useContext } from 'react'
+import { createContext, useState, useContext, useCallback } from 'react'
 import type {
   AuthModalContextValue,
   AuthModalProviderProps,
+  AuthModalView,
 } from '@/types/context'
 
 const AuthModalContext = createContext<AuthModalContextValue | undefined>(
@@ -11,16 +12,25 @@ const AuthModalContext = createContext<AuthModalContextValue | undefined>(
 )
 
 /**
- * Provider for global invite modal state management
+ * Provider for global auth / request-invite modal state
  */
 export function AuthModalProvider({ children }: AuthModalProviderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalView, setModalView] = useState<AuthModalView>('invite')
 
-  const openAuthModal = () => setIsModalOpen(true)
-  const closeAuthModal = () => setIsModalOpen(false)
+  const openAuthModal = useCallback((options?: { view?: AuthModalView }) => {
+    setModalView(options?.view ?? 'invite')
+    setIsModalOpen(true)
+  }, [])
+
+  const closeAuthModal = useCallback(() => {
+    setIsModalOpen(false)
+    setModalView('invite')
+  }, [])
 
   const value: AuthModalContextValue = {
     isModalOpen,
+    modalView,
     openAuthModal,
     closeAuthModal,
   }
@@ -33,7 +43,7 @@ export function AuthModalProvider({ children }: AuthModalProviderProps) {
 }
 
 /**
- * Hook to access invite modal state and controls
+ * Hook to access auth modal state and controls
  * @throws {Error} When used outside AuthModalProvider
  */
 export const useAuthModal = (): AuthModalContextValue => {
@@ -43,4 +53,3 @@ export const useAuthModal = (): AuthModalContextValue => {
   }
   return context
 }
-

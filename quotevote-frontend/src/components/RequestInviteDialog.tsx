@@ -2,9 +2,9 @@
 
 /**
  * RequestInviteDialog Component
- * 
- * Dialog component for requesting platform access via email invitation.
- * Migrated from Material UI to shadcn/ui components.
+ *
+ * Auth gate modal for guests: request invite, login with password, or learn more.
+ * Viewing is public; participation requires an account.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -12,6 +12,7 @@ import { useApolloClient, useMutation } from '@apollo/client/react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 import {
   Dialog,
@@ -27,25 +28,39 @@ import { Label } from '@/components/ui/label';
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
 import { GET_CHECK_DUPLICATE_EMAIL } from '@/graphql/queries';
 import { requestAccessEmailSchema } from '@/lib/validation/requestAccessSchema';
+import { loginUser } from '@/lib/auth';
+import { useAppStore } from '@/store/useAppStore';
 import type { RequestInviteDialogProps } from '@/types/components';
 
-export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps) {
+type PanelView = 'invite' | 'login';
+
+export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestInviteDialogProps) {
+  const [panel, setPanel] = useState<PanelView>(view);
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+  const setUserData = useAppStore((s) => s.setUserData);
+
   const client = useApolloClient();
   const [requestUserAccess, { loading }] = useMutation(
     REQUEST_USER_ACCESS_MUTATION
   );
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    if (open) {
+      setPanel(view);
+    }
+  }, [open, view]);
+
+  const handleInviteSubmit = async () => {
     setError('');
 
-    // Validate email using Zod schema
     const validationResult = requestAccessEmailSchema.safeParse({ email });
 
     if (!validationResult.success) {
@@ -56,7 +71,6 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
     }
 
     try {
-      // Check for duplicate email
       const checkDuplicate = await client.query({
         query: GET_CHECK_DUPLICATE_EMAIL,
         variables: { email },
@@ -74,28 +88,49 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
         return;
       }
 
-      // Submit request
       await requestUserAccess({
         variables: { requestUserAccessInput: { email } },
       });
-      
+
       setSubmitted(true);
       toast.success('Request submitted successfully!');
-      
-      // Auto-close after 3 seconds with cleanup
+
       timeoutRef.current = setTimeout(() => {
         handleClose();
       }, 3000);
     } catch (err) {
-      const error = err as Error;
+      const submitError = err as Error;
       setError('An unexpected error occurred. Please try again later.');
       toast.error('Failed to submit request');
-      console.error(error);
+      console.error(submitError);
+    }
+  };
+
+  const handleLoginSubmit = async () => {
+    setError('');
+    if (!loginUsername.trim() || !loginPassword) {
+      setError('Username and password are required.');
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
+      const result = await loginUser(loginUsername.trim(), loginPassword);
+      if (result.success && result.data) {
+        setUserData(result.data.user as Record<string, unknown>);
+        toast.success('Welcome back!');
+        handleClose();
+        return;
+      }
+      setError(result.error || 'Login failed. Please try again.');
+    } catch {
+      setError('Connection failed. Please try again.');
+    } finally {
+      setLoginLoading(false);
     }
   };
 
   const handleClose = () => {
-    // Clear timeout if it exists
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -103,10 +138,12 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
     setEmail('');
     setError('');
     setSubmitted(false);
+    setLoginUsername('');
+    setLoginPassword('');
+    setPanel('invite');
     onClose();
   };
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -115,9 +152,8 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
     };
   }, []);
 
-  // Get current URL path to pass as redirect parameter (including hash)
   const currentPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
-  const loginUrl = `/login?redirect=${encodeURIComponent(currentPath)}`;
+  const loginPageUrl = `/auths/login?callbackUrl=${encodeURIComponent(currentPath)}`;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
@@ -143,62 +179,138 @@ export function RequestInviteDialog({ open, onClose }: RequestInviteDialogProps)
               </DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="sr-only">
-                Email Address
-              </Label>
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-gray-200 transition-all duration-300 focus-within:border-[#52b274] focus-within:shadow-[0_0_0_4px_rgba(82,178,116,0.1)] focus-within:bg-gradient-to-br focus-within:from-white focus-within:to-gray-50" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter Your Email Address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                  className="relative bg-transparent border-none outline-none w-full text-base sm:text-lg text-foreground font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0"
-                />
-              </div>
+            <div className="flex rounded-lg border border-border p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => { setPanel('invite'); setError(''); }}
+                className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+                  panel === 'invite'
+                    ? 'bg-[#52b274] text-white'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Request invite
+              </button>
+              <button
+                type="button"
+                onClick={() => { setPanel('login'); setError(''); }}
+                className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+                  panel === 'login'
+                    ? 'bg-[#52b274] text-white'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Log in
+              </button>
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 text-center">
-                <p className="text-red-800 text-sm sm:text-[0.95rem] font-medium m-0">
-                  {error}
+            {panel === 'invite' ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="invite-email" className="sr-only">
+                    Email Address
+                  </Label>
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleInviteSubmit()}
+                  />
+                </div>
+
+                <div className="text-center py-1">
+                  <Link
+                    href="/auths/request-access#mission"
+                    className="text-[#52b274] no-underline text-sm font-medium hover:underline"
+                  >
+                    Learn more about our mission
+                  </Link>
+                </div>
+
+                <Button
+                  onClick={handleInviteSubmit}
+                  disabled={loading}
+                  className="w-full bg-[#52b274] text-white hover:bg-[#4a9e63]"
+                >
+                  {loading ? 'Submitting...' : 'Request Invite'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-username">Username or email</Label>
+                    <Input
+                      id="login-username"
+                      autoComplete="username"
+                      value={loginUsername}
+                      onChange={(e) => setLoginUsername(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleLoginSubmit()}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleLoginSubmit}
+                  disabled={loginLoading}
+                  className="w-full bg-[#52b274] text-white hover:bg-[#4a9e63]"
+                >
+                  {loginLoading ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign in'
+                  )}
+                </Button>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  Need a password reset or magic link?{' '}
+                  <Link href="/auths/forgot-password" className="text-[#52b274] font-medium hover:underline">
+                    Forgot password
+                  </Link>
                 </p>
+              </>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                <p className="text-red-800 text-sm font-medium m-0">{error}</p>
               </div>
             )}
 
-            <div className="text-center py-2">
-              <Link
-                href="/auth/request-access#mission"
-                className="text-[#52b274] no-underline text-sm sm:text-[0.95rem] font-medium transition-colors duration-300 hover:text-[#4a9f63] hover:underline"
-              >
-                Learn more about our mission here
-              </Link>
-            </div>
-
-            <Button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full bg-[#52b274] text-white hover:bg-[#4a9f63] rounded-lg py-3 px-6 text-base font-medium transition-colors duration-300"
-            >
-              {loading ? 'Submitting...' : 'Request Invite'}
-            </Button>
-
-            <p className="text-center text-sm text-gray-600 mt-4">
-              Already have an account?{' '}
-              <Link
-                href={loginUrl}
-                className="text-[#52b274] no-underline font-medium transition-colors duration-300 hover:underline"
-              >
-                Login
-              </Link>
-            </p>
+            {panel === 'invite' && (
+              <p className="text-center text-sm text-gray-600">
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setPanel('login'); setError(''); }}
+                  className="text-[#52b274] font-medium hover:underline bg-transparent border-0 cursor-pointer p-0"
+                >
+                  Log in
+                </button>
+                {' '}or{' '}
+                <Link href={loginPageUrl} className="text-[#52b274] font-medium hover:underline">
+                  open full login page
+                </Link>
+              </p>
+            )}
           </div>
         )}
       </DialogContent>
     </Dialog>
   );
 }
-
