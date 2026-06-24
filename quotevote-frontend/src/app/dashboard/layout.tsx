@@ -223,6 +223,7 @@ export default function DashboardLayout({
             {/* Create */}
             <button
               type="button"
+              data-testid="create-post-button"
               onClick={() => setSubmitDialogOpen(true)}
               className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#52b274] text-white text-[13px] font-semibold shadow-[0_2px_6px_rgba(82,178,116,0.40)] hover:bg-[#4a9e63] hover:shadow-[0_3px_10px_rgba(82,178,116,0.50)] active:scale-95 transition-all duration-150 cursor-pointer border-0 flex-shrink-0"
               aria-label="Create new quote"
@@ -369,6 +370,7 @@ export default function DashboardLayout({
         {/* Create — floating green circle */}
         <button
           type="button"
+          data-testid="create-post-button"
           onClick={() => setSubmitDialogOpen(true)}
           className="flex flex-col items-center justify-center flex-1 h-full cursor-pointer border-0 bg-transparent"
           aria-label="Create"

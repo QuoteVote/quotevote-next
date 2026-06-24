@@ -23,10 +23,16 @@ pnpm build            # Production build
 pnpm lint             # ESLint
 pnpm type-check       # TypeScript validation
 pnpm format:check     # Prettier check
-pnpm test             # Jest tests
+pnpm test             # Jest unit tests
 pnpm test:watch       # Watch mode
 pnpm test:coverage    # Coverage report
-pnpm test -- src/__tests__/foundation/layout.test.tsx  # Single test file
+pnpm test -- src/__tests__/foundation/layout.test.tsx  # Single unit test file
+pnpm test:e2e         # Playwright E2E (all specs, desktop + mobile)
+pnpm test:e2e post-submission.spec.ts  # Single E2E spec
+pnpm test:e2e --grep "E2E-POST-001"    # E2E by test sheet ID
+pnpm test:e2e --project=desktop post-submission.spec.ts  # One viewport
+pnpm test:e2e:headed  # E2E in visible browser
+pnpm test:e2e:ui      # Playwright UI debugger
 ```
 
 ### Backend (`quotevote-backend/`)
@@ -44,7 +50,7 @@ pnpm prisma:validate  # Validate Prisma schema
 
 ### CI checks (both packages)
 
-CI runs `lint`, `type-check`, and `test` for both frontend and backend on PRs to `main`/`develop`.
+CI runs `lint`, `type-check`, and `test` (Jest) for both frontend and backend on PRs to `main`/`develop`. Frontend E2E (Playwright) runs when the `E2E_AUTHOR_PASSWORD` repository secret is set.
 
 ## Architecture
 
@@ -56,7 +62,7 @@ CI runs `lint`, `type-check`, and `test` for both frontend and backend on PRs to
 - **State**: Zustand (`src/store/`) — no Redux, no provider wrappers needed
 - **Data fetching**: Apollo Client 4 for GraphQL (`src/lib/apollo/`, `src/graphql/`)
 - **Forms**: React Hook Form + Zod validation
-- **Testing**: Jest 30 + React Testing Library in jsdom environment
+- **Testing**: Jest 30 + React Testing Library (unit, `src/__tests__/`); Playwright (E2E, `e2e/`)
 
 ### Backend
 
@@ -70,18 +76,20 @@ CI runs `lint`, `type-check`, and `test` for both frontend and backend on PRs to
 ### Key directories
 
 ```
-quotevote-frontend/src/
-  app/              # Pages and layouts (App Router)
-  app/components/   # Page-specific components
-  components/       # Shared components
-  components/ui/    # shadcn/ui components
-  hooks/            # Custom React hooks
-  lib/apollo/       # Apollo Client setup
-  lib/utils/        # Utility functions
-  store/            # Zustand stores
-  types/            # All TypeScript type definitions (mandatory location)
-  graphql/          # Queries, mutations, subscriptions
-  __tests__/        # All test files (mandatory location)
+quotevote-frontend/
+  e2e/              # Playwright E2E specs and helpers
+  src/
+    app/              # Pages and layouts (App Router)
+    app/components/   # Page-specific components
+    components/       # Shared components
+    components/ui/    # shadcn/ui components
+    hooks/            # Custom React hooks
+    lib/apollo/       # Apollo Client setup
+    lib/utils/        # Utility functions
+    store/            # Zustand stores
+    types/            # All TypeScript type definitions (mandatory location)
+    graphql/          # Queries, mutations, subscriptions
+    __tests__/        # Jest unit tests (mandatory location)
 
 quotevote-backend/app/
   server.ts         # Express + Apollo entry point
@@ -115,9 +123,10 @@ quotevote-backend/app/
 
 ### Testing
 
-- Frontend tests go in `src/__tests__/` (subdirs: `foundation/`, `components/`, `utils/`)
+- Frontend unit tests go in `src/__tests__/` (subdirs: `foundation/`, `components/`, `utils/`)
+- Frontend E2E tests go in `e2e/` (`.spec.ts`; helpers in `e2e/helpers/`; env via `.env.e2e.local` from `.env.e2e.example`)
 - Backend tests go in `app/__tests__/` (subdirs: `unit/`, `integration/`, `utils/`)
-- Use `.test.tsx` or `.test.ts` extensions
+- Unit tests use `.test.tsx` or `.test.ts`; E2E specs use `.spec.ts`
 
 ### Formatting
 

@@ -243,6 +243,8 @@ function PostCardComponent({
 
   return (
     <article
+      data-testid="post-card"
+      data-post-title={title || ''}
       className={cn(
         'group/card rounded-[7px] cursor-pointer overflow-hidden',
         !cardTheme.bg && 'bg-card',

@@ -176,6 +176,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
       )}
       <form onSubmit={handleSubmit(onSubmit)}>
         <Card
+          data-testid="post-composer"
           className={cn(
             'flex flex-col w-full',
             isMobile ? 'h-dvh max-h-dvh' : 'max-h-[calc(100vh-200px)]'
@@ -211,6 +212,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
               {/* Title — no label, placeholder only (matches monorepo InputBase) */}
               <Input
                 id="title"
+                data-testid="post-title-input"
                 placeholder="Enter Title"
                 {...register('title')}
                 className={cn('text-lg border-0 shadow-none px-0 focus-visible:ring-0 rounded-none', errors.title && 'border-b border-destructive')}
@@ -225,6 +227,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
               <div className="flex-1 flex flex-col min-h-0 overflow-auto">
                 <Textarea
                   id="text"
+                  data-testid="post-body-input"
                   placeholder="Enter your post content (no links allowed)"
                   {...register('text')}
                   className={cn(
@@ -316,6 +319,8 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
                       errorMessage={errors.group?.message}
                       disabled={loadingGroup || loading}
                       allowCreate={true}
+                      triggerTestId="post-group-select"
+                      createOptionTestId="post-group-create"
                       className="bg-[rgba(160,243,204,0.6)]"
                     />
                   )}
@@ -326,6 +331,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
             <div className="flex justify-end w-full">
               <Button
                 id="submit-button"
+                data-testid="post-submit-button"
                 type="submit"
                 variant="default"
                 className="w-full bg-[#52b274] hover:bg-[#52b274]/90 text-white text-lg"

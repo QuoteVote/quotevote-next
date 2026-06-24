@@ -88,3 +88,59 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+  e2e:
+    name: Frontend E2E
+    runs-on: ubuntu-latest
+    if: ${{ secrets.E2E_AUTHOR_PASSWORD }}
+    defaults:
+      run:
+        working-directory: ./quotevote-frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: quotevote-frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-workspace
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build frontend
+        env:
+          NEXT_PUBLIC_SERVER_URL: ${{ secrets.E2E_API_URL || 'https://api.quote.vote' }}
+          NEXT_PUBLIC_GRAPHQL_ENDPOINT: ${{ secrets.E2E_GRAPHQL_ENDPOINT || 'https://api.quote.vote/graphql' }}
+        run: pnpm build
+
+      - name: Run Playwright tests
+        env:
+          CI: true
+          E2E_AUTHOR_USERNAME: ${{ secrets.E2E_AUTHOR_USERNAME || 'authorUser' }}
+          E2E_AUTHOR_PASSWORD: ${{ secrets.E2E_AUTHOR_PASSWORD }}
+          E2E_PUBLIC_GROUP_NAME: ${{ secrets.E2E_PUBLIC_GROUP_NAME || 'QA' }}
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+        run: |
+          pnpm start &
+          pnpm exec wait-on http://localhost:3000 --timeout 120000
+          pnpm test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: quotevote-frontend/playwright-report/
+          retention-days: 7
+
