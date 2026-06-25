@@ -86,31 +86,31 @@ describe('SelectionPopover', () => {
   })
 
   it('applies custom topOffset', () => {
-    const { container } = render(
+    render(
       <SelectionPopover {...defaultProps} showPopover={true} topOffset={50} />,
     )
-    const popover = container.querySelector('#selectionPopover')
+    const popover = document.querySelector('#selectionPopover')
     expect(popover).toBeInTheDocument()
   })
 
   it('renders above the post sticky action bar (z-index > 10) by default', () => {
-    const { container } = render(
+    render(
       <SelectionPopover {...defaultProps} showPopover={true} />,
     )
-    const popover = container.querySelector('#selectionPopover') as HTMLElement
+    const popover = document.querySelector('#selectionPopover') as HTMLElement
     expect(Number(popover.style.zIndex)).toBeGreaterThan(10)
   })
 
   it('applies custom styles', () => {
     const customStyle = { zIndex: 999 }
-    const { container } = render(
+    render(
       <SelectionPopover
         {...defaultProps}
         showPopover={true}
         style={customStyle}
       />,
     )
-    const popover = container.querySelector('#selectionPopover') as HTMLElement
+    const popover = document.querySelector('#selectionPopover') as HTMLElement
     expect(popover).toHaveStyle({ zIndex: '999' })
   })
 
@@ -189,7 +189,7 @@ describe('SelectionPopover', () => {
     expect(screen.queryByText('Test content')).not.toBeInTheDocument()
   })
 
-  it('handles mouse enter to expand selection', async () => {
+  it('does not alter selection or call onSelect when mouse enters the popover', async () => {
     const onSelect = jest.fn()
 
     render(
@@ -207,8 +207,8 @@ describe('SelectionPopover', () => {
       })
     }
 
-    // Should expand selection on mouse enter
-    expect(onSelect).toBeDefined()
+    // Hovering over the popup must NOT call onSelect or expand the selection
+    expect(onSelect).not.toHaveBeenCalled()
   })
 
   it('computes popover position correctly for desktop', () => {
