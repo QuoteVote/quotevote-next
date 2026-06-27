@@ -12,7 +12,7 @@ A modern, type-safe frontend application built with Next.js 16, React 19, and Ty
 - **Icons**: [lucide-react](https://lucide.dev/)
 - **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) 5.0.8
 - **GraphQL Client**: [Apollo Client](https://www.apollographql.com/) 4.0.9
-- **Testing**: [Jest](https://jestjs.io/) 30.2.0 + [React Testing Library](https://testing-library.com/react) 16.3.0
+- **Testing**: [Jest](https://jestjs.io/) 30.2.0 + [React Testing Library](https://testing-library.com/react) 16.3.0; [Playwright](https://playwright.dev/) for E2E
 - **Form Handling**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
 - **Package Manager**: [pnpm](https://pnpm.io/)
 
@@ -97,7 +97,7 @@ import { Button } from '../../../components/ui/button'
 
 ## 🧪 Testing
 
-### Running Tests
+### Unit tests (Jest)
 
 ```bash
 # Run all tests
@@ -116,15 +116,63 @@ pnpm test:ci
 pnpm test src/__tests__/foundation/layout.test.tsx
 ```
 
+### E2E tests (Playwright)
+
+End-to-end specs live in `e2e/` and run against a real browser. Playwright starts the dev server automatically (or reuse one already on `:3000`).
+
+**One-time setup:**
+
+```bash
+pnpm exec playwright install chromium
+cp .env.e2e.example .env.e2e.local
+# Edit .env.e2e.local — set E2E_AUTHOR_PASSWORD and E2E_PUBLIC_GROUP_NAME
+```
+
+**Run commands:**
+
+```bash
+# All E2E (desktop + mobile viewports)
+pnpm test:e2e
+
+# One spec file
+pnpm test:e2e post-submission.spec.ts
+
+# By test sheet ID
+pnpm test:e2e --grep "E2E-POST-001"
+
+# One viewport only
+pnpm test:e2e --project=desktop post-submission.spec.ts
+pnpm test:e2e --project=mobile post-submission.spec.ts
+
+# Debug
+pnpm test:e2e:headed post-submission.spec.ts
+pnpm test:e2e:ui
+
+# Dev server already running
+PLAYWRIGHT_SKIP_WEBSERVER=1 pnpm test:e2e post-submission.spec.ts
+```
+
+See [`.env.e2e.example`](.env.e2e.example) for env vars and the full command reference.
+
 ### Test Requirements
 
-- **Test Location**: All test files **MUST** be in `src/__tests__/` directory
-- **Test Naming**: Use `.test.tsx` or `.test.ts` extensions
-- **Test Organization**:
-  - Foundation tests: `src/__tests__/foundation/`
-  - Component tests: `src/__tests__/components/`
-  - Utility tests: `src/__tests__/utils/`
-- **Testing is MANDATORY**: After each phase or component group migration, all tests must pass before proceeding
+**Unit tests (Jest)**
+
+- **Location**: `src/__tests__/`
+- **Naming**: `.test.tsx` or `.test.ts`
+- **Organization**:
+  - Foundation: `src/__tests__/foundation/`
+  - Components: `src/__tests__/components/`
+  - Utilities: `src/__tests__/utils/`
+
+**E2E tests (Playwright)**
+
+- **Location**: `e2e/` (specs use `.spec.ts`)
+- **Helpers**: `e2e/helpers/`
+- **Config**: `playwright.config.ts` (desktop + mobile projects)
+- **Auth state**: generated at runtime in `e2e/.auth/` (gitignored)
+
+- **Testing is MANDATORY**: After each phase or component group migration, unit tests must pass before proceeding
 
 ### Test Structure
 
@@ -247,10 +295,13 @@ export function MyComponent({ prop1, prop2 }: MyComponentProps) {
 | `pnpm type-check` | Check TypeScript types |
 | `pnpm format` | Format code with Prettier |
 | `pnpm format:check` | Check code formatting |
-| `pnpm test` | Run tests |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm test:coverage` | Run tests with coverage |
-| `pnpm test:ci` | Run tests in CI mode |
+| `pnpm test` | Run unit tests (Jest) |
+| `pnpm test:watch` | Run unit tests in watch mode |
+| `pnpm test:coverage` | Run unit tests with coverage |
+| `pnpm test:ci` | Run unit tests in CI mode |
+| `pnpm test:e2e` | Run E2E tests (Playwright) |
+| `pnpm test:e2e:headed` | Run E2E tests in a visible browser |
+| `pnpm test:e2e:ui` | Open Playwright UI for debugging E2E |
 
 ## 📚 Key Conventions
 
@@ -269,7 +320,8 @@ export function MyComponent({ prop1, prop2 }: MyComponentProps) {
 - **shadcn/ui components**: `src/components/ui/`
 - **Custom hooks**: `src/hooks/`
 - **Type definitions**: `src/types/` (MANDATORY)
-- **Test files**: `src/__tests__/` (MANDATORY)
+- **Unit test files**: `src/__tests__/`
+- **E2E test files**: `e2e/`
 
 ### State Management
 
@@ -287,7 +339,7 @@ export function MyComponent({ prop1, prop2 }: MyComponentProps) {
 
 - ❌ Using `any` type
 - ❌ Defining types inline in component files (must use `src/types/`)
-- ❌ Placing test files outside `src/__tests__/`
+- ❌ Placing Jest unit tests outside `src/__tests__/`
 - ❌ Using relative imports when path aliases are available
 - ❌ Using `npm` or `yarn` instead of `pnpm`
 - ❌ Using `'use client'` unnecessarily (prefer Server Components)
@@ -328,13 +380,13 @@ When migrating components or features:
 
 Before submitting a PR, ensure:
 
-- [ ] All tests pass (`pnpm test`)
+- [ ] All unit tests pass (`pnpm test`)
 - [ ] TypeScript compiles without errors (`pnpm type-check`)
 - [ ] Linting passes (`pnpm lint`)
 - [ ] Code is formatted (`pnpm format:check`)
 - [ ] No `any` types are used
 - [ ] All types are defined in `src/types/` directory
-- [ ] All test files are in `src/__tests__/` directory
+- [ ] Unit test files are in `src/__tests__/`
 - [ ] Path aliases are used for all imports
 - [ ] Dependencies installed with `pnpm`
 

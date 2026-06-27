@@ -26,6 +26,8 @@ export interface ComboboxProps {
   className?: string
   disabled?: boolean
   allowCreate?: boolean
+  triggerTestId?: string
+  createOptionTestId?: string
 }
 
 export function Combobox({
@@ -39,6 +41,8 @@ export function Combobox({
   className,
   disabled = false,
   allowCreate = true,
+  triggerTestId,
+  createOptionTestId,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [inputValue, setInputValue] = React.useState('')
@@ -123,6 +127,7 @@ export function Combobox({
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
+            data-testid={triggerTestId}
             className={cn(
               'w-full justify-between text-sm font-normal',
               !displayValue && 'text-muted-foreground',
@@ -135,7 +140,7 @@ export function Combobox({
         </PopoverTrigger>
 
         <PopoverContent
-          className="p-0"
+          className="z-[80] p-0"
           style={{ width: triggerWidth }}
           align="start"
           sideOffset={4}
@@ -164,6 +169,7 @@ export function Combobox({
                 <button
                   key={option._id ?? option.title}
                   type="button"
+                  data-testid={isCreateOption(option) ? createOptionTestId : undefined}
                   onClick={() => handleSelect(option)}
                   className={cn(
                     'flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground',

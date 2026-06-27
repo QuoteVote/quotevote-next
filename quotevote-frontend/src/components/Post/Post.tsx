@@ -44,6 +44,7 @@ import {
   GET_TOP_POSTS,
   GET_USER_ACTIVITY,
   GET_USERS,
+  GET_GROUP,
 } from '@/graphql/queries'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
@@ -76,6 +77,13 @@ export default function Post({
   const isFollowing = includes(_followingId, userId)
   const admin = user.admin || false
   const isOwner = user._id === userId
+
+  const { data: groupData } = useQuery<{ group?: { _id: string; title: string } }>(GET_GROUP, {
+    variables: { groupId: post.groupId || '' },
+    skip: !post.groupId,
+    errorPolicy: 'all',
+    fetchPolicy: 'cache-first',
+  })
 
   // Admin-only: fetch user list for enhanced tooltips
   useQuery<{ users?: Array<{ _id: string; username: string }> }>(GET_USERS, {
@@ -357,9 +365,21 @@ export default function Post({
         </div>
 
         {/* Title */}
-        <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight mb-1">
+        <h1
+          data-testid="post-detail-title"
+          className="text-base sm:text-lg font-bold text-foreground leading-tight mb-1"
+        >
           {title}
         </h1>
+
+        {post.groupId && groupData?.group && (
+          <span
+            data-testid="post-detail-group"
+            className="inline-flex text-[10px] font-semibold text-[#52b274] bg-[rgba(82,178,116,0.1)] border border-[rgba(82,178,116,0.2)] px-2 py-0.5 rounded-full uppercase tracking-wide mb-1"
+          >
+            #{groupData.group.title}
+          </span>
+        )}
 
         {/* Citation URL */}
         {post.citationUrl && (
@@ -513,7 +533,9 @@ export default function Post({
         )}
 
         {/* Selectable post text + floating VotingPopup */}
-        <div className={cn(
+        <div
+          data-testid="post-detail-body"
+          className={cn(
           'text-[15px] leading-[1.75] text-foreground/85',
           postHeight && postHeight >= 742 && 'max-h-[60vh] overflow-y-auto'
         )}>
