@@ -20,6 +20,7 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const previousAddBuddyMode = useRef(addBuddyMode);
 
   const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
     const searchKey = e.target.value;
@@ -58,10 +59,13 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
     }
   };
 
-  // Clear search when addBuddyMode changes from outside (e.g., parent component)
-  // Only clear if we're exiting add mode and have a search value
+  // Track the previous mode so we only clear when addBuddyMode transitions
+  // from true to false via an external change.
   useEffect(() => {
-    if (!addBuddyMode && searchValue && onAddBuddyModeChange) {
+    const wasAddBuddyMode = previousAddBuddyMode.current;
+    previousAddBuddyMode.current = addBuddyMode;
+
+    if (wasAddBuddyMode !== addBuddyMode && !addBuddyMode && searchValue && onAddBuddyModeChange) {
       // Only clear if we're not in the middle of toggling (which is handled in toggleAddMode)
       // This handles the case where addBuddyMode is changed externally
       const timeoutId = setTimeout(() => {
