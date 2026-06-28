@@ -64,53 +64,6 @@ async function startServer() {
           heartbeat: HeartbeatResponse
       }
 
-      type Post {
-        _id: String
-        userId: String
-        groupId: String
-        title: String
-        text: String
-        citationUrl: String
-        url: String
-        deleted: Boolean
-        upvotes: Int
-        downvotes: Int
-        featuredSlot: Int
-        enable_voting: Boolean
-        dayPoints: Int
-        pointTimestamp: String
-        votedBy: [String]
-        bookmarkedBy: [String]
-        approvedBy: [String]
-        rejectedBy: [String]
-        reportedBy: [String]
-        created: String
-        creator: PostCreator
-      }
-
-      type PostCreator {
-        _id: String
-        name: String
-        username: String
-        avatar: String
-      }
-
-      type Pagination {
-        total_count: Int
-        limit: Int
-        offset: Int
-      }
-
-      type Posts {
-        entities: [Post]
-        pagination: Pagination
-      }
-
-      type HeartbeatResponse {
-        success: Boolean!
-        timestamp: String!
-      }
-
       type SolidConnectionStatus {
         connected: Boolean
         webId: String
