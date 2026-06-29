@@ -125,10 +125,15 @@ export function Eyebrow() {
         email={watch("email")}
       />
       <div className="relative bg-white z-40 shadow-sm border-b border-gray-200">
-        <div className="mx-auto px-6 pr-12 sm:pr-14 py-3 w-full flex flex-col sm:flex-row items-start justify-between gap-3">
+        <form
+          data-testid="eyebrow-email-form"
+          onSubmit={handleSubmit(handleContinue)}
+          className="mx-auto px-6 pr-12 sm:pr-14 py-3 w-full flex flex-col sm:flex-row items-start justify-between gap-3"
+        >
           <div className="flex flex-col gap-1.5 grow w-full">
             <Input
               id="email"
+              data-testid="eyebrow-email-input"
               type="email"
               placeholder="Enter your email"
               className="w-full"
@@ -149,14 +154,13 @@ export function Eyebrow() {
           </div>
 
           <Button
-            onClick={handleSubmit(handleContinue)}
+            data-testid="eyebrow-email-submit"
             disabled={!isValid || isLoading}
             type="submit"
             className="mx-auto w-full sm:w-fit"
           >
             Continue
           </Button>
-
           {errors.email && (
             <div className="min-h-4 text-[13px] block sm:hidden text-red-500">
               <span>{errors.email.message}</span>
@@ -167,7 +171,7 @@ export function Eyebrow() {
               <span>{feedback}</span>
             </div>
           )}
-        </div>
+        </form>
         <button
           type="button"
           onClick={() => setIsDismissed(true)}

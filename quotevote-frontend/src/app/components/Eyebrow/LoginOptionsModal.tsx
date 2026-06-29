@@ -21,13 +21,15 @@ const LoginOptionsModal = ({ email, isOpen, onClose }: LoginOptionsModalProps) =
           e.preventDefault();
         }}
       >
-        <DialogHeader>
-          <DialogTitle>We recognize this email.</DialogTitle>
+       <DialogHeader>
+          <DialogTitle data-testid="registered-user-message">We recognize this email.</DialogTitle>
           <DialogDescription>Choose how you&apos;d like to log in</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
-          <Button className="w-full">Send me a login link</Button>
-          <Button variant="outline" className="w-full">
+          <Button data-testid="magic-link-login-option" className="w-full">
+            Send me a login link
+          </Button>
+          <Button data-testid="password-login-option" variant="outline" className="w-full">
             Login with password
           </Button>
         </div>
