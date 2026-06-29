@@ -27,6 +27,10 @@ import {
   ChevronLeft,
   Star,
   MessageCircle,
+  Lock,
+  BookOpen,
+  Code,
+  Smile,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -568,6 +572,169 @@ export function LandingPageContent({
         </div>
       </section>
 
+      {/* ── Platform Principles ───────────────────────────────── */}
+      <section
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
+        aria-labelledby="principles-heading"
+      >
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <p
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+              style={{ color: '#2ecc71' }}
+            >
+              Our Principles
+            </p>
+            <h2
+              id="principles-heading"
+              className="text-4xl sm:text-5xl font-extrabold tracking-tight"
+              style={{ color: '#0f172a' }}
+            >
+              Built on{' '}
+              <span style={{ color: '#2ecc71' }}>Values</span>
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                icon: ShieldOff,
+                title: 'No Ads',
+                description: 'Pure conversations without commercial influence or tracking.',
+              },
+              {
+                icon: Zap,
+                title: 'No Algorithms',
+                description: 'See what the community actually cares about, not what algorithms push.',
+              },
+              {
+                icon: Code,
+                title: 'Open Source',
+                description: 'Transparent, community-driven development you can audit and contribute to.',
+              },
+              {
+                icon: Users,
+                title: 'Everyone Welcome',
+                description: 'A safe space for diverse voices and respectful discourse.',
+              },
+            ].map(({ icon: Icon, title, description }) => (
+              <ScrollReveal key={title}>
+              <div
+                className="rounded-2xl p-6 flex flex-col hover:-translate-y-1 transition-all h-full"
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+                }}
+              >
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: '#f0fdf4' }}
+                >
+                  <Icon size={24} style={{ color: '#2ecc71' }} aria-hidden />
+                </div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: '#0f172a' }}>
+                  {title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
+                  {description}
+                </p>
+              </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Community Use Cases ───────────────────────────────── */}
+      <section
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
+        aria-labelledby="usecases-heading"
+      >
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <p
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+              style={{ color: '#2ecc71' }}
+            >
+              For Every Community
+            </p>
+            <h2
+              id="usecases-heading"
+              className="text-4xl sm:text-5xl font-extrabold tracking-tight"
+              style={{ color: '#0f172a' }}
+            >
+              Who is Quote.Vote{' '}
+              <span style={{ color: '#2ecc71' }}>for?</span>
+            </h2>
+            <p className="text-base mt-4 max-w-lg mx-auto" style={{ color: '#475569' }}>
+              From classrooms to boardrooms, Quote.Vote powers thoughtful conversations everywhere.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              {
+                title: 'Schools & Universities',
+                description: 'Structured discussions and transparent voting on academic topics.',
+                icon: BookOpen,
+              },
+              {
+                title: 'Parent Groups',
+                description: 'Safe space for parents to share advice and make community decisions.',
+                icon: Heart,
+              },
+              {
+                title: 'Organizations',
+                description: 'Democratic feedback and decision-making for teams and committees.',
+                icon: Users,
+              },
+              {
+                title: 'Governments',
+                description: 'Civic engagement and public consultation with transparent voting.',
+                icon: Globe,
+              },
+              {
+                title: 'Nonprofits & Advocacy',
+                description: 'Community-driven initiatives and consensus building on social causes.',
+                icon: Smile,
+              },
+              {
+                title: 'Teams & Projects',
+                description: 'Collaborative planning and idea evaluation without algorithmic bias.',
+                icon: Zap,
+              },
+            ].map(({ title, description, icon: Icon }) => (
+              <ScrollReveal key={title}>
+              <div
+                className="rounded-2xl p-6 flex flex-col hover:-translate-y-1 transition-all h-full"
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+                }}
+              >
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: '#f0fdf4' }}
+                >
+                  <Icon size={24} style={{ color: '#2ecc71' }} aria-hidden />
+                </div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: '#0f172a' }}>
+                  {title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
+                  {description}
+                </p>
+              </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Features — Bento Grid ─────────────────────────────── */}
       <section
         className="py-14 sm:py-20 relative overflow-hidden"
@@ -767,6 +934,105 @@ export function LandingPageContent({
               </div>
             </div>
             </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Private Conversations ─────────────────────────────── */}
+      <section
+        className="py-14 sm:py-20 relative overflow-hidden"
+        style={{ background: '#eef4f9' }}
+        aria-labelledby="private-heading"
+      >
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            {/* Text side */}
+            <div>
+              <p
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                style={{ color: '#2ecc71' }}
+              >
+                Connect Privately
+              </p>
+              <h2
+                id="private-heading"
+                className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
+                style={{ color: '#0f172a' }}
+              >
+                Your{' '}
+                <span
+                  style={{ color: '#2ecc71' }}
+                >
+                  Private Circle
+                </span>
+              </h2>
+              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
+                Connect with friends and colleagues privately. Find anyone by username, message directly, and follow discussions together.
+              </p>
+              <ul className="space-y-2">
+                {[
+                  'Username-based connections and messaging',
+                  'Private and public discussion threads',
+                  'Follow shared interests and grow your circle',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3">
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: '#f0fdf4' }}
+                    >
+                      <CheckCircle2 size={12} style={{ color: '#2ecc71' }} aria-hidden />
+                    </div>
+                    <span className="text-sm" style={{ color: '#475569' }}>
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Icons side */}
+            <div className="grid grid-cols-2 gap-4">
+              <div
+                className="rounded-2xl p-6 flex flex-col items-center text-center"
+                style={{
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                }}
+              >
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: '#f0fdf4' }}
+                >
+                  <Lock size={24} style={{ color: '#2ecc71' }} aria-hidden />
+                </div>
+                <h3 className="font-bold text-sm mb-2" style={{ color: '#0f172a' }}>
+                  Private Messages
+                </h3>
+                <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
+                  Direct messaging with privacy and control
+                </p>
+              </div>
+              <div
+                className="rounded-2xl p-6 flex flex-col items-center text-center"
+                style={{
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                }}
+              >
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: '#f0fdf4' }}
+                >
+                  <Users size={24} style={{ color: '#2ecc71' }} aria-hidden />
+                </div>
+                <h3 className="font-bold text-sm mb-2" style={{ color: '#0f172a' }}>
+                  Your Buddy System
+                </h3>
+                <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
+                  Connect with people you trust and follow
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
