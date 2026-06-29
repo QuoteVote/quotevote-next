@@ -452,9 +452,11 @@ describe('LandingPage', () => {
 
     it('renders all 4 principle cards', () => {
       renderLandingPage();
+      const principlesSection = screen.getByRole('heading', { name: /built on values/i }).closest('section');
+      expect(principlesSection).toBeInTheDocument();
       expect(screen.getByText('No Ads')).toBeInTheDocument();
       expect(screen.getByText('No Algorithms')).toBeInTheDocument();
-      expect(screen.getByText('Open Source')).toBeInTheDocument();
+      expect(screen.getAllByText('Open Source').length).toBeGreaterThan(0);
       expect(screen.getByText('Everyone Welcome')).toBeInTheDocument();
     });
 
