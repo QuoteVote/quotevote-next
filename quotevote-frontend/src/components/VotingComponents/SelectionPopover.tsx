@@ -9,7 +9,7 @@ import type { SelectionPopoverProps } from '@/types/voting'
  */
 export default function SelectionPopover({
   showPopover,
-  topOffset = 30,
+  topOffset: _topOffset = 30,
   onSelect,
   onDeselect,
   style,
@@ -93,7 +93,7 @@ export default function SelectionPopover({
         right: 0,
       })
     }
-  }, [topOffset, selectionExists])
+  }, [selectionExists])
 
   const selectionChange = useCallback(() => {
     const selection = window.getSelection()

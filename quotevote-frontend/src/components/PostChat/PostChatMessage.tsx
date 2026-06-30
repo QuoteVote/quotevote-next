@@ -73,6 +73,7 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
 
   return (
     <div
+      data-testid="discussion-message"
       data-post-chat-message="true"
       data-current-user={!isDefaultDirection ? 'true' : undefined}
       className={cn(

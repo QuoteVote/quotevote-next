@@ -20,6 +20,7 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const prevAddBuddyModeRef = useRef(addBuddyMode);
 
   const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
     const searchKey = e.target.value;
@@ -61,17 +62,18 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
   // Clear search when addBuddyMode changes from outside (e.g., parent component)
   // Only clear if we're exiting add mode and have a search value
   useEffect(() => {
-    if (!addBuddyMode && searchValue && onAddBuddyModeChange) {
-      // Only clear if we're not in the middle of toggling (which is handled in toggleAddMode)
-      // This handles the case where addBuddyMode is changed externally
-      const timeoutId = setTimeout(() => {
+    let timer: NodeJS.Timeout | undefined;
+    if (prevAddBuddyModeRef.current && !addBuddyMode && searchValue) {
+      timer = setTimeout(() => {
         setSearchValue('');
         setSearch('');
       }, 0);
-      return () => clearTimeout(timeoutId);
     }
-    return undefined;
-  }, [addBuddyMode, searchValue, setSearch, onAddBuddyModeChange]);
+    prevAddBuddyModeRef.current = addBuddyMode;
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [addBuddyMode, searchValue, setSearch]);
 
   const ariaLabel = addBuddyMode
     ? 'search users to add'
@@ -128,6 +130,7 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
           value={searchValue}
           onChange={handleInput}
           aria-label={ariaLabel}
+          data-testid="chat-search-input"
         />
 
         {searchValue && (

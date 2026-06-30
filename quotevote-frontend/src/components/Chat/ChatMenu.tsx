@@ -5,8 +5,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { toast } from 'sonner';
 
-import ChatContent from './ChatContent';
-import { MobileDrawer } from '@/components/Notifications/MobileDrawer';
 import { useAppStore } from '@/store';
 import { GET_CHAT_ROOMS } from '@/graphql/queries';
 import type { ChatRoom } from '@/types/chat';
@@ -92,41 +90,29 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <>
-      <button
-        type="button"
-        aria-label="Chat"
-        onClick={toggleOpen}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className="relative inline-flex items-center justify-center rounded-full border border-transparent bg-background/80 p-1.5 text-muted-foreground shadow-sm transition-colors hover:border-[#52b274]/60 hover:bg-[#52b274]/8 dark:hover:border-[#52b274]/40 dark:hover:bg-[#52b274]/15"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/assets/ChatActive.svg"
-          alt="Chat"
-          style={{ width, height }}
-          className={isHovered || open ? 'opacity-100' : 'opacity-90'}
-        />
+    <button
+      type="button"
+      aria-label="Chat"
+      onClick={toggleOpen}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="relative inline-flex items-center justify-center rounded-full border border-transparent bg-background/80 p-1.5 text-muted-foreground shadow-sm transition-colors hover:border-[#52b274]/60 hover:bg-[#52b274]/8 dark:hover:border-[#52b274]/40 dark:hover:bg-[#52b274]/15"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/assets/ChatActive.svg"
+        alt="Chat"
+        style={{ width, height }}
+        className={isHovered || open ? 'opacity-100' : 'opacity-90'}
+      />
 
-        {/* Unread-messages badge */}
-        {totalUnread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#52b274] px-[3px] text-[9px] font-bold leading-none text-white shadow-sm ring-2 ring-background">
-            {totalUnread > 99 ? '99+' : totalUnread}
-          </span>
-        )}
-      </button>
-
-      <MobileDrawer
-        open={open}
-        onClose={() => setChatOpen(false)}
-        title="Chat"
-        anchor="right"
-        showHeader={false}
-      >
-        <ChatContent />
-      </MobileDrawer>
-    </>
+      {/* Unread-messages badge */}
+      {totalUnread > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#52b274] px-[3px] text-[9px] font-bold leading-none text-white shadow-sm ring-2 ring-background">
+          {totalUnread > 99 ? '99+' : totalUnread}
+        </span>
+      )}
+    </button>
   );
 };
 

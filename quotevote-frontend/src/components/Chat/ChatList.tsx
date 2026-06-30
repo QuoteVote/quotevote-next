@@ -38,6 +38,7 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
   if (loading && !data) return <LoadingSpinner size={50} />;
 
   const rooms: ChatRoom[] = data?.messageRooms || [];
+  console.log('ChatList state:', { loading, hasData: !!data, roomsLength: rooms.length, filterType, search });
 
   // Filter by type
   const filteredRooms = rooms.filter((room) => {
@@ -51,11 +52,20 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
     return true;
   });
 
-  // Filter by search (simplified - just filter by title for now)
+  console.log('ChatList filteredRooms details:', JSON.stringify(filteredRooms.map(r => ({ _id: r._id, title: r.title, messageType: r.messageType, users: r.users }))));
+
+  // Filter by search (match room title, post title, or post text)
   const searchFiltered = search
     ? filteredRooms.filter((room) => {
-      const title = room.title || '';
-      return title.toLowerCase().includes(search.toLowerCase());
+      const query = search.toLowerCase();
+      const title = (room.title || '').toLowerCase();
+      const postTitle = (room.postDetails?.title || '').toLowerCase();
+      const postText = (room.postDetails?.text || '').toLowerCase();
+      return (
+        title.includes(query) ||
+        postTitle.includes(query) ||
+        postText.includes(query)
+      );
     })
     : filteredRooms;
 
@@ -110,7 +120,10 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
 
   if (sortedRooms.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center text-muted-foreground">
+      <div
+        className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center text-muted-foreground"
+        data-testid={search ? "chat-empty-search-state" : undefined}
+      >
         <div className="mb-4 rounded-full bg-muted p-3 text-muted-foreground/80">
           <MessageCircle className="h-8 w-8" />
         </div>
@@ -129,7 +142,7 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto py-2 pr-1">
+    <div className="flex-1 overflow-y-auto py-2 pr-1" data-testid="discussion-list">
       <ul className="flex flex-col gap-2 px-2">
         {sortedRooms.map((room) => {
           const displayInfo = getRoomDisplayInfo(room);
@@ -138,10 +151,11 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
           const isDm = room.messageType === 'USER' && (room.users?.length ?? 0) === 2;
 
           return (
-            <li key={room._id}>
+            <li key={room._id} data-testid={search ? "chat-search-result" : undefined}>
               <button
                 type="button"
                 onClick={() => handleRoomClick(room)}
+                data-testid="discussion-thread"
                 className={
                   'flex w-full items-center gap-3 rounded-2xl border border-transparent bg-background px-3 py-3 text-left shadow-sm transition-all hover:border-[#52b274]/30 hover:bg-[#52b274]/5 hover:translate-x-[2px] dark:hover:border-[#52b274]/40 dark:hover:bg-[#52b274]/10 ' +
                   (isSelected
