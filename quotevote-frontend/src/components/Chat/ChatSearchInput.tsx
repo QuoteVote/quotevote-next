@@ -62,11 +62,17 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
   // Clear search when addBuddyMode changes from outside (e.g., parent component)
   // Only clear if we're exiting add mode and have a search value
   useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
     if (prevAddBuddyModeRef.current && !addBuddyMode && searchValue) {
-      setSearchValue('');
-      setSearch('');
+      timer = setTimeout(() => {
+        setSearchValue('');
+        setSearch('');
+      }, 0);
     }
     prevAddBuddyModeRef.current = addBuddyMode;
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [addBuddyMode, searchValue, setSearch]);
 
   const ariaLabel = addBuddyMode
