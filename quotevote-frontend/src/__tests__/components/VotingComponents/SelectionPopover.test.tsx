@@ -89,31 +89,31 @@ describe('SelectionPopover', () => {
   })
 
   it('applies custom topOffset', () => {
-    const { container } = render(
+    render(
       <SelectionPopover {...defaultProps} showPopover={true} topOffset={50} />,
     )
-    const popover = container.querySelector('#selectionPopover')
+    const popover = document.querySelector('#selectionPopover')
     expect(popover).toBeInTheDocument()
   })
 
   it('renders above the post sticky action bar (z-index > 10) by default', () => {
-    const { container } = render(
+    render(
       <SelectionPopover {...defaultProps} showPopover={true} />,
     )
-    const popover = container.querySelector('#selectionPopover') as HTMLElement
+    const popover = document.querySelector('#selectionPopover') as HTMLElement
     expect(Number(popover.style.zIndex)).toBeGreaterThan(10)
   })
 
   it('applies custom styles', () => {
     const customStyle = { zIndex: 999 }
-    const { container } = render(
+    render(
       <SelectionPopover
         {...defaultProps}
         showPopover={true}
         style={customStyle}
       />,
     )
-    const popover = container.querySelector('#selectionPopover') as HTMLElement
+    const popover = document.querySelector('#selectionPopover') as HTMLElement
     expect(popover).toHaveStyle({ zIndex: '999' })
   })
 

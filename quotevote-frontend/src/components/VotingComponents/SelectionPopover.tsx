@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import type { SelectionPopoverProps } from '@/types/voting'
 
 /**
@@ -15,13 +16,18 @@ export default function SelectionPopover({
   style,
   children,
 }: SelectionPopoverProps) {
+  const [mounted, setMounted] = useState(false)
   const [popoverBox, setPopoverBox] = useState({
     top: 0,
     left: 0,
-    right: 0,
   })
   const popoverRef = useRef<HTMLDivElement>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+  }, [])
 
   const selectionExists = useCallback(() => {
     const selection = window.getSelection()
@@ -55,44 +61,33 @@ export default function SelectionPopover({
     if (!popoverElement) return
 
     const popoverBoxRect = popoverElement.getBoundingClientRect()
-    const halfWindowWidth = window.innerWidth / 2
-    const targetElement = document.querySelector('[data-selectable]')
-    if (!targetElement) return
+    const popoverWidth = popoverBoxRect.width || 285
+    const popoverHeight = popoverBoxRect.height || 48
 
-    const targetBox = targetElement.getBoundingClientRect()
+    // Clamp horizontally within viewport
+    const margin = 10
+    const viewportLeft = selectionBox.left + selectionBox.width / 2 - popoverWidth / 2
+    const clampedViewportLeft = Math.max(
+      margin,
+      Math.min(window.innerWidth - popoverWidth - margin, viewportLeft)
+    )
+    const pageLeft = clampedViewportLeft + window.scrollX
 
-    const popupH = popoverBoxRect.height || 48
-    const popupW = popoverBoxRect.width || 285
-
-    if (window.innerWidth > 960) {
-      // Desktop: popup above the selection, horizontally centred over it
-      setPopoverBox({
-        top: selectionBox.top - popupH - 8 - targetBox.top,
-        left:
-          selectionBox.left - targetBox.left +
-          selectionBox.width / 2 -
-          popupW / 2,
-        right: 0,
-      })
-    } else if (
-      window.innerWidth > 500 &&
-      window.innerWidth <= 960 &&
-      selectionBox.x > halfWindowWidth
-    ) {
-      // Tablet, right-side selection: popup below, right-aligned
-      setPopoverBox({
-        top: selectionBox.bottom - targetBox.top + 8,
-        right: window.innerWidth - selectionBox.x + popupW,
-        left: 0,
-      })
+    // Determine vertical position: top or bottom
+    const spaceAtTop = selectionBox.top
+    let pageTop: number
+    if (spaceAtTop < popoverHeight + topOffset + 10) {
+      // Position below the selection
+      pageTop = selectionBox.bottom + window.scrollY + topOffset
     } else {
-      // Mobile: popup below the selection, left-aligned
-      setPopoverBox({
-        top: selectionBox.bottom - targetBox.top + 8,
-        left: 0,
-        right: 0,
-      })
+      // Position above the selection
+      pageTop = selectionBox.top + window.scrollY - popoverHeight - topOffset
     }
+
+    setPopoverBox({
+      top: pageTop,
+      left: pageLeft,
+    })
   }, [topOffset, selectionExists])
 
   const selectionChange = useCallback(() => {
@@ -144,6 +139,25 @@ export default function SelectionPopover({
   }, [handleMobileSelection, handleRemoveInterval, selectionChange])
 
   useEffect(() => {
+    if (showPopover) {
+      // Run on next frames to handle potential layout adjustments and avoid cascading renders lint rule
+      const rafId1 = requestAnimationFrame(computePopoverBox)
+      const rafId2 = requestAnimationFrame(() => requestAnimationFrame(computePopoverBox))
+
+      window.addEventListener('resize', computePopoverBox)
+      window.addEventListener('scroll', computePopoverBox, { passive: true })
+
+      return () => {
+        cancelAnimationFrame(rafId1)
+        cancelAnimationFrame(rafId2)
+        window.removeEventListener('resize', computePopoverBox)
+        window.removeEventListener('scroll', computePopoverBox)
+      }
+    }
+    return undefined
+  }, [showPopover, computePopoverBox])
+
+  useEffect(() => {
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
@@ -151,10 +165,12 @@ export default function SelectionPopover({
     }
   }, [])
 
+  if (!mounted) return null
+
   const visibility = showPopover ? 'visible' : 'hidden'
   const display = showPopover ? 'inline-block' : 'none'
 
-  return (
+  return createPortal(
     <div
       id="selectionPopover"
       ref={popoverRef}
@@ -163,8 +179,7 @@ export default function SelectionPopover({
         display,
         position: 'absolute',
         top: popoverBox.top,
-        left: popoverBox.left || undefined,
-        right: popoverBox.right || undefined,
+        left: popoverBox.left,
         // Must sit above the post's sticky action bar (Disagree/Support,
         // z-10 in Post.tsx) so the selection interaction isn't hidden behind it.
         zIndex: 50,
@@ -172,7 +187,8 @@ export default function SelectionPopover({
       }}
     >
       {showPopover && children}
-    </div>
+    </div>,
+    document.body
   )
 }
 
