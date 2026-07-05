@@ -132,6 +132,7 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
           value={searchValue}
           onChange={handleInput}
           aria-label={ariaLabel}
+          data-testid="chat-search-input"
         />
 
         {searchValue && (

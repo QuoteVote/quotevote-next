@@ -64,7 +64,8 @@ export async function loginUser(
             };
         }
 
-        const { token, user } = data;
+        const token = data.token || data.accessToken;
+        const { user } = data;
 
         if (!token) {
             return { success: false, error: 'No token received from server.' };

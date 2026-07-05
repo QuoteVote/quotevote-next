@@ -93,6 +93,7 @@ function ChatPanel() {
         side="right"
         overlayClassName="bottom-[56px] md:bottom-0"
         className="w-full sm:w-[400px] p-0 bottom-[56px] h-[calc(100%-56px)] md:inset-y-0 md:h-full"
+        onInteractOutside={(e) => e.preventDefault()}
       >
         <div className="h-full"><ChatContent /></div>
       </SheetContent>
