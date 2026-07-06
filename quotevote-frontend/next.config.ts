@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
 
   // Optimize images
   images: {
+    // ponytail: safe because remotePatterns below restrict SVG sources to trusted domains only
     dangerouslyAllowSVG: true,
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

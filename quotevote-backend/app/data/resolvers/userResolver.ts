@@ -12,8 +12,9 @@ export const userResolver = {
         return [];
       }
 
-      // Case-insensitive regex search on name and username
-      const regex = new RegExp(queryName, 'i');
+      // ponytail: escape regex special chars to prevent injection (e.g. @.* matching all users)
+      const escaped = queryName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escaped, 'i');
       const users = await User.find({
         $or: [{ name: regex }, { username: regex }],
         accountStatus: 'active',

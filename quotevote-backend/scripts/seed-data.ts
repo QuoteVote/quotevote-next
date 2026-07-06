@@ -4,6 +4,16 @@ import Post from '../app/data/models/Post';
 
 async function seed() {
   const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/quotevote';
+
+  // ponytail: safety guard — refuse to wipe non-local databases
+  const parsed = new URL(MONGO_URI);
+  if (!['localhost', '127.0.0.1'].includes(parsed.hostname)) {
+    throw new Error(
+      `SEED ABORTED: Refusing to run against non-local database "${parsed.hostname}". ` +
+      'This script calls deleteMany({}) and will wipe all data.'
+    );
+  }
+
   await mongoose.connect(MONGO_URI);
   console.log('Connected to MongoDB');
 
