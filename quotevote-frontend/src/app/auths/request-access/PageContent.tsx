@@ -185,8 +185,13 @@ export function RequestAccessPageContent() {
       )}
 
       {/* Email + Button row */}
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+      <form
+        data-testid="invite-request-form"
+        onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+        style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}
+      >
         <input
+          data-testid="invite-email-input"
           type="email"
           placeholder="Enter Email"
           value={userDetails}
@@ -206,7 +211,8 @@ export function RequestAccessPageContent() {
           }}
         />
         <button
-          onClick={onSubmit}
+          data-testid="invite-submit-button"
+          type="submit"
           disabled={loading}
           style={{
             textTransform: 'none',
@@ -223,11 +229,11 @@ export function RequestAccessPageContent() {
         >
           {loading ? 'Submitting...' : 'Request Invite'}
         </button>
-      </div>
+      </form>
 
       {/* Error message */}
       {errorMessage && (
-        <p style={{ color: '#fff', margin: '4px 0 12px', fontSize: 14 }}>{errorMessage}</p>
+        <p data-testid="invite-duplicate-message" style={{ color: '#fff', margin: '4px 0 12px', fontSize: 14 }}>{errorMessage}</p>
       )}
 
       {/* Two-column info overlay */}

@@ -70,7 +70,7 @@ export function PersonalForm({
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-12 px-4">
       <div className="w-full max-w-6xl">
-        <h1 className="text-center text-2xl md:text-4xl font-bold mb-4 md:mb-8">
+        <h1 data-testid="invite-success-message" className="text-center text-2xl md:text-4xl font-bold mb-4 md:mb-8">
           {requestInviteSuccessful ? (
             <>
               Thank you for{' '}

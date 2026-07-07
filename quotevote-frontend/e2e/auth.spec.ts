@@ -61,7 +61,8 @@ test.describe("Eyebrow Email Gateway: Registered User (E2E-AUTH-006)", () => {
     await expect(submitButton).toBeDisabled();
 
     // 2. Email input accepts a registered email address
-    await emailInput.fill(registeredUser.email);
+    await emailInput.click();
+    await page.keyboard.type(registeredUser.email);
 
     // 3. Submit button becomes available once the email is valid
     await expect(submitButton).toBeEnabled();
@@ -95,5 +96,123 @@ test.describe("Eyebrow Email Gateway: Registered User (E2E-AUTH-006)", () => {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     expect(pageErrors).toHaveLength(0);
+  });
+});
+
+/**
+ * E2E-AUTH-005: Invite Request CTA
+ *
+ * A logged-out visitor navigates to /auths/request-access, enters a unique
+ * email, and submits an invite request. The app should confirm success.
+ * A duplicate submission with the same email should be handled gracefully.
+ *
+ * Both GraphQL operations (duplicate check query + request mutation) are
+ * mocked at the network layer since no real backend is required for this
+ * test to be meaningful.
+ *
+ * Out of scope: invite approval, account creation, magic link login,
+ * password setup, admin invite management, email delivery.
+ */
+
+const GRAPHQL_URL = "http://localhost:4000/graphql";
+
+async function mockGraphQLOperation(
+  page: Page,
+  operationName: string,
+  responseData: object
+) {
+  await page.route(GRAPHQL_URL, async (route) => {
+    let body: { operationName?: string } = {};
+    try {
+      body = route.request().postDataJSON() as { operationName?: string };
+    } catch {
+      await route.fallback();
+      return;
+    }
+    if (body?.operationName !== operationName) {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ data: responseData }),
+    });
+  });
+}
+
+test.describe("Invite Request CTA (E2E-AUTH-005)", () => {
+  const visitorEmail = `e2e-invite-${Date.now()}@example.com`;
+
+  test.beforeEach(async ({ page }) => {
+    await mockGraphQLOperation(page, "checkDuplicateEmail", {
+      checkDuplicateEmail: [],
+    });
+    await mockGraphQLOperation(page, "requestUserAccess", {
+      requestUserAccess: { _id: "mock-id", email: visitorEmail },
+    });
+  });
+
+  test("submits a new invite request and shows confirmation", async ({ page }) => {
+    await page.goto("/auths/request-access");
+
+    // 1. Invite CTA is visible to logged-out visitors
+    const form = page.getByTestId("invite-request-form");
+    const emailInput = page.getByTestId("invite-email-input");
+    const submitButton = page.getByTestId("invite-submit-button");
+
+    await expect(form).toBeVisible();
+    await expect(emailInput).toBeVisible();
+    await expect(submitButton).toBeVisible();
+
+    // 2. Email input accepts a registered email address
+    await emailInput.fill(registeredUser.email);
+    await emailInput.dispatchEvent("input");
+
+    // 3. Submit button becomes available once the email is valid
+    await expect(submitButton).toBeEnabled();
+    await submitButton.click();
+
+    // 4. Confirmation message appears
+    const successMessage = page.getByTestId("invite-success-message");
+    await expect(successMessage).toBeVisible();
+    await expect(successMessage).toContainText(/thank you for joining us/i);
+
+    // 5. Visitor remains logged out
+    const cookies = await page.context().cookies();
+    const hasAuthCookie = cookies.some((c) => /token|session|auth/i.test(c.name));
+    expect(hasAuthCookie).toBe(false);
+  });
+
+  test("handles duplicate invite request gracefully", async ({ page }) => {
+    // Override: duplicate check returns existing record
+    await mockGraphQLOperation(page, "checkDuplicateEmail", {
+      checkDuplicateEmail: [{ _id: "existing-id", email: visitorEmail }],
+    });
+    await mockGraphQLOperation(page, "requestUserAccess", {
+      requestUserAccess: null,
+    });
+
+    await page.goto("/auths/request-access");
+
+    const emailInput = page.getByTestId("invite-email-input");
+    const submitButton = page.getByTestId("invite-submit-button");
+
+    await emailInput.fill(visitorEmail);
+    await submitButton.click();
+
+    // Duplicate message appears instead of success
+    const duplicateMessage = page.getByTestId("invite-duplicate-message");
+    await expect(duplicateMessage).toBeVisible();
+    await expect(duplicateMessage).toContainText(/this email already exists/i);
+
+    // Success state does NOT render
+    const successMessage = page.getByTestId("invite-success-message");
+    await expect(successMessage).not.toBeVisible();
+
+    // Visitor remains logged out
+    const cookies = await page.context().cookies();
+    const hasAuthCookie = cookies.some((c) => /token|session|auth/i.test(c.name));
+    expect(hasAuthCookie).toBe(false);
   });
 });
