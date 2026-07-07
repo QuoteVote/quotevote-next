@@ -152,7 +152,7 @@ function Header({ room }: HeaderProps) {
               {title || 'Chat'}
             </div>
             <div className="mt-0.5 text-[0.8125rem] text-muted-foreground">
-              {isUserRoom ? 'Direct Message' : 'Group Chat'}
+              {isUserRoom ? 'Direct Message' : 'Discussion'}
             </div>
           </div>
         </div>

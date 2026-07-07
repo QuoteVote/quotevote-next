@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -42,9 +42,11 @@ export default function LoginPageContent() {
   const [submitting, setSubmitting] = useState(false)
   const [tosAccepted, setTosAccepted] = useState(false)
   const [cocAccepted, setCocAccepted] = useState(false)
-  const [bgImage] = useState<string>(
-    () => BG_IMAGES[Math.floor(Math.random() * BG_IMAGES.length)]
-  )
+  const [bgImage, setBgImage] = useState<string>(BG_IMAGES[0])
+
+  useEffect(() => {
+    setBgImage(BG_IMAGES[Math.floor(Math.random() * BG_IMAGES.length)])
+  }, [])
 
   const {
     register,

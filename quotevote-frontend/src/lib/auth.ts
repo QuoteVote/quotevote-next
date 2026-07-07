@@ -7,6 +7,7 @@
 
 import type { LoginResponse } from '@/types/login';
 import { env } from '@/config/env';
+import { getLoginToken, postLogin } from '@/lib/auth/restLogin';
 
 const TOKEN_KEY = 'token';
 const COOKIE_NAME = 'qv-token';
@@ -48,14 +49,7 @@ export async function loginUser(
     password: string
 ): Promise<LoginResponse> {
     try {
-        const serverUrl = env.serverUrl;
-        const response = await fetch(`${serverUrl}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
-
-        const data = await response.json();
+        const { response, data } = await postLogin(env.serverUrl, username, password);
 
         if (!response.ok) {
             return {
@@ -64,7 +58,8 @@ export async function loginUser(
             };
         }
 
-        const { token, user } = data;
+        const token = getLoginToken(data);
+        const { user } = data;
 
         if (!token) {
             return { success: false, error: 'No token received from server.' };

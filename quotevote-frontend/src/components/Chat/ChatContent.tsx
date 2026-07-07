@@ -151,7 +151,7 @@ function ChatContent() {
   // If no room is selected, show the sidebar view
   if (!selectedRoomId) {
     return (
-      <div className="flex h-full w-full flex-col bg-background">
+      <div className="flex h-full w-full flex-col bg-background" data-testid="chat-page">
         {/* Header */}
         <div className="bg-gradient-to-br from-[#52b274] to-[#4a9e63] px-4 py-3 text-white shadow-md">
           <div className="flex items-center gap-3">
@@ -244,7 +244,7 @@ function ChatContent() {
 
   // Room is selected: show conversation view
   return (
-    <div className="flex h-full w-full flex-col bg-background">
+    <div className="flex h-full w-full flex-col bg-background" data-testid="chat-page">
       <MessageBox />
     </div>
   );

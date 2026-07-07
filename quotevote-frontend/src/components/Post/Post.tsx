@@ -357,7 +357,10 @@ export default function Post({
         </div>
 
         {/* Title */}
-        <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight mb-1">
+        <h1
+          data-testid="post-detail-title"
+          className="text-base sm:text-lg font-bold text-foreground leading-tight mb-1"
+        >
           {title}
         </h1>
 
@@ -513,7 +516,9 @@ export default function Post({
         )}
 
         {/* Selectable post text + floating VotingPopup */}
-        <div className={cn(
+        <div
+          data-testid="post-detail-body"
+          className={cn(
           'text-[15px] leading-[1.75] text-foreground/85',
           postHeight && postHeight >= 742 && 'max-h-[60vh] overflow-y-auto'
         )}>
