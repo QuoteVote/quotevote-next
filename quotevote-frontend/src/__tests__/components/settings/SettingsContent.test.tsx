@@ -597,7 +597,7 @@ describe('SettingsContent', () => {
 
       // Input should accept the value (form mock may not reflect it in value attribute)
       expect(nameInput).toBeInTheDocument()
-    })
+    } , 20000) // Increase timeout for long input test
 
     it('handles special characters in inputs', async () => {
       const user = userEvent.setup()

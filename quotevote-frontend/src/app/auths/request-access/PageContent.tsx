@@ -212,7 +212,7 @@ export function RequestAccessPageContent() {
         />
         <button
           data-testid="invite-submit-button"
-          onClick={onSubmit}
+          type="submit"
           disabled={loading}
           style={{
             textTransform: 'none',

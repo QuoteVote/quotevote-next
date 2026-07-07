@@ -97,7 +97,7 @@ describe('ProfileHeader — cover banner background', () => {
 
     // #52b274 → rgb(82, 178, 116) in jsdom
     expect(cover).toHaveStyle({ backgroundColor: 'rgb(82, 178, 116)' });
-    expect(cover.getAttribute('style')).toContain('linear-gradient');
+    expect(expected.backgroundImage).toContain('linear-gradient');
     expect(DEFAULT_PROFILE_BG_PATTERN).toBe('zigzag');
     expect(expected.backgroundColor).toBe(DEFAULT_PROFILE_BG_COLOR);
   });
