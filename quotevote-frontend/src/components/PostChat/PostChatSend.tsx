@@ -2,7 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { useMutation } from '@apollo/client/react'
-import { Send } from 'lucide-react'
+import { Send, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -16,6 +17,7 @@ import type { PostChatSendProps, MessagesData, CreateMessageData } from '@/types
 export default function PostChatSend({ messageRoomId, title, postId }: PostChatSendProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState('')
+  const submitting = useAppStore((state) => state.chat.submitting)
 
   const user = useAppStore((state) => state.user.data)
   const setChatSubmitting = useAppStore((state) => state.setChatSubmitting)
@@ -24,8 +26,9 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
   const type = 'POST'
 
   const [createMessage] = useMutation<CreateMessageData>(SEND_MESSAGE, {
-    onError: () => {
+    onError: (err) => {
       setChatSubmitting(false)
+      toast.error(`Message failed: ${err.message}`)
     },
     onCompleted: () => {
       setChatSubmitting(false)
@@ -118,12 +121,14 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
+        disabled={submitting}
         className={cn(
           'min-h-[40px] max-h-[120px] flex-1 resize-none rounded-xl',
           'border border-border bg-muted/50',
           'px-3 py-2.5 text-sm',
           'placeholder:text-muted-foreground/50',
           'focus:bg-background focus:ring-2 focus:ring-primary/20',
+          submitting && 'opacity-50 cursor-not-allowed',
         )}
         rows={1}
       />
@@ -131,11 +136,15 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
         variant="ghost"
         size="icon"
         onClick={handleSubmit}
-        disabled={!text.trim()}
+        disabled={!text.trim() || submitting}
         className="h-10 w-10 shrink-0 text-primary hover:bg-primary/10 disabled:opacity-30"
         aria-label="Send message"
       >
-        <Send className="h-4.5 w-4.5" />
+        {submitting ? (
+          <Loader2 className="h-4.5 w-4.5 animate-spin" />
+        ) : (
+          <Send className="h-4.5 w-4.5" />
+        )}
       </Button>
     </div>
   )
