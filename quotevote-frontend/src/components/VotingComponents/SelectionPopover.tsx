@@ -173,6 +173,7 @@ export default function SelectionPopover({
   return createPortal(
     <div
       id="selectionPopover"
+      data-testid="highlight-popup"
       ref={popoverRef}
       style={{
         visibility,
