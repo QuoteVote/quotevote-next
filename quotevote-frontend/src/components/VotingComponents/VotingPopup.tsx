@@ -163,6 +163,7 @@ export default function VotingPopup({
                       disabled
                       className="opacity-50"
                       aria-label="Upvote"
+                      data-testid="highlight-agree-button"
                     >
                       <Like size={30} />
                     </Button>
@@ -175,7 +176,12 @@ export default function VotingPopup({
             ) : showUpvoteTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Upvote">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Upvote"
+                    data-testid="highlight-agree-button"
+                  >
                     <Like size={30} />
                   </Button>
                 </TooltipTrigger>
@@ -188,6 +194,7 @@ export default function VotingPopup({
                 variant="ghost"
                 size="icon"
                 aria-label="Upvote"
+                data-testid="highlight-agree-button"
                 onClick={() => {
                   if (!hasVoted) {
                     setExpand({
@@ -219,6 +226,7 @@ export default function VotingPopup({
                       disabled
                       className="opacity-50"
                       aria-label="Downvote"
+                      data-testid="highlight-disagree-button"
                     >
                       <Dislike size={30} />
                     </Button>
@@ -231,7 +239,12 @@ export default function VotingPopup({
             ) : showDownvoteTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Downvote">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Downvote"
+                    data-testid="highlight-disagree-button"
+                  >
                     <Dislike size={30} />
                   </Button>
                 </TooltipTrigger>
@@ -244,6 +257,7 @@ export default function VotingPopup({
                 variant="ghost"
                 size="icon"
                 aria-label="Downvote"
+                data-testid="highlight-disagree-button"
                 onClick={() => {
                   if (!hasVoted) {
                     setExpand({
@@ -269,6 +283,7 @@ export default function VotingPopup({
               variant="ghost"
               size="icon"
               aria-label="Comment"
+              data-testid="highlight-comment-button"
               onClick={() =>
                 setExpand({
                   open: expand.type !== 'comment' || !expand.open,
@@ -291,6 +306,7 @@ export default function VotingPopup({
               variant="ghost"
               size="icon"
               aria-label="Quote"
+              data-testid="highlight-quote-button"
               onClick={() => {
                 const newQuote = expand.type !== 'quote'
                 setExpand({ open: false, type: newQuote ? 'quote' : '' })
