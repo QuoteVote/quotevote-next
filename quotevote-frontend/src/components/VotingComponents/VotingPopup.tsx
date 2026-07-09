@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { isEmpty, findIndex } from 'lodash'
+import { Loader2 } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,6 +38,7 @@ export default function VotingPopup({
     type: '',
   })
   const [comment, setComment] = useState('')
+  const [commentSubmitting, setCommentSubmitting] = useState(false)
   const [validationError, setValidationError] = useState('')
   const [checkWindowWidth, setCheckWindowWidth] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -100,15 +102,21 @@ export default function VotingPopup({
     [hasVoted, expand.type, onVote, handleSetExpand],
   )
 
-  const handleAddComment = useCallback(() => {
+  const handleAddComment = useCallback(async () => {
     if (!comment.trim()) {
       setValidationError('Please enter a comment')
       return
     }
     const withQuote = !isEmpty(selectedText.text)
-    onAddComment(comment.trim(), withQuote)
-    setComment('')
-    handleSetExpand({ open: false, type: '' })
+    setCommentSubmitting(true)
+    try {
+      await onAddComment(comment.trim(), withQuote)
+      setComment('')
+      setValidationError('')
+      handleSetExpand({ open: false, type: '' })
+    } finally {
+      setCommentSubmitting(false)
+    }
   }, [comment, selectedText.text, onAddComment, handleSetExpand])
 
   const handleAddQuote = useCallback(() => {
@@ -361,12 +369,14 @@ export default function VotingPopup({
                     setValidationError('')
                   }
                 }}
+                disabled={commentSubmitting}
                 className={cn(
                   'flex-1 text-[#3c4858cc] pb-1',
+                  commentSubmitting && 'opacity-50',
                   validationError && 'border-destructive focus-visible:ring-destructive',
                 )}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
+                  if (event.key === 'Enter' && !event.shiftKey && !commentSubmitting) {
                     event.preventDefault()
                     handleAddComment()
                   }
@@ -375,10 +385,11 @@ export default function VotingPopup({
               />
               <Button
                 onClick={handleAddComment}
+                disabled={commentSubmitting}
                 className="bg-[#52b274] text-white hover:bg-[#52b274]/90"
                 size="sm"
               >
-                Send
+                {commentSubmitting ? <Loader2 className="size-4 animate-spin" /> : 'Send'}
               </Button>
             </div>
             {validationError && (

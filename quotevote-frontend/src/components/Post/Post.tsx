@@ -389,8 +389,8 @@ export default function Post({
         role="toolbar"
         aria-label="Post actions"
       >
-        <div className="flex items-center gap-1 ml-auto flex-wrap">
-          {/* Sentiment buttons — always visible */}
+        <div className="flex items-center gap-1 flex-wrap">
+          {/* ponytail: RC1-012 — Disagree=red, Support=dark green */}
           <Button
             size="sm"
             onClick={handleReject}
@@ -398,8 +398,8 @@ export default function Post({
             className={cn(
               'rounded-xl font-bold text-xs h-8 border',
               hasRejected
-                ? 'bg-destructive border-destructive text-destructive-foreground hover:bg-destructive/90'
-                : 'bg-transparent border-destructive/40 text-destructive hover:bg-destructive/5 hover:border-destructive'
+                ? 'bg-disagree border-disagree text-white hover:bg-disagree-hover'
+                : 'bg-transparent border-disagree/40 text-disagree hover:bg-disagree/5 hover:border-disagree'
             )}
           >
             Disagree{rejectCount > 0 ? ` (${rejectCount})` : ''}
@@ -409,13 +409,13 @@ export default function Post({
             onClick={handleApprove}
             aria-label={hasApproved ? 'Remove upvote' : 'Upvote this post'}
             className={cn(
-              'rounded-xl font-bold text-xs h-8',
+              'rounded-xl font-bold text-xs h-8 border',
               hasApproved
-                ? 'bg-[#1b5e20] text-white hover:bg-[#0a3d0a] shadow-[0_4px_14px_rgba(46,125,50,0.39)]'
-                : 'bg-[#2e7d32] text-white hover:bg-[#1b5e20] shadow-[0_4px_14px_rgba(46,125,50,0.39)]'
+                ? 'bg-agree border-agree text-white hover:bg-agree-hover'
+                : 'bg-transparent border-agree/40 text-agree hover:bg-agree/5 hover:border-agree'
             )}
           >
-            Support{approveCount > 0 ? ` (${approveCount})` : ''}
+            Agree{approveCount > 0 ? ` (${approveCount})` : ''}
           </Button>
 
           <Separator orientation="vertical" className="h-5 mx-0.5" />

@@ -110,6 +110,7 @@ describe('PostChatSend', () => {
         user: {
           data: mockCurrentUser,
         },
+        chat: { submitting: false },
         setChatSubmitting: jest.fn(),
       }
       return selector(state)
@@ -144,6 +145,7 @@ describe('PostChatSend', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
+        chat: { submitting: false },
         setChatSubmitting,
       }
       return selector(state)
@@ -174,6 +176,7 @@ describe('PostChatSend', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
+        chat: { submitting: false },
         setChatSubmitting,
       }
       return selector(state)
@@ -196,6 +199,7 @@ describe('PostChatSend', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
+        chat: { submitting: false },
         setChatSubmitting,
       }
       return selector(state)
@@ -216,6 +220,7 @@ describe('PostChatSend', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
+        chat: { submitting: false },
         setChatSubmitting,
       }
       return selector(state)
@@ -236,6 +241,7 @@ describe('PostChatSend', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
+        chat: { submitting: false },
         setChatSubmitting,
       }
       return selector(state)
@@ -277,6 +283,7 @@ describe('PostChatSend', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
+        chat: { submitting: false },
         setChatSubmitting,
       }
       return selector(state)
@@ -311,6 +318,7 @@ describe('PostChatSend', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
+        chat: { submitting: false },
         setChatSubmitting,
       }
       return selector(state)

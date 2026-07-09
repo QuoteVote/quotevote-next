@@ -44,7 +44,7 @@ export type VoteHandler = (vote: { type: VoteType; tags: VoteOption }) => void
 /**
  * Comment handler function type
  */
-export type CommentHandler = (comment: string, withQuote: boolean) => void
+export type CommentHandler = (comment: string, withQuote: boolean) => void | Promise<void>
 
 /**
  * Quote handler function type

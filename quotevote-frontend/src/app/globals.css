@@ -118,6 +118,12 @@
   --color-gray-light: #E5E5E5;
   --color-black-card: #2D2A2A;
 
+  /* Agree / Disagree Action Colors */
+  --color-disagree: #d32f2f;
+  --color-disagree-hover: #b71c1c;
+  --color-agree: #1b5e20;
+  --color-agree-hover: #0a3d0a;
+
   /* Fonts */
   --font-sans: var(--font-sans, "Inter", ui-sans-serif, system-ui, sans-serif);
   --font-mono: ui-monospace, monospace;
