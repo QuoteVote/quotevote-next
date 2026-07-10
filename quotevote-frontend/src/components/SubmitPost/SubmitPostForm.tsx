@@ -218,7 +218,9 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
                 className={cn('text-lg border-0 shadow-none px-0 focus-visible:ring-0 rounded-none', errors.title && 'border-b border-destructive')}
               />
               {errors.title && (
-                <p className="text-sm text-destructive mt-1">{errors.title.message}</p>
+                <p className="text-sm text-destructive mt-1" data-testid="post-title-error">
+                  {errors.title.message}
+                </p>
               )}
 
               <div className="border-t my-2" />
@@ -242,7 +244,12 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
                     className="flex items-center gap-2 bg-red-50 border border-red-400 rounded p-3 mt-2"
                   >
                     <AlertTriangle className="h-5 w-5 text-red-500 shrink-0" />
-                    <p className="text-sm text-red-600 font-medium">{errors.text.message}</p>
+                    <p
+                      className="text-sm text-red-600 font-medium"
+                      data-testid="post-body-error"
+                    >
+                      {errors.text.message}
+                    </p>
                   </div>
                 )}
               </div>
@@ -317,6 +324,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
                       label=""
                       error={!!errors.group}
                       errorMessage={errors.group?.message}
+                      errorTestId="post-group-error"
                       disabled={loadingGroup || loading}
                       allowCreate={true}
                       triggerTestId="post-group-select"

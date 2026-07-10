@@ -28,6 +28,7 @@ export interface ComboboxProps {
   allowCreate?: boolean
   triggerTestId?: string
   createOptionTestId?: string
+  errorTestId?: string
 }
 
 export function Combobox({
@@ -43,6 +44,7 @@ export function Combobox({
   allowCreate = true,
   triggerTestId,
   createOptionTestId,
+  errorTestId,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [inputValue, setInputValue] = React.useState('')
@@ -201,7 +203,9 @@ export function Combobox({
       </Popover>
 
       {error && errorMessage && (
-        <p className="mt-1 text-sm text-destructive">{errorMessage}</p>
+        <p className="mt-1 text-sm text-destructive" data-testid={errorTestId}>
+          {errorMessage}
+        </p>
       )}
     </div>
   )
