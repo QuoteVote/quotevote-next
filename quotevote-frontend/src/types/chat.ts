@@ -188,6 +188,7 @@ export interface StagedChatRoom {
   avatar: string | null;
   messageType: 'USER';
   users: string[];
+  username?: string;
 }
 
 /**

@@ -161,6 +161,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
             : (avatar?.url ?? null),
         messageType: 'USER',
         users: [loggedInUserIdString, _id],
+        username: username || undefined,
       };
       setSelectedChatRoom(staged);
     }

@@ -183,6 +183,20 @@ describe('MessageItem', () => {
     expect(avatars.length).toBeGreaterThan(0)
   })
 
+  it('renders profile link on other user avatar', () => {
+    render(<MessageItem message={mockOtherMessage} />)
+
+    const profileLink = screen.getByRole('link', { name: 'Open otheruser profile' })
+    expect(profileLink).toHaveAttribute('href', '/dashboard/profile/otheruser')
+  })
+
+  it('renders profile link on own avatar', () => {
+    render(<MessageItem message={mockOwnMessage} />)
+
+    const profileLink = screen.getByRole('link', { name: 'Open currentuser profile' })
+    expect(profileLink).toHaveAttribute('href', '/dashboard/profile/currentuser')
+  })
+
   it('displays read indicator for own messages when read', () => {
     render(<MessageItem message={mockOwnMessage} />)
 
@@ -321,4 +335,3 @@ describe('MessageItem', () => {
     expect(container.firstChild).toBeNull()
   })
 })
-

@@ -104,6 +104,7 @@ export default function BuddyItemList({ buddyList, className }: BuddyItemListPro
                         avatar: typeof item.user.avatar === 'string' ? item.user.avatar : null,
                         messageType: 'USER',
                         users: [currentUser._id!.toString(), item.user._id],
+                        username: item.user.username,
                     };
                     setSelectedChatRoom(staged);
                 }

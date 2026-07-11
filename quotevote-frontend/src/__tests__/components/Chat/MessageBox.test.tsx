@@ -143,7 +143,20 @@ describe('MessageBox', () => {
       }
       if (query === GET_ROSTER) {
         return {
-          data: { roster: { buddies: [], pendingRequests: [], blockedUsers: [] } },
+          data: {
+            getRoster: [
+              {
+                _id: 'roster-1',
+                userId: 'user1',
+                buddyId: 'user2',
+                status: 'accepted',
+                buddy: {
+                  _id: 'user2',
+                  username: 'other-user',
+                },
+              },
+            ],
+          },
           loading: false,
           error: undefined,
         }
@@ -194,6 +207,60 @@ describe('MessageBox', () => {
     })
 
     expect(screen.getByText('Direct Message')).toBeInTheDocument()
+  })
+
+  it('renders avatar as a profile link when DM buddy username is available', async () => {
+    render(<MessageBox />)
+
+    const profileLink = await screen.findByRole('link', { name: 'Open other-user profile' })
+    expect(profileLink).toHaveAttribute('href', '/dashboard/profile/other-user')
+  })
+
+  it('renders avatar as a profile link for staged room username', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) => {
+      const state = {
+        user: { data: mockCurrentUser },
+        chat: {
+          selectedRoom: {
+            _id: null,
+            title: 'Staged DM',
+            avatar: null,
+            messageType: 'USER',
+            users: ['user1', 'user3'],
+            username: 'staged user',
+          },
+          buddyList: [],
+          presenceMap: {},
+        },
+        setSelectedChatRoom: jest.fn(),
+        setSnackbar: jest.fn(),
+      }
+      return selector(state)
+    })
+
+    render(<MessageBox />)
+
+    const profileLink = await screen.findByRole('link', { name: 'Open staged user profile' })
+    expect(profileLink).toHaveAttribute('href', '/dashboard/profile/staged%20user')
+  })
+
+  it('does not render avatar as profile link for non-user rooms', async () => {
+    const groupRoom: ChatRoom = {
+      _id: 'group-room-1',
+      title: 'Group Chat',
+      messageType: 'POST',
+      users: ['user1', 'user2', 'user3'],
+      created: new Date().toISOString(),
+    }
+
+    render(<MessageBox roomOverride={groupRoom} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Group Chat')).toBeInTheDocument()
+    })
+
+    expect(screen.queryByRole('link', { name: /Open .* profile/ })).not.toBeInTheDocument()
   })
 
   it('renders back button and calls setSelectedChatRoom when clicked', async () => {
@@ -281,4 +348,3 @@ describe('MessageBox', () => {
     expect(screen.getByText('No room selected')).toBeInTheDocument()
   })
 })
-

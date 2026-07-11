@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { ArrowLeft, Settings, Ban, UserX, Trash2 } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 
@@ -25,9 +26,10 @@ import type { ChatRoom, StagedChatRoom } from '@/types/chat'
 
 interface HeaderProps {
   room: ChatRoom | null
+  stagedProfileUsername?: string | null
 }
 
-function Header({ room }: HeaderProps) {
+function Header({ room, stagedProfileUsername }: HeaderProps) {
   const currentUser = useAppStore((state) => state.user.data)
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom)
   const setChatOpen = useAppStore((state) => state.setChatOpen)
@@ -39,7 +41,15 @@ function Header({ room }: HeaderProps) {
       fetchPolicy: 'cache-and-network',
     },
   )
-  const { data: rosterData } = useQuery<{ getRoster: Array<{ _id: string; userId: string; buddyId: string; status: string }> }>(
+  const { data: rosterData } = useQuery<{
+    getRoster: Array<{
+      _id: string
+      userId: string
+      buddyId: string
+      status: string
+      buddy?: { _id?: string; username?: string | null } | null
+    }>
+  }>(
     GET_ROSTER,
     { skip: !currentUser },
   )
@@ -67,6 +77,19 @@ function Header({ room }: HeaderProps) {
 
   const rosterEntries = rosterData?.getRoster ?? []
   const currentUserIdStr = currentUser?._id?.toString()
+
+  const otherUsernameFromRoster =
+    otherUserId
+      ? rosterEntries.find((r) => r.buddy?._id?.toString() === otherUserId)?.buddy?.username ?? null
+      : null
+  const profileUsername =
+    messageType === 'USER'
+      ? stagedProfileUsername ?? otherUsernameFromRoster ?? null
+      : null
+  const profileHref = profileUsername
+    ? `/dashboard/profile/${encodeURIComponent(profileUsername)}`
+    : null
+
   const isBlocked = !!(
     otherUserId &&
     currentUserIdStr &&
@@ -140,12 +163,27 @@ function Header({ room }: HeaderProps) {
         </Button>
 
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <DisplayAvatar
-            avatar={avatar as string | Record<string, unknown> | undefined}
-            username={title || ''}
-            size={44}
-            className="flex-shrink-0 ring-2 ring-white shadow-sm"
-          />
+          {profileHref ? (
+            <Link
+              href={profileHref}
+              aria-label={`Open ${profileUsername} profile`}
+              className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-2"
+            >
+              <DisplayAvatar
+                avatar={avatar as string | Record<string, unknown> | undefined}
+                username={title || ''}
+                size={44}
+                className="flex-shrink-0 ring-2 ring-white shadow-sm"
+              />
+            </Link>
+          ) : (
+            <DisplayAvatar
+              avatar={avatar as string | Record<string, unknown> | undefined}
+              username={title || ''}
+              size={44}
+              className="flex-shrink-0 ring-2 ring-white shadow-sm"
+            />
+          )}
 
           <div className="min-w-0 flex-1">
             <div className="truncate text-base font-bold text-foreground" style={{ letterSpacing: '-0.01em' }}>
@@ -211,6 +249,9 @@ function MessageBox({ roomOverride }: MessageBoxProps) {
   const ensureAuth = useGuestGuard()
   const selectedRoomId = useAppStore((state) => state.chat.selectedRoom)
   const isStagedRoom = selectedRoomId !== null && typeof selectedRoomId === 'object'
+  const stagedProfileUsername = isStagedRoom
+    ? (selectedRoomId as StagedChatRoom).username ?? null
+    : null
 
   const { data: roomsData } = useQuery<{ messageRooms: ChatRoom[] }>(GET_CHAT_ROOMS, {
     fetchPolicy: 'cache-and-network',
@@ -256,7 +297,7 @@ function MessageBox({ roomOverride }: MessageBoxProps) {
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <Header room={room} />
+      <Header room={room} stagedProfileUsername={stagedProfileUsername} />
       <div
         className="flex flex-1 flex-col overflow-hidden"
         style={{

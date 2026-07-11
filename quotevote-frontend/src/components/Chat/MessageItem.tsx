@@ -2,6 +2,7 @@
 
 import type { FC } from 'react';
 import { useMemo, memo } from 'react';
+import Link from 'next/link';
 import { useMutation } from '@apollo/client/react';
 import { Check, CheckCheck, Trash2 } from 'lucide-react';
 
@@ -102,8 +103,31 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
     'Unknown';
 
   const avatarRaw = message.user?.avatar;
+  const profileUsername = message.user?.username ?? (isOwnMessage ? currentUser.username : null);
+  const profileHref = profileUsername
+    ? `/dashboard/profile/${encodeURIComponent(profileUsername)}`
+    : null;
 
   const timeLabel = formatTime(message.created);
+
+  const avatarNode = (
+    <DisplayAvatar
+      avatar={avatarRaw as string | Record<string, unknown> | undefined}
+      username={senderName}
+      size={40}
+      className="ring-2 ring-white shadow-sm"
+    />
+  );
+
+  const avatarWithLink = profileHref ? (
+    <Link
+      href={profileHref}
+      aria-label={`Open ${profileUsername} profile`}
+      className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-2"
+    >
+      {avatarNode}
+    </Link>
+  ) : avatarNode;
 
   return (
     <div
@@ -114,12 +138,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
     >
       {isDefaultDirection && (
         <div className="mr-2.5 flex h-10 w-10 flex-shrink-0 items-center justify-center">
-          <DisplayAvatar
-            avatar={avatarRaw as string | Record<string, unknown> | undefined}
-            username={senderName}
-            size={40}
-            className="ring-2 ring-white shadow-sm"
-          />
+          {avatarWithLink}
         </div>
       )}
 
@@ -186,12 +205,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
 
       {!isDefaultDirection && (
         <div className="ml-2.5 flex h-10 w-10 flex-shrink-0 items-center justify-center">
-          <DisplayAvatar
-            avatar={avatarRaw as string | Record<string, unknown> | undefined}
-            username={senderName}
-            size={40}
-            className="ring-2 ring-white shadow-sm"
-          />
+          {avatarWithLink}
         </div>
       )}
     </div>
