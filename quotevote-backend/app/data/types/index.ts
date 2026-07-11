@@ -50,6 +50,7 @@ import { DeletedMessageType } from './DeletedMessage';
 import { HeartbeatResponseType, PresenceType, PresenceUpdateType } from './Presence';
 import { BuddyWithPresenceType, DeletedRosterType, RosterType } from './Roster';
 import { TypingIndicatorType, TypingResponseType } from './TypingIndicator';
+import { domainInputTypes } from '../inputs';
 
 export * from './scalars';
 export * from './enums';
@@ -130,6 +131,7 @@ export const domainTypes: readonly GraphQLNamedType[] = [
   DeletedRosterType,
   TypingIndicatorType,
   TypingResponseType,
+  ...domainInputTypes,
 ];
 
 /**
