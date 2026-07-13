@@ -1,6 +1,9 @@
+import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import User from '../app/data/models/User';
 import Post from '../app/data/models/Post';
+
+dotenv.config();
 
 async function seed() {
   const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/quotevote';
