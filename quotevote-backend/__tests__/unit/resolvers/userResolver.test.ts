@@ -21,15 +21,17 @@ describe('userResolver', () => {
 
     it('escapes special regex characters to prevent injection', async () => {
       (User.find as jest.Mock).mockReturnValue({
-        limit: jest.fn().mockReturnValue({
-          lean: jest.fn().mockResolvedValue([
-            {
-              _id: new mongoose.Types.ObjectId('60d5ec49ad414d7a8d5464a0'),
-              name: 'Alice Cooper',
-              username: 'alice',
-              accountStatus: 'active',
-            },
-          ]),
+        select: jest.fn().mockReturnValue({
+          limit: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue([
+              {
+                _id: new mongoose.Types.ObjectId('60d5ec49ad414d7a8d5464a0'),
+                name: 'Alice Cooper',
+                username: 'alice',
+                accountStatus: 'active',
+              },
+            ]),
+          }),
         }),
       });
 
