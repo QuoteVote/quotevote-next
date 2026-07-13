@@ -3,6 +3,18 @@ import type * as Common from '~/types/common';
 
 export const userResolver = {
   Query: {
+    user: async (
+      _parent: unknown,
+      args: { username: string }
+    ): Promise<Common.User | null> => {
+      const user = await User.findByUsername(args.username).lean();
+      if (!user) return null;
+
+      return {
+        ...user,
+        _id: user._id.toString(),
+      } as unknown as Common.User;
+    },
     searchUser: async (
       _parent: unknown,
       args: { queryName: string }
