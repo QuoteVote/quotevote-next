@@ -25,8 +25,6 @@ const PostSchema = new Schema<PostDocument, PostModel>(
       type: Number,
       min: 1,
       max: 12,
-      unique: true,
-      sparse: true,
     },
     messageRoomId: { type: String },
     urlId: { type: String },
