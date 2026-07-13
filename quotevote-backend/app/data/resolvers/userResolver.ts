@@ -20,9 +20,17 @@ export const userResolver = {
         .lean();
       if (!user) return null;
 
+      const userId = user._id.toString();
+
       return {
         ...user,
-        _id: user._id.toString(),
+        _id: userId,
+        // reputation is a plain nested object on the model, not a Mongoose
+        // subdocument, so it never gets its own _id — but UserReputationType
+        // requires one. Reuse the parent user's id since it's 1:1 embedded.
+        reputation: user.reputation
+          ? { ...user.reputation, _id: userId }
+          : undefined,
       } as unknown as Common.User;
     },
     searchUser: async (
