@@ -11,7 +11,7 @@ export const userResolver = {
       // fields so this can't be used to harvest email addresses or other
       // sensitive data, and match searchUser's active-account filter.
       const user = await User.findOne({
-        username: args.username,
+        username: args.username?.trim(),
         accountStatus: 'active',
       })
         .select(
@@ -49,6 +49,9 @@ export const userResolver = {
         $or: [{ name: regex }, { username: regex }],
         accountStatus: 'active',
       })
+        .select(
+          '_id name username avatar contributorBadge upvotes downvotes _followingId _followersId reputation'
+        )
         .limit(10)
         .lean();
 
