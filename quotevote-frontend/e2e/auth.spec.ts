@@ -216,3 +216,92 @@ test.describe("Invite Request CTA (E2E-AUTH-005)", () => {
     expect(hasAuthCookie).toBe(false);
   });
 });
+
+test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
+  // Override global storage state so we start as a logged-out visitor
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("creates a new account, logs in, and routes to authenticated dashboard", async ({ page }) => {
+    const errorToastLocator = page.locator('[data-sonner-toast][data-type="error"]');
+    const uniqueId = Date.now();
+    const uniqueUsername = `user_${uniqueId.toString().slice(-10)}`;
+    const uniqueEmail = `e2e-signup-${uniqueId}@example.com`;
+    const validPassword = `Password${uniqueId}!`;
+
+    console.log(`TEST PROGRESS: Generated uniqueUsername=${uniqueUsername}, uniqueEmail=${uniqueEmail}`);
+
+    // 1. Open Quote.Vote while logged out and navigate to signup
+    console.log("TEST PROGRESS: Navigating to signup page");
+    await page.goto("/auths/signup");
+
+    // 2. Assert signup form and elements load successfully
+    console.log("TEST PROGRESS: Asserting signup form elements are loaded");
+    const signupForm = page.getByTestId("signup-form");
+    const usernameInput = page.getByTestId("signup-username-input");
+    const emailInput = page.getByTestId("signup-email-input");
+    const passwordInput = page.getByTestId("signup-password-input");
+    const confirmPasswordInput = page.getByTestId("signup-confirm-password-input");
+    const submitButton = page.getByTestId("signup-submit-button");
+
+    await expect(signupForm).toBeVisible();
+    await expect(usernameInput).toBeVisible();
+    await expect(emailInput).toBeVisible();
+    await expect(passwordInput).toBeVisible();
+    await expect(confirmPasswordInput).toBeVisible();
+    await expect(submitButton).toBeVisible();
+
+    // 3. Fill in direct signup credentials
+    console.log("TEST PROGRESS: Filling credentials in signup form");
+    await usernameInput.fill(uniqueUsername);
+    await emailInput.fill(uniqueEmail);
+    await passwordInput.fill(validPassword);
+    await confirmPasswordInput.fill(validPassword);
+
+    // 4. Submit the signup form
+    console.log("TEST PROGRESS: Submitting signup form");
+    await submitButton.click();
+
+    // 5. Direct signup redirects to /auths/login
+    console.log("TEST PROGRESS: Waiting for redirect to /auths/login");
+    await page.waitForURL("**/auths/login", { timeout: 15000 });
+
+    // 6. Complete login using newly created credentials
+    console.log("TEST PROGRESS: Filling login form with new credentials");
+    await page.getByPlaceholder('Email/Username').fill(uniqueEmail);
+    await page.getByPlaceholder('Password').fill(validPassword);
+
+    console.log("TEST PROGRESS: Accepting terms of service and code of conduct");
+    await page.click('#tos');
+    await page.click('#coc');
+
+    const loginButton = page.getByRole('button', { name: 'Log in' });
+    await expect(loginButton).toBeEnabled();
+
+    console.log("TEST PROGRESS: Clicking submit to log in");
+    await loginButton.click({ force: true });
+
+    // 7. Verify navigation to the authenticated experience /dashboard/explore
+    console.log("TEST PROGRESS: Verifying redirect to dashboard");
+    await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
+
+    // 8. Confirm the new user is authenticated
+    const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
+    await expect(authNav).toBeVisible();
+
+    const profileMenu = page.getByTestId("user-profile-menu").filter({ visible: true });
+    await expect(profileMenu).toBeVisible();
+
+    // 9. Confirm session persists after page reload
+    console.log("TEST PROGRESS: Reloading page to verify session persistence");
+    await page.reload();
+    await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
+    await expect(authNav).toBeVisible();
+    await expect(profileMenu).toBeVisible();
+
+    // 10. No runtime errors or generic error toasts appear
+    await expect(errorToastLocator).toHaveCount(0);
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    expect(pageErrors).toHaveLength(0);
+  });
+});
