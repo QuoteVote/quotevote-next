@@ -61,8 +61,10 @@ CI runs `lint`, `type-check`, and `test` (Jest) for both frontend and backend on
 - **UI**: shadcn/ui (New York style) + Tailwind CSS 4.x + lucide-react icons. No Material-UI.
 - **State**: Zustand (`src/store/`) — no Redux, no provider wrappers needed
 - **Data fetching**: Apollo Client 4 for GraphQL (`src/lib/apollo/`, `src/graphql/`)
-- **Forms**: React Hook Form + Zod validation
+- **Forms**: React Hook Form + Zod validation (e.g. `src/lib/validation/submitPostSchema.ts` for Create Quote)
 - **Testing**: Jest 30 + React Testing Library (unit, `src/__tests__/`); Playwright (E2E, `e2e/`)
+
+**Create Quote composer** (`src/components/SubmitPost/`): required title, body, and tag; optional citation and attribution; drafts in `sessionStorage`; POST disabled until Zod validation passes. E2E uses `E2E_PUBLIC_TAG_NAME` (see `quotevote-frontend/.env.e2e.example`).
 
 ### Backend
 
@@ -85,7 +87,8 @@ quotevote-frontend/
     components/ui/    # shadcn/ui components
     hooks/            # Custom React hooks
     lib/apollo/       # Apollo Client setup
-    lib/utils/        # Utility functions
+    lib/utils/        # Utility functions (e.g. submitPostDraft sessionStorage helpers)
+    lib/constants/    # Shared constants (form limits, etc.)
     store/            # Zustand stores
     types/            # All TypeScript type definitions (mandatory location)
     graphql/          # Queries, mutations, subscriptions
