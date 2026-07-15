@@ -128,6 +128,7 @@ describe('ProfileHeader — Message button', () => {
       avatar: 'https://example.com/avatar.jpg',
       messageType: 'USER',
       users: ['currentuser', 'user1'],
+      username: 'testuser',
     });
     expect(setChatOpen).toHaveBeenCalledWith(true);
   });

@@ -2,7 +2,7 @@
  * Post submission E2E specs (post-submission.spec.ts)
  *
  * - E2E-POST-001: Create Public Post (happy path)
- * - E2E-POST-003: Post Validation (required-field inline errors)
+ * - E2E-POST-003: Post Validation (POST disabled until required fields are valid)
  *
  * Actor: Registered User (authorUser)
  * Auth State: Logged in (precondition via global-setup storageState)
