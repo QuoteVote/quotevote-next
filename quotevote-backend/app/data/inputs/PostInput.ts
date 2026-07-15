@@ -9,6 +9,5 @@ export const PostInput = new GraphQLInputObjectType({
     text: { type: new GraphQLNonNull(GraphQLString) },
     citationUrl: { type: GraphQLString },
     attribution: { type: GraphQLString },
-    attributionType: { type: GraphQLString },
   },
 });

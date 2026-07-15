@@ -1,6 +1,10 @@
 import { expect, type Page } from '@playwright/test';
 
-export const PUBLIC_GROUP_NAME = process.env.E2E_PUBLIC_GROUP_NAME ?? 'Public';
+export const PUBLIC_TAG_NAME =
+  process.env.E2E_PUBLIC_TAG_NAME ?? process.env.E2E_PUBLIC_GROUP_NAME ?? 'Public';
+
+/** @deprecated Use selectPostTag */
+export const PUBLIC_GROUP_NAME = PUBLIC_TAG_NAME;
 
 export async function openPostComposer(page: Page): Promise<void> {
   const createButton = page.getByTestId('create-post-button').locator('visible=true');
@@ -10,11 +14,14 @@ export async function openPostComposer(page: Page): Promise<void> {
   await expect(composer).toBeVisible();
 }
 
-export async function selectPostGroup(page: Page, groupName = PUBLIC_GROUP_NAME): Promise<void> {
-  await page.getByTestId('post-group-select').click();
-  await page.getByPlaceholder('Search or type new group name...').fill(groupName);
-  await page.getByRole('button', { name: groupName, exact: true }).click();
+export async function selectPostTag(page: Page, tagName = PUBLIC_TAG_NAME): Promise<void> {
+  await page.getByTestId('post-tag-select').click();
+  await page.getByPlaceholder('Search or type new tag name...').fill(tagName);
+  await page.getByRole('button', { name: tagName, exact: true }).click();
 }
+
+/** @deprecated Use selectPostTag */
+export const selectPostGroup = selectPostTag;
 
 export async function assertComposerRemainsOpen(page: Page): Promise<void> {
   await expect(page.getByTestId('post-composer')).toBeVisible();
@@ -32,13 +39,13 @@ export async function assertPostTitleNotVisibleOnPage(
 export async function assertInvalidPostNotPublished(
   page: Page,
   titleMarker: string,
-  groupName = PUBLIC_GROUP_NAME
+  tagName = PUBLIC_TAG_NAME
 ): Promise<void> {
   const surfaces = [
     '/dashboard/explore',
     '/dashboard/post',
     '/dashboard/profile',
-    `/dashboard/explore?q=${encodeURIComponent(groupName)}`,
+    `/dashboard/explore?q=${encodeURIComponent(tagName)}`,
   ];
 
   for (const path of surfaces) {

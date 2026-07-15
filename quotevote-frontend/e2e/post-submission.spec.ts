@@ -15,7 +15,7 @@ import {
   assertComposerRemainsOpen,
   assertInvalidPostNotPublished,
   openPostComposer,
-  selectPostGroup,
+  selectPostTag,
 } from './helpers/post-composer';
 
 test.describe('E2E-POST-001: Create Public Post', () => {
@@ -57,8 +57,8 @@ test.describe('E2E-POST-001: Create Public Post', () => {
     await expect(titleInput).toHaveValue(postTitle);
     await expect(bodyInput).toHaveValue(postBody);
 
-    // Step: select Public group
-    await selectPostGroup(page);
+    // Step: select Public tag
+    await selectPostTag(page);
 
     // Step: submit
     const submitButton = page.getByTestId('post-submit-button');
@@ -97,7 +97,7 @@ test.describe('E2E-POST-001: Create Public Post', () => {
 test.describe('E2E-POST-003: Post Validation', () => {
   test.skip(!AUTHOR_PASSWORD, 'E2E_AUTHOR_PASSWORD is required');
 
-  test('blocks submission and shows inline validation for missing required fields', async ({
+  test('blocks submission until required fields are valid', async ({
     page,
   }) => {
     const uniqueSuffix = `${Date.now()}-${test.info().project.name}`;
@@ -111,49 +111,28 @@ test.describe('E2E-POST-003: Post Validation', () => {
     // Step 2: Open the post composer
     await openPostComposer(page);
     const composer = page.getByTestId('post-composer');
+    const submitButton = page.getByTestId('post-submit-button');
 
-    // Step 3: Attempt submit with empty title, body, and group
-    await page.getByTestId('post-submit-button').click();
-
-    await expect(page.getByTestId('post-title-error')).toBeVisible();
-    await expect(page.getByTestId('post-title-error')).toHaveText('Title is required');
-    await expect(page.getByTestId('post-body-error')).toBeVisible();
-    await expect(page.getByTestId('post-body-error')).toHaveText('Post content is required');
-    await expect(page.getByTestId('post-group-error')).toBeVisible();
-    await expect(page.getByTestId('post-group-error')).toHaveText('Please select or create a group');
+    // Step 3: POST stays disabled with empty title, body, and tag
+    await expect(submitButton).toBeDisabled();
     await assertComposerRemainsOpen(page);
 
-    // Step 4: Enter title and body but leave group unselected, then submit again
+    // Step 4: Enter title and body but leave tag unselected
     await page.getByTestId('post-title-input').fill(attemptedTitle);
     await page.getByTestId('post-body-input').fill(attemptedBody);
-    await page.getByTestId('post-submit-button').click();
-
-    await expect(page.getByTestId('post-group-error')).toBeVisible();
-    await expect(page.getByTestId('post-group-error')).toHaveText('Please select or create a group');
-    await expect(page.getByTestId('post-title-error')).toHaveCount(0);
-    await expect(page.getByTestId('post-body-error')).toHaveCount(0);
+    await expect(submitButton).toBeDisabled();
     await assertComposerRemainsOpen(page);
 
-    // Step 5: Select group but leave body empty, then submit again
-    await selectPostGroup(page);
+    // Step 5: Select tag but leave body empty
+    await selectPostTag(page);
     await page.getByTestId('post-body-input').fill('');
-    await page.getByTestId('post-submit-button').click();
-
-    await expect(page.getByTestId('post-body-error')).toBeVisible();
-    await expect(page.getByTestId('post-body-error')).toHaveText('Post content is required');
-    await expect(page.getByTestId('post-title-error')).toHaveCount(0);
-    await expect(page.getByTestId('post-group-error')).toHaveCount(0);
+    await expect(submitButton).toBeDisabled();
     await assertComposerRemainsOpen(page);
 
-    // Step 6: Clear title, enter body text, then submit again
+    // Step 6: Clear title, enter body text, keep tag selected
     await page.getByTestId('post-title-input').fill('');
     await page.getByTestId('post-body-input').fill(attemptedBody);
-    await page.getByTestId('post-submit-button').click();
-
-    await expect(page.getByTestId('post-title-error')).toBeVisible();
-    await expect(page.getByTestId('post-title-error')).toHaveText('Title is required');
-    await expect(page.getByTestId('post-body-error')).toHaveCount(0);
-    await expect(page.getByTestId('post-group-error')).toHaveCount(0);
+    await expect(submitButton).toBeDisabled();
     await assertComposerRemainsOpen(page);
 
     // Step 7: Confirm no post was created from any invalid submission attempt

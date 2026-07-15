@@ -77,6 +77,7 @@ export interface Post {
   text?: string | null
   url?: string | null
   citationUrl?: string | null
+  attribution?: string | null
   upvotes?: number | null
   downvotes?: number | null
   approvedBy?: string[] | null
@@ -119,6 +120,7 @@ export interface PostCardProps {
   title: string | null | undefined
   url: string | null | undefined
   citationUrl?: string | null
+  attribution?: string | null
   bookmarkedBy?: string[]
   approvedBy?: string[]
   rejectedBy?: string[]

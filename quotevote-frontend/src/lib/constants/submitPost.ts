@@ -1,0 +1,1 @@
+export const SUBMIT_POST_TITLE_MAX_LENGTH = 200

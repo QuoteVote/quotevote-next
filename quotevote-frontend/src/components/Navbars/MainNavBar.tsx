@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
 import ChatMenu from '@/components/Chat/ChatMenu';
-import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
 import { AdminIconButton } from '../CustomButtons/AdminIconButton';
 import { SettingsIconButton } from '../CustomButtons/SettingsIconButton';
 import type { MainNavBarProps } from '@/types/components';
@@ -147,7 +147,7 @@ export function MainNavBar({}: MainNavBarProps) {
                 }}
                 className="bg-[#52b274] text-white font-semibold min-w-[150px] hover:bg-[#459963] transition-colors"
               >
-                Create Quote
+                Create Quotes
               </Button>
               <Button
                 variant="ghost"
@@ -280,7 +280,7 @@ export function MainNavBar({}: MainNavBarProps) {
                   }}
                   className="w-full justify-start bg-gradient-to-r from-[#2AE6B2] to-[#27C4E1] text-white font-semibold hover:from-[#27C4E1] hover:to-[#178BE1] hover:shadow-[0_4px_12px_rgba(42,230,178,0.3)] transition-all"
                 >
-                  Create Quote
+                  Create Quotes
                 </Button>
 
                 <div className="h-0.5 bg-gradient-to-r from-[#2AE6B2] via-[#27C4E1] to-[#178BE1] my-4" />
@@ -339,8 +339,8 @@ export function MainNavBar({}: MainNavBarProps) {
 
       {/* Create Quote Dialog */}
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        <DialogContent className={isMediumScreen ? 'max-w-md' : 'max-w-full h-full'} showCloseButton={false}>
-          <DialogTitle className="sr-only">Create Quote</DialogTitle>
+        <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quotes</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>
       </Dialog>

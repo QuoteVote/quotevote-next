@@ -14,7 +14,7 @@ import { deletePostViaApi, loginViaApi } from './helpers/api';
 import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from './helpers/auth';
 import { selectPostText } from './helpers/selection';
 
-const PUBLIC_GROUP_NAME = process.env.E2E_PUBLIC_GROUP_NAME ?? 'Public';
+import { PUBLIC_TAG_NAME } from './helpers/post-composer';
 
 test.describe('E2E-HILITE-001: Highlight Action Popup', () => {
   test.skip(!AUTHOR_PASSWORD, 'E2E_AUTHOR_PASSWORD is required');
@@ -58,9 +58,9 @@ test.describe('E2E-HILITE-001: Highlight Action Popup', () => {
       await page.getByTestId('post-title-input').fill(postTitle);
       await page.getByTestId('post-body-input').fill(postBody);
 
-      await page.getByTestId('post-group-select').click();
-      await page.getByPlaceholder('Search or type new group name...').fill(PUBLIC_GROUP_NAME);
-      await page.getByRole('button', { name: PUBLIC_GROUP_NAME, exact: true }).click();
+      await page.getByTestId('post-tag-select').click();
+      await page.getByPlaceholder('Search or type new tag name...').fill(PUBLIC_TAG_NAME);
+      await page.getByRole('button', { name: PUBLIC_TAG_NAME, exact: true }).click();
 
       await page.getByTestId('post-submit-button').click();
       await expect(page.getByTestId('post-composer')).toBeHidden({ timeout: 30_000 });

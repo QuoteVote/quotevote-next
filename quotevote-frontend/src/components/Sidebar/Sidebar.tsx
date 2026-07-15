@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
 import ChatMenu from '@/components/Chat/ChatMenu';
-import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
 import { AdminIconButton } from '../CustomButtons/AdminIconButton';
 import { SettingsIconButton } from '../CustomButtons/SettingsIconButton';
 import type { SidebarProps, SidebarWrapperProps } from '@/types/components';
@@ -365,8 +365,8 @@ export function Sidebar({
 
       {/* Create Quote Dialog */}
       <Dialog open={openCreateQuote} onOpenChange={setOpenCreateQuote}>
-        <DialogContent className="max-w-md p-0" showCloseButton={false}>
-          <DialogTitle className="sr-only">Create Quote</DialogTitle>
+        <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quotes</DialogTitle>
           <SubmitPost setOpen={setOpenCreateQuote} />
         </DialogContent>
       </Dialog>

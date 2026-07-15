@@ -44,7 +44,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
 import { DashboardSidebars } from '@/components/DashboardSidebars';
 
 /* ------------------------------------------------------------------ */
@@ -552,10 +552,9 @@ export default function DashboardLayout({
       <ChatPanel />
 
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        {/* z-[70] keeps the full-screen create form above the mobile bottom
-            nav (z-[60]) so the POST button isn't hidden behind it. */}
-        <DialogContent className="max-w-md p-0 z-[70]" showCloseButton={false}>
-          <DialogTitle className="sr-only">Create Quote</DialogTitle>
+        {/* Full-bleed on mobile; z-[70] stays above bottom nav (z-[60]). */}
+        <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quotes</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>
       </Dialog>
