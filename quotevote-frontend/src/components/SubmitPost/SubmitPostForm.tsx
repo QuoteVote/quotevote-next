@@ -152,6 +152,14 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
 
     const sanitizedCitationUrl = citationUrl ? sanitizeUrl(citationUrl) : null
 
+    if (citationUrl?.trim() && !sanitizedCitationUrl) {
+      setError('citationUrl', {
+        type: 'manual',
+        message: 'Invalid URL format. Please enter a valid http or https URL.',
+      })
+      return
+    }
+
     const tagData = typeof tag === 'string' ? { title: tag } : tag
 
     try {
