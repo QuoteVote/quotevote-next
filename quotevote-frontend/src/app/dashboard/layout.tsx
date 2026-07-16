@@ -196,7 +196,7 @@ export default function DashboardLayout({
       {/* ════════════════════════════════════════════════════════════════
           DESKTOP NAVBAR
       ════════════════════════════════════════════════════════════════ */}
-      <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] items-center" data-testid="authenticated-navigation">
         <div className="relative flex h-full w-full items-center px-4">
 
           {/* ── Left: Logo ── */}
@@ -252,6 +252,7 @@ export default function DashboardLayout({
                     type="button"
                     className="flex items-center gap-1.5 h-9 pl-1.5 pr-2.5 rounded-full bg-muted hover:bg-muted/70 transition-all duration-150 cursor-pointer border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 group"
                     aria-label="Account menu"
+                    data-testid="user-profile-menu"
                   >
                     <DisplayAvatar
                       avatar={user?.avatar as string | Record<string, unknown> | undefined}
@@ -362,6 +363,7 @@ export default function DashboardLayout({
       <nav
         className="fixed bottom-0 left-0 right-0 z-[60] md:hidden h-[56px] bg-card border-t border-border flex items-center"
         aria-label="Mobile navigation"
+        data-testid="authenticated-navigation"
       >
         {/* Home */}
         <Link
@@ -438,6 +440,7 @@ export default function DashboardLayout({
                   isActive('/dashboard/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
                 )}
                 aria-label="Account menu"
+                data-testid="user-profile-menu"
               >
                 <div className="relative">
                   <DisplayAvatar

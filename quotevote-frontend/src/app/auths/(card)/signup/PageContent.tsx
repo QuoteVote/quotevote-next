@@ -103,9 +103,9 @@ export default function SignupPageContent() {
           return
         }
       } else {
-        // Direct signup via REST /register endpoint
+        // signup via REST /auth/register endpoint
         const { env } = await import('@/config/env')
-        const response = await fetch(`${env.serverUrl}/register`, {
+        const response = await fetch(`${env.serverUrl}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -116,6 +116,7 @@ export default function SignupPageContent() {
             status: 'active',
           }),
         })
+        
         const data = await response.json()
         if (!response.ok) {
           toast.error(data?.error_message || data?.message || 'Signup failed')
@@ -164,17 +165,17 @@ export default function SignupPageContent() {
         <h1 className="text-2xl font-bold">Create Account</h1>
         <p className="text-muted-foreground text-sm">Join Quote.Vote</p>
       </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="signup-form">
         <div className="space-y-2">
           <Label htmlFor="username">Username</Label>
-          <Input id="username" placeholder="johndoe" {...register('username')} />
+          <Input id="username" placeholder="johndoe" {...register('username')} data-testid="signup-username-input" />
           {errors.username && (
             <p className="text-sm text-destructive">{errors.username.message}</p>
           )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
+          <Input id="email" type="email" placeholder="you@example.com" {...register('email')} data-testid="signup-email-input" />
           {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-2">
@@ -184,6 +185,7 @@ export default function SignupPageContent() {
             type="password"
             placeholder="••••••••"
             {...register('password')}
+            data-testid="signup-password-input"
           />
           {errors.password && (
             <p className="text-sm text-destructive">{errors.password.message}</p>
@@ -196,12 +198,13 @@ export default function SignupPageContent() {
             type="password"
             placeholder="••••••••"
             {...register('confirmPassword')}
+            data-testid="signup-confirm-password-input"
           />
           {errors.confirmPassword && (
             <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
           )}
         </div>
-        <Button type="submit" disabled={submitting} className="w-full">
+        <Button type="submit" disabled={submitting} className="w-full" data-testid="signup-submit-button">
           {submitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
           Create Account
         </Button>

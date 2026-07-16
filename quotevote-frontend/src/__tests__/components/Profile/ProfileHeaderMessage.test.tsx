@@ -126,6 +126,7 @@ describe('ProfileHeader — Message button', () => {
       _id: null,
       title: 'Test User',
       avatar: 'https://example.com/avatar.jpg',
+      username: 'testuser',
       messageType: 'USER',
       users: ['currentuser', 'user1'],
     });
