@@ -18,14 +18,18 @@ export function SubmitPost({ setOpen }: SubmitPostProps) {
 
   if (!user || !userId) {
     return (
-      <div className="p-4 text-center text-muted-foreground">
+      <div className="flex h-full min-h-[12rem] items-center justify-center p-4 text-center text-muted-foreground">
         Please log in to create a post.
       </div>
     )
   }
 
   if (error) {
-    return <div className="p-4 text-center text-destructive">Something went wrong!</div>
+    return (
+      <div className="flex h-full min-h-[12rem] items-center justify-center p-4 text-center text-destructive">
+        Something went wrong!
+      </div>
+    )
   }
 
   if (loading) {
@@ -39,11 +43,13 @@ export function SubmitPost({ setOpen }: SubmitPostProps) {
   })
 
   return (
-    <SubmitPostForm
-      options={groupsOptions}
-      user={{ _id: String(userId), ...user } as { _id: string; [key: string]: unknown }}
-      setOpen={setOpen}
-    />
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col">
+      <SubmitPostForm
+        options={groupsOptions}
+        user={{ _id: String(userId), ...user } as { _id: string; [key: string]: unknown }}
+        setOpen={setOpen}
+      />
+    </div>
   )
 }
 

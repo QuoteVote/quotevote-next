@@ -111,6 +111,7 @@ export interface Post {
   text: string;
   url?: string;
   citationUrl?: string;
+  attribution?: string;
   upvotes?: number;
   downvotes?: number;
   reported?: number;
@@ -449,6 +450,7 @@ export interface PostInput {
   text?: string;
   url?: string;
   citationUrl?: string;
+  attribution?: string;
   enable_voting?: boolean;
 }
 

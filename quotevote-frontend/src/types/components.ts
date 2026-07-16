@@ -651,7 +651,7 @@ export interface SubmitPostProps {
 
 export interface SubmitPostFormProps {
   /**
-   * Array of available groups for selection
+   * Array of available tags for selection
    */
   options?: Group[];
   /**
@@ -693,7 +693,7 @@ export interface SubmitPostAlertProps {
 export interface SubmitPostFormValues {
   title: string;
   text: string;
-  group: Group | { title: string } | string;
+  tag: Group | { title: string } | string;
 }
 
 // Quotes Component Types

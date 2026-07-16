@@ -5,7 +5,7 @@ import type { NoFollowersProps } from '@/types/profile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
 
 export function NoFollowers({ filter }: NoFollowersProps) {
   const isFollowing = filter === 'following';
@@ -48,8 +48,8 @@ export function NoFollowers({ filter }: NoFollowersProps) {
 
       {/* Create Quote dialog — same flow as the navbar's create button */}
       <Dialog open={submitOpen} onOpenChange={setSubmitOpen}>
-        <DialogContent className="max-w-md p-0" showCloseButton={false}>
-          <DialogTitle className="sr-only">Create Quote</DialogTitle>
+        <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quotes</DialogTitle>
           <SubmitPost setOpen={setSubmitOpen} />
         </DialogContent>
       </Dialog>

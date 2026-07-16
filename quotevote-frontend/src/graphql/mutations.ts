@@ -171,6 +171,7 @@ export const SUBMIT_POST = gql`
       _id
       url
       citationUrl
+      attribution
     }
   }
 `

@@ -26,6 +26,8 @@ export interface ComboboxProps {
   className?: string
   disabled?: boolean
   allowCreate?: boolean
+  /** Prefer "top" when the trigger sits near the bottom of the viewport (e.g. mobile composer footer). */
+  side?: 'top' | 'bottom' | 'left' | 'right'
   triggerTestId?: string
   createOptionTestId?: string
   errorTestId?: string
@@ -35,13 +37,14 @@ export function Combobox({
   options,
   value,
   onValueChange,
-  placeholder = 'Select or create a group',
+  placeholder = 'Select or create a tag',
   label,
   error,
   errorMessage,
   className,
   disabled = false,
   allowCreate = true,
+  side = 'bottom',
   triggerTestId,
   createOptionTestId,
   errorTestId,
@@ -112,6 +115,17 @@ export function Combobox({
     typeof value !== 'string' &&
     (value as ComboboxOption).title === option.title
 
+  const listRef = React.useRef<HTMLDivElement>(null)
+
+  // Dialog scroll-lock (react-remove-scroll) swallows wheel events on nested popovers.
+  // Manually apply delta so the tag list scrolls with the mouse wheel.
+  const handleListWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    const el = listRef.current
+    if (!el) return
+    event.stopPropagation()
+    el.scrollTop += event.deltaY
+  }
+
   return (
     <div className={cn('w-full', className)}>
       {label && (
@@ -120,7 +134,7 @@ export function Combobox({
         </Label>
       )}
 
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             ref={triggerRef}
@@ -143,16 +157,19 @@ export function Combobox({
 
         <PopoverContent
           className="z-[80] p-0"
-          style={{ width: triggerWidth }}
+          style={{ width: Math.max(triggerWidth, 220) }}
           align="start"
+          side={side}
           sideOffset={4}
+          collisionPadding={16}
           onOpenAutoFocus={(e) => e.preventDefault()}
+          onWheel={(e) => e.stopPropagation()}
         >
           {/* Search input */}
           <div className="border-b px-3 py-2">
             <Input
               ref={inputRef}
-              placeholder="Search or type new group name..."
+              placeholder="Search or type new tag name..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -160,11 +177,16 @@ export function Combobox({
             />
           </div>
 
-          {/* Options list */}
-          <div className="max-h-[200px] overflow-y-auto py-1">
+          {/* Options list — taller on short viewports so more choices stay reachable */}
+          <div
+            ref={listRef}
+            data-scroll-lock-scrollable=""
+            onWheel={handleListWheel}
+            className="max-h-[min(40dvh,280px)] overflow-y-auto overscroll-contain py-1"
+          >
             {filteredOptions.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">
-                {inputValue ? 'No matching groups.' : 'No groups yet. Type a name to create one.'}
+                {inputValue ? 'No matching tags.' : 'No tags yet. Type a name to create one.'}
               </p>
             ) : (
               filteredOptions.map((option) => (

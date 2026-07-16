@@ -125,7 +125,7 @@ End-to-end specs live in `e2e/` and run against a real browser. Playwright start
 ```bash
 pnpm exec playwright install chromium
 cp .env.e2e.example .env.e2e.local
-# Edit .env.e2e.local — set E2E_AUTHOR_PASSWORD and E2E_PUBLIC_GROUP_NAME
+# Edit .env.e2e.local — set E2E_AUTHOR_PASSWORD and E2E_PUBLIC_TAG_NAME
 ```
 
 **Run commands:**
@@ -187,6 +187,20 @@ describe('MyComponent', () => {
   })
 })
 ```
+
+## Create Quote composer
+
+The **Create Quote** dialog is implemented in `src/components/SubmitPost/` (`SubmitPostForm.tsx`).
+
+| Area | Details |
+|------|---------|
+| **Required fields** | Title, quote body, tag (shown in UI; saved as `groupId` via GraphQL) |
+| **Optional fields** | Citation URL, attribution (“Who said this?”) — under **Add details (optional)** |
+| **Validation** | React Hook Form + Zod (`src/lib/validation/submitPostSchema.ts`); POST stays disabled until valid |
+| **Drafts** | Auto-saved to `sessionStorage` per user (`quotevote:submit-post-draft:{userId}`); cleared on successful post |
+| **Limits** | Title 200 chars (`src/lib/constants/submitPost.ts`); attribution 120 chars (`src/lib/constants/attribution.ts`) |
+
+**E2E helpers** (`e2e/helpers/post-composer.ts`): `openPostComposer()`, `selectPostTag()` (test IDs: `post-tag-select`, `post-tag-error`).
 
 ## 🏗️ Building for Production
 

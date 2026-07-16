@@ -9,6 +9,7 @@ const PostSchema = new Schema<PostDocument, PostModel>(
     text: { type: String, required: true },
     url: { type: String },
     citationUrl: { type: String, default: null },
+    attribution: { type: String, default: null },
     bookmarkedBy: [{ type: String }],
     rejectedBy: [{ type: String }],
     approvedBy: [{ type: String }],

@@ -39,6 +39,7 @@ export const PostType: GraphQLObjectType<PostShape, GraphQLContext> = new GraphQ
     title: { type: GraphQLString },
     text: { type: GraphQLString },
     citationUrl: { type: GraphQLString },
+    attribution: { type: GraphQLString },
     url: { type: GraphQLString },
     deleted: { type: GraphQLBoolean },
     upvotes: { type: GraphQLInt },

@@ -8,6 +8,7 @@ model Post {
   text           String
   url            String?
   citationUrl    String?
+  attribution    String?
   upvotes        Int      @default(0)
   downvotes      Int      @default(0)
   reported       Int      @default(0)

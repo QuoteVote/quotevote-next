@@ -1,13 +1,13 @@
 /**
  * Tests for submit post schema validation - Citation URL related fields
  */
-import { submitPostSchema } from '@/lib/validation/submitPostSchema'
+import { submitPostSchema, isSubmitPostFormReady } from '@/lib/validation/submitPostSchema'
 
-// Helper to create valid base post data (group is required by the schema)
+// Helper to create valid base post data (tag is required by the schema)
 const validBasePost = {
   title: 'Test Post',
   text: 'This is post content without any links',
-  group: 'test-group-id', // Group is required by schema refine
+  tag: 'test-tag-id', // Tag is required by schema refine
 }
 
 describe('submitPostSchema - Citation URL validation', () => {
@@ -128,6 +128,23 @@ describe('submitPostSchema - Citation URL validation', () => {
         citationUrl: 'https://source.com/original-article'
       })
       expect(result.success).toBe(false)
+    })
+  })
+
+  describe('isSubmitPostFormReady', () => {
+    it('returns false when required fields are missing', () => {
+      expect(isSubmitPostFormReady({ title: '', text: '', citationUrl: '' })).toBe(false)
+      expect(
+        isSubmitPostFormReady({
+          title: 'Title',
+          text: 'Body',
+          citationUrl: '',
+        })
+      ).toBe(false)
+    })
+
+    it('returns true when required fields are valid', () => {
+      expect(isSubmitPostFormReady(validBasePost)).toBe(true)
     })
   })
 })
