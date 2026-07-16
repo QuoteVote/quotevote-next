@@ -222,20 +222,20 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test("creates a new account, logs in, and routes to authenticated dashboard", async ({ page }) => {
+    // 1. Listen for page errors from the start of the test
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+
     const errorToastLocator = page.locator('[data-sonner-toast][data-type="error"]');
     const uniqueId = Date.now();
     const uniqueUsername = `user_${uniqueId.toString().slice(-10)}`;
     const uniqueEmail = `e2e-signup-${uniqueId}@example.com`;
     const validPassword = `Password${uniqueId}!`;
 
-    console.log(`TEST PROGRESS: Generated uniqueUsername=${uniqueUsername}, uniqueEmail=${uniqueEmail}`);
-
-    // 1. Open Quote.Vote while logged out and navigate to signup
-    console.log("TEST PROGRESS: Navigating to signup page");
+    // 2. Open Quote.Vote while logged out and navigate to signup
     await page.goto("/auths/signup");
 
-    // 2. Assert signup form and elements load successfully
-    console.log("TEST PROGRESS: Asserting signup form elements are loaded");
+    // 3. Assert signup form and elements load successfully
     const signupForm = page.getByTestId("signup-form");
     const usernameInput = page.getByTestId("signup-username-input");
     const emailInput = page.getByTestId("signup-email-input");
@@ -250,58 +250,49 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
     await expect(confirmPasswordInput).toBeVisible();
     await expect(submitButton).toBeVisible();
 
-    // 3. Fill in direct signup credentials
-    console.log("TEST PROGRESS: Filling credentials in signup form");
+    // 4. Fill in direct signup credentials
     await usernameInput.fill(uniqueUsername);
     await emailInput.fill(uniqueEmail);
     await passwordInput.fill(validPassword);
     await confirmPasswordInput.fill(validPassword);
 
-    // 4. Submit the signup form
-    console.log("TEST PROGRESS: Submitting signup form");
+    // 5. Submit the signup form
     await submitButton.click();
 
-    // 5. Direct signup redirects to /auths/login
-    console.log("TEST PROGRESS: Waiting for redirect to /auths/login");
+    // 6. Direct signup redirects to /auths/login
     await page.waitForURL("**/auths/login", { timeout: 15000 });
 
-    // 6. Complete login using newly created credentials
-    console.log("TEST PROGRESS: Filling login form with new credentials");
+    // 7. Complete login using newly created credentials
     await page.getByPlaceholder('Email/Username').fill(uniqueEmail);
     await page.getByPlaceholder('Password').fill(validPassword);
 
-    console.log("TEST PROGRESS: Accepting terms of service and code of conduct");
     await page.click('#tos');
     await page.click('#coc');
 
     const loginButton = page.getByRole('button', { name: 'Log in' });
     await expect(loginButton).toBeEnabled();
 
-    console.log("TEST PROGRESS: Clicking submit to log in");
     await loginButton.click({ force: true });
 
-    // 7. Verify navigation to the authenticated experience /dashboard/explore
-    console.log("TEST PROGRESS: Verifying redirect to dashboard");
+    // 8. Verify navigation to the authenticated experience /dashboard/explore
     await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
 
-    // 8. Confirm the new user is authenticated
+    // 9. Confirm the new user is authenticated
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
     await expect(authNav).toBeVisible();
 
     const profileMenu = page.getByTestId("user-profile-menu").filter({ visible: true });
     await expect(profileMenu).toBeVisible();
 
-    // 9. Confirm session persists after page reload
-    console.log("TEST PROGRESS: Reloading page to verify session persistence");
+    // 10. Confirm session persists after page reload
     await page.reload();
     await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
     await expect(authNav).toBeVisible();
     await expect(profileMenu).toBeVisible();
 
-    // 10. No runtime errors or generic error toasts appear
+    // 11. No runtime errors or generic error toasts appear
     await expect(errorToastLocator).toHaveCount(0);
-    const pageErrors: string[] = [];
-    page.on("pageerror", (error) => pageErrors.push(error.message));
     expect(pageErrors).toHaveLength(0);
   });
 });
+

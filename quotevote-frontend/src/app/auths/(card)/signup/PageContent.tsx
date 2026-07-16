@@ -105,7 +105,7 @@ export default function SignupPageContent() {
       } else {
         // signup via REST /auth/register endpoint
         const { env } = await import('@/config/env')
-        let response = await fetch(`${env.serverUrl}/auth/register`, {
+        const response = await fetch(`${env.serverUrl}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -116,23 +116,6 @@ export default function SignupPageContent() {
             status: 'active',
           }),
         })
-        
-        if (!response.ok) {
-          const fallbackResponse = await fetch(`${env.serverUrl}/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: values.username,
-              email: values.email,
-              username: values.username,
-              password: values.password,
-              status: 'active',
-            }),
-          })
-          if (fallbackResponse.ok) {
-            response = fallbackResponse
-          }
-        }
         
         const data = await response.json()
         if (!response.ok) {
