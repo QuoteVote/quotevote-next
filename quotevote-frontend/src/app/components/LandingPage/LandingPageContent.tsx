@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store';
-import { Check, Clock, Code2, Users, Globe } from 'lucide-react';
+import { Check, Clock, Code2, Users } from 'lucide-react';
 
 interface LandingPageContentProps {
   totalRaised?: string;
