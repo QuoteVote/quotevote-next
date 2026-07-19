@@ -93,7 +93,7 @@ export default function SelectionPopover({
         right: 0,
       })
     }
-  }, [topOffset, selectionExists])
+  }, [selectionExists])
 
   const selectionChange = useCallback(() => {
     const selection = window.getSelection()
