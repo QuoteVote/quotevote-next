@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
+import { Inter, Montserrat, Roboto } from "next/font/google";
 import { Toaster } from "sonner";
 import { ApolloProviderWrapper } from "@/lib/apollo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -28,6 +28,8 @@ import "./globals.css";
  */
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const montserrat = Montserrat({ subsets: ["latin"], weight: ["700"], variable: "--font-montserrat" });
+const roboto = Roboto({ subsets: ["latin"], weight: ["700"], variable: "--font-roboto" });
 
 export const metadata: Metadata = {
   title: "Quote.Vote - Text-First Platform for Thoughtful Dialogue",
@@ -63,7 +65,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={cn(inter.variable, "font-sans antialiased")}
+        className={cn(inter.variable, montserrat.variable, roboto.variable, "font-sans antialiased")}
       >
         <ErrorBoundary>
           <ApolloProviderWrapper>
