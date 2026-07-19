@@ -8,6 +8,10 @@ import {
 } from 'graphql';
 import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
+import { UserType } from './User';
+import { ReportReasonEnum, ReportStatusEnum, ReportSeverityEnum } from './enums';
+
+import User from '../models/User';
 
 export const ReputationMetricsType: GraphQLObjectType<Common.ReputationMetrics, GraphQLContext> =
   new GraphQLObjectType<Common.ReputationMetrics, GraphQLContext>({
@@ -105,15 +109,23 @@ export const UserReportType: GraphQLObjectType<Common.UserReport, GraphQLContext
         type: new GraphQLNonNull(GraphQLString),
         resolve: (r) => r.reportedUserId,
       },
-      reason: { type: new GraphQLNonNull(GraphQLString) },
+      reason: { type: new GraphQLNonNull(ReportReasonEnum) },
       description: { type: GraphQLString },
       status: {
-        type: new GraphQLNonNull(GraphQLString),
+        type: new GraphQLNonNull(ReportStatusEnum),
         resolve: (r) => r.status ?? 'pending',
       },
       severity: {
-        type: new GraphQLNonNull(GraphQLString),
+        type: new GraphQLNonNull(ReportSeverityEnum),
         resolve: (r) => r.severity ?? 'low',
+      },
+      reporter: {
+        type: UserType,
+        resolve: (r) => User.findById(r.reporterId).lean(),
+      },
+      reportedUser: {
+        type: UserType,
+        resolve: (r) => User.findById(r.reportedUserId).lean(),
       },
       adminNotes: { type: GraphQLString },
       createdAt: {

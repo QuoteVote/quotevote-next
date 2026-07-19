@@ -27,7 +27,7 @@ export type MessageType = 'USER' | 'POST';
 
 export type RosterStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 
-export type AccountStatus = 'active' | 'disabled';
+export type AccountStatus = 'active' | 'disabled' | 'suspended' | 'pending';
 
 export type VoteOption = '#true' | '#agree' | '#like' | '#false' | '#disagree' | '#dislike';
 

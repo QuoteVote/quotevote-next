@@ -9,6 +9,11 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { DateScalar } from './scalars';
 import { UserType } from './User';
+import { PostType } from './Post';
+import { VoteTypeEnum } from './enums';
+
+import User from '../models/User';
+import Post from '../models/Post';
 
 export const VoteType: GraphQLObjectType<Common.Vote, GraphQLContext> = new GraphQLObjectType<
   Common.Vote,
@@ -21,7 +26,7 @@ export const VoteType: GraphQLObjectType<Common.Vote, GraphQLContext> = new Grap
     created: { type: DateScalar },
     postId: { type: GraphQLString },
     userId: { type: GraphQLString },
-    type: { type: GraphQLString },
+    type: { type: VoteTypeEnum },
     tags: {
       type: GraphQLString,
       resolve: (v) => (Array.isArray(v.tags) ? v.tags.join(',') : (v.tags ?? null)),
@@ -30,7 +35,14 @@ export const VoteType: GraphQLObjectType<Common.Vote, GraphQLContext> = new Grap
     endWordIndex: { type: GraphQLInt },
     deleted: { type: GraphQLBoolean },
     content: { type: GraphQLString },
-    user: { type: UserType },
+    user: {
+      type: UserType,
+      resolve: (vote) => (vote as any).user ?? User.findById(vote.userId).lean(),
+    },
+    post: {
+      type: PostType,
+      resolve: (vote) => Post.findById(vote.postId).lean(),
+    },
   }),
 });
 

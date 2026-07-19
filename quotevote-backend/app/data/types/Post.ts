@@ -15,6 +15,12 @@ import { VoteType } from './Vote';
 import { QuoteType } from './Quote';
 import { MessageRoomType } from './MessageRoom';
 
+import User from '../models/User';
+import Comment from '../models/Comment';
+import Vote from '../models/Vote';
+import Quote from '../models/Quote';
+import MessageRoom from '../models/MessageRoom';
+
 interface PostShape extends Common.Post {
   creator?: Common.User;
   comments?: Common.Comment[];
@@ -68,20 +74,26 @@ export const PostType: GraphQLObjectType<PostShape, GraphQLContext> = new GraphQ
     pointTimestamp: { type: GraphQLString },
     featuredSlot: { type: GraphQLInt },
     enable_voting: { type: GraphQLBoolean },
-    creator: { type: UserType },
+    creator: {
+      type: UserType,
+      resolve: (p) => p.creator ?? User.findById(p.userId).lean(),
+    },
     comments: {
       type: new GraphQLList(CommentType),
-      resolve: (p) => p.comments ?? [],
+      resolve: (p) => p.comments ?? Comment.find({ postId: p._id }).lean(),
     },
     votes: {
       type: new GraphQLList(VoteType),
-      resolve: (p) => p.votes ?? [],
+      resolve: (p) => p.votes ?? Vote.find({ postId: p._id }).lean(),
     },
     quotes: {
       type: new GraphQLList(QuoteType),
-      resolve: (p) => p.quotes ?? [],
+      resolve: (p) => p.quotes ?? Quote.find({ postId: p._id }).lean(),
     },
-    messageRoom: { type: MessageRoomType },
+    messageRoom: {
+      type: MessageRoomType,
+      resolve: (p) => p.messageRoom ?? MessageRoom.findOne({ postId: p._id }).lean(),
+    },
   }),
 });
 

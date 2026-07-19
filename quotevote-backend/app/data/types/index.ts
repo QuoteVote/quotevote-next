@@ -17,7 +17,20 @@ import { printType } from 'graphql';
 
 // Scalars & enums
 import { DateScalar, JSONScalar } from './scalars';
-import { PresenceStatusEnum, RosterStatusEnum } from './enums';
+import {
+  PresenceStatusEnum,
+  RosterStatusEnum,
+  AccountStatusEnum,
+  VoteTypeEnum,
+  MessageTypeEnum,
+  NotificationTypeEnum,
+  ActivityEventTypeEnum,
+  GroupPrivacyEnum,
+  InviteStatusEnum,
+  ReportStatusEnum,
+  ReportSeverityEnum,
+  ReportReasonEnum,
+} from './enums';
 
 // Core domain object types — one per legacy typedef file
 import { ActivityType } from './Activity';
@@ -91,6 +104,16 @@ export const domainTypes: readonly GraphQLNamedType[] = [
   // Enums
   PresenceStatusEnum,
   RosterStatusEnum,
+  AccountStatusEnum,
+  VoteTypeEnum,
+  MessageTypeEnum,
+  NotificationTypeEnum,
+  ActivityEventTypeEnum,
+  GroupPrivacyEnum,
+  InviteStatusEnum,
+  ReportStatusEnum,
+  ReportSeverityEnum,
+  ReportReasonEnum,
   // Pagination / envelopes
   PaginationType,
   PostsType,

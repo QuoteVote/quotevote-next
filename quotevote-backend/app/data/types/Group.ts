@@ -8,6 +8,11 @@ import {
 import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { UserType } from './User';
+import { RosterType } from './Roster';
+import { GroupPrivacyEnum } from './enums';
+
+import User from '../models/User';
+import Roster from '../models/Roster';
 
 interface GroupShape extends Common.Group {
   pendingUsers?: Common.User[];
@@ -32,7 +37,7 @@ export const GroupType: GraphQLObjectType<GroupShape, GraphQLContext> = new Grap
       resolve: (g) => g.description ?? '',
     },
     url: { type: new GraphQLNonNull(GraphQLString), resolve: (g) => g.url ?? '' },
-    privacy: { type: new GraphQLNonNull(GraphQLString) },
+    privacy: { type: new GraphQLNonNull(GroupPrivacyEnum) },
     allowedUserIds: {
       type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
       resolve: (g) => g.allowedUserIds ?? [],
@@ -44,6 +49,22 @@ export const GroupType: GraphQLObjectType<GroupShape, GraphQLContext> = new Grap
     pendingUsers: {
       type: new GraphQLList(UserType),
       resolve: (g) => g.pendingUsers ?? [],
+    },
+    creator: {
+      type: UserType,
+      resolve: (group) => User.findById(group.creatorId).lean(),
+    },
+    adminUsers: {
+      type: new GraphQLList(UserType),
+      resolve: (group) => User.find({ _id: { $in: group.adminIds ?? [] } }).lean(),
+    },
+    allowedUsers: {
+      type: new GraphQLList(UserType),
+      resolve: (group) => User.find({ _id: { $in: group.allowedUserIds ?? [] } }).lean(),
+    },
+    rosters: {
+      type: new GraphQLList(RosterType),
+      resolve: (group) => Roster.find({ userId: group.creatorId }).lean(),
     },
   }),
 });

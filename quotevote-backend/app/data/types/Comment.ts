@@ -9,6 +9,10 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { DateScalar } from './scalars';
 import { UserType } from './User';
+import { PostType } from './Post';
+
+import User from '../models/User';
+import Post from '../models/Post';
 
 export const CommentType: GraphQLObjectType<Common.Comment, GraphQLContext> = new GraphQLObjectType<
   Common.Comment,
@@ -27,7 +31,14 @@ export const CommentType: GraphQLObjectType<Common.Comment, GraphQLContext> = ne
     url: { type: GraphQLString },
     reaction: { type: GraphQLString },
     deleted: { type: GraphQLBoolean },
-    user: { type: UserType },
+    user: {
+      type: UserType,
+      resolve: (comment) => (comment as any).user ?? User.findById(comment.userId).lean(),
+    },
+    post: {
+      type: PostType,
+      resolve: (comment) => Post.findById(comment.postId).lean(),
+    },
   }),
 });
 

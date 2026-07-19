@@ -9,6 +9,10 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { DateScalar } from './scalars';
 import { UserType } from './User';
+import { MessageRoomType } from './MessageRoom';
+
+import User from '../models/User';
+import MessageRoom from '../models/MessageRoom';
 
 interface TypingIndicatorShape extends Common.Typing {
   user?: Common.User;
@@ -21,7 +25,14 @@ export const TypingIndicatorType: GraphQLObjectType<TypingIndicatorShape, GraphQ
     fields: (): GraphQLFieldConfigMap<TypingIndicatorShape, GraphQLContext> => ({
       messageRoomId: { type: new GraphQLNonNull(GraphQLString) },
       userId: { type: new GraphQLNonNull(GraphQLString) },
-      user: { type: UserType },
+      user: {
+        type: UserType,
+        resolve: (typing) => typing.user ?? User.findById(typing.userId).lean(),
+      },
+      messageRoom: {
+        type: MessageRoomType,
+        resolve: (typing) => MessageRoom.findById(typing.messageRoomId).lean(),
+      },
       isTyping: { type: new GraphQLNonNull(GraphQLBoolean) },
       timestamp: { type: new GraphQLNonNull(DateScalar) },
     }),
