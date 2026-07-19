@@ -129,7 +129,6 @@ describe('ProfileHeader — Message button', () => {
       username: 'testuser',
       messageType: 'USER',
       users: ['currentuser', 'user1'],
-      username: 'testuser',
     });
     expect(setChatOpen).toHaveBeenCalledWith(true);
   });

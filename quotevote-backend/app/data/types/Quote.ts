@@ -39,7 +39,7 @@ export const QuoteType: GraphQLObjectType<QuoteShape, GraphQLContext> = new Grap
     deleted: { type: GraphQLBoolean },
     user: {
       type: UserType,
-      resolve: (quote) => (quote as any).user ?? User.findById(quote.userId).lean(),
+      resolve: (quote) => (quote as Common.Quote & { user?: Common.User }).user ?? User.findById(quote.userId).lean(),
     },
     post: {
       type: PostType,

@@ -37,7 +37,7 @@ export const VoteType: GraphQLObjectType<Common.Vote, GraphQLContext> = new Grap
     content: { type: GraphQLString },
     user: {
       type: UserType,
-      resolve: (vote) => (vote as any).user ?? User.findById(vote.userId).lean(),
+      resolve: (vote) => (vote as Common.Vote & { user?: Common.User }).user ?? User.findById(vote.userId).lean(),
     },
     post: {
       type: PostType,

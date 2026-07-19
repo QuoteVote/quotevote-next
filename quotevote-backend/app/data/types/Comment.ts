@@ -33,7 +33,7 @@ export const CommentType: GraphQLObjectType<Common.Comment, GraphQLContext> = ne
     deleted: { type: GraphQLBoolean },
     user: {
       type: UserType,
-      resolve: (comment) => (comment as any).user ?? User.findById(comment.userId).lean(),
+      resolve: (comment) => (comment as Common.Comment & { user?: Common.User }).user ?? User.findById(comment.userId).lean(),
     },
     post: {
       type: PostType,

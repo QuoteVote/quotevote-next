@@ -60,7 +60,7 @@ export const MessageType: GraphQLObjectType<MessageShape, GraphQLContext> = new 
     deleted: { type: GraphQLBoolean },
     user: {
       type: UserType,
-      resolve: (msg) => (msg as any).user ?? User.findById(msg.userId).lean(),
+      resolve: (msg) => (msg as Common.Message & { user?: Common.User }).user ?? User.findById(msg.userId).lean(),
     },
     messageRoom: {
       type: MessageRoomType,
