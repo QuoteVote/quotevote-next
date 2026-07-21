@@ -18,13 +18,17 @@ export function UserFollowDisplay({
       className="flex flex-row items-center justify-center gap-4 p-4 border-b last:border-b-0"
       id="component-user-follow-display"
     >
-      <div className="flex-shrink-0">
+      <Link
+        href={`/dashboard/profile/${username}`}
+        aria-label={`Open ${username} profile`}
+        className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-2"
+      >
         <DisplayAvatar
           avatar={avatar as string | Record<string, unknown> | undefined}
           username={username}
           size={50}
         />
-      </div>
+      </Link>
       <div className="flex-1 flex flex-col gap-1">
         <Link
           href={`/dashboard/profile/${username}`}

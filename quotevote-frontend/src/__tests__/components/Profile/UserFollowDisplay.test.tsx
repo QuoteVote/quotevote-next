@@ -83,6 +83,13 @@ describe('UserFollowDisplay', () => {
     expect(link).toHaveAttribute('href', '/dashboard/profile/testuser');
   });
 
+  it('links the avatar to the user profile (RC1-002: works for logged-out users)', () => {
+    const { getByTestId } = render(<UserFollowDisplay {...mockUser} />);
+    const avatarLink = getByTestId('display-avatar').closest('a');
+    expect(avatarLink).toHaveAttribute('href', '/dashboard/profile/testuser');
+    expect(avatarLink).toHaveAttribute('aria-label', 'Open testuser profile');
+  });
+
   it('handles object avatar structure', () => {
     const userWithObjectAvatar = {
       ...mockUser,
