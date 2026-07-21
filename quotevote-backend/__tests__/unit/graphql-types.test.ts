@@ -20,7 +20,10 @@ import {
   GraphQLSchema,
   GraphQLString,
   printSchema,
+  GraphQLEnumType,
 } from 'graphql';
+import RosterMock from '~/data/models/Roster';
+import type { GraphQLContext } from '~/types/graphql';
 import {
   DateScalar,
   domainTypeDefs,
@@ -248,34 +251,33 @@ describe('GraphQL domain typedefs (7.28 migration)', () => {
       }).getTypeMap();
 
       // Check PresenceStatusEnum
-      const presenceEnum = typeMap.PresenceStatus as any;
+      const presenceEnum = typeMap.PresenceStatus as GraphQLEnumType;
       expect(presenceEnum).toBeDefined();
       expect(presenceEnum.getValue('online').value).toBe('online');
       expect(presenceEnum.getValue('away').value).toBe('away');
 
       // Check AccountStatusEnum
-      const accountEnum = typeMap.AccountStatus as any;
+      const accountEnum = typeMap.AccountStatus as GraphQLEnumType;
       expect(accountEnum).toBeDefined();
       expect(accountEnum.getValue('suspended').value).toBe('suspended');
       expect(accountEnum.getValue('pending').value).toBe('pending');
 
       // Check MessageTypeEnum
-      const messageEnum = typeMap.MessageType as any;
+      const messageEnum = typeMap.MessageType as GraphQLEnumType;
       expect(messageEnum).toBeDefined();
       expect(messageEnum.getValue('SYSTEM').value).toBe('SYSTEM');
 
       // Check NotificationTypeEnum
-      const notificationEnum = typeMap.NotificationType as any;
+      const notificationEnum = typeMap.NotificationType as GraphQLEnumType;
       expect(notificationEnum).toBeDefined();
       expect(notificationEnum.getValue('SYSTEM').value).toBe('SYSTEM');
       expect(notificationEnum.getValue('VOTE').value).toBe('VOTE');
     });
 
     it('verifies relationship resolvers correctly fetch and filter database models', async () => {
-      const RosterMock = require('~/data/models/Roster').default;
-      const findSpy = jest.spyOn(RosterMock, 'find').mockImplementation(() => ({
+      const findSpy = jest.spyOn(RosterMock, 'find').mockImplementation((() => ({
         lean: () => Promise.resolve([{ _id: 'roster1', userId: 'user1', buddyId: 'user2' }])
-      } as any));
+      })) as unknown as typeof RosterMock.find);
 
       const groupFields = GroupType.getFields();
       expect(groupFields.rosters).toBeDefined();
@@ -286,7 +288,14 @@ describe('GraphQL domain typedefs (7.28 migration)', () => {
         allowedUserIds: ['user123', 'user456'],
       };
 
-      const result = await (groupFields.rosters.resolve as Function)(fakeGroup, {}, {}, {} as any);
+      const resolveFn = groupFields.rosters.resolve as (
+        source: unknown,
+        args: Record<string, unknown>,
+        context: GraphQLContext,
+        info: unknown
+      ) => unknown;
+
+      const result = await resolveFn(fakeGroup, {}, {} as GraphQLContext, {});
       expect(findSpy).toHaveBeenCalledWith({
         $or: [
           { userId: { $in: ['creator123', 'user123', 'user456'] } },
