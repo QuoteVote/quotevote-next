@@ -131,13 +131,15 @@ export default function DashboardLayout({
 
   const { data: notifData } = useQuery<{ notifications: Array<{ _id: string; status: string }> }>(
     GET_NOTIFICATIONS,
-    { skip: !loggedIn, fetchPolicy: 'cache-and-network', pollInterval: 60000 }
+    // pollInterval is gated on loggedIn: Apollo keeps polling a query even when
+    // `skip` is true, which would fire authed-only requests for guests.
+    { skip: !loggedIn, fetchPolicy: 'cache-and-network', pollInterval: loggedIn ? 60000 : 0 }
   );
 
   const { data: roomsData } = useQuery<{ messageRooms: ChatRoom[] }>(GET_CHAT_ROOMS, {
     skip: !loggedIn,
     fetchPolicy: 'cache-and-network',
-    pollInterval: 8000,
+    pollInterval: loggedIn ? 8000 : 0,
   });
 
   const unreadCount = useMemo(

@@ -18,7 +18,6 @@ import {
   ShieldOff,
   Search,
   FileText,
-  User,
   CheckCircle2,
   Users,
   TrendingUp,
@@ -31,6 +30,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { useAppStore } from '@/store';
 import { SEARCH, GET_FEATURED_POSTS } from '@/graphql/queries';
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
@@ -1739,19 +1739,11 @@ function HeroSearch({ router }: HeroSearchProps) {
                       onClick={() => handleCreatorClick(creator)}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                     >
-                      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
-                        {creator.avatar ? (
-                          <Image
-                            src={creator.avatar}
-                            alt={creator.name ?? 'Creator avatar'}
-                            width={32}
-                            height={32}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User size={16} className="text-gray-400" aria-hidden />
-                        )}
-                      </div>
+                      <DisplayAvatar
+                        avatar={creator.avatar}
+                        username={creator.name || creator.username || ''}
+                        size={32}
+                      />
                       <p className="text-sm font-medium text-gray-900 truncate">{creator.name}</p>
                     </button>
                   ))}
