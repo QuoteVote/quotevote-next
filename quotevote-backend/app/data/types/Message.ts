@@ -11,6 +11,15 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { DateScalar } from './scalars';
 import { UserType } from './User';
+import { MessageRoomType } from './MessageRoom';
+import { ReactionType } from './Reaction';
+import { PresenceType } from './Presence';
+import { MessageTypeEnum } from './enums';
+
+import User from '../models/User';
+import MessageRoom from '../models/MessageRoom';
+import Reaction from '../models/Reaction';
+import Presence from '../models/Presence';
 
 interface MessageShape extends Common.Message {
   userAvatar?: string;
@@ -46,10 +55,25 @@ export const MessageType: GraphQLObjectType<MessageShape, GraphQLContext> = new 
     title: { type: GraphQLString },
     text: { type: GraphQLString },
     created: { type: DateScalar },
-    type: { type: GraphQLString },
+    type: { type: MessageTypeEnum },
     mutation_type: { type: GraphQLString },
     deleted: { type: GraphQLBoolean },
-    user: { type: UserType },
+    user: {
+      type: UserType,
+      resolve: (msg) => (msg as Common.Message & { user?: Common.User }).user ?? User.findById(msg.userId).lean(),
+    },
+    messageRoom: {
+      type: MessageRoomType,
+      resolve: (msg) => MessageRoom.findById(msg.messageRoomId).lean(),
+    },
+    reactions: {
+      type: new GraphQLList(ReactionType),
+      resolve: (msg) => Reaction.find({ messageId: msg._id }).lean(),
+    },
+    presence: {
+      type: PresenceType,
+      resolve: (msg) => Presence.findOne({ userId: msg.userId }).lean(),
+    },
     readBy: { type: new GraphQLList(GraphQLString), resolve: (m) => m.readBy ?? [] },
     readByDetailed: {
       type: new GraphQLList(ReadByDetailedEntryType),

@@ -11,6 +11,8 @@ import { DateScalar } from './scalars';
 import { PresenceStatusEnum } from './enums';
 import { UserType } from './User';
 
+import User from '../models/User';
+
 interface PresenceShape extends Common.Presence {
   user?: Common.User;
 }
@@ -28,7 +30,10 @@ export const PresenceType: GraphQLObjectType<PresenceShape, GraphQLContext> = ne
     statusMessage: { type: GraphQLString },
     lastHeartbeat: { type: new GraphQLNonNull(DateScalar) },
     lastSeen: { type: DateScalar },
-    user: { type: UserType },
+    user: {
+      type: UserType,
+      resolve: (presence) => presence.user ?? User.findById(presence.userId).lean(),
+    },
   }),
 });
 

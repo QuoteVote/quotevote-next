@@ -12,6 +12,9 @@ import { RosterStatusEnum } from './enums';
 import { UserType } from './User';
 import { PresenceType } from './Presence';
 
+import User from '../models/User';
+import Presence from '../models/Presence';
+
 interface RosterShape extends Common.Roster {
   buddy?: Common.User;
   presence?: Common.Presence;
@@ -32,8 +35,18 @@ export const RosterType: GraphQLObjectType<RosterShape, GraphQLContext> = new Gr
       type: new GraphQLNonNull(GraphQLString),
       resolve: (r) => r.initiatedBy ?? r.userId,
     },
-    buddy: { type: UserType },
-    presence: { type: PresenceType },
+    buddy: {
+      type: UserType,
+      resolve: (roster) => roster.buddy ?? User.findById(roster.buddyId).lean(),
+    },
+    user: {
+      type: UserType,
+      resolve: (roster) => User.findById(roster.userId).lean(),
+    },
+    presence: {
+      type: PresenceType,
+      resolve: (roster) => roster.presence ?? Presence.findOne({ userId: roster.buddyId }).lean(),
+    },
     created: { type: new GraphQLNonNull(DateScalar) },
     updated: {
       type: new GraphQLNonNull(DateScalar),

@@ -11,6 +11,15 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { DateScalar, JSONScalar } from './scalars';
 import { MessageType } from './Message';
+import { UserType } from './User';
+import { TypingIndicatorType } from './TypingIndicator';
+import { PostType } from './Post';
+import { MessageTypeEnum } from './enums';
+
+import User from '../models/User';
+import Message from '../models/Message';
+import Typing from '../models/Typing';
+import Post from '../models/Post';
 
 interface PostDetailsShape {
   _id?: string;
@@ -45,7 +54,7 @@ export const MessageRoomType: GraphQLObjectType<MessageRoomShape, GraphQLContext
     fields: (): GraphQLFieldConfigMap<MessageRoomShape, GraphQLContext> => ({
       _id: { type: new GraphQLNonNull(GraphQLID) },
       users: { type: new GraphQLList(GraphQLString), resolve: (r) => r.users ?? [] },
-      messageType: { type: GraphQLString },
+      messageType: { type: MessageTypeEnum },
       created: { type: DateScalar },
       lastActivity: { type: DateScalar },
       lastMessageTime: { type: DateScalar },
@@ -55,9 +64,21 @@ export const MessageRoomType: GraphQLObjectType<MessageRoomShape, GraphQLContext
       postId: { type: GraphQLString },
       messages: {
         type: new GraphQLList(MessageType),
-        resolve: (r) => r.messages ?? [],
+        resolve: (r) => r.messages ?? Message.find({ messageRoomId: r._id }).sort({ created: 1 }).lean(),
       },
       postDetails: { type: PostDetailsType },
+      usersData: {
+        type: new GraphQLList(UserType),
+        resolve: (r) => User.find({ _id: { $in: r.users ?? [] } }).lean(),
+      },
+      typingIndicators: {
+        type: new GraphQLList(TypingIndicatorType),
+        resolve: (r) => Typing.find({ messageRoomId: r._id }).lean(),
+      },
+      post: {
+        type: PostType,
+        resolve: (r) => Post.findById(r.postId).lean(),
+      },
     }),
   });
 

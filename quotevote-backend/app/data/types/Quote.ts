@@ -10,6 +10,10 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { DateScalar } from './scalars';
 import { UserType } from './User';
+import { PostType } from './Post';
+
+import User from '../models/User';
+import Post from '../models/Post';
 
 interface QuoteShape extends Common.Quote {
   quoted?: string;
@@ -33,7 +37,14 @@ export const QuoteType: GraphQLObjectType<QuoteShape, GraphQLContext> = new Grap
     startWordIndex: { type: GraphQLInt },
     endWordIndex: { type: GraphQLInt },
     deleted: { type: GraphQLBoolean },
-    user: { type: UserType },
+    user: {
+      type: UserType,
+      resolve: (quote) => (quote as Common.Quote & { user?: Common.User }).user ?? User.findById(quote.userId).lean(),
+    },
+    post: {
+      type: PostType,
+      resolve: (quote) => Post.findById(quote.postId).lean(),
+    },
   }),
 });
 
