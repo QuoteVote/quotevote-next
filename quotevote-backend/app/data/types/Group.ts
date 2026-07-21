@@ -64,7 +64,18 @@ export const GroupType: GraphQLObjectType<GroupShape, GraphQLContext> = new Grap
     },
     rosters: {
       type: new GraphQLList(RosterType),
-      resolve: (group) => Roster.find({ userId: group.creatorId }).lean(),
+      resolve: (group) => {
+        const memberIds = [
+          group.creatorId,
+          ...(group.allowedUserIds ?? []),
+        ];
+        return Roster.find({
+          $or: [
+            { userId: { $in: memberIds } },
+            { buddyId: { $in: memberIds } },
+          ],
+        }).lean();
+      },
     },
   }),
 });

@@ -54,6 +54,18 @@ import {
   VoteType,
 } from '~/data/types';
 
+jest.mock('~/data/models/Roster');
+jest.mock('~/data/models/User');
+jest.mock('~/data/models/Post');
+jest.mock('~/data/models/Comment');
+jest.mock('~/data/models/Vote');
+jest.mock('~/data/models/Quote');
+jest.mock('~/data/models/MessageRoom');
+jest.mock('~/data/models/Message');
+jest.mock('~/data/models/Typing');
+jest.mock('~/data/models/Reaction');
+jest.mock('~/data/models/Presence');
+
 const LEGACY_TYPE_NAMES = [
   'Activity',
   'Activities',
@@ -222,6 +234,68 @@ describe('GraphQL domain typedefs (7.28 migration)', () => {
       const roundTripped = buildSchema(`${domainTypeDefs}\n\ntype Query { _ping: String }`);
       expect(printSchema(roundTripped)).toContain('type User');
       expect(printSchema(roundTripped)).toContain('type Post');
+    });
+  });
+
+  describe('runtime enum values and resolvers validation', () => {
+    it('verifies GraphQLEnumType value mappings match constants', () => {
+      const typeMap = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: { _placeholder: { type: GraphQLString } },
+        }),
+        types: [...domainTypes],
+      }).getTypeMap();
+
+      // Check PresenceStatusEnum
+      const presenceEnum = typeMap.PresenceStatus as any;
+      expect(presenceEnum).toBeDefined();
+      expect(presenceEnum.getValue('online').value).toBe('online');
+      expect(presenceEnum.getValue('away').value).toBe('away');
+
+      // Check AccountStatusEnum
+      const accountEnum = typeMap.AccountStatus as any;
+      expect(accountEnum).toBeDefined();
+      expect(accountEnum.getValue('suspended').value).toBe('suspended');
+      expect(accountEnum.getValue('pending').value).toBe('pending');
+
+      // Check MessageTypeEnum
+      const messageEnum = typeMap.MessageType as any;
+      expect(messageEnum).toBeDefined();
+      expect(messageEnum.getValue('SYSTEM').value).toBe('SYSTEM');
+
+      // Check NotificationTypeEnum
+      const notificationEnum = typeMap.NotificationType as any;
+      expect(notificationEnum).toBeDefined();
+      expect(notificationEnum.getValue('SYSTEM').value).toBe('SYSTEM');
+      expect(notificationEnum.getValue('VOTE').value).toBe('VOTE');
+    });
+
+    it('verifies relationship resolvers correctly fetch and filter database models', async () => {
+      const RosterMock = require('~/data/models/Roster').default;
+      const findSpy = jest.spyOn(RosterMock, 'find').mockImplementation(() => ({
+        lean: () => Promise.resolve([{ _id: 'roster1', userId: 'user1', buddyId: 'user2' }])
+      } as any));
+
+      const groupFields = GroupType.getFields();
+      expect(groupFields.rosters).toBeDefined();
+      expect(groupFields.rosters.resolve).toBeInstanceOf(Function);
+
+      const fakeGroup = {
+        creatorId: 'creator123',
+        allowedUserIds: ['user123', 'user456'],
+      };
+
+      const result = await (groupFields.rosters.resolve as Function)(fakeGroup, {}, {}, {} as any);
+      expect(findSpy).toHaveBeenCalledWith({
+        $or: [
+          { userId: { $in: ['creator123', 'user123', 'user456'] } },
+          { buddyId: { $in: ['creator123', 'user123', 'user456'] } },
+        ]
+      });
+      expect(result).toEqual([{ _id: 'roster1', userId: 'user1', buddyId: 'user2' }]);
+
+      findSpy.mockRestore();
     });
   });
 });

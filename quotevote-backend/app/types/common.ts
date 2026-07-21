@@ -19,11 +19,20 @@ export type ActivityEventType =
 
 export type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
 
-export type NotificationType = 'FOLLOW' | 'UPVOTED' | 'DOWNVOTED' | 'COMMENTED' | 'QUOTED';
+export type NotificationType =
+  | 'FOLLOW'
+  | 'VOTE'
+  | 'COMMENT'
+  | 'QUOTE'
+  | 'MESSAGE'
+  | 'MENTION'
+  | 'SYSTEM'
+  | 'UPVOTED'
+  | 'DOWNVOTED';
 
 export type VoteType = 'up' | 'down';
 
-export type MessageType = 'USER' | 'POST';
+export type MessageType = 'USER' | 'POST' | 'SYSTEM';
 
 export type RosterStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 
@@ -216,7 +225,7 @@ export interface Message {
   userName?: string;
   title?: string;
   text?: string;
-  type?: string;
+  type?: MessageType;
   mutation_type?: string;
   deleted?: boolean;
   readBy?: string[];
@@ -349,12 +358,14 @@ export interface Reaction {
 // Invite & Report Types
 // ============================================================================
 
+export type InviteStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+
 export interface UserInvite {
   _id: string;
   email: string;
   invitedBy?: string;
   code?: string;
-  status?: string;
+  status?: InviteStatus;
   created: Date | string;
   expiresAt?: Date | string;
 }
