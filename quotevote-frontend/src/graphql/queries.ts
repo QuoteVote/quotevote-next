@@ -109,7 +109,7 @@ export const GET_GROUP = gql`
  * Get action reactions query
  */
 export const GET_ACTION_REACTIONS = gql`
-  query GetActionReactions($actionId: ID!) {
+  query GetActionReactions($actionId: String!) {
     actionReactions(actionId: $actionId) {
       _id
       userId
@@ -715,6 +715,7 @@ export const GET_USER_ACTIVITY = gql`
       activityEvent: $activityEvent
     ) {
       entities {
+        _id
         created
         postId
         userId
