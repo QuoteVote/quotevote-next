@@ -1971,6 +1971,10 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
   const downvotes = post.downvotes ?? 0;
   const commentCount = post.comments?.length || 0;
   const quoteCount = post.quotes?.length || 0;
+  const href = post.url ? toAppPostUrl(post.url) : undefined;
+  const ariaLabel = post.title
+    ? `Read featured post: ${post.title}`
+    : 'Read featured post';
 
   const displayText = post.text
     ? post.text.length > 200
@@ -1978,98 +1982,125 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
       : post.text
     : '';
 
-  return (
-    <div
-      className="flex-shrink-0 w-[85%] sm:w-[420px] snap-center"
-      role="listitem"
-    >
-      <div
-        className="rounded-2xl p-6 h-full flex flex-col transition-all hover:-translate-y-1"
-        style={{
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-        }}
-      >
-        {/* Header: author + star badge */}
-        <div className="flex items-center gap-3 mb-4">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
-            style={{
-              background: '#f0fdf4',
-              color: '#2ecc71',
-            }}
-          >
-            {creatorName[0]?.toUpperCase() || '?'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{creatorName}</p>
-            <p className="text-xs truncate" style={{ color: '#94a3b8' }}>
-              @{username} · {timeAgo}
-            </p>
-          </div>
-          <div
-            className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
-            style={{
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-            }}
-          >
-            <Star size={12} style={{ color: '#2ecc71' }} aria-hidden />
-            <span className="text-[10px] font-bold" style={{ color: '#2ecc71' }}>
-              Featured
-            </span>
-          </div>
-        </div>
+  const cardClassName =
+    'rounded-2xl p-6 h-full flex flex-col transition-all hover:-translate-y-1';
+  const cardStyle: React.CSSProperties = {
+    background: '#ffffff',
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+  };
 
-        {/* Title */}
-        {post.title && (
-          <h3 className="text-base font-bold mb-2 leading-snug line-clamp-2" style={{ color: '#0f172a' }}>
-            {post.title}
-          </h3>
-        )}
-
-        {/* Body */}
-        {displayText && (
-          <p
-            className="text-sm leading-relaxed mb-4 flex-1 line-clamp-4"
-            style={{ color: '#475569' }}
-          >
-            {displayText}
-          </p>
-        )}
-
-        {/* Engagement stats */}
+  const cardContent = (
+    <>
+      {/* Header: author + star badge */}
+      <div className="flex items-center gap-3 mb-4">
         <div
-          className="flex items-center gap-4 pt-4 mt-auto"
-          style={{ borderTop: '1px solid #e2e8f0' }}
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
+          style={{
+            background: '#f0fdf4',
+            color: '#2ecc71',
+          }}
         >
-          <div className="flex items-center gap-1.5">
-            <ThumbsUp size={14} style={{ color: '#2ecc71' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
-              {upvotes}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <ThumbsDown size={14} style={{ color: '#ef4444' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
-              {downvotes}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <MessageCircle size={14} style={{ color: '#27C4E1' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
-              {commentCount}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <MessageSquareQuote size={14} style={{ color: '#c8a03c' }} aria-hidden />
-            <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
-              {quoteCount}
-            </span>
-          </div>
+          {creatorName[0]?.toUpperCase() || '?'}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>
+            {creatorName}
+          </p>
+          <p className="text-xs truncate" style={{ color: '#94a3b8' }}>
+            @{username} · {timeAgo}
+          </p>
+        </div>
+        <div
+          className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
+          style={{
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+          }}
+        >
+          <Star size={12} style={{ color: '#2ecc71' }} aria-hidden />
+          <span className="text-[10px] font-bold" style={{ color: '#2ecc71' }}>
+            Featured
+          </span>
         </div>
       </div>
+
+      {/* Title */}
+      {post.title && (
+        <h3
+          className="text-base font-bold mb-2 leading-snug line-clamp-2"
+          style={{ color: '#0f172a' }}
+        >
+          {post.title}
+        </h3>
+      )}
+
+      {/* Body */}
+      {displayText && (
+        <p
+          className="text-sm leading-relaxed mb-4 flex-1 line-clamp-4"
+          style={{ color: '#475569' }}
+        >
+          {displayText}
+        </p>
+      )}
+
+      {/* Engagement stats */}
+      <div
+        className="flex items-center gap-4 pt-4 mt-auto"
+        style={{ borderTop: '1px solid #e2e8f0' }}
+      >
+        <div className="flex items-center gap-1.5">
+          <ThumbsUp size={14} style={{ color: '#2ecc71' }} aria-hidden />
+          <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
+            {upvotes}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <ThumbsDown size={14} style={{ color: '#ef4444' }} aria-hidden />
+          <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
+            {downvotes}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <MessageCircle size={14} style={{ color: '#27C4E1' }} aria-hidden />
+          <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
+            {commentCount}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <MessageSquareQuote size={14} style={{ color: '#c8a03c' }} aria-hidden />
+          <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
+            {quoteCount}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex-shrink-0 w-[85%] sm:w-[420px] snap-center" role="listitem">
+      {href ? (
+        <Link
+          href={href}
+          className={`${cardClassName} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2ecc71] focus-visible:ring-offset-2`}
+          style={cardStyle}
+          aria-label={ariaLabel}
+          data-testid="featured-post-card"
+          data-post-id={post._id}
+        >
+          {cardContent}
+        </Link>
+      ) : (
+        <div
+          className={cardClassName}
+          style={cardStyle}
+          data-testid="featured-post-card"
+          data-post-id={post._id}
+        >
+          {cardContent}
+        </div>
+      )}
     </div>
   );
 }
