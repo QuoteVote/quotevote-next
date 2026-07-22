@@ -2,3 +2,6 @@ quotevote-backend/compose.yml
 quotevote-backend/dockerfile
 session_state.md
 graphify-out/
+
+# Local Cursor IDE rules / agent config (machine-specific)
+.cursor/
