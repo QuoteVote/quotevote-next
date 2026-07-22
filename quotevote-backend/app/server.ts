@@ -112,8 +112,8 @@ async function startServer() {
         getBuddyList: [BuddyWithPresence!]!
         getRoster: [Roster!]!
         
-        # Action reactions
-        actionReactions(actionId: ID!): [Reaction!]!
+        # Action reactions (String! — matches hosted/legacy API; ID! breaks clients)
+        actionReactions(actionId: String!): [Reaction!]!
         
         # Admin / reports
         getBotReportedUsers(sortBy: String, limit: Int): [User!]!

@@ -175,7 +175,12 @@ function LoadActivityList({
     <div className="space-y-5">
       {activities.map((activity) => (
         <div
-          key={activity._id}
+          key={
+            activity._id ||
+            [activity.postId, activity.activityType, activity.voteId, activity.commentId, activity.quoteId]
+              .filter(Boolean)
+              .join('-')
+          }
           className="rounded-lg shadow-lg border"
           style={{ borderRadius: 7 }}
         >

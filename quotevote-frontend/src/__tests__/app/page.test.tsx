@@ -544,6 +544,89 @@ describe('LandingPage', () => {
     });
   });
 
+  // ── Featured posts navigation (RC1-004) ────────────────────
+
+  describe('Featured posts navigation', () => {
+    const featuredPosts = [
+      {
+        _id: 'feat-1',
+        userId: 'u1',
+        title: 'Featured Democracy Debate',
+        text: 'A thoughtful take on civic discourse.',
+        created: new Date().toISOString(),
+        url: '/post/general/featured-democracy-debate/feat-1',
+        upvotes: 12,
+        downvotes: 1,
+        creator: { _id: 'u1', name: 'Alex Author', username: 'alex' },
+        comments: [{ _id: 'c1' }],
+        quotes: [],
+      },
+      {
+        _id: 'feat-2',
+        userId: 'u2',
+        title: 'Climate Action Now',
+        text: 'We need practical climate policy.',
+        created: new Date().toISOString(),
+        url: '/post/climate/climate-action-now/feat-2',
+        upvotes: 8,
+        downvotes: 0,
+        creator: { _id: 'u2', name: 'Sam Writer', username: 'sam' },
+        comments: [],
+        quotes: [{ _id: 'q1' }],
+      },
+    ];
+
+    beforeEach(() => {
+      mockUseQuery.mockReturnValue({
+        loading: false,
+        error: undefined,
+        data: {
+          featuredPosts: {
+            entities: featuredPosts,
+            pagination: { total_count: 2, limit: 10, offset: 0 },
+          },
+          posts: { entities: [] },
+          searchUser: [],
+        },
+      });
+    });
+
+    it('renders featured post cards as links to post detail routes', () => {
+      renderLandingPage();
+
+      expect(
+        screen.getByRole('heading', { name: /featured posts/i })
+      ).toBeInTheDocument();
+
+      const firstCard = screen.getByRole('link', {
+        name: /read featured post: featured democracy debate/i,
+      });
+      expect(firstCard).toHaveAttribute(
+        'href',
+        '/dashboard/post/general/featured-democracy-debate/feat-1'
+      );
+
+      const secondCard = screen.getByRole('link', {
+        name: /read featured post: climate action now/i,
+      });
+      expect(secondCard).toHaveAttribute(
+        'href',
+        '/dashboard/post/climate/climate-action-now/feat-2'
+      );
+    });
+
+    it('makes the full card the clickable navigation target', () => {
+      renderLandingPage();
+
+      const cards = screen.getAllByTestId('featured-post-card');
+      expect(cards).toHaveLength(2);
+      cards.forEach((card) => {
+        expect(card.tagName.toLowerCase()).toBe('a');
+        expect(card).toHaveAttribute('href');
+      });
+    });
+  });
+
   // ── Auth redirect ──────────────────────────────────────────
 
   describe('Auth redirect', () => {

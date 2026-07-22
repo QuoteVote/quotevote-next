@@ -230,10 +230,23 @@ export function PaginatedActivityList({
     (activity) => !hiddenPosts.includes(activity._id)
   )
 
-  // Render individual activity
-  const renderActivity = (activity: ActivityEntity) => (
-    <LoadActivityCard key={activity._id} activity={activity} width={width} />
-  )
+  // Render individual activity — keys must be stable across inserts/removes/reorders.
+  // `_id` is requested by GET_USER_ACTIVITY; composite fields are stable fallbacks only.
+  const renderActivity = (activity: ActivityEntity) => {
+    const key =
+      activity._id ||
+      [
+        activity.postId,
+        activity.activityType,
+        activity.voteId,
+        activity.commentId,
+        activity.quoteId,
+      ]
+        .filter((part) => part !== undefined && part !== null && part !== '')
+        .join('-')
+
+    return <LoadActivityCard key={key} activity={activity} width={width} />
+  }
 
   // Render empty state
   const renderEmpty = () => (
