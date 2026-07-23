@@ -28,6 +28,8 @@ export const PresenceType: GraphQLObjectType<PresenceShape, GraphQLContext> = ne
     userId: { type: new GraphQLNonNull(GraphQLString) },
     status: { type: new GraphQLNonNull(PresenceStatusEnum) },
     statusMessage: { type: GraphQLString },
+    preferredStatus: { type: PresenceStatusEnum },
+    preferredStatusMessage: { type: GraphQLString },
     lastHeartbeat: { type: new GraphQLNonNull(DateScalar) },
     lastSeen: { type: DateScalar },
     user: {
@@ -59,6 +61,8 @@ export const PresenceUpdateType: GraphQLObjectType<PresenceUpdateShape, GraphQLC
 interface HeartbeatResponseShape {
   success: boolean;
   timestamp: Date | string | number;
+  status?: string;
+  statusMessage?: string;
 }
 
 export const HeartbeatResponseType: GraphQLObjectType<HeartbeatResponseShape, GraphQLContext> =
@@ -68,6 +72,8 @@ export const HeartbeatResponseType: GraphQLObjectType<HeartbeatResponseShape, Gr
     fields: (): GraphQLFieldConfigMap<HeartbeatResponseShape, GraphQLContext> => ({
       success: { type: new GraphQLNonNull(GraphQLBoolean) },
       timestamp: { type: new GraphQLNonNull(DateScalar) },
+      status: { type: PresenceStatusEnum },
+      statusMessage: { type: GraphQLString },
     }),
   });
 

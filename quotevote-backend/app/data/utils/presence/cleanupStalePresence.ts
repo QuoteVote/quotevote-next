@@ -19,12 +19,18 @@ export const cleanupStalePresence = async (): Promise<void> => {
     });
 
     for (const presence of stalePresences) {
-      // Update to offline
+      // Mark offline for peers, but keep preferredStatus / preferredStatusMessage
+      // (and statusMessage) so a refresh can restore the user's chosen status.
+      if (!presence.preferredStatus) {
+        presence.preferredStatus = presence.status;
+      }
+      if (presence.preferredStatusMessage === undefined) {
+        presence.preferredStatusMessage = presence.statusMessage ?? '';
+      }
       presence.status = 'offline';
       presence.lastSeen = new Date();
       await presence.save();
 
-      // Publish offline event
       await pubsub.publish(SUBSCRIPTION_EVENTS.PRESENCE_UPDATED, {
         presence: {
           userId: presence.userId.toString(),
