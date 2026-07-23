@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils'
 import { UPDATE_USER } from '@/graphql/mutations'
 import { replaceGqlError } from '@/lib/utils/replaceGqlError'
 import Avatar from '@/components/Avatar'
+import { parseAvatarToUrl } from '@/lib/avatar'
 import { useAppStore } from '@/store/useAppStore'
 import { PROFILE_BIO_MAX_LENGTH, PROFILE_BIO_HTML_PATTERN } from '@/lib/constants/profile'
 import type { 
@@ -74,6 +75,8 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
   const setUserData = useAppStore((state) => state.setUserData)
 
   const avatar = userData?.avatar as UserAvatar | string | Record<string, unknown> | undefined
+  const avatarSrc =
+    parseAvatarToUrl(avatar) ?? (typeof avatar === 'string' ? avatar : undefined)
   const username = userData?.username ?? ''
   const email = userData?.email ?? ''
   const name = userData?.name ?? ''
@@ -148,8 +151,8 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                 className="group relative flex-shrink-0"
                 aria-label="Change avatar"
               >
-                <Avatar 
-                  src={avatar}
+                <Avatar
+                  src={avatarSrc}
                   alt={watchedName || 'User avatar'}
                   size={96}
                   fallback={watchedName.charAt(0).toUpperCase() || 'U'}

@@ -155,7 +155,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
       const staged: StagedChatRoom = {
         _id: null,
         title: name || username || 'Chat',
-        avatar: (avatar as string | Record<string, unknown> | null | undefined) ?? null,
+        avatar: typeof avatar === 'string' ? avatar : null,
         messageType: 'USER',
         users: [loggedInUserIdString, _id],
         username: username || undefined,
