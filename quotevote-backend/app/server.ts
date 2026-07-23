@@ -13,6 +13,7 @@ import { groupResolver } from './data/resolvers/groupResolver';
 import { chatResolver } from './data/resolvers/chatResolver';
 import { rosterResolver } from './data/resolvers/rosterResolver';
 import { quoteResolver } from './data/resolvers/quoteResolver';
+import { heartbeatResolver } from './data/resolvers/heartbeatResolver';
 import { domainTypeDefs } from './data/types';
 import type { GraphQLContext, PubSub } from './types/graphql';
 import { requireAuth } from './data/utils/requireAuth';
@@ -130,6 +131,7 @@ async function startServer() {
           solidPushPortableState(input: PortableStateInput!): Boolean
           solidAppendActivityEvent(input: ActivityEventInput!): Boolean
           heartbeat: HeartbeatResponse
+          updatePresence(presence: PresenceInput!): Presence
           updateUser(user: UserInput!): User
           updateUserAvatar(user_id: String!, avatarQualities: JSON): User
       }
@@ -179,6 +181,7 @@ async function startServer() {
       chatResolver,
       rosterResolver,
       quoteResolver,
+      heartbeatResolver,
     ],
   });
 

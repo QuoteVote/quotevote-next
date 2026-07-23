@@ -544,6 +544,8 @@ export const GET_USER = gql`
       presence {
         status
         statusMessage
+        preferredStatus
+        preferredStatusMessage
       }
       reputation {
         _id
