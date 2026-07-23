@@ -326,6 +326,9 @@ export interface Presence {
   userId: string;
   status: PresenceStatus;
   statusMessage?: string;
+  /** Chosen status that survives stale cleanup marking the user offline. */
+  preferredStatus?: PresenceStatus;
+  preferredStatusMessage?: string;
   lastHeartbeat?: Date | string | number;
   lastSeen?: Date | string | number;
 }

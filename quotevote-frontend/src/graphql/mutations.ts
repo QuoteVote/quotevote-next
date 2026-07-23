@@ -8,6 +8,8 @@ export const HEARTBEAT = gql`
     heartbeat {
       success
       timestamp
+      status
+      statusMessage
     }
   }
 `
