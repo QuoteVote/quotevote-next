@@ -14,9 +14,10 @@ export interface LoadingSpinnerProps {
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
-   * URL of the avatar image
+   * Avatar image URL, avataaars qualities object, or JSON-encoded qualities.
+   * Objects are resolved via `parseAvatarToUrl`.
    */
-  src?: string;
+  src?: string | Record<string, unknown> | null;
   /**
    * Alt text for the image (required for accessibility)
    */
@@ -521,7 +522,7 @@ export interface ProfileHeaderProps {
     username: string;
     _followingId?: string[];
     _followersId?: string[];
-    avatar?: string;
+    avatar?: string | Record<string, unknown>;
     contributorBadge?: boolean;
     [key: string]: unknown;
   };
@@ -937,7 +938,7 @@ export interface SearchCreatorResult {
   _id: string;
   name: string;
   username?: string;
-  avatar?: string;
+  avatar?: string | Record<string, unknown>;
   __typename?: string;
 }
 
@@ -966,7 +967,7 @@ export interface UsernameSearchUser {
   _id: string;
   username: string;
   name: string;
-  avatar?: string;
+  avatar?: string | Record<string, unknown>;
   contributorBadge?: boolean;
 }
 

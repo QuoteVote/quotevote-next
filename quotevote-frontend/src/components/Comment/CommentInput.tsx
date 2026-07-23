@@ -6,7 +6,7 @@ import { useMutation } from '@apollo/client/react'
 import { gql } from '@apollo/client'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { ADD_COMMENT } from '@/graphql/mutations'
 import { useAppStore } from '@/store/useAppStore'
 import { toast } from 'sonner'
@@ -41,7 +41,6 @@ export default function CommentInput({
   const userData = useAppStore((state) => state.user.data)
   const ensureAuth = useGuestGuard()
 
-  const avatarSrc = typeof userData.avatar === 'string' ? userData.avatar : undefined
   const displayName = (userData.name as string) || (userData.username as string) || ''
 
   const [addComment, { loading }] = useMutation<AddCommentData>(ADD_COMMENT, {
@@ -109,12 +108,12 @@ export default function CommentInput({
     <div className="flex gap-3">
       {/* User avatar */}
       <div className="flex-shrink-0 mt-1">
-        <Avatar className="size-8 ring-1 ring-border/50">
-          <AvatarImage src={avatarSrc} />
-          <AvatarFallback className="text-[11px] bg-primary/8 text-primary font-semibold">
-            {displayName.slice(0, 2).toUpperCase() || 'U'}
-          </AvatarFallback>
-        </Avatar>
+        <DisplayAvatar
+          avatar={userData.avatar as string | Record<string, unknown> | undefined}
+          username={displayName}
+          size={32}
+          className="ring-1 ring-border/50"
+        />
       </div>
 
       {/* Input area */}

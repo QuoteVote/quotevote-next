@@ -12,6 +12,9 @@ export interface LoginApiResponse {
     name?: string;
     email?: string;
     admin?: boolean;
+    accountStatus?: string;
+    avatar?: string | Record<string, unknown> | null;
+    bio?: string;
   };
 }
 
