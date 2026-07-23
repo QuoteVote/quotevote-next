@@ -86,6 +86,7 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps) {
   // Apply saved preference when login state / server preference changes.
   // Do NOT depend on themeMode — that caused toggles to snap back to the
   // last saved preference before Save.
+  /* eslint-disable react-hooks/set-state-in-effect -- sync theme from auth/store preference */
   useEffect(() => {
     if (!isLoggedIn) {
       setThemeMode(readStoredThemeMode())
@@ -96,7 +97,7 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps) {
       writeStoredThemeMode(themePreference)
     }
   }, [isLoggedIn, themePreference])
-
+  /* eslint-enable react-hooks/set-state-in-effect */
   const theme = useMemo<Theme>(
     () => (themeMode === 'dark' ? darkTheme : lightTheme),
     [themeMode]

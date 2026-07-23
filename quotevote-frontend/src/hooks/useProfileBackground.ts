@@ -41,20 +41,15 @@ function readPattern(): ProfileBackgroundPattern {
  * across hook instances/tabs via a custom event + the native `storage` event,
  * so editing it in Settings is reflected on the profile banner.
  *
- * Initial state always uses defaults so SSR and the first client paint match;
- * persisted values hydrate in an effect after mount.
+ * Initialized from localStorage via useState lazy init (same as pre-split main).
+ * `hydrated` is always true after mount so Settings can baseline dirty checks.
  */
 export function useProfileBackground(): ProfileBackground {
-  const [hydrated, setHydrated] = useState(false);
-  const [color, setColorState] = useState<string>(DEFAULT_PROFILE_BG_COLOR);
+  const [color, setColorState] = useState<string>(readColor);
   const [pattern, setPatternState] =
-    useState<ProfileBackgroundPattern>(DEFAULT_PROFILE_BG_PATTERN);
+    useState<ProfileBackgroundPattern>(readPattern);
 
   useEffect(() => {
-    setColorState(readColor());
-    setPatternState(readPattern());
-    setHydrated(true);
-
     const sync = () => {
       setColorState(readColor());
       setPatternState(readPattern());
@@ -89,5 +84,5 @@ export function useProfileBackground(): ProfileBackground {
     }
   }, []);
 
-  return { color, pattern, setColor, setPattern, hydrated };
+  return { color, pattern, setColor, setPattern, hydrated: true };
 }
