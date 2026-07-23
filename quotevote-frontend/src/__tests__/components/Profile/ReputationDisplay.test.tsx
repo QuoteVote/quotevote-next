@@ -60,6 +60,26 @@ describe('ReputationDisplay', () => {
     it('displays last calculated date', () => {
       render(<ReputationDisplay reputation={mockReputation} />);
       expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
+      expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
+    });
+
+    it('shows Not available when lastCalculated is invalid', () => {
+      const badReputation: Reputation = {
+        ...mockReputation,
+        lastCalculated: 'not-a-date',
+      };
+      render(<ReputationDisplay reputation={badReputation} />);
+      expect(screen.getByText(/Last updated: Not available/)).toBeInTheDocument();
+    });
+
+    it('parses numeric timestamps for lastCalculated', () => {
+      const stamped: Reputation = {
+        ...mockReputation,
+        lastCalculated: String(Date.UTC(2024, 0, 15)),
+      };
+      render(<ReputationDisplay reputation={stamped} />);
+      expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
     });
 
     it('calls onRefresh when refresh button is clicked', () => {

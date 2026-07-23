@@ -40,6 +40,9 @@ function readPattern(): ProfileBackgroundPattern {
  * Persisted to localStorage (no backend per migration rules) and kept in sync
  * across hook instances/tabs via a custom event + the native `storage` event,
  * so editing it in Settings is reflected on the profile banner.
+ *
+ * Initialized from localStorage via useState lazy init (same as pre-split main).
+ * `hydrated` is always true after mount so Settings can baseline dirty checks.
  */
 export function useProfileBackground(): ProfileBackground {
   const [color, setColorState] = useState<string>(readColor);
@@ -81,5 +84,5 @@ export function useProfileBackground(): ProfileBackground {
     }
   }, []);
 
-  return { color, pattern, setColor, setPattern };
+  return { color, pattern, setColor, setPattern, hydrated: true };
 }

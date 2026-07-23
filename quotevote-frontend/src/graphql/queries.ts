@@ -534,6 +534,7 @@ export const GET_USER = gql`
       _id
       name
       username
+      bio
       upvotes
       downvotes
       _followingId

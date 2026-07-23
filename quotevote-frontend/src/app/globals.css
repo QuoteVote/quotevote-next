@@ -1395,6 +1395,22 @@ body {
 }
 
 /* ============================================================ */
+/* SONNER TOASTS — close on trailing edge (right in LTR)         */
+/* ============================================================ */
+
+[data-sonner-toaster] {
+  --toast-close-button-start: auto;
+  --toast-close-button-end: 0;
+  --toast-close-button-transform: translate(35%, -35%);
+}
+
+[data-sonner-toast][data-styled="true"] [data-close-button] {
+  left: auto !important;
+  right: 0 !important;
+  transform: translate(35%, -35%) !important;
+}
+
+/* ============================================================ */
 /* SONNER TOASTS — brutalist chips, color per variant            */
 /* ============================================================ */
 

@@ -47,8 +47,18 @@ export function ReputationDisplay({
     return 'Poor';
   };
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString();
+  const formatDate = (dateValue: string | Date | null | undefined): string => {
+    if (dateValue == null || dateValue === '') return 'Not available';
+
+    const date =
+      dateValue instanceof Date
+        ? dateValue
+        : typeof dateValue === 'number' || /^\d+$/.test(String(dateValue))
+          ? new Date(Number(dateValue))
+          : new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) return 'Not available';
+    return date.toLocaleDateString();
   };
 
   const scoreColor = getScoreColor(reputation.overallScore);

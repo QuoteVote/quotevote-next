@@ -91,10 +91,10 @@ describe('ProfileView', () => {
       expect(screen.getByText('Return to homepage.')).toBeInTheDocument();
     });
 
-    it('has link to search page', () => {
+    it('has link to home page', () => {
       render(<ProfileView profileUser={undefined} />);
       const link = screen.getByText('Return to homepage.');
-      expect(link.closest('a')).toHaveAttribute('href', '/search');
+      expect(link.closest('a')).toHaveAttribute('href', '/');
     });
   });
 
@@ -142,6 +142,24 @@ describe('ProfileView', () => {
         expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
       });
       expect(screen.getByText('Reputation')).toBeInTheDocument();
+      expect(screen.getByText('No about text yet')).toBeInTheDocument();
+    });
+
+    it('shows bio text on About tab when present', async () => {
+      const user = userEvent.setup();
+      const userWithBio: ProfileUser = {
+        ...mockProfileUser,
+        bio: 'I care about thoughtful dialogue.',
+      };
+      await act(async () => {
+        render(<ProfileView profileUser={userWithBio} />);
+      });
+      const aboutTab = screen.getByRole('tab', { name: 'About' });
+      await user.click(aboutTab);
+      await waitFor(() => {
+        expect(screen.getByText('I care about thoughtful dialogue.')).toBeInTheDocument();
+      });
+      expect(screen.getByRole('heading', { name: 'About', level: 3 })).toBeInTheDocument();
     });
 
     it('shows voted activity list when Voted tab is clicked', async () => {
@@ -156,7 +174,7 @@ describe('ProfileView', () => {
       });
     });
 
-    it('does not render reputation display when reputation is missing and About tab clicked', async () => {
+    it('shows empty about state when reputation is missing and About tab clicked', async () => {
       const user = userEvent.setup();
       const userWithoutReputation: ProfileUser = {
         ...mockProfileUser,
@@ -169,7 +187,7 @@ describe('ProfileView', () => {
       await user.click(aboutTab);
       await waitFor(() => {
         expect(screen.queryByTestId('reputation-display')).not.toBeInTheDocument();
-        expect(screen.getByText('No additional information available')).toBeInTheDocument();
+        expect(screen.getByText('No about text yet')).toBeInTheDocument();
       });
     });
 

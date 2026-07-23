@@ -9,29 +9,38 @@ import { ProfileView } from './ProfileView';
 import type { ProfileUser } from '@/types/profile';
 
 export function ProfileController() {
-  const { username } = useParams<{ username: string }>();
+  const { username: paramUsername } = useParams<{ username?: string }>();
   const loggedInUser = useAppStore((state) => state.user.data);
   const setSelectedPage = useAppStore((state) => state.setSelectedPage);
 
+  const targetUsername =
+    (typeof paramUsername === 'string' && paramUsername.trim()) ||
+    (typeof loggedInUser?.username === 'string' && loggedInUser.username.trim()) ||
+    '';
+
   const { data: userData, loading } = useQuery<{
-    user?: ProfileUser;
+    user?: ProfileUser | null;
   }>(GET_USER, {
-    variables: { username: username || loggedInUser.username },
-    skip: !username && !loggedInUser.username,
+    variables: { username: targetUsername },
+    skip: !targetUsername,
   });
 
   useEffect(() => {
     setSelectedPage('');
   }, [setSelectedPage]);
 
-  // Derive userInfo directly from query data instead of using effect
-  const userInfo = userData?.user;
+  // Keep SSR and the first client paint on the loading UI until the persisted
+  // store rehydrates a username (or a route param is present). Otherwise the
+  // server can render LoadingSpinner while the client briefly renders
+  // "Invalid user" and triggers a hydration mismatch.
+  if (!targetUsername || loading) {
+    return <ProfileView loading />;
+  }
 
   return (
     <ProfileView
-      profileUser={userInfo}
-      loading={loading}
+      profileUser={userData?.user ?? undefined}
+      loading={false}
     />
   );
 }
-

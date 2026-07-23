@@ -74,10 +74,21 @@ export const UserReputationType: GraphQLObjectType<Common.Reputation, GraphQLCon
       },
       lastCalculated: {
         type: new GraphQLNonNull(GraphQLString),
-        resolve: (rep) =>
-          rep.lastCalculated instanceof Date
-            ? rep.lastCalculated.toISOString()
-            : String(rep.lastCalculated),
+        resolve: (rep) => {
+          const value = rep.lastCalculated;
+          if (value instanceof Date) {
+            return Number.isNaN(value.getTime()) ? '' : value.toISOString();
+          }
+          if (typeof value === 'number') {
+            const d = new Date(value);
+            return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+          }
+          if (typeof value === 'string' && value.trim()) {
+            const d = new Date(value);
+            return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+          }
+          return '';
+        },
       },
       createdAt: {
         type: new GraphQLNonNull(GraphQLString),
