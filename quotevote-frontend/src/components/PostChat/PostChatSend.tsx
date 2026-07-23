@@ -78,7 +78,7 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
             _id: ((user._id || user.id) as string) || '',
             name: (user.name as string) || '',
             username: (user.username as string) || '',
-            avatar: typeof user.avatar === 'string' ? user.avatar : '',
+            avatar: user.avatar as string | Record<string, unknown> | undefined,
           },
         },
       },

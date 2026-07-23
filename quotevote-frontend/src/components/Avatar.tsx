@@ -5,24 +5,13 @@ import { useState, useMemo } from 'react';
 import { User } from 'lucide-react';
 import type { AvatarProps } from '@/types/components';
 import { cn } from '@/lib/utils';
+import { parseAvatarToUrl } from '@/lib/avatar';
 
 /**
  * Avatar Component
- * 
- * A fully typed, reusable Avatar component that displays user profile images
- * with fallback support for missing images. Supports initials or a default icon
- * as fallback content.
- * 
- * @param src - URL of the avatar image
- * @param alt - Alt text for the image (required for accessibility)
- * @param fallback - Fallback text (typically user initials) or React node
- * @param size - Size variant: 'sm', 'md', 'lg', or a custom number in pixels
- * @param className - Additional CSS classes
- * @param onClick - Optional click handler
- * 
- * @example
- * <Avatar src="/avatar.jpg" alt="John Doe" size="md" />
- * <Avatar alt="Jane Smith" fallback="JS" size="lg" />
+ *
+ * Displays a user profile image with fallback support. Accepts URL strings or
+ * avataaars qualities objects (resolved via `parseAvatarToUrl`).
  */
 export default function Avatar({
   src,
@@ -33,8 +22,10 @@ export default function Avatar({
   onClick,
   ...props
 }: AvatarProps) {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const resolvedSrc = useMemo(
+    () => parseAvatarToUrl(src ?? undefined) ?? (typeof src === 'string' ? src : undefined),
+    [src]
+  );
 
   // Calculate size classes and dimensions
   const sizeConfig = useMemo(() => {
@@ -76,9 +67,6 @@ export default function Avatar({
     return null;
   }, [alt, fallback]);
 
-  const showImage = !!src && typeof src === 'string' && !imageError;
-  const showFallback = !showImage;
-
   const baseClasses = cn(
     'relative inline-flex items-center justify-center',
     'rounded-full overflow-hidden',
@@ -117,52 +105,80 @@ export default function Avatar({
       }
       {...props}
     >
-      {showImage && (
-        <Image
-          src={src}
-          alt={alt || 'User avatar'}
-          width={sizeConfig.dimension}
-          height={sizeConfig.dimension}
-          loading="lazy"
-          className={cn(
-            'object-cover w-full h-full',
-            !imageLoaded && 'opacity-0'
-          )}
-          onError={() => setImageError(true)}
-          onLoad={() => setImageLoaded(true)}
-          {...(src?.startsWith('data:') || src?.startsWith('blob:') || src?.includes('avataaars.io')
-            ? { unoptimized: true }
-            : {})}
-        />
-      )}
-
-      {showFallback && (
-        <div
-          className={cn(
-            'w-full h-full flex items-center justify-center',
-            'bg-[var(--color-primary)] text-[var(--color-primary-contrast)]',
-            sizeConfig.textSize,
-            'font-medium'
-          )}
-          aria-hidden="true"
-        >
-          {fallbackContent ? (
-            <span>{fallbackContent}</span>
-          ) : (
-            <User
-              className={cn(
-                sizeConfig.dimension <= 32
-                  ? 'w-4 h-4'
-                  : sizeConfig.dimension <= 40
-                  ? 'w-5 h-5'
-                  : 'w-6 h-6'
-              )}
-              aria-hidden="true"
-            />
-          )}
-        </div>
-      )}
+      {/* Keyed by src so load/error state resets when the avatar changes */}
+      <AvatarMedia
+        key={resolvedSrc ?? 'fallback'}
+        resolvedSrc={resolvedSrc}
+        alt={alt}
+        dimension={sizeConfig.dimension}
+        textSize={sizeConfig.textSize}
+        fallbackContent={fallbackContent}
+      />
     </div>
   );
 }
 
+function AvatarMedia({
+  resolvedSrc,
+  alt,
+  dimension,
+  textSize,
+  fallbackContent,
+}: {
+  resolvedSrc?: string;
+  alt?: string;
+  dimension: number;
+  textSize: string;
+  fallbackContent: string | React.ReactNode | null;
+}) {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const showImage = !!resolvedSrc && !imageError;
+
+  if (showImage && resolvedSrc) {
+    return (
+      <Image
+        src={resolvedSrc}
+        alt={alt || 'User avatar'}
+        width={dimension}
+        height={dimension}
+        loading="lazy"
+        className={cn(
+          'object-cover w-full h-full',
+          !imageLoaded && 'opacity-0'
+        )}
+        onError={() => setImageError(true)}
+        onLoad={() => setImageLoaded(true)}
+        {...(resolvedSrc.startsWith('data:') ||
+        resolvedSrc.startsWith('blob:') ||
+        resolvedSrc.includes('avataaars.io')
+          ? { unoptimized: true }
+          : {})}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'w-full h-full flex items-center justify-center',
+        'bg-[var(--color-primary)] text-[var(--color-primary-contrast)]',
+        textSize,
+        'font-medium'
+      )}
+      aria-hidden="true"
+    >
+      {fallbackContent ? (
+        <span>{fallbackContent}</span>
+      ) : (
+        <User
+          className={cn(
+            dimension <= 32 ? 'w-4 h-4' : dimension <= 40 ? 'w-5 h-5' : 'w-6 h-6'
+          )}
+          aria-hidden="true"
+        />
+      )}
+    </div>
+  );
+}

@@ -12,14 +12,15 @@
  * redirects back to the user's profile page.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@apollo/client/react';
 import { toast } from 'sonner';
 import { Dices, Save, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { UPDATE_USER_AVATAR } from '@/graphql/mutations';
-import { buildAvatarUrl, type AvatarQualities } from '@/lib/avatar';
+import { GET_USER } from '@/graphql/queries';
+import { buildAvatarUrl, getDefaultAvatar, type AvatarQualities } from '@/lib/avatar';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -333,7 +334,7 @@ interface UpdateUserAvatarData {
     username: string;
     name: string;
     email: string;
-    avatar: string;
+    avatar: string | Record<string, unknown>;
   };
 }
 
@@ -348,16 +349,30 @@ export default function AvatarEditorPage(): React.ReactNode {
   const updateStoreAvatar = useAppStore((state) => state.updateAvatar);
   const userId = (userData._id || userData.id) as string | undefined;
 
-  // Initialise avatar state from the store or random values
-  const initialAvatar = useMemo(() => {
+  // Deterministic default so SSR and the first client paint match.
+  // Persist-rehydrated store avatar is applied after mount.
+  const [avatar, setAvatar] = useState<AvatarQualities>(() =>
+    getDefaultAvatar('avatar-editor')
+  );
+  const seededFromStore = useRef(false);
+
+  useEffect(() => {
+    if (seededFromStore.current) return;
+
     const stored = parseStoredAvatar(
       userData.avatar as string | Record<string, unknown> | undefined
     );
-    return stored ?? getRandomAvatar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (stored) {
+      setAvatar(stored);
+      seededFromStore.current = true;
+      return;
+    }
 
-  const [avatar, setAvatar] = useState<AvatarQualities>(initialAvatar);
+    // Store finished rehydrating (user id present) with no editable avatar — keep default.
+    if (userId) {
+      seededFromStore.current = true;
+    }
+  }, [userData.avatar, userId]);
 
   const [updateUserAvatar, { loading: saving }] = useMutation<UpdateUserAvatarData>(UPDATE_USER_AVATAR);
 
@@ -380,15 +395,25 @@ export default function AvatarEditorPage(): React.ReactNode {
       return;
     }
 
+    const username = typeof userData.username === 'string' ? userData.username : undefined;
+
     try {
       const result = await updateUserAvatar({
         variables: { user_id: userId, avatarQualities: avatar },
+        refetchQueries: username
+          ? [{ query: GET_USER, variables: { username } }]
+          : [],
+        awaitRefetchQueries: Boolean(username),
       });
 
       const returnedAvatar = result.data?.updateUserAvatar?.avatar;
-      if (returnedAvatar) {
-        updateStoreAvatar(returnedAvatar);
-      }
+      // Prefer the qualities we just saved so the store keeps a parseable object
+      // even if the API returns a serialized/odd shape.
+      updateStoreAvatar(
+        returnedAvatar && typeof returnedAvatar === 'object'
+          ? returnedAvatar
+          : avatar
+      );
 
       toast.success('Avatar updated successfully!');
       router.back();
@@ -397,7 +422,7 @@ export default function AvatarEditorPage(): React.ReactNode {
         err instanceof Error ? err.message : 'Failed to update avatar.';
       toast.error(message);
     }
-  }, [userId, avatar, updateUserAvatar, updateStoreAvatar, router]);
+  }, [userId, avatar, updateUserAvatar, updateStoreAvatar, router, userData.username]);
 
   const handleBack = useCallback(() => {
     router.back();

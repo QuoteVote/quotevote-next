@@ -541,6 +541,10 @@ export const GET_USER = gql`
       _followersId
       avatar
       contributorBadge
+      presence {
+        status
+        statusMessage
+      }
       reputation {
         _id
         overallScore

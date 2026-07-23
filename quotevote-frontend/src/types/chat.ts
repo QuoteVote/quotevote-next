@@ -79,8 +79,8 @@ export interface ChatRoom {
     messageType?: string | null
     /** Room title (for groups or resolved DM display) */
     title?: string | null
-    /** Optional avatar URL resolved by backend */
-    avatar?: string | null
+    /** Optional avatar URL or avataaars qualities resolved by backend */
+    avatar?: string | Record<string, unknown> | null
     /** ISO timestamp when room was created */
     created: string
     /** ISO timestamp of last message */
@@ -185,7 +185,7 @@ export interface TypingUser {
 export interface StagedChatRoom {
   _id: null;
   title: string;
-  avatar: string | null;
+  avatar: string | Record<string, unknown> | null;
   messageType: 'USER';
   users: string[];
   username?: string;

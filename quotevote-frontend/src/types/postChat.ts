@@ -127,7 +127,7 @@ export interface CreateMessageData {
       _id: string
       name: string
       username: string
-      avatar: string
+      avatar?: string | Record<string, unknown>
     }
   }
 }

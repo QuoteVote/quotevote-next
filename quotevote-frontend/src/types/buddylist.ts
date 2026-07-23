@@ -12,7 +12,7 @@ export interface BuddyUser {
     _id: string;
     name?: string;
     username?: string;
-    avatar?: string | null;
+    avatar?: string | Record<string, unknown> | null;
 }
 
 export interface Buddy {
@@ -31,7 +31,7 @@ export interface BuddyItem {
     Text?: string;
     messageType?: 'USER' | 'POST';
     type?: 'USER' | 'POST';
-    avatar?: string | { url: string } | null;
+    avatar?: string | Record<string, unknown> | { url: string } | null;
     unreadMessages?: number;
     presence?: Presence;
     statusMessage?: string;

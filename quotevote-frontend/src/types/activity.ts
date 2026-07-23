@@ -14,7 +14,7 @@ export interface ActivityUser {
   _id: string
   name?: string
   username: string
-  avatar?: string
+  avatar?: string | Record<string, unknown>
   contributorBadge?: boolean
 }
 
@@ -164,7 +164,7 @@ export type ActivityEmptyListProps = Record<string, never>
 
 // ActivityCard props
 export interface ActivityCardProps {
-  avatar?: string | { src?: string; alt?: string }
+  avatar?: string | Record<string, unknown> | { src?: string; alt?: string }
   cardColor?: string
   name?: string
   username: string
