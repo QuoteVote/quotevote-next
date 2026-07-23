@@ -101,7 +101,7 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
             >
               <div className="relative">
                 <Avatar
-                  src={typeof user.avatar === 'string' ? user.avatar : undefined}
+                  src={user.avatar}
                   alt={user.name || user.username}
                   size={40}
                 />

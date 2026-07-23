@@ -101,7 +101,7 @@ export default function BuddyItemList({ buddyList, className }: BuddyItemListPro
                     const staged: StagedChatRoom = {
                         _id: null,
                         title: item.user.name || item.user.username || 'Chat',
-                        avatar: typeof item.user.avatar === 'string' ? item.user.avatar : null,
+                        avatar: (item.user.avatar as string | Record<string, unknown> | null | undefined) ?? null,
                         messageType: 'USER',
                         users: [currentUser._id!.toString(), item.user._id],
                         username: item.user.username,

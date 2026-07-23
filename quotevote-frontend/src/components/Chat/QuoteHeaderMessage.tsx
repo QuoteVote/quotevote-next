@@ -39,7 +39,7 @@ const QuoteHeaderMessage: FC<QuoteHeaderMessageProps> = ({
           <div className="flex items-center gap-3">
             {postCreator && (
               <Avatar
-                src={typeof postCreator.avatar === 'string' ? postCreator.avatar : undefined}
+                src={postCreator.avatar}
                 alt={authorName}
                 size={40}
                 className="h-10 w-10 border-2 border-background shadow-sm"
