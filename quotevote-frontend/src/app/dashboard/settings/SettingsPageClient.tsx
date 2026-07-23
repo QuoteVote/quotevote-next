@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useMutation } from '@apollo/client/react'
+import { useMutation, useQuery } from '@apollo/client/react'
 import { Camera, Loader2, Moon, Sun, LogOut, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -13,18 +13,21 @@ import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { UPDATE_USER } from '@/graphql/mutations'
+import { GET_USER } from '@/graphql/queries'
 import { replaceGqlError } from '@/lib/utils/replaceGqlError'
 import { useAppStore } from '@/store/useAppStore'
 import { removeToken } from '@/lib/auth'
@@ -35,6 +38,7 @@ import {
   PROFILE_BG_COLORS,
   PROFILE_BG_PATTERNS,
 } from '@/lib/utils/profileBackground'
+import { PROFILE_BIO_MAX_LENGTH, PROFILE_BIO_HTML_PATTERN } from '@/lib/constants/profile'
 import { cn } from '@/lib/utils'
 import type { SettingsUserData } from '@/types/settings'
 import type { UpdateUserResponse } from '@/types/test'
@@ -46,6 +50,12 @@ const settingsSchema = z.object({
     .min(4, 'Username must be at least 4 characters')
     .max(50, 'Username must be under 50 characters'),
   email: z.string().email('Please enter a valid email'),
+  bio: z
+    .string()
+    .max(PROFILE_BIO_MAX_LENGTH, `About must be ${PROFILE_BIO_MAX_LENGTH} characters or fewer`)
+    .refine((val) => !PROFILE_BIO_HTML_PATTERN.test(val), {
+      message: 'About must be plain text without HTML',
+    }),
   password: z.string().refine((val) => !val || val.length >= 8, {
     message: 'Password must be at least 8 characters',
   }),
@@ -57,34 +67,66 @@ export default function SettingsPageClient() {
   const router = useRouter()
   const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined
   const setUserData = useAppStore((state) => state.setUserData)
-  const { toggleTheme, isDarkMode, neoBrutalism, toggleNeoBrutalism } = useTheme()
+  const { setTheme, isDarkMode, neoBrutalism, toggleNeoBrutalism } = useTheme()
   const {
     color: profileBgColor,
     pattern: profileBgPattern,
     setColor: setProfileBgColor,
     setPattern: setProfileBgPattern,
+    hydrated: profileBgHydrated,
   } = useProfileBackground()
 
   const username = userData?.username ?? ''
   const email = userData?.email ?? ''
   const name = userData?.name ?? ''
+  const bio = typeof userData?.bio === 'string' ? userData.bio : ''
   const userId = userData?.id ?? userData?._id ?? ''
 
   const [localDarkMode, setLocalDarkMode] = useState(isDarkMode)
   const [originalDarkMode, setOriginalDarkMode] = useState(isDarkMode)
   const [localBrutalism, setLocalBrutalism] = useState(neoBrutalism)
+  const [originalBgColor, setOriginalBgColor] = useState(profileBgColor)
+  const [originalBgPattern, setOriginalBgPattern] = useState(profileBgPattern)
+  const [bgBaselineReady, setBgBaselineReady] = useState(false)
 
   const [updateUser, { loading }] = useMutation<UpdateUserResponse>(UPDATE_USER)
 
-  const form = useForm<SettingsFormValues>({
-    resolver: zodResolver(settingsSchema),
-    defaultValues: { name, username, email, password: '' },
+  const { data: profileData } = useQuery<{ user: { bio?: string | null } | null }>(GET_USER, {
+    variables: { username },
+    skip: !username,
+    fetchPolicy: 'cache-and-network',
   })
 
-  const handleThemeToggle = useCallback(() => {
-    const newMode = toggleTheme()
-    setLocalDarkMode(newMode === 'dark')
-  }, [toggleTheme])
+  const form = useForm<SettingsFormValues>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: { name, username, email, bio, password: '' },
+  })
+
+  useEffect(() => {
+    const fetchedBio = profileData?.user?.bio
+    if (typeof fetchedBio === 'string' && form.getValues('bio') === bio) {
+      form.setValue('bio', fetchedBio, { shouldDirty: false })
+    }
+  }, [profileData?.user?.bio, bio, form])
+
+  useEffect(() => {
+    setLocalDarkMode(isDarkMode)
+  }, [isDarkMode])
+
+  useEffect(() => {
+    if (!profileBgHydrated || bgBaselineReady) return
+    setOriginalBgColor(profileBgColor)
+    setOriginalBgPattern(profileBgPattern)
+    setBgBaselineReady(true)
+  }, [profileBgHydrated, profileBgColor, profileBgPattern, bgBaselineReady])
+
+  const handleThemeToggle = useCallback(
+    (checked: boolean) => {
+      setTheme(checked ? 'dark' : 'light')
+      setLocalDarkMode(checked)
+    },
+    [setTheme]
+  )
 
   const handleBrutalismToggle = useCallback(() => {
     const next = toggleNeoBrutalism()
@@ -92,7 +134,11 @@ export default function SettingsPageClient() {
   }, [toggleNeoBrutalism])
 
   const themeDirty = localDarkMode !== originalDarkMode
-  const isFormDirty = form.formState.isDirty || themeDirty
+  const bgDirty =
+    bgBaselineReady &&
+    (profileBgColor.toLowerCase() !== originalBgColor.toLowerCase() ||
+      profileBgPattern !== originalBgPattern)
+  const isFormDirty = form.formState.isDirty || themeDirty || bgDirty
 
   const handleSignOut = useCallback(() => {
     removeToken()
@@ -101,9 +147,19 @@ export default function SettingsPageClient() {
 
   const onSubmit = async (values: SettingsFormValues) => {
     const { password, ...otherValues } = values
+
+    // Background is localStorage-only; if that's the only change, just accept baseline.
+    if (!form.formState.isDirty && !themeDirty && bgDirty) {
+      setOriginalBgColor(profileBgColor)
+      setOriginalBgPattern(profileBgPattern)
+      toast.success('Settings saved successfully')
+      return
+    }
+
     const userInput: Record<string, unknown> = {
       _id: userId,
       ...otherValues,
+      bio: otherValues.bio.trim(),
       themePreference: localDarkMode ? 'dark' : 'light',
     }
     if (password) {
@@ -111,21 +167,34 @@ export default function SettingsPageClient() {
     }
 
     try {
-      const result = await updateUser({ variables: { user: userInput } })
+      const result = await updateUser({
+        variables: { user: userInput },
+        refetchQueries: [
+          {
+            query: GET_USER,
+            variables: { username: otherValues.username },
+          },
+        ],
+        awaitRefetchQueries: true,
+      })
       const updated = result.data?.updateUser
       if (updated) {
         setUserData({
           ...userData,
           ...updated,
+          bio: updated.bio ?? otherValues.bio.trim(),
           avatar: userData?.avatar as string | undefined,
           themePreference: localDarkMode ? 'dark' : 'light',
         })
         setOriginalDarkMode(localDarkMode)
+        setOriginalBgColor(profileBgColor)
+        setOriginalBgPattern(profileBgPattern)
         toast.success('Settings saved successfully')
         form.reset({
           name: updated.name ?? otherValues.name,
           username: updated.username ?? otherValues.username,
           email: updated.email ?? otherValues.email,
+          bio: (updated.bio as string | undefined) ?? otherValues.bio.trim(),
           password: '',
         })
       }
@@ -148,7 +217,6 @@ export default function SettingsPageClient() {
         <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Avatar */}
               <div className="flex items-center gap-4">
                 <button
                   type="button"
@@ -180,7 +248,6 @@ export default function SettingsPageClient() {
 
               <Separator />
 
-              {/* Name */}
               <FormField
                 control={form.control}
                 name="name"
@@ -195,7 +262,6 @@ export default function SettingsPageClient() {
                 )}
               />
 
-              {/* Username */}
               <FormField
                 control={form.control}
                 name="username"
@@ -210,7 +276,6 @@ export default function SettingsPageClient() {
                 )}
               />
 
-              {/* Email */}
               <FormField
                 control={form.control}
                 name="email"
@@ -225,28 +290,31 @@ export default function SettingsPageClient() {
                 )}
               />
 
-              {/* Password field hidden for now */}
-              {/* <FormField
+              <FormField
                 control={form.control}
-                name="password"
+                name="bio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>About</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Leave blank to keep current password"
+                      <Textarea
+                        placeholder="Tell others a little about yourself"
+                        rows={4}
+                        maxLength={PROFILE_BIO_MAX_LENGTH}
+                        className="resize-y min-h-[96px]"
                         {...field}
                       />
                     </FormControl>
+                    <FormDescription>
+                      Plain text only · {field.value?.length ?? 0}/{PROFILE_BIO_MAX_LENGTH}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
-              /> */}
+              />
 
               <Separator />
 
-              {/* Dark mode */}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="dark-mode">Dark Mode</Label>
@@ -269,7 +337,6 @@ export default function SettingsPageClient() {
                 </div>
               </div>
 
-              {/* Neo-brutalism */}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="neo-brutalism">Neo-Brutalism</Label>
@@ -292,7 +359,6 @@ export default function SettingsPageClient() {
 
               <Separator />
 
-              {/* Profile Background */}
               <div className="space-y-3">
                 <div className="space-y-0.5">
                   <Label>Profile Background</Label>
@@ -301,7 +367,6 @@ export default function SettingsPageClient() {
                   </p>
                 </div>
 
-                {/* Live preview */}
                 <div
                   className="h-20 w-full rounded-md border border-border"
                   style={getProfileBackgroundStyle(profileBgColor, profileBgPattern)}
@@ -309,13 +374,11 @@ export default function SettingsPageClient() {
                   role="img"
                 />
 
-                {/* Color */}
                 <div className="space-y-1.5">
                   <p className="text-xs font-medium text-muted-foreground">Color</p>
                   <div className="flex flex-wrap items-center gap-2">
                     {PROFILE_BG_COLORS.map((c) => {
-                      const selected =
-                        profileBgColor.toLowerCase() === c.toLowerCase()
+                      const selected = profileBgColor.toLowerCase() === c.toLowerCase()
                       return (
                         <button
                           key={c}
@@ -346,7 +409,6 @@ export default function SettingsPageClient() {
                   </div>
                 </div>
 
-                {/* Pattern */}
                 <div className="space-y-1.5">
                   <p className="text-xs font-medium text-muted-foreground">Pattern</p>
                   <div className="flex flex-wrap gap-2">
@@ -372,7 +434,6 @@ export default function SettingsPageClient() {
 
               <Separator />
 
-              {/* Footer */}
               <div className="flex items-center gap-3 flex-wrap">
                 <Button
                   type="button"

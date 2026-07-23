@@ -46,6 +46,7 @@ export const UserType: GraphQLObjectType<Common.User, GraphQLContext> = new Grap
     tokens: { type: GraphQLInt },
     _wallet: { type: GraphQLString, resolve: (u) => u._wallet },
     avatar: { type: JSONScalar },
+    bio: { type: GraphQLString },
     _followersId: {
       type: new GraphQLList(GraphQLString),
       resolve: (u) => u._followersId ?? [],
@@ -94,7 +95,15 @@ export const UserType: GraphQLObjectType<Common.User, GraphQLContext> = new Grap
     },
     presence: {
       type: PresenceType,
-      resolve: (user) => Presence.findOne({ userId: user._id }).lean(),
+      resolve: async (user) => {
+        const doc = await Presence.findOne({ userId: user._id }).lean();
+        if (!doc) return null;
+        return {
+          ...doc,
+          _id: doc._id.toString(),
+          userId: doc.userId.toString(),
+        };
+      },
     },
     rosters: {
       type: new GraphQLList(RosterType),

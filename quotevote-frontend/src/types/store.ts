@@ -13,7 +13,7 @@ export interface UserState {
     id?: string;
     username?: string;
     email?: string;
-    avatar?: string;
+    avatar?: string | Record<string, unknown>;
     admin?: boolean;
     _followingId?: string[];
     [key: string]: unknown;

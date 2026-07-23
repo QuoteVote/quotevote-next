@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useProfileBackground } from '@/hooks/useProfileBackground'
 import {
   DEFAULT_PROFILE_BG_COLOR,
@@ -35,13 +35,17 @@ describe('useProfileBackground', () => {
     expect(localStorage.getItem('profileBgPattern')).toBe('zigzag')
   })
 
-  it('hydrates from previously persisted values', () => {
+  it('hydrates from previously persisted values after mount', async () => {
     localStorage.setItem('profileBgColor', '#ef4444')
     localStorage.setItem('profileBgPattern', 'dots')
 
     const { result } = renderHook(() => useProfileBackground())
-    expect(result.current.color).toBe('#ef4444')
-    expect(result.current.pattern).toBe('dots')
+
+    // Effects flush under renderHook; assert the post-mount hydrated values.
+    await waitFor(() => {
+      expect(result.current.color).toBe('#ef4444')
+      expect(result.current.pattern).toBe('dots')
+    })
   })
 
   it('sanitizes invalid input before persisting', () => {

@@ -155,10 +155,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
       const staged: StagedChatRoom = {
         _id: null,
         title: name || username || 'Chat',
-        avatar:
-          typeof avatar === 'string'
-            ? avatar
-            : (avatar?.url ?? null),
+        avatar: (avatar as string | Record<string, unknown> | null | undefined) ?? null,
         messageType: 'USER',
         users: [loggedInUserIdString, _id],
         username: username || undefined,
@@ -228,7 +225,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
             {sameUser ? (
               <Button
                 variant="outline"
-                onClick={() => router.push(`/dashboard/profile/${username}/avatar`)}
+                onClick={() => router.push('/dashboard/settings')}
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit Profile
@@ -269,10 +266,10 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           </div>
         </div>
 
-        {/* Username + handle */}
+        {/* Display name + handle */}
         <div className="space-y-0.5 mb-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-foreground">{username}</h2>
+            <h2 className="text-xl font-bold text-foreground">{name || username}</h2>
             {contributorBadge && (
               <ProfileBadgeContainer>
                 <ProfileBadge type="contributor" />

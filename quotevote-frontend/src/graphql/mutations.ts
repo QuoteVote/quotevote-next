@@ -618,6 +618,7 @@ export const UPDATE_USER = gql`
       username
       email
       name
+      bio
       avatar
       admin
       accountStatus

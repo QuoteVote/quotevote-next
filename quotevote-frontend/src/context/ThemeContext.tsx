@@ -29,42 +29,44 @@ export const useTheme = (): ThemeContextValue => {
   return context
 }
 
-export function ThemeContextProvider({
-  children,
-}: ThemeContextProviderProps) {
-  const user = useAppStore((s) => s.user.data)
-  const isLoggedIn = Boolean(user?._id)
-
-  // Initialize theme mode from localStorage (fast, before Redux finishes hydrating)
-  const getInitialThemeMode = (): ThemeMode => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedTheme = localStorage.getItem('themeMode')
-        if (savedTheme === 'light' || savedTheme === 'dark') {
-          return savedTheme
-        }
-      } catch (_error) {
-        // ignore localStorage read errors
-      }
+function readStoredThemeMode(): ThemeMode {
+  if (typeof window === 'undefined') return 'light'
+  try {
+    const savedTheme = localStorage.getItem('themeMode')
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme
     }
-    return 'light'
+  } catch {
+    // ignore localStorage read errors
   }
+  return 'light'
+}
 
-  const getInitialNeoBrutalism = (): boolean => {
-    if (typeof window !== 'undefined') {
-      try {
-        return localStorage.getItem('neoBrutalism') === 'on'
-      } catch (_error) {
-        // ignore localStorage read errors
-      }
+function writeStoredThemeMode(mode: ThemeMode): void {
+  try {
+    localStorage.setItem('themeMode', mode)
+  } catch {
+    // ignore localStorage write errors
+  }
+}
+
+export function ThemeContextProvider({ children }: ThemeContextProviderProps) {
+  const isLoggedIn = useAppStore((s) => Boolean(s.user.data?._id))
+  const themePreference = useAppStore((s) => {
+    const pref = s.user.data?.themePreference
+    return pref === 'light' || pref === 'dark' ? pref : undefined
+  })
+
+  const [themeMode, setThemeMode] = useState<ThemeMode>(readStoredThemeMode)
+  const [neoBrutalism, setNeoBrutalism] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return localStorage.getItem('neoBrutalism') === 'on'
+    } catch {
+      return false
     }
-    return false
-  }
+  })
 
-  const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialThemeMode)
-  const [neoBrutalism, setNeoBrutalism] = useState<boolean>(getInitialNeoBrutalism)
-
-  // Apply dark class to <html> whenever themeMode changes
   useEffect(() => {
     if (themeMode === 'dark') {
       document.documentElement.classList.add('dark')
@@ -73,7 +75,6 @@ export function ThemeContextProvider({
     }
   }, [themeMode])
 
-  // Apply neo-brutalism class to <html> whenever flag changes
   useEffect(() => {
     if (neoBrutalism) {
       document.documentElement.classList.add('neo-brutalism')
@@ -82,70 +83,42 @@ export function ThemeContextProvider({
     }
   }, [neoBrutalism])
 
-  // Update theme when user logs in/out or user preference changes
-  /* eslint-disable react-hooks/set-state-in-effect */
+  // Apply saved preference when login state / server preference changes.
+  // Do NOT depend on themeMode — that caused toggles to snap back to the
+  // last saved preference before Save.
   useEffect(() => {
-    if (isLoggedIn && user?.themePreference) {
-      const userTheme = user.themePreference as ThemeMode
-      if (userTheme === 'light' || userTheme === 'dark') {
-        setThemeMode(userTheme)
-        try {
-          localStorage.setItem('themeMode', userTheme)
-        } catch (_error) {
-          // ignore localStorage write errors
-        }
-      }
-    } else if (!isLoggedIn) {
-      let savedTheme: ThemeMode = 'light'
-      try {
-        const stored = localStorage.getItem('themeMode')
-        if (stored === 'light' || stored === 'dark') {
-          savedTheme = stored
-        }
-      } catch (_error) {
-        // ignore localStorage read errors
-      }
-      setThemeMode(savedTheme)
-    } else if (isLoggedIn && !user?.themePreference) {
-      try {
-        const currentTheme =
-          (localStorage.getItem('themeMode') as ThemeMode) ||
-          themeMode ||
-          'light'
-        if (currentTheme === 'light' || currentTheme === 'dark') {
-          localStorage.setItem('themeMode', currentTheme)
-          setThemeMode(currentTheme)
-        }
-      } catch (_error) {
-        // ignore localStorage sync errors
-      }
+    if (!isLoggedIn) {
+      setThemeMode(readStoredThemeMode())
+      return
     }
-  }, [isLoggedIn, user, themeMode])
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (themePreference === 'light' || themePreference === 'dark') {
+      setThemeMode(themePreference)
+      writeStoredThemeMode(themePreference)
+    }
+  }, [isLoggedIn, themePreference])
 
   const theme = useMemo<Theme>(
     () => (themeMode === 'dark' ? darkTheme : lightTheme),
     [themeMode]
   )
 
+  const setTheme = useCallback((mode: ThemeMode): void => {
+    setThemeMode(mode)
+    writeStoredThemeMode(mode)
+  }, [])
+
   const toggleTheme = useCallback((): ThemeMode => {
     const newMode: ThemeMode = themeMode === 'light' ? 'dark' : 'light'
-    setThemeMode(newMode)
-    try {
-      // Always update localStorage for immediate persistence
-      localStorage.setItem('themeMode', newMode)
-    } catch (_error) {
-      // ignore localStorage write errors
-    }
+    setTheme(newMode)
     return newMode
-  }, [themeMode])
+  }, [themeMode, setTheme])
 
   const toggleNeoBrutalism = useCallback((): boolean => {
     const next = !neoBrutalism
     setNeoBrutalism(next)
     try {
       localStorage.setItem('neoBrutalism', next ? 'on' : 'off')
-    } catch (_error) {
+    } catch {
       // ignore localStorage write errors
     }
     return next
@@ -155,16 +128,16 @@ export function ThemeContextProvider({
     () => ({
       themeMode,
       theme,
+      setTheme,
       toggleTheme,
       isDarkMode: themeMode === 'dark',
       neoBrutalism,
       toggleNeoBrutalism,
     }),
-    [themeMode, theme, toggleTheme, neoBrutalism, toggleNeoBrutalism]
+    [themeMode, theme, setTheme, toggleTheme, neoBrutalism, toggleNeoBrutalism]
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
 export default ThemeContext
-
