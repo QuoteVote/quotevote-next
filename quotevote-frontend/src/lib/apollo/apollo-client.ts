@@ -5,13 +5,14 @@ import { ErrorLink } from '@apollo/client/link/error';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
-import { map } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { toast } from 'sonner';
 import { env } from '@/config/env';
-import { getGraphqlWsServerUrl } from '@/lib/utils/getServerUrl';
+import { getGraphqlWsServerUrl, areGraphqlSubscriptionsEnabled } from '@/lib/utils/getServerUrl';
 import { serializeObjectIds } from '@/lib/utils/objectIdSerializer';
 import { getToken, removeToken } from '@/lib/auth';
 import { triggerAuthGate } from '@/lib/auth-gate';
+import { useAppStore } from '@/store/useAppStore';
 
 /**
  * Get the GraphQL endpoint URL from validated environment configuration
@@ -77,6 +78,11 @@ function createAuthLink() {
 function createWsLink(): GraphQLWsLink | null {
   // WebSocket links only work in the browser
   if (typeof window === 'undefined') {
+    return null;
+  }
+
+  // Local backend has no subscription transport — avoid noisy reconnect loops.
+  if (!areGraphqlSubscriptionsEnabled()) {
     return null;
   }
 
@@ -192,7 +198,19 @@ function createErrorLink() {
         if (code === 'UNAUTHENTICATED') {
           if (typeof window !== 'undefined') {
             removeToken();
-            triggerAuthGate({ view: 'login' });
+            // Keep UI auth state in sync with the cleared token.
+            useAppStore.getState().logout();
+
+            // Background queries (notifications, rooms, activities) must not
+            // pop the invite/login modal while the user still looks signed in.
+            // Interactive mutations still open the login gate.
+            const definition = getMainDefinition(operation.query);
+            const isMutation =
+              definition.kind === 'OperationDefinition' &&
+              definition.operation === 'mutation';
+            if (isMutation) {
+              triggerAuthGate({ view: 'login' });
+            }
           }
           return;
         }
@@ -259,6 +277,17 @@ function createObjectIdSerializationLink() {
 }
 
 /**
+ * Local backends have no graphql-ws transport. Completing immediately keeps
+ * useSubscription callers quiet instead of sending subscriptions over HTTP
+ * (which produces INTERNAL_SERVER_ERROR / validation noise).
+ */
+function createNoopSubscriptionLink(): ApolloLink {
+  return new ApolloLink(() => new Observable((subscriber) => {
+    subscriber.complete();
+  }));
+}
+
+/**
  * Create and configure Apollo Client instance
  * This is SSR-aware and safe to use in both server and client components
  * 
@@ -281,23 +310,25 @@ function createApolloClient(): ApolloClientType {
     httpLink,
   ]);
 
-  // Split link: subscriptions go to WebSocket, queries/mutations go to HTTP
-  // On server, only use HTTP link (no WebSocket support)
-  // Note: Type assertion needed due to pnpm dependency resolution creating
-  // separate instances of ApolloLink types from different packages
-  const link = typeof window !== 'undefined' && wsLink
-    ? (split(
-        ({ query }) => {
-          const definition = getMainDefinition(query);
-          return (
-            definition.kind === 'OperationDefinition' &&
-            definition.operation === 'subscription'
-          );
-        },
-        wsLink as unknown as ApolloLink,
-        httpLinkChain
-      ) as ApolloLink)
-    : httpLinkChain;
+  // Split link: subscriptions go to WebSocket (or a no-op on localhost),
+  // queries/mutations go to HTTP. On the server, only use HTTP.
+  const subscriptionLink =
+    (wsLink as unknown as ApolloLink | null) ?? createNoopSubscriptionLink();
+
+  const link =
+    typeof window !== 'undefined'
+      ? (split(
+          ({ query }) => {
+            const definition = getMainDefinition(query);
+            return (
+              definition.kind === 'OperationDefinition' &&
+              definition.operation === 'subscription'
+            );
+          },
+          subscriptionLink,
+          httpLinkChain
+        ) as ApolloLink)
+      : httpLinkChain;
 
   return new ApolloClient({
     link,
