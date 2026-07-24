@@ -83,7 +83,10 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps) {
     }
   }, [neoBrutalism])
 
-  // Apply saved preference when login state / server preference changes.
+  // Apply saved account preference when login state or preference changes.
+  // Intentionally does NOT follow OS/device color-scheme — only the user's
+  // saved `themePreference` (and localStorage when logged out). Preference is
+  // written to the store on settings Save; we must subscribe so that sync runs.
   // Do NOT depend on themeMode — that caused toggles to snap back to the
   // last saved preference before Save.
   /* eslint-disable react-hooks/set-state-in-effect -- sync theme from auth/store preference */

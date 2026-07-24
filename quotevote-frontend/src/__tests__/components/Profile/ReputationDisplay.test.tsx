@@ -72,7 +72,8 @@ describe('ReputationDisplay', () => {
       expect(screen.getByText(/Last updated: Not available/)).toBeInTheDocument();
     });
 
-    it('parses numeric timestamps for lastCalculated', () => {
+    it('parses digit-only epoch strings defensively for lastCalculated', () => {
+      // GraphQL returns ISO strings; this covers older/non-GraphQL payloads.
       const stamped: Reputation = {
         ...mockReputation,
         lastCalculated: String(Date.UTC(2024, 0, 15)),

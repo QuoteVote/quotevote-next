@@ -12,6 +12,10 @@ export interface LoginApiResponse {
     name?: string;
     email?: string;
     admin?: boolean;
+    accountStatus?: string;
+    /** URL string or avataaars qualities object from Mongo (JSON body, not JWT). */
+    avatar?: string | Record<string, unknown> | null;
+    bio?: string;
   };
 }
 

@@ -12,6 +12,7 @@ import { UserType } from './User';
 import { ReportReasonEnum, ReportStatusEnum, ReportSeverityEnum } from './enums';
 
 import User from '../models/User';
+import { toIsoDateString } from '../utils/serializeDate';
 
 export const ReputationMetricsType: GraphQLObjectType<Common.ReputationMetrics, GraphQLContext> =
   new GraphQLObjectType<Common.ReputationMetrics, GraphQLContext>({
@@ -74,35 +75,22 @@ export const UserReputationType: GraphQLObjectType<Common.Reputation, GraphQLCon
       },
       lastCalculated: {
         type: new GraphQLNonNull(GraphQLString),
-        resolve: (rep) => {
-          const value = rep.lastCalculated;
-          if (value instanceof Date) {
-            return Number.isNaN(value.getTime()) ? '' : value.toISOString();
-          }
-          if (typeof value === 'number') {
-            const d = new Date(value);
-            return Number.isNaN(d.getTime()) ? '' : d.toISOString();
-          }
-          if (typeof value === 'string' && value.trim()) {
-            const d = new Date(value);
-            return Number.isNaN(d.getTime()) ? '' : d.toISOString();
-          }
-          return '';
-        },
+        // Always ISO-8601 strings for the client (never raw epoch numbers).
+        resolve: (rep) => toIsoDateString(rep.lastCalculated),
       },
       createdAt: {
         type: new GraphQLNonNull(GraphQLString),
-        resolve: (rep) => {
-          const v = (rep as Common.Reputation & { createdAt?: Date | string }).createdAt;
-          return v instanceof Date ? v.toISOString() : (v ?? '');
-        },
+        resolve: (rep) =>
+          toIsoDateString(
+            (rep as Common.Reputation & { createdAt?: Date | string }).createdAt
+          ),
       },
       updatedAt: {
         type: new GraphQLNonNull(GraphQLString),
-        resolve: (rep) => {
-          const v = (rep as Common.Reputation & { updatedAt?: Date | string }).updatedAt;
-          return v instanceof Date ? v.toISOString() : (v ?? '');
-        },
+        resolve: (rep) =>
+          toIsoDateString(
+            (rep as Common.Reputation & { updatedAt?: Date | string }).updatedAt
+          ),
       },
     }),
   });

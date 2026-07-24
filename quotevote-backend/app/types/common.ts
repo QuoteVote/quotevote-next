@@ -67,7 +67,8 @@ export interface Reputation {
   conductScore: number;
   activityScore: number;
   metrics: ReputationMetrics;
-  lastCalculated: Date | string;
+  /** Stored as Date in Mongo; GraphQL serializes to ISO-8601 string. */
+  lastCalculated: Date | string | number;
 }
 
 export interface User {

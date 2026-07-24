@@ -47,13 +47,17 @@ export function ReputationDisplay({
     return 'Poor';
   };
 
+  /**
+   * GraphQL returns ISO-8601 strings for lastCalculated. Keep light defensive
+   * parsing for Date instances and digit-only epoch strings from older payloads.
+   */
   const formatDate = (dateValue: string | Date | null | undefined): string => {
     if (dateValue == null || dateValue === '') return 'Not available';
 
     const date =
       dateValue instanceof Date
         ? dateValue
-        : typeof dateValue === 'number' || /^\d+$/.test(String(dateValue))
+        : /^\d+$/.test(dateValue.trim())
           ? new Date(Number(dateValue))
           : new Date(dateValue);
 
