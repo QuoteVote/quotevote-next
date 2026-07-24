@@ -5,21 +5,17 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { MockedProvider } from '@apollo/client/testing/react'
 import type { ReactNode } from 'react'
-import { useSyncCurrentUserProfile } from '@/hooks/useSyncCurrentUserProfile'
+import {
+  resolveOwnStatus,
+  useSyncCurrentUserProfile,
+} from '@/hooks/useSyncCurrentUserProfile'
 import { GET_USER } from '@/graphql/queries'
 import { useAppStore } from '@/store/useAppStore'
 import { resetStore } from '@/__tests__/utils/test-utils'
 
 const qualities = { topType: 'LongHairStraight', hairColor: 'Brown' }
 
-function makeGetUserMock(
-  presence?: {
-    status: string
-    statusMessage: string
-    preferredStatus?: string
-    preferredStatusMessage?: string
-  } | null
-) {
+function makeGetUserMock(presence?: { status: string; statusMessage: string } | null) {
   return {
     request: {
       query: GET_USER,
@@ -40,7 +36,7 @@ function makeGetUserMock(
           contributorBadge: false,
           presence:
             presence === undefined
-              ? { status: 'away', statusMessage: 'In a meeting', preferredStatus: 'away', preferredStatusMessage: 'In a meeting' }
+              ? { status: 'away', statusMessage: 'In a meeting' }
               : presence,
           reputation: null,
         },
@@ -48,6 +44,37 @@ function makeGetUserMock(
     },
   }
 }
+
+describe('resolveOwnStatus', () => {
+  it('defaults to online when status is missing', () => {
+    expect(resolveOwnStatus({})).toEqual({ status: 'online', statusMessage: '' })
+  })
+
+  it('keeps an explicit non-offline status', () => {
+    expect(resolveOwnStatus({ status: 'away', statusMessage: 'BRB' })).toEqual({
+      status: 'away',
+      statusMessage: 'BRB',
+    })
+  })
+
+  it('maps offline → online for the active session', () => {
+    expect(resolveOwnStatus({ status: 'offline', statusMessage: 'Back soon' })).toEqual({
+      status: 'online',
+      statusMessage: 'Back soon',
+    })
+  })
+
+  it('favors preferredStatus over status (e.g. cleanup marked offline)', () => {
+    expect(
+      resolveOwnStatus({
+        status: 'offline',
+        statusMessage: '',
+        preferredStatus: 'dnd',
+        preferredStatusMessage: 'Heads down',
+      })
+    ).toEqual({ status: 'dnd', statusMessage: 'Heads down' })
+  })
+})
 
 describe('useSyncCurrentUserProfile', () => {
   beforeEach(() => {
@@ -96,29 +123,6 @@ describe('useSyncCurrentUserProfile', () => {
     await waitFor(() => {
       expect(useAppStore.getState().chat.userStatus).toBe('online')
       expect(useAppStore.getState().chat.userStatusMessage).toBe('Back soon')
-    })
-  })
-
-  it('restores preferredStatus when cleanup marked the user offline', async () => {
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <MockedProvider
-        mocks={[
-          makeGetUserMock({
-            status: 'offline',
-            statusMessage: '',
-            preferredStatus: 'dnd',
-            preferredStatusMessage: 'Heads down',
-          }),
-        ]}
-      >
-        {children}
-      </MockedProvider>
-    )
-    renderHook(() => useSyncCurrentUserProfile(), { wrapper })
-
-    await waitFor(() => {
-      expect(useAppStore.getState().chat.userStatus).toBe('dnd')
-      expect(useAppStore.getState().chat.userStatusMessage).toBe('Heads down')
     })
   })
 })

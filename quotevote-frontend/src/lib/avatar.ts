@@ -63,6 +63,21 @@ export function getDefaultAvatar(seed: string): AvatarQualities {
   );
 }
 
+export type AvatarValue = string | Record<string, unknown>;
+
+/**
+ * Runtime-narrow unknown avatar payloads (GraphQL JSON / loosely typed maps)
+ * to string | Record | null. Rejects numbers, arrays, and other unexpected shapes.
+ */
+export function coerceAvatarValue(value: unknown): AvatarValue | null {
+  if (value == null) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return null;
+}
+
 /**
  * Converts any stored avatar value to a renderable URL:
  *  - avataaars qualities object → avataaars.io URL

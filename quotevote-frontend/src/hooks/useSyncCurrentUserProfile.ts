@@ -5,9 +5,10 @@ import { useQuery } from '@apollo/client/react'
 import { GET_USER } from '@/graphql/queries'
 import { useAppStore } from '@/store/useAppStore'
 
-type SyncedPresence = {
+export type SyncedPresence = {
   status?: string | null
   statusMessage?: string | null
+  /** Optional; not yet exposed on GET_USER / Presence GraphQL type. */
   preferredStatus?: string | null
   preferredStatusMessage?: string | null
 }
@@ -23,7 +24,15 @@ type SyncedUserFields = {
 
 const PRESENCE_STATUSES = new Set(['online', 'away', 'dnd', 'invisible', 'offline'])
 
-function resolveOwnStatus(presence: SyncedPresence): { status: string; statusMessage: string } {
+/**
+ * Resolve the status the current user should see for themselves after rehydrate.
+ * Prefers `preferredStatus` when present (survives cleanup marking status offline).
+ * Maps leftover `offline` → `online` since the user is actively in the app.
+ */
+export function resolveOwnStatus(presence: SyncedPresence): {
+  status: string
+  statusMessage: string
+} {
   const preferred =
     typeof presence.preferredStatus === 'string' && PRESENCE_STATUSES.has(presence.preferredStatus)
       ? presence.preferredStatus
@@ -33,8 +42,7 @@ function resolveOwnStatus(presence: SyncedPresence): { status: string; statusMes
   const status = raw === 'offline' ? 'online' : raw
   const fromPreferred =
     typeof presence.preferredStatusMessage === 'string' ? presence.preferredStatusMessage : null
-  const fromCurrent =
-    typeof presence.statusMessage === 'string' ? presence.statusMessage : null
+  const fromCurrent = typeof presence.statusMessage === 'string' ? presence.statusMessage : null
   return {
     status,
     statusMessage: fromPreferred ?? fromCurrent ?? '',
@@ -46,6 +54,9 @@ function resolveOwnStatus(presence: SyncedPresence): { status: string; statusMes
  * with the latest profile from GraphQL. Login historically omitted `avatar`, so
  * without this sync the nav shows a seeded default while the profile page is correct.
  *
+ * Uses cache-first so dashboard remounts reuse Apollo cache instead of re-hitting
+ * the network on every page. Misses (post-login, hard reload) still fetch once.
+ *
  * Also restores presence (status + message) from the server — Zustand defaults to
  * online/empty on hard reload even though Presence is saved in MongoDB.
  */
@@ -56,10 +67,12 @@ export function useSyncCurrentUserProfile(): void {
   const setUserData = useAppStore((state) => state.setUserData)
   const setUserStatus = useAppStore((state) => state.setUserStatus)
 
+  // cache-first: fill gaps after login / hard reload; avoid re-fetching on every
+  // dashboard navigation. Avatar/settings mutations update Apollo cache + Zustand.
   const { data } = useQuery<{ user: SyncedUserFields | null }>(GET_USER, {
     variables: { username: username ?? '' },
     skip: !username,
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-first',
   })
 
   useEffect(() => {
