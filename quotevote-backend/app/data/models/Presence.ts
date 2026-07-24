@@ -33,9 +33,9 @@ const PresenceSchema = new Schema<PresenceDocument, PresenceModel>(
 PresenceSchema.index({ status: 1 });
 PresenceSchema.index({ lastHeartbeat: 1 });
 
-PresenceSchema.statics.findByUserId = function (userId: string) {
+function findByUserIdImpl(this: PresenceModel, userId: string) {
   return this.findOne({ userId });
-};
+}
 
 /**
  * Refresh liveness only. Do not overwrite a user-chosen status/message.
@@ -79,13 +79,27 @@ async function updateHeartbeatImpl(
   return existing.save();
 }
 
+PresenceSchema.statics.findByUserId = findByUserIdImpl;
 PresenceSchema.statics.updateHeartbeat = updateHeartbeatImpl;
 
-// Always bind the latest statics — mongoose.models.Presence may already exist after hot reload.
-const Presence =
-  (mongoose.models.Presence as PresenceModel) ||
-  mongoose.model<PresenceDocument, PresenceModel>('Presence', PresenceSchema);
+/**
+ * Re-bind every schema static onto the live model.
+ *
+ * Under ts-node-dev / hot reload, `mongoose.models.Presence` often already exists
+ * from a previous module evaluation. In that case `mongoose.model(...)` is skipped
+ * and schema.statics assigned above never replace the stale methods on the cached
+ * model. Binding here (for *all* statics, not just one) keeps call sites on the
+ * latest implementation when new statics are added later.
+ */
+function bindPresenceStatics(model: PresenceModel): PresenceModel {
+  model.findByUserId = findByUserIdImpl.bind(model);
+  model.updateHeartbeat = updateHeartbeatImpl.bind(model);
+  return model;
+}
 
-Presence.updateHeartbeat = updateHeartbeatImpl.bind(Presence);
+const Presence = bindPresenceStatics(
+  (mongoose.models.Presence as PresenceModel) ||
+    mongoose.model<PresenceDocument, PresenceModel>('Presence', PresenceSchema)
+);
 
 export default Presence;

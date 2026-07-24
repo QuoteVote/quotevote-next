@@ -41,8 +41,11 @@ export const usePresenceHeartbeat = (interval: number = 45000): UsePresenceHeart
     const applyPresenceFromHeartbeat = (payload: HeartbeatResult['heartbeat']): void => {
       if (!payload?.status || !PRESENCE_STATUSES.has(payload.status)) return
       const statusMessage = typeof payload.statusMessage === 'string' ? payload.statusMessage : ''
+      // Store defaults to online/'' — coalesce so a partial rehydrate can't force a no-op miss.
       const chat = useAppStore.getState().chat
-      if (chat.userStatus === payload.status && chat.userStatusMessage === statusMessage) return
+      const currentStatus = chat.userStatus || 'online'
+      const currentMessage = chat.userStatusMessage || ''
+      if (currentStatus === payload.status && currentMessage === statusMessage) return
       setUserStatus(payload.status, statusMessage)
     }
 
