@@ -28,11 +28,10 @@ describe('notificationResolver', () => {
     });
 
     it('returns an empty list when the user has no notifications', async () => {
-      (Notification.find as jest.Mock).mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          lean: jest.fn().mockResolvedValue([]),
-        }),
-      });
+      const lean = jest.fn().mockResolvedValue([]);
+      const limit = jest.fn().mockReturnValue({ lean });
+      const sort = jest.fn().mockReturnValue({ limit });
+      (Notification.find as jest.Mock).mockReturnValue({ sort });
 
       const result = await notificationResolver.Query.notifications(
         null,
@@ -48,7 +47,27 @@ describe('notificationResolver', () => {
         userId,
         status: 'new',
       });
+      expect(limit).toHaveBeenCalledWith(50);
       expect(result).toEqual([]);
+    });
+
+    it('clamps limit to a maximum of 100', async () => {
+      const lean = jest.fn().mockResolvedValue([]);
+      const limit = jest.fn().mockReturnValue({ lean });
+      const sort = jest.fn().mockReturnValue({ limit });
+      (Notification.find as jest.Mock).mockReturnValue({ sort });
+
+      await notificationResolver.Query.notifications(
+        null,
+        { limit: 500 },
+        mockContext({
+          _id: userId,
+          username: 'alice',
+          email: 'alice@example.com',
+        } as NonNullable<GraphQLContext['user']>)
+      );
+
+      expect(limit).toHaveBeenCalledWith(100);
     });
   });
 });

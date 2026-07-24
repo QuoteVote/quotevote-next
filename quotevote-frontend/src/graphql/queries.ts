@@ -710,7 +710,7 @@ export const GET_USER_ACTIVITY = gql`
     $searchKey: String!
     $startDateRange: String
     $endDateRange: String
-    $activityEvent: JSON!
+    $activityEvent: [ActivityEventType!]
   ) {
     activities(
       user_id: $user_id
@@ -807,8 +807,8 @@ export const GET_USER_ACTIVITY = gql`
  * Get notifications query
  */
 export const GET_NOTIFICATIONS = gql`
-  query notifications {
-    notifications {
+  query notifications($limit: Int) {
+    notifications(limit: $limit) {
       _id
       userId
       userIdBy

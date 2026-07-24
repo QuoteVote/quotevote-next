@@ -1,12 +1,19 @@
 import mongoose from 'mongoose';
 import { GraphQLError } from 'graphql';
-import { activityResolver } from '~/data/resolvers/activityResolver';
+import { activityResolver, normalizeActivityEvents } from '~/data/resolvers/activityResolver';
 import Activity from '~/data/models/Activity';
 import User from '~/data/models/User';
 import type { GraphQLContext } from '~/types/graphql';
 
 jest.mock('~/data/models/Activity');
 jest.mock('~/data/models/User');
+jest.mock('~/data/utils/logger', () => ({
+  logger: {
+    warn: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
 const actorId = '60d5ec49ad414d7a8d5464a0';
 const profileId = '60d5ec49ad414d7a8d5464a1';
@@ -25,6 +32,20 @@ function mockContext(overrides: Partial<NonNullable<GraphQLContext['user']>> = {
     } as NonNullable<GraphQLContext['user']>,
   };
 }
+
+describe('normalizeActivityEvents', () => {
+  it('accepts ActivityEventType arrays', () => {
+    expect(normalizeActivityEvents(['VOTED', 'POSTED'])).toEqual(['VOTED', 'POSTED']);
+  });
+
+  it('parses legacy JSON array strings', () => {
+    expect(normalizeActivityEvents('["COMMENTED"]')).toEqual(['COMMENTED']);
+  });
+
+  it('drops unknown event strings', () => {
+    expect(normalizeActivityEvents(['VOTED', 'NOT_A_REAL_EVENT'] as string[])).toEqual(['VOTED']);
+  });
+});
 
 describe('activityResolver', () => {
   beforeEach(() => {
@@ -92,6 +113,41 @@ describe('activityResolver', () => {
       expect(result.entities).toHaveLength(1);
       expect(result.entities[0].activityType).toBe('VOTED');
       expect(result.entities[0]._id).toBe(activityId.toString());
+      expect(result.entities[0].userId).toBe(profileId);
+    });
+
+    it('rejects activities missing userId', async () => {
+      (Activity.countDocuments as jest.Mock).mockResolvedValue(1);
+      (Activity.find as jest.Mock).mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          skip: jest.fn().mockReturnValue({
+            limit: jest.fn().mockReturnValue({
+              lean: jest.fn().mockResolvedValue([
+                {
+                  _id: new mongoose.Types.ObjectId(),
+                  userId: null,
+                  activityType: 'VOTED',
+                  created: new Date(),
+                },
+              ]),
+            }),
+          }),
+        }),
+      });
+
+      await expect(
+        activityResolver.Query.activities(
+          null,
+          {
+            user_id: profileId,
+            limit: 10,
+            offset: 0,
+            searchKey: '',
+            activityEvent: ['VOTED'],
+          },
+          mockContext()
+        )
+      ).rejects.toThrow(/missing required userId/);
     });
 
     it('falls back to following feed when user_id is omitted', async () => {

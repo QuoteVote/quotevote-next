@@ -16,6 +16,9 @@ const ActivitySchema = new Schema<ActivityDocument, ActivityModel>(
   { timestamps: true }
 );
 
+// Supports activities feed: filter by user, sort newest-first with skip/limit.
+ActivitySchema.index({ userId: 1, created: -1 });
+
 const Activity =
   (mongoose.models.Activity as ActivityModel) ||
   mongoose.model<ActivityDocument, ActivityModel>('Activity', ActivitySchema);

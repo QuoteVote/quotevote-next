@@ -1,13 +1,21 @@
 import { GraphQLError } from 'graphql';
 import Activity from '../models/Activity';
 import User from '../models/User';
+import { logger } from '../utils/logger';
+import { ActivityEventTypeValues } from '../utils/constants';
 import type * as Common from '~/types/common';
 import type { ActivityQueryArgs, GraphQLContext } from '~/types/graphql';
 
 type ActivityFilter = Record<string, unknown>;
 
-function normalizeActivityEvents(
-  activityEvent: ActivityQueryArgs['activityEvent'] | string | null | undefined
+const ALLOWED_ACTIVITY_EVENTS = new Set<string>(Object.values(ActivityEventTypeValues));
+
+/**
+ * Normalize activityEvent filter from GraphQL.
+ * Prefer `[ActivityEventType!]`; still accepts a legacy JSON-encoded array string.
+ */
+export function normalizeActivityEvents(
+  activityEvent: ActivityQueryArgs['activityEvent'] | string | string[] | null | undefined
 ): Common.ActivityEventType[] {
   if (activityEvent == null) return [];
 
@@ -15,13 +23,26 @@ function normalizeActivityEvents(
   if (typeof activityEvent === 'string') {
     try {
       parsed = JSON.parse(activityEvent);
-    } catch {
+    } catch (err) {
+      logger.warn('activities.activityEvent JSON parse failed; ignoring filter', {
+        raw: activityEvent.slice(0, 200),
+        error: err instanceof Error ? err.message : String(err),
+      });
       return [];
     }
   }
 
-  if (!Array.isArray(parsed)) return [];
-  return parsed.filter((v): v is Common.ActivityEventType => typeof v === 'string');
+  if (!Array.isArray(parsed)) {
+    logger.warn('activities.activityEvent is not an array; ignoring filter', {
+      receivedType: typeof parsed,
+    });
+    return [];
+  }
+
+  return parsed.filter(
+    (v): v is Common.ActivityEventType =>
+      typeof v === 'string' && ALLOWED_ACTIVITY_EVENTS.has(v)
+  );
 }
 
 function toActivityEntity(doc: {
@@ -40,9 +61,19 @@ function toActivityEntity(doc: {
     return typeof value === 'string' ? value : value.toString();
   };
 
+  const userId = toId(doc.userId);
+  if (!userId) {
+    throw new GraphQLError('Activity document is missing required userId', {
+      extensions: {
+        code: 'INTERNAL_SERVER_ERROR',
+        activityId: doc._id.toString(),
+      },
+    });
+  }
+
   return {
     _id: doc._id.toString(),
-    userId: toId(doc.userId) ?? '',
+    userId,
     postId: toId(doc.postId),
     voteId: toId(doc.voteId),
     commentId: toId(doc.commentId),

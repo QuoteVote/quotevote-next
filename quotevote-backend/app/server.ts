@@ -124,8 +124,8 @@ async function startServer() {
         # Token verification
         verifyUserPasswordResetToken(token: String!): Boolean
 
-        # Notifications (auth required)
-        notifications: [Notification!]!
+        # Notifications (auth required); limit defaults to 50 (max 100) in the resolver
+        notifications(limit: Int): [Notification!]!
 
         # Activity feed (auth required)
         activities(
@@ -135,7 +135,7 @@ async function startServer() {
           startDateRange: String
           endDateRange: String
           user_id: String
-          activityEvent: JSON
+          activityEvent: [ActivityEventType!]
         ): Activities
       }
 
