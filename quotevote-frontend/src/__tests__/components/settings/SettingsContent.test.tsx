@@ -41,6 +41,12 @@ jest.mock('@/components/ui/input', () => ({
   ),
 }))
 
+jest.mock('@/components/ui/textarea', () => ({
+  Textarea: React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'textarea'>>(
+    (props, ref) => <textarea ref={ref} {...props} />
+  ),
+}))
+
 jest.mock('@/components/ui/card', () => ({
   Card: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="card">{children}</div>
@@ -83,13 +89,15 @@ jest.mock('@/components/ui/form', () => ({
       field: { 
         name: string
         value: string
-        onChange: (e: React.ChangeEvent<HTMLInputElement> | string) => void
+        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string) => void
         onBlur: () => void
       } 
     }) => React.ReactNode
   }) => {
     const [value, setValue] = React.useState('')
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement> | string) => {
+    const handleChange = (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string
+    ) => {
       if (typeof e === 'string') {
         setValue(e)
       } else {
@@ -127,6 +135,9 @@ jest.mock('@/components/ui/form', () => ({
   },
   FormMessage: ({ children }: { children?: React.ReactNode }) => 
     children ? <span role="alert">{children}</span> : null,
+  FormDescription: ({ children }: { children?: React.ReactNode }) => (
+    <p data-testid="form-description">{children}</p>
+  ),
 }))
 
 jest.mock('@/components/Avatar', () => ({
@@ -189,6 +200,7 @@ const mockUserData = {
   username: 'testuser',
   email: 'test@example.com',
   name: 'Test User',
+  bio: '',
   avatar: 'https://example.com/avatar.jpg',
   admin: false,
 }

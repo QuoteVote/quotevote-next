@@ -72,7 +72,7 @@ export default function RootLayout({
                 <Eyebrow />
                 {children}
                 <AuthGateDialog />
-                <Toaster position="top-right" richColors />
+                <Toaster position="top-right" richColors closeButton />
               </AuthModalProvider>
             </ThemeContextProvider>
           </ApolloProviderWrapper>

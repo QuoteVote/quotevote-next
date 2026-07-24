@@ -47,8 +47,22 @@ export function ReputationDisplay({
     return 'Poor';
   };
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString();
+  /**
+   * GraphQL returns ISO-8601 strings for lastCalculated. Keep light defensive
+   * parsing for Date instances and digit-only epoch strings from older payloads.
+   */
+  const formatDate = (dateValue: string | Date | null | undefined): string => {
+    if (dateValue == null || dateValue === '') return 'Not available';
+
+    const date =
+      dateValue instanceof Date
+        ? dateValue
+        : /^\d+$/.test(dateValue.trim())
+          ? new Date(Number(dateValue))
+          : new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) return 'Not available';
+    return date.toLocaleDateString();
   };
 
   const scoreColor = getScoreColor(reputation.overallScore);

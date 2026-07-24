@@ -150,10 +150,29 @@ describe('ProfileHeader Component', () => {
       });
       // Component may be caught by ErrorBoundary if queries fail, so check for either username or error UI
       await waitFor(() => {
-        const username = screen.queryByText('testuser');
+        const username = screen.queryByText('@testuser');
+        const displayName = screen.queryByText('Test User');
         const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(username || errorUI).toBeTruthy();
+        expect(username || displayName || errorUI).toBeTruthy();
       }, { timeout: 5000 });
+    });
+
+    it('renders display name as the profile heading', async () => {
+      await act(async () => {
+        render(
+          <MockedProvider mocks={createMocks()} addTypename={false}>
+            <ProfileHeader profileUser={mockProfileUser} />
+          </MockedProvider>
+        );
+      });
+      await waitFor(() => {
+        const heading = screen.queryByRole('heading', { name: 'Test User' });
+        const errorUI = screen.queryByText(/Something went wrong/i);
+        expect(heading || errorUI).toBeTruthy();
+      }, { timeout: 5000 });
+      if (!screen.queryByText(/Something went wrong/i)) {
+        expect(screen.getByText('@testuser')).toBeInTheDocument();
+      }
     });
 
     it('renders avatar with correct props', async () => {
@@ -267,7 +286,7 @@ describe('ProfileHeader Component', () => {
       }, { timeout: 5000 });
     });
 
-    it('navigates to avatar page when clicking Edit Profile', async () => {
+    it('navigates to settings page when clicking Edit Profile', async () => {
       const ownProfile: ProfileUser = {
         ...mockProfileUser,
         _id: 'currentuser',
@@ -292,7 +311,7 @@ describe('ProfileHeader Component', () => {
         await act(async () => {
           fireEvent.click(button);
         });
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/avatar');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/settings');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();

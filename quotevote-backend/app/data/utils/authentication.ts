@@ -206,6 +206,8 @@ export const addCreatorToUser = async (
             email: user.email,
             admin: user.admin,
             accountStatus: user.accountStatus,
+            avatar: user.avatar ?? null,
+            bio: user.bio ?? '',
         },
     });
 };

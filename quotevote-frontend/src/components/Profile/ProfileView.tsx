@@ -22,7 +22,7 @@ export function ProfileView({
         <Card>
           <CardContent className="pt-6 text-center">
             <h3 className="text-lg font-semibold mb-2">Invalid user</h3>
-            <Link href="/search" className="text-primary hover:underline">
+            <Link href="/" className="text-primary hover:underline">
               Return to homepage.
             </Link>
           </CardContent>
@@ -75,19 +75,28 @@ export function ProfileView({
           />
         </TabsContent>
 
-        <TabsContent value="about" className="mt-4">
+        <TabsContent value="about" className="mt-4 space-y-4">
+          <Card>
+            <CardContent className="pt-6 space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">About</h3>
+              {profileUser.bio?.trim() ? (
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                  {profileUser.bio.trim()}
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-sm py-2">
+                  No about text yet
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {profileUser.reputation ? (
             <ReputationDisplay
               reputation={profileUser.reputation}
               onRefresh={() => window.location.reload()}
             />
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">No additional information available</p>
-              </CardContent>
-            </Card>
-          )}
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>

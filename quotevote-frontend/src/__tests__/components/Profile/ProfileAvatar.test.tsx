@@ -64,7 +64,6 @@ describe('ProfileAvatar', () => {
       user: {
         loading: false,
         loginError: null,
-        // @ts-expect-error - avatar as object in test
         data: { avatar: qualities },
       },
     });

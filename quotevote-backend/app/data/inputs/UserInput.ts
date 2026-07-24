@@ -10,6 +10,7 @@ export const UserInput = new GraphQLInputObjectType({
     password: { type: GraphQLString },
     quotes: { type: new GraphQLList(GraphQLString) },
     avatar: { type: GraphQLString },
+    bio: { type: GraphQLString },
     contributorBadge: { type: GraphQLBoolean },
     themePreference: { type: GraphQLString },
   },

@@ -169,6 +169,28 @@ export interface QueryResolvers {
 export interface MutationResolvers {
   // User mutations
   followUser: ResolverFn<Common.User, unknown, { user_id: string; action: string }>;
+  updateUser: ResolverFn<
+    Common.User,
+    unknown,
+    {
+      user: {
+        _id: string;
+        name?: string | null;
+        username?: string | null;
+        email?: string | null;
+        password?: string | null;
+        avatar?: string | null;
+        bio?: string | null;
+        contributorBadge?: boolean | null;
+        themePreference?: string | null;
+      };
+    }
+  >;
+  updateUserAvatar: ResolverFn<
+    Common.User,
+    unknown,
+    { user_id: string; avatarQualities?: Record<string, unknown> | null }
+  >;
   updateUserPassword: ResolverFn<
     boolean,
     unknown,
@@ -232,7 +254,11 @@ export interface MutationResolvers {
 
   // Presence mutations
   heartbeat: ResolverFn<HeartbeatResult>;
-  updatePresence: ResolverFn<Common.Presence, unknown, { presence: Common.PresenceInput }>;
+  updatePresence: ResolverFn<
+    Common.Presence,
+    unknown,
+    { presence: { status: string; statusMessage?: string | null } }
+  >;
 
   // Typing mutations
   updateTyping: ResolverFn<TypingResult, unknown, { typing: Common.TypingInput }>;
@@ -411,7 +437,9 @@ export interface MutationResult {
 
 export interface HeartbeatResult {
   success: boolean;
-  timestamp: number;
+  timestamp: string | number;
+  status?: string;
+  statusMessage?: string;
 }
 
 export interface TypingResult {

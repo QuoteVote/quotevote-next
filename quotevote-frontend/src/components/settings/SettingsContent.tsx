@@ -12,12 +12,14 @@ import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { cn } from '@/lib/utils'
@@ -25,7 +27,9 @@ import { cn } from '@/lib/utils'
 import { UPDATE_USER } from '@/graphql/mutations'
 import { replaceGqlError } from '@/lib/utils/replaceGqlError'
 import Avatar from '@/components/Avatar'
+import { parseAvatarToUrl } from '@/lib/avatar'
 import { useAppStore } from '@/store/useAppStore'
+import { PROFILE_BIO_MAX_LENGTH, PROFILE_BIO_HTML_PATTERN } from '@/lib/constants/profile'
 import type { 
   SettingsFormValues, 
   SettingsContentProps, 
@@ -41,6 +45,12 @@ const settingsSchema = z.object({
     .min(5, 'Username should be more than 4 characters')
     .max(50, 'Username should be less than 50 characters'),
   email: z.string().email('Entered value does not match email format'),
+  bio: z
+    .string()
+    .max(PROFILE_BIO_MAX_LENGTH, `About must be ${PROFILE_BIO_MAX_LENGTH} characters or fewer`)
+    .refine((val) => !PROFILE_BIO_HTML_PATTERN.test(val), {
+      message: 'About must be plain text without HTML',
+    }),
   password: z
     .string()
     .optional()
@@ -64,10 +74,13 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
   const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined
   const setUserData = useAppStore((state) => state.setUserData)
 
-  const avatar = userData?.avatar as UserAvatar | string | undefined
+  const avatar = userData?.avatar as UserAvatar | string | Record<string, unknown> | undefined
+  const avatarSrc =
+    parseAvatarToUrl(avatar) ?? (typeof avatar === 'string' ? avatar : undefined)
   const username = userData?.username ?? ''
   const email = userData?.email ?? ''
   const name = userData?.name ?? ''
+  const bio = typeof userData?.bio === 'string' ? userData.bio : ''
   const userId = userData?.id ?? userData?._id ?? ''
 
   const [updateUser, { loading, error }] = useMutation<UpdateUserResponse>(UPDATE_USER)
@@ -78,13 +91,16 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
       username,
       name,
       email,
+      bio,
       password: '',
     },
   })
 
   const onSubmit: SubmitHandler<SettingsFormValues> = async (values) => {
     const { password, ...otherValues } = values;
-    const updateVariables = !password || password.length === 0 ? otherValues : values;
+    const updateVariables = !password || password.length === 0
+      ? { ...otherValues, bio: otherValues.bio.trim() }
+      : { ...values, bio: values.bio.trim() };
 
     try {
       const result = await updateUser({
@@ -97,28 +113,23 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
       });
 
       if (result.data?.updateUser) {
-        const updatedAvatar = typeof avatar === 'string' 
-          ? avatar 
-          : (avatar as UserAvatar)?.url || (avatar as UserAvatar)?.src || '';
-
         setUserData({
           ...userData,
           ...otherValues,
-          avatar: updatedAvatar,
+          bio: otherValues.bio.trim(),
+          // Keep the existing avatar value (URL or qualities object) — profile
+          // updates must not coerce avataaars objects into an empty string.
+          avatar: userData?.avatar,
         });
         
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
-        form.reset(values);
+        form.reset({ ...values, bio: values.bio.trim() });
       }
     } catch (_err) {
       // Error handled by Apollo
     }
   };
-
-  const avatarUrl = typeof avatar === 'string' 
-    ? avatar 
-    : (avatar as UserAvatar)?.url || (avatar as UserAvatar)?.src || ''
 
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch is safe here, compiler skips memoization
   const watchedName = (form.watch('name') as string) || name || '';
@@ -140,8 +151,8 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                 className="group relative flex-shrink-0"
                 aria-label="Change avatar"
               >
-                <Avatar 
-                  src={avatarUrl}
+                <Avatar
+                  src={avatarSrc}
                   alt={watchedName || 'User avatar'}
                   size={96}
                   fallback={watchedName.charAt(0).toUpperCase() || 'U'}
@@ -200,6 +211,33 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                       <FormControl>
                         <Input type="email" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <FormField
+                  control={form.control as Control<SettingsFormValues>}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>About</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Tell others a little about yourself"
+                          rows={4}
+                          maxLength={PROFILE_BIO_MAX_LENGTH}
+                          className="resize-y min-h-[96px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Plain text only · {field.value?.length ?? 0}/{PROFILE_BIO_MAX_LENGTH}
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

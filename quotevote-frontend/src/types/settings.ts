@@ -12,6 +12,7 @@ export interface SettingsFormValues {
   name: string
   username: string
   email: string
+  bio: string
   password?: string
 }
 
@@ -26,6 +27,7 @@ export interface SettingsMenuProps {
 export interface UserAvatar {
   url?: string
   src?: string
+  [key: string]: unknown
 }
 
 export interface SettingsUserData {
@@ -34,7 +36,8 @@ export interface SettingsUserData {
   username?: string
   email?: string
   name?: string
-  avatar?: UserAvatar | string
+  bio?: string
+  avatar?: UserAvatar | string | Record<string, unknown>
   admin?: boolean
   _followingId?: string[]
   themePreference?: 'light' | 'dark'

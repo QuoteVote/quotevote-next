@@ -49,6 +49,7 @@ export interface User {
   name?: string;
   username: string;
   email?: string;
+  bio?: string;
   avatar?: string | {
     url?: string;
     [key: string]: unknown;
@@ -65,6 +66,7 @@ export interface User {
 export interface ProfileUser extends User {
   _id: string;
   username: string;
+  bio?: string;
   _followingId?: string[];
   _followersId?: string[];
   avatar?: string | {
@@ -172,5 +174,7 @@ export interface ProfileBackground {
   pattern: ProfileBackgroundPattern;
   setColor: (color: string) => void;
   setPattern: (pattern: ProfileBackgroundPattern) => void;
+  /** True after localStorage values have been read on the client. */
+  hydrated: boolean;
 }
 

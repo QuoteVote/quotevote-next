@@ -46,6 +46,7 @@ export interface AuthModalContextValue {
 export interface ThemeContextValue {
   themeMode: ThemeMode
   theme: Theme
+  setTheme: (mode: ThemeMode) => void
   toggleTheme: () => ThemeMode
   isDarkMode: boolean
   neoBrutalism: boolean

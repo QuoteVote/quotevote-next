@@ -158,8 +158,12 @@ describe('Authentication Utils', () => {
             const mockUser = {
                 _id: 'mockId',
                 username: 'testuser',
+                name: 'Test User',
                 email: 'test@example.com',
                 admin: false,
+                accountStatus: 'active',
+                avatar: { topType: 'ShortHairShortFlat', hairColor: 'Brown' },
+                bio: 'Hello',
                 comparePassword: jest.fn().mockResolvedValue(true),
             };
             (User.findOne as jest.Mock).mockResolvedValue(mockUser);
@@ -170,7 +174,12 @@ describe('Authentication Utils', () => {
             expect(jwt.sign).toHaveBeenCalled();
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
                 accessToken: 'token',
-                refreshToken: 'token'
+                refreshToken: 'token',
+                user: expect.objectContaining({
+                    username: 'testuser',
+                    avatar: { topType: 'ShortHairShortFlat', hairColor: 'Brown' },
+                    bio: 'Hello',
+                }),
             }));
         });
     });

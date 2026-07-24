@@ -130,6 +130,8 @@ async function startServer() {
           solidPushPortableState(input: PortableStateInput!): Boolean
           solidAppendActivityEvent(input: ActivityEventInput!): Boolean
           heartbeat: HeartbeatResponse
+          updateUser(user: UserInput!): User
+          updateUserAvatar(user_id: String!, avatarQualities: JSON): User
       }
 
       type SolidConnectionStatus {

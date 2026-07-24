@@ -25,8 +25,10 @@ jest.mock('../../../components/Profile/ProfileView', () => ({
 }));
 
 // Mock Next.js router
+const mockReplace = jest.fn();
 jest.mock('next/navigation', () => ({
   useParams: () => ({ username: 'testuser' }),
+  useRouter: () => ({ replace: mockReplace, push: jest.fn() }),
 }));
 
 const mockUserData = {
@@ -71,6 +73,7 @@ const mockUserData = {
 
 describe('ProfileController', () => {
   beforeEach(() => {
+    mockReplace.mockClear();
     useAppStore.setState({
       user: {
         loading: false,
