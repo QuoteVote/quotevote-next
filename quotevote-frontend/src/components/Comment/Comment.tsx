@@ -7,7 +7,7 @@ import { Reference } from '@apollo/client'
 import { Link as LinkIcon, Trash2 } from 'lucide-react'
 import CommentReactions from './CommentReactions'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { parseCommentDate } from '@/lib/utils/momentUtils'
 import { useAppStore } from '@/store/useAppStore'
 import { toast } from 'sonner'
@@ -99,12 +99,12 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
         className="flex-shrink-0 mt-0.5"
         onClick={() => router.push(`/dashboard/profile/${username}`)}
       >
-        <Avatar className="size-8 ring-1 ring-border/50">
-          <AvatarImage src={typeof avatar === 'string' ? avatar : undefined} alt={username} />
-          <AvatarFallback className="text-[11px] bg-muted font-semibold">
-            {(name || username || '').slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <DisplayAvatar
+          avatar={avatar as string | Record<string, unknown> | undefined}
+          username={name || username}
+          size={32}
+          className="ring-1 ring-border/50"
+        />
       </button>
 
       {/* Content */}

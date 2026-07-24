@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/tooltip';
 import { BuddyItem, BuddyItemListProps, PresenceStatus } from '@/types/buddylist';
 import { ChatRoom, StagedChatRoom } from '@/types/chat';
+import { coerceAvatarValue } from '@/lib/avatar';
 
 
 
@@ -101,7 +102,7 @@ export default function BuddyItemList({ buddyList, className }: BuddyItemListPro
                     const staged: StagedChatRoom = {
                         _id: null,
                         title: item.user.name || item.user.username || 'Chat',
-                        avatar: typeof item.user.avatar === 'string' ? item.user.avatar : null,
+                        avatar: coerceAvatarValue(item.user.avatar),
                         messageType: 'USER',
                         users: [currentUser._id!.toString(), item.user._id],
                         username: item.user.username,
@@ -153,7 +154,7 @@ function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void 
     // index.jsx maps item.messageType to item.type.
     const itemType = item.type || item.messageType || (item.user ? 'USER' : 'POST');
 
-    const rawAvatar = item.avatar || item.user?.avatar || item.room?.avatar;
+    const rawAvatar = coerceAvatarValue(item.avatar || item.user?.avatar || item.room?.avatar);
 
     return (
         <li
@@ -170,7 +171,7 @@ function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void 
         >
             <div className="relative">
                 <DisplayAvatar
-                    avatar={rawAvatar as string | Record<string, unknown> | undefined}
+                    avatar={rawAvatar}
                     username={itemText}
                     size={40}
                     className="border-2 border-white shadow-sm"
