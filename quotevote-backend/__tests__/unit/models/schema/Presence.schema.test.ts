@@ -59,20 +59,98 @@ describe('Presence Schema', () => {
       findOneSpy.mockRestore();
     });
 
-    it('updateHeartbeat should use findOneAndUpdate with upsert', async () => {
+    it('updateHeartbeat upserts when no presence exists', async () => {
       const userId = createObjectId().toHexString();
+      const findOneSpy = jest.spyOn(Presence, 'findOne').mockResolvedValue(null);
+      const upserted = {
+        userId,
+        status: 'online',
+        preferredStatus: 'online',
+        lastHeartbeat: new Date(),
+        lastSeen: new Date(),
+      };
       const findOneAndUpdateSpy = jest
         .spyOn(Presence, 'findOneAndUpdate')
-        .mockResolvedValue(null);
+        .mockResolvedValue(upserted as never);
 
-      await Presence.updateHeartbeat(userId);
+      const result = await Presence.updateHeartbeat(userId);
 
+      expect(findOneSpy).toHaveBeenCalledWith({ userId });
       expect(findOneAndUpdateSpy).toHaveBeenCalledWith(
         { userId },
-        expect.objectContaining({ status: 'online' }),
+        expect.objectContaining({
+          $set: expect.objectContaining({
+            lastHeartbeat: expect.any(Date),
+            lastSeen: expect.any(Date),
+          }),
+          $setOnInsert: expect.objectContaining({
+            status: 'online',
+            preferredStatus: 'online',
+          }),
+        }),
         expect.objectContaining({ upsert: true, new: true, setDefaultsOnInsert: true })
       );
+      expect(result).toEqual(upserted);
+
+      findOneSpy.mockRestore();
       findOneAndUpdateSpy.mockRestore();
+    });
+
+    it('updateHeartbeat refreshes timestamps without forcing online when already present', async () => {
+      const userId = createObjectId().toHexString();
+      const save = jest.fn().mockImplementation(function (this: { status: string }) {
+        return Promise.resolve(this);
+      });
+      const existing = {
+        userId,
+        status: 'away',
+        statusMessage: 'In a meeting',
+        preferredStatus: 'away',
+        preferredStatusMessage: 'In a meeting',
+        lastHeartbeat: new Date('2020-01-01T00:00:00.000Z'),
+        lastSeen: new Date('2020-01-01T00:00:00.000Z'),
+        save,
+      };
+      const findOneSpy = jest.spyOn(Presence, 'findOne').mockResolvedValue(existing as never);
+      const findOneAndUpdateSpy = jest.spyOn(Presence, 'findOneAndUpdate');
+
+      const result = await Presence.updateHeartbeat(userId);
+
+      expect(findOneAndUpdateSpy).not.toHaveBeenCalled();
+      expect(save).toHaveBeenCalled();
+      expect(result.status).toBe('away');
+      expect(result.statusMessage).toBe('In a meeting');
+      expect(result.lastHeartbeat).toBeInstanceOf(Date);
+      expect(result.lastHeartbeat).not.toEqual(new Date('2020-01-01T00:00:00.000Z'));
+
+      findOneSpy.mockRestore();
+      findOneAndUpdateSpy.mockRestore();
+    });
+
+    it('updateHeartbeat restores preferred status when currently offline', async () => {
+      const userId = createObjectId().toHexString();
+      const save = jest.fn().mockImplementation(function (this: unknown) {
+        return Promise.resolve(this);
+      });
+      const existing = {
+        userId,
+        status: 'offline',
+        statusMessage: '',
+        preferredStatus: 'dnd',
+        preferredStatusMessage: 'Focusing',
+        lastHeartbeat: new Date('2020-01-01T00:00:00.000Z'),
+        lastSeen: new Date('2020-01-01T00:00:00.000Z'),
+        save,
+      };
+      const findOneSpy = jest.spyOn(Presence, 'findOne').mockResolvedValue(existing as never);
+
+      const result = await Presence.updateHeartbeat(userId);
+
+      expect(result.status).toBe('dnd');
+      expect(result.statusMessage).toBe('Focusing');
+      expect(save).toHaveBeenCalled();
+
+      findOneSpy.mockRestore();
     });
   });
 });

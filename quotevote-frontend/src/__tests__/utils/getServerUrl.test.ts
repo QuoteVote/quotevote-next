@@ -1,4 +1,4 @@
-import { getBaseServerUrl, getGraphqlServerUrl, getGraphqlWsServerUrl } from '@/lib/utils/getServerUrl'
+import { getBaseServerUrl, getGraphqlServerUrl, getGraphqlWsServerUrl, areGraphqlSubscriptionsEnabled } from '@/lib/utils/getServerUrl'
 
 describe('getServerUrl', () => {
     const OLD_ENV = process.env
@@ -42,5 +42,15 @@ describe('getServerUrl', () => {
     it('builds websocket urls for localhost', () => {
         process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:4000'
         expect(getGraphqlWsServerUrl()).toBe('ws://localhost:4000/graphql')
+    })
+
+    it('disables subscriptions on localhost', () => {
+        process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:4000'
+        expect(areGraphqlSubscriptionsEnabled()).toBe(false)
+    })
+
+    it('enables subscriptions on hosted APIs', () => {
+        process.env.NEXT_PUBLIC_SERVER_URL = 'https://api.quote.vote'
+        expect(areGraphqlSubscriptionsEnabled()).toBe(true)
     })
 })

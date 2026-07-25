@@ -5,7 +5,7 @@ import moment from 'moment'
 import { isEmpty } from 'lodash'
 import { Bookmark, BookmarkCheck } from 'lucide-react'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import Avatar from '@/components/Avatar'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ActivityCardProps } from '@/types/activity'
@@ -62,7 +62,7 @@ function ActivityContent({
 }: {
   date: string | number
   content: string
-  avatar?: string | { src?: string; alt?: string }
+  avatar?: string | Record<string, unknown> | { src?: string; alt?: string }
   width?: 'lg' | 'md' | 'sm' | 'xl' | 'xs' | number
   handleRedirectToProfile?: (username: string) => void
   username: string
@@ -73,24 +73,32 @@ function ActivityContent({
   const contentLength = numericWidth > 500 ? 1000 : 500
   const isPosted = activityType?.toUpperCase() === 'POSTED'
   const title = post?.title ? (isPosted ? post.title : post.title.substring(0, 100)) : ''
-  
-  const avatarSrc = typeof avatar === 'string' ? avatar : avatar?.src
-  const avatarAlt = typeof avatar === 'string' ? undefined : avatar?.alt || username
+
+  // Legacy ActivityCard shape used `{ src, alt }`; API avatars are URLs or qualities objects.
+  const isLegacyAvatarShape =
+    typeof avatar === 'object' &&
+    avatar !== null &&
+    ('src' in avatar || 'alt' in avatar) &&
+    !('topType' in avatar) &&
+    !('url' in avatar)
+  const avatarValue = isLegacyAvatarShape
+    ? (avatar as { src?: string }).src
+    : (avatar as string | Record<string, unknown> | undefined)
 
   return (
     <div className="flex gap-4 min-h-[130px]">
-      <Avatar
-        src={avatarSrc}
-        alt={avatarAlt || username}
-        size={40}
-        className="cursor-pointer shrink-0"
+      <button
+        type="button"
+        className="cursor-pointer shrink-0 rounded-full"
         onClick={(e) => {
           e.stopPropagation()
           if (handleRedirectToProfile) {
             handleRedirectToProfile(username)
           }
         }}
-      />
+      >
+        <DisplayAvatar avatar={avatarValue} username={username} size={40} />
+      </button>
       <div className="flex-1 min-w-0">
         <ActivityHeader
           name={username}

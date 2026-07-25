@@ -13,6 +13,9 @@ import { groupResolver } from './data/resolvers/groupResolver';
 import { chatResolver } from './data/resolvers/chatResolver';
 import { rosterResolver } from './data/resolvers/rosterResolver';
 import { quoteResolver } from './data/resolvers/quoteResolver';
+import { notificationResolver } from './data/resolvers/notificationResolver';
+import { activityResolver } from './data/resolvers/activityResolver';
+import { heartbeatResolver } from './data/resolvers/heartbeatResolver';
 import { domainTypeDefs } from './data/types';
 import type { GraphQLContext, PubSub } from './types/graphql';
 import { requireAuth } from './data/utils/requireAuth';
@@ -120,6 +123,20 @@ async function startServer() {
         
         # Token verification
         verifyUserPasswordResetToken(token: String!): Boolean
+
+        # Notifications (auth required); limit defaults to 50 (max 100) in the resolver
+        notifications(limit: Int): [Notification!]!
+
+        # Activity feed (auth required)
+        activities(
+          offset: Int
+          limit: Int
+          searchKey: String
+          startDateRange: String
+          endDateRange: String
+          user_id: String
+          activityEvent: [ActivityEventType!]
+        ): Activities
       }
 
       type Mutation {
@@ -130,6 +147,7 @@ async function startServer() {
           solidPushPortableState(input: PortableStateInput!): Boolean
           solidAppendActivityEvent(input: ActivityEventInput!): Boolean
           heartbeat: HeartbeatResponse
+          updatePresence(presence: PresenceInput!): Presence
           updateUser(user: UserInput!): User
           updateUserAvatar(user_id: String!, avatarQualities: JSON): User
       }
@@ -179,6 +197,9 @@ async function startServer() {
       chatResolver,
       rosterResolver,
       quoteResolver,
+      notificationResolver,
+      activityResolver,
+      heartbeatResolver,
     ],
   });
 

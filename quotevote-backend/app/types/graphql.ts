@@ -131,7 +131,7 @@ export interface QueryResolvers {
   activities: ResolverFn<Common.PaginatedResult<Common.Activity>, unknown, ActivityQueryArgs>;
 
   // Notification queries
-  notifications: ResolverFn<Common.Notification[]>;
+  notifications: ResolverFn<Common.Notification[], unknown, { limit?: number | null }>;
 
   // Message queries
   messages: ResolverFn<Common.Message[], unknown, { messageRoomId: string }>;
@@ -399,7 +399,7 @@ export interface ActivityQueryArgs {
   searchKey?: string;
   startDateRange?: string;
   endDateRange?: string;
-  activityEvent: Common.ActivityEventType[];
+  activityEvent?: Common.ActivityEventType[] | null;
 }
 
 // ============================================================================

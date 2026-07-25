@@ -49,3 +49,13 @@ export const getGraphqlWsServerUrl = (): string => {
   const replacedUrl = baseUrl.replace('https://', 'wss://').replace('http://', 'ws://')
   return `${replacedUrl}/graphql`
 }
+
+/**
+ * Local quotevote-backend is HTTP-only (no graphql-ws). Skip the Apollo WS
+ * link on localhost/127.0.0.1 so the console is not flooded with connection errors.
+ * Hosted APIs still use subscriptions over WSS.
+ */
+export const areGraphqlSubscriptionsEnabled = (): boolean => {
+  const baseUrl = getBaseServerUrl()
+  return !baseUrl.includes('localhost') && !baseUrl.includes('127.0.0.1')
+}
