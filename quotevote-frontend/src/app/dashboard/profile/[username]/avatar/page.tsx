@@ -356,6 +356,7 @@ export default function AvatarEditorPage(): React.ReactNode {
   );
   const seededFromStore = useRef(false);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- seed editor from rehydrated Zustand avatar once */
   useEffect(() => {
     if (seededFromStore.current) return;
 
@@ -373,7 +374,7 @@ export default function AvatarEditorPage(): React.ReactNode {
       seededFromStore.current = true;
     }
   }, [userData.avatar, userId]);
-
+  /* eslint-enable react-hooks/set-state-in-effect */
   const [updateUserAvatar, { loading: saving }] = useMutation<UpdateUserAvatarData>(UPDATE_USER_AVATAR);
 
   // Live preview URL
