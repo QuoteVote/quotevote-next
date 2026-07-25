@@ -10,7 +10,7 @@ export function parseSearchQuery(raw: string): ParsedSearchQuery {
   const trimmed = raw.trim();
 
   if (!trimmed) {
-    return { usernames: [], hashtags: [], textQuery: '', tokens: [] };
+    return { keywords: [], usernames: [], hashtags: [], textQuery: '', tokens: [] };
   }
 
   const usernames = new Set<string>();
@@ -48,7 +48,9 @@ export function parseSearchQuery(raw: string): ParsedSearchQuery {
   }
   textQuery = textQuery.replace(/\s{2,}/g, ' ').trim();
 
+  const keywords = textQuery.length > 0 ? textQuery.split(' ') : [];
   return {
+    keywords,
     usernames: Array.from(usernames),
     hashtags: Array.from(hashtags),
     textQuery,
