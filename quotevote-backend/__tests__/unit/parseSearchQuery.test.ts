@@ -192,35 +192,37 @@ describe('parseSearchQuery', () => {
       expect(result.textQuery).toBe('education reform');
     });
 
-    it('ignores standalone @ without a following word', () => {
+    it('ignores standalone @ without a following word, and excludes it from keywords', () => {
       const result = parseSearchQuery('@ hello');
 
       expect(result.usernames).toEqual([]);
       expect(result.textQuery).toBe('@ hello');
-      expect(result.keywords).toEqual(['@', 'hello']);
+      expect(result.keywords).toEqual(['hello']);
     });
 
-    it('ignores standalone # without a following word', () => {
+    it('ignores standalone # without a following word, and excludes it from keywords', () => {
       const result = parseSearchQuery('# hello');
 
       expect(result.usernames).toEqual([]);
       expect(result.hashtags).toEqual([]);
       expect(result.textQuery).toBe('# hello');
-      expect(result.keywords).toEqual(['#', 'hello']);
+      expect(result.keywords).toEqual(['hello']);
     });
 
-    it('does not crash when the entire query is a lone @', () => {
+    it('does not crash when the entire query is a lone @, and excludes it from keywords', () => {
       const result = parseSearchQuery('@');
 
       expect(result.usernames).toEqual([]);
-      expect(result.keywords).toEqual(['@']);
+      expect(result.textQuery).toBe('@');
+      expect(result.keywords).toEqual([]);
     });
 
-    it('does not crash when the entire query is a lone #', () => {
+    it('does not crash when the entire query is a lone #, and excludes it from keywords', () => {
       const result = parseSearchQuery('#');
 
       expect(result.hashtags).toEqual([]);
-      expect(result.keywords).toEqual(['#']);
+      expect(result.textQuery).toBe('#');
+      expect(result.keywords).toEqual([]);
     });
 
     it('handles @ and # embedded in words (e.g. email addresses)', () => {
@@ -244,6 +246,44 @@ describe('parseSearchQuery', () => {
 
       // \w does not include hyphens, so this should extract 'some' only
       expect(result.usernames).toEqual(['some']);
+    });
+  });
+
+  // ── Punctuation-only tokens ─────────────────────────────────────────────
+
+  describe('punctuation-only tokens', () => {
+    it('excludes a lone @ from keywords but keeps it in textQuery', () => {
+      const result = parseSearchQuery('@');
+
+      expect(result.keywords).toEqual([]);
+      expect(result.textQuery).toBe('@');
+    });
+
+    it('excludes a lone # from keywords but keeps it in textQuery', () => {
+      const result = parseSearchQuery('#');
+
+      expect(result.keywords).toEqual([]);
+      expect(result.textQuery).toBe('#');
+    });
+
+    it('excludes multiple punctuation-only tokens from keywords', () => {
+      const result = parseSearchQuery('@ # !!!');
+
+      expect(result.keywords).toEqual([]);
+      expect(result.textQuery).toBe('@ # !!!');
+    });
+
+    it('keeps a word containing punctuation, such as an email address', () => {
+      const result = parseSearchQuery('user@example.com');
+
+      expect(result.keywords).toEqual(['user@example.com']);
+      expect(result.usernames).toEqual([]);
+    });
+
+    it('keeps punctuation-only tokens interspersed with real keywords, filtering only the former', () => {
+      const result = parseSearchQuery('hello @ world # !!!');
+
+      expect(result.keywords).toEqual(['hello', 'world']);
     });
   });
 });

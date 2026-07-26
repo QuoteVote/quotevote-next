@@ -48,7 +48,10 @@ export function parseSearchQuery(raw: string): ParsedSearchQuery {
   }
   textQuery = textQuery.replace(/\s{2,}/g, ' ').trim();
 
-  const keywords = textQuery.length > 0 ? textQuery.split(' ') : [];
+  const keywords = textQuery.length > 0
+    ? textQuery.split(' ').filter((word) => /\w/.test(word))
+    : [];
+
   return {
     keywords,
     usernames: Array.from(usernames),

@@ -31,10 +31,13 @@ export type SearchToken = UsernameToken | HashtagToken;
 /**
  * The result of parsing a raw search query string.
  *
+ * - `keywords`   — plain-text keyword tokens, in the order they appeared in the query. Tokens
+ *                  made up entirely of punctuation (e.g. a lone `@` or `#`) are excluded.
  * - `usernames`  — extracted @username tokens (lowercased, without the @ prefix)
- * - `keywords`   — plain-text keyword tokens, in the order they appeared in the query
  * - `hashtags`   — extracted #hashtag tokens (lowercased, without the # prefix)
- * - `textQuery`  — the remaining plain-text portion after token extraction (trimmed)
+ * - `textQuery`  — the remaining plain-text portion after token extraction (trimmed) — kept for
+ *                  backwards compatibility. Unlike `keywords`, this retains punctuation-only
+ *                  tokens verbatim.
  * - `tokens`     — ordered list of all extracted tokens for debugging/logging
  */
 export interface ParsedSearchQuery {
