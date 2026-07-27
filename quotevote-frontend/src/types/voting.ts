@@ -88,6 +88,10 @@ export interface VotingPopupProps {
    * Type of vote the current user has cast (if any)
    */
   userVoteType?: VoteType | null
+  /**
+   * Handler function called when a vote is retracted/deleted
+   */
+  onDeleteVote?: () => void
 }
 
 /**

@@ -38,6 +38,7 @@ import {
   APPROVE_POST,
   REJECT_POST,
   DELETE_POST,
+  DELETE_VOTE,
 } from '@/graphql/mutations'
 import {
   GET_POST,
@@ -84,6 +85,14 @@ export default function Post({
   })
 
   const [addVote] = useMutation(VOTE, {
+    update() { refetchPost?.() },
+    refetchQueries: [
+      { query: GET_TOP_POSTS, variables: { limit: 5, offset: 0, searchKey: '' } },
+      { query: GET_POST, variables: { postId: _id } },
+    ],
+  })
+
+  const [removeVote] = useMutation(DELETE_VOTE, {
     update() { refetchPost?.() },
     refetchQueries: [
       { query: GET_TOP_POSTS, variables: { limit: 5, offset: 0, searchKey: '' } },
@@ -168,18 +177,50 @@ export default function Post({
     (v) => v.user?._id?.toString() === userIdStr && !(v as { deleted?: boolean }).deleted
   )
 
-  const getUserVoteType = () => {
+  const getUserVote = () => {
     if (!hasVoted) return null
-    const userVote = votedBy.find(
+    return votedBy.find(
       (v) => v.user?._id?.toString() === userIdStr && !(v as { deleted?: boolean }).deleted
     )
+  }
+
+  const getUserVoteType = () => {
+    const userVote = getUserVote()
     return userVote ? userVote.type : null
+  }
+
+  const handleDeleteVote = async () => {
+    if (!ensureAuth()) return
+    const userVote = getUserVote()
+    if (!userVote) return
+    try {
+      await removeVote({
+        variables: {
+          voteId: userVote._id,
+        },
+      })
+      toast.success('Vote removed successfully')
+    } catch (err) {
+      toast.error(`Error removing vote: ${err instanceof Error ? err.message : 'Unknown'}`)
+    }
   }
 
   const handleVoting = async (obj: { type: VoteType; tags: VoteOption }) => {
     if (!ensureAuth()) return
-    if (hasVoted) { toast('You have already voted on this post'); return }
+    const userVote = getUserVote()
     try {
+      if (userVote) {
+        if (userVote.type === obj.type) {
+          await handleDeleteVote()
+          return
+        }
+        // Switch vote: synchronously delete existing vote first
+        await removeVote({
+          variables: {
+            voteId: userVote._id,
+          },
+        })
+      }
       await addVote({
         variables: {
           vote: {
@@ -546,6 +587,7 @@ export default function Post({
                   selectedText={selection}
                   hasVoted={hasVoted}
                   userVoteType={getUserVoteType() as VoteType | null}
+                  onDeleteVote={handleDeleteVote}
                 />
               </Suspense>
             )}

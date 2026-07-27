@@ -31,6 +31,7 @@ export default function VotingPopup({
   selectedText,
   hasVoted,
   userVoteType,
+  onDeleteVote,
 }: VotingPopupProps) {
   const user = useAppStore((state) => state.user.data)
   const [expand, setExpand] = useState<{ open: boolean; type: string }>({
@@ -171,29 +172,52 @@ export default function VotingPopup({
           <div
             className={cn(
               'flex items-center justify-center',
-              expand.type === 'up' && 'bg-[#2475b0]',
+              (expand.type === 'up' || (hasVoted && userVoteType === 'up')) && 'bg-[#2475b0]',
             )}
           >
             {hasVoted ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
+              userVoteType === 'up' ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled
-                      className="opacity-50"
                       aria-label="Upvote"
                       data-testid="highlight-agree-button"
+                      onClick={() => {
+                        onDeleteVote?.()
+                      }}
                     >
                       <Like size={30} />
                     </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{voteTooltipText}</p>
-                </TooltipContent>
-              </Tooltip>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Retract upvote</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Upvote"
+                      data-testid="highlight-agree-button"
+                      onClick={() => {
+                        handleSetExpand({
+                          open: expand.type !== 'up' || !expand.open,
+                          type: 'up',
+                        })
+                      }}
+                    >
+                      <Like size={30} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Change vote to upvote</p>
+                  </TooltipContent>
+                </Tooltip>
+              )
             ) : showUpvoteTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -202,6 +226,9 @@ export default function VotingPopup({
                     size="icon"
                     aria-label="Upvote"
                     data-testid="highlight-agree-button"
+                    onClick={() => {
+                      onDeleteVote?.()
+                    }}
                   >
                     <Like size={30} />
                   </Button>
@@ -217,12 +244,10 @@ export default function VotingPopup({
                 aria-label="Upvote"
                 data-testid="highlight-agree-button"
                 onClick={() => {
-                  if (!hasVoted) {
-                    handleSetExpand({
-                      open: expand.type !== 'up' || !expand.open,
-                      type: 'up',
-                    })
-                  }
+                  handleSetExpand({
+                    open: expand.type !== 'up' || !expand.open,
+                    type: 'up',
+                  })
                 }}
               >
                 <Like size={30} />
@@ -234,29 +259,52 @@ export default function VotingPopup({
           <div
             className={cn(
               'flex items-center justify-center',
-              expand.type === 'down' && 'bg-[#2475b0]',
+              (expand.type === 'down' || (hasVoted && userVoteType === 'down')) && 'bg-[#2475b0]',
             )}
           >
             {hasVoted ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
+              userVoteType === 'down' ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled
-                      className="opacity-50"
                       aria-label="Downvote"
                       data-testid="highlight-disagree-button"
+                      onClick={() => {
+                        onDeleteVote?.()
+                      }}
                     >
                       <Dislike size={30} />
                     </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{voteTooltipText}</p>
-                </TooltipContent>
-              </Tooltip>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Retract downvote</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Downvote"
+                      data-testid="highlight-disagree-button"
+                      onClick={() => {
+                        handleSetExpand({
+                          open: expand.type !== 'down' || !expand.open,
+                          type: 'down',
+                        })
+                      }}
+                    >
+                      <Dislike size={30} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Change vote to downvote</p>
+                  </TooltipContent>
+                </Tooltip>
+              )
             ) : showDownvoteTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -265,6 +313,9 @@ export default function VotingPopup({
                     size="icon"
                     aria-label="Downvote"
                     data-testid="highlight-disagree-button"
+                    onClick={() => {
+                      onDeleteVote?.()
+                    }}
                   >
                     <Dislike size={30} />
                   </Button>
@@ -280,12 +331,10 @@ export default function VotingPopup({
                 aria-label="Downvote"
                 data-testid="highlight-disagree-button"
                 onClick={() => {
-                  if (!hasVoted) {
-                    handleSetExpand({
-                      open: expand.type !== 'down' || !expand.open,
-                      type: 'down',
-                    })
-                  }
+                  handleSetExpand({
+                    open: expand.type !== 'down' || !expand.open,
+                    type: 'down',
+                  })
                 }}
               >
                 <Dislike size={30} />

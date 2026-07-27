@@ -140,39 +140,39 @@ describe('VotingPopup', () => {
     expect(onAddQuote).toHaveBeenCalled()
   })
 
-  it('disables voting buttons when user has already voted', () => {
-    render(<VotingPopup {...defaultProps} hasVoted={true} userVoteType="up" />)
+  it('does not disable voting buttons when user has already voted, allowing retraction', async () => {
+    const onDeleteVote = jest.fn()
+    render(<VotingPopup {...defaultProps} hasVoted={true} userVoteType="up" onDeleteVote={onDeleteVote} />)
 
     const upvoteButton = screen
       .getByTestId('like-icon')
       .closest('button')
-    expect(upvoteButton).toBeDisabled()
+    expect(upvoteButton).not.toBeDisabled()
+
+    if (upvoteButton) {
+      fireEvent.click(upvoteButton)
+    }
+    await waitFor(() => {
+      expect(onDeleteVote).toHaveBeenCalled()
+    })
   })
 
-  it('shows tooltip when user has already voted', async () => {
-    render(
-      <VotingPopup
-        {...defaultProps}
-        hasVoted={true}
-        userVoteType="up"
-      />,
-    )
+  it('allows vote switching when user has already voted', async () => {
+    render(<VotingPopup {...defaultProps} hasVoted={true} userVoteType="up" />)
 
-    const upvoteButton = screen
-      .getByTestId('like-icon')
+    const downvoteButton = screen
+      .getByTestId('dislike-icon')
       .closest('button')
-    expect(upvoteButton).toBeInTheDocument()
-    expect(upvoteButton).toBeDisabled()
+    expect(downvoteButton).not.toBeDisabled()
 
-    // Tooltip content is rendered but may not be visible until hover
-    // In Radix UI, tooltips are rendered in a portal and may need user interaction
-    // For this test, we verify the button is disabled and the tooltip structure exists
-    const tooltipContent = screen.queryByText(/You have already upvoted this post/)
-    // Tooltip may not be visible until hover, but the structure should exist
-    // If not found, that's okay - tooltips in Radix UI require proper interaction
-    if (tooltipContent) {
-      expect(tooltipContent).toBeInTheDocument()
+    if (downvoteButton) {
+      fireEvent.click(downvoteButton)
     }
+
+    // Wait for the opposite vote tags to expand
+    await waitFor(() => {
+      expect(screen.getByText('#false')).toBeInTheDocument()
+    })
   })
 
   it('calls onVote when downvote option is selected', async () => {
@@ -359,7 +359,7 @@ describe('VotingPopup', () => {
     })
   })
 
-  it('does not allow voting when hasVoted is true', async () => {
+  it('does not expand tags options when clicking user\'s active vote type', async () => {
     const onVote = jest.fn()
     render(
       <VotingPopup
@@ -384,7 +384,7 @@ describe('VotingPopup', () => {
     expect(onVote).not.toHaveBeenCalled()
   })
 
-  it('shows tooltip for downvote when user has downvoted', () => {
+  it('allows switching vote when user has downvoted', async () => {
     render(
       <VotingPopup
         {...defaultProps}
@@ -393,10 +393,10 @@ describe('VotingPopup', () => {
       />,
     )
 
-    const downvoteButton = screen
-      .getByTestId('dislike-icon')
+    const upvoteButton = screen
+      .getByTestId('like-icon')
       .closest('button')
-    expect(downvoteButton).toBeDisabled()
+    expect(upvoteButton).not.toBeDisabled()
   })
 
   it('handles window resize for responsive layout', () => {
