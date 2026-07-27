@@ -154,7 +154,7 @@ export default function VotingPopup({
   const isComment = expand.type === 'comment'
 
   const voteTooltipText = hasVoted
-    ? `You have already ${userVoteType === 'up' ? 'upvoted' : 'downvoted'} this post`
+    ? `You have already ${userVoteType === 'up' ? 'upvoted' : 'downvoted'} this post${!onDeleteVote ? '. Vote changes are not allowed' : ''}`
     : ''
 
   return (
@@ -176,7 +176,27 @@ export default function VotingPopup({
             )}
           >
             {hasVoted ? (
-              userVoteType === 'up' ? (
+              !onDeleteVote ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled
+                        className="opacity-50"
+                        aria-label="Upvote"
+                        data-testid="highlight-agree-button"
+                      >
+                        <Like size={30} />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>{voteTooltipText}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : userVoteType === 'up' ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -263,7 +283,27 @@ export default function VotingPopup({
             )}
           >
             {hasVoted ? (
-              userVoteType === 'down' ? (
+              !onDeleteVote ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled
+                        className="opacity-50"
+                        aria-label="Downvote"
+                        data-testid="highlight-disagree-button"
+                      >
+                        <Dislike size={30} />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>{voteTooltipText}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : userVoteType === 'down' ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

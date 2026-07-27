@@ -158,7 +158,8 @@ describe('VotingPopup', () => {
   })
 
   it('allows vote switching when user has already voted', async () => {
-    render(<VotingPopup {...defaultProps} hasVoted={true} userVoteType="up" />)
+    const onDeleteVote = jest.fn()
+    render(<VotingPopup {...defaultProps} hasVoted={true} userVoteType="up" onDeleteVote={onDeleteVote} />)
 
     const downvoteButton = screen
       .getByTestId('dislike-icon')
@@ -361,12 +362,14 @@ describe('VotingPopup', () => {
 
   it('does not expand tags options when clicking user\'s active vote type', async () => {
     const onVote = jest.fn()
+    const onDeleteVote = jest.fn()
     render(
       <VotingPopup
         {...defaultProps}
         hasVoted={true}
         userVoteType="up"
         onVote={onVote}
+        onDeleteVote={onDeleteVote}
       />,
     )
 
@@ -384,12 +387,14 @@ describe('VotingPopup', () => {
     expect(onVote).not.toHaveBeenCalled()
   })
 
-  it('allows switching vote when user has downvoted', async () => {
+  it('allows switching vote when user has downvoted and onDeleteVote is provided', async () => {
+    const onDeleteVote = jest.fn()
     render(
       <VotingPopup
         {...defaultProps}
         hasVoted={true}
         userVoteType="down"
+        onDeleteVote={onDeleteVote}
       />,
     )
 
@@ -397,6 +402,21 @@ describe('VotingPopup', () => {
       .getByTestId('like-icon')
       .closest('button')
     expect(upvoteButton).not.toBeDisabled()
+  })
+
+  it('disables buttons and shows clear restriction state when user has voted but onDeleteVote is not provided', () => {
+    render(
+      <VotingPopup
+        {...defaultProps}
+        hasVoted={true}
+        userVoteType="up"
+      />,
+    )
+
+    const upvoteButton = screen
+      .getByTestId('like-icon')
+      .closest('button')
+    expect(upvoteButton).toBeDisabled()
   })
 
   it('handles window resize for responsive layout', () => {
