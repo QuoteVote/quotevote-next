@@ -246,9 +246,6 @@ export default function VotingPopup({
                     size="icon"
                     aria-label="Upvote"
                     data-testid="highlight-agree-button"
-                    onClick={() => {
-                      onDeleteVote?.()
-                    }}
                   >
                     <Like size={30} />
                   </Button>
@@ -353,9 +350,6 @@ export default function VotingPopup({
                     size="icon"
                     aria-label="Downvote"
                     data-testid="highlight-disagree-button"
-                    onClick={() => {
-                      onDeleteVote?.()
-                    }}
                   >
                     <Dislike size={30} />
                   </Button>

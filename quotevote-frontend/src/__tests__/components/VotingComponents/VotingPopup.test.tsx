@@ -512,5 +512,34 @@ describe('VotingPopup', () => {
       .closest('button')
     expect(upvoteButton).toBeInTheDocument()
   })
+
+  it('does not trigger onDeleteVote when clicking on showUpvoteTooltip/showDownvoteTooltip buttons since hasVoted is false', async () => {
+    const onDeleteVote = jest.fn()
+    const votedBy = [
+      {
+        userId: 'user123',
+        type: 'up' as const,
+        _id: 'vote1',
+      },
+    ]
+
+    render(
+      <VotingPopup
+        {...defaultProps}
+        votedBy={votedBy}
+        hasVoted={false}
+        onDeleteVote={onDeleteVote}
+      />,
+    )
+
+    const upvoteButton = screen
+      .getByTestId('like-icon')
+      .closest('button')
+    if (upvoteButton) {
+      fireEvent.click(upvoteButton)
+    }
+
+    expect(onDeleteVote).not.toHaveBeenCalled()
+  })
 })
 
