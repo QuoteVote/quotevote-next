@@ -249,6 +249,15 @@ export const UPDATE_ACTION_REACTION = gql`
 `
 
 /**
+ * Delete action reaction mutation
+ */
+export const DELETE_ACTION_REACTION = gql`
+  mutation DeleteActionReaction($_id: String!) {
+    deleteActionReaction(_id: $_id)
+  }
+`
+
+/**
  * Approve post mutation
  */
 export const APPROVE_POST = gql`

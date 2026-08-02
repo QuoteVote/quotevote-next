@@ -9,7 +9,8 @@ export const reactionResolver = {
       _parent: unknown,
       args: { actionId: string }
     ): Promise<Common.Reaction[]> => {
-      const reactions = await Reaction.find({ actionId: args.actionId }).lean();
+      // ponytail: use static method defined on Reaction model
+      const reactions = await Reaction.findByActionId(args.actionId).lean();
       return reactions.map((r) => ({
         ...r,
         _id: r._id.toString(),
@@ -31,18 +32,18 @@ export const reactionResolver = {
         });
       }
 
-      const rxn = await Reaction.create({
-        userId: args.reaction.userId,
-        actionId: args.reaction.actionId,
-        emoji: args.reaction.emoji,
-      });
+      // ponytail: security guard - enforce context.user._id & upsert to prevent duplicates
+      const rxn = await Reaction.findOneAndUpdate(
+        { userId: context.user._id, actionId: args.reaction.actionId },
+        { $set: { emoji: args.reaction.emoji } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      ).lean();
 
       return {
+        ...rxn,
         _id: rxn._id.toString(),
         userId: rxn.userId.toString(),
         actionId: rxn.actionId ? rxn.actionId.toString() : undefined,
-        emoji: rxn.emoji,
-        created: rxn.created,
       } as unknown as Common.Reaction;
     },
 
@@ -57,24 +58,61 @@ export const reactionResolver = {
         });
       }
 
+      // ponytail: ownership check before updating
+      const existing = await Reaction.findById(args._id).lean();
+      if (!existing) {
+        throw new GraphQLError('Reaction not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      if (existing.userId.toString() !== context.user._id.toString()) {
+        throw new GraphQLError('Not authorized', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
       const rxn = await Reaction.findByIdAndUpdate(
         args._id,
         { $set: { emoji: args.emoji } },
         { new: true }
       ).lean();
 
-      if (!rxn) {
+      return {
+        ...rxn!,
+        _id: rxn!._id.toString(),
+        userId: rxn!.userId.toString(),
+        actionId: rxn!.actionId ? rxn!.actionId.toString() : undefined,
+      } as unknown as Common.Reaction;
+    },
+
+    deleteActionReaction: async (
+      _parent: unknown,
+      args: { _id: string },
+      context: GraphQLContext
+    ): Promise<boolean> => {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // ponytail: ownership check before deleting
+      const existing = await Reaction.findById(args._id).lean();
+      if (!existing) {
         throw new GraphQLError('Reaction not found', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
-      return {
-        ...rxn,
-        _id: rxn._id.toString(),
-        userId: rxn.userId.toString(),
-        actionId: rxn.actionId ? rxn.actionId.toString() : undefined,
-      } as unknown as Common.Reaction;
+      if (existing.userId.toString() !== context.user._id.toString()) {
+        throw new GraphQLError('Not authorized', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      await Reaction.findByIdAndDelete(args._id);
+      return true;
     },
   },
 };

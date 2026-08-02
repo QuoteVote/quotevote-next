@@ -276,8 +276,8 @@ export interface ReactionDocument
 }
 
 export interface ReactionModel extends Model<ReactionDocument> {
-  findByActionId(actionId: string): Promise<ReactionDocument[]>;
-  findByMessageId(messageId: string): Promise<ReactionDocument[]>;
+  findByActionId(actionId: string): any;
+  findByMessageId(messageId: string): any;
 }
 
 // ============================================================================

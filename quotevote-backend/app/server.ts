@@ -153,6 +153,7 @@ async function startServer() {
           updateUserAvatar(user_id: String!, avatarQualities: JSON): User
           addActionReaction(reaction: ReactionInput!): Reaction!
           updateActionReaction(_id: String!, emoji: String!): Reaction!
+          deleteActionReaction(_id: String!): Boolean!
       }
 
       type SolidConnectionStatus {
