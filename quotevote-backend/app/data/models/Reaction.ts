@@ -16,6 +16,7 @@ const ReactionSchema = new Schema<ReactionDocument, ReactionModel>(
 ReactionSchema.index({ messageId: 1 });
 ReactionSchema.index({ actionId: 1 });
 ReactionSchema.index({ userId: 1, messageId: 1 });
+ReactionSchema.index({ userId: 1, actionId: 1 }, { unique: true, sparse: true });
 
 // Static methods
 ReactionSchema.statics.findByActionId = function (actionId: string) {

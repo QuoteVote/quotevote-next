@@ -3,7 +3,7 @@
  * Document interfaces and schema-related types for MongoDB/Mongoose
  */
 
-import type { Document, Model, Types } from 'mongoose';
+import type { Document, Model, QueryWithHelpers, Types } from 'mongoose';
 import type * as Common from '~/types/common';
 
 // ============================================================================
@@ -276,8 +276,8 @@ export interface ReactionDocument
 }
 
 export interface ReactionModel extends Model<ReactionDocument> {
-  findByActionId(actionId: string): Promise<ReactionDocument[]>;
-  findByMessageId(messageId: string): Promise<ReactionDocument[]>;
+  findByActionId(actionId: string): QueryWithHelpers<ReactionDocument[], ReactionDocument>;
+  findByMessageId(messageId: string): QueryWithHelpers<ReactionDocument[], ReactionDocument>;
 }
 
 // ============================================================================

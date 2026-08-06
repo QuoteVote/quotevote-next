@@ -35,7 +35,7 @@ interface CommentReactionsProps {
 }
 
 export default function CommentReactions({ actionId, reactions }: CommentReactionsProps) {
-  const userId = useAppStore((state) => state.user.data.id || state.user.data._id) as string
+  const userId = useAppStore((state) => state.user.data?.id || state.user.data?._id || '') as string
   const [open, setOpen] = useState(false)
   const ensureAuth = useGuestGuard()
 
@@ -89,7 +89,7 @@ export default function CommentReactions({ actionId, reactions }: CommentReactio
   }, [userId, actionId, userReaction, addReaction, updateReaction, ensureAuth])
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
       <div className="flex gap-1">
         {Object.keys(groupedReactions).map((emoji) => (
           <div className="flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-sm dark:bg-slate-800" key={emoji}>

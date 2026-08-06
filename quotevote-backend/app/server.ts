@@ -16,6 +16,7 @@ import { quoteResolver } from './data/resolvers/quoteResolver';
 import { notificationResolver } from './data/resolvers/notificationResolver';
 import { activityResolver } from './data/resolvers/activityResolver';
 import { heartbeatResolver } from './data/resolvers/heartbeatResolver';
+import { reactionResolver } from './data/resolvers/reactionResolver';
 import { domainTypeDefs } from './data/types';
 import type { GraphQLContext, PubSub } from './types/graphql';
 import { requireAuth } from './data/utils/requireAuth';
@@ -150,6 +151,9 @@ async function startServer() {
           updatePresence(presence: PresenceInput!): Presence
           updateUser(user: UserInput!): User
           updateUserAvatar(user_id: String!, avatarQualities: JSON): User
+          addActionReaction(reaction: ReactionInput!): Reaction!
+          updateActionReaction(_id: String!, emoji: String!): Reaction!
+          deleteActionReaction(_id: String!): Boolean!
       }
 
       type SolidConnectionStatus {
@@ -200,6 +204,7 @@ async function startServer() {
       notificationResolver,
       activityResolver,
       heartbeatResolver,
+      reactionResolver,
     ],
   });
 
