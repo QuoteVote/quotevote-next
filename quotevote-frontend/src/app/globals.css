@@ -41,6 +41,18 @@
   --color-gray-light: #E5E5E5;
   --color-black-card: #2D2A2A;
 
+  /* Landing page accent colors (Zeplin design, issue #350) */
+  --color-brand-green: #1AAE5A;
+  --color-brand-green-dark: #16A34A;
+  --color-brand-indigo: #4F46E5;
+  --color-brand-purple: #6C63FF;
+  --color-donate-purple: #6C2BD9;
+  --color-section-mint: #EAF6F0;
+  --color-section-lavender: #F3F2FB;
+  --color-section-indigo-tint: #EEF0FF;
+  --color-section-slate: #F4F5F9;
+  --color-footer-navy: #0A1F44;
+
   /* Legacy variables for compatibility */
 
   --radius: 0.625rem;
@@ -117,6 +129,18 @@
   --color-gray-inactive: #D8D8D8;
   --color-gray-light: #E5E5E5;
   --color-black-card: #2D2A2A;
+
+  /* Landing page accent colors (Zeplin design, issue #350) */
+  --color-brand-green: #1AAE5A;
+  --color-brand-green-dark: #16A34A;
+  --color-brand-indigo: #4F46E5;
+  --color-brand-purple: #6C63FF;
+  --color-donate-purple: #6C2BD9;
+  --color-section-mint: #EAF6F0;
+  --color-section-lavender: #F3F2FB;
+  --color-section-indigo-tint: #EEF0FF;
+  --color-section-slate: #F4F5F9;
+  --color-footer-navy: #0A1F44;
 
   /* Agree / Disagree Action Colors */
   --color-disagree: #d32f2f;

@@ -174,12 +174,12 @@ export function LandingPageContent({
 
   useEffect(() => {
     if (user?.id) {
-      router.push('/dashboard/explore');
+      router.push('/');
     }
   }, [user, router]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#eef4f9' }} data-testid="landing-page">
+    <div className="min-h-screen flex flex-col bg-white text-[#1A1A1A] font-sans overflow-x-hidden selection:bg-brand-green selection:text-white" data-testid="landing-page">
       {/* ── Navbar ────────────────────────────────────────────── */}
       <nav
         className="sticky top-0 z-50 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
@@ -291,9 +291,8 @@ export function LandingPageContent({
 
       {/* ── Hero ──────────────────────────────────────────────── */}
       <section
-        className="relative flex-shrink-0 overflow-hidden"
+        className="relative flex-shrink-0 overflow-hidden bg-white"
         aria-labelledby="hero-heading"
-        style={{ background: '#eef4f9' }}
       >
         {/* Background atmosphere */}
         <div className="absolute inset-0 pointer-events-none select-none" aria-hidden>
@@ -434,8 +433,7 @@ export function LandingPageContent({
       {/* ── Mission / About ───────────────────────────────────── */}
       <section
         id="about-section"
-        className="relative overflow-hidden py-14 sm:py-20"
-        style={{ background: '#eef4f9' }}
+        className="relative overflow-hidden py-24 bg-white"
         aria-labelledby="about-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -570,8 +568,7 @@ export function LandingPageContent({
 
       {/* ── Features — Bento Grid ─────────────────────────────── */}
       <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
+        className="py-24 bg-white relative overflow-hidden"
         aria-labelledby="features-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -773,8 +770,7 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — Voting UI ──────────────────────── */}
       <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
+        className="py-24 relative overflow-hidden bg-white"
         aria-labelledby="showcase-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -863,8 +859,7 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — At Any Time ────────────────────── */}
       <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
+        className="py-24 relative overflow-hidden bg-white"
         aria-labelledby="anytime-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -920,8 +915,7 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — Track Conversations ────────────── */}
       <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
+        className="py-24 bg-section-slate relative overflow-hidden"
         aria-labelledby="track-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -993,8 +987,7 @@ export function LandingPageContent({
 
       {/* ── How It Works — 3 steps ────────────────────────────── */}
       <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
+        className="py-24 relative overflow-hidden bg-white"
         aria-labelledby="how-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
@@ -1079,8 +1072,7 @@ export function LandingPageContent({
 
       {/* ── Full-width CTA Banner ─────────────────────────────── */}
       <section
-        className="relative overflow-hidden py-14 sm:py-20"
-        style={{ background: '#eef4f9' }}
+        className="relative overflow-hidden py-24 bg-white"
         aria-label="Call to action"
       >
         {/* Decorative large quote */}
@@ -1152,8 +1144,7 @@ export function LandingPageContent({
 
       {/* ── Discover & Share — two-column ─────────────────────── */}
       <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
+        className="py-24 relative overflow-hidden bg-white"
         aria-labelledby="discover-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -1267,8 +1258,7 @@ export function LandingPageContent({
 
       {/* ── Donate ────────────────────────────────────────────── */}
       <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
+        className="py-24 bg-section-mint relative overflow-hidden"
         aria-labelledby="donate-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -1389,8 +1379,7 @@ export function LandingPageContent({
       {/* ── Footer ────────────────────────────────────────────── */}
       <footer
         role="contentinfo"
-        className="text-white"
-        style={{ background: '#0f172a' }}
+        className="text-white bg-footer-navy"
       >
         {/* Top border accent */}
         <div
