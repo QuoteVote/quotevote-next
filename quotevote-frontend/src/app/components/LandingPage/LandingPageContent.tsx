@@ -190,7 +190,7 @@ export function LandingPageContent({
         <div className="w-full px-4 h-16 flex items-center justify-between gap-4">
           <Link
             href="/"
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded-lg"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark rounded-lg"
             aria-label="Quote.Vote home"
           >
             <Image
@@ -212,7 +212,7 @@ export function LandingPageContent({
           <div className="flex items-center gap-1 sm:gap-2">
             <Link
               href="/"
-              className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] hidden sm:block"
+              className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark hidden sm:block"
               style={{ color: '#475569' }}
               aria-label="Go to home page"
             >
@@ -221,7 +221,7 @@ export function LandingPageContent({
 
             <button
               onClick={() => scrollToSection('about-section')}
-              className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] hidden sm:block"
+              className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark hidden sm:block"
               style={{ color: '#475569' }}
               aria-label="Scroll to About section"
             >
@@ -232,8 +232,7 @@ export function LandingPageContent({
               href="https://opencollective.com/quotevote/donate"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] hidden md:block"
-              style={{ color: '#475569' }}
+              className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark hidden md:block text-donate-purple"
               aria-label="Donate to Quote.Vote (opens in new tab)"
             >
               Donate
@@ -262,7 +261,7 @@ export function LandingPageContent({
 
             <Link
               href="/auths/login"
-              className="px-4 py-2 text-sm font-semibold rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:ring-offset-2"
+              className="px-4 py-2 text-sm font-semibold rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark focus-visible:ring-offset-2"
               style={{
                 color: '#2ecc71',
                 border: '1.5px solid #bbf7d0',
@@ -275,9 +274,9 @@ export function LandingPageContent({
 
             <Link
               href="/auths/request-access"
-              className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:ring-offset-2"
+              className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark focus-visible:ring-offset-2"
               style={{
-                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                background: 'linear-gradient(135deg, var(--color-brand-green-dark) 0%, #15803d 100%)',
                 boxShadow: '0 2px 12px rgba(22,163,74,0.25)',
               }}
               aria-label="Request an invite to join Quote.Vote"
@@ -412,7 +411,7 @@ export function LandingPageContent({
       {/* ── Mission / About ───────────────────────────────────── */}
       <section
         id="about-section"
-        className="relative overflow-hidden py-24 bg-white"
+        className="relative overflow-hidden py-14 sm:py-20 bg-white"
         aria-labelledby="about-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -446,7 +445,7 @@ export function LandingPageContent({
               {/* Blockquote */}
               <blockquote
                 className="relative pl-6"
-                style={{ borderLeft: '3px solid #16a34a' }}
+                style={{ borderLeft: '3px solid var(--color-brand-green-dark)' }}
               >
                 <p
                   className="text-xl sm:text-2xl font-semibold italic leading-snug"
@@ -460,7 +459,7 @@ export function LandingPageContent({
                   href="/auths/request-access"
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 hover:-translate-y-0.5"
                   style={{
-                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                    background: 'linear-gradient(135deg, var(--color-brand-green-dark) 0%, #15803d 100%)',
                     boxShadow: '0 4px 20px rgba(22,163,74,0.28)',
                   }}
                   aria-label="Request an invite to join Quote.Vote"
@@ -472,12 +471,7 @@ export function LandingPageContent({
                   href="https://opencollective.com/quotevote/donate"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5"
-                  style={{
-                    color: '#2ecc71',
-                    border: '1.5px solid #bbf7d0',
-                    background: '#f0fdf4',
-                  }}
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5 bg-donate-purple text-white"
                   aria-label="Donate to support Quote.Vote (opens in new tab)"
                 >
                   Donate
@@ -543,7 +537,7 @@ export function LandingPageContent({
 
       {/* ── Features — Bento Grid ─────────────────────────────── */}
       <section
-        className="py-24 bg-white relative overflow-hidden"
+        className="py-14 sm:py-20 bg-white relative overflow-hidden"
         aria-labelledby="features-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -1035,7 +1029,7 @@ export function LandingPageContent({
 
       {/* ── Full-width CTA Banner ─────────────────────────────── */}
       <section
-        className="relative overflow-hidden py-24 bg-white"
+        className="relative overflow-hidden py-14 sm:py-20 bg-white"
         aria-label="Call to action"
       >
         {/* Decorative large quote */}
@@ -1083,7 +1077,7 @@ export function LandingPageContent({
               href="/auths/request-access"
               className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-white text-base transition-all hover:opacity-90 hover:-translate-y-0.5 w-full sm:w-auto"
               style={{
-                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                background: 'linear-gradient(135deg, var(--color-brand-green-dark) 0%, #15803d 100%)',
                 boxShadow: '0 6px 30px rgba(22,163,74,0.25)',
               }}
               aria-label="Request an invite to join Quote.Vote"
@@ -1256,7 +1250,7 @@ export function LandingPageContent({
                     className="h-full rounded-full"
                     style={{
                       width: `${progressPct}%`,
-                      background: 'linear-gradient(90deg, #16a34a 0%, #86efac 100%)',
+                      background: 'linear-gradient(90deg, var(--color-brand-green-dark) 0%, #86efac 100%)',
                     }}
                   />
                 </div>
@@ -1272,7 +1266,7 @@ export function LandingPageContent({
                   href="/auths/request-access"
                   className="inline-flex items-center justify-between px-6 py-4 rounded-2xl font-bold text-white text-sm transition-all hover:-translate-y-0.5 gap-4"
                   style={{
-                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                    background: 'linear-gradient(135deg, var(--color-brand-green-dark) 0%, #15803d 100%)',
                     boxShadow: '0 4px 24px rgba(22,163,74,0.25)',
                   }}
                   aria-label="Request an invite to join Quote.Vote"
@@ -1284,12 +1278,7 @@ export function LandingPageContent({
                   href="https://opencollective.com/quotevote/donate"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-6 py-4 rounded-2xl font-bold text-sm transition-all hover:-translate-y-0.5"
-                  style={{
-                    background: '#f0fdf4',
-                    color: '#2ecc71',
-                    border: '1.5px solid #bbf7d0',
-                  }}
+                  className="inline-flex items-center justify-center px-6 py-4 rounded-2xl font-bold text-sm transition-all hover:-translate-y-0.5 bg-donate-purple text-white"
                   aria-label="Donate to Quote.Vote today (opens in new tab)"
                 >
                   Donate Today
@@ -1381,7 +1370,7 @@ export function LandingPageContent({
               </h3>
               <a
                 href="mailto:admin@quote.vote"
-                className="flex items-center gap-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
+                className="flex items-center gap-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark rounded"
                 style={{ color: 'rgba(255,255,255,0.55)' }}
                 aria-label="Contact us via email at admin@quote.vote"
               >
@@ -1404,7 +1393,7 @@ export function LandingPageContent({
                     <a
                       href={href}
                       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                      className="text-sm hover:translate-x-0.5 transition-all inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
+                      className="text-sm hover:translate-x-0.5 transition-all inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark rounded"
                       style={{ color: 'rgba(255,255,255,0.55)' }}
                       aria-label={external ? `${label} (opens in new tab)` : label}
                     >
@@ -1428,7 +1417,7 @@ export function LandingPageContent({
                   <li key={label}>
                     <a
                       href={href}
-                      className="text-sm hover:translate-x-0.5 transition-all inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
+                      className="text-sm hover:translate-x-0.5 transition-all inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark rounded"
                       style={{ color: 'rgba(255,255,255,0.55)' }}
                     >
                       {label}
@@ -1454,7 +1443,7 @@ export function LandingPageContent({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`Visit our ${label} (opens in new tab)`}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a]"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark"
                     style={{
                       background: 'rgba(255,255,255,0.06)',
                       border: '1px solid rgba(255,255,255,0.10)',
@@ -1590,7 +1579,7 @@ function HeroSearch({ router }: HeroSearchProps) {
           />
           <button
             type="submit"
-            className="m-2 px-3 sm:px-6 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] flex-shrink-0 flex items-center gap-1.5"
+            className="m-2 px-3 sm:px-6 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-dark flex-shrink-0 flex items-center gap-1.5"
             style={{ background: 'var(--color-primary)' }}
             aria-label="Submit search"
           >
