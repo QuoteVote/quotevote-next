@@ -58,7 +58,7 @@ jest.mock('@/hooks/useGuestGuard', () => ({
 const mockUseQuery = jest.fn();
 const mockUseMutation = jest.fn();
 jest.mock('@apollo/client/react', () => {
-  const actual = jest.requireActual('@apollo/client/react') as any;
+  const actual = jest.requireActual('@apollo/client/react') as Record<string, unknown>;
   return {
     ...actual,
     useQuery: (...args: unknown[]) => mockUseQuery(...args),
