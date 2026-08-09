@@ -227,7 +227,7 @@ describe('Sidebar Component', () => {
         await user.click(searchLink);
         // Link navigation is handled by Next.js Link, which doesn't call router.push in tests
         // We verify the link has the correct href instead
-        expect(searchLink).toHaveAttribute('href', '/search');
+        expect(searchLink).toHaveAttribute('href', '/');
         expect(onOpenChange).toHaveBeenCalledWith(false);
       }
     });
@@ -287,7 +287,7 @@ describe('Sidebar Component', () => {
 
   describe('Active Route Highlighting', () => {
     it('highlights active route in sidebar', () => {
-      mockPathname.mockReturnValue('/search');
+      mockPathname.mockReturnValue('/');
       useAppStore.setState({
         user: {
           loading: false,
@@ -478,7 +478,7 @@ describe('Sidebar Component', () => {
 
       const searchLink = screen.getByText('Search').closest('a');
       if (searchLink) {
-        expect(searchLink).toHaveAttribute('href', '/search');
+        expect(searchLink).toHaveAttribute('href', '/');
       }
     });
 

@@ -58,7 +58,7 @@ describe('ActivityEmptyList', () => {
     await user.click(searchButton)
 
     expect(mockSetSelectedPage).toHaveBeenCalledWith('1')
-    expect(mockPush).toHaveBeenCalledWith('/search')
+    expect(mockPush).toHaveBeenCalledWith('/')
   })
 })
 

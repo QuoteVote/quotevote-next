@@ -1,16 +1,15 @@
 import { routeHasPersistentChatPanel } from '@/lib/utils/chatLayout';
 
 describe('routeHasPersistentChatPanel', () => {
-  it('matches profile, settings and explore routes', () => {
+  it('matches profile, settings and the home route', () => {
     expect(routeHasPersistentChatPanel('/dashboard/profile')).toBe(true);
     expect(routeHasPersistentChatPanel('/dashboard/settings')).toBe(true);
-    expect(routeHasPersistentChatPanel('/dashboard/explore')).toBe(true);
+    expect(routeHasPersistentChatPanel('/')).toBe(true);
   });
 
   it('matches nested paths of those routes', () => {
     expect(routeHasPersistentChatPanel('/dashboard/profile/someuser')).toBe(true);
     expect(routeHasPersistentChatPanel('/dashboard/settings/privacy')).toBe(true);
-    expect(routeHasPersistentChatPanel('/dashboard/explore/abc')).toBe(true);
   });
 
   it('does not match other dashboard routes (drawer stays available)', () => {

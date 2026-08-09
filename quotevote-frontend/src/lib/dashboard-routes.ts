@@ -3,7 +3,7 @@
  * Read-only routes are browsable without auth; participation is gated client-side.
  */
 
-const GUEST_READABLE_PREFIXES = ['/', '/dashboard/post'] as const;
+const GUEST_READABLE_PREFIXES = ['/', '/dashboard/explore', '/dashboard/post'] as const;
 
 const AUTH_REQUIRED_PREFIXES = [
   '/dashboard/settings',

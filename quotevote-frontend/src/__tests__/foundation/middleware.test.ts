@@ -79,11 +79,11 @@ describe('Middleware', () => {
   })
 
   describe('Auth page redirect for authenticated users', () => {
-    it('redirects authenticated users from /auths/login to /dashboard/explore', () => {
+    it('redirects authenticated users from /auths/login to /', () => {
       middleware(createMockRequest('/auths/login', 'valid-token'))
       expect(NextResponse.redirect).toHaveBeenCalled()
       const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
-      expect(redirectUrl.pathname).toBe('/dashboard/explore')
+      expect(redirectUrl.pathname).toBe('/')
     })
 
     it('redirects authenticated users from /auths/signup', () => {

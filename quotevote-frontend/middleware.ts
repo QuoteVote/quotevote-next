@@ -44,7 +44,7 @@ export function middleware(request: NextRequest) {
     if (pathname.startsWith('/dashboard/control-panel')) {
       const payload = token ? decodeJwtPayload(token) : null;
       if (!payload || payload.admin !== true) {
-        return NextResponse.redirect(new URL('/dashboard/explore', request.url));
+        return NextResponse.redirect(new URL('/', request.url));
       }
     }
   }
@@ -54,7 +54,7 @@ export function middleware(request: NextRequest) {
     const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
     if (token && isAuthRoute && !isAlwaysAccessible) {
-      return NextResponse.redirect(new URL('/dashboard/explore', request.url));
+      return NextResponse.redirect(new URL('/', request.url));
     }
   }
 
