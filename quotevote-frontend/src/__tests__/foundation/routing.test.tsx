@@ -10,7 +10,7 @@
 
 import { render, screen } from '../utils/test-utils'
 import { useRouter, usePathname } from 'next/navigation'
-import Home from '@/app/page'
+import Home from '@/app/(app)/page'
 
 // Mock Next.js navigation hooks
 const mockPush = jest.fn()

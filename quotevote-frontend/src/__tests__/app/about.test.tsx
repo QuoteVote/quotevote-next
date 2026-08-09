@@ -1,5 +1,5 @@
 /**
- * Landing Page Tests
+ * About Page Tests
  *
  * Covers: rendering, section presence, navigation links,
  * auth redirect, smooth-scroll, accessibility, and inline search.
@@ -15,7 +15,7 @@ import { useAppStore } from '@/store';
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
-  usePathname: () => '/',
+  usePathname: () => '/about',
 }));
 
 jest.mock('next/image', () => ({
@@ -128,20 +128,15 @@ describe('LandingPage', () => {
     it('renders the main h1 heading', () => {
       renderLandingPage();
       expect(
-        screen.getByRole('heading', { level: 1, name: /share ideas/i })
-      ).toBeInTheDocument();
-    });
-
-    it('renders the motto badge', () => {
-      renderLandingPage();
-      expect(
-        screen.getByText(/no algorithms\. no ads\. just conversations\./i)
+        screen.getByRole('heading', { level: 1, name: /better conversations build/i })
       ).toBeInTheDocument();
     });
 
     it('renders the hero sub-text', () => {
       renderLandingPage();
-      expect(screen.getByText(/text-first platform for thoughtful dialogue/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/neutral public square for structured dialogue/i)
+      ).toBeInTheDocument();
     });
 
     it('renders the hero search bar', () => {
@@ -278,7 +273,7 @@ describe('LandingPage', () => {
       expect(screen.getByText(/search unavailable/i)).toBeInTheDocument();
     });
 
-    it('redirects to /dashboard/explore when clicking a content result', async () => {
+    it('redirects to / when clicking a content result', async () => {
       mockUseQuery.mockReturnValue({
         loading: false,
         error: undefined,
@@ -300,7 +295,7 @@ describe('LandingPage', () => {
       expect(resultBtn).not.toBeNull();
       await user.click(resultBtn!);
 
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/explore?q=Democracy%20Matters');
+      expect(mockPush).toHaveBeenCalledWith('/?q=Democracy%20Matters');
     });
 
     it('does not show dropdown when query is empty', () => {
@@ -440,85 +435,15 @@ describe('LandingPage', () => {
     });
   });
 
-  // ── Platform Principles Section ────────────────────────────
+  // ── Hero trust badges ──────────────────────────────────────
 
-  describe('Platform Principles section', () => {
-    it('renders the Platform Principles heading', () => {
+  describe('Hero trust badges', () => {
+    it('renders the Open Source / Ad-Free / Community-Driven / No Tracking row', () => {
       renderLandingPage();
-      expect(
-        screen.getByRole('heading', { name: /built on values/i })
-      ).toBeInTheDocument();
-    });
-
-    it('renders all 4 principle cards', () => {
-      renderLandingPage();
-      const principlesSection = screen.getByRole('heading', { name: /built on values/i }).closest('section');
-      expect(principlesSection).toBeInTheDocument();
-      expect(screen.getByText('No Ads')).toBeInTheDocument();
-      expect(screen.getByText('No Algorithms')).toBeInTheDocument();
       expect(screen.getAllByText('Open Source').length).toBeGreaterThan(0);
-      expect(screen.getByText('Everyone Welcome')).toBeInTheDocument();
-    });
-
-    it('renders principle descriptions', () => {
-      renderLandingPage();
-      expect(screen.getByText(/pure conversations without commercial influence/i)).toBeInTheDocument();
-      expect(screen.getByText(/community-driven development/i)).toBeInTheDocument();
-    });
-  });
-
-  // ── Community Use Cases Section ────────────────────────────
-
-  describe('Community Use Cases section', () => {
-    it('renders the Community Use Cases heading', () => {
-      renderLandingPage();
-      expect(
-        screen.getByRole('heading', { name: /who is quote\.vote for/i })
-      ).toBeInTheDocument();
-    });
-
-    it('renders all 6 use case cards', () => {
-      renderLandingPage();
-      expect(screen.getByText('Schools & Universities')).toBeInTheDocument();
-      expect(screen.getByText('Parent Groups')).toBeInTheDocument();
-      expect(screen.getByText('Organizations')).toBeInTheDocument();
-      expect(screen.getByText('Governments')).toBeInTheDocument();
-      expect(screen.getByText('Nonprofits & Advocacy')).toBeInTheDocument();
-      expect(screen.getByText('Teams & Projects')).toBeInTheDocument();
-    });
-
-    it('renders use case descriptions', () => {
-      renderLandingPage();
-      expect(screen.getByText(/structured discussions and transparent voting/i)).toBeInTheDocument();
-      expect(screen.getByText(/democratic feedback and decision-making/i)).toBeInTheDocument();
-    });
-  });
-
-  // ── Private Conversations Section ──────────────────────────
-
-  describe('Private Conversations section', () => {
-    it('renders the Private Circle heading', () => {
-      renderLandingPage();
-      expect(
-        screen.getByRole('heading', { name: /your private circle/i })
-      ).toBeInTheDocument();
-    });
-
-    it('renders private messaging and buddy system cards', () => {
-      renderLandingPage();
-      expect(screen.getByText('Private Messages')).toBeInTheDocument();
-      expect(screen.getByText('Your Buddy System')).toBeInTheDocument();
-    });
-
-    it('renders private conversation description', () => {
-      renderLandingPage();
-      expect(screen.getByText(/connect with friends and colleagues privately/i)).toBeInTheDocument();
-    });
-
-    it('renders private conversation features list', () => {
-      renderLandingPage();
-      expect(screen.getByText(/username-based connections and messaging/i)).toBeInTheDocument();
-      expect(screen.getByText(/follow shared interests/i)).toBeInTheDocument();
+      expect(screen.getByText('Ad-Free')).toBeInTheDocument();
+      expect(screen.getByText('Community-Driven')).toBeInTheDocument();
+      expect(screen.getByText('No Tracking')).toBeInTheDocument();
     });
   });
 
@@ -733,7 +658,7 @@ describe('LandingPage', () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('redirects authenticated users to /dashboard/explore', async () => {
+    it('redirects authenticated users to /', async () => {
       useAppStore.getState().setUserData({
         id: 'user-1',
         username: 'testuser',
@@ -743,7 +668,7 @@ describe('LandingPage', () => {
       renderLandingPage();
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/explore');
+        expect(mockPush).toHaveBeenCalledWith('/');
       });
     });
   });

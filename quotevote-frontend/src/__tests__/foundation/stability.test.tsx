@@ -10,7 +10,7 @@
 import React from 'react'
 import { render, screen, act } from '../utils/test-utils'
 import RootLayout from '@/app/layout'
-import Home from '@/app/page'
+import Home from '@/app/(app)/page'
 import { ApolloProviderWrapper } from '@/lib/apollo'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,12 @@ jest.mock('next/font/google', () => ({
   })),
   Geist_Mono: jest.fn(() => ({
     variable: '--font-geist-mono',
+  })),
+  Montserrat: jest.fn(() => ({
+    variable: '--font-montserrat',
+  })),
+  Roboto: jest.fn(() => ({
+    variable: '--font-roboto',
   })),
 }))
 

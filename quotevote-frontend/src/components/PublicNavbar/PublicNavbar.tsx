@@ -60,6 +60,14 @@ export function PublicNavbar({ showLogin = true, showRequestInvite = false }: Pu
             Home
           </Link>
 
+          <Link
+            href="/about"
+            className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] hidden sm:block"
+            style={{ color: '#475569' }}
+          >
+            About
+          </Link>
+
           <a
             href="https://opencollective.com/quotevote/donate"
             target="_blank"
