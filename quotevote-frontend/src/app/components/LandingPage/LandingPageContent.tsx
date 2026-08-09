@@ -306,45 +306,25 @@ export function LandingPageContent({
         </div>
 
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-20 pb-14 sm:pt-20 sm:pb-20 text-center">
-          <p className="text-sm mb-4" style={{ color: '#64748b' }}>
-            No algorithms. No ads. Just conversations.
+          <p className="text-sm mb-4 text-[#2A2A2A]">
+            Quote.Vote is a neutral public square for structured dialogue. Highlight what matters, vote on ideas, and find common ground across any divide.
           </p>
 
           <h1
             id="hero-heading"
-            className="text-[2.75rem] sm:text-6xl lg:text-7xl font-extrabold mb-6 leading-[1.08] tracking-tight"
-            style={{ color: '#0f172a' }}
+            className="text-5xl md:text-[3rem] font-bold leading-[1.05] mb-8 tracking-tight text-[#1A1A1A]"
           >
-            Share Ideas.{' '}
-            <span style={{ color: '#2ecc71' }}>
-              Vote
-            </span>{' '}
-            on What Matters.
+            Better conversations build <span className="text-brand-green">stronger</span> <span className="text-brand-indigo">communities.</span>
           </h1>
 
-          <p className="text-base sm:text-lg leading-relaxed mb-6 max-w-lg mx-auto" style={{ color: '#64748b' }}>
-            An open-source, text-first platform for thoughtful dialogue. Quote,
-            vote, and engage in real conversations.
-          </p>
 
           <HeroSearch router={router} />
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-5">
-            <Button
-              asChild
-              size="lg"
-              className="rounded-xl px-8 font-semibold text-white text-sm w-full sm:w-auto"
-              style={{
-                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                boxShadow: '0 4px 24px rgba(22,163,74,0.25), inset 0 1px 0 rgba(255,255,255,0.15)',
-                border: 'none',
-              }}
-            >
-              <Link href="/auths/request-access" aria-label="Request an invite to join Quote.Vote">
-                Request Invite
-                <ArrowRight size={16} aria-hidden />
-              </Link>
-            </Button>
+            <Link href="/auths/request-access" className="bg-gradient-to-r from-[#16A34A] to-[#1AAE5A] text-white px-8 py-3.5 rounded-full font-bold text-[15px] shadow-sm hover:shadow-lg hover:opacity-90 active:scale-[0.98] transition-all duration-200 ease-out inline-flex items-center gap-2" aria-label="Request an invite to join Quote.Vote">
+              Request Invite
+              <ArrowRight size={16} aria-hidden />
+            </Link>
 
             <Button
               asChild
@@ -410,12 +390,11 @@ export function LandingPageContent({
                 }}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <Icon size={14} style={{ color: '#2ecc71' }} aria-hidden />
+                  <Icon size={14} className="text-brand-green" aria-hidden />
                 </div>
                 <span
                   className="text-2xl sm:text-3xl font-extrabold tracking-tight"
-                  style={{ color: '#0f172a' }}
-                >
+                      >
                   <AnimatedCounter value={value} />
                 </span>
                 <span className="text-xs font-medium" style={{ color: '#64748b' }}>
@@ -441,19 +420,17 @@ export function LandingPageContent({
             {/* Left — headline */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
               >
                 Our Mission
               </p>
               <h2
                 id="about-heading"
                 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight mb-6"
-                style={{ color: '#0f172a' }}
-              >
+                  >
                 Welcome to{' '}
                 <span
-                  style={{ color: '#2ecc71' }}
+                  className="text-brand-green"
                 >
                   Quote.Vote
                 </span>
@@ -473,8 +450,7 @@ export function LandingPageContent({
               >
                 <p
                   className="text-xl sm:text-2xl font-semibold italic leading-snug"
-                  style={{ color: '#0f172a' }}
-                >
+                      >
                   &ldquo;Thoughtful, respectful discourse leads to stronger communities and richer dialogue.&rdquo;
                 </p>
               </blockquote>
@@ -542,8 +518,7 @@ export function LandingPageContent({
                 >
                   <div className="flex-shrink-0 mt-1">
                     <span
-                      className="text-xs font-bold tracking-widest"
-                      style={{ color: '#2ecc71' }}
+                      className="text-xs font-bold tracking-widest text-brand-green"
                     >
                       {num}
                     </span>
@@ -574,19 +549,17 @@ export function LandingPageContent({
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-10">
             <p
-              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-              style={{ color: '#2ecc71' }}
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
             >
               Platform Features
             </p>
             <h2
               id="features-heading"
               className="text-4xl sm:text-5xl font-extrabold tracking-tight"
-              style={{ color: '#0f172a' }}
-            >
+              >
               Built for{' '}
               <span
-                style={{ color: '#2ecc71' }}
+                className="text-brand-green"
               >
                 Meaningful
               </span>{' '}
@@ -618,7 +591,7 @@ export function LandingPageContent({
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: '#f0fdf4' }}
                   >
-                    <MessageSquareQuote size={22} style={{ color: '#2ecc71' }} aria-hidden />
+                    <MessageSquareQuote size={22} className="text-brand-green" aria-hidden />
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Targeted Feedback</h3>
@@ -628,8 +601,8 @@ export function LandingPageContent({
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
-                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
+                <CheckCircle2 size={14} className="text-brand-green" />
+                <span className="text-xs font-medium text-brand-green">
                   Precision quoting on any passage
                 </span>
               </div>
@@ -658,7 +631,7 @@ export function LandingPageContent({
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: '#f0fdf4' }}
                   >
-                    <Zap size={22} style={{ color: '#2ecc71' }} aria-hidden />
+                    <Zap size={22} className="text-brand-green" aria-hidden />
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Live Chat Threads</h3>
@@ -668,8 +641,8 @@ export function LandingPageContent({
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
-                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
+                <CheckCircle2 size={14} className="text-brand-green" />
+                <span className="text-xs font-medium text-brand-green">
                   Real-time public threads
                 </span>
               </div>
@@ -698,7 +671,7 @@ export function LandingPageContent({
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: '#f0fdf4' }}
                   >
-                    <ThumbsUp size={22} style={{ color: '#2ecc71' }} aria-hidden />
+                    <ThumbsUp size={22} className="text-brand-green" aria-hidden />
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Voting Mechanics</h3>
@@ -708,8 +681,8 @@ export function LandingPageContent({
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
-                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
+                <CheckCircle2 size={14} className="text-brand-green" />
+                <span className="text-xs font-medium text-brand-green">
                   Transparent democratic voting
                 </span>
               </div>
@@ -738,7 +711,7 @@ export function LandingPageContent({
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: '#f0fdf4' }}
                   >
-                    <ShieldOff size={22} style={{ color: '#2ecc71' }} aria-hidden />
+                    <ShieldOff size={22} className="text-brand-green" aria-hidden />
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Ad-Free &amp; Algorithm-Free</h3>
@@ -770,7 +743,7 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — Voting UI ──────────────────────── */}
       <section
-        className="py-24 relative overflow-hidden bg-white"
+        className="py-14 sm:py-20 relative overflow-hidden bg-white"
         aria-labelledby="showcase-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -778,19 +751,17 @@ export function LandingPageContent({
             {/* Text side */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
               >
                 See it in action
               </p>
               <h2
                 id="showcase-heading"
                 className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
-                style={{ color: '#0f172a' }}
-              >
+                  >
                 What people{' '}
                 <span
-                  style={{ color: '#2ecc71' }}
+                  className="text-brand-green"
                 >
                   are saying
                 </span>
@@ -810,7 +781,7 @@ export function LandingPageContent({
                       className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background: '#f0fdf4' }}
                     >
-                      <CheckCircle2 size={12} style={{ color: '#2ecc71' }} aria-hidden />
+                      <CheckCircle2 size={12} className="text-brand-green" aria-hidden />
                     </div>
                     <span className="text-sm" style={{ color: '#475569' }}>
                       {item}
@@ -859,26 +830,24 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — At Any Time ────────────────────── */}
       <section
-        className="py-24 relative overflow-hidden bg-white"
+        className="py-14 sm:py-20 relative overflow-hidden bg-white"
         aria-labelledby="anytime-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
           <div className="mb-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
               >
                 Any time, anywhere
               </p>
               <h2
                 id="anytime-heading"
                 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight"
-                style={{ color: '#0f172a' }}
-              >
+                  >
                 Put your{' '}
                 <span
-                  style={{ color: '#2ecc71' }}
+                  className="text-brand-green"
                 >
                   Quote
                 </span>{' '}
@@ -887,8 +856,7 @@ export function LandingPageContent({
             </div>
             <Link
               href="/auths/request-access"
-              className="inline-flex items-center gap-2 text-sm font-semibold shrink-0"
-              style={{ color: '#2ecc71' }}
+              className="inline-flex items-center gap-2 text-sm font-semibold shrink-0 text-brand-green"
               aria-label="Request an invite to join"
             >
               Start sharing <ChevronRight size={16} aria-hidden />
@@ -915,7 +883,7 @@ export function LandingPageContent({
 
       {/* ── Product Showcase — Track Conversations ────────────── */}
       <section
-        className="py-24 bg-section-slate relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden bg-section-slate"
         aria-labelledby="track-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -940,19 +908,17 @@ export function LandingPageContent({
             {/* Text side — right */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
               >
                 Stay informed
               </p>
               <h2
                 id="track-heading"
                 className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
-                style={{ color: '#0f172a' }}
-              >
+                  >
                 Track every{' '}
                 <span
-                  style={{ color: '#2ecc71' }}
+                  className="text-brand-green"
                 >
                   Conversation
                 </span>
@@ -972,7 +938,7 @@ export function LandingPageContent({
                       className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background: '#f0fdf4' }}
                     >
-                      <CheckCircle2 size={12} style={{ color: '#2ecc71' }} aria-hidden />
+                      <CheckCircle2 size={12} className="text-brand-green" aria-hidden />
                     </div>
                     <span className="text-sm" style={{ color: '#475569' }}>
                       {item}
@@ -987,20 +953,18 @@ export function LandingPageContent({
 
       {/* ── How It Works — 3 steps ────────────────────────────── */}
       <section
-        className="py-24 relative overflow-hidden bg-white"
+        className="py-14 sm:py-20 relative overflow-hidden bg-white"
         aria-labelledby="how-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ color: '#2ecc71' }}
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
           >
             Simple by design
           </p>
           <h2
             id="how-heading"
             className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4"
-            style={{ color: '#0f172a' }}
           >
             How it works
           </h2>
@@ -1052,11 +1016,10 @@ export function LandingPageContent({
                     border: '1px solid #bbf7d0',
                   }}
                 >
-                  <Icon size={26} style={{ color: '#2ecc71' }} aria-hidden />
+                  <Icon size={26} className="text-brand-green" aria-hidden />
                 </div>
                 <span
-                  className="text-xs font-bold tracking-[0.2em] uppercase mb-2"
-                  style={{ color: '#2ecc71' }}
+                  className="text-xs font-bold tracking-[0.2em] uppercase mb-2 text-brand-green"
                 >
                   Step {step}
                 </span>
@@ -1093,18 +1056,16 @@ export function LandingPageContent({
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ color: '#2ecc71' }}
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
           >
             Ready to join?
           </p>
           <h2
             className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6"
-            style={{ color: '#0f172a' }}
           >
             The future of{' '}
             <span
-              style={{ color: '#2ecc71' }}
+              className="text-brand-green"
             >
               thoughtful discourse
             </span>{' '}
@@ -1132,8 +1093,7 @@ export function LandingPageContent({
             </Link>
             <Link
               href="/#about-section"
-              className="inline-flex items-center gap-2 text-base font-semibold transition-all hover:opacity-80"
-              style={{ color: '#2ecc71' }}
+              className="inline-flex items-center gap-2 text-base font-semibold transition-all hover:opacity-80 text-brand-green"
             >
               Read our mission
               <ChevronRight size={18} aria-hidden />
@@ -1144,22 +1104,20 @@ export function LandingPageContent({
 
       {/* ── Discover & Share — two-column ─────────────────────── */}
       <section
-        className="py-24 relative overflow-hidden bg-white"
+        className="py-14 sm:py-20 relative overflow-hidden bg-white"
         aria-labelledby="discover-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-10">
             <p
-              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-              style={{ color: '#2ecc71' }}
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
             >
               For everyone
             </p>
             <h2
               id="discover-heading"
               className="text-4xl sm:text-5xl font-extrabold tracking-tight"
-              style={{ color: '#0f172a' }}
-            >
+              >
               Find your place in the conversation
             </h2>
           </div>
@@ -1178,12 +1136,12 @@ export function LandingPageContent({
                 className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
                 style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
               >
-                <Search size={24} style={{ color: '#2ecc71' }} aria-hidden />
+                <Search size={24} className="text-brand-green" aria-hidden />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{ color: '#0f172a' }}>
                 Discover{' '}
                 <span
-                  style={{ color: '#2ecc71' }}
+                  className="text-brand-green"
                 >
                   without bias
                 </span>
@@ -1199,7 +1157,7 @@ export function LandingPageContent({
                 {['No algorithmic curation', 'Historical event search', 'Follow-based filtering'].map(
                   (item) => (
                     <li key={item} className="flex items-center gap-2.5">
-                      <ChevronRight size={14} style={{ color: '#2ecc71' }} aria-hidden />
+                      <ChevronRight size={14} className="text-brand-green" aria-hidden />
                       <span className="text-sm" style={{ color: '#475569' }}>
                         {item}
                       </span>
@@ -1222,12 +1180,12 @@ export function LandingPageContent({
                 className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
                 style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
               >
-                <TrendingUp size={24} style={{ color: '#2ecc71' }} aria-hidden />
+                <TrendingUp size={24} className="text-brand-green" aria-hidden />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{ color: '#0f172a' }}>
                 Share{' '}
                 <span
-                  style={{ color: '#2ecc71' }}
+                  className="text-brand-green"
                 >
                   your ideas
                 </span>
@@ -1243,7 +1201,7 @@ export function LandingPageContent({
                 {['Public and private circles', 'Quote-based responses', 'Democratic voting on ideas'].map(
                   (item) => (
                     <li key={item} className="flex items-center gap-2.5">
-                      <ChevronRight size={14} style={{ color: '#2ecc71' }} aria-hidden />
+                      <ChevronRight size={14} className="text-brand-green" aria-hidden />
                       <span className="text-sm" style={{ color: '#475569' }}>
                         {item}
                       </span>
@@ -1258,7 +1216,7 @@ export function LandingPageContent({
 
       {/* ── Donate ────────────────────────────────────────────── */}
       <section
-        className="py-24 bg-section-mint relative overflow-hidden"
+        className="py-14 sm:py-20 relative overflow-hidden bg-section-mint"
         aria-labelledby="donate-heading"
       >
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -1266,19 +1224,17 @@ export function LandingPageContent({
             {/* Left */}
             <div>
               <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
               >
                 Support the mission
               </p>
               <h2
                 id="donate-heading"
                 className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
-                style={{ color: '#0f172a' }}
-              >
+                  >
                 Donate{' '}
                 <span
-                  style={{ color: '#2ecc71' }}
+                  className="text-brand-green"
                 >
                   what you can
                 </span>
@@ -1405,7 +1361,7 @@ export function LandingPageContent({
                 height={32}
                 className="object-contain"
               />
-              <span className="font-extrabold text-base tracking-wide" style={{ color: '#2ecc71' }}>
+              <span className="font-extrabold text-base tracking-wide text-brand-green">
                 QUOTE.VOTE
               </span>
             </Link>
@@ -1625,7 +1581,6 @@ function HeroSearch({ router }: HeroSearchProps) {
             onKeyDown={handleKeyDown}
             placeholder="Search topics, quotes, conversations…"
             className="flex-1 bg-transparent border-none outline-none text-base px-4 py-4"
-            style={{ color: '#0f172a' }}
             role="combobox"
             aria-label="Search topics, quotes, conversations"
             aria-expanded={showDropdown}
@@ -1837,19 +1792,17 @@ function FeaturedPostsSection() {
         {/* Header */}
         <div className="text-center mb-8">
           <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ color: '#2ecc71' }}
+            className="text-xs font-bold uppercase tracking-[0.25em] mb-3 text-brand-green"
           >
             Community Highlights
           </p>
           <h2
             id="featured-heading"
             className="text-4xl sm:text-5xl font-extrabold tracking-tight"
-            style={{ color: '#0f172a' }}
           >
             Featured{' '}
             <span
-              style={{ color: '#2ecc71' }}
+              className="text-brand-green"
             >
               Posts
             </span>
@@ -1874,7 +1827,7 @@ function FeaturedPostsSection() {
                   }}
                   aria-label="Previous featured post"
                 >
-                  <ChevronLeft size={20} style={{ color: '#2ecc71' }} />
+                  <ChevronLeft size={20} className="text-brand-green" />
                 </button>
                 <button
                   type="button"
@@ -1887,7 +1840,7 @@ function FeaturedPostsSection() {
                   }}
                   aria-label="Next featured post"
                 >
-                  <ChevronRight size={20} style={{ color: '#2ecc71' }} />
+                  <ChevronRight size={20} className="text-brand-green" />
                 </button>
               </>
             )}
@@ -1930,8 +1883,7 @@ function FeaturedPostsSection() {
         <div className="text-center mt-6">
           <Link
             href="/auths/login"
-            className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
-            style={{ color: '#2ecc71' }}
+            className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80 text-brand-green"
           >
             Join to see more and participate
             <ChevronRight size={16} aria-hidden />
@@ -2007,8 +1959,8 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
             border: '1px solid #bbf7d0',
           }}
         >
-          <Star size={12} style={{ color: '#2ecc71' }} aria-hidden />
-          <span className="text-[10px] font-bold" style={{ color: '#2ecc71' }}>
+          <Star size={12} className="text-brand-green" aria-hidden />
+          <span className="text-[10px] font-bold text-brand-green">
             Featured
           </span>
         </div>
@@ -2018,8 +1970,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
       {post.title && (
         <h3
           className="text-base font-bold mb-2 leading-snug line-clamp-2"
-          style={{ color: '#0f172a' }}
-        >
+                  >
           {post.title}
         </h3>
       )}
@@ -2040,7 +1991,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
         style={{ borderTop: '1px solid #e2e8f0' }}
       >
         <div className="flex items-center gap-1.5">
-          <ThumbsUp size={14} style={{ color: '#2ecc71' }} aria-hidden />
+          <ThumbsUp size={14} className="text-brand-green" aria-hidden />
           <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
             {upvotes}
           </span>
@@ -2164,16 +2115,15 @@ function BeInTouchSection() {
               border: '1px solid #bbf7d0',
             }}
           >
-            <Mail size={26} style={{ color: '#2ecc71' }} aria-hidden />
+            <Mail size={26} className="text-brand-green" aria-hidden />
           </div>
 
           <h2
             id="touch-heading"
             className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4"
-            style={{ color: '#0f172a' }}
           >
             Please Be{' '}
-            <span style={{ color: '#2ecc71' }}>in Touch!</span>
+            <span className="text-brand-green">in Touch!</span>
           </h2>
           <p
             className="text-base leading-relaxed max-w-lg mx-auto mb-6"
