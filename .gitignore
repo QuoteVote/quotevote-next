@@ -5,3 +5,4 @@ graphify-out/
 
 # Local Cursor IDE rules / agent config (machine-specific)
 .cursor/
+.superpowers/
