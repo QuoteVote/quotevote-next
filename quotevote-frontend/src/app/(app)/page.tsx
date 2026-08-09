@@ -10,7 +10,7 @@ import {
 
 const BASE_TITLE = 'Explore — Quote.Vote'
 const BASE_DESCRIPTION = 'Discover trending ideas, featured posts, and connect with creators on Quote.Vote'
-const BASE_URL = '/dashboard/explore'
+const BASE_URL = '/'
 
 interface ExplorePageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>

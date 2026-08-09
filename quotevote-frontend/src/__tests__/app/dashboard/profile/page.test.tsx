@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import ProfilePage from '@/app/dashboard/profile/page';
+import ProfilePage from '@/app/(app)/dashboard/profile/page';
 
 // Mock the components used in ProfilePage
 jest.mock('@/components/SubHeader', () => ({

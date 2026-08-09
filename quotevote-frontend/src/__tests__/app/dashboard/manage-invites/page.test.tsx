@@ -11,7 +11,7 @@ jest.mock('next/navigation', () => ({
 
 let ManageInvitesClient: React.ComponentType
 beforeAll(async () => {
-  const mod = await import('@/app/dashboard/manage-invites/ManageInvitesClient')
+  const mod = await import('@/app/(app)/dashboard/manage-invites/ManageInvitesClient')
   ManageInvitesClient = mod.default
 })
 

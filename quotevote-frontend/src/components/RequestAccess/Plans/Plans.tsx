@@ -25,7 +25,7 @@ export function Plans({}: PlansProps) {
   useEffect(() => {
     // Check if user is logged in and redirect if so
     if (userData && '_id' in userData && userData._id) {
-      router.push('/search');
+      router.push('/');
     }
   }, [userData, router]);
 

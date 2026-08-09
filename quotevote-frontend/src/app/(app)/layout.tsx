@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronDown,
   Settings,
+  Info,
 } from 'lucide-react';
 
 
@@ -51,7 +52,7 @@ import { DashboardSidebars } from '@/components/DashboardSidebars';
 /* ------------------------------------------------------------------ */
 
 const NAV_PAGES = [
-  { path: '/dashboard/explore', page: 'home' },
+  { path: '/', page: 'home' },
   { path: '/dashboard/post', page: 'post' },
   { path: '/dashboard/profile', page: 'profile' },
   { path: '/dashboard/notifications', page: 'notifications' },
@@ -157,7 +158,9 @@ export default function DashboardLayout({
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
   useEffect(() => {
-    const match = NAV_PAGES.find((l) => pathname.startsWith(l.path));
+    const match = NAV_PAGES.find((l) =>
+      l.path === '/' ? pathname === '/' : pathname.startsWith(l.path)
+    );
     setSelectedPage(match?.page || 'home');
   }, [pathname, setSelectedPage]);
 
@@ -205,7 +208,7 @@ export default function DashboardLayout({
 
           {/* ── Left: Logo ── */}
           <div className="flex items-center gap-2 flex-shrink-0 z-10">
-            <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 no-underline flex-shrink-0">
               <Image
                 src="/icons/android-chrome-192x192.png"
                 alt="Quote.Vote"
@@ -236,6 +239,13 @@ export default function DashboardLayout({
 
           {/* ── Right: Actions ── */}
           <div className="flex items-center gap-2 ml-auto flex-shrink-0 z-10">
+            <Link
+              href="/about"
+              className="hidden lg:flex items-center h-9 px-3 rounded-full text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-150"
+            >
+              About
+            </Link>
+
             {/* Create */}
             <button
               type="button"
@@ -302,6 +312,15 @@ export default function DashboardLayout({
                         <p className="text-[11px] text-muted-foreground">Manage your account</p>
                       </div>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/about')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                        <Info className="size-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold">About Quote.Vote</p>
+                        <p className="text-[11px] text-muted-foreground">Mission and platform info</p>
+                      </div>
+                    </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem onClick={() => router.push('/dashboard/control-panel')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#e8f5ee]">
@@ -346,7 +365,7 @@ export default function DashboardLayout({
       ════════════════════════════════════════════════════════════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 md:hidden h-[56px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] flex items-center">
         <div className="flex h-full w-full items-center justify-between px-4">
-          <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline">
+          <Link href="/" className="flex items-center gap-2 no-underline">
             <Image
               src="/icons/android-chrome-192x192.png"
               alt="Quote.Vote"
@@ -371,14 +390,14 @@ export default function DashboardLayout({
       >
         {/* Home */}
         <Link
-          href="/dashboard/explore"
+          href="/"
           className={cn(
             'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-            isActive('/dashboard/explore') ? 'text-[#52b274]' : 'text-muted-foreground'
+            isActive('/') ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
           aria-label="Home"
         >
-          <House className="size-[22px]" fill={isActive('/dashboard/explore') ? 'currentColor' : 'none'} />
+          <House className="size-[22px]" fill={isActive('/') ? 'currentColor' : 'none'} />
           <span className="text-[10px] font-semibold">Home</span>
         </Link>
 
@@ -524,7 +543,7 @@ export default function DashboardLayout({
         {pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/settings') ? (
           /* Profile and Settings & Privacy align with the Home feed column:
              apply the same fixed left-sidebar / right-chat offsets as
-             /dashboard/explore so the content's left and right edges match the
+             the home feed (`/`) so the content's left and right edges match the
              Home page (no horizontal jump when switching tabs), and render the
              Notifications + Messages sidebars. */
           <div
@@ -544,7 +563,7 @@ export default function DashboardLayout({
           <div
             className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12 h-full md:h-auto')}
             style={{
-              maxWidth: pathname.startsWith('/dashboard/explore') || pathname.startsWith('/dashboard/control-panel')
+              maxWidth: pathname === '/' || pathname.startsWith('/dashboard/control-panel')
                 ? 'none'
                 : pathname.startsWith('/dashboard/post/')
                   ? '1170px'

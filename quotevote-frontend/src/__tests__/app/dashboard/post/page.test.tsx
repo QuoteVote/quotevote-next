@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import PostsPage from '@/app/dashboard/post/page';
+import PostsPage from '@/app/(app)/dashboard/post/page';
 
 // Mock the components used in PostsPage
 jest.mock('@/components/SubHeader', () => ({

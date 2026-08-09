@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import ExplorePage from '@/app/dashboard/explore/page'
+import ExplorePage from '@/app/(app)/page'
 
 // Mock the ExploreContent client component
-jest.mock('@/app/dashboard/explore/ExploreContent', () => ({
+jest.mock('@/app/(app)/ExploreContent', () => ({
   __esModule: true,
   default: () => (
     <div data-testid="explore-content">Explore Content</div>

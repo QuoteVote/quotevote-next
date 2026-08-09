@@ -43,7 +43,7 @@ jest.mock('@/hooks/useResponsive', () => ({
   useResponsive: () => ({ isMobile: false, isTablet: false, isDesktop: true }),
 }));
 
-import { NotificationsPageContent } from '@/app/dashboard/notifications/NotificationsPageContent';
+import { NotificationsPageContent } from '@/app/(app)/dashboard/notifications/NotificationsPageContent';
 
 const mockNotifications = [
   {

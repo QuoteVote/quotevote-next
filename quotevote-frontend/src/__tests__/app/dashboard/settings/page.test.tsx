@@ -31,7 +31,7 @@ jest.mock('@/context/ThemeContext', () => ({
 
 let SettingsPageClient: React.ComponentType
 beforeAll(async () => {
-  const mod = await import('@/app/dashboard/settings/SettingsPageClient')
+  const mod = await import('@/app/(app)/dashboard/settings/SettingsPageClient')
   SettingsPageClient = mod.default
 })
 

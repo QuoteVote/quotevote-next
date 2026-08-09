@@ -12,7 +12,7 @@ import type { Notification as NotificationType } from '@/types/notification'
 /**
  * Fixed left (Notifications) + right (Chat / messages) sidebars shared by the
  * dashboard pages that align with the Home feed column — Profile and
- * Settings & Privacy. Positioning and breakpoints mirror `/dashboard/explore`
+ * Settings & Privacy. Positioning and breakpoints mirror the home feed (`/`)
  * so the content's left/right edges stay consistent across pages.
  *
  * Feed-specific filters are intentionally omitted here (they only apply to

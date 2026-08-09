@@ -68,7 +68,7 @@ export function MainNavBar({}: MainNavBarProps) {
         <div className="min-h-16 flex items-center justify-between px-6 md:px-12">
           {/* Logo */}
           <Link
-            href="/search"
+            href="/"
             onClick={handleQuoteVote}
             className="flex items-center gap-2 no-underline hover:opacity-90 transition-opacity"
           >

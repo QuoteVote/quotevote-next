@@ -83,7 +83,7 @@ export function Sidebar({
   // Note: handleVoxPop kept for potential future use
   // const handleVoxPop = () => {
   //   setSelectedPage('home');
-  //   router.push('/search');
+  //   router.push('/');
   //   handleDrawerToggle(false);
   // };
 
@@ -207,10 +207,10 @@ export function Sidebar({
 
         {/* Search */}
         <Link
-          href="/search"
+          href="/"
           className={cn(
             "flex items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md transition-colors",
-            isActiveRoute('/search') ? "bg-accent" : "hover:bg-accent"
+            isActiveRoute('/') ? "bg-accent" : "hover:bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >

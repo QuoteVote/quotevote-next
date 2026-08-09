@@ -18,7 +18,7 @@ jest.mock('@/hooks/useResponsive', () => ({
 
 let ControlPanelClient: React.ComponentType
 beforeAll(async () => {
-  const mod = await import('@/app/dashboard/control-panel/ControlPanelClient')
+  const mod = await import('@/app/(app)/dashboard/control-panel/ControlPanelClient')
   ControlPanelClient = mod.default
 })
 

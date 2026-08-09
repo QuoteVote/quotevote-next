@@ -9,7 +9,7 @@
 const PERSISTENT_CHAT_PANEL_ROUTES = [
   '/dashboard/profile',
   '/dashboard/settings',
-  '/dashboard/explore',
+  '/',
 ] as const;
 
 /**

@@ -1086,7 +1086,7 @@ export function LandingPageContent({
               <ArrowRight size={18} aria-hidden />
             </Link>
             <Link
-              href="/#about-section"
+              href="/about#about-section"
               className="inline-flex items-center gap-2 text-base font-semibold transition-all hover:opacity-80 text-brand-green"
             >
               Read our mission
@@ -1529,7 +1529,7 @@ function HeroSearch({ router }: HeroSearchProps) {
       router.push(toAppPostUrl(item.url));
       return;
     }
-    router.push(`/dashboard/explore?q=${encodeURIComponent(item.title)}`);
+    router.push(`/?q=${encodeURIComponent(item.title)}`);
   };
 
   const handleCreatorClick = (creator: CreatorResult) => {
@@ -1688,7 +1688,7 @@ function HeroSearch({ router }: HeroSearchProps) {
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    router.push(`/dashboard/explore?q=${encodeURIComponent(debouncedQuery)}`);
+                    router.push(`/?q=${encodeURIComponent(debouncedQuery)}`);
                   }}
                   className="text-sm font-medium transition-colors hover:underline"
                   style={{ color: 'var(--color-primary)' }}

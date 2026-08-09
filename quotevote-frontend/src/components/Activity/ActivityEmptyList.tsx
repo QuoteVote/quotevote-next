@@ -13,7 +13,7 @@ export function ActivityEmptyList({}: ActivityEmptyListProps) {
 
   const handleGoToSearch = () => {
     setSelectedPage('1')
-    router.push('/search')
+    router.push('/')
   }
 
   return (

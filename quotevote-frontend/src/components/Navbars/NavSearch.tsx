@@ -12,7 +12,7 @@ export default function NavSearch() {
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isExplorePage = pathname === '/dashboard/explore' || pathname.startsWith('/dashboard/explore');
+  const isExplorePage = pathname === '/';
 
   // Mirror the explore page: read q from URL when on explore, else start empty
   const urlQ = isExplorePage ? (searchParams.get('q') || '') : '';
@@ -46,9 +46,9 @@ export default function NavSearch() {
       } else {
         params.delete('q');
       }
-      router.replace(`/dashboard/explore?${params.toString()}`);
+      router.replace(`/?${params.toString()}`);
     } else if (debouncedQuery) {
-      router.push(`/dashboard/explore?q=${encodeURIComponent(debouncedQuery)}`);
+      router.push(`/?q=${encodeURIComponent(debouncedQuery)}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
@@ -58,7 +58,7 @@ export default function NavSearch() {
     if (isExplorePage) {
       const params = new URLSearchParams(searchParams.toString());
       params.delete('q');
-      router.replace(`/dashboard/explore?${params.toString()}`);
+      router.replace(`/?${params.toString()}`);
     }
     inputRef.current?.focus();
   };
