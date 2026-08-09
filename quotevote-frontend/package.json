@@ -10,6 +10,8 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "type-check": "tsc --noEmit",
+    "validate:graphql": "node scripts/validate-graphql.mjs",
+    "schema:update": "node scripts/update-schema.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "jest",

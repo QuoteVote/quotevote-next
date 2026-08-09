@@ -4,19 +4,18 @@ import { useEffect, useRef } from 'react'
 import { useMutation } from '@apollo/client/react'
 import { HEARTBEAT } from '@/graphql/mutations'
 import { isAuthenticated } from '@/lib/utils/auth'
-import { useAppStore } from '@/store/useAppStore'
 import type { UsePresenceHeartbeatReturn } from '@/types/hooks'
 
+/**
+ * The deployed API's `HeartbeatResponse` carries only `success` and `timestamp`,
+ * so the heartbeat keeps presence alive but cannot report status back.
+ */
 type HeartbeatResult = {
   heartbeat?: {
     success: boolean
     timestamp?: string
-    status?: string | null
-    statusMessage?: string | null
   } | null
 }
-
-const PRESENCE_STATUSES = new Set(['online', 'away', 'dnd', 'invisible'])
 
 /**
  * Custom hook to send periodic heartbeat to keep presence alive
@@ -24,7 +23,6 @@ const PRESENCE_STATUSES = new Set(['online', 'away', 'dnd', 'invisible'])
  */
 export const usePresenceHeartbeat = (interval: number = 45000): UsePresenceHeartbeatReturn => {
   const [heartbeat, { error }] = useMutation<HeartbeatResult>(HEARTBEAT)
-  const setUserStatus = useAppStore((state) => state.setUserStatus)
   const retryCountRef = useRef<number>(0)
   const maxRetries = 3
   const backoffMultiplier = 2
@@ -38,22 +36,10 @@ export const usePresenceHeartbeat = (interval: number = 45000): UsePresenceHeart
       return Math.min(interval * Math.pow(backoffMultiplier, attempt), 300000)
     }
 
-    const applyPresenceFromHeartbeat = (payload: HeartbeatResult['heartbeat']): void => {
-      if (!payload?.status || !PRESENCE_STATUSES.has(payload.status)) return
-      const statusMessage = typeof payload.statusMessage === 'string' ? payload.statusMessage : ''
-      // Store defaults to online/'' — coalesce so a partial rehydrate can't force a no-op miss.
-      const chat = useAppStore.getState().chat
-      const currentStatus = chat.userStatus || 'online'
-      const currentMessage = chat.userStatusMessage || ''
-      if (currentStatus === payload.status && currentMessage === statusMessage) return
-      setUserStatus(payload.status, statusMessage)
-    }
-
     const sendHeartbeat = async (): Promise<void> => {
       try {
-        const result = await heartbeat()
+        await heartbeat()
         retryCountRef.current = 0
-        applyPresenceFromHeartbeat(result.data?.heartbeat)
       } catch {
         if (retryCountRef.current < maxRetries) {
           retryCountRef.current += 1
@@ -100,7 +86,7 @@ export const usePresenceHeartbeat = (interval: number = 45000): UsePresenceHeart
       stopHeartbeat()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [heartbeat, interval, setUserStatus])
+  }, [heartbeat, interval])
 
   return { error }
 }

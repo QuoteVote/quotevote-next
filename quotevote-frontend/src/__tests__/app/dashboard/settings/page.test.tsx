@@ -41,7 +41,6 @@ const mockUser = {
   username: 'testuser',
   name: 'Test User',
   email: 'test@example.com',
-  bio: 'Existing about text',
   avatar: 'https://example.com/avatar.png',
   admin: false,
   accountStatus: 'active',
@@ -58,7 +57,6 @@ const getUserMock = {
         _id: 'user-1',
         name: 'Test User',
         username: 'testuser',
-        bio: 'Existing about text',
         upvotes: 0,
         downvotes: 0,
         _followingId: [],
@@ -80,7 +78,6 @@ const updateUserMock = {
         name: 'Updated Name',
         username: 'testuser',
         email: 'test@example.com',
-        bio: 'Existing about text',
         themePreference: 'light',
       },
     },
@@ -93,7 +90,6 @@ const updateUserMock = {
         username: 'testuser',
         email: 'test@example.com',
         name: 'Updated Name',
-        bio: 'Existing about text',
         avatar: 'https://example.com/avatar.png',
         admin: false,
         accountStatus: 'active',
@@ -121,7 +117,6 @@ describe('Settings Page', () => {
     expect(screen.getByLabelText('Display Name')).toBeInTheDocument()
     expect(screen.getByLabelText('Username')).toBeInTheDocument()
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
-    expect(screen.getByLabelText('About')).toBeInTheDocument()
   })
 
   it('renders profile form with user data by default', () => {
@@ -129,7 +124,6 @@ describe('Settings Page', () => {
     expect(screen.getByDisplayValue('Test User')).toBeInTheDocument()
     expect(screen.getByDisplayValue('testuser')).toBeInTheDocument()
     expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Existing about text')).toBeInTheDocument()
   })
 
   it('renders dark mode toggle', () => {

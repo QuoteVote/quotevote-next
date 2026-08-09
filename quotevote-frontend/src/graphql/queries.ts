@@ -508,25 +508,10 @@ export const GET_FEATURED_POSTS = gql`
 `
 
 /**
- * Get latest quotes query
- */
-export const GET_LATEST_QUOTES = gql`
-  query latestQuotes($limit: Int!) {
-    latestQuotes(limit: $limit) {
-      _id
-      quote
-      created
-      user {
-        _id
-        username
-        contributorBadge
-      }
-    }
-  }
-`
-
-/**
  * Get user by username query
+ *
+ * `bio` and `presence` are intentionally absent: the deployed API's `User` type
+ * exposes neither. Presence is available separately via `getPresence(userId)`.
  */
 export const GET_USER = gql`
   query user($username: String!) {
@@ -534,19 +519,12 @@ export const GET_USER = gql`
       _id
       name
       username
-      bio
       upvotes
       downvotes
       _followingId
       _followersId
       avatar
       contributorBadge
-      presence {
-        status
-        statusMessage
-        preferredStatus
-        preferredStatusMessage
-      }
       reputation {
         _id
         overallScore
@@ -710,7 +688,7 @@ export const GET_USER_ACTIVITY = gql`
     $searchKey: String!
     $startDateRange: String
     $endDateRange: String
-    $activityEvent: [ActivityEventType!]
+    $activityEvent: JSON
   ) {
     activities(
       user_id: $user_id
@@ -805,10 +783,13 @@ export const GET_USER_ACTIVITY = gql`
 
 /**
  * Get notifications query
+ *
+ * The deployed API declares `notifications: [Notification]` with no arguments,
+ * so callers that need a subset must slice the result client-side.
  */
 export const GET_NOTIFICATIONS = gql`
-  query notifications($limit: Int) {
-    notifications(limit: $limit) {
+  query notifications {
+    notifications {
       _id
       userId
       userIdBy

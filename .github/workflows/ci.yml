@@ -85,6 +85,11 @@ jobs:
       - name: Run type check
         run: pnpm type-check
 
+      # Catches documents selecting fields the deployed API does not expose,
+      # which type-check cannot see and which fail at runtime with HTTP 400.
+      - name: Validate GraphQL documents against schema snapshot
+        run: pnpm validate:graphql
+
       - name: Run tests
         run: pnpm test
 

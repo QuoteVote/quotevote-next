@@ -6,8 +6,6 @@
  */
 
 import {
-  LOGIN_MUTATION,
-  SIGNUP_MUTATION,
   SEND_PASSWORD_RESET_EMAIL,
   UPDATE_USER_PASSWORD,
   REQUEST_USER_ACCESS_MUTATION,
@@ -26,43 +24,6 @@ function getVarNames(doc: ReturnType<typeof getOperationDef>) {
 }
 
 describe('GraphQL Mutations', () => {
-  describe('LOGIN_MUTATION', () => {
-    it('is a valid DocumentNode', () => {
-      expect(LOGIN_MUTATION).toBeDefined()
-      expect(LOGIN_MUTATION.kind).toBe('Document')
-    })
-
-    it('is a mutation operation', () => {
-      const op = getOperationDef(LOGIN_MUTATION)
-      expect(op?.operation).toBe('mutation')
-    })
-
-    it('has username and password variables', () => {
-      const vars = getVarNames(getOperationDef(LOGIN_MUTATION))
-      expect(vars).toContain('username')
-      expect(vars).toContain('password')
-    })
-  })
-
-  describe('SIGNUP_MUTATION', () => {
-    it('is a valid DocumentNode', () => {
-      expect(SIGNUP_MUTATION).toBeDefined()
-      expect(SIGNUP_MUTATION.kind).toBe('Document')
-    })
-
-    it('is a mutation operation', () => {
-      const op = getOperationDef(SIGNUP_MUTATION)
-      expect(op?.operation).toBe('mutation')
-    })
-
-    it('has username, email, and password variables', () => {
-      const vars = getVarNames(getOperationDef(SIGNUP_MUTATION))
-      expect(vars).toContain('username')
-      expect(vars).toContain('email')
-      expect(vars).toContain('password')
-    })
-  })
-
   describe('SEND_PASSWORD_RESET_EMAIL', () => {
     it('is a valid DocumentNode', () => {
       expect(SEND_PASSWORD_RESET_EMAIL).toBeDefined()

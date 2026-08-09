@@ -15,7 +15,6 @@ import {
   GET_PAGINATED_POSTS,
   GET_FRIENDS_POSTS,
   GET_FEATURED_POSTS,
-  GET_LATEST_QUOTES,
 } from '@/graphql/queries'
 import {
   SUBMIT_POST,
@@ -126,19 +125,6 @@ describe('Post GraphQL Queries', () => {
     })
   })
 
-  describe('GET_LATEST_QUOTES', () => {
-    it('is defined and is a valid GraphQL query', () => {
-      expect(GET_LATEST_QUOTES).toBeDefined()
-      expect(GET_LATEST_QUOTES.definitions).toBeDefined()
-    })
-
-    it('has correct query structure', () => {
-      const queryString = GET_LATEST_QUOTES.loc?.source.body || ''
-      expect(queryString).toContain('query latestQuotes')
-      expect(queryString).toContain('$limit: Int!')
-      expect(queryString).toContain('user')
-    })
-  })
 })
 
 describe('Post GraphQL Mutations', () => {
@@ -345,7 +331,6 @@ describe('GraphQL Operations Integration', () => {
     expect(GET_PAGINATED_POSTS.kind).toBe('Document')
     expect(GET_FRIENDS_POSTS.kind).toBe('Document')
     expect(GET_FEATURED_POSTS.kind).toBe('Document')
-    expect(GET_LATEST_QUOTES.kind).toBe('Document')
   })
 
   it('all mutations use @apollo/client gql', () => {
@@ -384,7 +369,6 @@ describe('GraphQL Operations Integration', () => {
     expect(getOperationName(GET_PAGINATED_POSTS)).toBe('paginatedPosts')
     expect(getOperationName(GET_FRIENDS_POSTS)).toBe('friendsPosts')
     expect(getOperationName(GET_FEATURED_POSTS)).toBe('featuredPosts')
-    expect(getOperationName(GET_LATEST_QUOTES)).toBe('latestQuotes')
   })
 
   it('mutations have proper operation names', () => {

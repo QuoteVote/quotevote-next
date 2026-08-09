@@ -1,0 +1,676 @@
+# Snapshot of the deployed API schema (https://api.quote.vote/graphql).
+# Regenerate with: pnpm schema:update
+# Used by scripts/validate-graphql.mjs to catch documents that would 400 at runtime.
+
+type Activities {
+  entities: [Activity]
+  pagination: Pagination
+}
+
+type Activity {
+  _id: String
+  activityType: String
+  comment: Comment
+  commentId: String
+  content: String
+  created: Date
+  post: Post
+  postId: String
+  quote: Quote
+  quoteId: String
+  user: User
+  userId: String
+  vote: Vote
+  voteId: String
+}
+
+type BuddyWithPresence {
+  presence: Presence
+  roster: Roster!
+  user: User!
+}
+
+input CardPaymentMethodInput {
+  cvc: String!
+  exp_month: String!
+  exp_year: String!
+  number: String!
+}
+
+type ChatRoom {
+  _id: ID!
+  created: Date
+  messageType: String
+  unreadMessages: Int
+  user: User
+  users: JSON
+}
+
+type Comment {
+  _id: String
+  content: String
+  created: Date
+  deleted: Boolean
+  endWordIndex: Int
+  postId: String
+  reaction: String
+  startWordIndex: Int
+  url: String
+  user: User
+  userId: String
+}
+
+input CommentInput {
+  content: String!
+  endWordIndex: Int!
+  postId: String!
+  quote: String
+  reaction: String
+  startWordIndex: Int!
+  url: String
+  userId: String!
+}
+
+type Content {
+  _id: String
+  created: Date
+  creator: Creator
+  creatorId: String
+  domainId: String
+  score: Int
+  text: String
+  title: String
+  url: String
+}
+
+type Creator {
+  _id: String
+  created: Date
+  name: String
+  profileImageUrl: String
+  score: Int
+}
+
+scalar Date
+
+"""Returns a Date of format of "YYYY-MM-DD HH:mm:ss" in String"""
+scalar DateTime
+
+type DeletedComment {
+  _id: String
+}
+
+type DeletedMessage {
+  _id: String
+}
+
+type DeletedPost {
+  _id: String
+}
+
+type DeletedQuote {
+  _id: String
+}
+
+type DeletedRoster {
+  _id: String!
+  success: Boolean!
+}
+
+type DeletedVote {
+  _id: String
+}
+
+type Group {
+  _id: String!
+  adminIds: [String!]
+  allowedUserIds: [String!]
+  created: String!
+  creatorId: String!
+  description: String!
+  pendingUsers: [User]
+  privacy: String!
+  title: String!
+  url: String!
+}
+
+input GroupInput {
+  creatorId: String!
+  description: String!
+  privacy: String!
+  title: String!
+  url: String
+}
+
+type HeartbeatResponse {
+  success: Boolean!
+  timestamp: Date!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type Message {
+  _id: ID!
+  created: Date
+  deleted: Boolean
+  messageRoomId: String
+  mutation_type: String
+  readBy: JSON
+  text: String
+  title: String
+  type: String
+  user: User
+  userAvatar: String!
+  userId: String
+  userName: String
+}
+
+input MessageInput {
+  """ Either user._id or post._id """
+  componentId: String
+
+  """ Message Room ID"""
+  messageRoomId: String
+
+  """ Content of the chat message """
+  text: String!
+
+  """ Title of the chat message """
+  title: String!
+
+  """ Type of the message USER or POST """
+  type: String
+}
+
+type MessageRoom {
+  _id: ID!
+  avatar: JSON
+  created: Date
+  lastActivity: Date
+  lastMessageTime: Date
+  messageType: String
+  messages: [Message]
+  postDetails: PostDetails
+  postId: String
+  title: String
+  unreadMessages: Int
+  users: JSON
+}
+
+type Mutation {
+  acceptBuddy(rosterId: String!): Roster
+  addActionReaction(reaction: ReactionInput!): Reaction
+  addBuddy(roster: RosterInput!): Roster
+  addComment(comment: CommentInput!): Comment
+  addMessageReaction(reaction: ReactionInput!): Reaction
+  addPost(post: PostInput!): Post
+  addQuote(quote: QuoteInput!): Quote
+  addStripeCustomer(stripeCustomer: StripeCustomerInput!): JSON
+  addVote(vote: VoteInput!): Vote
+  approvePost(postId: String!, remove: Boolean, userId: String!): Post
+  blockBuddy(buddyId: String!): Roster
+  clearPresence: Boolean
+  createGroup(group: GroupInput!): Group
+  createMessage(message: MessageInput!): Message
+  createPostMessageRoom(postId: String!): MessageRoom
+  declineBuddy(rosterId: String!): DeletedRoster
+  deleteComment(commentId: String!): DeletedComment
+  deleteMessage(messageId: String!): DeletedMessage
+  deletePost(postId: String!): DeletedPost
+  deleteQuote(quoteId: String!): DeletedQuote
+  deleteVote(voteId: String!): DeletedVote
+  disableUser(userId: String!): User
+  enableUser(userId: String!): User
+  followUser(action: String!, user_id: String!): User
+  heartbeat: HeartbeatResponse
+  recalculateReputation(userId: String!): JSON
+  rejectPost(postId: String!, remove: Boolean, userId: String!): Post
+  removeBuddy(buddyId: String!): DeletedRoster
+  removeNotification(notificationId: String!): Notification
+  reportBot(reporterId: String!, userId: String!): JSON
+  reportPost(postId: String!, userId: String!): Post
+  reportUser(reportUserInput: ReportUserInput!): JSON
+  requestUserAccess(requestUserAccessInput: RequestUserAccessInput!): User
+  sendInvestorMail(email: String!): JSON
+  sendPasswordResetEmail(email: String!): JSON
+  sendUserInvite(email: String!): JSON
+  sendUserInviteApproval(inviteStatus: String!, userId: String!): JSON
+  toggleVoting(postId: String!): Post
+  unblockBuddy(buddyId: String!): Roster
+  updateActionReaction(_id: String!, emoji: String!): Reaction
+  updateFeaturedSlot(featuredSlot: Int, postId: String!): Post
+  updateMessageReadBy(messageRoomId: String!): [Message]
+  updatePostBookmark(postId: String!, userId: String!): Post
+  updatePresence(presence: PresenceInput!): Presence
+  updateReaction(_id: String!, emoji: String!): Reaction
+  updateTyping(typing: TypingInput!): TypingResponse
+  updateUser(user: UserInput!): User
+  updateUserAvatar(avatarQualities: JSON, user_id: String!): User
+  updateUserPassword(password: String, token: String, username: String): JSON
+}
+
+type Notification {
+  _id: String
+  created: Date
+  label: String
+  notificationType: String
+  post: Post
+  status: String
+  userBy: User
+  userId: String
+  userIdBy: String
+}
+
+scalar ObjectId
+
+type Pagination {
+  limit: Int
+  offset: Int
+  total_count: Int
+}
+
+type Post {
+  _id: String
+  approvedBy: [String]
+  attribution: String
+  attributionType: String
+  bookmarkedBy: [String]
+  citationUrl: String
+  comments: [Comment]
+  created: Date
+  creator: User
+  dayPoints: Int
+  deleted: Boolean
+  downvotes: Int
+  enable_voting: Boolean
+  featuredSlot: Int
+  groupId: String
+  messageRoom: MessageRoom
+  pointTimestamp: String
+  quotes: [Quote]
+  rejectedBy: [String]
+  reportedBy: [String]
+  text: String
+  title: String
+  upvotes: Int
+  url: String
+  userId: String
+  votedBy: [String]
+  votes: [Vote]
+}
+
+type PostDetails {
+  _id: ID
+  text: String
+  title: String
+  url: String
+  userId: ID
+}
+
+input PostInput {
+  attribution: String
+  attributionType: String
+  citationUrl: String
+  groupId: String!
+  text: String!
+  title: String!
+  userId: String!
+}
+
+type Posts {
+  entities: [Post]
+  pagination: Pagination
+}
+
+type Presence {
+  _id: String!
+  lastHeartbeat: Date!
+  lastSeen: Date
+  status: PresenceStatus!
+  statusMessage: String
+  user: User
+  userId: String!
+}
+
+input PresenceInput {
+  status: String!
+  statusMessage: String
+}
+
+enum PresenceStatus {
+  away
+  dnd
+  invisible
+  offline
+  online
+}
+
+type PresenceUpdate {
+  lastSeen: Date
+  status: PresenceStatus!
+  statusMessage: String
+  userId: String!
+}
+
+type Query {
+  """ This will query the action Reactions"""
+  actionReactions(actionId: String!): [Reaction]
+
+  """ This will give the public news feed """
+  activities(activityEvent: JSON, endDateRange: String, limit: Int, offset: Int, searchKey: String, startDateRange: String, user_id: String): Activities
+
+  """ This will query duplicate email"""
+  checkDuplicateEmail(email: String!): JSON
+
+  """ Posts selected for homepage carousel """
+  featuredPosts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, groupId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
+
+  """ Get users reported as bots (admin only) """
+  getBotReportedUsers(limit: Int, sortBy: String): [User]
+
+  """ Get buddy list with presence information"""
+  getBuddyList: [BuddyWithPresence]
+
+  """ Get user presence by user ID"""
+  getPresence(userId: String!): Presence
+
+  """ Get roster entries"""
+  getRoster: [Roster]
+
+  """ Get typing users in a message room"""
+  getTypingUsers(messageRoomId: String!): [TypingIndicator]
+
+  """ This will query the user follow info """
+  getUserFollowInfo(filter: String, username: String): JSON
+
+  """ Get user invites """
+  getUserInvites(status: String, userId: String!): [UserInvite]
+
+  """ Get user reports """
+  getUserReports(status: String, userId: String!): [UserReport]
+
+  """ Get user reputation information """
+  getUserReputation(userId: String!): UserReputation
+
+  """ Get a specific group by ID """
+  group(groupId: String!): Group
+
+  """ Get all groups """
+  groups(created: String, key: String, limit: Int, title: String): [Group]
+
+  """ This will query the message Reactions"""
+  messageReactions(messageId: String!): [Reaction]
+
+  """ This will query the user message room"""
+  messageRoom(otherUserId: String!): MessageRoom
+
+  """ This will query the list user message rooms"""
+  messageRooms: [MessageRoom]
+
+  """ This will query the user messages by Message Room ID"""
+  messages(messageRoomId: String!): [Message]
+
+  """ This will query user notifications"""
+  notifications: [Notification]
+
+  """ This will query a post """
+  post(postId: String!): Post
+
+  """ This will query a post message room"""
+  postMessageRoom(postId: String!): MessageRoom
+
+  """ This will query the list of posts """
+  posts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, groupId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
+
+  """ Search content by text """
+  searchContent(text: String!): [Content]
+
+  """ Search creators by name """
+  searchCreator(text: String!): [Creator]
+
+  """ This will search for users by username or name """
+  searchUser(queryName: String!): [User]
+
+  """ This will query the top posts (alias for posts) """
+  topPosts(endDateRange: String, friendsOnly: Boolean, interactions: Boolean, limit: Int!, offset: Int!, searchKey: String!, sortOrder: String, startDateRange: String, userId: String): Posts
+
+  """ This will query the user """
+  user(creatorId: String, user_id: String, username: String): User
+
+  """ This will query the list of user invite requests """
+  userInviteRequests: [UserInvite]
+
+  """ This will query the list of available users (Admin only) """
+  users(limit: Int, offset: Int): [User]
+
+  """ This will query user info if token is valid"""
+  verifyUserPasswordResetToken(token: String!): JSON
+}
+
+type Quote {
+  _id: String
+  created: Date
+  deleted: Boolean
+  endWordIndex: Int
+  postId: Int
+  quote: String
+  quoted: String
+  quoter: String
+  startWordIndex: Int
+  user: User
+}
+
+input QuoteInput {
+  endWordIndex: Int!
+  postId: String!
+  quote: String!
+  quoted: String!
+  quoter: String!
+  startWordIndex: Int!
+}
+
+type Reaction {
+  _id: String
+  actionId: String
+  created: String
+  emoji: String
+  messageId: String
+  userId: String
+}
+
+input ReactionInput {
+  actionId: String
+  emoji: String
+  messageId: String
+  userId: String
+}
+
+input ReportUserInput {
+  _reportedUserId: String!
+  description: String
+  reason: String!
+  severity: String
+}
+
+type ReputationHistory {
+  activityScore: Int!
+  conductScore: Int!
+  date: String!
+  inviteNetworkScore: Int!
+  overallScore: Int!
+  reason: String!
+}
+
+type ReputationMetrics {
+  averageInviteeReputation: Int!
+  totalComments: Int!
+  totalDownvotes: Int!
+  totalInvitesAccepted: Int!
+  totalInvitesDeclined: Int!
+  totalInvitesSent: Int!
+  totalPosts: Int!
+  totalReportsReceived: Int!
+  totalReportsResolved: Int!
+  totalUpvotes: Int!
+}
+
+input RequestUserAccessInput {
+  email: String!
+}
+
+type Roster {
+  _id: String!
+  buddy: User
+  buddyId: String!
+  created: Date!
+  initiatedBy: String!
+  presence: Presence
+  status: RosterStatus!
+  updated: Date!
+  userId: String!
+}
+
+input RosterInput {
+  buddyId: String!
+}
+
+enum RosterStatus {
+  accepted
+  blocked
+  pending
+}
+
+input SendUserInviteInput {
+  email: String!
+}
+
+input StripeCustomerInput {
+  card: CardPaymentMethodInput!
+  email: String!
+  first_name: String!
+  last_name: String
+}
+
+type Subscription {
+  message(messageRoomId: String!): Message
+  notification(userId: String!): Notification
+  presence(userId: String): PresenceUpdate
+  roster(userId: String!): Roster
+  typing(messageRoomId: String!): TypingIndicator
+}
+
+type TypingIndicator {
+  isTyping: Boolean!
+  messageRoomId: String!
+  timestamp: Date!
+  user: User
+  userId: String!
+}
+
+input TypingInput {
+  isTyping: Boolean!
+  messageRoomId: String!
+}
+
+type TypingResponse {
+  success: Boolean!
+}
+
+type User {
+  _followersId: [String]
+  _followingId: [String]
+  _id: String!
+  _votesId: Int
+  _wallet: String
+  accountStatus: String
+  admin: Boolean
+  avatar: JSON
+  botReports: Int
+  contributorBadge: Boolean
+  downvotes: Int
+  email: String
+  favorited: Int
+  joined: String
+  lastBotReportDate: String
+  name: String
+  reputation: UserReputation
+  themePreference: String
+  tokens: Int
+  upvotes: Int
+  userId: ID
+  username: String
+}
+
+input UserInput {
+  _id: String!
+  avatar: String
+  contributorBadge: Boolean
+  email: String
+  name: String
+  password: String
+  quotes: [String]
+  themePreference: String
+  username: String
+}
+
+type UserInvite {
+  _id: String!
+  _userId: String
+  email: String!
+  joined: Date
+  status: String
+}
+
+type UserReport {
+  _id: String!
+  _reportedUserId: String!
+  _reporterId: String!
+  adminNotes: String
+  createdAt: String!
+  description: String
+  reason: String!
+  severity: String!
+  status: String!
+  updatedAt: String!
+}
+
+type UserReputation {
+  _id: String!
+  _userId: String!
+  activityScore: Int!
+  conductScore: Int!
+  createdAt: String!
+  history: [ReputationHistory!]!
+  inviteNetworkScore: Int!
+  lastCalculated: String!
+  metrics: ReputationMetrics!
+  overallScore: Int!
+  updatedAt: String!
+}
+
+type Vote {
+  _id: String
+  content: String
+  created: Date
+  deleted: Boolean
+  endWordIndex: Int
+  postId: String
+  startWordIndex: Int
+  tags: String
+  type: String
+  user: User
+  userId: String
+}
+
+input VoteInput {
+  content: String
+  endWordIndex: Int!
+  postId: String!
+  startWordIndex: Int!
+  tags: String!
+  type: String!
+  userId: String
+}
