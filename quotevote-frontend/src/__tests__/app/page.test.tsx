@@ -624,6 +624,22 @@ describe('LandingPage', () => {
         screen.queryByText(/please enter a valid email address/i)
       ).not.toBeInTheDocument();
     });
+
+    it('submits a valid email via REQUEST_USER_ACCESS_MUTATION', async () => {
+      const mockRequestAccess = jest.fn().mockResolvedValue({ data: {} });
+      mockUseMutation.mockReturnValue([mockRequestAccess, { loading: false }]);
+      const user = userEvent.setup();
+      renderLandingPage();
+
+      await user.type(screen.getByLabelText(/email address/i), 'reader@example.com');
+      await user.click(screen.getByRole('button', { name: /contact/i }));
+
+      await waitFor(() => {
+        expect(mockRequestAccess).toHaveBeenCalledWith({
+          variables: { requestUserAccessInput: { email: 'reader@example.com' } },
+        });
+      });
+    });
   });
 
   // ── Featured posts navigation (RC1-004) ────────────────────
