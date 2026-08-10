@@ -1,43 +1,44 @@
 /**
  * PostCard Component Tests
- * 
+ *
  * Basic tests for the PostCard component
  */
 
 import { render } from '../../utils/test-utils'
-// @ts-expect-error - MockedProvider may not have types in this version
-import { MockedProvider } from '@apollo/client/testing'
 import PostCard from '../../../components/Post/PostCard'
 import type { PostCardProps } from '@/types/post'
 
 // Mock useRouter
-const mockPush = jest.fn()
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
+  useRouter: () => ({ push: jest.fn() }),
 }))
 
-// Mock Zustand store
-const mockSetSelectedPost = jest.fn()
-jest.mock('@/store', () => ({
-  useAppStore: () => ({
-    setSelectedPost: mockSetSelectedPost,
-  }),
-}))
+// Mock Zustand store — selector-aware so the component reads the right slices.
+// State object is inside the factory to avoid jest.mock hoisting / TDZ issues.
+jest.mock('@/store', () => {
+  const state = {
+    setSelectedPost: jest.fn(),
+    user: { data: null },
+    ui: { hiddenPosts: [] },
+  }
+  return {
+    useAppStore: (selector: (s: typeof state) => unknown) =>
+      typeof selector === 'function' ? selector(state) : state,
+  }
+})
 
 // Mock useGuestGuard
-const mockGuestGuard = jest.fn(() => true)
 jest.mock('@/hooks/useGuestGuard', () => ({
   __esModule: true,
-  default: () => mockGuestGuard,
+  default: () => jest.fn(() => true),
 }))
 
-// Mock useQuery from Apollo Client
-const mockUseQuery = jest.fn()
+// Mock Apollo hooks — both must be inside the factory to avoid TDZ issues.
+// useMutation needs a live Apollo tree; mocking avoids that requirement.
 jest.mock('@apollo/client/react', () => ({
   ...jest.requireActual('@apollo/client/react'),
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
+  useQuery: jest.fn(() => ({ data: undefined, loading: false, error: undefined })),
+  useMutation: jest.fn(() => [jest.fn(), { loading: false }]),
 }))
 
 describe('PostCard Component', () => {
@@ -63,88 +64,69 @@ describe('PostCard Component', () => {
     limitText: false,
   }
 
-  beforeEach(() => {
-    jest.clearAllMocks()
-    // Default mock for useQuery - returns loading: false, no data
-    mockUseQuery.mockReturnValue({
-      data: undefined,
-      loading: false,
-      error: undefined,
-    })
-  })
-
   describe('Basic Rendering', () => {
     it('renders post card', () => {
-      const { container } = render(
-        <MockedProvider mocks={[]}>
-          <PostCard {...mockPostCardProps} />
-        </MockedProvider>
-      )
+      const { container } = render(<PostCard {...mockPostCardProps} />)
       expect(container.firstChild).toBeInTheDocument()
     })
 
     it('renders without crashing when title is provided', () => {
-      const { container } = render(
-        <MockedProvider mocks={[]}>
-          <PostCard {...mockPostCardProps} />
-        </MockedProvider>
-      )
-      // Component should render without crashing
+      const { container } = render(<PostCard {...mockPostCardProps} />)
       expect(container.firstChild).toBeInTheDocument()
     })
 
     it('handles missing creator gracefully', () => {
-      const propsWithoutCreator = {
-        ...mockPostCardProps,
-        creator: undefined,
-      }
-      const { container } = render(
-        <MockedProvider mocks={[]}>
-          <PostCard {...propsWithoutCreator} />
-        </MockedProvider>
-      )
+      const { container } = render(<PostCard {...mockPostCardProps} creator={undefined} />)
       expect(container.firstChild).toBeInTheDocument()
     })
   })
 
   describe('Citation URL Rendering', () => {
     it('renders post card with citationUrl without crashing', () => {
-      const propsWithCitation: PostCardProps = {
-        ...mockPostCardProps,
-        citationUrl: 'https://www.example.com/article',
-      }
       const { container } = render(
-        <MockedProvider mocks={[]}>
-          <PostCard {...propsWithCitation} />
-        </MockedProvider>
+        <PostCard {...mockPostCardProps} citationUrl="https://www.example.com/article" />
       )
-      // Component should render without crashing when citationUrl is provided
       expect(container.firstChild).toBeInTheDocument()
     })
 
     it('renders post card without citationUrl without crashing', () => {
-      const { container } = render(
-        <MockedProvider mocks={[]}>
-          <PostCard {...mockPostCardProps} />
-        </MockedProvider>
-      )
-      // Component should render without crashing when citationUrl is not provided
+      const { container } = render(<PostCard {...mockPostCardProps} />)
       expect(mockPostCardProps.citationUrl).toBeUndefined()
       expect(container.firstChild).toBeInTheDocument()
     })
 
     it('handles null citationUrl gracefully', () => {
-      const propsWithNullCitation: PostCardProps = {
-        ...mockPostCardProps,
-        citationUrl: null,
-      }
-      const { container } = render(
-        <MockedProvider mocks={[]}>
-          <PostCard {...propsWithNullCitation} />
-        </MockedProvider>
-      )
+      const { container } = render(<PostCard {...mockPostCardProps} citationUrl={null} />)
       expect(container.firstChild).toBeInTheDocument()
     })
   })
-})
 
+  // RC1-028: Standard post cards must always use blue styling regardless of vote state.
+  // Green/red are reserved for profile activity cards (ActivityCard + getCardBackgroundColor).
+  describe('Card Color (RC1-028)', () => {
+    const expectBlueCard = (container: HTMLElement) => {
+      const card = container.querySelector('[data-testid="post-card"]') as HTMLElement
+      if (!card) throw new Error(`post-card not found. HTML:\n${container.innerHTML.slice(0, 1000)}`)
+      // CARD_THEME.borderColor = '#56b3ff'. jsdom keeps the hex value as-is (does not convert to rgb).
+      expect(card.style.border).toContain('#56b3ff')
+      expect(card.style.borderBottom).toContain('#56b3ff')
+      // Background must not be set by vote state — it's controlled by the card class
+      expect(card.style.backgroundColor).toBe('')
+      expect(card.getAttribute('data-sentiment')).toBe('neutral')
+    }
+
+    it('stays blue when the post is heavily upvoted', () => {
+      const { container } = render(
+        <PostCard {...mockPostCardProps} approvedBy={['a', 'b', 'c']} rejectedBy={[]} />
+      )
+      expectBlueCard(container)
+    })
+
+    it('stays blue when the post is heavily downvoted', () => {
+      const { container } = render(
+        <PostCard {...mockPostCardProps} approvedBy={[]} rejectedBy={['a', 'b', 'c']} />
+      )
+      expectBlueCard(container)
+    })
+  })
+})
