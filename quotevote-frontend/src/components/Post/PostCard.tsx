@@ -129,7 +129,17 @@ function PostCardComponent({
       setLocalRejectedBy((prev) => prev.filter((id) => id !== userId))
     }
     try {
-      await approvePost({ variables: { postId: _id, userId, remove: hasApproved } })
+      const { data } = await approvePost({
+        variables: { postId: _id, userId, remove: hasApproved },
+      })
+      const updatedPost = (data as {
+        approvePost?: { approvedBy?: string[]; rejectedBy?: string[] }
+      } | undefined)?.approvePost
+      if (updatedPost) {
+        // The optimistic update is only immediate feedback; the completed mutation is authoritative.
+        setLocalApprovedBy(updatedPost.approvedBy || [])
+        setLocalRejectedBy(updatedPost.rejectedBy || [])
+      }
     } catch {
       setLocalApprovedBy(approvedBy || [])
       setLocalRejectedBy(rejectedBy || [])
@@ -149,7 +159,17 @@ function PostCardComponent({
       setLocalApprovedBy((prev) => prev.filter((id) => id !== userId))
     }
     try {
-      await rejectPost({ variables: { postId: _id, userId, remove: hasRejected } })
+      const { data } = await rejectPost({
+        variables: { postId: _id, userId, remove: hasRejected },
+      })
+      const updatedPost = (data as {
+        rejectPost?: { approvedBy?: string[]; rejectedBy?: string[] }
+      } | undefined)?.rejectPost
+      if (updatedPost) {
+        // Reconcile both arrays because rejecting can also remove an existing approval.
+        setLocalApprovedBy(updatedPost.approvedBy || [])
+        setLocalRejectedBy(updatedPost.rejectedBy || [])
+      }
     } catch {
       setLocalApprovedBy(approvedBy || [])
       setLocalRejectedBy(rejectedBy || [])

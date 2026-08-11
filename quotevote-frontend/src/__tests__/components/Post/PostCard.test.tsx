@@ -4,10 +4,11 @@
  * Basic tests for the PostCard component
  */
 
-import { render } from '../../utils/test-utils'
+import { fireEvent, render, screen, waitFor } from '../../utils/test-utils'
 // @ts-expect-error - MockedProvider may not have types in this version
 import { MockedProvider } from '@apollo/client/testing'
 import PostCard from '../../../components/Post/PostCard'
+import { APPROVE_POST } from '@/graphql/mutations'
 import type { PostCardProps } from '@/types/post'
 
 // Mock useRouter
@@ -21,9 +22,11 @@ jest.mock('next/navigation', () => ({
 // Mock Zustand store
 const mockSetSelectedPost = jest.fn()
 jest.mock('@/store', () => ({
-  useAppStore: () => ({
-    setSelectedPost: mockSetSelectedPost,
-  }),
+  useAppStore: (selector: (state: unknown) => unknown) =>
+    selector({
+      setSelectedPost: mockSetSelectedPost,
+      user: { data: { _id: 'current-user' } },
+    }),
 }))
 
 // Mock useGuestGuard
@@ -70,6 +73,43 @@ describe('PostCard Component', () => {
       data: undefined,
       loading: false,
       error: undefined,
+    })
+  })
+
+  it('reconciles the selected Support state from the completed mutation response', async () => {
+    const approvePostMock = {
+      request: {
+        query: APPROVE_POST,
+        variables: {
+          postId: 'post1',
+          userId: 'current-user',
+          remove: true,
+        },
+      },
+      result: {
+        data: {
+          approvePost: {
+            _id: 'post1',
+            // Intentionally differs from the optimistic removal to prove the response wins.
+            approvedBy: ['current-user'],
+            rejectedBy: [],
+          },
+        },
+      },
+    }
+
+    render(
+      <PostCard
+        {...mockPostCardProps}
+        approvedBy={['current-user']}
+      />,
+      { mocks: [approvePostMock] }
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove support' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Remove support' })).toBeInTheDocument()
     })
   })
 
