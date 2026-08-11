@@ -39,6 +39,20 @@ const CARD_THEMES = {
   },
 } as const
 
+type VoteStateMutationPost = {
+  _id: string
+  approvedBy?: string[]
+  rejectedBy?: string[]
+}
+
+type ApprovePostMutationData = {
+  approvePost?: VoteStateMutationPost
+}
+
+type RejectPostMutationData = {
+  rejectPost?: VoteStateMutationPost
+}
+
 function stringLimit(text: string, limit: number): string {
   if (!text || text.length <= limit) return text
   return text.slice(0, limit) + '...'
@@ -73,8 +87,10 @@ function PostCardComponent({
   ) as string | undefined
 
   const [updateBookmark] = useMutation(UPDATE_POST_BOOKMARK)
-  const [approvePost, { loading: approvingPost }] = useMutation(APPROVE_POST)
-  const [rejectPost, { loading: rejectingPost }] = useMutation(REJECT_POST)
+  const [approvePost, { loading: approvingPost }] =
+    useMutation<ApprovePostMutationData>(APPROVE_POST)
+  const [rejectPost, { loading: rejectingPost }] =
+    useMutation<RejectPostMutationData>(REJECT_POST)
 
   // Local optimistic state — updates immediately on vote so color reflects right away
   const [localApprovedBy, setLocalApprovedBy] = useState<string[]>(() => approvedBy || [])
@@ -132,9 +148,7 @@ function PostCardComponent({
       const { data } = await approvePost({
         variables: { postId: _id, userId, remove: hasApproved },
       })
-      const updatedPost = (data as {
-        approvePost?: { approvedBy?: string[]; rejectedBy?: string[] }
-      } | undefined)?.approvePost
+      const updatedPost = data?.approvePost
       if (updatedPost) {
         // The optimistic update is only immediate feedback; the completed mutation is authoritative.
         setLocalApprovedBy(updatedPost.approvedBy || [])
@@ -162,9 +176,7 @@ function PostCardComponent({
       const { data } = await rejectPost({
         variables: { postId: _id, userId, remove: hasRejected },
       })
-      const updatedPost = (data as {
-        rejectPost?: { approvedBy?: string[]; rejectedBy?: string[] }
-      } | undefined)?.rejectPost
+      const updatedPost = data?.rejectPost
       if (updatedPost) {
         // Reconcile both arrays because rejecting can also remove an existing approval.
         setLocalApprovedBy(updatedPost.approvedBy || [])

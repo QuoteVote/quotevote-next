@@ -83,15 +83,15 @@ describe('PostCard Component', () => {
         variables: {
           postId: 'post1',
           userId: 'current-user',
-          remove: true,
+          remove: false,
         },
       },
       result: {
         data: {
           approvePost: {
             _id: 'post1',
-            // Intentionally differs from the optimistic removal to prove the response wins.
-            approvedBy: ['current-user'],
+            // Intentionally differs from the optimistic addition to prove the response wins.
+            approvedBy: [],
             rejectedBy: [],
           },
         },
@@ -99,17 +99,16 @@ describe('PostCard Component', () => {
     }
 
     render(
-      <PostCard
-        {...mockPostCardProps}
-        approvedBy={['current-user']}
-      />,
+      <PostCard {...mockPostCardProps} />,
       { mocks: [approvePostMock] }
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove support' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Support this post' }))
+
+    expect(screen.getByRole('button', { name: 'Remove support' })).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Remove support' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Support this post' })).toBeInTheDocument()
     })
   })
 
