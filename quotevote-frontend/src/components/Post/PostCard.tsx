@@ -18,25 +18,13 @@ import HighlightText from '@/components/HighlightText/HighlightText'
 import { DisplayAvatar } from '@/components/DisplayAvatar'
 import type { PostCardProps } from '@/types/post'
 
-const CARD_THEMES = {
-  support: {
-    bg: 'rgba(82,178,116,0.08)',
-    borderColor: '#52b274',
-    shadow: '4px 4px 0px #52b274',
-    hoverShadow: '7px 7px 0px #52b274',
-  },
-  disagree: {
-    bg: 'rgba(255,96,96,0.08)',
-    borderColor: '#ff6060',
-    shadow: '4px 4px 0px #ff6060',
-    hoverShadow: '7px 7px 0px #ff6060',
-  },
-  neutral: {
-    bg: '',
-    borderColor: '#56b3ff',
-    shadow: '4px 4px 0px rgba(86,179,255,0.45)',
-    hoverShadow: '7px 7px 0px rgba(86,179,255,0.55)',
-  },
+// Standard post cards are always blue. Vote state is communicated by the
+// up/down controls, not the card chrome. Green/red belong to profile activity
+// cards (see ActivityCard + getCardBackgroundColor).
+const CARD_THEME = {
+  borderColor: '#56b3ff',
+  shadow: '4px 4px 0px rgba(86,179,255,0.45)',
+  hoverShadow: '7px 7px 0px rgba(86,179,255,0.55)',
 } as const
 
 function stringLimit(text: string, limit: number): string {
@@ -219,14 +207,6 @@ function PostCardComponent({
   const upvoteCount = localApprovedBy.length
   const downvoteCount = localRejectedBy.length
 
-  const sentiment: 'support' | 'disagree' | 'neutral' = (() => {
-    const up = localApprovedBy.length
-    const down = localRejectedBy.length
-    if (up > 0 && up > down) return 'support'
-    if (down > 0 && down > up) return 'disagree'
-    return 'neutral'
-  })()
-  const cardTheme = CARD_THEMES[sentiment]
 
   const formattedDate = useMemo(
     () =>
@@ -245,23 +225,19 @@ function PostCardComponent({
     <article
       data-testid="post-card"
       data-post-title={title || ''}
-      className={cn(
-        'group/card rounded-[7px] cursor-pointer overflow-hidden',
-        !cardTheme.bg && 'bg-card',
-      )}
+      className={cn('group/card rounded-[7px] cursor-pointer overflow-hidden bg-card')}
       style={{
-        ...(cardTheme.bg ? { backgroundColor: cardTheme.bg } : {}),
-        border: `2px solid ${cardTheme.borderColor}`,
-        borderBottom: `8px solid ${cardTheme.borderColor}`,
-        boxShadow: cardTheme.shadow,
+        border: `2px solid ${CARD_THEME.borderColor}`,
+        borderBottom: `8px solid ${CARD_THEME.borderColor}`,
+        boxShadow: CARD_THEME.shadow,
         transition: 'box-shadow 0.15s ease, transform 0.15s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = cardTheme.hoverShadow
+        e.currentTarget.style.boxShadow = CARD_THEME.hoverShadow
         e.currentTarget.style.transform = 'translate(-2px, -2px)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = cardTheme.shadow
+        e.currentTarget.style.boxShadow = CARD_THEME.shadow
         e.currentTarget.style.transform = ''
       }}
       onClick={handleCardClick}
@@ -274,7 +250,7 @@ function PostCardComponent({
       tabIndex={0}
       role="article"
       aria-label={title || 'Post'}
-      data-sentiment={sentiment}
+      data-sentiment="neutral"
     >
       {/* ── Vote + interactions row ── */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b border-border/30">
