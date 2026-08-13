@@ -1,22 +1,60 @@
 import { ActivityContentType } from '@/types/store'
 
+/**
+ * Activity Color Design System (RC1-008, RC1-009)
+ *
+ * Mappings for profile activity cards and activity controls:
+ * - POSTED: #FFFFFF (White)
+ * - COMMENTED: #FDD835 (Yellow)
+ * - UPVOTED / UP: #52b274 (Green)
+ * - DOWNVOTED / DOWN: #FF6060 (Red)
+ * - VOTED: #52b274 (Default green for generic vote activity)
+ * - LIKED / HEARTED: #F16C99 (Pink)
+ * - QUOTED: #E36DFA (Purple)
+ */
+export const ACTIVITY_COLOR_MAP = {
+  POSTED: '#FFFFFF',
+  COMMENTED: '#FDD835',
+  UPVOTED: '#52b274',
+  DOWNVOTED: '#FF6060',
+  VOTED: '#52b274',
+  LIKED: '#F16C99',
+  QUOTED: '#E36DFA',
+} as const
+
+// ponytail: single switch statement handles all aliases without extra abstraction
 const getCardBackgroundColor = (activityType: ActivityContentType): string => {
+  if (!activityType) return ACTIVITY_COLOR_MAP.POSTED
+
   switch (activityType.toUpperCase()) {
     case 'POSTED':
-      return '#FFFFFF'
+    case 'POST':
+      return ACTIVITY_COLOR_MAP.POSTED
     case 'COMMENTED':
-      return '#FDD835'
+    case 'COMMENT':
+      return ACTIVITY_COLOR_MAP.COMMENTED
     case 'UPVOTED':
-      return '#52b274'
+    case 'UP':
+    case 'UPVOTE':
+      return ACTIVITY_COLOR_MAP.UPVOTED
     case 'DOWNVOTED':
-      return '#FF6060'
+    case 'DOWN':
+    case 'DOWNVOTE':
+      return ACTIVITY_COLOR_MAP.DOWNVOTED
+    case 'VOTED':
+    case 'VOTE':
+      return ACTIVITY_COLOR_MAP.VOTED
     case 'LIKED':
-      return '#F16C99'
+    case 'LIKE':
+    case 'HEARTED':
+      return ACTIVITY_COLOR_MAP.LIKED
     case 'QUOTED':
-      return '#E36DFA'
+    case 'QUOTE':
+      return ACTIVITY_COLOR_MAP.QUOTED
     default:
-      return '#FFFFFF'
+      return ACTIVITY_COLOR_MAP.POSTED
   }
 }
 
 export default getCardBackgroundColor
+

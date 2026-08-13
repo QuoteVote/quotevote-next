@@ -57,7 +57,9 @@ function getStatusDotClass(status: string): string {
 
 export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const router = useRouter();
-  const loggedInUserId = useAppStore((state) => state.user.data._id || state.user.data.id);
+  const loggedInUser = useAppStore((state) => state.user.data);
+  const loggedInUserId = loggedInUser?._id || loggedInUser?.id;
+  const loggedInUsername = loggedInUser?.username;
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
   const setChatOpen = useAppStore((state) => state.setChatOpen);
   const userStatus = useAppStore((state) => state.chat.userStatus || 'online');
@@ -77,7 +79,11 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
     contributorBadge,
   } = profileUser;
 
-  const sameUser = _id === loggedInUserIdString;
+  // ponytail: robust check for current user matching either id or username (RC1-010)
+  const sameUser =
+    Boolean(loggedInUserIdString && _id && String(_id) === loggedInUserIdString) ||
+    Boolean(loggedInUsername && username && loggedInUsername.toLowerCase() === username.toLowerCase());
+
   const followersArray = Array.isArray(_followersId) ? _followersId : typeof _followersId === 'string' ? [_followersId] : [];
   const isFollowing = followersArray.includes(loggedInUserIdString);
 

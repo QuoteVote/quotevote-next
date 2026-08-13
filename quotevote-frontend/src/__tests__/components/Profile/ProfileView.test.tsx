@@ -428,4 +428,35 @@ describe('ProfileView', () => {
       expect(spaceYContainer).toBeInTheDocument();
     });
   });
+
+  describe('RC1-009: Activity Button Colors by Type', () => {
+    it('applies activity-specific color classes when filters are active', async () => {
+      const user = userEvent.setup();
+      await act(async () => {
+        render(<ProfileView profileUser={mockProfileUser} />);
+      });
+
+      const votedButton = screen.getByRole('tab', { name: 'Voted' });
+      await user.click(votedButton);
+      await waitFor(() => {
+        expect(votedButton.className).toContain('border-[#52b274]');
+        expect(votedButton.className).toContain('text-[#52b274]');
+      });
+
+      const commentedButton = screen.getByRole('tab', { name: 'Commented' });
+      await user.click(commentedButton);
+      await waitFor(() => {
+        expect(commentedButton.className).toContain('border-[#ca8a04]');
+        expect(commentedButton.className).toContain('text-[#ca8a04]');
+      });
+
+      const quotedButton = screen.getByRole('tab', { name: 'Quoted' });
+      await user.click(quotedButton);
+      await waitFor(() => {
+        expect(quotedButton.className).toContain('border-[#c026d3]');
+        expect(quotedButton.className).toContain('text-[#c026d3]');
+      });
+    });
+  });
 });
+

@@ -26,14 +26,24 @@ describe('ActivityCard', () => {
     expect(screen.getByText(/Test activity content/i)).toBeInTheDocument()
   })
 
-  it('renders without custom background color override', () => {
+  it('renders default background color when cardColor is not provided', () => {
     const { container } = render(
       <ActivityCard {...defaultProps} />
     )
 
     const card = container.querySelector('[data-slot="card"]')
-    expect(card).not.toHaveStyle({ backgroundColor: 'rgb(255, 0, 0)' })
+    expect(card).toHaveStyle({ backgroundColor: '#FFFFFF' })
   })
+
+  it('renders with custom cardColor when provided', () => {
+    const { container } = render(
+      <ActivityCard {...defaultProps} cardColor="#52b274" />
+    )
+
+    const card = container.querySelector('[data-slot="card"]')
+    expect(card).toHaveStyle({ backgroundColor: '#52b274' })
+  })
+
 
   it('calls onCardClick when card is clicked', async () => {
     const handleCardClick = jest.fn()

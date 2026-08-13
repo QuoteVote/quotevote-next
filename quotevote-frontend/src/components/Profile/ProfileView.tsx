@@ -22,6 +22,33 @@ export const ACTIVITY_FILTERS: Array<{
   { id: 'QUOTED', label: 'Quoted' },
 ];
 
+// Activity filter styling mapping with accessible contrast (RC1-009)
+export const ACTIVITY_FILTER_STYLES: Record<
+  ProfileActivityType,
+  { activeBorder: string; activeText: string; color: string }
+> = {
+  POSTED: {
+    activeBorder: 'border-primary',
+    activeText: 'text-foreground',
+    color: '#52b274',
+  },
+  VOTED: {
+    activeBorder: 'border-[#52b274]',
+    activeText: 'text-[#52b274]',
+    color: '#52b274',
+  },
+  COMMENTED: {
+    activeBorder: 'border-[#ca8a04]',
+    activeText: 'text-[#ca8a04]',
+    color: '#FDD835',
+  },
+  QUOTED: {
+    activeBorder: 'border-[#c026d3]',
+    activeText: 'text-[#c026d3]',
+    color: '#E36DFA',
+  },
+};
+
 export const ALL_ACTIVITY_TYPES: ProfileActivityType[] = [
   'POSTED',
   'VOTED',
@@ -114,6 +141,7 @@ export function ProfileView({
               activeTab === 'activity' &&
               !isAllActive &&
               selectedFilters.includes(id);
+            const filterStyle = ACTIVITY_FILTER_STYLES[id];
 
             return (
               <button
@@ -126,7 +154,7 @@ export function ProfileView({
                 className={cn(
                   'flex-1 h-full min-w-[60px] inline-flex items-center justify-center whitespace-nowrap px-1 sm:px-3 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border-b-2',
                   isActive
-                    ? 'border-primary text-foreground font-semibold'
+                    ? `${filterStyle.activeBorder} ${filterStyle.activeText} font-semibold`
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 )}
               >
