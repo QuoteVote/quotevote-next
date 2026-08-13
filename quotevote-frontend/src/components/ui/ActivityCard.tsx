@@ -161,6 +161,7 @@ function ActivityActions({
 
 export const ActivityCard = memo(function ActivityCard({
   avatar = '',
+  cardColor,
   name: _name = 'Username',
   username,
   date,
@@ -197,13 +198,15 @@ export const ActivityCard = memo(function ActivityCard({
     interactions.push(...messages)
   }
 
+  // ponytail: apply cardColor directly on Card style for profile activity context
   return (
     <Card
       className={cn(
-        'min-w-[350px] min-h-[200px] rounded-md cursor-pointer transition-shadow hover:shadow-md',
+        'min-w-[350px] min-h-[200px] rounded-md cursor-pointer transition-shadow hover:shadow-md text-neutral-900',
         'sm:max-w-full sm:min-w-full sm:w-full'
       )}
       style={{
+        backgroundColor: cardColor || '#FFFFFF',
         width: typeof width === 'number' ? `${width}px` : '100%',
       }}
       onClick={onCardClick}
@@ -230,4 +233,5 @@ export const ActivityCard = memo(function ActivityCard({
     </Card>
   )
 })
+
 
