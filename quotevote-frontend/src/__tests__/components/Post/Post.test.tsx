@@ -221,4 +221,19 @@ describe('Post Component', () => {
     // the action-bar indicator only exposes it via aria-label/tooltip.
     expect(queryByText(/interactions?$/)).not.toBeInTheDocument()
   })
+
+  describe('RC1-017: Suppress redundant vote indicator', () => {
+    it('does not render "You upvoted/downvoted this post" banner after voting', () => {
+      const postWithUserVote = {
+        ...mockPost,
+        votes: [{ _id: 'v1', userId: 'current-user', type: 'up' }],
+      }
+      const { queryByText } = render(
+        <Post {...mockProps} post={postWithUserVote} />
+      )
+      expect(queryByText(/You upvoted this post/i)).not.toBeInTheDocument()
+      expect(queryByText(/You downvoted this post/i)).not.toBeInTheDocument()
+    })
+  })
 })
+
