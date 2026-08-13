@@ -24,31 +24,55 @@ import type {
   DeleteQuoteData,
 } from '@/types/postActions'
 
-// ── Type badge ───────────────────────────────────────────────────────────────
-function ActionTypeBadge({ type, voteType }: { type: string; voteType?: string }) {
+// ── Type badge / activity label button (RC1-019) ─────────────────────────────
+function ActionTypeBadge({
+  type,
+  voteType,
+  className,
+}: {
+  type: string
+  voteType?: string
+  className?: string
+}) {
   if (type === 'Vote') {
     const isUp = voteType === 'up' || voteType === 'upvote'
     return (
-      <span className={cn(
-        'inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide',
-        isUp
-          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-          : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-      )}>
+      <span
+        data-testid="activity-label-button"
+        className={cn(
+          'inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide shrink-0',
+          isUp
+            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+            : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+          className
+        )}
+      >
         {isUp ? '↑ Agree' : '↓ Disagree'}
       </span>
     )
   }
   if (type === 'Quote') {
     return (
-      <span className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400">
+      <span
+        data-testid="activity-label-button"
+        className={cn(
+          'inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 shrink-0',
+          className
+        )}
+      >
         ❝ Quote
       </span>
     )
   }
   if (type === 'Comment') {
     return (
-      <span className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400">
+      <span
+        data-testid="activity-label-button"
+        className={cn(
+          'inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400 shrink-0',
+          className
+        )}
+      >
         💬 Comment
       </span>
     )
@@ -246,7 +270,7 @@ export default function PostActionCard({
       {/* Content column */}
       <div className="flex-1 min-w-0">
 
-        {/* Header: name · date · type badge */}
+        {/* Header: name · date */}
         <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
           <button
             type="button"
@@ -266,17 +290,17 @@ export default function PostActionCard({
           )}
           <span className="text-muted-foreground/40 text-xs leading-none">·</span>
           <time className="text-[11px] text-muted-foreground leading-none">{parsedDate}</time>
-          <ActionTypeBadge type={type} voteType={voteType} />
         </div>
 
-        {/* Vote: selected text as an accented blockquote */}
+        {/* Vote: selected text as an accented blockquote with activity label before it (RC1-019) */}
         {type === 'Vote' && (
           <blockquote className={cn(
-            'pl-3 border-l-[3px] text-sm leading-relaxed',
+            'pl-3 border-l-[3px] text-sm leading-relaxed flex items-start gap-1.5 flex-wrap',
             voteType === 'up' || voteType === 'upvote'
               ? 'border-l-emerald-400/60 text-foreground/80'
               : 'border-l-red-400/60 text-foreground/80'
           )}>
+            <ActionTypeBadge type={type} voteType={voteType} className="mr-1 my-0.5" />
             {content
               ? <span>&ldquo;{content}&rdquo;</span>
               : <span className="italic text-muted-foreground/60">no text selected</span>
@@ -284,24 +308,30 @@ export default function PostActionCard({
           </blockquote>
         )}
 
-        {/* Quote: italic blockquote with violet accent */}
+        {/* Quote: italic blockquote with activity label before it (RC1-019) */}
         {type === 'Quote' && (
-          <blockquote className="pl-3 border-l-[3px] border-l-violet-400/60 text-sm text-foreground/75 italic leading-relaxed">
-            {quoteContent}
+          <blockquote className="pl-3 border-l-[3px] border-l-violet-400/60 text-sm text-foreground/75 italic leading-relaxed flex items-start gap-1.5 flex-wrap">
+            <ActionTypeBadge type={type} className="mr-1 my-0.5 not-italic" />
+            <span>{quoteContent}</span>
           </blockquote>
         )}
 
-        {/* Comment: optional quoted context + body */}
+        {/* Comment: optional quoted context + body with activity label (RC1-019) */}
         {type === 'Comment' && (
           <div>
             {commentQuote && (
-              <blockquote className="mb-1.5 pl-3 border-l-[3px] border-l-sky-400/60 text-[13px] text-muted-foreground italic leading-relaxed">
-                {commentQuote}
+              <blockquote className="mb-1.5 pl-3 border-l-[3px] border-l-sky-400/60 text-[13px] text-muted-foreground italic leading-relaxed flex items-start gap-1.5 flex-wrap">
+                <ActionTypeBadge type="Quote" className="mr-1 my-0.5 not-italic" />
+                <span>{commentQuote}</span>
               </blockquote>
             )}
-            <p className="text-[13px] text-foreground/85 leading-relaxed">{content}</p>
+            <div className="flex items-start gap-1.5 flex-wrap">
+              <ActionTypeBadge type={type} className="mr-1 my-0.5" />
+              <p className="text-[13px] text-foreground/85 leading-relaxed inline">{content}</p>
+            </div>
           </div>
         )}
+
 
         {/* Footer: reactions (left) · copy + delete (right, fade in on hover) */}
         <div className="flex items-center justify-between mt-2.5 -ml-1">

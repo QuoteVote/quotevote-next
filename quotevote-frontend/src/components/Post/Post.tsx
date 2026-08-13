@@ -538,29 +538,8 @@ export default function Post({
 
       {/* ── Post body ───────────────────────────────────────────────────── */}
       <div className="px-4 sm:px-6 py-4">
-
-        {/* Vote status indicator */}
-        {hasVoted && (
-          <div
-            className="flex items-center gap-2 text-sm rounded-lg px-3.5 py-2.5 mb-4 border"
-            style={{
-              background: getUserVoteType() === 'up' ? 'var(--color-upvote)' : 'var(--color-downvote)',
-              borderColor: 'transparent',
-              color: '#fff',
-              opacity: 0.9,
-            }}
-          >
-            {getUserVoteType() === 'up'
-              ? <ArrowBigUp className="size-5 shrink-0" strokeWidth={1.5} />
-              : <ArrowBigDown className="size-5 shrink-0" strokeWidth={1.5} />
-            }
-            <span className="font-medium">
-              You {getUserVoteType() === 'up' ? 'upvoted' : 'downvoted'} this post
-            </span>
-          </div>
-        )}
-
         {/* Selectable post text + floating VotingPopup */}
+
         <div
           data-testid="post-detail-body"
           className={cn(
