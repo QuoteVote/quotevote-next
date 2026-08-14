@@ -1,0 +1,109 @@
+export const Query = `
+type Query {
+  " Hello world check "
+  hello: String
+
+  " Status of server "
+  status: String
+
+  " Get Solid connection status "
+  solidConnectionStatus: SolidConnectionStatus!
+
+  " This will give the public news feed "
+  activities(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, user_id: String, activityEvent: JSON): Activities
+
+  " Get all groups "
+  groups(created: String, key: String, title: String, limit: Int): [Group]
+
+  " Get a specific group by ID "
+  group(groupId: String!): Group
+
+  " This will query the list of user invite requests "
+  userInviteRequests: [UserInvite]
+
+  " This will query a post "
+  post(postId: String!): Post
+
+  " Get latest quotes "
+  latestQuotes(limit: Int!): [Quote!]!
+
+  " This will query the list of posts "
+  posts(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, friendsOnly: Boolean, groupId: String, userId: String, approved: Boolean, deleted: Boolean, interactions: Boolean, sortOrder: String): Posts
+
+  " This will query the top posts (alias for posts) "
+  topPosts(limit: Int!, offset: Int!, searchKey: String!, startDateRange: String, endDateRange: String, friendsOnly: Boolean, interactions: Boolean, userId: String, sortOrder: String): Posts
+
+  " Posts selected for homepage carousel "
+  featuredPosts(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, friendsOnly: Boolean, groupId: String, userId: String, approved: Boolean, deleted: Boolean, interactions: Boolean, sortOrder: String): Posts
+
+  " This will query a post message room"
+  postMessageRoom(postId: String!): MessageRoom
+
+  " This will query the list of available users (Admin only) "
+  users(limit: Int, offset: Int): [User]
+
+  " This will query the user "
+  user(user_id: String, username: String, creatorId: String): User
+
+  " This will search for users by username or name "
+  searchUser(queryName: String!): [User]
+
+  " This will query the user follow info "
+  getUserFollowInfo(username: String, filter: String): JSON
+
+  " Get user reputation information "
+  getUserReputation(userId: String!): UserReputation
+
+  " Get user invites "
+  getUserInvites(userId: String!, status: String): [UserInvite]
+
+  " Get user reports "
+  getUserReports(userId: String!, status: String): [UserReport]
+
+  " Get users reported as bots (admin only) "
+  getBotReportedUsers(sortBy: String, limit: Int): [User]
+
+  " This will query the user messages by Message Room ID"
+  messages(messageRoomId: String!): [Message]
+
+  " This will query the list user message rooms"
+  messageRooms: [MessageRoom]
+  
+  " This will query the user message room"
+  messageRoom(otherUserId: String!): MessageRoom
+
+  " This will query duplicate email"
+  checkDuplicateEmail(email: String!): JSON
+
+  " This will query user info if token is valid"
+  verifyUserPasswordResetToken(token: String!): JSON
+  
+  " This will query user notifications"
+  notifications: [Notification]
+
+  " This will query the message Reactions"
+  messageReactions(messageId: String!): [Reaction]
+
+  " This will query the action Reactions"
+  actionReactions(actionId: String!): [Reaction]
+
+  # ===== Presence Queries =====
+  " Get user presence by user ID"
+  getPresence(userId: String!): Presence
+
+  " Get buddy list with presence information"
+  getBuddyList: [BuddyWithPresence]
+
+  " Get roster entries"
+  getRoster: [Roster]
+
+  # ===== Typing Queries =====
+  " Get typing users in a message room"
+  getTypingUsers(messageRoomId: String!): [TypingIndicator]
+
+  " Search content by text "
+  searchContent(text: String!): [Content]
+
+  " Search creators by name "
+  searchCreator(text: String!): [Creator]
+}`;
