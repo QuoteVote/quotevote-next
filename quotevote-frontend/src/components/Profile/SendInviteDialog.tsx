@@ -27,11 +27,13 @@ export function SendInviteDialog({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // `sendUserInvite` resolves to a JSON scalar, so the payload is untyped on the
+  // wire — narrow it here and treat a missing body as a failure.
   const [sendInvite, { loading }] = useMutation<{
-    sendUserInvite: { code: string; message?: string };
+    sendUserInvite: { code?: string; message?: string } | null;
   }>(SEND_USER_INVITE, {
     onCompleted: (data) => {
-      if (data.sendUserInvite.code === 'SUCCESS') {
+      if (data.sendUserInvite?.code === 'SUCCESS') {
         setSuccess('Invitation sent successfully!');
         setEmail('');
         if (onSuccess) onSuccess();
@@ -40,7 +42,7 @@ export function SendInviteDialog({
           setSuccess('');
         }, 2000);
       } else {
-        setError(data.sendUserInvite.message || 'Failed to send invitation');
+        setError(data.sendUserInvite?.message || 'Failed to send invitation');
       }
     },
     onError: (err: Error) => {

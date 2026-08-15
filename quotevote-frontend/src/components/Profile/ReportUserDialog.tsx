@@ -51,18 +51,20 @@ export function ReportUserDialog({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // `reportUser` resolves to a JSON scalar, so the payload is untyped on the
+  // wire — narrow it here and treat a missing body as a failure.
   const [reportUser, { loading }] = useMutation<{
-    reportUser: { code: string; message?: string };
+    reportUser: { code?: string; message?: string } | null;
   }>(REPORT_USER, {
     onCompleted: (data) => {
-      if (data.reportUser.code === 'SUCCESS') {
+      if (data.reportUser?.code === 'SUCCESS') {
         setSuccess('User report submitted successfully!');
         setTimeout(() => {
           onClose();
           setSuccess('');
         }, 2000);
       } else {
-        setError(data.reportUser.message || 'Failed to submit report');
+        setError(data.reportUser?.message || 'Failed to submit report');
       }
     },
     onError: (err: Error) => {

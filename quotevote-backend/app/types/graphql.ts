@@ -238,6 +238,7 @@ export interface MutationResolvers {
   // Reaction mutations
   addActionReaction: ResolverFn<Common.Reaction, unknown, { reaction: Common.ReactionInput }>;
   updateActionReaction: ResolverFn<Common.Reaction, unknown, { _id: string; emoji: string }>;
+  deleteActionReaction: ResolverFn<boolean, unknown, { _id: string }>;
   addMessageReaction: ResolverFn<Common.Reaction, unknown, { reaction: Common.ReactionInput }>;
   updateReaction: ResolverFn<Common.Reaction, unknown, { _id: string; emoji: string }>;
 

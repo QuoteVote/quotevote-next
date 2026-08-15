@@ -8,8 +8,6 @@ export const HEARTBEAT = gql`
     heartbeat {
       success
       timestamp
-      status
-      statusMessage
     }
   }
 `
@@ -112,8 +110,6 @@ export const UPDATE_TYPING = gql`
   mutation UpdateTyping($typing: TypingInput!) {
     updateTyping(typing: $typing) {
       success
-      messageRoomId
-      isTyping
     }
   }
 `
@@ -204,18 +200,6 @@ export const ADD_COMMENT = gql`
         username
         avatar
       }
-    }
-  }
-`
-
-/**
- * Update comment mutation
- */
-export const UPDATE_COMMENT = gql`
-  mutation UpdateComment($commentId: String!, $content: String!) {
-    updateComment(commentId: $commentId, content: $content) {
-      _id
-      content
     }
   }
 `
@@ -380,25 +364,23 @@ export const DELETE_QUOTE = gql`
 
 /**
  * Send user invite mutation
+ *
+ * Returns a `JSON` scalar ({ code, message }), so it must not have a selection set.
  */
 export const SEND_USER_INVITE = gql`
   mutation sendUserInvite($email: String!) {
-    sendUserInvite(email: $email) {
-      code
-      message
-    }
+    sendUserInvite(email: $email)
   }
 `
 
 /**
  * Report user mutation
+ *
+ * Returns a `JSON` scalar ({ code, message }), so it must not have a selection set.
  */
 export const REPORT_USER = gql`
   mutation reportUser($reportUserInput: ReportUserInput!) {
-    reportUser(reportUserInput: $reportUserInput) {
-      code
-      message
-    }
+    reportUser(reportUserInput: $reportUserInput)
   }
 `
 
@@ -568,50 +550,11 @@ export const ENABLE_USER = gql`
 `
 
 /**
- * Login mutation — authenticates a user and returns a token + user object.
- */
-export const LOGIN_MUTATION = gql`
-  mutation login($username: String!, $password: String!) {
-    login(username: $username, password: $password) {
-      token
-      user {
-        _id
-        id
-        username
-        email
-        name
-        avatar
-        admin
-        accountStatus
-      }
-    }
-  }
-`
-
-/**
- * Register/signup mutation — creates a new user account.
- */
-export const SIGNUP_MUTATION = gql`
-  mutation register($username: String!, $email: String!, $password: String!) {
-    register(username: $username, email: $email, password: $password) {
-      token
-      user {
-        _id
-        id
-        username
-        email
-        name
-        avatar
-        admin
-        accountStatus
-      }
-    }
-  }
-`
-
-/**
  * Update user profile mutation
  * Used by Settings component for updating user information
+ *
+ * `bio` is intentionally absent: the deployed API exposes it on neither `User`
+ * nor `UserInput`.
  */
 export const UPDATE_USER = gql`
   mutation updateUser($user: UserInput!) {
@@ -620,7 +563,6 @@ export const UPDATE_USER = gql`
       username
       email
       name
-      bio
       avatar
       admin
       accountStatus

@@ -244,7 +244,31 @@ describe('ProfileHeader Component', () => {
         expect(username || errorUI).toBeTruthy();
       }, { timeout: 5000 });
     });
+
+    it('shows status message when matching own profile by username (RC1-010)', async () => {
+      act(() => {
+        useAppStore.setState((s) => ({
+          user: { ...s.user, data: { ...s.user.data, _id: 'different-id', username: 'testuser' } },
+          chat: { ...s.chat, userStatus: 'away', userStatusMessage: 'Out for lunch' },
+        }));
+      });
+
+      await act(async () => {
+        render(
+          <MockedProvider mocks={createMocks()} addTypename={false}>
+            <ProfileHeader profileUser={mockProfileUser} />
+          </MockedProvider>
+        );
+      });
+
+      await waitFor(() => {
+        const status = screen.queryByText('Out for lunch');
+        const errorUI = screen.queryByText(/Something went wrong/i);
+        expect(status || errorUI).toBeTruthy();
+      }, { timeout: 5000 });
+    });
   });
+
 
   describe('Own Profile vs Other User Profile', () => {
     it('shows "Edit Profile" button for own profile', async () => {

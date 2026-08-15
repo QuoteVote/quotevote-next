@@ -761,5 +761,61 @@ describe('PostActionCard', () => {
       expect(screen.getAllByText('user1').length).toBeGreaterThan(0)
     })
   })
+
+  describe('RC1-019: Activity label button before highlighted text', () => {
+    it('renders activity label badge before highlighted vote text', () => {
+      const voteAction: PostAction = {
+        _id: 'vote-1',
+        __typename: 'Vote',
+        content: 'Highlighted important text',
+        created: new Date().toISOString(),
+        type: 'up',
+        user: {
+          _id: 'user1',
+          username: 'user1',
+          name: 'User One',
+        },
+      }
+
+      render(
+        <PostActionCard
+          postAction={voteAction}
+          postUrl="/post/123"
+        />,
+      )
+
+      const badges = screen.getAllByTestId('activity-label-button')
+      expect(badges.length).toBeGreaterThan(0)
+      expect(badges[0]).toHaveTextContent('↑ Agree')
+      expect(screen.getByText(/Highlighted important text/i)).toBeInTheDocument()
+    })
+
+    it('renders activity label badge before highlighted quote text', () => {
+      const quoteAction: PostAction = {
+        _id: 'quote-1',
+        __typename: 'Quote',
+        quote: 'Quoted highlight snippet',
+        created: new Date().toISOString(),
+        user: {
+          _id: 'user1',
+          username: 'user1',
+          name: 'User One',
+        },
+      }
+
+      render(
+        <PostActionCard
+          postAction={quoteAction}
+          postUrl="/post/123"
+        />,
+      )
+
+      const badges = screen.getAllByTestId('activity-label-button')
+      expect(badges.length).toBeGreaterThan(0)
+      expect(badges[0]).toHaveTextContent('❝ Quote')
+      expect(screen.getByText(/Quoted highlight snippet/i)).toBeInTheDocument()
+    })
+  })
 })
+
 

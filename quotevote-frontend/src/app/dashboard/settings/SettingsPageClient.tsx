@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useMutation, useQuery } from '@apollo/client/react'
+import { useMutation } from '@apollo/client/react'
 import { Camera, Loader2, Moon, Sun, LogOut, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -13,14 +13,12 @@ import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
@@ -38,7 +36,6 @@ import {
   PROFILE_BG_COLORS,
   PROFILE_BG_PATTERNS,
 } from '@/lib/utils/profileBackground'
-import { PROFILE_BIO_MAX_LENGTH, PROFILE_BIO_HTML_PATTERN } from '@/lib/constants/profile'
 import { cn } from '@/lib/utils'
 import type { SettingsUserData } from '@/types/settings'
 import type { UpdateUserResponse } from '@/types/test'
@@ -50,12 +47,6 @@ const settingsSchema = z.object({
     .min(4, 'Username must be at least 4 characters')
     .max(50, 'Username must be under 50 characters'),
   email: z.string().email('Please enter a valid email'),
-  bio: z
-    .string()
-    .max(PROFILE_BIO_MAX_LENGTH, `About must be ${PROFILE_BIO_MAX_LENGTH} characters or fewer`)
-    .refine((val) => !PROFILE_BIO_HTML_PATTERN.test(val), {
-      message: 'About must be plain text without HTML',
-    }),
   password: z.string().refine((val) => !val || val.length >= 8, {
     message: 'Password must be at least 8 characters',
   }),
@@ -79,7 +70,6 @@ export default function SettingsPageClient() {
   const username = userData?.username ?? ''
   const email = userData?.email ?? ''
   const name = userData?.name ?? ''
-  const bio = typeof userData?.bio === 'string' ? userData.bio : ''
   const userId = userData?.id ?? userData?._id ?? ''
 
   const [localDarkMode, setLocalDarkMode] = useState(isDarkMode)
@@ -91,23 +81,10 @@ export default function SettingsPageClient() {
 
   const [updateUser, { loading }] = useMutation<UpdateUserResponse>(UPDATE_USER)
 
-  const { data: profileData } = useQuery<{ user: { bio?: string | null } | null }>(GET_USER, {
-    variables: { username },
-    skip: !username,
-    fetchPolicy: 'cache-and-network',
-  })
-
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: { name, username, email, bio, password: '' },
+    defaultValues: { name, username, email, password: '' },
   })
-
-  useEffect(() => {
-    const fetchedBio = profileData?.user?.bio
-    if (typeof fetchedBio === 'string' && form.getValues('bio') === bio) {
-      form.setValue('bio', fetchedBio, { shouldDirty: false })
-    }
-  }, [profileData?.user?.bio, bio, form])
 
   useEffect(() => {
     setLocalDarkMode(isDarkMode)
@@ -159,7 +136,6 @@ export default function SettingsPageClient() {
     const userInput: Record<string, unknown> = {
       _id: userId,
       ...otherValues,
-      bio: otherValues.bio.trim(),
       themePreference: localDarkMode ? 'dark' : 'light',
     }
     if (password) {
@@ -182,7 +158,6 @@ export default function SettingsPageClient() {
         setUserData({
           ...userData,
           ...updated,
-          bio: updated.bio ?? otherValues.bio.trim(),
           avatar: userData?.avatar as string | undefined,
           themePreference: localDarkMode ? 'dark' : 'light',
         })
@@ -194,7 +169,6 @@ export default function SettingsPageClient() {
           name: updated.name ?? otherValues.name,
           username: updated.username ?? otherValues.username,
           email: updated.email ?? otherValues.email,
-          bio: (updated.bio as string | undefined) ?? otherValues.bio.trim(),
           password: '',
         })
       }
@@ -285,29 +259,6 @@ export default function SettingsPageClient() {
                     <FormControl>
                       <Input type="email" placeholder="you@example.com" {...field} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>About</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Tell others a little about yourself"
-                        rows={4}
-                        maxLength={PROFILE_BIO_MAX_LENGTH}
-                        className="resize-y min-h-[96px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Plain text only · {field.value?.length ?? 0}/{PROFILE_BIO_MAX_LENGTH}
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
