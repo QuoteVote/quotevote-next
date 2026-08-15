@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { useMutation } from '@apollo/client/react'
 import { toast } from 'sonner'
 import { Loader2, Mail, ChevronLeft } from 'lucide-react'
-import Image from 'next/image'
+import { Globe } from '@/components/Icons'
 import Link from 'next/link'
 import { SEND_PASSWORD_RESET_EMAIL } from '@/graphql/mutations'
 import { Input } from '@/components/ui/input'
@@ -119,14 +119,8 @@ export default function ForgotPasswordPageContent() {
           minHeight: '50px',
         }}
       >
-        <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <Image
-            src="/icons/android-chrome-192x192.png"
-            alt="Quote Vote"
-            width={25}
-            height={25}
-            style={{ objectFit: 'contain' }}
-          />
+        <Link href="/" style={{ display: 'flex', alignItems: 'center' }} aria-label="Quote.Vote home">
+          <Globe size={25} />
         </Link>
 
         <Link

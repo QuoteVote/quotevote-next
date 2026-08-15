@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@apollo/client/react';
 import {
@@ -18,6 +17,7 @@ import {
   ChevronDown,
   Settings,
 } from 'lucide-react';
+import { Globe } from '@/components/Icons';
 
 
 import { cn } from '@/lib/utils';
@@ -205,15 +205,12 @@ export default function DashboardLayout({
 
           {/* ── Left: Logo ── */}
           <div className="flex items-center gap-2 flex-shrink-0 z-10">
-            <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline flex-shrink-0">
-              <Image
-                src="/icons/android-chrome-192x192.png"
-                alt="Quote.Vote"
-                width={36}
-                height={36}
-                className="object-contain rounded-full"
-                crossOrigin="anonymous"
-              />
+            <Link
+              href="/dashboard/explore"
+              className="flex items-center gap-2 no-underline flex-shrink-0"
+              aria-label="Quote.Vote home"
+            >
+              <Globe size={36} className="size-9" />
               <span className="hidden lg:block text-[20px] font-extrabold tracking-tight text-[#52b274] select-none">
                 Quote.Vote
               </span>
@@ -346,15 +343,12 @@ export default function DashboardLayout({
       ════════════════════════════════════════════════════════════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 md:hidden h-[56px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] flex items-center">
         <div className="flex h-full w-full items-center justify-between px-4">
-          <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline">
-            <Image
-              src="/icons/android-chrome-192x192.png"
-              alt="Quote.Vote"
-              width={32}
-              height={32}
-              className="object-contain rounded-full"
-              crossOrigin="anonymous"
-            />
+          <Link
+            href="/dashboard/explore"
+            className="flex items-center gap-2 no-underline"
+            aria-label="Quote.Vote home"
+          >
+            <Globe size={32} className="size-8" />
             <span className="text-[18px] font-extrabold tracking-tight text-[#52b274]">Quote.Vote</span>
           </Link>
           {/* Account menu lives on the bottom-nav Profile button. */}

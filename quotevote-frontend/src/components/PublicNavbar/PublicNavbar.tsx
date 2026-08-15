@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Github } from 'lucide-react';
+import { Globe } from '@/components/Icons';
 
 interface PublicNavbarProps {
   /** Show the Login button (hide when already on the login page) */
@@ -34,14 +34,7 @@ export function PublicNavbar({ showLogin = true, showRequestInvite = false }: Pu
           className="flex items-center gap-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded-lg"
           aria-label="Quote.Vote home"
         >
-          <Image
-            src="/icons/android-chrome-192x192.png"
-            alt="Quote.Vote"
-            width={28}
-            height={28}
-            className="object-contain"
-            priority
-          />
+          <Globe size={28} className="size-7" />
           <span
             className="font-extrabold text-lg tracking-wide hidden sm:block select-none"
             style={{ color: '#0A2342' }}

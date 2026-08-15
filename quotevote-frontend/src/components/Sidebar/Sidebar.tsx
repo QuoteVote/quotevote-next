@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Menu, Plus, Github, Search, User, LogOut } from 'lucide-react';
+import { Globe } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -112,14 +112,9 @@ export function Sidebar({
           href="/" 
           className="inline-block w-full"
           onClick={() => handleDrawerToggle(false)}
+          aria-label="Quote.Vote home"
         >
-          <Image
-            src="/icons/android-chrome-192x192.png"
-            alt="QuoteVote Logo"
-            width={30}
-            height={30}
-            className="cursor-pointer"
-          />
+          <Globe size={30} className="cursor-pointer" aria-label="QuoteVote Logo" />
         </Link>
         
         <Link
@@ -279,14 +274,9 @@ export function Sidebar({
               href="/" 
               className="inline-block" 
               onClick={handleLogoClick}
+              aria-label="Quote.Vote home"
             >
-              <Image
-                src="/icons/android-chrome-192x192.png"
-                alt="QuoteVote Logo"
-                width={30}
-                height={30}
-                className="cursor-pointer"
-              />
+              <Globe size={30} className="cursor-pointer" aria-label="QuoteVote Logo" />
             </Link>
           </div>
 

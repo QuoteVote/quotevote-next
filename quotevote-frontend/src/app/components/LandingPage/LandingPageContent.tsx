@@ -28,6 +28,7 @@ import {
   Star,
   MessageCircle,
 } from 'lucide-react';
+import { Globe as GlobeIcon } from '@/components/Icons';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
@@ -193,14 +194,7 @@ export function LandingPageContent({
             className="flex items-center gap-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded-lg"
             aria-label="Quote.Vote home"
           >
-            <Image
-              src="/icons/android-chrome-192x192.png"
-              alt="Quote.Vote"
-              width={28}
-              height={28}
-              className="object-contain"
-              priority
-            />
+            <GlobeIcon size={28} className="size-7" />
             <span
               className="font-extrabold text-lg tracking-wide hidden sm:block select-none"
               style={{ color: '#0A2342' }}

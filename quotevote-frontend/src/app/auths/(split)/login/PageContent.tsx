@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2, User, Lock } from 'lucide-react'
-import Image from 'next/image'
+import { Globe } from '@/components/Icons'
 import Link from 'next/link'
 import { loginUser } from '@/lib/auth'
 import { useAppStore } from '@/store/useAppStore'
@@ -105,14 +105,8 @@ export default function LoginPageContent() {
           minHeight: '50px',
         }}
       >
-        <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <Image
-            src="/icons/android-chrome-192x192.png"
-            alt="Quote Vote"
-            width={25}
-            height={25}
-            style={{ objectFit: 'contain' }}
-          />
+        <Link href="/" style={{ display: 'flex', alignItems: 'center' }} aria-label="Quote.Vote home">
+          <Globe size={25} />
         </Link>
 
         <Link
