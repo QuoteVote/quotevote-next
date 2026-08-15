@@ -4,8 +4,9 @@
  * Basic tests for the PostCard component
  */
 
-import { render } from '../../utils/test-utils'
+import { act, fireEvent, render, screen, waitFor } from '../../utils/test-utils'
 import PostCard from '../../../components/Post/PostCard'
+import { APPROVE_POST } from '@/graphql/mutations'
 import type { PostCardProps } from '@/types/post'
 
 // Mock useRouter
@@ -16,7 +17,11 @@ jest.mock('next/navigation', () => ({
 // Mock Zustand store — selector-aware so the component reads the right slices.
 // State object is inside the factory to avoid jest.mock hoisting / TDZ issues.
 jest.mock('@/store', () => {
-  const state = {
+  const state: {
+    setSelectedPost: jest.Mock
+    user: { data: { _id: string } | null }
+    ui: { hiddenPosts: string[] }
+  } = {
     setSelectedPost: jest.fn(),
     user: { data: null },
     ui: { hiddenPosts: [] },
@@ -24,8 +29,15 @@ jest.mock('@/store', () => {
   return {
     useAppStore: (selector: (s: typeof state) => unknown) =>
       typeof selector === 'function' ? selector(state) : state,
+    __setMockUserData: (user: { _id: string } | null) => {
+      state.user.data = user
+    },
   }
 })
+
+const { __setMockUserData } = jest.requireMock('@/store') as {
+  __setMockUserData: (user: { _id: string } | null) => void
+}
 
 // Mock useGuestGuard
 jest.mock('@/hooks/useGuestGuard', () => ({
@@ -40,6 +52,10 @@ jest.mock('@apollo/client/react', () => ({
   useQuery: jest.fn(() => ({ data: undefined, loading: false, error: undefined })),
   useMutation: jest.fn(() => [jest.fn(), { loading: false }]),
 }))
+
+const { useMutation: mockUseMutation } = jest.requireMock('@apollo/client/react') as {
+  useMutation: jest.Mock
+}
 
 describe('PostCard Component', () => {
   const mockPostCardProps: PostCardProps = {
@@ -63,6 +79,69 @@ describe('PostCard Component', () => {
     activityType: 'POSTED',
     limitText: false,
   }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    __setMockUserData(null)
+    mockUseMutation.mockImplementation(() => [jest.fn(), { loading: false }])
+  })
+
+  it('reconciles the selected Support state from the completed mutation response', async () => {
+    type ApprovePostResult = {
+      data: {
+        approvePost: {
+          _id: string
+          approvedBy: string[]
+          rejectedBy: string[]
+        }
+      }
+    }
+    let resolveApprovePost!: (result: ApprovePostResult) => void
+    const approvePost = jest.fn(
+      () =>
+        new Promise<ApprovePostResult>((resolve) => {
+          resolveApprovePost = resolve
+        })
+    )
+
+    __setMockUserData({ _id: 'current-user' })
+    mockUseMutation.mockImplementation((mutation) => {
+      if (mutation === APPROVE_POST) return [approvePost, { loading: false }]
+      return [jest.fn(), { loading: false }]
+    })
+
+    render(<PostCard {...mockPostCardProps} />)
+
+    expect(screen.getByRole('button', { name: 'Support this post' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Support this post' }))
+
+    expect(screen.getByRole('button', { name: 'Remove support' })).toBeInTheDocument()
+    expect(approvePost).toHaveBeenCalledWith({
+      variables: {
+        postId: 'post1',
+        userId: 'current-user',
+        remove: false,
+      },
+    })
+
+    await act(async () => {
+      resolveApprovePost({
+        data: {
+          approvePost: {
+            _id: 'post1',
+            // Intentionally differs from the optimistic addition to prove the response wins.
+            approvedBy: [],
+            rejectedBy: [],
+          },
+        },
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Support this post' })).toBeInTheDocument()
+    })
+  })
 
   describe('Basic Rendering', () => {
     it('renders post card', () => {

@@ -27,6 +27,20 @@ const CARD_THEME = {
   hoverShadow: '7px 7px 0px rgba(86,179,255,0.55)',
 } as const
 
+type VoteStateMutationPost = {
+  _id: string
+  approvedBy?: string[]
+  rejectedBy?: string[]
+}
+
+type ApprovePostMutationData = {
+  approvePost?: VoteStateMutationPost
+}
+
+type RejectPostMutationData = {
+  rejectPost?: VoteStateMutationPost
+}
+
 function stringLimit(text: string, limit: number): string {
   if (!text || text.length <= limit) return text
   return text.slice(0, limit) + '...'
@@ -61,8 +75,10 @@ function PostCardComponent({
   ) as string | undefined
 
   const [updateBookmark] = useMutation(UPDATE_POST_BOOKMARK)
-  const [approvePost, { loading: approvingPost }] = useMutation(APPROVE_POST)
-  const [rejectPost, { loading: rejectingPost }] = useMutation(REJECT_POST)
+  const [approvePost, { loading: approvingPost }] =
+    useMutation<ApprovePostMutationData>(APPROVE_POST)
+  const [rejectPost, { loading: rejectingPost }] =
+    useMutation<RejectPostMutationData>(REJECT_POST)
 
   // Local optimistic state — updates immediately on vote so color reflects right away
   const [localApprovedBy, setLocalApprovedBy] = useState<string[]>(() => approvedBy || [])
@@ -117,7 +133,15 @@ function PostCardComponent({
       setLocalRejectedBy((prev) => prev.filter((id) => id !== userId))
     }
     try {
-      await approvePost({ variables: { postId: _id, userId, remove: hasApproved } })
+      const { data } = await approvePost({
+        variables: { postId: _id, userId, remove: hasApproved },
+      })
+      const updatedPost = data?.approvePost
+      if (updatedPost) {
+        // The optimistic update is only immediate feedback; the completed mutation is authoritative.
+        setLocalApprovedBy(updatedPost.approvedBy || [])
+        setLocalRejectedBy(updatedPost.rejectedBy || [])
+      }
     } catch {
       setLocalApprovedBy(approvedBy || [])
       setLocalRejectedBy(rejectedBy || [])
@@ -137,7 +161,15 @@ function PostCardComponent({
       setLocalApprovedBy((prev) => prev.filter((id) => id !== userId))
     }
     try {
-      await rejectPost({ variables: { postId: _id, userId, remove: hasRejected } })
+      const { data } = await rejectPost({
+        variables: { postId: _id, userId, remove: hasRejected },
+      })
+      const updatedPost = data?.rejectPost
+      if (updatedPost) {
+        // Reconcile both arrays because rejecting can also remove an existing approval.
+        setLocalApprovedBy(updatedPost.approvedBy || [])
+        setLocalRejectedBy(updatedPost.rejectedBy || [])
+      }
     } catch {
       setLocalApprovedBy(approvedBy || [])
       setLocalRejectedBy(rejectedBy || [])
