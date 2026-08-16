@@ -1,5 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { registeredUser } from "./fixtures/registeredUser";
+import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from "./helpers/auth";
+import { registerAuthorUser } from "./helpers/api";
 
 /**
  * E2E-AUTH-006: Eyebrow Email Gateway — Registered User
@@ -297,81 +299,15 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
 });
 
 /**
- * Helper to generate a lightweight unsigned JWT mock for test sessions.
- */
-function createMockJwt(payload: Record<string, unknown>): string {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  return `${header}.${body}.mock_signature`;
-}
-
-/**
- * Mocks the REST login endpoint (/login and /auth/login) so tests pass
- * reliably in isolated environments while preserving standard browser auth behavior.
- */
-async function mockPasswordLogin(page: Page, user = registeredUser) {
-  const mockToken = createMockJwt({
-    id: user._id,
-    username: user.username,
-    email: user.email,
-    name: user.name,
-    exp: Math.floor(Date.now() / 1000) + 86400 * 7,
-  });
-
-  await page.route(/(\/login|\/auth\/login)/, async (route) => {
-    if (route.request().method() !== 'POST') {
-      await route.fallback();
-      return;
-    }
-
-    let body: { username?: string; password?: string } = {};
-    try {
-      body = route.request().postDataJSON() as { username?: string; password?: string };
-    } catch {
-      await route.fallback();
-      return;
-    }
-
-    const isMatch =
-      (body.username === user.email || body.username === user.username) &&
-      body.password === user.password;
-
-    if (!isMatch) {
-      await route.fulfill({
-        status: 401,
-        contentType: 'application/json',
-        body: JSON.stringify({ message: 'Invalid username or password.' }),
-      });
-      return;
-    }
-
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        token: mockToken,
-        accessToken: mockToken,
-        user: {
-          _id: user._id,
-          username: user.username,
-          name: user.name,
-          email: user.email,
-        },
-      }),
-    });
-  });
-}
-
-/**
  * 5.1.12 E2E-AUTH-002: Password Login
  *
  * A registered user logs into Quote.Vote with a valid password from a logged-out
- * state. The test confirms:
+ * state against the test backend. The test confirms:
  * - Login form and input controls render properly
  * - Inputs accept valid text
  * - Terms checkboxes enable submission
  * - Form submits without errors
- * - Application authenticates and navigates to the dashboard (/dashboard/explore)
+ * - Application authenticates against backend and navigates to the dashboard (/dashboard/explore)
  * - Authenticated navigation / profile menu controls appear
  * - Authenticated session persists across page reload
  * - Works across desktop and mobile viewports
@@ -379,11 +315,28 @@ async function mockPasswordLogin(page: Page, user = registeredUser) {
 test.describe("Password Login (E2E-AUTH-002)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test.beforeEach(async ({ page }) => {
-    await mockPasswordLogin(page, registeredUser);
+  const testUsername = (AUTHOR_USERNAME || registeredUser.username).trim();
+  const testPassword = (AUTHOR_PASSWORD || registeredUser.password).trim();
+  const testEmail = registeredUser.email || `${testUsername}@e2e.quotevote.test`;
+
+  test.beforeAll(async () => {
+    if (AUTHOR_PASSWORD) {
+      try {
+        await registerAuthorUser({
+          username: testUsername,
+          password: testPassword,
+          name: "E2E Author",
+          email: testEmail,
+        });
+      } catch {
+        // Account may already exist on test backend
+      }
+    }
   });
 
-  test("logs in with valid email and password, routes to dashboard, and preserves session after reload", async ({ page }) => {
+  test("logs in with valid username and password, routes to dashboard, and preserves session after reload", async ({ page }) => {
+    test.skip(!AUTHOR_PASSWORD, "E2E_AUTHOR_PASSWORD is required for live backend auth");
+
     const errorToastLocator = page.locator('[data-sonner-toast][data-type="error"]');
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -407,12 +360,12 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     // Submit is disabled before required fields and terms agreements are filled
     await expect(submitButton).toBeDisabled();
 
-    // 3. Enter registered user email and valid password
-    await identifierInput.fill(registeredUser.email);
-    await expect(identifierInput).toHaveValue(registeredUser.email);
+    // 3. Enter registered user username and valid password
+    await identifierInput.fill(testUsername);
+    await expect(identifierInput).toHaveValue(testUsername);
 
-    await passwordInput.fill(registeredUser.password);
-    await expect(passwordInput).toHaveValue(registeredUser.password);
+    await passwordInput.fill(testPassword);
+    await expect(passwordInput).toHaveValue(testPassword);
 
     // 4. Accept Terms of Service and Code of Conduct
     await tosCheckbox.click();
@@ -425,7 +378,7 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     await submitButton.click();
 
     // 7. Confirm user becomes authenticated and routes to the authenticated dashboard
-    await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
+    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
 
     // 8. Confirm authenticated navigation and profile controls appear
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
@@ -436,7 +389,7 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
 
     // 9. Confirm session persists after page reload
     await page.reload();
-    await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
+    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
     await expect(authNav).toBeVisible();
     await expect(profileMenu).toBeVisible();
 
@@ -445,7 +398,9 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     expect(pageErrors).toHaveLength(0);
   });
 
-  test("logs in with valid username and password", async ({ page }) => {
+  test("logs in with valid email and password", async ({ page }) => {
+    test.skip(!AUTHOR_PASSWORD, "E2E_AUTHOR_PASSWORD is required for live backend auth");
+
     const errorToastLocator = page.locator('[data-sonner-toast][data-type="error"]');
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -458,15 +413,15 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     const cocCheckbox = page.getByTestId("login-coc-checkbox");
     const submitButton = page.getByTestId("login-submit-button");
 
-    await identifierInput.fill(registeredUser.username);
-    await passwordInput.fill(registeredUser.password);
+    await identifierInput.fill(testEmail);
+    await passwordInput.fill(testPassword);
     await tosCheckbox.click();
     await cocCheckbox.click();
 
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
 
-    await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
+    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
 
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
     await expect(authNav).toBeVisible();
