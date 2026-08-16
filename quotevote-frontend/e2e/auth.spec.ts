@@ -1,5 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { registeredUser } from "./fixtures/registeredUser";
+import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from "./helpers/auth";
+import { registerAuthorUser } from "./helpers/api";
 
 /**
  * E2E-AUTH-006: Eyebrow Email Gateway — Registered User
@@ -295,4 +297,138 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
     expect(pageErrors).toHaveLength(0);
   });
 });
+
+/**
+ * 5.1.12 E2E-AUTH-002: Password Login
+ *
+ * A registered user logs into Quote.Vote with a valid password from a logged-out
+ * state against the test backend. The test confirms:
+ * - Login form and input controls render properly
+ * - Inputs accept valid text
+ * - Terms checkboxes enable submission
+ * - Form submits without errors
+ * - Application authenticates against backend and navigates to the dashboard (/dashboard/explore)
+ * - Authenticated navigation / profile menu controls appear
+ * - Authenticated session persists across page reload
+ * - Works across desktop and mobile viewports
+ */
+test.describe("Password Login (E2E-AUTH-002)", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  const testUsername = (AUTHOR_USERNAME || registeredUser.username).trim();
+  const testPassword = (AUTHOR_PASSWORD || registeredUser.password).trim();
+  const testEmail = registeredUser.email || `${testUsername}@e2e.quotevote.test`;
+
+  test.beforeAll(async () => {
+    if (AUTHOR_PASSWORD) {
+      try {
+        await registerAuthorUser({
+          username: testUsername,
+          password: testPassword,
+          name: "E2E Author",
+          email: testEmail,
+        });
+      } catch {
+        // Account may already exist on test backend
+      }
+    }
+  });
+
+  test("logs in with valid username and password, routes to dashboard, and preserves session after reload", async ({ page }) => {
+    test.skip(!AUTHOR_PASSWORD, "E2E_AUTHOR_PASSWORD is required for live backend auth");
+
+    const errorToastLocator = page.locator('[data-sonner-toast][data-type="error"]');
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+
+    // 1. Open Quote.Vote while logged out and navigate to login form
+    await page.goto("/auths/login");
+
+    // 2. Assert login form and controls load successfully
+    const form = page.getByTestId("login-form");
+    const identifierInput = page.getByTestId("login-identifier-input");
+    const passwordInput = page.getByTestId("login-password-input");
+    const tosCheckbox = page.getByTestId("login-tos-checkbox");
+    const cocCheckbox = page.getByTestId("login-coc-checkbox");
+    const submitButton = page.getByTestId("login-submit-button");
+
+    await expect(form).toBeVisible();
+    await expect(identifierInput).toBeVisible();
+    await expect(passwordInput).toBeVisible();
+    await expect(submitButton).toBeVisible();
+
+    // Submit is disabled before required fields and terms agreements are filled
+    await expect(submitButton).toBeDisabled();
+
+    // 3. Enter registered user username and valid password
+    await identifierInput.fill(testUsername);
+    await expect(identifierInput).toHaveValue(testUsername);
+
+    await passwordInput.fill(testPassword);
+    await expect(passwordInput).toHaveValue(testPassword);
+
+    // 4. Accept Terms of Service and Code of Conduct
+    await tosCheckbox.click();
+    await cocCheckbox.click();
+
+    // 5. Submit button becomes available
+    await expect(submitButton).toBeEnabled();
+
+    // 6. Submit login form
+    await submitButton.click();
+
+    // 7. Confirm user becomes authenticated and routes to the authenticated dashboard
+    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
+
+    // 8. Confirm authenticated navigation and profile controls appear
+    const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
+    await expect(authNav).toBeVisible();
+
+    const profileMenu = page.getByTestId("user-profile-menu").filter({ visible: true });
+    await expect(profileMenu).toBeVisible();
+
+    // 9. Confirm session persists after page reload
+    await page.reload();
+    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
+    await expect(authNav).toBeVisible();
+    await expect(profileMenu).toBeVisible();
+
+    // 10. Confirm no runtime errors or error toasts occurred
+    await expect(errorToastLocator).toHaveCount(0);
+    expect(pageErrors).toHaveLength(0);
+  });
+
+  test("logs in with valid email and password", async ({ page }) => {
+    test.skip(!AUTHOR_PASSWORD, "E2E_AUTHOR_PASSWORD is required for live backend auth");
+
+    const errorToastLocator = page.locator('[data-sonner-toast][data-type="error"]');
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+
+    await page.goto("/auths/login");
+
+    const identifierInput = page.getByTestId("login-identifier-input");
+    const passwordInput = page.getByTestId("login-password-input");
+    const tosCheckbox = page.getByTestId("login-tos-checkbox");
+    const cocCheckbox = page.getByTestId("login-coc-checkbox");
+    const submitButton = page.getByTestId("login-submit-button");
+
+    await identifierInput.fill(testEmail);
+    await passwordInput.fill(testPassword);
+    await tosCheckbox.click();
+    await cocCheckbox.click();
+
+    await expect(submitButton).toBeEnabled();
+    await submitButton.click();
+
+    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
+
+    const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
+    await expect(authNav).toBeVisible();
+
+    await expect(errorToastLocator).toHaveCount(0);
+    expect(pageErrors).toHaveLength(0);
+  });
+});
+
 
