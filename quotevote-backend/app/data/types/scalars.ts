@@ -66,7 +66,7 @@ export const DateScalar = new GraphQLScalarType<Date | string | number | null, s
 export const DateTimeScalar = new GraphQLScalarType({
   name: 'DateTime',
   description: 'DateTime scalar type',
-  serialize(value: any) {
+  serialize(value: unknown) {
     if (value instanceof Date) {
       return value.toISOString();
     }
@@ -78,7 +78,7 @@ export const DateTimeScalar = new GraphQLScalarType({
     }
     return null;
   },
-  parseValue(value: any) {
+  parseValue(value: unknown) {
     return value ? new Date(value as string) : null;
   },
   parseLiteral(ast) {
@@ -92,7 +92,7 @@ export const DateTimeScalar = new GraphQLScalarType({
 export const ObjectIdScalar = new GraphQLScalarType({
   name: 'ObjectId',
   description: 'Mongoose ObjectId scalar type',
-  serialize(value: any) {
+  serialize(value: unknown) {
     if (value instanceof mongoose.Types.ObjectId) {
       return value.toHexString();
     }
@@ -101,7 +101,7 @@ export const ObjectIdScalar = new GraphQLScalarType({
     }
     return null;
   },
-  parseValue(value: any) {
+  parseValue(value: unknown) {
     if (typeof value === 'string' && mongoose.Types.ObjectId.isValid(value)) {
       return new mongoose.Types.ObjectId(value);
     }
