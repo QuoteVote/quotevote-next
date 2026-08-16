@@ -118,7 +118,7 @@ describe('Sidebar Component', () => {
     it('renders logo in AppBar', () => {
       render(<Sidebar open={false} onOpenChange={jest.fn()} />);
 
-      const logo = screen.getByAltText('QuoteVote Logo');
+      const logo = screen.getByLabelText('QuoteVote Logo');
       expect(logo).toBeInTheDocument();
     });
   });

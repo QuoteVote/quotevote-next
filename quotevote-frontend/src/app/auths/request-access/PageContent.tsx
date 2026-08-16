@@ -6,8 +6,8 @@ import { useApolloClient, useMutation } from '@apollo/client/react'
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations'
 import { GET_CHECK_DUPLICATE_EMAIL } from '@/graphql/queries'
 import { PersonalForm } from '@/components/RequestAccess/PersonalForm/PersonalForm'
+import { Globe } from '@/components/Icons'
 import Link from 'next/link'
-import Image from 'next/image'
 
 const BG_IMAGES = [
   'viviana-rishe-UC8fvOyG5pU-unsplash.jpg',
@@ -111,8 +111,8 @@ export function RequestAccessPageContent() {
           boxSizing: 'border-box',
         }}
       >
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Image src="/icons/android-chrome-192x192.png" alt="Quote.Vote" width={32} height={32} />
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} aria-label="Quote.Vote home">
+          <Globe size={32} />
         </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>

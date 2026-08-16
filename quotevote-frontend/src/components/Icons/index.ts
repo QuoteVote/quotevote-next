@@ -13,4 +13,5 @@ export { Comment, default as CommentDefault } from './Comment';
 export { Quote, default as QuoteDefault } from './Quote';
 export { Like, default as LikeDefault } from './Like';
 export { Dislike, default as DislikeDefault } from './Dislike';
+export { Globe, default as GlobeDefault } from './Globe';
 

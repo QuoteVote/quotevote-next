@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Globe } from '@/components/Icons';
 import { Lock, Eye, EyeOff, Frown, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -272,14 +273,7 @@ export function PasswordReset({
                     <div className="flex justify-center mb-4">
                       <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-[var(--color-primary)] p-1 shadow-md">
                         <div className="w-full h-full rounded-md bg-[var(--color-white)] flex items-center justify-center">
-                          <Image
-                            src="/icons/android-chrome-192x192.png"
-                            alt="Quote.Vote"
-                            width={40}
-                            height={40}
-                            className="rounded"
-                            priority
-                          />
+                          <Globe size={36} className="size-9" title="Quote.Vote" />
                         </div>
                       </div>
                     </div>
@@ -326,14 +320,7 @@ export function PasswordReset({
                     <div className="flex justify-center mb-4">
                       <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-[var(--color-primary)] p-1 shadow-md">
                         <div className="w-full h-full rounded-md bg-[var(--color-white)] flex items-center justify-center">
-                          <Image
-                            src="/icons/android-chrome-192x192.png"
-                            alt="Quote.Vote"
-                            width={40}
-                            height={40}
-                            className="rounded"
-                            priority
-                          />
+                          <Globe size={36} className="size-9" title="Quote.Vote" />
                         </div>
                       </div>
                     </div>
@@ -360,14 +347,7 @@ export function PasswordReset({
                     <div className="flex justify-center mb-4">
                       <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-[var(--color-primary)] p-1 shadow-md">
                         <div className="w-full h-full rounded-md bg-[var(--color-white)] flex items-center justify-center">
-                          <Image
-                            src="/icons/android-chrome-192x192.png"
-                            alt="Quote.Vote"
-                            width={40}
-                            height={40}
-                            className="rounded"
-                            priority
-                          />
+                          <Globe size={36} className="size-9" title="Quote.Vote" />
                         </div>
                       </div>
                     </div>
