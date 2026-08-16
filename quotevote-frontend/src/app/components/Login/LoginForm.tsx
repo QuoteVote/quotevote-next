@@ -64,7 +64,7 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
     );
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} data-testid="login-form" className="w-full space-y-6">
       {/* Error alert */}
       {hasError && (
         <Alert
@@ -100,6 +100,7 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
             id="username"
             type="text"
             placeholder="you@example.com"
+            data-testid="login-identifier-input"
             className={inputCls(!!errors.username)}
             {...register('username')}
             aria-invalid={!!errors.username}
@@ -141,6 +142,7 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
             id="password"
             type={showPassword ? 'text' : 'password'}
             placeholder="Enter your password"
+            data-testid="login-password-input"
             className={cn(inputCls(!!errors.password), 'pr-12')}
             {...register('password')}
             aria-invalid={!!errors.password}
@@ -186,6 +188,7 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
               render={({ field }) => (
                 <Checkbox
                   id={name}
+                  data-testid={`login-${name}-checkbox`}
                   checked={field.value}
                   onCheckedChange={field.onChange}
                   disabled={loading}
@@ -213,6 +216,7 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
       {/* Submit */}
       <Button
         type="submit"
+        data-testid="login-submit-button"
         className="w-full h-11 text-sm font-semibold mt-2 rounded-xl border-0 text-white group transition-all disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden relative"
         style={{
           background: 'linear-gradient(135deg, #52b274 0%, #3a9058 100%)',

@@ -184,7 +184,7 @@ export default function LoginPageContent() {
               </h1>
 
               {/* Form */}
-              <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+              <form onSubmit={handleSubmit(onSubmit)} data-testid="login-form" style={{ width: '100%' }}>
                 {/* Email / Username */}
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ position: 'relative' }}>
@@ -204,6 +204,7 @@ export default function LoginPageContent() {
                       id="email"
                       type="text"
                       placeholder="Email/Username"
+                      data-testid="login-identifier-input"
                       className="pl-9 md:text-base"
                       style={{ borderColor: errors.email ? '#F55145' : undefined }}
                       {...register('email')}
@@ -235,6 +236,7 @@ export default function LoginPageContent() {
                       id="password"
                       type="password"
                       placeholder="Password"
+                      data-testid="login-password-input"
                       className="pl-9 md:text-base"
                       style={{ borderColor: errors.password ? '#F55145' : undefined }}
                       {...register('password')}
@@ -251,6 +253,7 @@ export default function LoginPageContent() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                   <Checkbox
                     id="tos"
+                    data-testid="login-tos-checkbox"
                     checked={tosAccepted}
                     onCheckedChange={(v) => setTosAccepted(v === true)}
                     style={{ marginTop: 2 }}
@@ -272,6 +275,7 @@ export default function LoginPageContent() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16 }}>
                   <Checkbox
                     id="coc"
+                    data-testid="login-coc-checkbox"
                     checked={cocAccepted}
                     onCheckedChange={(v) => setCocAccepted(v === true)}
                     style={{ marginTop: 2 }}
@@ -292,6 +296,7 @@ export default function LoginPageContent() {
                 {/* Submit — matches MUI large contained secondary (rose) */}
                 <button
                   type="submit"
+                  data-testid="login-submit-button"
                   disabled={isDisabled}
                   style={{
                     width: '100%',
