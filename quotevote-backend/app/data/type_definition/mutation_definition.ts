@@ -1,164 +1,171 @@
 export const Mutation = `type Mutation {
 
-  # ===== Solid Pod Integration Mutations =====
+  " Start Solid connection authorization flow "
   solidStartConnect(issuer: String!): SolidConnectResult
+
+  " Finish Solid connection authentication "
   solidFinishConnect(code: String!, state: String!, redirectUri: String!): SolidConnectResult
+
+  " Disconnect from Solid pod "
   solidDisconnect: Boolean
+
+  " Pull portable state from Solid pod "
   solidPullPortableState: PortableState
+
+  " Push portable state to Solid pod "
   solidPushPortableState(input: PortableStateInput!): Boolean
+
+  " Append activity event to Solid pod "
   solidAppendActivityEvent(input: ActivityEventInput!): Boolean
 
-  # Mutation for creating new post
+  " Create a new post "
   addPost(post: PostInput!): Post
 
-  # Mutation for approving a post
+  " Approve a post (admin only) "
   approvePost(postId: String!, userId: String!, remove: Boolean): Post
 
-  # Mutation for rejecting a post
+  " Reject a post (admin only) "
   rejectPost(postId: String!, userId: String!, remove: Boolean): Post
 
-  # Mutation for adding or removing a post bookmark
+  " Bookmark or unbookmark a post "
   updatePostBookmark(postId: String!, userId: String!): Post
 
-  # Mutation for updating a post's featured slot
+  " Update a post's featured slot (admin only) "
   updateFeaturedSlot(postId: String!, featuredSlot: Int): Post
 
-  # Mutation for creating a group
+  " Create a group "
   createGroup(group: GroupInput!): Group
 
-  # Mutation for updating/inserting votes
+  " Add or update a vote "
   addVote(vote: VoteInput!): Vote
 
-  # Mutation for deleting a vote
+  " Delete a vote "
   deleteVote(voteId: String!): DeletedVote
 
-  # Mutation for creating new comments
+  " Create a new comment "
   addComment(comment: CommentInput!): Comment
 
-  # Mutation for deleting a comment
+  " Delete a comment "
   deleteComment(commentId: String!): DeletedComment
 
-  # Mutation for creating new quote
+  " Create a new quote "
   addQuote(quote: QuoteInput!): Quote
 
-  # Mutation for deleting a quote
+  " Delete a quote "
   deleteQuote(quoteId: String!): DeletedQuote
 
-  # Mutation for adding a message
+  " Create a new chat message "
   createMessage(message: MessageInput!): Message
 
-  # Mutation for deleting a message
+  " Delete a chat message "
   deleteMessage(messageId: String!): DeletedMessage
 
-  # Mutation for creating a post chat room
+  " Create a chat room for a post "
   createPostMessageRoom(postId: String!): MessageRoom
    
-  # Mutation for adding a message
+  " Update messages as read in a room "
   updateMessageReadBy(messageRoomId: String!): [Message]
 
-  # Mutation for adding a message
+  " Create a Stripe customer record "
   addStripeCustomer(stripeCustomer: StripeCustomerInput!): JSON
 
-  # Mutation for toggling follow of user
+  " Follow or unfollow a user "
   followUser(user_id: String!, action: String!): User
 
-  # Mutation for request user access
+  " Request user access "
   requestUserAccess(requestUserAccessInput: RequestUserAccessInput!): User
 
-  # Mutation for send investor email
+  " Send investor email "
   sendInvestorMail(email: String!): JSON
 
-  # Mutation for send email password reset link
+  " Send password reset link email "
   sendPasswordResetEmail(email: String!): JSON
 
-  # Mutation for updating user password
+  " Reset user password with token "
   updateUserPassword(username: String, password: String, token: String): JSON
 
-  # Mutation for updating user details
+  " Update user profile details "
   updateUser(user: UserInput!): User
 
-  # Mutation for updating user details
+  " Approve or reject user access invite (admin only) "
   sendUserInviteApproval(userId: String!, inviteStatus: String!): JSON
 
-  # Mutation for updating a users avatar
+  " Update user avatar image "
   updateUserAvatar(user_id: String!, avatarQualities: JSON): User
     
-  # Mutation for removing user notification
+  " Remove user notification "
   removeNotification(notificationId: String!): Notification
 
-  # Mutation for adding a message reaction
+  " Add reaction to a chat message "
   addMessageReaction(reaction: ReactionInput!): Reaction
 
-  # Mutation for adding an action reaction
+  " Add reaction to an action/post "
   addActionReaction(reaction: ReactionInput!): Reaction
 
-  # Mutation for updating a message reaction
+  " Update an existing chat message reaction "
   updateReaction(_id: String!, emoji: String!): Reaction
 
-  # Mutation for updating an action reaction
+  " Update an existing action/post reaction "
   updateActionReaction(_id: String!, emoji: String!): Reaction
 
-  # Mutation for deleting an action reaction
+  " Delete an action/post reaction "
   deleteActionReaction(_id: String!): Boolean
 
-  # Mutation for reporting a post
+  " Report a post "
   reportPost(postId: String!, userId: String!): Post
 
-  # Mutation for deleting a post
+  " Soft-delete a post "
   deletePost(postId: String!): DeletedPost
 
-  # Mutation for sending user invite
+  " Send a user invitation "
   sendUserInvite(email: String!): JSON
 
-  # Mutation for reporting a user
+  " Submit a user report "
   reportUser(reportUserInput: ReportUserInput!): JSON
 
-  # Mutation for recalculating user reputation
+  " Recalculate user reputation metrics "
   recalculateReputation(userId: String!): JSON
 
-  # Mutation for toggling voting on a post
+  " Toggle voting capabilities on a post "
   toggleVoting(postId: String!): Post
 
-  # Mutation for reporting a user as a bot
+  " Report a user account as a bot "
   reportBot(userId: String!, reporterId: String!): JSON
 
-  # Mutation for disabling a user account (admin only)
+  " Disable a user account (admin only) "
   disableUser(userId: String!): User
 
-  # Mutation for enabling a user account (admin only)
+  " Enable a user account (admin only) "
   enableUser(userId: String!): User
 
-  # ===== Presence Management =====
-  # Mutation for updating user presence status
+  " Update user presence status "
   updatePresence(presence: PresenceInput!): Presence
   
-  # Mutation for heartbeat to keep presence alive
+  " Send heartbeat to keep presence active "
   heartbeat: HeartbeatResponse
   
-  # Mutation for clearing presence (logout)
+  " Clear presence status (on logout) "
   clearPresence: Boolean
 
-  # ===== Roster Management =====
-  # Mutation for adding a buddy
+  " Add buddy request "
   addBuddy(roster: RosterInput!): Roster
   
-  # Mutation for accepting a buddy request
+  " Accept buddy request "
   acceptBuddy(rosterId: String!): Roster
   
-  # Mutation for declining a buddy request
+  " Decline buddy request "
   declineBuddy(rosterId: String!): DeletedRoster
   
-  # Mutation for blocking a user
+  " Block a buddy/user "
   blockBuddy(buddyId: String!): Roster
   
-  # Mutation for unblocking a user
+  " Unblock a buddy/user "
   unblockBuddy(buddyId: String!): Roster
   
-  # Mutation for removing a buddy
+  " Remove a buddy "
   removeBuddy(buddyId: String!): DeletedRoster
 
-  # ===== Typing Indicators =====
-  # Mutation for updating typing status
+  " Update typing status in chat room "
   updateTyping(typing: TypingInput!): TypingResponse
 
 }`;

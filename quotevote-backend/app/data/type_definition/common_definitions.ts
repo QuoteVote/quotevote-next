@@ -1,4 +1,4 @@
-export const Scalar = `
+export const CommonDefinitions = `
   scalar DateTime
   scalar ObjectId
 
