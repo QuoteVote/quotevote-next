@@ -148,6 +148,7 @@ export interface ProfileViewProps {
   offset?: number;
   selectedEvent?: string[];
   loading?: boolean;
+  errorMessage?: string;
 }
 
 export interface ProfileControllerProps {

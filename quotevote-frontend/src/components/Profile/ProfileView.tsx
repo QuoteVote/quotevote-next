@@ -59,6 +59,7 @@ export const ALL_ACTIVITY_TYPES: ProfileActivityType[] = [
 export function ProfileView({
   profileUser,
   loading,
+  errorMessage,
 }: ProfileViewProps) {
   const [activeTab, setActiveTab] = useState<'activity' | 'about'>('activity');
   const [selectedFilters, setSelectedFilters] = useState<ProfileActivityType[]>([]);
@@ -86,6 +87,22 @@ export function ProfileView({
   }, []);
 
   if (loading) return <LoadingSpinner />;
+
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-5">
+        <Card>
+          <CardContent className="pt-6 text-center space-y-2">
+            <h3 className="text-lg font-semibold">Couldn&apos;t load this profile</h3>
+            <p className="text-sm text-muted-foreground">{errorMessage}</p>
+            <Link href="/dashboard/explore" className="text-primary hover:underline inline-block mt-2">
+              Back to Explore
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!profileUser) {
     return (

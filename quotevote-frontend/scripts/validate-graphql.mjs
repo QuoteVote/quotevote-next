@@ -25,6 +25,10 @@ if (!fs.existsSync(schemaPath)) {
 
 const schema = buildSchema(fs.readFileSync(schemaPath, "utf8"));
 
+// Documents that probe local-only fields (e.g. User.bio). Callers use
+// errorPolicy: 'all' so hosted schemas reject them without taking down the page.
+const OPTIONAL_DOCUMENTS = new Set(["GET_USER_BIO"]);
+
 let checked = 0;
 const failures = [];
 
@@ -35,6 +39,11 @@ for (const file of fs.readdirSync(graphqlDir).filter((f) => f.endsWith(".ts"))) 
   for (let match; (match = pattern.exec(source)); ) {
     const [, name, body] = match;
     const line = source.slice(0, match.index).split("\n").length;
+
+    if (OPTIONAL_DOCUMENTS.has(name)) {
+      continue;
+    }
+
     checked += 1;
 
     let document;
