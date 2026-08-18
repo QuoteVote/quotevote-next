@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import type { AppState, UserState, UIState, ChatState, FilterState } from '@/types/store';
 import type { StagedChatRoom } from '@/types/chat';
+import type { LinkedPassage } from '@/types/discussionSplit';
 
 // Initial state values
 const initialUserState: UserState = {
@@ -38,6 +39,8 @@ const initialUIState: UIState = {
   selectedPlan: 'personal',
   focusedComment: null,
   sharedComment: null,
+  mobileDiscussionOpen: false,
+  linkedPassage: null,
 };
 
 const initialChatState: ChatState = {
@@ -87,6 +90,8 @@ interface AppStore extends AppState {
   setSelectedPlan: (plan: string) => void;
   setFocusedComment: (commentId: string | null) => void;
   setSharedComment: (commentId: string | null) => void;
+  setMobileDiscussionOpen: (open: boolean) => void;
+  setLinkedPassage: (passage: LinkedPassage | null) => void;
 
   // Chat actions
   setChatSubmitting: (submitting: boolean) => void;
@@ -217,6 +222,22 @@ export const useAppStore = create<AppStore>()(
       ui: {
         ...state.ui,
         sharedComment: commentId,
+      },
+    })),
+
+  setMobileDiscussionOpen: (open) =>
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        mobileDiscussionOpen: open,
+      },
+    })),
+
+  setLinkedPassage: (passage) =>
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        linkedPassage: passage,
       },
     })),
 

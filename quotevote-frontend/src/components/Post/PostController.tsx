@@ -15,7 +15,11 @@ import type { PostControllerProps, PostQueryData } from '@/types/post'
  * Controller component for individual post pages.
  * Fetches post data by ID and renders the Post component.
  */
-export default function PostController({ postId }: PostControllerProps) {
+export default function PostController({
+  postId,
+  onOpenDiscussion,
+  onActivateLinkedComment,
+}: PostControllerProps) {
   const router = useRouter()
   const userData = useAppStore((state) => state.user.data)
   const setSelectedPage = useAppStore((state) => state.setSelectedPage)
@@ -78,6 +82,8 @@ export default function PostController({ postId }: PostControllerProps) {
       user={user}
       postActions={postActions}
       refetchPost={refetch}
+      onOpenDiscussion={onOpenDiscussion}
+      onActivateLinkedComment={onActivateLinkedComment}
     />
   )
 }

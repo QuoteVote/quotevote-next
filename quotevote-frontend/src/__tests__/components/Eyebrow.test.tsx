@@ -38,6 +38,15 @@ describe("Eyebrow Component", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("isn't rendered when the authenticated user only has _id", () => {
+    mockUseAppStore.mockReturnValue({
+      _id: "mongo-user",
+    } as Partial<AppState["user"]["data"]>);
+
+    const { container } = render(<Eyebrow />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it("disables continue button when email is invalid", async () => {
     const user = userEvent.setup();
     render(<Eyebrow />);

@@ -400,9 +400,9 @@ describe('PostActionList', () => {
         expect(element).toBeInTheDocument()
       })
 
-      // The scrollIntoView should be called when the element is found
+      // The scroll helper falls back to scrollIntoView when no discussion pane exists
       await waitFor(() => {
-        expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' })
+        expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
       }, { timeout: 1000 })
     })
 

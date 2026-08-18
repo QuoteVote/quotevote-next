@@ -89,10 +89,13 @@ export default function CommentReactions({ actionId, reactions }: CommentReactio
   }, [userId, actionId, userReaction, addReaction, updateReaction, ensureAuth])
 
   return (
-    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-start gap-2" onClick={(e) => e.stopPropagation()}>
       <div className="flex gap-1">
         {Object.keys(groupedReactions).map((emoji) => (
-          <div className="flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-sm dark:bg-slate-800" key={emoji}>
+          <div
+            className="flex items-center gap-1 rounded bg-slate-100 px-2 h-7 text-xs dark:bg-slate-800"
+            key={emoji}
+          >
             <span>{emoji}</span>
             <span className="text-xs text-slate-500">{groupedReactions[emoji].length}</span>
           </div>
@@ -101,7 +104,7 @@ export default function CommentReactions({ actionId, reactions }: CommentReactio
       
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button variant="ghost" size="icon" className="h-7 w-7">
             <Smile className="h-4 w-4" />
           </Button>
         </PopoverTrigger>

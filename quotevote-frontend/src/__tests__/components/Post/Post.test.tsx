@@ -9,7 +9,7 @@
  * `@apollo/client/testing`.)
  */
 
-import { render, within } from '../../utils/test-utils'
+import { render, within, fireEvent } from '../../utils/test-utils'
 import Post from '../../../components/Post/Post'
 import type { PostProps } from '@/types/post'
 
@@ -25,10 +25,25 @@ jest.mock('next/navigation', () => ({
 
 // Mock Zustand store
 const mockSetSnackbar = jest.fn()
+const mockUiState = {
+  linkedPassage: null as {
+    actionId: string
+    startWordIndex: number
+    endWordIndex: number
+  } | null,
+  mobileDiscussionOpen: false,
+}
 jest.mock('@/store', () => ({
-  useAppStore: () => ({
-    setSnackbar: mockSetSnackbar,
-  }),
+  useAppStore: (selector?: (state: {
+    ui: typeof mockUiState
+    setSnackbar: jest.Mock
+  }) => unknown) => {
+    const state = {
+      setSnackbar: mockSetSnackbar,
+      ui: mockUiState,
+    }
+    return selector ? selector(state) : state
+  },
 }))
 
 // Mock useGuestGuard
@@ -50,7 +65,20 @@ jest.mock('@apollo/client/react', () => ({
 // Stub heavy child components so the Post shell renders in jsdom
 jest.mock('@/components/VotingComponents/VotingBoard', () => ({
   __esModule: true,
-  default: ({ content }: { content: string }) => <div data-testid="voting-board">{content}</div>,
+  default: ({
+    content,
+    onHighlightClick,
+  }: {
+    content: string
+    onHighlightClick?: () => void
+  }) => (
+    <div data-testid="voting-board">
+      {content}
+      <button type="button" data-testid="linked-passage" onClick={() => onHighlightClick?.()}>
+        highlight
+      </button>
+    </div>
+  ),
 }))
 jest.mock('@/components/VotingComponents/VotingPopup', () => ({
   __esModule: true,
@@ -108,6 +136,8 @@ describe('Post Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUiState.linkedPassage = null
+    mockUiState.mobileDiscussionOpen = false
     // Default mocks
     mockUseQuery.mockReturnValue({
       data: { users: [] },
@@ -136,6 +166,11 @@ describe('Post Component', () => {
         <Post {...mockProps} post={postWithoutCreator} />
       )
       expect(getByRole('toolbar', { name: 'Post actions' })).toBeInTheDocument()
+    })
+
+    it('shows an OP badge next to the quote author', () => {
+      const { getByTestId } = render(<Post {...mockProps} />)
+      expect(getByTestId('post-op-badge')).toHaveTextContent('OP')
     })
   })
 
@@ -188,6 +223,30 @@ describe('Post Component', () => {
       const { getByRole } = render(<Post {...mockProps} />)
       const toolbar = getByRole('toolbar', { name: 'Post actions' })
       expect(within(toolbar).getByLabelText('0 interactions')).toHaveTextContent('0')
+    })
+
+    it('opens discussion when the comment-count action is clicked', () => {
+      const onOpenDiscussion = jest.fn()
+      const { getByRole } = render(
+        <Post {...mockProps} onOpenDiscussion={onOpenDiscussion} />
+      )
+      const toolbar = getByRole('toolbar', { name: 'Post actions' })
+      fireEvent.click(within(toolbar).getByTestId('post-comment-count'))
+      expect(onOpenDiscussion).toHaveBeenCalledTimes(1)
+    })
+
+    it('activates the linked comment when the quote highlight is tapped', () => {
+      mockUiState.linkedPassage = {
+        actionId: 'c1',
+        startWordIndex: 0,
+        endWordIndex: 4,
+      }
+      const onActivateLinkedComment = jest.fn()
+      const { getByTestId } = render(
+        <Post {...mockProps} onActivateLinkedComment={onActivateLinkedComment} />
+      )
+      fireEvent.click(getByTestId('linked-passage'))
+      expect(onActivateLinkedComment).toHaveBeenCalledWith('c1')
     })
   })
 

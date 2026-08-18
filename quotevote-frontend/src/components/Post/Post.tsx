@@ -48,6 +48,8 @@ import {
 } from '@/graphql/queries'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
+import { scrollActionIntoDiscussion } from '@/lib/utils/discussionSplit'
+import { useAppStore } from '@/store'
 import VotingBoard from '@/components/VotingComponents/VotingBoard'
 const VotingPopup = lazy(() => import('@/components/VotingComponents/VotingPopup'))
 import type { PostVote, PostProps } from '@/types/post'
@@ -59,9 +61,30 @@ export default function Post({
   postHeight,
   postActions: _postActions,
   refetchPost,
+  onOpenDiscussion,
+  onActivateLinkedComment,
 }: PostProps) {
   const router = useRouter()
   const ensureAuth = useGuestGuard()
+  const linkedPassage = useAppStore((state) => state.ui.linkedPassage)
+  const mobileDiscussionOpen = useAppStore((state) => state.ui.mobileDiscussionOpen)
+
+  const handleHighlightClick = () => {
+    const actionId = linkedPassage?.actionId
+    if (!actionId) {
+      onOpenDiscussion?.()
+      return
+    }
+    onActivateLinkedComment?.(actionId)
+    // Reverse-nav only when opening Discussion; tapping the highlight while
+    // split-screen is already open clears the selection instead.
+    if (mobileDiscussionOpen) return
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        scrollActionIntoDiscussion(actionId, 'center')
+      }, 220)
+    })
+  }
 
   const { title, creator, created, _id, userId } = post
   const { name, avatar, username } = creator || {}
@@ -338,7 +361,7 @@ export default function Post({
           type="button"
           onClick={() => router.back()}
           aria-label="Go back"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 -ml-1 transition-colors rounded-lg px-2 py-1 hover:bg-muted/50"
+          className="hidden md:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 -ml-1 transition-colors rounded-lg px-2 py-1 hover:bg-muted/50"
         >
           <ArrowLeft className="size-4" />
           Back
@@ -370,6 +393,13 @@ export default function Post({
                 >
                   {name || username}
                 </button>
+                <span
+                  data-testid="post-op-badge"
+                  className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-md tracking-wide bg-[#52b274] text-white leading-none"
+                  title="Original poster"
+                >
+                  OP
+                </span>
                 <span className="text-sm text-muted-foreground">@{username}</span>
               </div>
               <time className="text-xs text-muted-foreground" suppressHydrationWarning>
@@ -423,10 +453,14 @@ export default function Post({
         )}
       </div>
 
-      {/* ── Sticky action bar ── */}
+      {/* ── Action bar: sticky while reading; scrolls with the quote in split view ── */}
       <div
-        className="sticky top-0 z-10 flex items-center gap-2 px-4 sm:px-6 py-2
-          bg-background/80 backdrop-blur-sm border-y border-border/60"
+        className={cn(
+          'flex items-center gap-2 px-4 sm:px-6 py-2 border-y border-border/60',
+          mobileDiscussionOpen
+            ? 'relative bg-background'
+            : 'sticky top-0 z-10 bg-background/80 backdrop-blur-sm',
+        )}
         role="toolbar"
         aria-label="Post actions"
       >
@@ -498,13 +532,27 @@ export default function Post({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span
-                  className="flex items-center gap-1 px-2 h-8 rounded-md bg-muted/40 text-[12px] text-muted-foreground"
-                  aria-label={`${interactionCount} interaction${interactionCount !== 1 ? 's' : ''}`}
-                >
-                  <MessageCircle className="size-3.5" />
-                  <strong className="text-foreground font-semibold tabular-nums">{interactionCount}</strong>
-                </span>
+                {onOpenDiscussion ? (
+                  <button
+                    type="button"
+                    onClick={onOpenDiscussion}
+                    className="flex items-center gap-1 px-2 h-8 rounded-md bg-muted/40 text-[12px] text-muted-foreground hover:bg-muted/70 transition-colors"
+                    aria-label={`${interactionCount} interaction${interactionCount !== 1 ? 's' : ''}`}
+                    data-testid="post-comment-count"
+                  >
+                    <MessageCircle className="size-3.5" />
+                    <strong className="text-foreground font-semibold tabular-nums">{interactionCount}</strong>
+                  </button>
+                ) : (
+                  <span
+                    className="flex items-center gap-1 px-2 h-8 rounded-md bg-muted/40 text-[12px] text-muted-foreground"
+                    aria-label={`${interactionCount} interaction${interactionCount !== 1 ? 's' : ''}`}
+                    data-testid="post-comment-count"
+                  >
+                    <MessageCircle className="size-3.5" />
+                    <strong className="text-foreground font-semibold tabular-nums">{interactionCount}</strong>
+                  </span>
+                )}
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}
@@ -551,6 +599,8 @@ export default function Post({
             onSelect={setSelectedText}
             highlights={true}
             votes={post.votes || []}
+            focusedComment={linkedPassage}
+            onHighlightClick={handleHighlightClick}
           >
             {(selection) => (
               <Suspense fallback={null}>

@@ -1,18 +1,19 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useQuery, useSubscription } from '@apollo/client/react'
 import { WifiOff } from 'lucide-react'
 import PostController from '@/components/Post/PostController'
 import PostActionList from '@/components/PostActions/PostActionList'
 import PostChatSend from '@/components/PostChat/PostChatSend'
-import SwipeDrawer from '@/components/SwipeDrawer/SwipeDrawer'
-import { useIsMobile, useIsLandscapeMobile } from '@/hooks/useMediaQuery'
-import { MessagesSquare } from 'lucide-react'
+import MobileDiscussionSplit from '@/components/Post/MobileDiscussionSplit'
+import { useHasMounted, useIsMobile, useIsLandscapeMobile } from '@/hooks/useMediaQuery'
 import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
 import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
+import { toLinkedPassage } from '@/lib/utils/discussionSplit'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
+import { useAppStore } from '@/store'
 import type { PostQueryData } from '@/types/post'
 import type { PostAction, VoteAction, CommentAction, QuoteAction, MessageAction } from '@/types/postActions'
 
@@ -35,6 +36,14 @@ interface RoomMessagesData {
   }>
 }
 
+interface InteractionSectionProps {
+  postId: string
+  hideHeader?: boolean
+  selectedActionId?: string | null
+  onActionSelect?: (action: PostAction) => void
+  onCountChange?: (count: number) => void
+}
+
 export default function PostDetailPage(): React.ReactNode {
   const params = useParams<{ postId: string }>()
   const postId = params?.postId
@@ -51,20 +60,117 @@ export default function PostDetailPage(): React.ReactNode {
 }
 
 function PostLayout({ postId }: { postId: string }) {
+  const hasMounted = useHasMounted()
   const isMobile = useIsMobile()
   const isLandscape = useIsLandscapeMobile()
+  const isPortraitMobile = isMobile && !isLandscape
 
-  if (isMobile && !isLandscape) {
+  const [discussionOpen, setDiscussionOpen] = useState(false)
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
+  const [discussionCount, setDiscussionCount] = useState(0)
+
+  const setMobileDiscussionOpen = useAppStore((s) => s.setMobileDiscussionOpen)
+  const setLinkedPassage = useAppStore((s) => s.setLinkedPassage)
+  const setFocusedComment = useAppStore((s) => s.setFocusedComment)
+
+  useEffect(() => {
+    setMobileDiscussionOpen(discussionOpen && isPortraitMobile)
+    return () => setMobileDiscussionOpen(false)
+  }, [discussionOpen, isPortraitMobile, setMobileDiscussionOpen])
+
+  useEffect(() => {
+    return () => {
+      setLinkedPassage(null)
+      setFocusedComment(null)
+    }
+  }, [setLinkedPassage, setFocusedComment])
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      setDiscussionOpen(open)
+      setMobileDiscussionOpen(open && isPortraitMobile)
+    },
+    [isPortraitMobile, setMobileDiscussionOpen],
+  )
+
+  const handleActionSelect = useCallback(
+    (action: PostAction) => {
+      if (selectedActionId === action._id) {
+        setSelectedActionId(null)
+        setFocusedComment(null)
+        setLinkedPassage(null)
+        return
+      }
+      setSelectedActionId(action._id)
+      setFocusedComment(action._id)
+      const passage = toLinkedPassage(action)
+      if (passage) {
+        setLinkedPassage(passage)
+        if (isPortraitMobile) {
+          setDiscussionOpen(true)
+          setMobileDiscussionOpen(true)
+        }
+      }
+    },
+    [
+      selectedActionId,
+      isPortraitMobile,
+      setFocusedComment,
+      setLinkedPassage,
+      setMobileDiscussionOpen,
+    ],
+  )
+
+  const handleActivateLinkedComment = useCallback(
+    (actionId: string) => {
+      if (selectedActionId === actionId && discussionOpen) {
+        setSelectedActionId(null)
+        setFocusedComment(null)
+        setLinkedPassage(null)
+        return
+      }
+      setSelectedActionId(actionId)
+      setFocusedComment(actionId)
+      handleOpenChange(true)
+    },
+    [discussionOpen, handleOpenChange, selectedActionId, setFocusedComment, setLinkedPassage],
+  )
+
+  const quotePane = (
+    <PostController
+      postId={postId}
+      onOpenDiscussion={() => handleOpenChange(true)}
+      onActivateLinkedComment={handleActivateLinkedComment}
+    />
+  )
+
+  const discussion = (
+    <InteractionSection
+      postId={postId}
+      hideHeader={isPortraitMobile}
+      selectedActionId={selectedActionId}
+      onActionSelect={handleActionSelect}
+      onCountChange={setDiscussionCount}
+    />
+  )
+
+  // SSR and hydration share this shell so matchMedia cannot swap the tree.
+  // After mount, pick portrait-mobile split vs desktop/landscape columns.
+  if (!hasMounted) {
+    return <div className="h-full overflow-hidden relative">{quotePane}</div>
+  }
+
+  if (isPortraitMobile) {
     return (
-      // h-full fills the scrollable <main> area (between the fixed top bar and
-      // bottom nav); the post body scrolls internally so both bars stay fixed.
       <div className="h-full overflow-hidden relative">
-        <div className="h-full overflow-y-auto pb-16">
-          <PostController postId={postId} />
-        </div>
-        <SwipeDrawer title="Open Discussion">
-          <InteractionSection postId={postId} />
-        </SwipeDrawer>
+        <MobileDiscussionSplit
+          open={discussionOpen}
+          onOpenChange={handleOpenChange}
+          discussionCount={discussionCount}
+          quotePane={quotePane}
+        >
+          {discussion}
+        </MobileDiscussionSplit>
       </div>
     )
   }
@@ -72,19 +178,23 @@ function PostLayout({ postId }: { postId: string }) {
   const containerHeight = isLandscape ? 'h-[calc(100vh-80px)]' : 'h-[85vh]'
   return (
     <div className={`flex ${containerHeight} overflow-hidden`}>
-      {/* Left: Post content */}
       <div data-post-detail-pane="content" className="flex-1 overflow-y-auto border-r border-border">
-        <PostController postId={postId} />
+        {quotePane}
       </div>
-      {/* Right: Unified discussion feed */}
       <div data-post-detail-pane="discussion" className="w-[50%] flex flex-col overflow-hidden">
-        <InteractionSection postId={postId} />
+        {discussion}
       </div>
     </div>
   )
 }
 
-function InteractionSection({ postId }: { postId: string }) {
+function InteractionSection({
+  postId,
+  hideHeader = false,
+  selectedActionId = null,
+  onActionSelect,
+  onCountChange,
+}: InteractionSectionProps) {
   const [wsDisconnected, setWsDisconnected] = useState(false)
 
   const { loading: postLoading, data: postData, refetch: refetchPost } = useQuery<PostQueryData>(
@@ -139,6 +249,8 @@ function InteractionSection({ postId }: { postId: string }) {
         __typename: 'Comment',
         content: c.content || '',
         created: c.created,
+        startWordIndex: c.startWordIndex,
+        endWordIndex: c.endWordIndex,
         user: {
           _id: c.user?._id || '',
           username: c.user?.username || '',
@@ -200,36 +312,39 @@ function InteractionSection({ postId }: { postId: string }) {
     return actions
   }, [post, messagesData])
 
+  useEffect(() => {
+    onCountChange?.(postActions.length)
+  }, [postActions.length, onCountChange])
+
   return (
     <div className="flex flex-col h-full">
-      {/* Panel header */}
-      <div data-discussion-header className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background shrink-0">
-        <MessagesSquare className="size-4 text-muted-foreground/50" />
-        <span className="text-sm font-semibold text-foreground/75">Open Discussion</span>
-        {postActions.length > 0 && (
-          <span className="ml-auto text-[11px] text-muted-foreground/50 bg-muted/50 px-2 py-0.5 rounded-full tabular-nums">
-            {postActions.length}
+      {!hideHeader && (
+        <div data-discussion-header className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background shrink-0">
+          <span className="text-sm font-semibold text-foreground/75">
+            Discussion · {postActions.length}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {wsDisconnected && (
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/50 dark:border-amber-800/30 text-amber-700 dark:text-amber-400 text-xs">
-          <WifiOff className="size-3.5 flex-shrink-0" />
+          <WifiOff className="size-3.5 shrink-0" />
           <span>Live updates paused. Reconnecting...</span>
         </div>
       )}
-      <div data-discussion-scroll="true" className="flex-1 overflow-y-auto">
+      <div data-discussion-scroll="true" className="flex-1 overflow-y-auto overscroll-contain">
         <PostActionList
           postActions={postActions}
           loading={postLoading}
           postUrl={postUrl ?? undefined}
           refetchPost={() => refetchPost()}
           postOwnerId={post?.userId}
+          selectedActionId={selectedActionId}
+          onSelectAction={onActionSelect}
         />
       </div>
       {messageRoomId && (
-        <div className="border-t border-border px-4 py-3 bg-background shrink-0">
+        <div className="border-t border-border px-4 py-3 bg-background shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <PostChatSend messageRoomId={messageRoomId} title={postTitle ?? undefined} postId={postId} />
         </div>
       )}

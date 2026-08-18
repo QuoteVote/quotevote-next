@@ -109,6 +109,10 @@ export interface PostProps {
   postHeight?: number
   postActions?: unknown[]
   refetchPost?: () => void
+  /** Opens the mobile split-screen discussion (comment-count action). */
+  onOpenDiscussion?: () => void
+  /** Re-selects a linked comment after tapping its Quote highlight. */
+  onActivateLinkedComment?: (actionId: string) => void
 }
 
 /**
@@ -146,6 +150,8 @@ export interface PostCardProps {
  */
 export interface PostControllerProps {
   postId?: string
+  onOpenDiscussion?: () => void
+  onActivateLinkedComment?: (actionId: string) => void
 }
 
 /**
