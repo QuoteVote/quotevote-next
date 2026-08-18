@@ -43,7 +43,9 @@ export default function MobileDiscussionSplit({
   const [isDragging, setIsDragging] = useState(false);
   const quoteRatio = overrideRatio ?? persistedRatio;
   const quoteRatioRef = useRef(quoteRatio);
-  quoteRatioRef.current = quoteRatio;
+  useEffect(() => {
+    quoteRatioRef.current = quoteRatio;
+  }, [quoteRatio]);
 
   const restoreDefaultRatio = useCallback(() => {
     persistQuoteRatio(DEFAULT_QUOTE_RATIO);
@@ -90,7 +92,7 @@ export default function MobileDiscussionSplit({
         e.currentTarget.setPointerCapture(e.pointerId);
       }
     },
-    [open, quoteRatio]
+    [open]
   );
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
