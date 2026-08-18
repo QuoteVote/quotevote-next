@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useMutation } from '@apollo/client/react'
+import { useMutation, useQuery } from '@apollo/client/react'
 import { Camera, Loader2, Moon, Sun, LogOut, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -19,13 +19,14 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { UPDATE_USER } from '@/graphql/mutations'
-import { GET_USER } from '@/graphql/queries'
+import { GET_USER, GET_USER_BIO } from '@/graphql/queries'
 import { replaceGqlError } from '@/lib/utils/replaceGqlError'
 import { useAppStore } from '@/store/useAppStore'
 import { removeToken } from '@/lib/auth'
@@ -37,6 +38,10 @@ import {
   PROFILE_BG_PATTERNS,
 } from '@/lib/utils/profileBackground'
 import { cn } from '@/lib/utils'
+import {
+  PROFILE_BIO_HTML_PATTERN,
+  PROFILE_BIO_MAX_LENGTH,
+} from '@/lib/constants/profile'
 import type { SettingsUserData } from '@/types/settings'
 import type { UpdateUserResponse } from '@/types/test'
 
@@ -50,6 +55,12 @@ const settingsSchema = z.object({
   password: z.string().refine((val) => !val || val.length >= 8, {
     message: 'Password must be at least 8 characters',
   }),
+  bio: z
+    .string()
+    .max(PROFILE_BIO_MAX_LENGTH, `About must be ${PROFILE_BIO_MAX_LENGTH} characters or fewer`)
+    .refine((val) => !PROFILE_BIO_HTML_PATTERN.test(val), {
+      message: 'About must be plain text without HTML',
+    }),
 })
 
 type SettingsFormValues = z.infer<typeof settingsSchema>
@@ -80,11 +91,28 @@ export default function SettingsPageClient() {
   const [bgBaselineReady, setBgBaselineReady] = useState(false)
 
   const [updateUser, { loading }] = useMutation<UpdateUserResponse>(UPDATE_USER)
+  const { data: bioData, error: bioError } = useQuery<{
+    user?: { _id: string; bio?: string | null } | null
+  }>(GET_USER_BIO, {
+    variables: { username },
+    skip: !username,
+    errorPolicy: 'all',
+  })
+  const bioSupported = Boolean(username) && !bioError
+  const fetchedBio = bioData?.user?.bio ?? userData?.bio ?? ''
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: { name, username, email, password: '' },
+    defaultValues: { name, username, email, password: '', bio: fetchedBio },
   })
+
+  useEffect(() => {
+    if (!bioSupported) return
+    const currentBio = form.getValues('bio')
+    if (currentBio === fetchedBio) return
+    if (form.formState.dirtyFields.bio) return
+    form.setValue('bio', fetchedBio, { shouldDirty: false })
+  }, [bioSupported, fetchedBio, form])
 
   useEffect(() => {
     setLocalDarkMode(isDarkMode)
@@ -123,7 +151,7 @@ export default function SettingsPageClient() {
   }, [router])
 
   const onSubmit = async (values: SettingsFormValues) => {
-    const { password, ...otherValues } = values
+    const { password, bio, ...otherValues } = values
 
     // Background is localStorage-only; if that's the only change, just accept baseline.
     if (!form.formState.isDirty && !themeDirty && bgDirty) {
@@ -141,6 +169,9 @@ export default function SettingsPageClient() {
     if (password) {
       userInput.password = password
     }
+    if (bioSupported) {
+      userInput.bio = bio ?? ''
+    }
 
     try {
       const result = await updateUser({
@@ -150,6 +181,9 @@ export default function SettingsPageClient() {
             query: GET_USER,
             variables: { username: otherValues.username },
           },
+          ...(bioSupported
+            ? [{ query: GET_USER_BIO, variables: { username: otherValues.username } }]
+            : []),
         ],
         awaitRefetchQueries: true,
       })
@@ -170,6 +204,7 @@ export default function SettingsPageClient() {
           username: updated.username ?? otherValues.username,
           email: updated.email ?? otherValues.email,
           password: '',
+          bio: bioSupported ? (bio ?? '') : '',
         })
       }
     } catch (err) {
@@ -263,6 +298,30 @@ export default function SettingsPageClient() {
                   </FormItem>
                 )}
               />
+
+              {bioSupported && (
+                <FormField
+                  control={form.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>About</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="A short, plain-text introduction"
+                          rows={4}
+                          maxLength={PROFILE_BIO_MAX_LENGTH}
+                          {...field}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        {(field.value?.length ?? 0)}/{PROFILE_BIO_MAX_LENGTH}
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <Separator />
 

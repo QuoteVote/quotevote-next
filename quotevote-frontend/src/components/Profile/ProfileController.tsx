@@ -4,7 +4,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@apollo/client/react';
 import { useAppStore } from '@/store';
-import { GET_USER } from '@/graphql/queries';
+import { GET_USER, GET_USER_BIO } from '@/graphql/queries';
 import { ProfileView } from './ProfileView';
 import type { ProfileUser } from '@/types/profile';
 
@@ -32,11 +32,27 @@ export function ProfileController() {
     (typeof loggedInUser?.username === 'string' && loggedInUser.username.trim()) ||
     '';
 
-  const { data: userData, loading } = useQuery<{
+  const {
+    data: userData,
+    loading,
+    error,
+  } = useQuery<{
     user?: ProfileUser | null;
   }>(GET_USER, {
     variables: { username: targetUsername },
     skip: !targetUsername,
+    errorPolicy: 'all',
+  });
+
+  // Isolated from GET_USER so a hosted schema without `User.bio` cannot
+  // blank the profile page (#440). Local backends that expose bio still
+  // populate the About tab (#362).
+  const { data: bioData } = useQuery<{
+    user?: { _id: string; bio?: string | null } | null;
+  }>(GET_USER_BIO, {
+    variables: { username: targetUsername },
+    skip: !targetUsername,
+    errorPolicy: 'all',
   });
 
   useEffect(() => {
@@ -56,9 +72,25 @@ export function ProfileController() {
     return <ProfileView loading />;
   }
 
+  if (error && !userData?.user) {
+    return (
+      <ProfileView
+        loading={false}
+        errorMessage="This profile could not be loaded. Try again, or return to Explore."
+      />
+    );
+  }
+
+  const profileUser = userData?.user
+    ? {
+        ...userData.user,
+        bio: bioData?.user?.bio ?? userData.user.bio,
+      }
+    : undefined;
+
   return (
     <ProfileView
-      profileUser={userData?.user ?? undefined}
+      profileUser={profileUser}
       loading={false}
     />
   );

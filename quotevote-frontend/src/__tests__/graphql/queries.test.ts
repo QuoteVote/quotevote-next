@@ -10,6 +10,8 @@ import {
   GET_ROSTER,
   GET_ROOM_MESSAGES,
   VERIFY_PASSWORD_RESET_TOKEN,
+  GET_USER,
+  GET_USER_BIO,
 } from '@/graphql/queries'
 
 function getOperationDef(doc: { definitions: ReadonlyArray<{ kind: string; operation?: string; name?: { value: string }; variableDefinitions?: ReadonlyArray<{ variable: { name: { value: string } } }> }> }) {
@@ -83,6 +85,35 @@ describe('GraphQL Queries', () => {
       }
       const varNames = op?.variableDefinitions?.map((v) => v.variable.name.value) ?? []
       expect(varNames).toContain('token')
+    })
+  })
+
+  describe('GET_USER / GET_USER_BIO', () => {
+    function userFieldNames(doc: {
+      definitions: ReadonlyArray<{
+        kind: string
+        selectionSet?: {
+          selections: ReadonlyArray<{
+            kind: string
+            name?: { value: string }
+            selectionSet?: { selections: ReadonlyArray<{ name?: { value: string } }> }
+          }>
+        }
+      }>
+    }) {
+      const op = doc.definitions.find((d) => d.kind === 'OperationDefinition')
+      const userField = op?.selectionSet?.selections.find((s) => s.name?.value === 'user')
+      return userField?.selectionSet?.selections.map((s) => s.name?.value) ?? []
+    }
+
+    it('keeps bio off GET_USER so hosted schemas cannot take down the profile', () => {
+      expect(userFieldNames(GET_USER as never)).not.toContain('bio')
+    })
+
+    it('loads About text through a separate GET_USER_BIO query', () => {
+      const op = getOperationDef(GET_USER_BIO)
+      expect(op?.operation).toBe('query')
+      expect(userFieldNames(GET_USER_BIO as never)).toContain('bio')
     })
   })
 })

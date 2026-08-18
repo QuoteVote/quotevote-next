@@ -98,6 +98,22 @@ describe('ProfileView', () => {
     });
   });
 
+  describe('Query error state (#440)', () => {
+    it('renders a recoverable error instead of Invalid user', () => {
+      render(
+        <ProfileView
+          errorMessage="This profile could not be loaded. Try again, or return to Explore."
+        />
+      );
+      expect(screen.getByText(/couldn.t load this profile/i)).toBeInTheDocument();
+      expect(screen.queryByText('Invalid user')).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /back to explore/i })).toHaveAttribute(
+        'href',
+        '/dashboard/explore'
+      );
+    });
+  });
+
   describe('Valid Profile - RC1-006 Filter Taxonomy & RC1-007 Multi-Select', () => {
     it('renders profile header', async () => {
       await act(async () => {

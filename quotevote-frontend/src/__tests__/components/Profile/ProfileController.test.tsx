@@ -10,16 +10,24 @@
 
 import { render, screen, waitFor } from '../../utils/test-utils';
 import { ProfileController } from '../../../components/Profile/ProfileController';
-import { GET_USER } from '@/graphql/queries';
+import { GET_USER, GET_USER_BIO } from '@/graphql/queries';
 import { useAppStore } from '@/store';
 // @ts-expect-error - MockedProvider may not have types in this version
 import { MockedProvider } from '@apollo/client/testing';
 
 // Mock child components
 jest.mock('../../../components/Profile/ProfileView', () => ({
-  ProfileView: ({ profileUser, loading }: { profileUser?: unknown; loading?: boolean }) => (
+  ProfileView: ({
+    profileUser,
+    loading,
+    errorMessage,
+  }: {
+    profileUser?: unknown;
+    loading?: boolean;
+    errorMessage?: string;
+  }) => (
     <div data-testid="profile-view">
-      {loading ? 'Loading...' : profileUser ? 'Profile Loaded' : 'No Profile'}
+      {loading ? 'Loading...' : errorMessage ? 'Profile Error' : profileUser ? 'Profile Loaded' : 'No Profile'}
     </div>
   ),
 }));
@@ -71,6 +79,31 @@ const mockUserData = {
   },
 };
 
+const mockUserBio = {
+  request: {
+    query: GET_USER_BIO,
+    variables: { username: 'testuser' },
+  },
+  result: {
+    data: {
+      user: {
+        _id: 'user1',
+        bio: 'Thoughtful dialogue.',
+      },
+    },
+  },
+};
+
+const mockUserBioUnavailable = {
+  request: {
+    query: GET_USER_BIO,
+    variables: { username: 'testuser' },
+  },
+  result: {
+    errors: [{ message: 'Cannot query field "bio" on type "User".' }],
+  },
+};
+
 describe('ProfileController', () => {
   beforeEach(() => {
     mockReplace.mockClear();
@@ -102,7 +135,7 @@ describe('ProfileController', () => {
 
     it('fetches and displays user data', async () => {
       render(
-        <MockedProvider mocks={[mockUserData]} addTypename={false}>
+        <MockedProvider mocks={[mockUserData, mockUserBio]} addTypename={false}>
           <ProfileController />
         </MockedProvider>
       );
@@ -116,7 +149,7 @@ describe('ProfileController', () => {
 
     it('uses username from params when available', async () => {
       render(
-        <MockedProvider mocks={[mockUserData]} addTypename={false}>
+        <MockedProvider mocks={[mockUserData, mockUserBio]} addTypename={false}>
           <ProfileController />
         </MockedProvider>
       );
@@ -136,9 +169,16 @@ describe('ProfileController', () => {
           variables: { username: 'currentuser' },
         },
       };
+      const loggedInUserBio = {
+        ...mockUserBio,
+        request: {
+          query: GET_USER_BIO,
+          variables: { username: 'currentuser' },
+        },
+      };
 
       render(
-        <MockedProvider mocks={[loggedInUserData]} addTypename={false}>
+        <MockedProvider mocks={[loggedInUserData, loggedInUserBio]} addTypename={false}>
           <ProfileController />
         </MockedProvider>
       );
@@ -262,7 +302,7 @@ describe('ProfileController', () => {
       }));
 
       render(
-        <MockedProvider mocks={[mockUserData]} addTypename={false}>
+        <MockedProvider mocks={[mockUserData, mockUserBio]} addTypename={false}>
           <ProfileController />
         </MockedProvider>
       );
@@ -288,9 +328,20 @@ describe('ProfileController', () => {
           },
         },
       };
+      const emptyUserBio = {
+        request: {
+          query: GET_USER_BIO,
+          variables: { username: 'testuser' },
+        },
+        result: {
+          data: {
+            user: null,
+          },
+        },
+      };
 
       render(
-        <MockedProvider mocks={[emptyUserData]} addTypename={false}>
+        <MockedProvider mocks={[emptyUserData, emptyUserBio]} addTypename={false}>
           <ProfileController />
         </MockedProvider>
       );
@@ -301,6 +352,58 @@ describe('ProfileController', () => {
         const loadingText = screen.queryByText('Loading...');
         const errorUI = screen.queryByText(/Something went wrong/i);
         expect(profileView || loadingText || errorUI).toBeTruthy();
+      }, { timeout: 3000 });
+    });
+  });
+
+  describe('Profile navigation (#440)', () => {
+    it('still loads the profile when GET_USER_BIO is unavailable on the hosted API', async () => {
+      render(<ProfileController />, { mocks: [mockUserData, mockUserBioUnavailable] });
+
+      await waitFor(() => {
+        expect(screen.getByText('Profile Loaded')).toBeInTheDocument();
+      }, { timeout: 3000 });
+      expect(screen.queryByText('Profile Error')).not.toBeInTheDocument();
+    });
+
+    it('still loads the profile when GET_USER_BIO returns no about text', async () => {
+      const emptyBio = {
+        request: {
+          query: GET_USER_BIO,
+          variables: { username: 'testuser' },
+        },
+        result: {
+          data: {
+            user: {
+              _id: 'user1',
+              bio: null,
+            },
+          },
+        },
+      };
+
+      render(<ProfileController />, { mocks: [mockUserData, emptyBio] });
+
+      await waitFor(() => {
+        expect(screen.getByText('Profile Loaded')).toBeInTheDocument();
+      }, { timeout: 3000 });
+    });
+
+    it('surfaces a profile error instead of crashing when GET_USER fails', async () => {
+      const queryError = {
+        request: {
+          query: GET_USER,
+          variables: { username: 'testuser' },
+        },
+        result: {
+          errors: [{ message: 'Cannot query field "bio" on type "User".' }],
+        },
+      };
+
+      render(<ProfileController />, { mocks: [queryError, mockUserBioUnavailable] });
+
+      await waitFor(() => {
+        expect(screen.getByText('Profile Error')).toBeInTheDocument();
       }, { timeout: 3000 });
     });
   });
