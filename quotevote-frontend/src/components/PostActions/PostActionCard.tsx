@@ -87,6 +87,7 @@ export default function PostActionCard({
   selected = false,
   refetchPost,
   postOwnerId,
+  onSelectAction,
 }: PostActionCardProps) {
   const [commentSelected, setCommentSelected] = useState(false)
   const router = useRouter()
@@ -181,6 +182,10 @@ export default function PostActionCard({
   }
 
   const handleClick = useCallback(() => {
+    if (onSelectAction) {
+      onSelectAction(postAction)
+      return
+    }
     if (!commentSelected) {
       setFocusedComment(_id)
       setCommentSelected(true)
@@ -188,7 +193,7 @@ export default function PostActionCard({
       setFocusedComment(sharedComment)
       setCommentSelected(false)
     }
-  }, [commentSelected, _id, sharedComment, setFocusedComment])
+  }, [commentSelected, _id, sharedComment, setFocusedComment, onSelectAction, postAction])
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -242,22 +247,22 @@ export default function PostActionCard({
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
       data-post-action="true"
       data-action-type={type}
+      data-selected={selected ? 'true' : undefined}
       data-post-owner={isPostOwner ? 'true' : undefined}
       data-current-user={isOwner && !isPostOwner ? 'true' : undefined}
       className={cn(
-        'group relative flex gap-3 px-4 py-3.5 cursor-pointer transition-colors',
+        'group relative flex items-start gap-3 px-3.5 py-3 cursor-pointer transition-colors rounded-xl border',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-        'hover:bg-muted/30',
         selected
-          ? 'bg-primary/[0.04] border-l-[3px] border-l-primary'
-          : 'border-l-[3px] border-l-transparent'
+          ? 'bg-[#52b274]/[0.06] border-[#52b274]/30 border-l-[4px] border-l-[#52b274]'
+          : 'border-border/70 border-l-[4px] border-l-transparent hover:bg-muted/30'
       )}
     >
       {/* Avatar */}
       <button
         type="button"
         onClick={handleProfileClick}
-        className="shrink-0 mt-0.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="shrink-0 self-start mt-0.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         <DisplayAvatar
           avatar={avatar as string | Record<string, unknown> | undefined}
@@ -270,12 +275,12 @@ export default function PostActionCard({
       {/* Content column */}
       <div className="flex-1 min-w-0">
 
-        {/* Header: name · date */}
-        <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+        {/* Header: name + date (avoid flex-wrap jitter on small screens) */}
+        <div className="flex items-baseline gap-1.5 mb-1.5">
           <button
             type="button"
             onClick={handleProfileClick}
-            className="text-[13px] font-semibold text-[#52b274] hover:underline leading-none"
+            className="text-[12px] sm:text-[13px] font-semibold text-[#52b274] hover:underline leading-none"
           >
             {displayName}
           </button>
@@ -288,19 +293,20 @@ export default function PostActionCard({
               OP
             </span>
           )}
-          <span className="text-muted-foreground/40 text-xs leading-none">·</span>
-          <time className="text-[11px] text-muted-foreground leading-none">{parsedDate}</time>
+          <div className="flex min-w-0 items-baseline gap-1">
+            <span className="text-muted-foreground/40 text-xs leading-none">·</span>
+            <time className="text-[10px] sm:text-[11px] text-muted-foreground leading-none">{parsedDate}</time>
+          </div>
+          {type !== 'Message' && (
+            <div className="ml-0.5 shrink-0 self-baseline">
+              <ActionTypeBadge type={type} voteType={voteType} className="leading-none" />
+            </div>
+          )}
         </div>
 
-        {/* Vote: selected text as an accented blockquote with activity label before it (RC1-019) */}
+        {/* Vote: selected text as an accented blockquote */}
         {type === 'Vote' && (
-          <blockquote className={cn(
-            'pl-3 border-l-[3px] text-sm leading-relaxed flex items-start gap-1.5 flex-wrap',
-            voteType === 'up' || voteType === 'upvote'
-              ? 'border-l-emerald-400/60 text-foreground/80'
-              : 'border-l-red-400/60 text-foreground/80'
-          )}>
-            <ActionTypeBadge type={type} voteType={voteType} className="mr-1 my-0.5" />
+          <blockquote className="text-sm leading-relaxed italic text-foreground/80">
             {content
               ? <span>&ldquo;{content}&rdquo;</span>
               : <span className="italic text-muted-foreground/60">no text selected</span>
@@ -308,35 +314,30 @@ export default function PostActionCard({
           </blockquote>
         )}
 
-        {/* Quote: italic blockquote with activity label before it (RC1-019) */}
+        {/* Quote: italic excerpt */}
         {type === 'Quote' && (
-          <blockquote className="pl-3 border-l-[3px] border-l-violet-400/60 text-sm text-foreground/75 italic leading-relaxed flex items-start gap-1.5 flex-wrap">
-            <ActionTypeBadge type={type} className="mr-1 my-0.5 not-italic" />
+          <blockquote className="text-sm text-foreground/75 italic leading-relaxed">
             <span>{quoteContent}</span>
           </blockquote>
         )}
 
-        {/* Comment: optional quoted context + body with activity label (RC1-019) */}
+        {/* Comment: optional quoted context + body */}
         {type === 'Comment' && (
           <div>
             {commentQuote && (
-              <blockquote className="mb-1.5 pl-3 border-l-[3px] border-l-sky-400/60 text-[13px] text-muted-foreground italic leading-relaxed flex items-start gap-1.5 flex-wrap">
-                <ActionTypeBadge type="Quote" className="mr-1 my-0.5 not-italic" />
+              <blockquote className="mb-1.5 text-[14px] text-muted-foreground italic leading-relaxed">
                 <span>{commentQuote}</span>
               </blockquote>
             )}
-            <div className="flex items-start gap-1.5 flex-wrap">
-              <ActionTypeBadge type={type} className="mr-1 my-0.5" />
-              <p className="text-[13px] text-foreground/85 leading-relaxed inline">{content}</p>
-            </div>
+            <p className="text-[14px] text-foreground/85 leading-relaxed">{content}</p>
           </div>
         )}
 
 
-        {/* Footer: reactions (left) · copy + delete (right, fade in on hover) */}
-        <div className="flex items-center justify-between mt-2.5 -ml-1">
+        {/* Footer: reactions + copy/delete (keep emoji alignment consistent) */}
+        <div className="flex items-start justify-between gap-2 mt-2">
           <CommentReactions actionId={_id} reactions={actionReactions} />
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
             <Button
               variant="ghost"
               size="icon"

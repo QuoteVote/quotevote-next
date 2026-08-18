@@ -16,8 +16,11 @@ import {
   LogOut,
   ChevronDown,
   Settings,
+  ArrowLeft,
+  Share2,
 } from 'lucide-react';
 import { Globe } from '@/components/Icons';
+import { toast } from 'sonner';
 
 
 import { cn } from '@/lib/utils';
@@ -119,6 +122,7 @@ export default function DashboardLayout({
   const setChatOpen = useAppStore((s) => s.setChatOpen);
   const user = useAppStore((s) => s.user.data);
   const logout = useAppStore((s) => s.logout);
+  const mobileDiscussionOpen = useAppStore((s) => s.ui.mobileDiscussionOpen);
 
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
@@ -155,6 +159,7 @@ export default function DashboardLayout({
   );
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
+  const isMobilePostDetail = /^\/dashboard\/post\/[^/]+\/[^/]+\/[^/]+/.test(pathname);
 
   useEffect(() => {
     const match = NAV_PAGES.find((l) => pathname.startsWith(l.path));
@@ -170,6 +175,24 @@ export default function DashboardLayout({
       logout();
     }
     router.push('/auths/login');
+  };
+
+  const handleSharePost = async () => {
+    const url = window.location.href;
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({ url, title: 'Quote.Vote' });
+        return;
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied!');
+    } catch {
+      toast.error('Failed to copy link');
+    }
   };
 
   const requireAuthForAction = (action: () => void, view: 'invite' | 'login' = 'login') => {
@@ -342,26 +365,60 @@ export default function DashboardLayout({
           MOBILE TOP BAR
       ════════════════════════════════════════════════════════════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 md:hidden h-[56px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] flex items-center">
-        <div className="flex h-full w-full items-center justify-between px-4">
-          <Link
-            href="/dashboard/explore"
-            className="flex items-center gap-2 no-underline"
-            aria-label="Quote.Vote home"
-          >
-            <Globe size={32} className="size-8" />
-            <span className="text-[18px] font-extrabold tracking-tight text-[#52b274]">Quote.Vote</span>
-          </Link>
-          {/* Account menu lives on the bottom-nav Profile button. */}
-        </div>
+        {isMobilePostDetail ? (
+          <div className="relative flex h-full w-full items-center px-1">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Go back"
+              className="z-10 inline-flex size-11 items-center justify-center text-foreground"
+            >
+              <ArrowLeft className="size-5" />
+            </button>
+            <Link
+              href="/dashboard/explore"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+              aria-label="Quote.Vote home"
+            >
+              <span className="pointer-events-auto flex items-center gap-2">
+                <Globe size={32} className="size-8" />
+                <span className="text-[18px] font-extrabold tracking-tight text-[#52b274]">Quote.Vote</span>
+              </span>
+            </Link>
+            <button
+              type="button"
+              onClick={handleSharePost}
+              aria-label="Share"
+              className="z-10 ml-auto inline-flex size-11 items-center justify-center text-foreground"
+            >
+              <Share2 className="size-5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex h-full w-full items-center justify-between px-4">
+            <Link
+              href="/dashboard/explore"
+              className="flex items-center gap-2 no-underline"
+              aria-label="Quote.Vote home"
+            >
+              <Globe size={32} className="size-8" />
+              <span className="text-[18px] font-extrabold tracking-tight text-[#52b274]">Quote.Vote</span>
+            </Link>
+          </div>
+        )}
       </header>
 
       {/* ════════════════════════════════════════════════════════════════
           MOBILE BOTTOM NAV
       ════════════════════════════════════════════════════════════════ */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[60] md:hidden h-[56px] bg-card border-t border-border flex items-center"
+        className={cn(
+          'fixed bottom-0 left-0 right-0 z-[60] md:hidden h-[56px] bg-card border-t border-border flex items-center',
+          mobileDiscussionOpen && 'hidden',
+        )}
         aria-label="Mobile navigation"
         data-testid="authenticated-navigation"
+        hidden={mobileDiscussionOpen}
       >
         {/* Home */}
         <Link
@@ -513,7 +570,10 @@ export default function DashboardLayout({
       ════════════════════════════════════════════════════════════════ */}
       <main
         id="main-content"
-        className="h-full overflow-y-auto overscroll-contain pt-[56px] md:pt-[60px] pb-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible"
+        className={cn(
+          'h-full overflow-y-auto overscroll-contain pt-[56px] md:pt-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible',
+          mobileDiscussionOpen ? 'pb-0' : 'pb-[60px]',
+        )}
       >
         {pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/settings') ? (
           /* Profile and Settings & Privacy align with the Home feed column:

@@ -11,6 +11,7 @@
 import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
 import PostChatSend from '@/components/PostChat/PostChatSend'
 import { useAppStore } from '@/store'
+import useGuestGuard from '@/hooks/useGuestGuard'
 
 // Mock useQuery and useMutation from Apollo Client
 const mockUseQuery = jest.fn()
@@ -80,6 +81,7 @@ jest.mock('@/hooks/useGuestGuard', () => ({
 }))
 
 const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>
+const mockUseGuestGuard = useGuestGuard as jest.MockedFunction<typeof useGuestGuard>
 
 const mockCurrentUser = {
   _id: 'user1',
@@ -96,6 +98,7 @@ describe('PostChatSend', () => {
     mutationCallbacks = {}
     shouldSuppressErrorReThrow = false
     mockMutate.mockResolvedValue({ data: { createMessage: { _id: 'msg1', messageRoomId: 'room1' } } })
+    mockUseGuestGuard.mockReturnValue(() => true)
 
     // Mock useQuery to return empty messages by default
     mockUseQuery.mockReturnValue({
@@ -120,7 +123,7 @@ describe('PostChatSend', () => {
   it('renders message input and send button', () => {
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    expect(screen.getByPlaceholderText('Add to the discussion...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Add to discussion...')).toBeInTheDocument()
     expect(screen.getByLabelText('Send message')).toBeInTheDocument()
   })
 
@@ -133,7 +136,7 @@ describe('PostChatSend', () => {
   it('updates input value when typing', () => {
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('Add to the discussion...')
+    const input = screen.getByPlaceholderText('Add to discussion...')
     fireEvent.change(input, { target: { value: 'Hello world' } })
 
     expect(input).toHaveValue('Hello world')
@@ -153,7 +156,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('Add to the discussion...')
+    const input = screen.getByPlaceholderText('Add to discussion...')
     const sendButton = screen.getByLabelText('Send message')
 
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -184,7 +187,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('Add to the discussion...')
+    const input = screen.getByPlaceholderText('Add to discussion...')
     fireEvent.change(input, { target: { value: 'Test message' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
 
@@ -207,7 +210,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('Add to the discussion...')
+    const input = screen.getByPlaceholderText('Add to discussion...')
     fireEvent.change(input, { target: { value: 'Test message' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: true })
 
@@ -228,7 +231,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('Add to the discussion...')
+    const input = screen.getByPlaceholderText('Add to discussion...')
     fireEvent.change(input, { target: { value: '   ' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
 
@@ -261,7 +264,7 @@ describe('PostChatSend', () => {
 
       render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-      const input = screen.getByPlaceholderText('Add to the discussion...')
+      const input = screen.getByPlaceholderText('Add to discussion...')
       const sendButton = screen.getByLabelText('Send message')
 
       fireEvent.change(input, { target: { value: 'Test message' } })
@@ -301,7 +304,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId={null} title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('Add to the discussion...')
+    const input = screen.getByPlaceholderText('Add to discussion...')
     const sendButton = screen.getByLabelText('Send message')
 
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -326,7 +329,7 @@ describe('PostChatSend', () => {
 
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
-    const input = screen.getByPlaceholderText('Add to the discussion...')
+    const input = screen.getByPlaceholderText('Add to discussion...')
     const sendButton = screen.getByLabelText('Send message')
 
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -335,6 +338,29 @@ describe('PostChatSend', () => {
     await waitFor(() => {
       expect(setChatSubmitting).toHaveBeenCalledWith(false)
     })
+  })
+
+  it('shows a sign-in action instead of a disabled composer when signed out', () => {
+    const ensureAuth = jest.fn(() => false)
+    mockUseGuestGuard.mockReturnValue(ensureAuth)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) => {
+      const state = {
+        user: { data: {} },
+        chat: { submitting: false },
+        setChatSubmitting: jest.fn(),
+      }
+      return selector(state)
+    })
+
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+
+    const cta = screen.getByTestId('discussion-signin-cta')
+    expect(cta).toHaveTextContent('Sign in to join the discussion')
+    expect(cta).not.toBeDisabled()
+    fireEvent.click(cta)
+    expect(ensureAuth).toHaveBeenCalled()
   })
 })
 

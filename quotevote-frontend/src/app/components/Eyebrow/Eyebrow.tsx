@@ -14,7 +14,7 @@ import OnboardingCompletionModal from "@/app/components/Eyebrow/OnboardingComple
 
 export function Eyebrow() {
   const user = useAppStore((state) => state.user.data);
-  const loggedIn = !!user?.id;
+  const loggedIn = !!(user?._id || user?.id);
 
   const [isDismissed, setIsDismissed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);

@@ -82,6 +82,8 @@ describe('Sidebar Component', () => {
         selectedPlan: 'personal',
         focusedComment: null,
         sharedComment: null,
+        mobileDiscussionOpen: false,
+        linkedPassage: null,
       },
     });
 

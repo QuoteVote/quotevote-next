@@ -4,6 +4,7 @@
  */
 
 import type { StagedChatRoom } from './chat';
+import type { LinkedPassage } from './discussionSplit';
 
 // User state interface
 export interface UserState {
@@ -42,6 +43,10 @@ export interface UIState {
   selectedPlan: string;
   focusedComment: string | null;
   sharedComment: string | null;
+  /** True while the mobile Quote-page discussion split-screen is open. */
+  mobileDiscussionOpen: boolean;
+  /** Quote-text range linked to the currently selected discussion comment. */
+  linkedPassage: LinkedPassage | null;
 }
 
 // Chat state interface

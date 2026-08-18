@@ -6,6 +6,7 @@ import moment from 'moment'
 import { MessagesSquare } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import PostActionCard from './PostActionCard'
+import { scrollActionIntoDiscussion } from '@/lib/utils/discussionSplit'
 import { useAppStore } from '@/store'
 import type { PostActionListProps } from '@/types/postActions'
 
@@ -15,6 +16,8 @@ export default function PostActionList({
   postUrl = '',
   refetchPost,
   postOwnerId,
+  selectedActionId = null,
+  onSelectAction,
 }: PostActionListProps) {
   const setFocusedComment = useAppStore((state) => state.setFocusedComment)
   const setSharedComment = useAppStore((state) => state.setSharedComment)
@@ -23,18 +26,22 @@ export default function PostActionList({
   const hash = typeof window !== 'undefined' ? window.location.hash : ''
 
   useEffect(() => {
-    if (!hash) {
+    if (!hash && !selectedActionId) {
       setFocusedComment(null)
       setSharedComment(null)
     }
     if (!loading && postActions.length && hash) {
       const elementId = hash.replace('#', '')
-      const element = document.getElementById(elementId)
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' })
+      if (document.getElementById(elementId)) {
+        scrollActionIntoDiscussion(elementId, 'center')
       }
     }
-  }, [hash, loading, postActions, setFocusedComment, setSharedComment])
+  }, [hash, loading, postActions, selectedActionId, setFocusedComment, setSharedComment])
+
+  useEffect(() => {
+    if (!selectedActionId) return
+    scrollActionIntoDiscussion(selectedActionId, 'nearest')
+  }, [selectedActionId])
 
   // Sort actions by creation date
   const sortedActions = [...postActions].sort((a, b) => {
@@ -54,15 +61,16 @@ export default function PostActionList({
       )}
 
       {!isEmpty(sortedActions) ? (
-        <div className="divide-y divide-border/60">
+        <div className="flex flex-col gap-2 px-3 py-3">
           {sortedActions.map((action) => (
             <div key={action._id} id={action._id}>
               <PostActionCard
                 postAction={action}
                 postUrl={postUrl}
-                selected={`#${action._id}` === hash}
+                selected={selectedActionId ? action._id === selectedActionId : `#${action._id}` === hash}
                 refetchPost={refetchPost}
                 postOwnerId={postOwnerId}
+                onSelectAction={onSelectAction}
               />
             </div>
           ))}
