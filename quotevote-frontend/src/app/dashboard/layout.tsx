@@ -39,7 +39,7 @@ import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from '@/graphql/queries';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import type { ChatRoom } from '@/types/chat';
 import NavSearch from '@/components/Navbars/NavSearch';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -94,12 +94,13 @@ function ChatPanel() {
   // height.
   return (
     <Sheet open={chatOpen} onOpenChange={setChatOpen} modal={false}>
-      <SheetContent
+        <SheetContent
         side="right"
         overlayClassName="bottom-[56px] md:bottom-0"
         className="w-full sm:w-[400px] p-0 bottom-[56px] h-[calc(100%-56px)] md:inset-y-0 md:h-full"
         onInteractOutside={(e) => e.preventDefault()}
       >
+        <SheetTitle className="sr-only">Messages</SheetTitle>
         <div className="h-full"><ChatContent /></div>
       </SheetContent>
     </Sheet>
@@ -381,8 +382,10 @@ export default function DashboardLayout({
               aria-label="Quote.Vote home"
             >
               <span className="pointer-events-auto flex items-center gap-2">
-                <Globe size={32} className="size-8" />
-                <span className="text-[18px] font-extrabold tracking-tight text-[#52b274]">Quote.Vote</span>
+                <Globe size={28} className="size-7" />
+                <span className="font-extrabold text-lg tracking-wide select-none text-[#0A2342] dark:text-foreground">
+                  Quote.Vote
+                </span>
               </span>
             </Link>
             <button
@@ -401,8 +404,10 @@ export default function DashboardLayout({
               className="flex items-center gap-2 no-underline"
               aria-label="Quote.Vote home"
             >
-              <Globe size={32} className="size-8" />
-              <span className="text-[18px] font-extrabold tracking-tight text-[#52b274]">Quote.Vote</span>
+              <Globe size={28} className="size-7" />
+              <span className="font-extrabold text-lg tracking-wide select-none text-[#0A2342] dark:text-foreground">
+                Quote.Vote
+              </span>
             </Link>
           </div>
         )}

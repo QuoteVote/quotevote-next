@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { PaginationProps } from '@/types/components';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 
 export function Pagination({
   currentPage,
@@ -16,23 +17,28 @@ export function Pagination({
   maxVisiblePages = 5,
   disabled = false,
 }: PaginationProps) {
+  const isMobile = useIsMobile();
+  const pageWindow = isMobile ? Math.min(maxVisiblePages, 3) : maxVisiblePages;
+
   const visiblePages = useMemo(() => {
-    if (totalPages <= maxVisiblePages) {
+    if (totalPages <= pageWindow) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-    const half = Math.floor(maxVisiblePages / 2);
+    const half = Math.floor(pageWindow / 2);
     let start = Math.max(1, currentPage - half);
-    const end = Math.min(totalPages, start + maxVisiblePages - 1);
-    if (end - start + 1 < maxVisiblePages) {
-      start = Math.max(1, end - maxVisiblePages + 1);
+    const end = Math.min(totalPages, start + pageWindow - 1);
+    if (end - start + 1 < pageWindow) {
+      start = Math.max(1, end - pageWindow + 1);
     }
     const pages: number[] = [];
     for (let i = start; i <= end; i++) pages.push(i);
     return pages;
-  }, [totalPages, maxVisiblePages, currentPage]);
+  }, [totalPages, pageWindow, currentPage]);
 
   const showStartEllipsis = visiblePages[0]! > 1;
   const showEndEllipsis = visiblePages[visiblePages.length - 1]! < totalPages;
+  // First/last chevrons already jump to the ends — skip extra 1 / last number chips.
+  const showEdgePageNumbers = !showFirstLast;
 
   const go = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage || disabled) return;
@@ -47,20 +53,24 @@ export function Pagination({
 
   const btnBase =
     'flex items-center justify-center rounded-lg border border-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium';
-  const btnMd = cn(btnBase, 'size-9');
+  const btnMd = cn(btnBase, 'size-8 sm:size-9 shrink-0');
 
   return (
-    <div className="flex flex-col items-center gap-3 px-4 py-5">
-      {/* Page info */}
+    <nav
+      aria-label="Pagination"
+      data-testid="pagination"
+      className="flex flex-col items-center gap-4 w-full min-w-0 max-w-full overflow-x-hidden px-4 pt-6 pb-8 sm:pt-7 sm:pb-10"
+    >
       {showPageInfo && (
-        <p className="text-xs text-muted-foreground tabular-nums">
+        <p className="text-xs text-muted-foreground tabular-nums text-center">
           {startItem}–{endItem} of {totalCount.toLocaleString()} posts
         </p>
       )}
 
-      {/* Controls */}
-      <div className="flex items-center gap-1">
-        {/* First */}
+      <div
+        data-testid="pagination-controls"
+        className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap max-w-full"
+      >
         {showFirstLast && (
           <button
             type="button"
@@ -73,30 +83,29 @@ export function Pagination({
           </button>
         )}
 
-        {/* Prev */}
         <button
           type="button"
           onClick={() => go(currentPage - 1)}
           disabled={currentPage === 1 || disabled}
           aria-label="Previous page"
-          className={btnMd}
+          className={cn(btnMd, !showStartEllipsis && 'mr-1.5 sm:mr-2')}
         >
           <ChevronLeft className="size-4" />
         </button>
 
-        {/* Start ellipsis */}
         {showStartEllipsis && (
           <>
-            <button type="button" onClick={() => go(1)} disabled={disabled} className={btnMd}>
-              1
-            </button>
-            <span className="flex items-center justify-center size-9 text-xs text-muted-foreground select-none">
+            {showEdgePageNumbers && (
+              <button type="button" onClick={() => go(1)} disabled={disabled} className={btnMd}>
+                1
+              </button>
+            )}
+            <span className="flex items-center justify-center w-6 sm:size-9 text-xs text-muted-foreground select-none">
               …
             </span>
           </>
         )}
 
-        {/* Page numbers */}
         {visiblePages.map((page) => (
           <button
             key={page}
@@ -116,35 +125,34 @@ export function Pagination({
           </button>
         ))}
 
-        {/* End ellipsis */}
         {showEndEllipsis && (
           <>
-            <span className="flex items-center justify-center size-9 text-xs text-muted-foreground select-none">
+            <span className="flex items-center justify-center w-6 sm:size-9 text-xs text-muted-foreground select-none">
               …
             </span>
-            <button
-              type="button"
-              onClick={() => go(totalPages)}
-              disabled={disabled}
-              className={btnMd}
-            >
-              {totalPages}
-            </button>
+            {showEdgePageNumbers && (
+              <button
+                type="button"
+                onClick={() => go(totalPages)}
+                disabled={disabled}
+                className={btnMd}
+              >
+                {totalPages}
+              </button>
+            )}
           </>
         )}
 
-        {/* Next */}
         <button
           type="button"
           onClick={() => go(currentPage + 1)}
           disabled={currentPage === totalPages || disabled}
           aria-label="Next page"
-          className={btnMd}
+          className={cn(btnMd, !showEndEllipsis && 'ml-1.5 sm:ml-2')}
         >
           <ChevronRight className="size-4" />
         </button>
 
-        {/* Last */}
         {showFirstLast && (
           <button
             type="button"
@@ -158,15 +166,13 @@ export function Pagination({
         )}
       </div>
 
-      {/* Mobile: compact page indicator */}
-      <p className="sm:hidden text-xs text-muted-foreground">
+      <p className="sm:hidden text-xs text-muted-foreground pt-1">
         Page {currentPage} of {totalPages}
       </p>
-    </div>
+    </nav>
   );
 }
 
-// Mobile-only compact variant (prev / X of Y / next)
 export function PaginationCompact({
   currentPage,
   totalPages,

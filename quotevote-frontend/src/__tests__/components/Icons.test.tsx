@@ -250,6 +250,7 @@ describe('Icon Components', () => {
       const svg = container.querySelector('svg')
       expect(svg).toBeInTheDocument()
       expect(svg).toHaveAttribute('viewBox', '0 0 338 409')
+      expect(svg).toHaveClass('block')
     })
 
     it('applies custom size as number', () => {
@@ -282,10 +283,22 @@ describe('Icon Components', () => {
       expect(container.querySelector('title')?.textContent).toBe('Quote.Vote Logo')
     })
 
-    it('renders linearGradient definition and path elements', () => {
-      const { container } = render(<Globe />)
-      expect(container.querySelector('linearGradient')).toBeInTheDocument()
-      expect(container.querySelectorAll('path').length).toBe(3)
+    it('renders unique gradient ids so duplicate Globes do not share a fill', () => {
+      const { container } = render(
+        <>
+          <Globe />
+          <Globe />
+        </>
+      )
+      const gradients = container.querySelectorAll('linearGradient')
+      expect(gradients).toHaveLength(2)
+      const firstId = gradients[0]?.getAttribute('id')
+      const secondId = gradients[1]?.getAttribute('id')
+      expect(firstId).toBeTruthy()
+      expect(secondId).toBeTruthy()
+      expect(firstId).not.toBe(secondId)
+      expect(container.querySelector(`path[fill="url(#${firstId})"]`)).toBeInTheDocument()
+      expect(container.querySelector(`path[fill="url(#${secondId})"]`)).toBeInTheDocument()
     })
   })
 
@@ -333,7 +346,7 @@ describe('Icon Components', () => {
       })
     })
 
-    it('all icons have inline-block class by default', () => {
+    it('all icons have inline-block class by default except Globe', () => {
       const icons = [
         <Calendar key="calendar" />,
         <Search key="search" />,
@@ -344,7 +357,6 @@ describe('Icon Components', () => {
         <Group key="group" />,
         <Up key="up" />,
         <Down key="down" />,
-        <Globe key="globe" />,
       ]
 
       icons.forEach((icon) => {

@@ -220,6 +220,7 @@ export const GET_TOP_POSTS = gql`
     $interactions: Boolean
     $userId: String
     $sortOrder: String
+    $groupId: String
   ) {
     posts(
       limit: $limit
@@ -231,6 +232,7 @@ export const GET_TOP_POSTS = gql`
       interactions: $interactions
       userId: $userId
       sortOrder: $sortOrder
+      groupId: $groupId
     ) {
       entities {
         _id
@@ -244,6 +246,7 @@ export const GET_TOP_POSTS = gql`
         created
         url
         citationUrl
+        attribution
         rejectedBy
         approvedBy
         enable_voting

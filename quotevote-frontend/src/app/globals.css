@@ -167,6 +167,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "rlig" 1, "calt" 1;
+  overflow-x: hidden;
 }
 
 
@@ -2076,8 +2077,11 @@ body {
 .neo-brutalism .nb-shadow-lg { box-shadow: var(--nb-shadow-lg); }
 .neo-brutalism .nb-border { border: var(--nb-border-width) solid var(--nb-border-color); }
 
-/* Smooth scrolling */
-html { scroll-behavior: smooth; }
+/* Smooth scrolling; lock horizontal pan on mobile (#454) */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
 
 /* Selection highlight */
 ::selection {
