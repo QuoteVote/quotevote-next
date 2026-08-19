@@ -52,6 +52,11 @@ pnpm prisma:validate  # Validate Prisma schema
 
 CI runs `lint`, `type-check`, and `test` (Jest) for both frontend and backend on PRs to `main`/`develop`. Frontend E2E (Playwright) runs when the `E2E_AUTHOR_PASSWORD` repository secret is set.
 
+## Git
+
+- Never commit or push to `main` or `develop`. If you are on either branch, create a feature branch first (`fix/...`, `feat/...`, `issue#N`), then `git push -u origin HEAD`.
+- Shared Cursor rules live in `.cursor/rules/` (always-apply workflow, security, and code quality; globbed frontend/backend/testing).
+
 ## Architecture
 
 ### Frontend
