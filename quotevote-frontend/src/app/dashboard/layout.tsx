@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   LogOut,
   ChevronDown,
-  Settings,
   ArrowLeft,
   Share2,
 } from 'lucide-react';
@@ -120,6 +119,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const { openAuthModal } = useAuthModal();
   const setSelectedPage = useAppStore((s) => s.setSelectedPage);
+  const chatOpen = useAppStore((s) => s.chat.open);
   const setChatOpen = useAppStore((s) => s.setChatOpen);
   const user = useAppStore((s) => s.user.data);
   const logout = useAppStore((s) => s.logout);
@@ -438,18 +438,26 @@ export default function DashboardLayout({
           <span className="text-[10px] font-semibold">Home</span>
         </Link>
 
-        {/* Settings */}
-        <Link
-          href="/dashboard/settings"
+        {/* Messages */}
+        <button
+          type="button"
+          onClick={() => requireAuthForAction(() => setChatOpen(true))}
           className={cn(
-            'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-            isActive('/dashboard/settings') ? 'text-[#52b274]' : 'text-muted-foreground'
+            'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
+            chatOpen ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
-          aria-label="Settings"
+          aria-label="Messages"
         >
-          <Settings className="size-[22px]" />
-          <span className="text-[10px] font-semibold">Settings</span>
-        </Link>
+          <div className="relative">
+            <MessageSquare className="size-[22px]" fill={chatOpen ? 'currentColor' : 'none'} />
+            {unreadChat > 0 && (
+              <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
+                {unreadChat > 9 ? '9+' : unreadChat}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-semibold">Messages</span>
+        </button>
 
         {/* Create — floating green circle */}
         <button
@@ -502,22 +510,15 @@ export default function DashboardLayout({
                 aria-label="Account menu"
                 data-testid="user-profile-menu"
               >
-                <div className="relative">
-                  <DisplayAvatar
-                    avatar={user?.avatar as string | Record<string, unknown> | undefined}
-                    username={avatarSeed}
-                    size={24}
-                    className={cn(
-                      'size-6 transition-all',
-                      isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
-                    )}
-                  />
-                  {unreadChat > 0 && (
-                    <span className="absolute -top-0.5 -right-1 flex items-center justify-center min-w-[12px] h-[12px] px-0.5 rounded-full bg-[#52b274] text-white text-[7px] font-bold leading-none shadow ring-1 ring-card">
-                      {unreadChat > 9 ? '9+' : unreadChat}
-                    </span>
+                <DisplayAvatar
+                  avatar={user?.avatar as string | Record<string, unknown> | undefined}
+                  username={avatarSeed}
+                  size={24}
+                  className={cn(
+                    'size-6 transition-all',
+                    isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
                   )}
-                </div>
+                />
                 <span className="text-[10px] font-semibold">Profile</span>
               </button>
             </DropdownMenuTrigger>
