@@ -5,7 +5,7 @@
  * - Rendering with profile data
  * - Loading state
  * - Empty/invalid user state
- * - RC1-006: Taxonomy & Labels (All, Posts, Voted, Commented, Quoted, About)
+ * - RC1-006: Taxonomy & Labels (All, Posts, Voted, Commented, Quoted)
  * - RC1-007: Multi-select activity filters, union filtering, All reset
  */
 
@@ -125,7 +125,7 @@ describe('ProfileView', () => {
       expect(screen.getByText(/Header for testuser/)).toBeInTheDocument();
     });
 
-    it('renders all six filter buttons with expected labels: All, Posts, Voted, Commented, Quoted, About', async () => {
+    it('renders the five activity tabs without an About tab', async () => {
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
@@ -135,7 +135,18 @@ describe('ProfileView', () => {
         expect(screen.getByRole('tab', { name: 'Voted' })).toBeInTheDocument();
         expect(screen.getByRole('tab', { name: 'Commented' })).toBeInTheDocument();
         expect(screen.getByRole('tab', { name: 'Quoted' })).toBeInTheDocument();
-        expect(screen.getByRole('tab', { name: 'About' })).toBeInTheDocument();
+        expect(screen.queryByRole('tab', { name: 'About' })).not.toBeInTheDocument();
+      });
+    });
+
+    it('keeps reputation visible after removing the About tab', async () => {
+      await act(async () => {
+        render(<ProfileView profileUser={mockProfileUser} />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
+        expect(screen.getByTestId('profile-activity-section')).toBeInTheDocument();
       });
     });
 
@@ -297,63 +308,6 @@ describe('ProfileView', () => {
       });
     });
 
-    it('shows reputation display and bio when About tab is clicked', async () => {
-      const user = userEvent.setup();
-      const userWithBio: ProfileUser = {
-        ...mockProfileUser,
-        bio: 'I care about thoughtful dialogue.',
-      };
-      await act(async () => {
-        render(<ProfileView profileUser={userWithBio} />);
-      });
-      const aboutTab = screen.getByRole('tab', { name: 'About' });
-      await user.click(aboutTab);
-      await waitFor(() => {
-        expect(aboutTab).toHaveAttribute('aria-selected', 'true');
-        expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
-        expect(screen.getByText('I care about thoughtful dialogue.')).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'About', level: 3 })).toBeInTheDocument();
-        expect(screen.queryByTestId('paginated-activity-list')).not.toBeInTheDocument();
-      });
-    });
-
-    it('shows empty about state when reputation is missing and About tab clicked', async () => {
-      const user = userEvent.setup();
-      const userWithoutReputation: ProfileUser = {
-        ...mockProfileUser,
-        reputation: undefined,
-      };
-      await act(async () => {
-        render(<ProfileView profileUser={userWithoutReputation} />);
-      });
-      const aboutTab = screen.getByRole('tab', { name: 'About' });
-      await user.click(aboutTab);
-      await waitFor(() => {
-        expect(screen.queryByTestId('reputation-display')).not.toBeInTheDocument();
-        expect(screen.getByText('No about text yet')).toBeInTheDocument();
-      });
-    });
-
-    it('switches back from About view to Activity view when an activity filter is clicked', async () => {
-      const user = userEvent.setup();
-      await act(async () => {
-        render(<ProfileView profileUser={mockProfileUser} />);
-      });
-
-      const aboutTab = screen.getByRole('tab', { name: 'About' });
-      await user.click(aboutTab);
-      await waitFor(() => {
-        expect(screen.getByTestId('profile-about-section')).toBeInTheDocument();
-      });
-
-      const quotedButton = screen.getByRole('tab', { name: 'Quoted' });
-      await user.click(quotedButton);
-      await waitFor(() => {
-        expect(screen.getByTestId('profile-activity-section')).toBeInTheDocument();
-        expect(quotedButton).toHaveAttribute('aria-selected', 'true');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveTextContent('QUOTED');
-      });
-    });
   });
 
   describe('Layout', () => {
@@ -406,8 +360,7 @@ describe('ProfileView', () => {
       });
     });
 
-    it('handles profile user with null reputation gracefully', async () => {
-      const user = userEvent.setup();
+    it('keeps the activity list visible when reputation is missing', async () => {
       const userWithNullReputation: ProfileUser = {
         ...mockProfileUser,
         reputation: undefined,
@@ -415,10 +368,8 @@ describe('ProfileView', () => {
       await act(async () => {
         render(<ProfileView profileUser={userWithNullReputation} />);
       });
-      const aboutTab = screen.getByRole('tab', { name: 'About' });
-      await user.click(aboutTab);
       await waitFor(() => {
-        expect(screen.queryByTestId('reputation-display')).not.toBeInTheDocument();
+        expect(screen.getByTestId('profile-activity-section')).toBeInTheDocument();
       });
     });
   });
@@ -475,4 +426,3 @@ describe('ProfileView', () => {
     });
   });
 });
-
