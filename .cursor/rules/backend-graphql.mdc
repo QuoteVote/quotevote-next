@@ -1,0 +1,38 @@
+---
+description: Backend Express / Apollo / Mongo conventions
+globs: quotevote-backend/**/*.{ts,js}
+alwaysApply: false
+---
+
+# Backend conventions
+
+## Stack
+
+- Express 5 + Apollo Server 5 (GraphQL)
+- MongoDB via Mongoose 9; Prisma 6 under `prisma/schema/`
+- JWT auth (access ~15m, refresh ~7d) + bcryptjs
+- Logging: Winston + Morgan; path alias `~/*` → `app/*`
+
+## Structure
+
+- Resolvers: `app/data/resolvers/`
+- Models: `app/data/models/`
+- Types: `app/types/` (mandatory; no `any`)
+- Tests: `app/__tests__/` (`unit/`, `integration/`, `utils/`)
+
+## GraphQL
+
+- Keep client query/mutation variable types aligned with schema (prefer matching hosted/legacy `String!` where already published)
+- Public queries listed in `requireAuth` allowlist must stay intentional
+- Resolvers must exist for every Query/Mutation field declared in `server.ts`
+- Return lean, serialized ids (`_id.toString()`) consistently
+
+## Formatting
+
+Single quotes, 100 char width, 2-space indent.
+
+## When changing schema
+
+1. Update typeDefs + resolver + types
+2. `pnpm type-check` and `pnpm test` from `quotevote-backend/`
+3. Confirm frontend operations still validate against the same field types

@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Top-of-page email gateway (magic link / invite request).
+ * Not mounted in the root layout — disabled pending UX redesign (issue #460).
+ * Username/password login is the supported path. Keep this module for a
+ * future reimplementation.
+ */
+
 import { useForm } from "react-hook-form";
 import { useAppStore } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
