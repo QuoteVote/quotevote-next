@@ -694,7 +694,7 @@ body {
   color: var(--nb-ink) !important;
 }
 
-.neo-brutalism [role="separator"] {
+.neo-brutalism [role="separator"]:not([aria-valuenow]) {
   background-color: var(--nb-border-color) !important;
   height: 2px !important;
   margin: 0.25rem 0 !important;

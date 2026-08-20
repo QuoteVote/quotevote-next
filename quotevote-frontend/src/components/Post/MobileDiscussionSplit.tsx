@@ -154,7 +154,7 @@ export default function MobileDiscussionSplit({
             aria-valuenow={quotePercent}
             aria-label="Resize quote and discussion panes"
             data-testid="discussion-divider"
-            className="flex cursor-row-resize touch-none select-none flex-col items-center pt-2 pb-1"
+            className="flex cursor-row-resize touch-none select-none flex-col items-center"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
