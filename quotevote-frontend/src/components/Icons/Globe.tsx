@@ -9,10 +9,11 @@ export function Globe({
   size = 24,
   className,
   title,
-  'aria-label': ariaLabel,
+  "aria-label": ariaLabel,
+  showSignal = true,
   ...props
-}: IconProps & { title?: string }) {
-  const sizeValue = typeof size === 'number' ? `${size}px` : size;
+}: IconProps & { title?: string; showSignal?: boolean }) {
+  const sizeValue = typeof size === "number" ? `${size}px` : size;
   const label = ariaLabel || title;
 
   return (
@@ -20,21 +21,23 @@ export function Globe({
       xmlns="http://www.w3.org/2000/svg"
       width={sizeValue}
       height={sizeValue}
-      viewBox="0 0 338 409"
+      viewBox={showSignal ? "0 0 338 409" : "0 70 338 339"}
       fill="none"
-      className={cn('inline-block shrink-0', className)}
-      role={label ? 'img' : undefined}
+      className={cn("inline-block shrink-0", className)}
+      role={label ? "img" : undefined}
       aria-label={label}
       {...props}
     >
       {title && <title>{title}</title>}
-      <path
-        d="m212.064 57.084-8.988-51.083M245.672 71.392l27.764-66.391M278.002 86.525l36.214-28.97"
-        stroke="#20E08E"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {showSignal ? (
+        <path
+          d="m212.064 57.084-8.988-51.083M245.672 71.392l27.764-66.391M278.002 86.525l36.214-28.97"
+          stroke="#20E08E"
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : null}
       <path
         d="M337.992 239.852c0 93.334-75.662 168.996-168.996 168.996-33.775 0-65.235-9.908-91.634-26.977a6.117 6.117 0 0 0-4.635-.854l-38.568 8.497c-2.765.609-5.271-1.769-4.806-4.563l6.334-38.052a6.12 6.12 0 0 0-1.188-4.709C12.853 313.786.001 278.32.001 239.852 0 146.518 75.663 70.856 168.996 70.856c93.334 0 168.996 75.662 168.996 168.996z"
         fill="url(#quotevote-globe-gradient)"
