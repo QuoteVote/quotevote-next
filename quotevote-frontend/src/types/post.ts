@@ -143,6 +143,8 @@ export interface PostCardProps {
   messageRoom?: PostMessageRoom
   groupId?: string | null
   searchKey?: string
+  /** Directory cards hide body text and center metadata (#454). */
+  compact?: boolean
 }
 
 /**
@@ -248,5 +250,7 @@ export interface PaginatedPostsListProps {
   className?: string
   contentClassName?: string
   paginationClassName?: string
+  /** Hide post body on directory cards. */
+  compact?: boolean
 }
 
