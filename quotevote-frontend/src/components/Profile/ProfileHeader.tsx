@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { ProfileBadge, ProfileBadgeContainer } from './ProfileBadge';
+import { ProfileBio } from './ProfileBio';
 import { cn } from '@/lib/utils';
 import useGuestGuard from '@/hooks/useGuestGuard';
 import { useProfileBackground } from '@/hooks/useProfileBackground';
@@ -283,6 +284,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
             )}
           </div>
           <p className="text-muted-foreground text-sm">@{username}</p>
+          <ProfileBio bio={profileUser.bio} />
           {sameUser && (
             <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs">
               <span
