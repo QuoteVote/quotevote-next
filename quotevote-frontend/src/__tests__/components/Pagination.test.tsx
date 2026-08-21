@@ -407,4 +407,24 @@ describe('Pagination Component', () => {
       expect(page3Buttons.length).toBeGreaterThan(0)
     })
   })
+
+  describe('Responsive layout', () => {
+    it('keeps first, last, and numbered page buttons on one wrapping row', () => {
+      render(<Pagination {...defaultProps} currentPage={6} totalPages={6} showFirstLast />)
+
+      expect(screen.getByLabelText('First page')).toBeInTheDocument()
+      expect(screen.getByLabelText('Last page')).toBeInTheDocument()
+      expect(screen.getByLabelText('Page 6')).toBeInTheDocument()
+      expect(screen.getByTestId('pagination-controls')).toHaveClass('flex-wrap')
+    })
+
+    it('does not overflow the viewport on the pagination nav', () => {
+      const { container } = render(
+        <Pagination {...defaultProps} currentPage={6} totalPages={6} />
+      )
+      const nav = container.querySelector('nav')
+      expect(nav).toHaveClass('overflow-x-hidden')
+      expect(nav).toHaveClass('max-w-full')
+    })
+  })
 })

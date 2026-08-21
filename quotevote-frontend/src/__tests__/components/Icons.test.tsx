@@ -22,6 +22,7 @@ import {
   Group,
   Comment,
   Quote,
+  Globe,
 } from '@/components/Icons'
 
 // Test each icon component
@@ -243,6 +244,64 @@ describe('Icon Components', () => {
     })
   })
 
+  describe('Globe', () => {
+    it('renders correctly with default props', () => {
+      const { container } = render(<Globe />)
+      const svg = container.querySelector('svg')
+      expect(svg).toBeInTheDocument()
+      expect(svg).toHaveAttribute('viewBox', '0 0 338 409')
+      expect(svg).toHaveClass('block')
+    })
+
+    it('applies custom size as number', () => {
+      const { container } = render(<Globe size={36} />)
+      const svg = container.querySelector('svg')
+      expect(svg).toHaveAttribute('width', '36px')
+      expect(svg).toHaveAttribute('height', '36px')
+    })
+
+    it('applies custom size as string', () => {
+      const { container } = render(<Globe size="2.5rem" />)
+      const svg = container.querySelector('svg')
+      expect(svg).toHaveAttribute('width', '2.5rem')
+      expect(svg).toHaveAttribute('height', '2.5rem')
+    })
+
+    it('applies custom className', () => {
+      const { container } = render(<Globe className="custom-globe-class" />)
+      const svg = container.querySelector('svg')
+      expect(svg).toHaveClass('custom-globe-class')
+    })
+
+    it('renders accessible title and aria-label', () => {
+      const { container, getByLabelText } = render(
+        <Globe aria-label="Quote.Vote Navigation Globe" title="Quote.Vote Logo" />
+      )
+      const svg = container.querySelector('svg')
+      expect(svg).toHaveAttribute('role', 'img')
+      expect(getByLabelText('Quote.Vote Navigation Globe')).toBeInTheDocument()
+      expect(container.querySelector('title')?.textContent).toBe('Quote.Vote Logo')
+    })
+
+    it('renders unique gradient ids so duplicate Globes do not share a fill', () => {
+      const { container } = render(
+        <>
+          <Globe />
+          <Globe />
+        </>
+      )
+      const gradients = container.querySelectorAll('linearGradient')
+      expect(gradients).toHaveLength(2)
+      const firstId = gradients[0]?.getAttribute('id')
+      const secondId = gradients[1]?.getAttribute('id')
+      expect(firstId).toBeTruthy()
+      expect(secondId).toBeTruthy()
+      expect(firstId).not.toBe(secondId)
+      expect(container.querySelector(`path[fill="url(#${firstId})"]`)).toBeInTheDocument()
+      expect(container.querySelector(`path[fill="url(#${secondId})"]`)).toBeInTheDocument()
+    })
+  })
+
   describe('Icon Props Integration', () => {
     it('all icons accept size prop', () => {
       const icons = [
@@ -255,6 +314,7 @@ describe('Icon Components', () => {
         <Group key="group" size={32} />,
         <Up key="up" size={32} />,
         <Down key="down" size={32} />,
+        <Globe key="globe" size={32} />,
       ]
 
       icons.forEach((icon) => {
@@ -276,6 +336,7 @@ describe('Icon Components', () => {
         <Group key="group" className="test-class" />,
         <Up key="up" className="test-class" />,
         <Down key="down" className="test-class" />,
+        <Globe key="globe" className="test-class" />,
       ]
 
       icons.forEach((icon) => {
@@ -285,7 +346,7 @@ describe('Icon Components', () => {
       })
     })
 
-    it('all icons have inline-block class by default', () => {
+    it('all icons have inline-block class by default except Globe', () => {
       const icons = [
         <Calendar key="calendar" />,
         <Search key="search" />,
@@ -316,6 +377,7 @@ describe('Icon Components', () => {
         <Group key="group" />,
         <Up key="up" />,
         <Down key="down" />,
+        <Globe key="globe" />,
       ]
 
       icons.forEach((icon) => {
@@ -338,6 +400,7 @@ describe('Icon Components', () => {
         <Group key="group" />,
         <Up key="up" />,
         <Down key="down" />,
+        <Globe key="globe" />,
       ]
 
       icons.forEach((icon) => {
@@ -402,6 +465,12 @@ describe('Icon Components', () => {
       const { container } = render(<Down />)
       const paths = container.querySelectorAll('path')
       expect(paths.length).toBeGreaterThan(0)
+    })
+
+    it('Globe has path elements', () => {
+      const { container } = render(<Globe />)
+      const paths = container.querySelectorAll('path')
+      expect(paths.length).toBe(3)
     })
   })
 })

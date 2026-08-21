@@ -97,5 +97,13 @@ describe('ActivityCard', () => {
 
     expect(screen.getByText('0')).toBeInTheDocument()
   })
+
+  it('aligns the avatar with the username and stacks the timestamp on small screens', () => {
+    render(<ActivityCard {...defaultProps} />)
+
+    expect(screen.getByTestId('activity-content')).toHaveClass('items-start')
+    expect(screen.getByTestId('activity-header')).toHaveClass('flex-col')
+    expect(screen.getByTestId('activity-header')).toHaveClass('sm:flex-row')
+  })
 })
 

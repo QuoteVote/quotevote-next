@@ -2,16 +2,33 @@
  * VotingBoard component tests
  */
 
-import { render, screen } from '@/__tests__/utils/test-utils'
+import { render, screen, fireEvent } from '@/__tests__/utils/test-utils'
 import VotingBoard from '@/components/VotingComponents/VotingBoard'
 import type { VotingBoardProps } from '@/types/voting'
 
 // Mock react-highlight-words
 jest.mock('react-highlight-words', () => ({
   __esModule: true,
-  default: ({ textToHighlight }: { textToHighlight: string }) => (
-    <span data-testid="highlighter">{textToHighlight}</span>
-  ),
+  default: ({
+    textToHighlight,
+    highlightTag: Tag,
+    findChunks,
+  }: {
+    textToHighlight: string
+    highlightTag?: React.ElementType
+    findChunks?: () => Array<{ start: number; end: number }>
+  }) => {
+    const chunks = findChunks?.() ?? []
+    const first = chunks[0]
+    if (Tag && first && first.end > first.start) {
+      return (
+        <span data-testid="highlighter">
+          <Tag>{textToHighlight.slice(first.start, first.end)}</Tag>
+        </span>
+      )
+    }
+    return <span data-testid="highlighter">{textToHighlight}</span>
+  },
 }))
 
 // Mock SelectionPopover
@@ -35,6 +52,10 @@ describe('VotingBoard', () => {
     content: 'This is test content for voting board',
     highlights: false,
   }
+
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = jest.fn()
+  })
 
   it('renders content correctly', () => {
     const { container } = render(<VotingBoard {...defaultProps} />)
@@ -142,6 +163,20 @@ describe('VotingBoard', () => {
       />,
     )
     expect(screen.getByTestId('highlighter')).toBeInTheDocument()
+  })
+
+  it('renders a clickable linked passage when a focused comment range is set', () => {
+    const onHighlightClick = jest.fn()
+    render(
+      <VotingBoard
+        {...defaultProps}
+        highlights={true}
+        focusedComment={{ startWordIndex: 0, endWordIndex: 4, actionId: 'c1' }}
+        onHighlightClick={onHighlightClick}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('linked-passage'))
+    expect(onHighlightClick).toHaveBeenCalledTimes(1)
   })
 
   it('calls onSelect with correct selection data', () => {

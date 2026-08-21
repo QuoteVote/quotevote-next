@@ -259,7 +259,7 @@ describe('PostChatReactions', () => {
   it('applies default direction text colour when isDefaultDirection is true', () => {
     render(<PostChatReactions {...baseProps} isDefaultDirection={true} />)
     const nameButton = screen.getByRole('button', { name: 'Alice' })
-    expect(nameButton.className).toContain('text-gray-500')
+    expect(nameButton.className).toContain('text-[#52b274]')
   })
 
   it('applies reverse direction text colour when isDefaultDirection is false', () => {

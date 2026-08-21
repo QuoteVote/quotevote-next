@@ -1,10 +1,46 @@
 'use client'
 
-import { Fragment, useState, useCallback } from 'react'
+import { Fragment, useState, useCallback, useLayoutEffect } from 'react'
 import Highlighter from 'react-highlight-words'
 import { parser } from '@/lib/utils/parser'
+import { cn } from '@/lib/utils'
+import { scrollLinkedPassageIntoView } from '@/lib/utils/discussionSplit'
 import SelectionPopover from './SelectionPopover'
 import type { VotingBoardProps, SelectedText } from '@/types/voting'
+
+const LINKED_PASSAGE_CLASS =
+  'bg-[#52b274]/20 text-foreground rounded-sm box-decoration-clone cursor-pointer px-0.5'
+
+/**
+ * Stable highlight tag so Highlighter does not remount on parent re-renders.
+ * Clicks bubble to the passage container, which owns the reverse-nav handler.
+ */
+function LinkedPassageMark({
+  children,
+  className,
+}: {
+  children?: React.ReactNode
+  className?: string
+  highlightIndex?: number
+}) {
+  return (
+    <mark
+      data-linked-passage="true"
+      data-testid="linked-passage"
+      className={cn(className, LINKED_PASSAGE_CLASS)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          e.currentTarget.click()
+        }
+      }}
+    >
+      {children}
+    </mark>
+  )
+}
 
 /**
  * VotingBoard component
@@ -19,6 +55,7 @@ export default function VotingBoard({
   votes = [],
   style,
   focusedComment,
+  onHighlightClick,
 }: VotingBoardProps) {
   // votes prop is available for future use (e.g., highlighting vote ranges)
   // Currently unused but kept for API compatibility
@@ -39,6 +76,15 @@ export default function VotingBoard({
   const startWordIndex = commentData?.startWordIndex ?? 0
   const endWordIndex = commentData?.endWordIndex ?? 0
   const highlightedText = content.substring(startWordIndex, endWordIndex).replace(/(\r\n|\n|\r)/gm, '')
+  const hasLinkedRange = endWordIndex > startWordIndex
+
+  useLayoutEffect(() => {
+    if (!hasLinkedRange) return
+    const frame = window.requestAnimationFrame(() => {
+      scrollLinkedPassageIntoView()
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [hasLinkedRange, commentData?.actionId, startWordIndex, endWordIndex])
 
   const handleSelect = useCallback(
     (select: Selection) => {
@@ -97,16 +143,28 @@ export default function VotingBoard({
     }
   }, [])
 
+  const handlePassageClick = useCallback(
+    (e: React.MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('[data-linked-passage="true"]')) {
+        e.preventDefault()
+        onHighlightClick?.()
+      }
+    },
+    [onHighlightClick],
+  )
+
   const renderHighlights = () => {
     if (highlights) {
       // If there's a focused comment, highlight it
-      if (endWordIndex > startWordIndex) {
+      if (hasLinkedRange) {
         return (
           <Highlighter
             style={{
               whiteSpace: 'pre-line',
             }}
-            highlightClassName="bg-[#52b274] text-white"
+            highlightClassName={LINKED_PASSAGE_CLASS}
+            highlightTag={LinkedPassageMark}
             textToHighlight={content}
             searchWords={[]}
             findChunks={findChunksAtBeginningOfWords}
@@ -121,7 +179,7 @@ export default function VotingBoard({
           style={{
             whiteSpace: 'pre-line',
           }}
-          highlightClassName="bg-[#52b274] text-white"
+          highlightClassName={LINKED_PASSAGE_CLASS}
           searchWords={[highlightedText]}
           textToHighlight={content}
           autoEscape
@@ -143,10 +201,11 @@ export default function VotingBoard({
 
   return (
     <div className="relative h-full flex flex-col" style={style}>
-      <div data-selectable className="flex-1 overflow-auto">
+      <div data-selectable className="flex-1">
         <p
           className="voting_board-content m-0 p-0 h-full"
           onContextMenu={disableContextMenu}
+          onClick={handlePassageClick}
         >
           {renderHighlights()}
         </p>

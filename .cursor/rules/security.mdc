@@ -1,0 +1,37 @@
+---
+description: Security practices for Quote.Vote frontend and backend
+alwaysApply: true
+---
+
+# Security
+
+## Secrets & env
+
+- Never commit tokens, passwords, or `.env.local` / `.env*.local`
+- Do not log JWTs, refresh tokens, or password reset tokens
+- Prefer `NEXT_PUBLIC_*` only for values safe to expose in the browser
+
+## Auth & authorization
+
+- Enforce auth in GraphQL context / `requireAuth`; do not trust client-only checks
+- Guest guards on the client are UX — server must still authorize mutations
+- Validate ownership/admin for delete/update of posts, comments, votes, quotes
+
+## Input & output
+
+- Validate mutations with explicit types / Zod (or schema args); reject unexpected fields
+- Sanitize URLs before navigation or rendering (`sanitizeUrl` / `toAppPostUrl`)
+- Escape or safely render user HTML; prefer text; never `dangerouslySetInnerHTML` with raw user content
+- Avoid open redirects: only push known app paths or sanitized post URLs
+
+## GraphQL / API
+
+- Do not expose internal errors to clients in production; log server-side
+- Keep CORS origins explicit (`CLIENT_URL`); credentials only for trusted origins
+- Rate-limit or guard expensive public queries when adding new unauthenticated endpoints
+
+## Dependencies & XSS
+
+- Prefer existing shadcn/lucide; avoid adding packages without need
+- Treat `postMessage` / third-party scripts as untrusted
+- Clipboard and share links must use same-origin app routes, not arbitrary strings from the API without normalization

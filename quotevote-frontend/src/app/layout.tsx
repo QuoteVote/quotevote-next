@@ -8,7 +8,6 @@ import { AuthModalProvider } from "@/context/AuthModalContext";
 import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "./components/Eyebrow/Eyebrow";
 import "./globals.css";
 
 /**
@@ -69,7 +68,6 @@ export default function RootLayout({
           <ApolloProviderWrapper>
             <ThemeContextProvider>
               <AuthModalProvider>
-                <Eyebrow />
                 {children}
                 <AuthGateDialog />
                 <Toaster position="top-right" richColors closeButton />

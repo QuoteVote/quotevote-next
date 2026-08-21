@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2, User, Lock } from 'lucide-react'
-import Image from 'next/image'
+import { Globe } from '@/components/Icons'
 import Link from 'next/link'
 import { loginUser } from '@/lib/auth'
 import { useAppStore } from '@/store/useAppStore'
@@ -105,14 +105,8 @@ export default function LoginPageContent() {
           minHeight: '50px',
         }}
       >
-        <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <Image
-            src="/icons/android-chrome-192x192.png"
-            alt="Quote Vote"
-            width={25}
-            height={25}
-            style={{ objectFit: 'contain' }}
-          />
+        <Link href="/" style={{ display: 'flex', alignItems: 'center' }} aria-label="Quote.Vote home">
+          <Globe size={25} />
         </Link>
 
         <Link
@@ -184,7 +178,7 @@ export default function LoginPageContent() {
               </h1>
 
               {/* Form */}
-              <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+              <form onSubmit={handleSubmit(onSubmit)} data-testid="login-form" style={{ width: '100%' }}>
                 {/* Email / Username */}
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ position: 'relative' }}>
@@ -204,6 +198,7 @@ export default function LoginPageContent() {
                       id="email"
                       type="text"
                       placeholder="Email/Username"
+                      data-testid="login-identifier-input"
                       className="pl-9 md:text-base"
                       style={{ borderColor: errors.email ? '#F55145' : undefined }}
                       {...register('email')}
@@ -235,6 +230,7 @@ export default function LoginPageContent() {
                       id="password"
                       type="password"
                       placeholder="Password"
+                      data-testid="login-password-input"
                       className="pl-9 md:text-base"
                       style={{ borderColor: errors.password ? '#F55145' : undefined }}
                       {...register('password')}
@@ -251,6 +247,7 @@ export default function LoginPageContent() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                   <Checkbox
                     id="tos"
+                    data-testid="login-tos-checkbox"
                     checked={tosAccepted}
                     onCheckedChange={(v) => setTosAccepted(v === true)}
                     style={{ marginTop: 2 }}
@@ -272,6 +269,7 @@ export default function LoginPageContent() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16 }}>
                   <Checkbox
                     id="coc"
+                    data-testid="login-coc-checkbox"
                     checked={cocAccepted}
                     onCheckedChange={(v) => setCocAccepted(v === true)}
                     style={{ marginTop: 2 }}
@@ -292,6 +290,7 @@ export default function LoginPageContent() {
                 {/* Submit — matches MUI large contained secondary (rose) */}
                 <button
                   type="submit"
+                  data-testid="login-submit-button"
                   disabled={isDisabled}
                   style={{
                     width: '100%',

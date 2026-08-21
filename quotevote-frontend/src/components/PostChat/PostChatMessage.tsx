@@ -96,7 +96,7 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
           data-post-chat-bubble="true"
           data-bubble-direction={isDefaultDirection ? 'incoming' : 'outgoing'}
           className={cn(
-            'relative rounded-md px-3.5 py-3.5 pb-1 text-base leading-relaxed shadow-sm',
+            'relative rounded-md px-3.5 py-3 text-sm leading-relaxed shadow-sm',
             // Speech bubble arrow
             "before:absolute before:top-0 before:border-10 before:border-transparent before:content-['']",
             isDefaultDirection

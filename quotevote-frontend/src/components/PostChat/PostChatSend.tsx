@@ -22,6 +22,7 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
   const user = useAppStore((state) => state.user.data)
   const setChatSubmitting = useAppStore((state) => state.setChatSubmitting)
   const ensureAuth = useGuestGuard()
+  const loggedIn = !!(user?._id || user?.id)
 
   const type = 'POST'
 
@@ -113,11 +114,45 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
     }
   }
 
+  if (!loggedIn) {
+    return (
+      <div data-post-chat-send="true" className="flex items-end gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            ensureAuth()
+          }}
+          data-testid="discussion-signin-cta"
+          className={cn(
+            'min-h-[40px] flex-1 rounded-xl border border-border bg-muted/50',
+            'px-3 py-2.5 text-sm text-left text-foreground',
+            'hover:bg-muted hover:border-[#52b274]/40 transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+          )}
+          aria-label="Sign in to join the discussion"
+        >
+          Sign in to join the discussion
+        </button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            ensureAuth()
+          }}
+          className="h-10 w-10 shrink-0 rounded-full text-[#52b274] hover:bg-[#52b274]/10"
+          aria-label="Sign in to join the discussion"
+        >
+          <Send className="h-4.5 w-4.5" />
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div data-post-chat-send="true" className="flex items-end gap-2">
       <Textarea
         ref={textareaRef}
-        placeholder="Add to the discussion..."
+        placeholder="Add to discussion..."
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -137,7 +172,13 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
         size="icon"
         onClick={handleSubmit}
         disabled={!text.trim() || submitting}
-        className="h-10 w-10 shrink-0 text-primary hover:bg-primary/10 disabled:opacity-30"
+        className={cn(
+          'h-10 w-10 shrink-0 rounded-full',
+          text.trim() && !submitting
+            ? 'bg-[#52b274] text-white hover:bg-[#52b274]/90'
+            : 'text-[#52b274] hover:bg-[#52b274]/10',
+          'disabled:opacity-30',
+        )}
         aria-label="Send message"
       >
         {submitting ? (

@@ -37,6 +37,8 @@ export interface VoteAction extends BasePostAction {
   type?: 'up' | 'down' | 'upvote' | 'downvote' | null
   tags?: string[] | null
   content?: string | null
+  startWordIndex?: number | null
+  endWordIndex?: number | null
 }
 
 /**
@@ -46,6 +48,8 @@ export interface CommentAction extends BasePostAction {
   __typename: 'Comment'
   content: string
   commentQuote?: string | null
+  startWordIndex?: number | null
+  endWordIndex?: number | null
 }
 
 /**
@@ -54,6 +58,8 @@ export interface CommentAction extends BasePostAction {
 export interface QuoteAction extends BasePostAction {
   __typename: 'Quote'
   quote?: string | null
+  startWordIndex?: number | null
+  endWordIndex?: number | null
 }
 
 /**
@@ -94,6 +100,10 @@ export interface PostActionCardProps {
    * The author id of the parent post — used to flag actions made by the original poster (OP)
    */
   postOwnerId?: string
+  /**
+   * Called when the card is activated (linked comment / quote navigation).
+   */
+  onSelectAction?: (action: PostAction) => void
 }
 
 /**
@@ -120,6 +130,14 @@ export interface PostActionListProps {
    * The author id of the parent post — used to flag actions made by the original poster (OP)
    */
   postOwnerId?: string
+  /**
+   * Currently selected discussion action id (drives linked highlight + active card).
+   */
+  selectedActionId?: string | null
+  /**
+   * Called when a discussion action card is activated.
+   */
+  onSelectAction?: (action: PostAction) => void
 }
 
 /**

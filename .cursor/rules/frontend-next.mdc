@@ -1,0 +1,47 @@
+---
+description: Frontend Next.js 16 / React 19 conventions and performance
+globs: quotevote-frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend conventions
+
+## Stack
+
+- Next.js App Router (`src/app/`), React 19, TypeScript strict
+- Server Components by default; add `'use client'` only for interactivity
+- shadcn/ui + Tailwind 4 + lucide-react (no Material-UI)
+- Zustand (`src/store/`), Apollo Client 4, RHF + Zod for forms
+
+## Imports & types
+
+- Path alias only: `@/*` → `src/*` (no deep relative imports)
+- Types live in `src/types/`; never `any` — use `unknown`
+- Type all props, params, and return values
+
+## Patterns
+
+```tsx
+// ❌ BAD — post URL without app prefix
+router.push(post.url)
+
+// ✅ GOOD — backend stores /post/...; app routes under /dashboard/post/...
+import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
+router.push(toAppPostUrl(post.url))
+```
+
+- Prefer `<Link>` for navigable cards/lists (full clickable area + a11y)
+- List keys: stable ids (`_id`); never array index. Ensure GraphQL queries request `_id`
+- Match GraphQL variable types to the API schema (`String!` vs `ID!` — hosted legacy often uses `String!`)
+- Forms: Zod schemas in `src/lib/validation/`; disable submit until valid
+
+## Formatting
+
+Double quotes, 100 char width, 2-space indent.
+
+## Performance
+
+- Avoid unnecessary `'use client'` boundaries and large client bundles
+- Do not add `useMemo`/`useCallback` by default; follow React Compiler guidance already in repo
+- Prefer `cache-first` / targeted refetch over blanket network policies when appropriate
+- Lazy-load heavy UI (emoji pickers, editors) when not on critical path

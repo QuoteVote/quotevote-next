@@ -316,10 +316,10 @@ test.describe('E2E-CHAT-008 Chat Search', () => {
     if (isMobile) {
       console.log('TEST PROGRESS: Mobile navigation to Messages');
       await expect(page.locator('[data-testid="chat-page"]').filter({ visible: true })).toHaveCount(0);
-      // Click Account/profile menu button in mobile bottom nav
-      await page.locator('button[aria-label="Account menu"]').filter({ visible: true }).click({ force: true });
-      // Click "Messages" option in the dropdown menu
-      await page.locator('[role="menuitem"]:has-text("Messages")').click({ force: true });
+      await page
+        .getByRole('navigation', { name: 'Mobile navigation' })
+        .getByRole('button', { name: 'Messages' })
+        .click({ force: true });
     }
 
     // Verify chat page loads

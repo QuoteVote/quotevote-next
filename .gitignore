@@ -3,5 +3,7 @@ quotevote-backend/dockerfile
 session_state.md
 graphify-out/
 
-# Local Cursor IDE rules / agent config (machine-specific)
-.cursor/
+# Local Cursor IDE state (machine-specific). Shared project rules are tracked.
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**

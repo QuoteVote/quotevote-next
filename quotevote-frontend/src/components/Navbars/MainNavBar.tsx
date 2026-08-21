@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Menu, Github } from 'lucide-react';
+import { Globe } from '@/components/Icons';
 import { getApolloClient } from '@/lib/apollo';
 import { useAppStore } from '@/store';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -71,15 +71,9 @@ export function MainNavBar({}: MainNavBarProps) {
             href="/search"
             onClick={handleQuoteVote}
             className="flex items-center gap-2 no-underline hover:opacity-90 transition-opacity"
+            aria-label="Quote.Vote home"
           >
-            <Image
-              src="/icons/android-chrome-192x192.png"
-              alt="Quote.Vote"
-              width={28}
-              height={28}
-              className="object-contain"
-              crossOrigin="anonymous"
-            />
+            <Globe size={28} className="size-7" />
             <span className="font-extrabold text-lg tracking-wide hidden sm:block select-none" style={{ color: '#0A2342' }}>
               Quote.Vote
             </span>

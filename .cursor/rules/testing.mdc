@@ -1,0 +1,35 @@
+---
+description: Jest and Playwright testing locations and practices
+globs: quotevote-frontend/src/__tests__/**/*,quotevote-frontend/e2e/**/*,quotevote-frontend/**/*.{test,spec}.{ts,tsx},quotevote-backend/app/__tests__/**/*
+alwaysApply: false
+---
+
+# Testing
+
+## Locations
+
+| Kind | Where |
+| --- | --- |
+| Frontend unit | `quotevote-frontend/src/__tests__/` (`.test.ts` / `.test.tsx`) |
+| Frontend E2E | `quotevote-frontend/e2e/` (`.spec.ts`; helpers in `e2e/helpers/`) |
+| Backend unit/integration | `quotevote-backend/app/__tests__/` |
+
+## Commands
+
+```bash
+# Frontend
+pnpm test -- src/__tests__/path/to/file.test.tsx
+pnpm test:e2e featured-posts.spec.ts
+pnpm test:e2e --project=desktop featured-posts.spec.ts
+
+# Backend
+pnpm test
+```
+
+## Practices
+
+- Cover acceptance criteria with unit tests; add E2E for user-visible navigation/auth flows
+- Mock GraphQL narrowly (`featuredPosts` only) — use `route.fallback()` for other ops to avoid breaking the page
+- E2E guest flows: clear storage state (`cookies: []`, `origins: []`) when auth redirects would hide public UI
+- Prefer `getByRole` / `getByTestId` over brittle CSS selectors
+- Keep fixtures free of real secrets; use `.env.e2e.local` locally, never commit it
