@@ -102,7 +102,7 @@ export default function SearchResultsView({
                     const result = isUser ? item.name : item.title
                     const link = isUser
                       ? `/dashboard/profile/${item.username || item.name?.replace(/\s/g, '') || ''}`
-                      : `/dashboard/explore?q=${encodeURIComponent(item.title || '')}&tab=search`
+                      : `/?q=${encodeURIComponent(item.title || '')}&tab=search`
 
                     return (
                       <Link

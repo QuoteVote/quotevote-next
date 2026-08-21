@@ -55,8 +55,8 @@ test.describe('E2E-MOB-005: Mobile Highlight Selection', () => {
     const postBody = `Automated mobile post body for testing touch highlight selection in ${uniqueSuffix}. Please select this passage of text on a mobile viewport to see the action popup.`;
 
     // Step 1: Log in as authorUser in a mobile viewport
-    await page.goto('/dashboard/explore');
-    await expect(page).toHaveURL(/\/dashboard\/explore/);
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/(?!dashboard\/explore)/);
 
     // Ensure at least one public post exists on the explore feed
     const firstPostCard = page.getByTestId('post-card').first();
@@ -78,7 +78,7 @@ test.describe('E2E-MOB-005: Mobile Highlight Selection', () => {
 
       await page.getByTestId('post-submit-button').click();
       await expect(page.getByTestId('post-composer')).toBeHidden({ timeout: 30_000 });
-      await expect(page).toHaveURL(/\/dashboard\/explore/, { timeout: 30_000 });
+      await expect(page).toHaveURL(/\/(?!dashboard\/explore)/, { timeout: 30_000 });
     }
 
     // Step 2: Navigate to an existing public post

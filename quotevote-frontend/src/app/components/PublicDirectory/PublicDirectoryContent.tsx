@@ -1,20 +1,14 @@
-'use client'
-
-import { useEffect, type ReactElement } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useAppStore } from '@/store'
+import { type ReactElement } from 'react'
+import { useSearchParams } from 'next/navigation'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
 import { DirectoryHeader } from './DirectoryHeader'
 import { DirectoryToolbar } from './DirectoryToolbar'
 
 /**
  * Public post directory shown at `/` (#454).
- * Guests land in the product; signed-in users continue to Explore.
  */
 export function PublicDirectoryContent(): ReactElement {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const user = useAppStore((state) => state.user.data)
 
   const q = searchParams.get('q') || ''
   const from = searchParams.get('from') || ''
@@ -23,12 +17,6 @@ export function PublicDirectoryContent(): ReactElement {
   const sortOrder = sortParam === 'asc' ? 'asc' : 'desc'
   const interactions = searchParams.get('interactions') === 'true'
   const groupId = searchParams.get('group') || undefined
-
-  useEffect(() => {
-    if (user?._id || user?.id) {
-      router.push('/dashboard/explore')
-    }
-  }, [user, router])
 
   return (
     <div

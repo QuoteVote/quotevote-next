@@ -53,7 +53,7 @@ import { DashboardSidebars } from '@/components/DashboardSidebars';
 /* ------------------------------------------------------------------ */
 
 const NAV_PAGES = [
-  { path: '/dashboard/explore', page: 'home' },
+  { path: '/', page: 'home' },
   { path: '/dashboard/post', page: 'post' },
   { path: '/dashboard/profile', page: 'profile' },
   { path: '/dashboard/notifications', page: 'notifications' },
@@ -230,7 +230,7 @@ export default function DashboardLayout({
           {/* ── Left: Logo ── */}
           <div className="flex items-center gap-2 flex-shrink-0 z-10">
             <Link
-              href="/dashboard/explore"
+              href="/"
               className="flex items-center gap-2 no-underline flex-shrink-0"
               aria-label="Quote.Vote home"
             >
@@ -377,7 +377,7 @@ export default function DashboardLayout({
               <ArrowLeft className="size-5" />
             </button>
             <Link
-              href="/dashboard/explore"
+              href="/"
               className="pointer-events-none absolute inset-0 flex items-center justify-center"
               aria-label="Quote.Vote home"
             >
@@ -400,7 +400,7 @@ export default function DashboardLayout({
         ) : (
           <div className="flex h-full w-full items-center justify-between px-4">
             <Link
-              href="/dashboard/explore"
+              href="/"
               className="flex items-center gap-2 no-underline"
               aria-label="Quote.Vote home"
             >
@@ -427,14 +427,14 @@ export default function DashboardLayout({
       >
         {/* Home */}
         <Link
-          href="/dashboard/explore"
+          href="/"
           className={cn(
             'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-            isActive('/dashboard/explore') ? 'text-[#52b274]' : 'text-muted-foreground'
+            isActive('/') ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
           aria-label="Home"
         >
-          <House className="size-[22px]" fill={isActive('/dashboard/explore') ? 'currentColor' : 'none'} />
+          <House className="size-[22px]" fill={isActive('/') ? 'currentColor' : 'none'} />
           <span className="text-[10px] font-semibold">Home</span>
         </Link>
 
@@ -583,8 +583,8 @@ export default function DashboardLayout({
       >
         {pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/settings') ? (
           /* Profile and Settings & Privacy align with the Home feed column:
-             apply the same fixed left-sidebar / right-chat offsets as
-             /dashboard/explore so the content's left and right edges match the
+             apply the same fixed left-sidebar / right-chat offsets
+             so the content's left and right edges match the
              Home page (no horizontal jump when switching tabs), and render the
              Notifications + Messages sidebars. */
           <div
@@ -604,7 +604,7 @@ export default function DashboardLayout({
           <div
             className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12 h-full md:h-auto')}
             style={{
-              maxWidth: pathname.startsWith('/dashboard/explore') || pathname.startsWith('/dashboard/control-panel')
+              maxWidth: pathname.startsWith('/dashboard/control-panel')
                 ? 'none'
                 : pathname.startsWith('/dashboard/post/')
                   ? '1170px'

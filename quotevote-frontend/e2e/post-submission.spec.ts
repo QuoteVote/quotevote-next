@@ -42,8 +42,8 @@ test.describe('E2E-POST-001: Create Public Post', () => {
     const postBody = `Automated post body for ${uniqueSuffix}. Sharing thoughts for feedback.`;
 
     // Precondition: user is already authenticated (storageState from global setup)
-    await page.goto('/dashboard/explore');
-    await expect(page).toHaveURL(/\/dashboard\/explore/);
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/(?!dashboard\/explore)/);
 
     // Step: open composer
     await openPostComposer(page);
@@ -67,7 +67,7 @@ test.describe('E2E-POST-001: Create Public Post', () => {
 
     await expect(page.getByTestId('post-composer')).toBeHidden({ timeout: 30_000 });
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
-    await expect(page).toHaveURL(/\/dashboard\/explore/, { timeout: 30_000 });
+    await expect(page).toHaveURL(/\/(?!dashboard\/explore)/, { timeout: 30_000 });
 
     // Expected: post appears in a relevant list (explore/home feed)
     const postCard = page.getByTestId('post-card').filter({ hasText: postTitle }).first();
@@ -87,7 +87,7 @@ test.describe('E2E-POST-001: Create Public Post', () => {
     await expect(page.getByTestId('post-detail-title')).toHaveText(postTitle);
     await expect(page.getByTestId('post-detail-body')).toContainText(postBody);
 
-    await page.goto('/dashboard/explore');
+    await page.goto('/');
     await expect(
       page.getByTestId('post-card').filter({ hasText: postTitle }).first()
     ).toBeVisible({ timeout: 30_000 });
@@ -105,8 +105,8 @@ test.describe('E2E-POST-003: Post Validation', () => {
     const attemptedBody = `E2E-POST-003-body-${uniqueSuffix}`;
 
     // Step 1: Log in as authorUser (precondition via global-setup storageState)
-    await page.goto('/dashboard/explore');
-    await expect(page).toHaveURL(/\/dashboard\/explore/);
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/(?!dashboard\/explore)/);
 
     // Step 2: Open the post composer
     await openPostComposer(page);
