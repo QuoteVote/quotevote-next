@@ -97,5 +97,25 @@ describe('ActivityCard', () => {
 
     expect(screen.getByText('0')).toBeInTheDocument()
   })
+
+  describe('Preview Truncation (#474)', () => {
+    it('renders short activity content without ellipsis', () => {
+      const shortContent = 'Short activity text'
+      render(<ActivityCard {...defaultProps} content={shortContent} />)
+
+      expect(screen.getByText(`"${shortContent}"`)).toBeInTheDocument()
+    })
+
+    it('truncates activity content over 150 chars with ellipsis and applies line-clamp-3', () => {
+      const longContent = 'X'.repeat(250)
+      const { container } = render(<ActivityCard {...defaultProps} content={longContent} />)
+
+      const expectedContent = `"${'X'.repeat(150)}..."`
+      expect(screen.getByText(expectedContent)).toBeInTheDocument()
+
+      const contentP = container.querySelector('.line-clamp-3')
+      expect(contentP).toBeInTheDocument()
+    })
+  })
 })
 
