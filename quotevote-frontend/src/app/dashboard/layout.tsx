@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@apollo/client/react';
 import {
@@ -16,8 +15,11 @@ import {
   ShieldCheck,
   LogOut,
   ChevronDown,
-  Settings,
+  ArrowLeft,
+  Share2,
 } from 'lucide-react';
+import { Globe } from '@/components/Icons';
+import { toast } from 'sonner';
 
 
 import { cn } from '@/lib/utils';
@@ -36,7 +38,7 @@ import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from '@/graphql/queries';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import type { ChatRoom } from '@/types/chat';
 import NavSearch from '@/components/Navbars/NavSearch';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -91,12 +93,13 @@ function ChatPanel() {
   // height.
   return (
     <Sheet open={chatOpen} onOpenChange={setChatOpen} modal={false}>
-      <SheetContent
+        <SheetContent
         side="right"
         overlayClassName="bottom-[56px] md:bottom-0"
         className="w-full sm:w-[400px] p-0 bottom-[56px] h-[calc(100%-56px)] md:inset-y-0 md:h-full"
         onInteractOutside={(e) => e.preventDefault()}
       >
+        <SheetTitle className="sr-only">Messages</SheetTitle>
         <div className="h-full"><ChatContent /></div>
       </SheetContent>
     </Sheet>
@@ -116,9 +119,11 @@ export default function DashboardLayout({
   const router = useRouter();
   const { openAuthModal } = useAuthModal();
   const setSelectedPage = useAppStore((s) => s.setSelectedPage);
+  const chatOpen = useAppStore((s) => s.chat.open);
   const setChatOpen = useAppStore((s) => s.setChatOpen);
   const user = useAppStore((s) => s.user.data);
   const logout = useAppStore((s) => s.logout);
+  const mobileDiscussionOpen = useAppStore((s) => s.ui.mobileDiscussionOpen);
 
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
@@ -155,6 +160,7 @@ export default function DashboardLayout({
   );
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
+  const isMobilePostDetail = /^\/dashboard\/post\/[^/]+\/[^/]+\/[^/]+/.test(pathname);
 
   useEffect(() => {
     const match = NAV_PAGES.find((l) => pathname.startsWith(l.path));
@@ -170,6 +176,24 @@ export default function DashboardLayout({
       logout();
     }
     router.push('/auths/login');
+  };
+
+  const handleSharePost = async () => {
+    const url = window.location.href;
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({ url, title: 'Quote.Vote' });
+        return;
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied!');
+    } catch {
+      toast.error('Failed to copy link');
+    }
   };
 
   const requireAuthForAction = (action: () => void, view: 'invite' | 'login' = 'login') => {
@@ -205,15 +229,12 @@ export default function DashboardLayout({
 
           {/* ── Left: Logo ── */}
           <div className="flex items-center gap-2 flex-shrink-0 z-10">
-            <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline flex-shrink-0">
-              <Image
-                src="/icons/android-chrome-192x192.png"
-                alt="Quote.Vote"
-                width={36}
-                height={36}
-                className="object-contain rounded-full"
-                crossOrigin="anonymous"
-              />
+            <Link
+              href="/dashboard/explore"
+              className="flex items-center gap-2 no-underline flex-shrink-0"
+              aria-label="Quote.Vote home"
+            >
+              <Globe size={36} className="size-9" />
               <span className="hidden lg:block text-[20px] font-extrabold tracking-tight text-[#52b274] select-none">
                 Quote.Vote
               </span>
@@ -345,29 +366,64 @@ export default function DashboardLayout({
           MOBILE TOP BAR
       ════════════════════════════════════════════════════════════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 md:hidden h-[56px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] flex items-center">
-        <div className="flex h-full w-full items-center justify-between px-4">
-          <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline">
-            <Image
-              src="/icons/android-chrome-192x192.png"
-              alt="Quote.Vote"
-              width={32}
-              height={32}
-              className="object-contain rounded-full"
-              crossOrigin="anonymous"
-            />
-            <span className="text-[18px] font-extrabold tracking-tight text-[#52b274]">Quote.Vote</span>
-          </Link>
-          {/* Account menu lives on the bottom-nav Profile button. */}
-        </div>
+        {isMobilePostDetail ? (
+          <div className="relative flex h-full w-full items-center px-1">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Go back"
+              className="z-10 inline-flex size-11 items-center justify-center text-foreground"
+            >
+              <ArrowLeft className="size-5" />
+            </button>
+            <Link
+              href="/dashboard/explore"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+              aria-label="Quote.Vote home"
+            >
+              <span className="pointer-events-auto flex items-center gap-2">
+                <Globe size={28} className="size-7" />
+                <span className="font-extrabold text-lg tracking-wide select-none text-[#0A2342] dark:text-foreground">
+                  Quote.Vote
+                </span>
+              </span>
+            </Link>
+            <button
+              type="button"
+              onClick={handleSharePost}
+              aria-label="Share"
+              className="z-10 ml-auto inline-flex size-11 items-center justify-center text-foreground"
+            >
+              <Share2 className="size-5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex h-full w-full items-center justify-between px-4">
+            <Link
+              href="/dashboard/explore"
+              className="flex items-center gap-2 no-underline"
+              aria-label="Quote.Vote home"
+            >
+              <Globe size={28} className="size-7" />
+              <span className="font-extrabold text-lg tracking-wide select-none text-[#0A2342] dark:text-foreground">
+                Quote.Vote
+              </span>
+            </Link>
+          </div>
+        )}
       </header>
 
       {/* ════════════════════════════════════════════════════════════════
           MOBILE BOTTOM NAV
       ════════════════════════════════════════════════════════════════ */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[60] md:hidden h-[56px] bg-card border-t border-border flex items-center"
+        className={cn(
+          'fixed bottom-0 left-0 right-0 z-[60] md:hidden h-[56px] bg-card border-t border-border flex items-center',
+          mobileDiscussionOpen && 'hidden',
+        )}
         aria-label="Mobile navigation"
         data-testid="authenticated-navigation"
+        hidden={mobileDiscussionOpen}
       >
         {/* Home */}
         <Link
@@ -382,18 +438,26 @@ export default function DashboardLayout({
           <span className="text-[10px] font-semibold">Home</span>
         </Link>
 
-        {/* Settings */}
-        <Link
-          href="/dashboard/settings"
+        {/* Messages */}
+        <button
+          type="button"
+          onClick={() => requireAuthForAction(() => setChatOpen(true))}
           className={cn(
-            'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-            isActive('/dashboard/settings') ? 'text-[#52b274]' : 'text-muted-foreground'
+            'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
+            chatOpen ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
-          aria-label="Settings"
+          aria-label="Messages"
         >
-          <Settings className="size-[22px]" />
-          <span className="text-[10px] font-semibold">Settings</span>
-        </Link>
+          <div className="relative">
+            <MessageSquare className="size-[22px]" fill={chatOpen ? 'currentColor' : 'none'} />
+            {unreadChat > 0 && (
+              <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
+                {unreadChat > 9 ? '9+' : unreadChat}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-semibold">Messages</span>
+        </button>
 
         {/* Create — floating green circle */}
         <button
@@ -446,22 +510,15 @@ export default function DashboardLayout({
                 aria-label="Account menu"
                 data-testid="user-profile-menu"
               >
-                <div className="relative">
-                  <DisplayAvatar
-                    avatar={user?.avatar as string | Record<string, unknown> | undefined}
-                    username={avatarSeed}
-                    size={24}
-                    className={cn(
-                      'size-6 transition-all',
-                      isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
-                    )}
-                  />
-                  {unreadChat > 0 && (
-                    <span className="absolute -top-0.5 -right-1 flex items-center justify-center min-w-[12px] h-[12px] px-0.5 rounded-full bg-[#52b274] text-white text-[7px] font-bold leading-none shadow ring-1 ring-card">
-                      {unreadChat > 9 ? '9+' : unreadChat}
-                    </span>
+                <DisplayAvatar
+                  avatar={user?.avatar as string | Record<string, unknown> | undefined}
+                  username={avatarSeed}
+                  size={24}
+                  className={cn(
+                    'size-6 transition-all',
+                    isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
                   )}
-                </div>
+                />
                 <span className="text-[10px] font-semibold">Profile</span>
               </button>
             </DropdownMenuTrigger>
@@ -519,7 +576,10 @@ export default function DashboardLayout({
       ════════════════════════════════════════════════════════════════ */}
       <main
         id="main-content"
-        className="h-full overflow-y-auto overscroll-contain pt-[56px] md:pt-[60px] pb-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible"
+        className={cn(
+          'h-full overflow-y-auto overscroll-contain pt-[56px] md:pt-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible',
+          mobileDiscussionOpen ? 'pb-0' : 'pb-[60px]',
+        )}
       >
         {pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/settings') ? (
           /* Profile and Settings & Privacy align with the Home feed column:

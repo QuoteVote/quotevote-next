@@ -109,6 +109,10 @@ export interface PostProps {
   postHeight?: number
   postActions?: unknown[]
   refetchPost?: () => void
+  /** Opens the mobile split-screen discussion (comment-count action). */
+  onOpenDiscussion?: () => void
+  /** Re-selects a linked comment after tapping its Quote highlight. */
+  onActivateLinkedComment?: (actionId: string) => void
 }
 
 /**
@@ -139,6 +143,8 @@ export interface PostCardProps {
   messageRoom?: PostMessageRoom
   groupId?: string | null
   searchKey?: string
+  /** Directory cards hide body text and center metadata (#454). */
+  compact?: boolean
 }
 
 /**
@@ -146,6 +152,8 @@ export interface PostCardProps {
  */
 export interface PostControllerProps {
   postId?: string
+  onOpenDiscussion?: () => void
+  onActivateLinkedComment?: (actionId: string) => void
 }
 
 /**
@@ -242,5 +250,7 @@ export interface PaginatedPostsListProps {
   className?: string
   contentClassName?: string
   paginationClassName?: string
+  /** Hide post body on directory cards. */
+  compact?: boolean
 }
 

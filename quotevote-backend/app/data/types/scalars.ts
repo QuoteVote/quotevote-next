@@ -6,6 +6,7 @@
  */
 
 import { GraphQLScalarType, Kind, type ValueNode } from 'graphql';
+import mongoose from 'mongoose';
 
 function parseLiteralJSON(ast: ValueNode): unknown {
   switch (ast.kind) {
@@ -61,3 +62,56 @@ export const DateScalar = new GraphQLScalarType<Date | string | number | null, s
     return null;
   },
 });
+
+export const DateTimeScalar = new GraphQLScalarType({
+  name: 'DateTime',
+  description: 'DateTime scalar type',
+  serialize(value: unknown) {
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    if (typeof value === 'number') {
+      return new Date(value).toISOString();
+    }
+    if (typeof value === 'string') {
+      return new Date(value).toISOString();
+    }
+    return null;
+  },
+  parseValue(value: unknown) {
+    return value ? new Date(value as string) : null;
+  },
+  parseLiteral(ast) {
+    if (ast.kind === Kind.STRING) {
+      return new Date(ast.value);
+    }
+    return null;
+  },
+});
+
+export const ObjectIdScalar = new GraphQLScalarType({
+  name: 'ObjectId',
+  description: 'Mongoose ObjectId scalar type',
+  serialize(value: unknown) {
+    if (value instanceof mongoose.Types.ObjectId) {
+      return value.toHexString();
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    return null;
+  },
+  parseValue(value: unknown) {
+    if (typeof value === 'string' && mongoose.Types.ObjectId.isValid(value)) {
+      return new mongoose.Types.ObjectId(value);
+    }
+    return null;
+  },
+  parseLiteral(ast) {
+    if (ast.kind === Kind.STRING && mongoose.Types.ObjectId.isValid(ast.value)) {
+      return new mongoose.Types.ObjectId(ast.value);
+    }
+    return null;
+  },
+});
+

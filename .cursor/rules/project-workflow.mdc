@@ -1,0 +1,42 @@
+---
+description: Quote.Vote monorepo workflow — pnpm commands, CI gates, env hygiene
+alwaysApply: true
+---
+
+# Quote.Vote project workflow
+
+Two independent packages (no shared workspace root). Run commands **inside** the package directory. Use **pnpm only** (never npm/yarn).
+
+## Before finishing a change
+
+From the touched package(s), run what applies:
+
+| Check | Frontend | Backend |
+| --- | --- | --- |
+| Lint | `pnpm lint` | `pnpm lint` |
+| Types | `pnpm type-check` | `pnpm type-check` |
+| Format | `pnpm format:check` | `pnpm format:check` |
+| Unit | `pnpm test` (or scoped file) | `pnpm test` |
+| E2E | `pnpm test:e2e <spec>` when UI flows change | — |
+
+CI on PRs to `main`/`develop`: `lint` + `type-check` + Jest for both packages. Frontend Playwright runs when `E2E_AUTHOR_PASSWORD` is set.
+
+## Env files
+
+- Never commit `.env.local` or `.env*.local` (gitignored).
+- Use `quotevote-frontend/.env.example` → `cp .env.example .env.local`.
+- Keep hosted/prod API URLs in local overrides only.
+- E2E secrets: `.env.e2e.local` from `.env.e2e.example`.
+
+## Git / PRs
+
+- **Never commit, push, or open a PR from `main` or `develop`.**
+- If HEAD is `main` or `develop`, create and check out a feature branch first
+  (`fix/...`, `feat/...`, `issue#N`) before any commit. Then `git push -u origin HEAD`.
+- Never `git push origin main` or `git push origin develop`. Do not force-push those branches.
+- Before **every commit** (not just before PR), run at minimum:
+  - Frontend: `pnpm lint && pnpm type-check`
+  - Backend: `pnpm lint && pnpm type-check`
+- Commit only files needed for the task; leave unrelated local fixes out unless asked.
+- Do not amend commits you did not create this session.
+- Prefer small, focused PRs with a clear test plan.

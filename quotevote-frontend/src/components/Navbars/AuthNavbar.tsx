@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import Image from 'next/image'
+import { Globe } from '@/components/Icons'
 import { Button } from '@/components/ui/button'
 
 /**
@@ -12,13 +12,8 @@ export function AuthNavbar() {
   return (
     <header className="bg-card border-b border-border">
       <div className="w-full px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/icons/android-chrome-192x192.png"
-            alt="Quote.Vote"
-            width={32}
-            height={32}
-          />
+        <Link href="/" className="flex items-center gap-2" aria-label="Quote.Vote home">
+          <Globe size={32} className="size-8" />
           <span className="font-semibold text-lg text-foreground">Quote.Vote</span>
         </Link>
         <Button asChild variant="outline">

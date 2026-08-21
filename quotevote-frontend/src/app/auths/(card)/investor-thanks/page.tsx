@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
+import { Globe } from '@/components/Icons'
 
 export const metadata: Metadata = {
   title: 'Thank You — Quote.Vote',
@@ -11,13 +11,9 @@ export default function InvestorThanksPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="max-w-lg text-center space-y-6">
-        <Image
-          src="/icons/android-chrome-192x192.png"
-          alt="Quote.Vote"
-          width={64}
-          height={64}
-          className="mx-auto"
-        />
+        <div className="flex justify-center">
+          <Globe size={64} className="size-16" title="Quote.Vote" />
+        </div>
         <h1 className="text-3xl font-bold">
           We Will Be{' '}
           <span className="text-primary">in Touch!</span>

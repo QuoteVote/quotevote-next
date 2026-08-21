@@ -82,6 +82,8 @@ describe('Sidebar Component', () => {
         selectedPlan: 'personal',
         focusedComment: null,
         sharedComment: null,
+        mobileDiscussionOpen: false,
+        linkedPassage: null,
       },
     });
 
@@ -118,7 +120,7 @@ describe('Sidebar Component', () => {
     it('renders logo in AppBar', () => {
       render(<Sidebar open={false} onOpenChange={jest.fn()} />);
 
-      const logo = screen.getByAltText('QuoteVote Logo');
+      const logo = screen.getByLabelText('QuoteVote Logo');
       expect(logo).toBeInTheDocument();
     });
   });

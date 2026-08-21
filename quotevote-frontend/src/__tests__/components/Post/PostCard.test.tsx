@@ -233,4 +233,43 @@ describe('PostCard Component', () => {
       expect(bodyDiv).toBeInTheDocument()
     })
   })
+
+  describe('Compact directory cards (#454)', () => {
+    it('hides body text, Show More, and bookmark/share actions', () => {
+      render(
+        <PostCard
+          {...mockPostCardProps}
+          compact
+          text="This body should not appear in the directory."
+        />
+      )
+
+      expect(screen.getByTestId('post-card')).toHaveAttribute('data-compact', 'true')
+      expect(
+        screen.queryByText('This body should not appear in the directory.')
+      ).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Show More' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Bookmark' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument()
+      expect(screen.getByText('Test Post Title')).toBeInTheDocument()
+    })
+
+    it('keeps votes, interaction count, and source attribution', () => {
+      render(
+        <PostCard
+          {...mockPostCardProps}
+          compact
+          citationUrl="https://arxiv.org/abs/123"
+          attribution="Ada Lovelace"
+          comments={[{ _id: 'c1', created: '2024-01-01T00:00:00Z', userId: 'u1' }]}
+        />
+      )
+
+      expect(screen.getByRole('button', { name: 'Support this post' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Disagree with this post' })).toBeInTheDocument()
+      expect(screen.getByText(/1 interaction/)).toBeInTheDocument()
+      expect(screen.getByText('Source: arxiv.org')).toBeInTheDocument()
+      expect(screen.getByText('— Ada Lovelace')).toBeInTheDocument()
+    })
+  })
 })

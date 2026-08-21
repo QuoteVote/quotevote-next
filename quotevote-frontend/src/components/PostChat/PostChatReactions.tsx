@@ -104,22 +104,22 @@ export default function PostChatReactions({
   }
 
   return (
-    <div className="mt-2 flex items-center justify-between">
-      {/* User name and time */}
-      <div className="flex items-center gap-2">
+    <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-2">
+      {/* User name and time (mobile: date below name) */}
+      <div className="min-w-0 flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
         <button
           type="button"
           onClick={handleRedirectToProfile}
           className={cn(
-            'text-base font-normal hover:underline',
-            isDefaultDirection ? 'text-gray-500' : 'text-white'
+            'text-[13px] font-semibold hover:underline break-words text-left',
+            isDefaultDirection ? 'text-[#52b274]' : 'text-white'
           )}
         >
           {userName}
         </button>
         <span
           className={cn(
-            'text-sm',
+            'text-[11px]',
             isDefaultDirection ? 'text-gray-500' : 'text-white/80'
           )}
           suppressHydrationWarning
@@ -128,15 +128,15 @@ export default function PostChatReactions({
         </span>
       </div>
 
-      {/* Reactions */}
-      <div className="flex items-center gap-1">
+      {/* Reactions (mobile: fixed footer block on the right) */}
+      <div className="ml-auto flex h-8 min-w-[72px] shrink-0 items-center justify-end gap-1 sm:ml-0">
         {/* Emoji reaction bubbles */}
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
           {Object.keys(groupedReactions).map((emoji) => (
             <div
               key={emoji}
               className={cn(
-                'flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-sm',
+                'flex h-7 items-center gap-1 rounded-lg px-1.5 text-sm',
                 isDefaultDirection ? 'bg-gray-100' : 'bg-emerald-400'
               )}
             >
@@ -155,7 +155,7 @@ export default function PostChatReactions({
               variant="ghost"
               size="icon"
               className={cn(
-                'h-8 w-8',
+                'h-7 w-7',
                 isDefaultDirection
                   ? 'text-muted-foreground hover:text-foreground'
                   : 'text-white hover:text-white/80'
@@ -166,7 +166,7 @@ export default function PostChatReactions({
                 }
               }}
             >
-              <Smile className="h-5 w-5" />
+              <Smile className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto border-none p-0" align="end">

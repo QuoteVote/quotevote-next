@@ -220,6 +220,7 @@ export const GET_TOP_POSTS = gql`
     $interactions: Boolean
     $userId: String
     $sortOrder: String
+    $groupId: String
   ) {
     posts(
       limit: $limit
@@ -231,6 +232,7 @@ export const GET_TOP_POSTS = gql`
       interactions: $interactions
       userId: $userId
       sortOrder: $sortOrder
+      groupId: $groupId
     ) {
       entities {
         _id
@@ -244,6 +246,7 @@ export const GET_TOP_POSTS = gql`
         created
         url
         citationUrl
+        attribution
         rejectedBy
         approvedBy
         enable_voting
@@ -510,8 +513,10 @@ export const GET_FEATURED_POSTS = gql`
 /**
  * Get user by username query
  *
- * `bio` and `presence` are intentionally absent: the deployed API's `User` type
+ * `bio` and `presence` are intentionally absent: the hosted API's `User` type
  * exposes neither. Presence is available separately via `getPresence(userId)`.
+ * About text is loaded with `GET_USER_BIO` so a missing `bio` field cannot
+ * take down the whole profile page (#440).
  */
 export const GET_USER = gql`
   query user($username: String!) {
@@ -545,6 +550,20 @@ export const GET_USER = gql`
         }
         lastCalculated
       }
+    }
+  }
+`
+
+/**
+ * Optional About/bio fetch. Hosted GraphQL rejects unknown `User.bio`;
+ * callers must use `errorPolicy: 'all'` and ignore failures so profile
+ * navigation still succeeds (#440 / #362).
+ */
+export const GET_USER_BIO = gql`
+  query userBio($username: String!) {
+    user(username: $username) {
+      _id
+      bio
     }
   }
 `

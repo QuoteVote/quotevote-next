@@ -1,0 +1,33 @@
+---
+description: DRY, SOLID, YAGNI, and change-hygiene for Quote.Vote
+alwaysApply: true
+---
+
+# Code quality
+
+## Scope of change
+
+- Change only files needed for the task. No drive-by refactors or unrelated formatting.
+- Prefer extending an existing helper over adding a parallel one.
+
+## DRY
+
+- Search for an existing util, hook, resolver, or component before writing a new one.
+- Shared types live in `types/`; shared UI in `components/`; shared GraphQL in `graphql/`.
+- Extract a shared helper only when the same logic exists in 2+ places.
+
+## SOLID (practical)
+
+- One job per module: a resolver mutates; a component renders; a hook owns one piece of client state.
+- Do not add new abstraction layers (services, factories, generic wrappers) unless reuse is already proven.
+- Depend on public `@/` / `~/` modules rather than reaching into unrelated internals.
+
+## YAGNI and performance
+
+- Do not ship unused params, dead feature flags, or "for later" code.
+- Do not add `useMemo` / `useCallback` or a new package for hypothetical cost. Measure first.
+- Avoid over-fetching GraphQL: request `_id` and only fields the UI uses.
+
+## Security
+
+Follow `security.mdc`. Never weaken `requireAuth`, URL sanitization, or secret handling to "make it work".

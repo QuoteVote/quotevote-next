@@ -316,7 +316,31 @@ describe('PostActionCard', () => {
 
       expect(screen.getAllByText('Commenter User').length).toBeGreaterThan(0)
       expect(screen.getByText('This is a comment')).toBeInTheDocument()
-      expect(screen.getByText(/Quoted text/)).toBeInTheDocument()
+      const quoted = screen.getByText(/Quoted text/)
+      expect(quoted.closest('blockquote')).toBeInTheDocument()
+      expect(quoted.closest('blockquote')?.className).not.toContain('border-l-[#52b274]')
+    })
+
+    it('notifies parent when a linked comment is selected', () => {
+      const onSelectAction = jest.fn()
+      const linkedComment: PostAction = {
+        ...commentAction,
+        startWordIndex: 4,
+        endWordIndex: 20,
+      }
+
+      render(
+        <PostActionCard
+          postAction={linkedComment}
+          postUrl="/post/123"
+          refetchPost={mockRefetchPost}
+          onSelectAction={onSelectAction}
+        />,
+      )
+
+      fireEvent.click(screen.getByText('This is a comment'))
+      expect(onSelectAction).toHaveBeenCalledWith(linkedComment)
+      expect(mockSetFocusedComment).not.toHaveBeenCalled()
     })
 
     it('deletes comment successfully', async () => {
@@ -599,8 +623,10 @@ describe('PostActionCard', () => {
         />,
       )
 
-      const card = document.querySelector('[class*="border-l-primary"]')
+      const card = document.querySelector('[data-selected="true"]')
       expect(card).toBeInTheDocument()
+      expect(card?.className).toContain('border-l-[#52b274]')
+      expect(card?.className).toContain('items-start')
     })
 
     it('sets focused and shared comment when selected', () => {

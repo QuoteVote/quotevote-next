@@ -132,7 +132,12 @@ export interface VotingBoardProps {
   focusedComment?: {
     startWordIndex: number
     endWordIndex: number
+    actionId?: string
   } | null
+  /**
+   * Called when the highlighted (linked) passage is tapped.
+   */
+  onHighlightClick?: () => void
 }
 
 /**

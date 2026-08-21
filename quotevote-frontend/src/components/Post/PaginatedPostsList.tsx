@@ -42,6 +42,7 @@ export default function PaginatedPostsList({
   className,
   contentClassName,
   paginationClassName,
+  compact = false,
   query,
   dataKey = 'posts',
 }: PaginatedPostsListProps & { query?: DocumentNode; dataKey?: string }) {
@@ -216,6 +217,9 @@ export default function PaginatedPostsList({
       messageRoom={post.messageRoom || undefined}
       groupId={post.groupId}
       citationUrl={post.citationUrl || undefined}
+      attribution={post.attribution || undefined}
+      searchKey={searchKey}
+      compact={compact}
     />
   )
 
