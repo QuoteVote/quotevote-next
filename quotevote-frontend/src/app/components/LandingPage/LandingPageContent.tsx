@@ -1970,9 +1970,10 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
     ? `Read featured post: ${post.title}`
     : 'Read featured post';
 
+  const PREVIEW_CHAR_LIMIT = 150;
   const displayText = post.text
-    ? post.text.length > 200
-      ? post.text.slice(0, 200) + '...'
+    ? post.text.length > PREVIEW_CHAR_LIMIT
+      ? post.text.slice(0, PREVIEW_CHAR_LIMIT) + '...'
       : post.text
     : '';
 
@@ -2032,7 +2033,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
       {/* Body */}
       {displayText && (
         <p
-          className="text-sm leading-relaxed mb-4 flex-1 line-clamp-4"
+          className="text-sm leading-relaxed mb-4 flex-1 line-clamp-3"
           style={{ color: '#475569' }}
         >
           {displayText}

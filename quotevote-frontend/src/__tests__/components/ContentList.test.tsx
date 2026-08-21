@@ -172,22 +172,18 @@ describe('ContentList Component', () => {
         expect(screen.getByText('Sixth Item')).toBeInTheDocument()
     })
 
-    it('handles content expansion', async () => {
-        const user = userEvent.setup()
+    it('renders truncated short preview without Read more button', () => {
         render(<ContentList data={mockData} />)
 
         expect(screen.getByText('Third Item')).toBeInTheDocument()
 
-        // Find "Read more" button
-        const readMoreButton = screen.getByText('Read more')
-        expect(readMoreButton).toBeInTheDocument()
+        // Truncated preview text with ellipsis
+        expect(screen.getByText(/This is the third item content\./)).toBeInTheDocument()
+        expect(screen.getByText(/\.\.\./)).toBeInTheDocument()
 
-        await user.click(readMoreButton)
-
-        expect(screen.getByText('Show less')).toBeInTheDocument()
-
-        await user.click(screen.getByText('Show less'))
-        expect(screen.getByText('Read more')).toBeInTheDocument()
+        // "Read more" button should not exist
+        expect(screen.queryByText('Read more')).not.toBeInTheDocument()
+        expect(screen.queryByText('Show more')).not.toBeInTheDocument()
     })
 
     it('clears filters when empty state action clicked', async () => {

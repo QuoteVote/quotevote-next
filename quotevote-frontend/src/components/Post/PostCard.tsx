@@ -71,7 +71,6 @@ function PostCardComponent({
   const router = useRouter()
   const setSelectedPost = useAppStore((state) => state.setSelectedPost)
   const guestGuard = useGuestGuard()
-  const [isExpanded, setIsExpanded] = useState(false)
   const userId = useAppStore(
     (state) => state.user.data?._id || state.user.data?.id
   ) as string | undefined
@@ -180,12 +179,12 @@ function PostCardComponent({
   }
 
   const postText = text || ''
-  const contentLimit = limitText ? 20 : 200
+  const contentLimit = limitText ? 20 : 150
   const isContentTruncated = postText.length > contentLimit
-  const shouldShowButton = isContentTruncated && !limitText
 
-  let displayText: string | React.ReactNode =
-    isExpanded || !shouldShowButton ? postText : stringLimit(postText, contentLimit)
+  let displayText: string | React.ReactNode = isContentTruncated
+    ? stringLimit(postText, contentLimit)
+    : postText
 
   if (!isEmpty(votes)) {
     const mappedVotes = votes
@@ -403,30 +402,11 @@ function PostCardComponent({
           </div>
         ) : null}
 
+        {/* Body */}
         {!compact && (
-          <>
-            <div
-              className={cn(
-                'text-base text-muted-foreground leading-relaxed whitespace-pre-line',
-                shouldShowButton && !isExpanded && 'line-clamp-4'
-              )}
-            >
-              {displayText}
-            </div>
-            {shouldShowButton && (
-              <button
-                type="button"
-                className="text-[#52b274] text-sm font-medium hover:underline mt-2"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsExpanded(!isExpanded)
-                }}
-                aria-expanded={isExpanded}
-              >
-                {isExpanded ? 'Show Less' : 'Show More'}
-              </button>
-            )}
-          </>
+          <div className="text-base text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-3">
+            {displayText}
+          </div>
         )}
       </div>
 

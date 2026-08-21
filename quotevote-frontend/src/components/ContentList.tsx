@@ -12,8 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  ChevronDown,
-  ChevronUp
 } from 'lucide-react'
 
 import { ContentListProps, ContentCardProps } from '@/types/contentList'
@@ -30,7 +28,6 @@ import {
 } from '@/components/ui/select'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 
 
@@ -40,7 +37,6 @@ const ITEMS_PER_PAGE = 5
 // Extracted ContentCard component for better state management and reusability
 
 function ContentCard({ item }: ContentCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const handleCopy = (url: string, id: string) => {
@@ -48,6 +44,12 @@ function ContentCard({ item }: ContentCardProps) {
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
   }
+
+  const PREVIEW_CHAR_LIMIT = 150
+  const displayContent =
+    item.content.length > PREVIEW_CHAR_LIMIT
+      ? `${item.content.slice(0, PREVIEW_CHAR_LIMIT)}...`
+      : item.content
 
   return (
     <Card className="transition-all hover:shadow-md" role="article">
@@ -80,26 +82,9 @@ function ContentCard({ item }: ContentCardProps) {
 
       <CardContent>
         <div className="relative">
-          <p className={cn(
-            "text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap",
-            !isExpanded && "line-clamp-3"
-          )}>
-            {item.content}
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap line-clamp-3">
+            {displayContent}
           </p>
-          {(item.content.length > 150 || item.content.split('\n').length > 3) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-auto p-0 text-xs font-medium text-primary mt-1 hover:bg-transparent hover:underline"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? (
-                <span className="flex items-center gap-1">Show less <ChevronUp className="w-3 h-3" /></span>
-              ) : (
-                <span className="flex items-center gap-1">Read more <ChevronDown className="w-3 h-3" /></span>
-              )}
-            </Button>
-          )}
         </div>
       </CardContent>
 
