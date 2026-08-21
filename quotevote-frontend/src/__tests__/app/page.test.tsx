@@ -5,7 +5,7 @@
  * auth redirect, smooth-scroll, accessibility, and inline search.
  */
 
-import { render, screen, waitFor } from '../utils/test-utils';
+import { render, screen } from '../utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { LandingPageContent } from '@/app/components/LandingPage/LandingPageContent';
 import { useAppStore } from '@/store';
@@ -278,7 +278,7 @@ describe('LandingPage', () => {
       expect(screen.getByText(/search unavailable/i)).toBeInTheDocument();
     });
 
-    it('redirects to /dashboard/explore when clicking a content result', async () => {
+    it('redirects to / when clicking a content result', async () => {
       mockUseQuery.mockReturnValue({
         loading: false,
         error: undefined,
@@ -300,7 +300,7 @@ describe('LandingPage', () => {
       expect(resultBtn).not.toBeNull();
       await user.click(resultBtn!);
 
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/explore?q=Democracy%20Matters');
+      expect(mockPush).toHaveBeenCalledWith('/?q=Democracy%20Matters');
     });
 
     it('does not show dropdown when query is empty', () => {
@@ -635,7 +635,7 @@ describe('LandingPage', () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('redirects authenticated users to /dashboard/explore', async () => {
+    it('does NOT redirect authenticated users since root is home', async () => {
       useAppStore.getState().setUserData({
         id: 'user-1',
         username: 'testuser',
@@ -644,9 +644,7 @@ describe('LandingPage', () => {
 
       renderLandingPage();
 
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/explore');
-      });
+      expect(mockPush).not.toHaveBeenCalled();
     });
   });
 

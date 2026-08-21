@@ -31,7 +31,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
-import { useAppStore } from '@/store';
 import { SEARCH, GET_FEATURED_POSTS } from '@/graphql/queries';
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -165,18 +164,11 @@ export function LandingPageContent({
   progressPct = 50,
 }: LandingPageContentProps) {
   const router = useRouter();
-  const user = useAppStore((state) => state.user.data);
 
   const stats = [
     { value: totalRaised, label: 'Raised in donations', icon: Heart },
     ...baseStats,
   ];
-
-  useEffect(() => {
-    if (user?.id) {
-      router.push('/dashboard/explore');
-    }
-  }, [user, router]);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#eef4f9' }} data-testid="landing-page">
@@ -1595,7 +1587,7 @@ function HeroSearch({ router }: HeroSearchProps) {
       router.push(toAppPostUrl(item.url));
       return;
     }
-    router.push(`/dashboard/explore?q=${encodeURIComponent(item.title)}`);
+    router.push(`/?q=${encodeURIComponent(item.title)}`);
   };
 
   const handleCreatorClick = (creator: CreatorResult) => {
@@ -1755,7 +1747,7 @@ function HeroSearch({ router }: HeroSearchProps) {
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    router.push(`/dashboard/explore?q=${encodeURIComponent(debouncedQuery)}`);
+                    router.push(`/?q=${encodeURIComponent(debouncedQuery)}`);
                   }}
                   className="text-sm font-medium transition-colors hover:underline"
                   style={{ color: 'var(--color-primary)' }}

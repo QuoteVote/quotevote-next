@@ -300,12 +300,12 @@ test.describe('E2E-CHAT-008 Chat Search', () => {
     await expect(submitBtn).toBeEnabled();
 
     // Click submit and wait for navigation
-    console.log('TEST PROGRESS: Clicking submit and waiting for /dashboard/explore');
+    console.log('TEST PROGRESS: Clicking submit and waiting for /');
     await submitBtn.click({ force: true });
     try {
-      await page.waitForURL('**/dashboard/explore', { timeout: 15000 });
+      await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 15000 });
     } catch (e) {
-      console.log('TEST PROGRESS: Navigation to /dashboard/explore timed out!');
+      console.log('TEST PROGRESS: Navigation to / timed out!');
       console.log('Current URL:', page.url());
       const bodyText = await page.innerText('body');
       console.log('Body Text:', bodyText);

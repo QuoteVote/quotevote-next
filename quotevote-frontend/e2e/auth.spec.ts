@@ -274,8 +274,8 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
 
     await loginButton.click({ force: true });
 
-    // 8. Verify navigation to the authenticated experience /dashboard/explore
-    await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
+    // 8. Verify navigation to the authenticated experience /
+    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 15000 });
 
     // 9. Confirm the new user is authenticated
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
@@ -286,7 +286,7 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
 
     // 10. Confirm session persists after page reload
     await page.reload();
-    await page.waitForURL("**/dashboard/explore", { timeout: 15000 });
+    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 15000 });
     await expect(authNav).toBeVisible();
     await expect(profileMenu).toBeVisible();
 

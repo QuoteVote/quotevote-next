@@ -61,7 +61,7 @@ describe('LoginPageContent', () => {
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() => {
       expect(mockLoginUser).toHaveBeenCalledWith('test@example.com', 'password123')
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/explore')
+      expect(mockPush).toHaveBeenCalledWith('/')
     })
   })
 

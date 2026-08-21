@@ -5,8 +5,7 @@ import {
 
 describe('dashboard-routes', () => {
   describe('isGuestReadableDashboardRoute', () => {
-    it('allows explore and post routes', () => {
-      expect(isGuestReadableDashboardRoute('/dashboard/explore')).toBe(true)
+    it('allows post routes', () => {
       expect(isGuestReadableDashboardRoute('/dashboard/post/general/title/id')).toBe(true)
     })
 

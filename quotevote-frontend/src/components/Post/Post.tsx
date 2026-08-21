@@ -310,7 +310,7 @@ export default function Post({
     try {
       await deletePost({ variables: { postId: _id } })
       toast.success('Post deleted')
-      router.push('/dashboard/explore')
+      router.push('/')
     } catch (err) { toast.error(`Error: ${err instanceof Error ? err.message : 'Unknown'}`) }
   }
 
