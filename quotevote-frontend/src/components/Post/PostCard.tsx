@@ -64,7 +64,9 @@ function PostCardComponent({
   messageRoom,
   groupId,
   citationUrl,
+  attribution,
   searchKey,
+  compact = false,
 }: PostCardProps) {
   const router = useRouter()
   const setSelectedPost = useAppStore((state) => state.setSelectedPost)
@@ -257,6 +259,7 @@ function PostCardComponent({
     <article
       data-testid="post-card"
       data-post-title={title || ''}
+      data-compact={compact ? 'true' : undefined}
       className={cn('group/card rounded-[7px] cursor-pointer overflow-hidden bg-card')}
       style={{
         border: `2px solid ${CARD_THEME.borderColor}`,
@@ -286,7 +289,7 @@ function PostCardComponent({
     >
       {/* ── Vote + interactions row ── */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b border-border/30">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
           <button
             type="button"
             onClick={handleApprove}
@@ -317,50 +320,66 @@ function PostCardComponent({
             <span className={cn('font-bold', hasRejected ? 'text-white' : 'text-[#ff6060]')}>↓</span>
             <span className="tabular-nums">{downvoteCount}</span>
           </button>
-          <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted/30">
-            {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}
-          </span>
+          {!compact && (
+            <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted/30">
+              {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
 
-        <div
-          className="flex items-center gap-0.5"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            className={cn(
-              'p-1.5 rounded transition-colors',
-              isBookmarked
-                ? 'text-amber-500'
-                : 'text-muted-foreground/60 hover:text-amber-500 hover:bg-amber-500/10'
-            )}
-            onClick={handleBookmark}
-            aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+        {compact ? (
+          <span className="text-xs text-muted-foreground px-2 py-0.5 rounded-full bg-muted/40 shrink-0">
+            {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}
+          </span>
+        ) : (
+          <div
+            className="flex items-center gap-0.5"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           >
-            <Bookmark className="size-4" fill={isBookmarked ? 'currentColor' : 'none'} />
-          </button>
-          <button
-            type="button"
-            className="p-1.5 rounded text-muted-foreground/60 hover:text-[#52b274] hover:bg-[#52b274]/10 transition-colors"
-            onClick={handleShare}
-            aria-label="Share"
-          >
-            <Share2 className="size-4" />
-          </button>
-        </div>
+            <button
+              type="button"
+              className={cn(
+                'p-1.5 rounded transition-colors',
+                isBookmarked
+                  ? 'text-amber-500'
+                  : 'text-muted-foreground/60 hover:text-amber-500 hover:bg-amber-500/10'
+              )}
+              onClick={handleBookmark}
+              aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+            >
+              <Bookmark className="size-4" fill={isBookmarked ? 'currentColor' : 'none'} />
+            </button>
+            <button
+              type="button"
+              className="p-1.5 rounded text-muted-foreground/60 hover:text-[#52b274] hover:bg-[#52b274]/10 transition-colors"
+              onClick={handleShare}
+              aria-label="Share"
+            >
+              <Share2 className="size-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Main content ── */}
-      <div className="px-4 pt-3 pb-3">
-        {/* Title */}
-        <h3 className="text-xl font-bold text-foreground leading-snug mb-2 break-words group-hover/card:text-[#52b274] transition-colors">
+      <div className={cn('px-4 pt-3', compact ? 'pb-2' : 'pb-3')}>
+        <h3
+          className={cn(
+            'font-bold text-foreground leading-snug mb-2 break-words group-hover/card:text-[#52b274] transition-colors',
+            compact ? 'text-lg text-center' : 'text-xl'
+          )}
+        >
           <HighlightText text={title || 'Untitled'} highlightTerms={searchKey || ''} />
         </h3>
 
-        {/* Badges: group + citation */}
-        {(groupId && groupData?.group) || citationUrl ? (
-          <div className="flex items-center flex-wrap gap-1.5 mb-3">
+        {(groupId && groupData?.group) || citationUrl || (compact && attribution) ? (
+          <div
+            className={cn(
+              'flex items-center flex-wrap gap-1.5',
+              compact ? 'justify-center mb-1' : 'mb-3'
+            )}
+          >
             {groupId && groupData?.group && (
               <span className="text-[10px] font-semibold text-[#52b274] bg-[rgba(82,178,116,0.1)] border border-[rgba(82,178,116,0.2)] px-2 py-0.5 rounded-full uppercase tracking-wide">
                 #{groupData.group.title}
@@ -378,30 +397,36 @@ function PostCardComponent({
                 Source: {getDomain(citationUrl)}
               </a>
             )}
+            {compact && attribution ? (
+              <span className="text-xs italic text-muted-foreground">— {attribution}</span>
+            ) : null}
           </div>
         ) : null}
 
-        {/* Body */}
-        <div
-          className={cn(
-            'text-base text-muted-foreground leading-relaxed whitespace-pre-line',
-            shouldShowButton && !isExpanded && 'line-clamp-4'
-          )}
-        >
-          {displayText}
-        </div>
-        {shouldShowButton && (
-          <button
-            type="button"
-            className="text-[#52b274] text-sm font-medium hover:underline mt-2"
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsExpanded(!isExpanded)
-            }}
-            aria-expanded={isExpanded}
-          >
-            {isExpanded ? 'Show Less' : 'Show More'}
-          </button>
+        {!compact && (
+          <>
+            <div
+              className={cn(
+                'text-base text-muted-foreground leading-relaxed whitespace-pre-line',
+                shouldShowButton && !isExpanded && 'line-clamp-4'
+              )}
+            >
+              {displayText}
+            </div>
+            {shouldShowButton && (
+              <button
+                type="button"
+                className="text-[#52b274] text-sm font-medium hover:underline mt-2"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsExpanded(!isExpanded)
+                }}
+                aria-expanded={isExpanded}
+              >
+                {isExpanded ? 'Show Less' : 'Show More'}
+              </button>
+            )}
+          </>
         )}
       </div>
 

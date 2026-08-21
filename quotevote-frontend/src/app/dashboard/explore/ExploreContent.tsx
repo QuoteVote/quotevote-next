@@ -254,7 +254,8 @@ export default function ExploreContent() {
   return (
     <div
       className={cn(
-        '-mx-4 md:-mx-4 min-h-[calc(100vh-60px)]',
+        'min-h-[calc(100vh-60px)]',
+        'md:-mx-4',
         'lg:pl-[300px] xl:pl-[340px]',
         isLoggedIn && 'xl:pr-[360px] 2xl:pr-[420px]'
       )}

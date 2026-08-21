@@ -213,7 +213,7 @@ export function ProfileView({
         {activeTab === 'about' && (
           <div className="mt-4 space-y-4" data-testid="profile-about-section">
             <Card>
-              <CardContent className="pt-6 space-y-2">
+              <CardContent className="pt-1 space-y-2">
                 <h3 className="text-sm font-semibold text-foreground">About</h3>
                 {profileUser.bio?.trim() ? (
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
