@@ -23,7 +23,7 @@ async function mockGraphQLOperation(
       await route.fallback();
       return;
     }
-    const payload: any = {};
+    const payload: { data?: object; errors?: object[] } = {};
     if (responseData !== null) payload.data = responseData;
     if (errorData) payload.errors = errorData;
 
@@ -82,7 +82,7 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
     const receivedTab = page.getByRole('tab', { name: /Received Requests/i });
     await expect(receivedTab).toBeVisible();
 
-    const isMobile = page.viewportSize()?.width! < 768;
+    const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
     
     if (isMobile) {
       await expect(page.locator('.md\\:hidden').getByText(visitorEmail)).toBeVisible();
@@ -154,7 +154,7 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
     const sentTab = page.getByRole('tab', { name: /Sent Invites/i });
     await sentTab.click();
 
-    const isMobile = page.viewportSize()?.width! < 768;
+    const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
     if (isMobile) {
       await expect(page.locator('.md\\:hidden').getByText(visitorEmail)).toBeVisible();
       await expect(page.locator('.md\\:hidden').getByText("Accepted")).toBeVisible();
@@ -230,7 +230,7 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
 
     await expect(page.getByText("Invitation declined")).toBeVisible();
 
-    const isMobile = page.viewportSize()?.width! < 768;
+    const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
     if (isMobile) {
       await expect(page.locator('.md\\:hidden').getByText("Declined")).toBeVisible();
     } else {
