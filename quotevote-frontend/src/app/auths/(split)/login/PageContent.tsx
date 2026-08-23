@@ -37,7 +37,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 export default function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/dashboard/explore'
+  const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
   const setUserData = useAppStore((s) => s.setUserData)
   const [submitting, setSubmitting] = useState(false)
   const [tosAccepted, setTosAccepted] = useState(false)
@@ -64,7 +64,7 @@ export default function LoginPageContent() {
       const result = await loginUser(values.email, values.password)
       if (result.success && result.data) {
         setUserData(result.data.user as Record<string, unknown>)
-        router.push(callbackUrl.startsWith('/') ? callbackUrl : '/dashboard/explore')
+        router.push(callbackUrl.startsWith('/') ? callbackUrl : '/')
       } else {
         toast.error(result.error || 'Login failed')
       }

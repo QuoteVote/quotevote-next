@@ -140,7 +140,7 @@ test.describe("RC1-004 Directory posts navigate to post detail", () => {
       await expect(page).toHaveURL(new RegExp(`/dashboard${post.url}$`));
 
       await page.goBack();
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL((url) => url.pathname === '/');
       await expect(cards.first()).toBeVisible();
     }
   });

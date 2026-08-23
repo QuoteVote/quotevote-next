@@ -21,7 +21,7 @@ export default function ErrorPageContent(): React.ReactNode {
   const fromSignup = searchParams.get('from') === 'signup';
 
   const handleBack = () => {
-    router.push('/dashboard/explore');
+    router.push('/');
   };
 
   return (

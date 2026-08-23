@@ -2,7 +2,7 @@
  * Public directory at `/` (#454)
  *
  * Covers: compact header, search/filters, Latest default,
- * no marketing landing sections, and signed-in redirect.
+ * and no marketing landing sections.
  */
 
 import { render, screen } from '../utils/test-utils'
@@ -78,13 +78,13 @@ describe('Public directory (`/`)', () => {
     expect(screen.getByTestId('filter-date')).toBeInTheDocument()
   })
 
-  it('redirects signed-in users to Explore', () => {
+  it('does not redirect signed-in users since root is home', () => {
     useAppStore.getState().setUserData({
       _id: 'user-1',
       username: 'tester',
       name: 'Tester',
     })
     renderDirectory()
-    expect(mockPush).toHaveBeenCalledWith('/dashboard/explore')
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })

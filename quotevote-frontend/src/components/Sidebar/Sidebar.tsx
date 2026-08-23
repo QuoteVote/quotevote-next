@@ -101,7 +101,7 @@ export function Sidebar({
 
   // Check if route is active
   const isActiveRoute = (routePath: string): boolean => {
-    return pathname === routePath || pathname.startsWith(routePath + '/');
+    return routePath === '/' ? pathname === '/' : pathname === routePath || pathname.startsWith(routePath + '/');
   };
 
   // Create guest links

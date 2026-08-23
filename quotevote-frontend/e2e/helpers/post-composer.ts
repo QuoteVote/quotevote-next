@@ -42,10 +42,10 @@ export async function assertInvalidPostNotPublished(
   tagName = PUBLIC_TAG_NAME
 ): Promise<void> {
   const surfaces = [
-    '/dashboard/explore',
+    '/',
     '/dashboard/post',
     '/dashboard/profile',
-    `/dashboard/explore?q=${encodeURIComponent(tagName)}`,
+    `/?q=${encodeURIComponent(tagName)}`,
   ];
 
   for (const path of surfaces) {
