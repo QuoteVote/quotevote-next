@@ -43,7 +43,7 @@ test.describe('E2E-POST-001: Create Public Post', () => {
 
     // Precondition: user is already authenticated (storageState from global setup)
     await page.goto('/');
-    await expect(page).toHaveURL(/\/(?!dashboard\/explore)/);
+    await expect(page).toHaveURL((url) => url.pathname === '/');
 
     // Step: open composer
     await openPostComposer(page);
@@ -67,7 +67,7 @@ test.describe('E2E-POST-001: Create Public Post', () => {
 
     await expect(page.getByTestId('post-composer')).toBeHidden({ timeout: 30_000 });
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
-    await expect(page).toHaveURL(/\/(?!dashboard\/explore)/, { timeout: 30_000 });
+    await expect(page).toHaveURL((url) => url.pathname === '/', { timeout: 30_000 });
 
     // Expected: post appears in a relevant list (explore/home feed)
     const postCard = page.getByTestId('post-card').filter({ hasText: postTitle }).first();
@@ -106,7 +106,7 @@ test.describe('E2E-POST-003: Post Validation', () => {
 
     // Step 1: Log in as authorUser (precondition via global-setup storageState)
     await page.goto('/');
-    await expect(page).toHaveURL(/\/(?!dashboard\/explore)/);
+    await expect(page).toHaveURL((url) => url.pathname === '/');
 
     // Step 2: Open the post composer
     await openPostComposer(page);

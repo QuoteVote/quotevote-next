@@ -20,13 +20,14 @@ import { middleware } from '../../../middleware'
 import { NextResponse } from 'next/server'
 
 function createMockRequest(pathname: string, tokenValue?: string) {
-  const url = `http://localhost:3000${pathname}`
+  const parsedUrl = new URL(pathname, 'http://localhost:3000')
   return {
     nextUrl: {
-      pathname,
-      searchParams: new URLSearchParams(),
+      pathname: parsedUrl.pathname,
+      search: parsedUrl.search,
+      searchParams: parsedUrl.searchParams,
     },
-    url,
+    url: parsedUrl.toString(),
     cookies: {
       get: (name: string) =>
         name === 'qv-token' && tokenValue ? { value: tokenValue } : undefined,
@@ -45,6 +46,15 @@ describe('Middleware', () => {
       expect(NextResponse.redirect).toHaveBeenCalled()
       const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
       expect(redirectUrl.pathname).toBe('/')
+      expect(redirectUrl.search).toBe('')
+    })
+
+    it('redirects /dashboard/explore with query parameters preserved', () => {
+      middleware(createMockRequest('/dashboard/explore?q=democracy&tab=latest'))
+      expect(NextResponse.redirect).toHaveBeenCalled()
+      const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
+      expect(redirectUrl.pathname).toBe('/')
+      expect(redirectUrl.search).toBe('?q=democracy&tab=latest')
     })
 
     it('allows unauthenticated users to view public post pages', () => {

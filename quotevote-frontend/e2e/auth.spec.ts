@@ -232,7 +232,7 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
  * - Inputs accept valid text
  * - Terms checkboxes enable submission
  * - Form submits without errors
- * - Application authenticates against backend and navigates to the dashboard (/dashboard/explore)
+ * - Application authenticates against backend and navigates to the home feed (/)
  * - Authenticated navigation / profile menu controls appear
  * - Authenticated session persists across page reload
  * - Works across desktop and mobile viewports
@@ -303,7 +303,7 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     await submitButton.click();
 
     // 7. Confirm user becomes authenticated and routes to the authenticated dashboard
-    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
+    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30000 });
 
     // 8. Confirm authenticated navigation and profile controls appear
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
@@ -314,7 +314,7 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
 
     // 9. Confirm session persists after page reload
     await page.reload();
-    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
+    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30000 });
     await expect(authNav).toBeVisible();
     await expect(profileMenu).toBeVisible();
 
@@ -346,7 +346,7 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
 
-    await page.waitForURL("**/dashboard/explore", { timeout: 30000 });
+    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30000 });
 
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
     await expect(authNav).toBeVisible();

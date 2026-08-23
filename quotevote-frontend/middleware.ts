@@ -27,11 +27,11 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 }
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const token = request.cookies.get('qv-token')?.value;
 
   if (pathname === '/dashboard/explore' || pathname.startsWith('/dashboard/explore/')) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL(`/${search}`, request.url));
   }
 
   if (pathname.startsWith('/dashboard')) {

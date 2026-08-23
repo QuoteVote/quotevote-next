@@ -159,11 +159,14 @@ export default function DashboardLayout({
     [roomsData]
   );
 
-  const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
+  const isActive = (path: string) =>
+    path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(path + '/');
   const isMobilePostDetail = /^\/dashboard\/post\/[^/]+\/[^/]+\/[^/]+/.test(pathname);
 
   useEffect(() => {
-    const match = NAV_PAGES.find((l) => pathname.startsWith(l.path));
+    const match = NAV_PAGES.find((l) =>
+      l.path === '/' ? pathname === '/' : pathname === l.path || pathname.startsWith(l.path + '/')
+    );
     setSelectedPage(match?.page || 'home');
   }, [pathname, setSelectedPage]);
 
