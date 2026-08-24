@@ -14,7 +14,7 @@ export function StickyPaginationWrapper({
         {children}
       </div>
       {pagination && (
-        <div className="border-t border-border/40">
+        <div className="border-t border-border/40 mt-2">
           {pagination}
         </div>
       )}

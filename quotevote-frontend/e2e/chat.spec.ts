@@ -300,12 +300,12 @@ test.describe('E2E-CHAT-008 Chat Search', () => {
     await expect(submitBtn).toBeEnabled();
 
     // Click submit and wait for navigation
-    console.log('TEST PROGRESS: Clicking submit and waiting for /dashboard/explore');
+    console.log('TEST PROGRESS: Clicking submit and waiting for /');
     await submitBtn.click({ force: true });
     try {
-      await page.waitForURL('**/dashboard/explore', { timeout: 15000 });
+      await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 15000 });
     } catch (e) {
-      console.log('TEST PROGRESS: Navigation to /dashboard/explore timed out!');
+      console.log('TEST PROGRESS: Navigation to / timed out!');
       console.log('Current URL:', page.url());
       const bodyText = await page.innerText('body');
       console.log('Body Text:', bodyText);
@@ -316,10 +316,10 @@ test.describe('E2E-CHAT-008 Chat Search', () => {
     if (isMobile) {
       console.log('TEST PROGRESS: Mobile navigation to Messages');
       await expect(page.locator('[data-testid="chat-page"]').filter({ visible: true })).toHaveCount(0);
-      // Click Account/profile menu button in mobile bottom nav
-      await page.locator('button[aria-label="Account menu"]').filter({ visible: true }).click({ force: true });
-      // Click "Messages" option in the dropdown menu
-      await page.locator('[role="menuitem"]:has-text("Messages")').click({ force: true });
+      await page
+        .getByRole('navigation', { name: 'Mobile navigation' })
+        .getByRole('button', { name: 'Messages' })
+        .click({ force: true });
     }
 
     // Verify chat page loads

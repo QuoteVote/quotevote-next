@@ -1,12 +1,9 @@
 /**
- * RC1-004 — Featured posts should navigate to post detail page
- *
- * Clicking a featured post card on the homepage should open the
- * corresponding post detail route.
+ * Directory cards on `/` should open the post detail page (#454).
  */
 import { test, expect, type Page } from "@playwright/test";
 
-const FEATURED_POSTS = [
+const DIRECTORY_POSTS = [
   {
     __typename: "Post",
     _id: "feat-e2e-1",
@@ -20,6 +17,11 @@ const FEATURED_POSTS = [
     created: new Date().toISOString(),
     url: "/post/general/e2e-featured-post-one/feat-e2e-1",
     citationUrl: null,
+    attribution: null,
+    rejectedBy: [],
+    approvedBy: [],
+    enable_voting: true,
+    featuredSlot: null,
     creator: {
       __typename: "User",
       _id: "user-1",
@@ -46,6 +48,11 @@ const FEATURED_POSTS = [
     created: new Date().toISOString(),
     url: "/post/climate/e2e-featured-post-two/feat-e2e-2",
     citationUrl: null,
+    attribution: null,
+    rejectedBy: [],
+    approvedBy: [],
+    enable_voting: true,
+    featuredSlot: null,
     creator: {
       __typename: "User",
       _id: "user-2",
@@ -61,7 +68,7 @@ const FEATURED_POSTS = [
   },
 ] as const;
 
-async function mockFeaturedPostsGraphQL(page: Page) {
+async function mockDirectoryPostsGraphQL(page: Page) {
   await page.route("**/graphql", async (route) => {
     const request = route.request();
     if (request.method() !== "POST") {
@@ -78,7 +85,7 @@ async function mockFeaturedPostsGraphQL(page: Page) {
       return;
     }
 
-    if (!query.includes("featuredPosts")) {
+    if (!query.includes("topPosts")) {
       await route.fallback();
       return;
     }
@@ -88,13 +95,13 @@ async function mockFeaturedPostsGraphQL(page: Page) {
       contentType: "application/json",
       body: JSON.stringify({
         data: {
-          featuredPosts: {
+          posts: {
             __typename: "Posts",
-            entities: FEATURED_POSTS,
+            entities: DIRECTORY_POSTS,
             pagination: {
               __typename: "Pagination",
-              total_count: FEATURED_POSTS.length,
-              limit: 10,
+              total_count: DIRECTORY_POSTS.length,
+              limit: 20,
               offset: 0,
             },
           },
@@ -104,40 +111,36 @@ async function mockFeaturedPostsGraphQL(page: Page) {
   });
 }
 
-test.describe("RC1-004 Featured posts navigate to post detail", () => {
-  // Homepage featured posts are for logged-out visitors; clear stored auth.
+test.describe("RC1-004 Directory posts navigate to post detail", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test.beforeEach(async ({ page }) => {
-    await mockFeaturedPostsGraphQL(page);
+    await mockDirectoryPostsGraphQL(page);
   });
 
-  test("clicking each featured post card opens the corresponding post page", async ({
+  test("clicking each directory card opens the corresponding post page", async ({
     page,
   }) => {
     await page.goto("/");
 
-    const cards = page.getByTestId("featured-post-card");
-    await expect(cards).toHaveCount(FEATURED_POSTS.length);
+    const cards = page.getByTestId("post-card");
+    await expect(cards).toHaveCount(DIRECTORY_POSTS.length);
 
-    for (const post of FEATURED_POSTS) {
+    for (const post of DIRECTORY_POSTS) {
       await page.goto("/");
-      await expect(cards).toHaveCount(FEATURED_POSTS.length);
+      await expect(cards).toHaveCount(DIRECTORY_POSTS.length);
 
-      const card = page.getByTestId("featured-post-card").filter({
+      const card = page.getByTestId("post-card").filter({
         hasText: post.title,
       });
       await expect(card).toBeVisible();
-      await expect(card).toHaveAttribute(
-        "href",
-        `/dashboard${post.url.replace(/\?/g, "")}`
-      );
+      await expect(card).not.toHaveText(post.text);
 
       await card.click();
       await expect(page).toHaveURL(new RegExp(`/dashboard${post.url}$`));
 
       await page.goBack();
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL((url) => url.pathname === '/');
       await expect(cards.first()).toBeVisible();
     }
   });

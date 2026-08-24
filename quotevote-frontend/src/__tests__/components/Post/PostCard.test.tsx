@@ -208,4 +208,68 @@ describe('PostCard Component', () => {
       expectBlueCard(container)
     })
   })
+
+  // RC1-030 / Issue #474: Short preview on content cards without 'Show More' link
+  describe('Body Preview Truncation (#474)', () => {
+    it('renders short text in full without ellipsis and without Show More button', () => {
+      const shortText = 'Short content under limit.'
+      render(<PostCard {...mockPostCardProps} text={shortText} />)
+
+      expect(screen.getByText(shortText)).toBeInTheDocument()
+      expect(screen.queryByText('Show More')).not.toBeInTheDocument()
+      expect(screen.queryByText('Show Less')).not.toBeInTheDocument()
+    })
+
+    it('truncates long text at 150 characters with ellipsis and does not render Show More button', () => {
+      const longText = 'A'.repeat(250)
+      const { container } = render(<PostCard {...mockPostCardProps} text={longText} />)
+
+      const expectedText = `${'A'.repeat(150)}...`
+      expect(screen.getByText(expectedText)).toBeInTheDocument()
+      expect(screen.queryByText('Show More')).not.toBeInTheDocument()
+      expect(screen.queryByText('Show Less')).not.toBeInTheDocument()
+
+      const bodyDiv = container.querySelector('.line-clamp-3')
+      expect(bodyDiv).toBeInTheDocument()
+    })
+  })
+
+  describe('Compact directory cards (#454)', () => {
+    it('hides body text, Show More, and bookmark/share actions', () => {
+      render(
+        <PostCard
+          {...mockPostCardProps}
+          compact
+          text="This body should not appear in the directory."
+        />
+      )
+
+      expect(screen.getByTestId('post-card')).toHaveAttribute('data-compact', 'true')
+      expect(
+        screen.queryByText('This body should not appear in the directory.')
+      ).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Show More' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Bookmark' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument()
+      expect(screen.getByText('Test Post Title')).toBeInTheDocument()
+    })
+
+    it('keeps votes, interaction count, and source attribution', () => {
+      render(
+        <PostCard
+          {...mockPostCardProps}
+          compact
+          citationUrl="https://arxiv.org/abs/123"
+          attribution="Ada Lovelace"
+          comments={[{ _id: 'c1', created: '2024-01-01T00:00:00Z', userId: 'u1' }]}
+        />
+      )
+
+      expect(screen.getByRole('button', { name: 'Support this post' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Disagree with this post' })).toBeInTheDocument()
+      expect(screen.getByText(/1 interaction/)).toBeInTheDocument()
+      expect(screen.getByText('Source: arxiv.org')).toBeInTheDocument()
+      expect(screen.getByText('— Ada Lovelace')).toBeInTheDocument()
+    })
+  })
 })

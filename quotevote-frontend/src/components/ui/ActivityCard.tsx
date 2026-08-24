@@ -30,10 +30,13 @@ function ActivityHeader({
   const time = moment(date).format('h:mm A')
 
   return (
-    <div className="flex justify-between items-center mb-2.5 ml-5">
+    <div
+      data-testid="activity-header"
+      className="flex flex-col items-start gap-0.5 mb-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2"
+    >
       <Button
         variant="ghost"
-        className="h-auto p-0 text-base font-medium hover:underline"
+        className="h-10 px-0 py-0 text-base font-medium hover:underline"
         onClick={(e) => {
           e.stopPropagation()
           if (handleRedirectToProfile) {
@@ -54,7 +57,6 @@ function ActivityContent({
   date,
   content,
   avatar,
-  width,
   handleRedirectToProfile,
   username,
   post,
@@ -63,14 +65,12 @@ function ActivityContent({
   date: string | number
   content: string
   avatar?: string | Record<string, unknown> | { src?: string; alt?: string }
-  width?: 'lg' | 'md' | 'sm' | 'xl' | 'xs' | number
   handleRedirectToProfile?: (username: string) => void
   username: string
   post?: Partial<{ title?: string; [key: string]: unknown }>
   activityType?: string
 }) {
-  const numericWidth = typeof width === 'number' ? width : width === 'lg' || width === 'xl' ? 600 : 400
-  const contentLength = numericWidth > 500 ? 1000 : 500
+  const PREVIEW_CHAR_LIMIT = 150
   const isPosted = activityType?.toUpperCase() === 'POSTED'
   const title = post?.title ? (isPosted ? post.title : post.title.substring(0, 100)) : ''
 
@@ -86,10 +86,10 @@ function ActivityContent({
     : (avatar as string | Record<string, unknown> | undefined)
 
   return (
-    <div className="flex gap-4 min-h-[130px]">
+    <div data-testid="activity-content" className="flex items-start gap-3 min-h-[130px]">
       <button
         type="button"
-        className="cursor-pointer shrink-0 rounded-full"
+        className="cursor-pointer shrink-0 rounded-full leading-none"
         onClick={(e) => {
           e.stopPropagation()
           if (handleRedirectToProfile) {
@@ -106,19 +106,19 @@ function ActivityContent({
           handleRedirectToProfile={handleRedirectToProfile}
         />
         {isPosted && title && (
-          <p className="ml-5 mb-2.5 text-base font-semibold cursor-pointer">
+          <p className="mb-2.5 text-base font-semibold cursor-pointer">
             {title}
           </p>
         )}
         {!isPosted && title && (
-          <p className="ml-5 mb-2.5 text-base cursor-pointer">
+          <p className="mb-2.5 text-base cursor-pointer">
             <span className="font-semibold">{activityType?.toUpperCase()}</span>
             {' on '}
             <span className="italic">{title}</span>
           </p>
         )}
-        <p className="ml-5 mb-2.5 text-base cursor-pointer">
-          &quot;{content.length > 1000 ? `${content.slice(0, contentLength)}...` : content}&quot;
+        <p className="ml-5 mb-2.5 text-base cursor-pointer line-clamp-3">
+          &quot;{content.length > PREVIEW_CHAR_LIMIT ? `${content.slice(0, PREVIEW_CHAR_LIMIT)}...` : content}&quot;
         </p>
       </div>
     </div>
@@ -211,12 +211,11 @@ export const ActivityCard = memo(function ActivityCard({
       }}
       onClick={onCardClick}
     >
-      <CardContent className="pt-6">
+      <CardContent className="pt-1">
         <ActivityContent
           date={date}
           content={content}
           avatar={avatar}
-          width={width}
           username={username}
           handleRedirectToProfile={handleRedirectToProfile}
           post={post ? { ...post, title: post.title ?? undefined } : undefined}

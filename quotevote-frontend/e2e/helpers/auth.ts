@@ -19,5 +19,5 @@ export async function loginAsAuthorUser(page: Page): Promise<void> {
   const loginButton = page.getByRole('button', { name: /^login$/i });
   await loginButton.click();
 
-  await page.waitForURL('**/dashboard/explore', { timeout: 30_000 });
+  await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30_000 });
 }

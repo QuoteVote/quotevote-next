@@ -144,7 +144,12 @@ export default function MobileDiscussionSplit({
       >
         <div
           data-discussion-header
-          className="flex shrink-0 flex-col bg-card border-b border-border/60"
+          data-testid="discussion-resize-handle"
+          className="flex shrink-0 cursor-row-resize touch-none select-none flex-col bg-card border-b border-border/60"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
         >
           <div
             role="separator"
@@ -154,20 +159,17 @@ export default function MobileDiscussionSplit({
             aria-valuenow={quotePercent}
             aria-label="Resize quote and discussion panes"
             data-testid="discussion-divider"
-            className="flex cursor-row-resize touch-none select-none flex-col items-center"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
+            className="flex flex-col items-center"
           >
-            <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            <div className="mt-1 w-10 h-1 rounded-full bg-muted-foreground/30 [.neo-brutalism_&]:mt-0" />
           </div>
           <div className="flex items-center gap-2 px-4 pb-2">
             <span className="text-sm font-semibold text-foreground">{title}</span>
             <button
               type="button"
-              className="ml-auto inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/60"
+              className="ml-auto inline-flex size-8 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted/60"
               aria-label="Collapse discussion"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={handleCollapse}
             >
               <ChevronUp className="size-4" />
@@ -190,7 +192,7 @@ export default function MobileDiscussionSplit({
           )}
           style={{ height: DISCUSSION_BAR_HEIGHT_PX }}
         >
-          {/* Keep spacing aligned with the expanded divider area. We hide it in closed mode so it doesn't look draggable. */}
+          {/* Hidden spacer so the collapsed bar stays 56px without looking draggable. */}
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mt-1.5 mb-1 opacity-0" />
           <div className="flex w-full items-center gap-2 px-4 pb-2">
             <span className="text-sm font-semibold text-foreground">{title}</span>

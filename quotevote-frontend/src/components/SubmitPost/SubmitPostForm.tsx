@@ -237,7 +237,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
         apolloClient.cache.gc()
         setOpen(false)
         toast.success('Post created!', { description: 'Your quote has been published.' })
-        router.push('/dashboard/explore')
+        router.push('/')
       }
     } catch (err) {
       setIsCreatingTag(false)
