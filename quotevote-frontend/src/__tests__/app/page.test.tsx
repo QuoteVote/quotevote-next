@@ -72,6 +72,8 @@ describe('Public directory (`/`)', () => {
       'placeholder',
       'Search quotes, topics, sources...'
     )
+    // iOS Safari zooms focused inputs under 16px; text-base keeps mobile at 16px
+    expect(screen.getByTestId('directory-search')).toHaveClass('text-base')
     expect(screen.getByTestId('filter-latest')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('filter-filters')).toBeInTheDocument()
     expect(screen.getByTestId('filter-tag')).toBeInTheDocument()

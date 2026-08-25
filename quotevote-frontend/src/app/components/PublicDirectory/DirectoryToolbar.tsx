@@ -115,7 +115,7 @@ export function DirectoryToolbar(): ReactElement {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search quotes, topics, sources..."
-            className="w-full h-11 rounded-full border border-border bg-background pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#52b274]/40"
+            className="w-full h-11 rounded-full border border-border bg-background pl-10 pr-4 text-base md:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#52b274]/40"
           />
         </div>
       </form>
