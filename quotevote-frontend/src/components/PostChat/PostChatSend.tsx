@@ -160,7 +160,7 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
         className={cn(
           'min-h-[40px] max-h-[120px] flex-1 resize-none rounded-xl',
           'border border-border bg-muted/50',
-          'px-3 py-2.5 text-sm',
+          'px-3 py-2.5 text-base md:text-sm',
           'placeholder:text-muted-foreground/50',
           'focus:bg-background focus:ring-2 focus:ring-primary/20',
           submitting && 'opacity-50 cursor-not-allowed',

@@ -256,7 +256,7 @@ export default function MessageSend({
       >
         <textarea
           aria-label="message input"
-          className="min-h-[40px] max-h-[140px] flex-1 resize-none border-0 bg-transparent p-0 text-[0.9375rem] leading-[1.5] outline-none focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground"
+          className="min-h-[40px] max-h-[140px] flex-1 resize-none border-0 bg-transparent p-0 text-base leading-[1.5] outline-none focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground"
           placeholder={placeholder}
           value={text}
           disabled={isBlocked || isSending}
