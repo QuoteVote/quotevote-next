@@ -124,6 +124,8 @@ describe('PostChatSend', () => {
     render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
 
     expect(screen.getByPlaceholderText('Add to discussion...')).toBeInTheDocument()
+    // iOS Safari zooms focused inputs under 16px; text-base keeps mobile at 16px
+    expect(screen.getByPlaceholderText('Add to discussion...')).toHaveClass('text-base')
     expect(screen.getByLabelText('Send message')).toBeInTheDocument()
   })
 

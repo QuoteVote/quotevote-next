@@ -123,7 +123,7 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
 
         <Input
           ref={inputRef}
-          className="h-7 flex-1 border-0 bg-transparent px-1 py-0 text-xs focus-visible:ring-0"
+          className="h-7 flex-1 border-0 bg-transparent px-1 py-0 text-base md:text-sm focus-visible:ring-0"
           placeholder={
             addBuddyMode
               ? 'Search users to add as buddy...'

@@ -132,8 +132,8 @@ export default function CommentInput({
             placeholder="Post your reply..."
             className={
               isFocused || content
-                ? 'min-h-[80px] resize-none border-0 bg-transparent focus-visible:ring-0 px-3 pt-3 pb-1 text-[14px] placeholder:text-muted-foreground/50'
-                : 'min-h-[44px] resize-none border border-border/60 bg-muted/30 hover:bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:bg-card rounded-full px-4 text-[14px] placeholder:text-muted-foreground/50 transition-all'
+                ? 'min-h-[80px] resize-none border-0 bg-transparent focus-visible:ring-0 px-3 pt-3 pb-1 text-base md:text-sm placeholder:text-muted-foreground/50'
+                : 'min-h-[44px] resize-none border border-border/60 bg-muted/30 hover:bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:bg-card rounded-full px-4 text-base md:text-sm placeholder:text-muted-foreground/50 transition-all'
             }
             rows={isFocused ? 3 : 1}
           />

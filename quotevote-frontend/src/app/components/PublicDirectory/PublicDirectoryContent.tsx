@@ -1,3 +1,5 @@
+'use client'
+
 import { type ReactElement } from 'react'
 import { useSearchParams } from 'next/navigation'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
