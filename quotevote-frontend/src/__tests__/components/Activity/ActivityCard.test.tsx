@@ -26,22 +26,42 @@ describe('ActivityCard', () => {
     expect(screen.getByText(/Test activity content/i)).toBeInTheDocument()
   })
 
-  it('renders default background color when cardColor is not provided', () => {
-    const { container } = render(
-      <ActivityCard {...defaultProps} />
-    )
+  // RC1-028 / #380: POSTED activity cards share feed PostCard blue chrome.
+  describe('Card Chrome (RC1-028 / #380)', () => {
+    it('applies standard blue border chrome for POSTED cards', () => {
+      const { container } = render(<ActivityCard {...defaultProps} />)
 
-    const card = container.querySelector('[data-slot="card"]')
-    expect(card).toHaveStyle({ backgroundColor: '#FFFFFF' })
-  })
+      const card = container.querySelector('[data-slot="card"]') as HTMLElement
+      expect(card).toHaveAttribute('data-chrome', 'standard-blue')
+      expect(card.style.border).toContain('#56b3ff')
+      expect(card.style.borderBottom).toContain('#56b3ff')
+      // Fill stays theme/card — not a vote-colored background
+      expect(card.style.backgroundColor).toBe('')
+    })
 
-  it('renders with custom cardColor when provided', () => {
-    const { container } = render(
-      <ActivityCard {...defaultProps} cardColor="#52b274" />
-    )
+    it('keeps activity fill colors for non-POSTED cards', () => {
+      const { container } = render(
+        <ActivityCard
+          {...defaultProps}
+          activityType="UPVOTED"
+          cardColor="#52b274"
+        />
+      )
 
-    const card = container.querySelector('[data-slot="card"]')
-    expect(card).toHaveStyle({ backgroundColor: '#52b274' })
+      const card = container.querySelector('[data-slot="card"]') as HTMLElement
+      expect(card).toHaveAttribute('data-chrome', 'activity')
+      expect(card).toHaveStyle({ backgroundColor: '#52b274' })
+      expect(card.style.border).not.toContain('#56b3ff')
+    })
+
+    it('falls back to white fill for non-POSTED cards without cardColor', () => {
+      const { container } = render(
+        <ActivityCard {...defaultProps} activityType="COMMENTED" />
+      )
+
+      const card = container.querySelector('[data-slot="card"]')
+      expect(card).toHaveStyle({ backgroundColor: '#FFFFFF' })
+    })
   })
 
 
