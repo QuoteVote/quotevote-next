@@ -1,16 +1,18 @@
 import { ActivityContentType } from '@/types/store'
 
 /**
- * Activity Color Design System (RC1-008, RC1-009)
+ * Activity Color Design System (RC1-008, RC1-009, RC1-028 / #380)
  *
- * Mappings for profile activity cards and activity controls:
- * - POSTED: #FFFFFF (White)
+ * Fill colors for profile activity cards and activity controls:
+ * - POSTED: #FFFFFF (White fill; blue border chrome comes from ActivityCard)
  * - COMMENTED: #FDD835 (Yellow)
  * - UPVOTED / UP: #52b274 (Green)
  * - DOWNVOTED / DOWN: #FF6060 (Red)
  * - VOTED: #52b274 (Default green for generic vote activity)
  * - LIKED / HEARTED: #F16C99 (Pink)
  * - QUOTED: #E36DFA (Purple)
+ *
+ * Explore/Home feed PostCards never use these fills for chrome — they stay blue.
  */
 export const ACTIVITY_COLOR_MAP = {
   POSTED: '#FFFFFF',

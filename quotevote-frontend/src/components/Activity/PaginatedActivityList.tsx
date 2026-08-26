@@ -20,6 +20,8 @@ import { useAppStore } from '@/store'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { useRouter } from 'next/navigation'
 import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
+import { isPostedActivityType } from '@/lib/constants/postCardTheme'
+import { cn } from '@/lib/utils'
 import type { PaginatedActivityListProps, ActivityEntity } from '@/types/activity'
 
 function LoadActivityCard({
@@ -128,9 +130,15 @@ function LoadActivityCard({
     router.push(toAppPostUrl(url.replace(/\?/g, '')))
   }
 
+  // POSTED cards own blue PostCard chrome (#380); skip competing wrapper border.
+  const isPosted = isPostedActivityType(type)
+
   return (
     <div
-      className="rounded-lg shadow-lg border mb-2 w-full max-w-full overflow-x-hidden box-border"
+      className={cn(
+        'mb-2 w-full max-w-full overflow-x-hidden box-border',
+        !isPosted && 'rounded-lg shadow-lg border'
+      )}
       style={{ borderRadius: 7 }}
     >
       <ActivityCard

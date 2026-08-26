@@ -17,15 +17,12 @@ import useGuestGuard from '@/hooks/useGuestGuard'
 import HighlightText from '@/components/HighlightText/HighlightText'
 import { DisplayAvatar } from '@/components/DisplayAvatar'
 import type { PostCardProps } from '@/types/post'
+import { STANDARD_POST_CARD_THEME } from '@/lib/constants/postCardTheme'
 
 // Standard post cards are always blue. Vote state is communicated by the
 // up/down controls, not the card chrome. Green/red belong to profile activity
 // cards (see ActivityCard + getCardBackgroundColor).
-const CARD_THEME = {
-  borderColor: '#56b3ff',
-  shadow: '4px 4px 0px rgba(86,179,255,0.45)',
-  hoverShadow: '7px 7px 0px rgba(86,179,255,0.55)',
-} as const
+const CARD_THEME = STANDARD_POST_CARD_THEME
 
 type VoteStateMutationPost = {
   _id: string

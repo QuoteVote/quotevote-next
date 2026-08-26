@@ -8,6 +8,10 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import {
+  STANDARD_POST_CARD_THEME,
+  isPostedActivityType,
+} from '@/lib/constants/postCardTheme'
 import type { ActivityCardProps } from '@/types/activity'
 
 function ActivityHeader({
@@ -181,6 +185,9 @@ export const ActivityCard = memo(function ActivityCard({
   // name prop is kept for API compatibility but username is used for display
   void _name
   const interactions: unknown[] = []
+  // RC1-028 / #380: POSTED cards use the same blue chrome as feed PostCards.
+  // Colored fills stay for voted/commented/quoted activity only.
+  const isPosted = isPostedActivityType(activityType)
 
   if (!isEmpty(comments)) {
     interactions.push(...comments)
@@ -201,14 +208,42 @@ export const ActivityCard = memo(function ActivityCard({
   // ponytail: apply cardColor directly on Card style for profile activity context
   return (
     <Card
+      data-chrome={isPosted ? 'standard-blue' : 'activity'}
       className={cn(
-        'min-w-[350px] min-h-[200px] rounded-md cursor-pointer transition-shadow hover:shadow-md text-neutral-900',
-        'sm:max-w-full sm:min-w-full sm:w-full'
+        'min-w-[350px] min-h-[200px] cursor-pointer text-neutral-900',
+        'sm:max-w-full sm:min-w-full sm:w-full',
+        isPosted
+          ? 'rounded-[7px] overflow-hidden bg-card border-0 shadow-none'
+          : 'rounded-md border transition-shadow hover:shadow-md'
       )}
       style={{
-        backgroundColor: cardColor || '#FFFFFF',
+        backgroundColor: isPosted ? undefined : cardColor || '#FFFFFF',
         width: typeof width === 'number' ? `${width}px` : '100%',
+        ...(isPosted
+          ? {
+              border: `2px solid ${STANDARD_POST_CARD_THEME.borderColor}`,
+              borderBottom: `8px solid ${STANDARD_POST_CARD_THEME.borderColor}`,
+              boxShadow: STANDARD_POST_CARD_THEME.shadow,
+              transition: 'box-shadow 0.15s ease, transform 0.15s ease',
+            }
+          : {}),
       }}
+      onMouseEnter={
+        isPosted
+          ? (e) => {
+              e.currentTarget.style.boxShadow = STANDARD_POST_CARD_THEME.hoverShadow
+              e.currentTarget.style.transform = 'translate(-2px, -2px)'
+            }
+          : undefined
+      }
+      onMouseLeave={
+        isPosted
+          ? (e) => {
+              e.currentTarget.style.boxShadow = STANDARD_POST_CARD_THEME.shadow
+              e.currentTarget.style.transform = ''
+            }
+          : undefined
+      }
       onClick={onCardClick}
     >
       <CardContent className="pt-1">
