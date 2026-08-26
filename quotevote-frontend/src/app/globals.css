@@ -1010,6 +1010,29 @@ body {
   box-shadow: var(--nb-shadow-sm);
 }
 
+/* Profile bios stay readable on narrow screens without making the header
+   excessively tall. The component measures overflow before showing More. */
+.profile-bio-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.profile-bio-text-expanded {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+@media (min-width: 640px) {
+  .profile-bio-text {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+  }
+}
+
 /* ============================================================ */
 /* EYEBROW banner (src/app/components/Eyebrow/Eyebrow.tsx)       */
 /* ============================================================ */

@@ -61,16 +61,13 @@ export function ProfileView({
   loading,
   errorMessage,
 }: ProfileViewProps) {
-  const [activeTab, setActiveTab] = useState<'activity' | 'about'>('activity');
   const [selectedFilters, setSelectedFilters] = useState<ProfileActivityType[]>([]);
 
   const handleSelectAll = useCallback(() => {
-    setActiveTab('activity');
     setSelectedFilters([]);
   }, []);
 
   const handleToggleFilter = useCallback((filterId: ProfileActivityType) => {
-    setActiveTab('activity');
     setSelectedFilters((prev) => {
       if (prev.length === 0 || prev.length === ALL_ACTIVITY_TYPES.length) {
         return [filterId];
@@ -80,10 +77,6 @@ export function ProfileView({
       }
       return [...prev, filterId];
     });
-  }, []);
-
-  const handleSelectAbout = useCallback(() => {
-    setActiveTab('about');
   }, []);
 
   if (loading) return <LoadingSpinner />;
@@ -120,10 +113,7 @@ export function ProfileView({
   }
 
   const isAllActive =
-    activeTab === 'activity' &&
-    (selectedFilters.length === 0 || selectedFilters.length === ALL_ACTIVITY_TYPES.length);
-
-  const isAboutActive = activeTab === 'about';
+    selectedFilters.length === 0 || selectedFilters.length === ALL_ACTIVITY_TYPES.length;
 
   return (
     <div className="w-full pb-8">
@@ -154,10 +144,7 @@ export function ProfileView({
 
           {/* Activity Filters: Posts, Voted, Commented, Quoted */}
           {ACTIVITY_FILTERS.map(({ id, label }) => {
-            const isActive =
-              activeTab === 'activity' &&
-              !isAllActive &&
-              selectedFilters.includes(id);
+            const isActive = !isAllActive && selectedFilters.includes(id);
             const filterStyle = ACTIVITY_FILTER_STYLES[id];
 
             return (
@@ -179,62 +166,26 @@ export function ProfileView({
               </button>
             );
           })}
-
-          {/* About Filter */}
-          <button
-            type="button"
-            role="tab"
-            aria-selected={isAboutActive}
-            data-state={isAboutActive ? 'active' : 'inactive'}
-            onClick={handleSelectAbout}
-            className={cn(
-              'flex-1 h-full min-w-[50px] inline-flex items-center justify-center whitespace-nowrap px-1 sm:px-3 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border-b-2',
-              isAboutActive
-                ? 'border-primary text-foreground font-semibold'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            About
-          </button>
         </div>
 
         {/* Content Section */}
-        {activeTab === 'activity' && (
-          <div className="mt-4" data-testid="profile-activity-section">
-            <PaginatedActivityList
-              userId={profileUser._id}
-              activityEvent={isAllActive ? [] : selectedFilters}
-              defaultPageSize={15}
-              maxVisiblePages={5}
+        <div className="mt-4" data-testid="profile-activity-section">
+          <PaginatedActivityList
+            userId={profileUser._id}
+            activityEvent={isAllActive ? [] : selectedFilters}
+            defaultPageSize={15}
+            maxVisiblePages={5}
+          />
+        </div>
+
+        {profileUser.reputation ? (
+          <div className="mt-4" data-testid="profile-reputation-section">
+            <ReputationDisplay
+              reputation={profileUser.reputation}
+              onRefresh={() => window.location.reload()}
             />
           </div>
-        )}
-
-        {activeTab === 'about' && (
-          <div className="mt-4 space-y-4" data-testid="profile-about-section">
-            <Card>
-              <CardContent className="pt-1 space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">About</h3>
-                {profileUser.bio?.trim() ? (
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                    {profileUser.bio.trim()}
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground text-sm py-2">
-                    No about text yet
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {profileUser.reputation ? (
-              <ReputationDisplay
-                reputation={profileUser.reputation}
-                onRefresh={() => window.location.reload()}
-              />
-            ) : null}
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
