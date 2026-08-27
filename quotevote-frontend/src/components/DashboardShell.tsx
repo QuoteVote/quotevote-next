@@ -53,11 +53,11 @@ import { DashboardSidebars } from '@/components/DashboardSidebars';
 
 const NAV_PAGES = [
   { path: '/', page: 'home' },
-  { path: '/dashboard/post', page: 'post' },
-  { path: '/dashboard/profile', page: 'profile' },
-  { path: '/dashboard/notifications', page: 'notifications' },
-  { path: '/dashboard/settings', page: 'settings' },
-  { path: '/dashboard/control-panel', page: 'control-panel' },
+  { path: '/post', page: 'post' },
+  { path: '/profile', page: 'profile' },
+  { path: '/notifications', page: 'notifications' },
+  { path: '/settings', page: 'settings' },
+  { path: '/control-panel', page: 'control-panel' },
 ] as const;
 
 /* ------------------------------------------------------------------ */
@@ -144,7 +144,7 @@ export function DashboardShell({
 
   const isActive = (path: string) =>
     path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(path + '/');
-  const isMobilePostDetail = /^\/dashboard\/post\/[^/]+\/[^/]+\/[^/]+/.test(pathname);
+  const isMobilePostDetail = /^\/post\/[^/]+\/[^/]+\/[^/]+/.test(pathname);
 
   useEffect(() => {
     const match = NAV_PAGES.find((l) =>
@@ -283,7 +283,7 @@ export function DashboardShell({
                   </div>
                   <DropdownMenuSeparator className="m-0" />
                   <div className="p-1.5">
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/profile')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                    <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
                         <User className="size-4 text-muted-foreground" />
                       </div>
@@ -292,7 +292,7 @@ export function DashboardShell({
                         <p className="text-[11px] text-muted-foreground">View and edit profile</p>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                    <DropdownMenuItem onClick={() => router.push('/settings')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
                         <Settings2 className="size-4 text-muted-foreground" />
                       </div>
@@ -302,7 +302,7 @@ export function DashboardShell({
                       </div>
                     </DropdownMenuItem>
                     {isAdmin && (
-                      <DropdownMenuItem onClick={() => router.push('/dashboard/control-panel')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                      <DropdownMenuItem onClick={() => router.push('/control-panel')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#e8f5ee]">
                           <ShieldCheck className="size-4 text-[#52b274]" />
                         </div>
@@ -452,15 +452,15 @@ export function DashboardShell({
         {/* Notifications */}
         <button
           type="button"
-          onClick={() => requireAuthForAction(() => router.push('/dashboard/notifications'))}
+          onClick={() => requireAuthForAction(() => router.push('/notifications'))}
           className={cn(
             'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
-            isActive('/dashboard/notifications') ? 'text-[#52b274]' : 'text-muted-foreground'
+            isActive('/notifications') ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
           aria-label="Notifications"
         >
           <div className="relative">
-            <Bell className="size-[22px]" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
+            <Bell className="size-[22px]" fill={isActive('/notifications') ? 'currentColor' : 'none'} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -478,7 +478,7 @@ export function DashboardShell({
                 type="button"
                 className={cn(
                   'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
-                  isActive('/dashboard/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
+                  isActive('/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
                 )}
                 aria-label="Account menu"
                 data-testid="user-profile-menu"
@@ -489,14 +489,14 @@ export function DashboardShell({
                   size={24}
                   className={cn(
                     'size-6 transition-all',
-                    isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
+                    isActive('/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
                   )}
                 />
                 <span className="text-[10px] font-semibold">Profile</span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="end" sideOffset={8} className="w-56 mb-1">
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')} className="cursor-pointer gap-2.5 py-2.5">
+              <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer gap-2.5 py-2.5">
                 <User className="size-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Your Profile</span>
               </DropdownMenuItem>
@@ -511,12 +511,12 @@ export function DashboardShell({
                 </div>
                 <span className="text-sm font-medium">Messages</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer gap-2.5 py-2.5">
+              <DropdownMenuItem onClick={() => router.push('/settings')} className="cursor-pointer gap-2.5 py-2.5">
                 <Settings2 className="size-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Settings &amp; Privacy</span>
               </DropdownMenuItem>
               {isAdmin && (
-                <DropdownMenuItem onClick={() => router.push('/dashboard/control-panel')} className="cursor-pointer gap-2.5 py-2.5">
+                <DropdownMenuItem onClick={() => router.push('/control-panel')} className="cursor-pointer gap-2.5 py-2.5">
                   <ShieldCheck className="size-4 text-[#52b274]" />
                   <span className="text-sm font-medium text-[#52b274]">Admin Panel</span>
                 </DropdownMenuItem>
@@ -552,7 +552,7 @@ export function DashboardShell({
           mobileDiscussionOpen ? 'pb-0' : 'pb-[60px]',
         )}
       >
-        {pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/settings') ? (
+        {pathname.startsWith('/profile') || pathname.startsWith('/settings') ? (
           <div
             className={cn(
               'lg:pl-[300px] xl:pl-[340px]',
@@ -566,11 +566,11 @@ export function DashboardShell({
           </div>
         ) : (
           <div
-            className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12 h-full md:h-auto')}
+            className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/post/') && 'md:px-8 lg:px-12 h-full md:h-auto')}
             style={{
-              maxWidth: pathname.startsWith('/dashboard/control-panel')
+              maxWidth: pathname.startsWith('/control-panel')
                 ? 'none'
-                : pathname.startsWith('/dashboard/post/')
+                : pathname.startsWith('/post/')
                   ? '1170px'
                   : '42rem',
             }}

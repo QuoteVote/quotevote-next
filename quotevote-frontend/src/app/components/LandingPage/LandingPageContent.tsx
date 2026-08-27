@@ -1587,7 +1587,7 @@ function HeroSearch({ router }: HeroSearchProps) {
   const handleCreatorClick = (creator: CreatorResult) => {
     setIsOpen(false);
     const profileSlug = creator.username || creator._id;
-    router.push(`/dashboard/profile/${profileSlug}`);
+    router.push(`/profile/${profileSlug}`);
   };
 
   return (

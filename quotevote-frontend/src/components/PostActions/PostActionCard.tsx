@@ -197,7 +197,7 @@ export default function PostActionCard({
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (username) router.push(`/dashboard/profile/${username}`)
+    if (username) router.push(`/profile/${username}`)
   }
 
   useEffect(() => {

@@ -232,7 +232,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
             {sameUser ? (
               <Button
                 variant="outline"
-                onClick={() => router.push('/dashboard/settings')}
+                onClick={() => router.push('/settings')}
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit Profile
@@ -304,14 +304,14 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
         {/* Stats row */}
         <div className="flex items-center gap-6">
           <button
-            onClick={() => router.push(`/dashboard/profile/${username}/followers`)}
+            onClick={() => router.push(`/profile/${username}/followers`)}
             className="cursor-pointer hover:underline text-sm text-foreground hover:scale-105 transition-transform"
           >
             <span className="font-extrabold text-base">{followersCount}</span>{' '}
             <span className="text-muted-foreground">Followers</span>
           </button>
           <button
-            onClick={() => router.push(`/dashboard/profile/${username}/following`)}
+            onClick={() => router.push(`/profile/${username}/following`)}
             className="cursor-pointer hover:underline text-sm text-foreground hover:scale-105 transition-transform"
           >
             <span className="font-extrabold text-base">{followingCount}</span>{' '}

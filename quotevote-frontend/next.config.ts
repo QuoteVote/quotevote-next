@@ -32,25 +32,8 @@ const nextConfig: NextConfig = {
   // Compress output
   compress: true,
 
-  // Redirect legacy URLs from the monorepo React Router app
   async redirects() {
-    return [
-      {
-        source: '/post/:path*',
-        destination: '/dashboard/post/:path*',
-        permanent: false,
-      },
-      {
-        source: '/Profile',
-        destination: '/dashboard/profile',
-        permanent: false,
-      },
-      {
-        source: '/Profile/:path*',
-        destination: '/dashboard/profile/:path*',
-        permanent: false,
-      },
-    ]
+    return []
   },
 
   // Security headers

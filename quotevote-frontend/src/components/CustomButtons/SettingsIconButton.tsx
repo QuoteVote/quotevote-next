@@ -39,7 +39,7 @@ export function SettingsIconButton({ fontSize }: SettingsIconButtonProps) {
   };
 
   const handleInviteControlPanel = () => {
-    router.push('/dashboard/control-panel');
+    router.push('/control-panel');
     setOpen(false);
   };
 

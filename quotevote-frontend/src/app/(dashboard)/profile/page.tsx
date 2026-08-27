@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
  * so the interactive ProfileController is rendered as a Client Component
  * within a Suspense boundary.
  *
- * Route: /dashboard/profile
+ * Route: /profile
  */
 export default function ProfilePage() {
   return (

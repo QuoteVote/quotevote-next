@@ -87,7 +87,7 @@ function Header({ room, stagedProfileUsername }: HeaderProps) {
       ? stagedProfileUsername ?? otherUsernameFromRoster ?? null
       : null
   const profileHref = profileUsername
-    ? `/dashboard/profile/${encodeURIComponent(profileUsername)}`
+    ? `/profile/${encodeURIComponent(profileUsername)}`
     : null
 
   const isBlocked = !!(

@@ -19,7 +19,7 @@ export function UserFollowDisplay({
       id="component-user-follow-display"
     >
       <Link
-        href={`/dashboard/profile/${username}`}
+        href={`/profile/${username}`}
         aria-label={`Open ${username} profile`}
         className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-2"
       >
@@ -31,7 +31,7 @@ export function UserFollowDisplay({
       </Link>
       <div className="flex-1 flex flex-col gap-1">
         <Link
-          href={`/dashboard/profile/${username}`}
+          href={`/profile/${username}`}
           className="font-medium hover:underline"
         >
           {username}
