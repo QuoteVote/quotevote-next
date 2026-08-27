@@ -6,7 +6,7 @@ import { GET_USER_REPORTS, GET_USERS } from '@/graphql/queries'
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
-  usePathname: () => '/dashboard/control-panel',
+  usePathname: () => '/control-panel',
 }))
 
 const usersMock = {

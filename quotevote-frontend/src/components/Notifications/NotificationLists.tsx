@@ -126,7 +126,7 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
     if (!ensureAuth()) return;
 
     if (notificationType === 'FOLLOW') {
-      router.push(`/dashboard/profile/${userBy.username}`);
+      router.push(`/profile/${userBy.username}`);
     } else if (post) {
       setSelectedPost(post._id);
       router.push(toAppPostUrl(post.url));

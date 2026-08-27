@@ -29,7 +29,7 @@ export function Notification({
 
   const handleClick = (): void => {
     if (setOpenPopUp) setOpenPopUp();
-    router.push('/dashboard/notifications');
+    router.push('/notifications');
   };
 
   return (

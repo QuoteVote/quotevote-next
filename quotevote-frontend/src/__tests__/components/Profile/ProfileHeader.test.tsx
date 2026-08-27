@@ -335,7 +335,7 @@ describe('ProfileHeader Component', () => {
         await act(async () => {
           fireEvent.click(button);
         });
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/settings');
+        expect(mockPush).toHaveBeenCalledWith('/settings');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();
@@ -851,7 +851,7 @@ describe('ProfileHeader Component', () => {
         await act(async () => {
           fireEvent.click(followersLink);
         });
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/followers');
+        expect(mockPush).toHaveBeenCalledWith('/profile/testuser/followers');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();
@@ -878,7 +878,7 @@ describe('ProfileHeader Component', () => {
         await act(async () => {
           fireEvent.click(followingLink);
         });
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/following');
+        expect(mockPush).toHaveBeenCalledWith('/profile/testuser/following');
       } else {
         // If ErrorBoundary caught an error, skip the navigation test
         expect(screen.queryByText(/Something went wrong/i)).toBeTruthy();

@@ -54,7 +54,7 @@ export const MOCK_POSTS: Post[] = [
     created: daysAgo(0),
     title: 'AI Will Create More Jobs Than It Destroys — But Not the Same Ones',
     text: 'Every major technological revolution has triggered the same fear: mass unemployment. The printing press, the loom, the assembly line — each one displaced workers in the short term but created entirely new industries within a generation. AI is following the same pattern, but the transition period matters enormously. We need to invest in retraining programs now, not after the displacement happens. The question is not whether AI will replace jobs, but whether we will prepare people for the jobs it creates.',
-    url: '/dashboard/post/general/ai-will-create-more-jobs/660a1b2c3d4e5f6a7b8c9d0e',
+    url: '/post/general/ai-will-create-more-jobs/660a1b2c3d4e5f6a7b8c9d0e',
     citationUrl: 'https://www.technologyreview.com/ai-workforce',
     approvedBy: [
       userIds.alex, userIds.philosophia, userIds.sarahJ, userIds.codeMaster,
@@ -112,7 +112,7 @@ export const MOCK_POSTS: Post[] = [
     created: daysAgo(1),
     title: 'Carbon Pricing Works — When It Is Designed Correctly',
     text: 'British Columbia introduced a revenue-neutral carbon tax in 2008 and saw emissions drop 15% while the economy grew faster than the rest of Canada. The key was returning every dollar to citizens through tax cuts, making it politically sustainable. Meanwhile, cap-and-trade systems in Europe struggled with over-allocation of permits. The lesson is clear: simplicity and transparency in carbon pricing builds public trust. We do not need perfect policy — we need good policy that people will actually support long enough to work.',
-    url: '/dashboard/post/general/carbon-pricing-works/660b2c3d4e5f6a7b8c9d0e1f',
+    url: '/post/general/carbon-pricing-works/660b2c3d4e5f6a7b8c9d0e1f',
     citationUrl: 'https://www.nature.com/articles/climate-policy',
     approvedBy: [
       userIds.alex, userIds.techguru, userIds.philosophia, userIds.sarahJ,
@@ -161,7 +161,7 @@ export const MOCK_POSTS: Post[] = [
     created: daysAgo(3),
     title: 'The Hidden Cost of "Free" Open Source Software',
     text: 'We built trillion-dollar industries on top of code maintained by unpaid volunteers. When the Log4j vulnerability hit in 2021, the world discovered that a critical piece of internet infrastructure was maintained by two people in their spare time. Open source is not free — the cost is just hidden and deferred. Companies that depend on open source should fund it proportionally. Some are starting to: GitHub Sponsors, Tidelift, and corporate OSPO teams are steps in the right direction, but we are nowhere close to sustainable.',
-    url: '/dashboard/post/general/hidden-cost-open-source/660c3d4e5f6a7b8c9d0e1f2a',
+    url: '/post/general/hidden-cost-open-source/660c3d4e5f6a7b8c9d0e1f2a',
     citationUrl: 'https://www.wired.com/open-source-sustainability',
     approvedBy: [
       userIds.alex, userIds.techguru, userIds.sarahJ, userIds.newsHound,
@@ -226,7 +226,7 @@ export const MOCK_POSTS: Post[] = [
     created: daysAgo(4),
     title: 'Algorithmic Feeds Are Optimizing for the Wrong Thing',
     text: 'Social media algorithms optimize for engagement, and the most engaging content is often the most outrageous. This is not a bug — it is the core business model. When your revenue depends on time-on-site, you are incentivized to show people content that makes them angry, anxious, or addicted. The alternative is not no algorithms at all. It is algorithms designed around different goals: understanding, connection, or even boredom. What if a feed algorithm optimized for the probability you would feel good about your time spent, rather than just the amount of it?',
-    url: '/dashboard/post/general/algorithmic-feeds-wrong/660d4e5f6a7b8c9d0e1f2a3b',
+    url: '/post/general/algorithmic-feeds-wrong/660d4e5f6a7b8c9d0e1f2a3b',
     approvedBy: [
       userIds.alex, userIds.techguru, userIds.civicMind, userIds.sarahJ,
       userIds.urbanPoet, userIds.newsHound, userIds.reader01, userIds.reader02,
@@ -276,7 +276,7 @@ export const MOCK_POSTS: Post[] = [
     created: daysAgo(5),
     title: 'Why Every City Should Have a 15-Minute Neighborhood Plan',
     text: 'The 15-minute city concept is simple: every resident should be able to reach essential services — groceries, healthcare, schools, parks — within a 15-minute walk or bike ride. Paris has been redesigning around this idea since 2020, and the results are striking: lower car usage, stronger local businesses, and measurably higher quality of life scores. The biggest obstacle is not urban design, it is zoning laws written in the 1950s that mandate single-use neighborhoods. We do not need flying cars — we need to let people live near where they work and shop.',
-    url: '/dashboard/post/general/15-minute-neighborhood/660e5f6a7b8c9d0e1f2a3b4c',
+    url: '/post/general/15-minute-neighborhood/660e5f6a7b8c9d0e1f2a3b4c',
     citationUrl: 'https://www.bloomberg.com/citylab/15-minute-city',
     approvedBy: [
       userIds.alex, userIds.philosophia, userIds.civicMind, userIds.sarahJ,
@@ -324,7 +324,7 @@ export const MOCK_POSTS: Post[] = [
     created: daysAgo(7),
     title: 'We Are Teaching Kids to Pass Tests, Not to Think',
     text: 'Finland consistently ranks among the top education systems in the world, and they have no standardized testing until age 16. Students spend more time in unstructured play, less time in the classroom, and teachers are given the autonomy to design their own curricula. Meanwhile, in the US and UK, we doubled down on standardized testing after No Child Left Behind and saw stagnant or declining outcomes. The evidence is overwhelming: creativity, critical thinking, and intrinsic motivation cannot be measured by bubble sheets. We need to trust teachers and let kids be curious.',
-    url: '/dashboard/post/general/teaching-kids-to-think/660f6a7b8c9d0e1f2a3b4c5d',
+    url: '/post/general/teaching-kids-to-think/660f6a7b8c9d0e1f2a3b4c5d',
     citationUrl: 'https://www.theatlantic.com/education/finland-model',
     approvedBy: [
       userIds.alex, userIds.techguru, userIds.philosophia, userIds.civicMind,
@@ -382,7 +382,7 @@ export const MOCK_POSTS: Post[] = [
     created: daysAgo(10),
     title: 'Orwell Predicted It, But Not Like This',
     text: '"It was a bright cold day in April, and the clocks were striking thirteen." Orwell imagined totalitarianism imposed from above — a boot stamping on a human face forever. What we got instead is closer to Huxley: we are drowning ourselves in information, distracted by an infinite scroll of entertainment, voluntarily surrendering our attention and data in exchange for convenience. The surveillance state did not need to be imposed. We bought the cameras, installed them in our homes, and carry them in our pockets. The dystopia is opt-in.',
-    url: '/dashboard/post/general/orwell-predicted-it/6610a7b8c9d0e1f2a3b4c5d6',
+    url: '/post/general/orwell-predicted-it/6610a7b8c9d0e1f2a3b4c5d6',
     citationUrl: 'https://www.gutenberg.org/ebooks/1984',
     approvedBy: [
       userIds.techguru, userIds.philosophia, userIds.sarahJ, userIds.codeMaster,
@@ -431,7 +431,7 @@ export const MOCK_POSTS: Post[] = [
     created: daysAgo(12),
     title: 'Crypto Needs Regulation — And That Is Not a Controversial Take',
     text: 'The collapse of FTX, Terra/Luna, and dozens of smaller exchanges proved what regulators warned about for years: an unregulated financial system will produce fraud at scale. Reasonable regulation does not mean banning crypto — it means requiring exchanges to prove their reserves, mandating disclosure of conflicts of interest, and treating stablecoins like the money market funds they effectively are. The crypto community is split between idealists who want decentralization and speculators who just want number-go-up. Good regulation protects the former from the latter.',
-    url: '/dashboard/post/general/crypto-needs-regulation/66117b8c9d0e1f2a3b4c5d6e',
+    url: '/post/general/crypto-needs-regulation/66117b8c9d0e1f2a3b4c5d6e',
     citationUrl: 'https://www.ft.com/crypto-regulation',
     approvedBy: [
       userIds.alex, userIds.techguru, userIds.civicMind, userIds.sarahJ,

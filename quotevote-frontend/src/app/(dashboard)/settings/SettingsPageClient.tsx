@@ -229,7 +229,7 @@ export default function SettingsPageClient() {
               <div className="flex items-center gap-4">
                 <button
                   type="button"
-                  onClick={() => router.push(`/dashboard/profile/${username}/avatar`)}
+                  onClick={() => router.push(`/profile/${username}/avatar`)}
                   className="group relative flex-shrink-0"
                   aria-label="Change avatar"
                 >
@@ -247,7 +247,7 @@ export default function SettingsPageClient() {
                   <p className="text-sm font-medium">Profile photo</p>
                   <button
                     type="button"
-                    onClick={() => router.push(`/dashboard/profile/${username}/avatar`)}
+                    onClick={() => router.push(`/profile/${username}/avatar`)}
                     className="text-sm text-primary hover:underline"
                   >
                     Change photo

@@ -97,7 +97,7 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
       <button
         type="button"
         className="flex-shrink-0 mt-0.5"
-        onClick={() => router.push(`/dashboard/profile/${username}`)}
+        onClick={() => router.push(`/profile/${username}`)}
       >
         <DisplayAvatar
           avatar={avatar as string | Record<string, unknown> | undefined}
@@ -113,7 +113,7 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
         <div className="flex items-center gap-1.5 mb-0.5">
           <button
             type="button"
-            onClick={() => router.push(`/dashboard/profile/${username}`)}
+            onClick={() => router.push(`/profile/${username}`)}
             className="text-[13px] font-bold text-foreground hover:underline truncate"
           >
             {name || username}

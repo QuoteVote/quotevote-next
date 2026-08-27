@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
-  isGuestReadableDashboardRoute,
-} from './src/lib/dashboard-routes';
+  isGuestReadableRoute,
+} from '@/lib/dashboard-routes';
 
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/auths/login', '/auths/signup', '/auths/request-access', '/auths/forgot-password'];
 
 // Auth sub-routes that remain accessible even when logged in
 const AUTH_ALWAYS_ACCESSIBLE = ['/auths/error-page', '/auths/investor-thanks', '/auths/password-reset'];
+
+// Authenticated route prefixes (require login unless guest-readable)
+const PROTECTED_PREFIXES = ['/post', '/profile', '/notifications', '/settings', '/control-panel', '/manage-invites'];
 
 /**
  * Lightweight JWT payload decode for edge runtime.
@@ -27,16 +30,14 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 }
 
 export function middleware(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+  const { pathname } = request.nextUrl;
   const token = request.cookies.get('qv-token')?.value;
 
-  if (pathname === '/dashboard/explore' || pathname.startsWith('/dashboard/explore/')) {
-    return NextResponse.redirect(new URL(`/${search}`, request.url));
-  }
-
-  if (pathname.startsWith('/dashboard')) {
+  // Auth gates for protected routes
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  if (isProtected) {
     if (!token) {
-      if (!isGuestReadableDashboardRoute(pathname)) {
+      if (!isGuestReadableRoute(pathname)) {
         const loginUrl = new URL('/auths/login', request.url);
         loginUrl.searchParams.set('callbackUrl', pathname);
         return NextResponse.redirect(loginUrl);
@@ -45,7 +46,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    if (pathname.startsWith('/dashboard/control-panel')) {
+    if (pathname.startsWith('/control-panel')) {
       const payload = token ? decodeJwtPayload(token) : null;
       if (!payload || payload.admin !== true) {
         return NextResponse.redirect(new URL('/', request.url));
@@ -66,5 +67,13 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/auths/:path*'],
+  matcher: [
+    '/post/:path*',
+    '/profile/:path*',
+    '/notifications/:path*',
+    '/settings/:path*',
+    '/control-panel/:path*',
+    '/manage-invites/:path*',
+    '/auths/:path*',
+  ],
 };

@@ -7,8 +7,8 @@
  * not duplicate the persistent panel.
  */
 const PERSISTENT_CHAT_PANEL_ROUTES = [
-  '/dashboard/profile',
-  '/dashboard/settings',
+  '/profile',
+  '/settings',
 ] as const;
 
 /**

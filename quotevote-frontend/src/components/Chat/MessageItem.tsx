@@ -105,7 +105,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
   const avatarRaw = message.user?.avatar;
   const profileUsername = message.user?.username ?? (isOwnMessage ? currentUser.username : null);
   const profileHref = profileUsername
-    ? `/dashboard/profile/${encodeURIComponent(profileUsername)}`
+    ? `/profile/${encodeURIComponent(profileUsername)}`
     : null;
 
   const timeLabel = formatTime(message.created);

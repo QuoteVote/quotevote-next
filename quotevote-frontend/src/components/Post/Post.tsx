@@ -372,7 +372,7 @@ export default function Post({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => username && router.push(`/dashboard/profile/${username}`)}
+              onClick={() => username && router.push(`/profile/${username}`)}
               className="shrink-0 rounded-full ring-2 ring-background shadow-md overflow-hidden"
             >
               <DisplayAvatar
@@ -388,7 +388,7 @@ export default function Post({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => username && router.push(`/dashboard/profile/${username}`)}
+                  onClick={() => username && router.push(`/profile/${username}`)}
                   className="text-[15px] font-bold text-foreground hover:underline"
                 >
                   {name || username}

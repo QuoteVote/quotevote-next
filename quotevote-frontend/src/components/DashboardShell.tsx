@@ -21,7 +21,6 @@ import {
 import { Globe } from '@/components/Icons';
 import { toast } from 'sonner';
 
-
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store';
 import { getApolloClient } from '@/lib/apollo';
@@ -54,11 +53,11 @@ import { DashboardSidebars } from '@/components/DashboardSidebars';
 
 const NAV_PAGES = [
   { path: '/', page: 'home' },
-  { path: '/dashboard/post', page: 'post' },
-  { path: '/dashboard/profile', page: 'profile' },
-  { path: '/dashboard/notifications', page: 'notifications' },
-  { path: '/dashboard/settings', page: 'settings' },
-  { path: '/dashboard/control-panel', page: 'control-panel' },
+  { path: '/post', page: 'post' },
+  { path: '/profile', page: 'profile' },
+  { path: '/notifications', page: 'notifications' },
+  { path: '/settings', page: 'settings' },
+  { path: '/control-panel', page: 'control-panel' },
 ] as const;
 
 /* ------------------------------------------------------------------ */
@@ -75,22 +74,10 @@ function ChatPanel() {
   const pathname = usePathname();
   const chatOpen = useAppStore((s) => s.chat.open);
   const setChatOpen = useAppStore((s) => s.setChatOpen);
-  // Tailwind `xl` breakpoint — the width at which the refined persistent
-  // messaging panel (DashboardSidebars / explore) becomes visible.
   const isXlUp = useMediaQuery('(min-width: 1280px)');
 
-  // These routes render the refined messaging panel persistently on the
-  // right at xl+. Sliding the old drawer in there would just duplicate it,
-  // so suppress the drawer and let the persistent panel display the chat.
-  // Below xl (no persistent panel) and on other routes the drawer stays so
-  // chat remains reachable.
   if (routeHasPersistentChatPanel(pathname) && isXlUp) return null;
 
-  // `modal={false}` keeps the mobile bottom nav interactive while the chat is
-  // open (a modal Radix dialog sets `pointer-events: none` on everything
-  // outside it). The sheet/overlay are also held above the 56px bottom nav on
-  // mobile so the nav stays visible; on md+ (no bottom nav) the sheet is full
-  // height.
   return (
     <Sheet open={chatOpen} onOpenChange={setChatOpen} modal={false}>
         <SheetContent
@@ -107,10 +94,10 @@ function ChatPanel() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  DashboardLayout                                                    */
+/*  DashboardShell                                                      */
 /* ------------------------------------------------------------------ */
 
-export default function DashboardLayout({
+export function DashboardShell({
   children,
 }: {
   children: React.ReactNode;
@@ -131,15 +118,11 @@ export default function DashboardLayout({
   const isAdmin = !!user?.admin;
   const username =
     (typeof user?.username === 'string' ? user.username : undefined) || '';
-  // Default-avatar seed — matches the profile / post card / post detail
-  // (display name, falling back to username) so an unset avatar is identical.
   const avatarSeed =
     (typeof user?.name === 'string' && user.name) || username || undefined;
 
   const { data: notifData } = useQuery<{ notifications: Array<{ _id: string; status: string }> }>(
     GET_NOTIFICATIONS,
-    // pollInterval is gated on loggedIn: Apollo keeps polling a query even when
-    // `skip` is true, which would fire authed-only requests for guests.
     { skip: !loggedIn, fetchPolicy: 'cache-and-network', pollInterval: loggedIn ? 60000 : 0 }
   );
 
@@ -161,7 +144,7 @@ export default function DashboardLayout({
 
   const isActive = (path: string) =>
     path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(path + '/');
-  const isMobilePostDetail = /^\/dashboard\/post\/[^/]+\/[^/]+\/[^/]+/.test(pathname);
+  const isMobilePostDetail = /^\/post\/[^/]+\/[^/]+\/[^/]+/.test(pathname);
 
   useEffect(() => {
     const match = NAV_PAGES.find((l) =>
@@ -212,9 +195,6 @@ export default function DashboardLayout({
   };
 
   return (
-    // Mobile = fixed app shell: the viewport itself never scrolls, so the
-    // fixed top bar and bottom nav are always visible and only <main> scrolls.
-    // Desktop (md+) keeps normal page (body) scrolling.
     <div className="bg-background h-[100dvh] overflow-hidden md:h-auto md:min-h-screen md:overflow-visible">
       <a
         href="#main-content"
@@ -224,13 +204,11 @@ export default function DashboardLayout({
       </a>
       <DashboardClient />
 
-      {/* ════════════════════════════════════════════════════════════════
-          DESKTOP NAVBAR
-      ════════════════════════════════════════════════════════════════ */}
+      {/* DESKTOP NAVBAR */}
       <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] items-center" data-testid="authenticated-navigation">
         <div className="relative flex h-full w-full items-center px-4">
 
-          {/* ── Left: Logo ── */}
+          {/* Left: Logo */}
           <div className="flex items-center gap-2 flex-shrink-0 z-10">
             <Link
               href="/"
@@ -244,7 +222,7 @@ export default function DashboardLayout({
             </Link>
           </div>
 
-          {/* ── Center: Search (truly centered) ── */}
+          {/* Center: Search */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="pointer-events-auto w-[440px] xl:w-[560px] 2xl:w-[640px]">
               <Suspense fallback={
@@ -258,9 +236,8 @@ export default function DashboardLayout({
             </div>
           </div>
 
-          {/* ── Right: Actions ── */}
+          {/* Right: Actions */}
           <div className="flex items-center gap-2 ml-auto flex-shrink-0 z-10">
-            {/* Create */}
             <button
               type="button"
               data-testid="create-post-button"
@@ -272,7 +249,6 @@ export default function DashboardLayout({
               <span>Create</span>
             </button>
 
-            {/* Avatar dropdown */}
             {loggedIn && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -293,7 +269,6 @@ export default function DashboardLayout({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={6} className="w-[300px] p-0 overflow-hidden rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
-                  {/* Profile card header */}
                   <div className="relative">
                     <div className="h-14 bg-gradient-to-r from-[#52b274] to-[#3a9e5f]" />
                     <div className="px-4 pb-3">
@@ -308,7 +283,7 @@ export default function DashboardLayout({
                   </div>
                   <DropdownMenuSeparator className="m-0" />
                   <div className="p-1.5">
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/profile')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                    <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
                         <User className="size-4 text-muted-foreground" />
                       </div>
@@ -317,7 +292,7 @@ export default function DashboardLayout({
                         <p className="text-[11px] text-muted-foreground">View and edit profile</p>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                    <DropdownMenuItem onClick={() => router.push('/settings')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
                         <Settings2 className="size-4 text-muted-foreground" />
                       </div>
@@ -327,7 +302,7 @@ export default function DashboardLayout({
                       </div>
                     </DropdownMenuItem>
                     {isAdmin && (
-                      <DropdownMenuItem onClick={() => router.push('/dashboard/control-panel')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                      <DropdownMenuItem onClick={() => router.push('/control-panel')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#e8f5ee]">
                           <ShieldCheck className="size-4 text-[#52b274]" />
                         </div>
@@ -365,9 +340,7 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      {/* ════════════════════════════════════════════════════════════════
-          MOBILE TOP BAR
-      ════════════════════════════════════════════════════════════════ */}
+      {/* MOBILE TOP BAR */}
       <header className="fixed top-0 left-0 right-0 z-50 md:hidden h-[56px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] flex items-center">
         {isMobilePostDetail ? (
           <div className="relative flex h-full w-full items-center px-1">
@@ -416,9 +389,7 @@ export default function DashboardLayout({
         )}
       </header>
 
-      {/* ════════════════════════════════════════════════════════════════
-          MOBILE BOTTOM NAV
-      ════════════════════════════════════════════════════════════════ */}
+      {/* MOBILE BOTTOM NAV */}
       <nav
         className={cn(
           'fixed bottom-0 left-0 right-0 z-[60] md:hidden h-[56px] bg-card border-t border-border flex items-center',
@@ -462,7 +433,7 @@ export default function DashboardLayout({
           <span className="text-[10px] font-semibold">Messages</span>
         </button>
 
-        {/* Create — floating green circle */}
+        {/* Create */}
         <button
           type="button"
           data-testid="create-post-button"
@@ -481,15 +452,15 @@ export default function DashboardLayout({
         {/* Notifications */}
         <button
           type="button"
-          onClick={() => requireAuthForAction(() => router.push('/dashboard/notifications'))}
+          onClick={() => requireAuthForAction(() => router.push('/notifications'))}
           className={cn(
             'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
-            isActive('/dashboard/notifications') ? 'text-[#52b274]' : 'text-muted-foreground'
+            isActive('/notifications') ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
           aria-label="Notifications"
         >
           <div className="relative">
-            <Bell className="size-[22px]" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
+            <Bell className="size-[22px]" fill={isActive('/notifications') ? 'currentColor' : 'none'} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -499,8 +470,7 @@ export default function DashboardLayout({
           <span className="text-[10px] font-semibold">Activity</span>
         </button>
 
-        {/* Profile — opens an account menu (Your Profile, Settings & Privacy,
-            Sign out) instead of navigating directly. */}
+        {/* Profile */}
         {loggedIn ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -508,7 +478,7 @@ export default function DashboardLayout({
                 type="button"
                 className={cn(
                   'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
-                  isActive('/dashboard/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
+                  isActive('/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
                 )}
                 aria-label="Account menu"
                 data-testid="user-profile-menu"
@@ -519,14 +489,14 @@ export default function DashboardLayout({
                   size={24}
                   className={cn(
                     'size-6 transition-all',
-                    isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
+                    isActive('/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
                   )}
                 />
                 <span className="text-[10px] font-semibold">Profile</span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="end" sideOffset={8} className="w-56 mb-1">
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')} className="cursor-pointer gap-2.5 py-2.5">
+              <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer gap-2.5 py-2.5">
                 <User className="size-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Your Profile</span>
               </DropdownMenuItem>
@@ -541,12 +511,12 @@ export default function DashboardLayout({
                 </div>
                 <span className="text-sm font-medium">Messages</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer gap-2.5 py-2.5">
+              <DropdownMenuItem onClick={() => router.push('/settings')} className="cursor-pointer gap-2.5 py-2.5">
                 <Settings2 className="size-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Settings &amp; Privacy</span>
               </DropdownMenuItem>
               {isAdmin && (
-                <DropdownMenuItem onClick={() => router.push('/dashboard/control-panel')} className="cursor-pointer gap-2.5 py-2.5">
+                <DropdownMenuItem onClick={() => router.push('/control-panel')} className="cursor-pointer gap-2.5 py-2.5">
                   <ShieldCheck className="size-4 text-[#52b274]" />
                   <span className="text-sm font-medium text-[#52b274]">Admin Panel</span>
                 </DropdownMenuItem>
@@ -574,9 +544,7 @@ export default function DashboardLayout({
         )}
       </nav>
 
-      {/* ════════════════════════════════════════════════════════════════
-          MAIN CONTENT
-      ════════════════════════════════════════════════════════════════ */}
+      {/* MAIN CONTENT */}
       <main
         id="main-content"
         className={cn(
@@ -584,12 +552,7 @@ export default function DashboardLayout({
           mobileDiscussionOpen ? 'pb-0' : 'pb-[60px]',
         )}
       >
-        {pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/settings') ? (
-          /* Profile and Settings & Privacy align with the Home feed column:
-             apply the same fixed left-sidebar / right-chat offsets
-             so the content's left and right edges match the
-             Home page (no horizontal jump when switching tabs), and render the
-             Notifications + Messages sidebars. */
+        {pathname.startsWith('/profile') || pathname.startsWith('/settings') ? (
           <div
             className={cn(
               'lg:pl-[300px] xl:pl-[340px]',
@@ -597,19 +560,17 @@ export default function DashboardLayout({
             )}
           >
             <DashboardSidebars />
-            {/* Full-band column matching the Home feed center (no width cap,
-                same px-4 content inset) so the center size is identical. */}
             <div className="min-w-0 px-4">
               {children}
             </div>
           </div>
         ) : (
           <div
-            className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12 h-full md:h-auto')}
+            className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/post/') && 'md:px-8 lg:px-12 h-full md:h-auto')}
             style={{
-              maxWidth: pathname.startsWith('/dashboard/control-panel')
+              maxWidth: pathname.startsWith('/control-panel')
                 ? 'none'
-                : pathname.startsWith('/dashboard/post/')
+                : pathname.startsWith('/post/')
                   ? '1170px'
                   : '42rem',
             }}
@@ -622,7 +583,6 @@ export default function DashboardLayout({
       <ChatPanel />
 
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        {/* Full-bleed on mobile; z-[70] stays above bottom nav (z-[60]). */}
         <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
           <DialogTitle className="sr-only">Create Quotes</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />

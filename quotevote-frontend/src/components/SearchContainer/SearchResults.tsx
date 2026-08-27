@@ -101,7 +101,7 @@ export default function SearchResultsView({
                     const item = content as { _id: string; title?: string; name?: string; username?: string }
                     const result = isUser ? item.name : item.title
                     const link = isUser
-                      ? `/dashboard/profile/${item.username || item.name?.replace(/\s/g, '') || ''}`
+                      ? `/profile/${item.username || item.name?.replace(/\s/g, '') || ''}`
                       : `/?q=${encodeURIComponent(item.title || '')}&tab=search`
 
                     return (

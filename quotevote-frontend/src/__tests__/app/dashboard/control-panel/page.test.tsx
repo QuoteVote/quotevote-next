@@ -7,7 +7,7 @@ import { USER_INVITE_REQUESTS } from '@/graphql/queries'
 const mockPush = jest.fn()
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
-  usePathname: () => '/dashboard/control-panel',
+  usePathname: () => '/control-panel',
   useSearchParams: () => new URLSearchParams(),
 }))
 
@@ -18,7 +18,7 @@ jest.mock('@/hooks/useResponsive', () => ({
 
 let ControlPanelClient: React.ComponentType
 beforeAll(async () => {
-  const mod = await import('@/app/dashboard/control-panel/ControlPanelClient')
+  const mod = await import('@/app/(dashboard)/control-panel/ControlPanelClient')
   ControlPanelClient = mod.default
 })
 

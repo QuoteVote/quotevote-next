@@ -187,14 +187,14 @@ describe('MessageItem', () => {
     render(<MessageItem message={mockOtherMessage} />)
 
     const profileLink = screen.getByRole('link', { name: 'Open otheruser profile' })
-    expect(profileLink).toHaveAttribute('href', '/dashboard/profile/otheruser')
+    expect(profileLink).toHaveAttribute('href', '/profile/otheruser')
   })
 
   it('renders profile link on own avatar', () => {
     render(<MessageItem message={mockOwnMessage} />)
 
     const profileLink = screen.getByRole('link', { name: 'Open currentuser profile' })
-    expect(profileLink).toHaveAttribute('href', '/dashboard/profile/currentuser')
+    expect(profileLink).toHaveAttribute('href', '/profile/currentuser')
   })
 
   it('displays read indicator for own messages when read', () => {

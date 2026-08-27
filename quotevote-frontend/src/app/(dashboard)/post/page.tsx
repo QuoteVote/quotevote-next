@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
  * The interactive paginated list is rendered inside a Suspense boundary
  * with a skeleton fallback while data loads.
  *
- * Route: /dashboard/post
+ * Route: /post
  */
 export default function PostsPage() {
   return (

@@ -86,7 +86,7 @@ export default function UsernameResults({
             return (
               <Link
                 key={user._id}
-                href={onUserSelect ? '#' : `/dashboard/profile/${user.username}`}
+                href={onUserSelect ? '#' : `/profile/${user.username}`}
                 onClick={handleClick}
                 className={cn(
                   'flex items-center gap-3 p-3',

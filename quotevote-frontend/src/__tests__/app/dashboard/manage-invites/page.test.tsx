@@ -5,13 +5,13 @@ import { USER_INVITE_REQUESTS } from '@/graphql/queries'
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
-  usePathname: () => '/dashboard/manage-invites',
+  usePathname: () => '/manage-invites',
   useSearchParams: () => new URLSearchParams(),
 }))
 
 let ManageInvitesClient: React.ComponentType
 beforeAll(async () => {
-  const mod = await import('@/app/dashboard/manage-invites/ManageInvitesClient')
+  const mod = await import('@/app/(dashboard)/manage-invites/ManageInvitesClient')
   ManageInvitesClient = mod.default
 })
 

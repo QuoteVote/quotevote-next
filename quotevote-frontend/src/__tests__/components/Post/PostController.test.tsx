@@ -60,7 +60,7 @@ const mockPost = {
   created: '2024-01-01',
   title: 'Test Post',
   text: 'Test content',
-  url: '/dashboard/post/group/test/test-post-id',
+  url: '/post/group/test/test-post-id',
   comments: [],
   votes: [],
   quotes: [],

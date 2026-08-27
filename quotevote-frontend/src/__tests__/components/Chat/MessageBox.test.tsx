@@ -213,7 +213,7 @@ describe('MessageBox', () => {
     render(<MessageBox />)
 
     const profileLink = await screen.findByRole('link', { name: 'Open other-user profile' })
-    expect(profileLink).toHaveAttribute('href', '/dashboard/profile/other-user')
+    expect(profileLink).toHaveAttribute('href', '/profile/other-user')
   })
 
   it('renders avatar as a profile link for staged room username', async () => {
@@ -242,7 +242,7 @@ describe('MessageBox', () => {
     render(<MessageBox />)
 
     const profileLink = await screen.findByRole('link', { name: 'Open staged user profile' })
-    expect(profileLink).toHaveAttribute('href', '/dashboard/profile/staged%20user')
+    expect(profileLink).toHaveAttribute('href', '/profile/staged%20user')
   })
 
   it('does not render avatar as profile link for non-user rooms', async () => {
