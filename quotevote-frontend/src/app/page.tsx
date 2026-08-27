@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactElement } from 'react'
 import { Suspense } from 'react'
-import { PublicDirectoryContent } from './components/PublicDirectory/PublicDirectoryContent'
+import { AuthAwareHome } from './components/AuthAwareHome'
 
 export const metadata: Metadata = {
   title: 'Quote.Vote – Share Ideas. Vote on What Matters.',
@@ -56,7 +56,7 @@ function DirectorySkeleton(): ReactElement {
 export default function RootPage(): ReactElement {
   return (
     <Suspense fallback={<DirectorySkeleton />}>
-      <PublicDirectoryContent />
+      <AuthAwareHome />
     </Suspense>
   )
 }
