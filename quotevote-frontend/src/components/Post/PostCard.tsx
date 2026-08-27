@@ -399,12 +399,16 @@ function PostCardComponent({
           </div>
         ) : null}
 
-        {/* Body */}
-        {!compact && (
-          <div className="text-base text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-3">
-            {displayText}
-          </div>
-        )}
+        {/* Body preview: 3 lines / ~150 chars, no Show More (#474). Shown on
+            directory cards too — compact only hides bookmark/share chrome. */}
+        <div
+          className={cn(
+            'text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-3',
+            compact ? 'text-sm text-center' : 'text-base'
+          )}
+        >
+          {displayText}
+        </div>
       </div>
 
       {/* ── Footer: avatar + username + date ── */}

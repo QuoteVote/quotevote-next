@@ -134,7 +134,8 @@ test.describe("RC1-004 Directory posts navigate to post detail", () => {
         hasText: post.title,
       });
       await expect(card).toBeVisible();
-      await expect(card).not.toHaveText(post.text);
+      await expect(card).toContainText(post.text);
+      await expect(card.getByRole("button", { name: "Show More" })).toHaveCount(0);
 
       await card.click();
       await expect(page).toHaveURL(new RegExp(`/dashboard${post.url}$`));

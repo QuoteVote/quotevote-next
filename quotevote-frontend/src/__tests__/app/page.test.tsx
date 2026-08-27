@@ -80,6 +80,51 @@ describe('Public directory (`/`)', () => {
     expect(screen.getByTestId('filter-date')).toBeInTheDocument()
   })
 
+  it('shows a short body preview on directory cards without Show More (#474)', () => {
+    const { useQuery } = jest.requireMock('@apollo/client/react') as {
+      useQuery: jest.Mock
+    }
+    const defaultImpl = useQuery.getMockImplementation()
+    useQuery.mockImplementation(() => ({
+      data: {
+        posts: {
+          entities: [
+            {
+              _id: 'p1',
+              title: 'Directory Quote',
+              text: 'A short preview of the post body for guests.',
+              url: '/post/general/directory-quote/p1',
+              created: '2024-01-15T10:30:00Z',
+              creator: { username: 'alice', name: 'Alice' },
+              votes: [],
+              comments: [],
+              quotes: [],
+              approvedBy: [],
+              rejectedBy: [],
+              bookmarkedBy: [],
+            },
+          ],
+          pagination: { total_count: 1, limit: 20, offset: 0 },
+        },
+        groups: [],
+      },
+      loading: false,
+      error: undefined,
+      refetch: jest.fn(),
+      fetchMore: jest.fn(),
+    }))
+
+    try {
+      renderDirectory()
+      expect(
+        screen.getByText('A short preview of the post body for guests.')
+      ).toBeInTheDocument()
+      expect(screen.queryByText('Show More')).not.toBeInTheDocument()
+    } finally {
+      if (defaultImpl) useQuery.mockImplementation(defaultImpl)
+    }
+  })
+
   it('does not redirect signed-in users since root is home', () => {
     useAppStore.getState().setUserData({
       _id: 'user-1',
