@@ -91,7 +91,7 @@ export function DirectoryToolbar(): ReactElement {
   return (
     <div
       data-testid="directory-toolbar"
-      className="w-full max-w-2xl mx-auto px-4 pt-3 pb-2 space-y-3 min-w-0"
+      className="w-full max-w-2xl mx-auto px-4 pt-3 pb-2 space-y-3 min-w-0 bg-[#eef4f9]"
     >
       <form
         role="search"

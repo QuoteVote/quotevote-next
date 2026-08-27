@@ -8,6 +8,10 @@ import { DirectoryToolbar } from './DirectoryToolbar'
 
 /**
  * Public post directory shown at `/` (#454).
+ * Mobile: nav + search + filters stay pinned while posts scroll (#487).
+ * `position: sticky` cannot be used here — `html`/`body` set `overflow-x: hidden`
+ * (#454), which creates a scroll container and prevents sticky from activating.
+ * Desktop: page scroll is unchanged; the toolbar is not pinned.
  */
 export function PublicDirectoryContent(): ReactElement {
   const searchParams = useSearchParams()
@@ -23,12 +27,21 @@ export function PublicDirectoryContent(): ReactElement {
   return (
     <div
       data-testid="public-directory"
-      className="min-h-screen w-full max-w-[100vw] overflow-x-hidden flex flex-col"
+      className="h-dvh overflow-hidden md:h-auto md:min-h-screen md:overflow-visible w-full max-w-[100vw] min-w-0 flex flex-col"
       style={{ background: '#eef4f9' }}
     >
-      <DirectoryHeader />
-      <main className="flex-1 w-full min-w-0 overflow-x-hidden">
+      <div
+        data-testid="directory-sticky-chrome"
+        className="shrink-0 z-50"
+        style={{ background: '#eef4f9' }}
+      >
+        <DirectoryHeader />
         <DirectoryToolbar />
+      </div>
+      <main
+        data-testid="directory-scroll"
+        className="flex-1 min-h-0 w-full overflow-y-auto md:overflow-visible"
+      >
         <div className="w-full max-w-2xl mx-auto min-w-0">
           <PaginatedPostsList
             defaultPageSize={20}
