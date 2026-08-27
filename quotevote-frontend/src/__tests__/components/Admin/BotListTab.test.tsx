@@ -11,7 +11,7 @@ jest.mock('@/hooks/useResponsive', () => ({
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
-  usePathname: () => '/dashboard/control-panel',
+  usePathname: () => '/control-panel',
 }))
 
 const botReportsMock = {

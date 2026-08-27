@@ -16,7 +16,7 @@ jest.mock('next/server', () => ({
   },
 }))
 
-import { middleware } from '../../../middleware'
+import { middleware } from '../../middleware'
 import { NextResponse } from 'next/server'
 
 function createMockRequest(pathname: string, tokenValue?: string) {
@@ -40,52 +40,63 @@ describe('Middleware', () => {
     jest.clearAllMocks()
   })
 
-  describe('Dashboard protection', () => {
-    it('redirects /dashboard/explore to /', () => {
-      middleware(createMockRequest('/dashboard/explore'))
+  describe('Protected route gates', () => {
+    it('redirects unauthenticated users from /settings to /auths/login', () => {
+      middleware(createMockRequest('/settings'))
       expect(NextResponse.redirect).toHaveBeenCalled()
       const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
-      expect(redirectUrl.pathname).toBe('/')
-      expect(redirectUrl.search).toBe('')
+      expect(redirectUrl.pathname).toBe('/auths/login')
+      expect(redirectUrl.searchParams.get('callbackUrl')).toBe('/settings')
     })
 
-    it('redirects /dashboard/explore with query parameters preserved', () => {
-      middleware(createMockRequest('/dashboard/explore?q=democracy&tab=latest'))
+    it('redirects unauthenticated users from /notifications to /auths/login', () => {
+      middleware(createMockRequest('/notifications'))
       expect(NextResponse.redirect).toHaveBeenCalled()
       const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
-      expect(redirectUrl.pathname).toBe('/')
-      expect(redirectUrl.search).toBe('?q=democracy&tab=latest')
+      expect(redirectUrl.pathname).toBe('/auths/login')
+    })
+
+    it('redirects unauthenticated users from /profile (no username) to /auths/login', () => {
+      middleware(createMockRequest('/profile'))
+      expect(NextResponse.redirect).toHaveBeenCalled()
     })
 
     it('allows unauthenticated users to view public post pages', () => {
-      middleware(createMockRequest('/dashboard/post/general/sample-title/abc123'))
+      middleware(createMockRequest('/post/general/sample-title/abc123'))
       expect(NextResponse.next).toHaveBeenCalled()
       expect(NextResponse.redirect).not.toHaveBeenCalled()
     })
 
     it('allows unauthenticated users to view public profiles', () => {
-      middleware(createMockRequest('/dashboard/profile/testuser'))
+      middleware(createMockRequest('/profile/testuser'))
       expect(NextResponse.next).toHaveBeenCalled()
       expect(NextResponse.redirect).not.toHaveBeenCalled()
     })
 
-    it('redirects unauthenticated users from /dashboard/settings to /auths/login', () => {
-      middleware(createMockRequest('/dashboard/settings'))
+    it('allows authenticated users through protected routes', () => {
+      middleware(createMockRequest('/settings', 'valid-token'))
+      expect(NextResponse.next).toHaveBeenCalled()
+      expect(NextResponse.redirect).not.toHaveBeenCalled()
+    })
+
+    it('allows authenticated users through /notifications', () => {
+      middleware(createMockRequest('/notifications', 'valid-token'))
+      expect(NextResponse.next).toHaveBeenCalled()
+      expect(NextResponse.redirect).not.toHaveBeenCalled()
+    })
+
+    it('redirects unauthenticated users from /control-panel to /auths/login', () => {
+      middleware(createMockRequest('/control-panel'))
       expect(NextResponse.redirect).toHaveBeenCalled()
       const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
       expect(redirectUrl.pathname).toBe('/auths/login')
-      expect(redirectUrl.searchParams.get('callbackUrl')).toBe('/dashboard/settings')
     })
 
-    it('redirects unauthenticated users from /dashboard/profile to /auths/login', () => {
-      middleware(createMockRequest('/dashboard/profile'))
+    it('redirects unauthenticated users from /manage-invites to /auths/login', () => {
+      middleware(createMockRequest('/manage-invites'))
       expect(NextResponse.redirect).toHaveBeenCalled()
-    })
-
-    it('allows authenticated users to pass through /dashboard', () => {
-      middleware(createMockRequest('/dashboard/settings', 'valid-token'))
-      expect(NextResponse.next).toHaveBeenCalled()
-      expect(NextResponse.redirect).not.toHaveBeenCalled()
+      const redirectUrl = (NextResponse.redirect as jest.Mock).mock.calls[0][0] as URL
+      expect(redirectUrl.pathname).toBe('/auths/login')
     })
   })
 

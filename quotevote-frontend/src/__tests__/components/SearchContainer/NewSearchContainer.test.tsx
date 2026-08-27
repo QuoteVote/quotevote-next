@@ -77,7 +77,7 @@ const defaultQueryResult = {
           created: '2024-01-01',
           title: 'Test Post',
           text: 'Test content',
-          url: '/dashboard/post/group/test/post-1',
+          url: '/post/group/test/post-1',
           comments: [],
           votes: [],
           quotes: [],
