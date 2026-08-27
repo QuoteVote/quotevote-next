@@ -22,7 +22,7 @@ export function DirectoryHeader(): ReactElement {
   return (
     <>
       <header
-        className="sticky top-0 z-50 w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
+        className="md:sticky md:top-0 md:z-50 w-full max-w-[100vw] min-w-0 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
         role="navigation"
         aria-label="Main navigation"
         style={{ borderImage: 'linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1' }}

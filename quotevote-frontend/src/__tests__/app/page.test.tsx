@@ -80,6 +80,23 @@ describe('Public directory (`/`)', () => {
     expect(screen.getByTestId('filter-date')).toBeInTheDocument()
   })
 
+  it('keeps nav, search, and filters pinned above the scrolling post list on mobile', () => {
+    renderDirectory()
+    const chrome = screen.getByTestId('directory-sticky-chrome')
+    const scroll = screen.getByTestId('directory-scroll')
+    expect(chrome).toContainElement(screen.getByRole('navigation', { name: 'Main navigation' }))
+    expect(chrome).toContainElement(screen.getByTestId('directory-toolbar'))
+    expect(chrome).toHaveClass('shrink-0')
+    expect(screen.getByTestId('public-directory')).toHaveClass(
+      'h-dvh',
+      'overflow-hidden',
+      'md:h-auto',
+      'md:overflow-visible'
+    )
+    expect(scroll).toHaveClass('overflow-y-auto', 'md:overflow-visible')
+    expect(scroll).not.toContainElement(screen.getByTestId('directory-toolbar'))
+  })
+
   it('does not redirect signed-in users since root is home', () => {
     useAppStore.getState().setUserData({
       _id: 'user-1',
