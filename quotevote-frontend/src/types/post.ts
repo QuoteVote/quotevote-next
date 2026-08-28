@@ -143,7 +143,7 @@ export interface PostCardProps {
   messageRoom?: PostMessageRoom
   groupId?: string | null
   searchKey?: string
-  /** Directory cards hide body text and center metadata (#454). */
+  /** Directory cards center metadata and hide bookmark/share (#454). Body preview still shows (#474). */
   compact?: boolean
 }
 
@@ -250,7 +250,7 @@ export interface PaginatedPostsListProps {
   className?: string
   contentClassName?: string
   paginationClassName?: string
-  /** Hide post body on directory cards. */
+  /** Directory card chrome: centered metadata, no bookmark/share. Body preview still shows. */
   compact?: boolean
 }
 
