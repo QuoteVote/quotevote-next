@@ -17,6 +17,8 @@ import {
   ChevronDown,
   ArrowLeft,
   Share2,
+  Menu,
+  Github,
 } from 'lucide-react';
 import { Globe } from '@/components/Icons';
 import { toast } from 'sonner';
@@ -37,7 +39,8 @@ import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from '@/graphql/queries';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import type { ChatRoom } from '@/types/chat';
 import NavSearch from '@/components/Navbars/NavSearch';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -59,6 +62,9 @@ const NAV_PAGES = [
   { path: '/settings', page: 'settings' },
   { path: '/control-panel', page: 'control-panel' },
 ] as const;
+
+const DONATE_URL = 'https://opencollective.com/quotevote/donate';
+const GITHUB_URL = 'https://github.com/QuoteVote/quotevote-next';
 
 /* ------------------------------------------------------------------ */
 
@@ -93,6 +99,84 @@ function ChatPanel() {
   );
 }
 
+function AuthenticatedAccountSheet({
+  open,
+  onOpenChange,
+  isAdmin,
+  onLogout,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  isAdmin: boolean;
+  onLogout: () => void;
+}) {
+  const close = () => onOpenChange(false);
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" overlayClassName="z-[70]" className="z-[70] w-80 p-6">
+        <SheetHeader>
+          <SheetTitle className="text-[#0A2342] font-bold text-lg">Menu</SheetTitle>
+        </SheetHeader>
+        <nav className="mt-1 flex flex-col gap-3" aria-label="Account menu" data-testid="authenticated-account-menu">
+          <Button variant="ghost" asChild className="w-full justify-start">
+            <Link href="/settings" onClick={close}>
+              <Settings2 className="size-4" />
+              Settings & Privacy
+            </Link>
+          </Button>
+          {isAdmin && (
+            <Button variant="ghost" asChild className="w-full justify-start">
+              <Link href="/control-panel" onClick={close}>
+                <ShieldCheck className="size-4 text-[#52b274]" />
+                Admin Panel
+              </Link>
+            </Button>
+          )}
+          <Button variant="ghost" asChild className="w-full justify-start">
+            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" onClick={close}>
+              Donate
+            </a>
+          </Button>
+          <Button variant="ghost" asChild className="w-full justify-start">
+            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" onClick={close}>
+              <Github className="size-4" />
+              GitHub
+            </a>
+          </Button>
+          <div className="my-1 h-px bg-border" role="separator" />
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full justify-start text-red-500 hover:text-red-500 hover:bg-destructive/10"
+            onClick={() => {
+              close();
+              onLogout();
+            }}
+          >
+            <LogOut className="size-4" />
+            Sign Out
+          </Button>
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function MobileMenuButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Open menu"
+      data-testid="authenticated-menu-button"
+      className="z-10 inline-flex size-11 items-center justify-center text-foreground"
+    >
+      <Menu className="size-5" />
+    </button>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  DashboardShell                                                      */
 /* ------------------------------------------------------------------ */
@@ -113,6 +197,7 @@ export function DashboardShell({
   const mobileDiscussionOpen = useAppStore((s) => s.ui.mobileDiscussionOpen);
 
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const loggedIn = !!(user?.id || user?._id);
   const isAdmin = !!user?.admin;
@@ -364,14 +449,17 @@ export function DashboardShell({
                 </span>
               </span>
             </Link>
-            <button
-              type="button"
-              onClick={handleSharePost}
-              aria-label="Share"
-              className="z-10 ml-auto inline-flex size-11 items-center justify-center text-foreground"
-            >
-              <Share2 className="size-5" />
-            </button>
+            <div className="z-10 ml-auto flex items-center">
+              <button
+                type="button"
+                onClick={handleSharePost}
+                aria-label="Share"
+                className="inline-flex size-11 items-center justify-center text-foreground"
+              >
+                <Share2 className="size-5" />
+              </button>
+              {loggedIn && <MobileMenuButton onClick={() => setMenuOpen(true)} />}
+            </div>
           </div>
         ) : (
           <div className="flex h-full w-full items-center justify-between px-4">
@@ -385,6 +473,7 @@ export function DashboardShell({
                 Quote.Vote
               </span>
             </Link>
+            {loggedIn && <MobileMenuButton onClick={() => setMenuOpen(true)} />}
           </div>
         )}
       </header>
@@ -472,62 +561,26 @@ export function DashboardShell({
 
         {/* Profile */}
         {loggedIn ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
-                  isActive('/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
-                )}
-                aria-label="Account menu"
-                data-testid="user-profile-menu"
-              >
-                <DisplayAvatar
-                  avatar={user?.avatar as string | Record<string, unknown> | undefined}
-                  username={avatarSeed}
-                  size={24}
-                  className={cn(
-                    'size-6 transition-all',
-                    isActive('/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
-                  )}
-                />
-                <span className="text-[10px] font-semibold">Profile</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="end" sideOffset={8} className="w-56 mb-1">
-              <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer gap-2.5 py-2.5">
-                <User className="size-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Your Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setChatOpen(true)} className="cursor-pointer gap-2.5 py-2.5">
-                <div className="relative">
-                  <MessageSquare className="size-4 text-muted-foreground" />
-                  {unreadChat > 0 && (
-                    <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[12px] h-[12px] rounded-full bg-[#52b274] text-white text-[7px] font-bold leading-none">
-                      {unreadChat > 9 ? '9+' : unreadChat}
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm font-medium">Messages</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/settings')} className="cursor-pointer gap-2.5 py-2.5">
-                <Settings2 className="size-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Settings &amp; Privacy</span>
-              </DropdownMenuItem>
-              {isAdmin && (
-                <DropdownMenuItem onClick={() => router.push('/control-panel')} className="cursor-pointer gap-2.5 py-2.5">
-                  <ShieldCheck className="size-4 text-[#52b274]" />
-                  <span className="text-sm font-medium text-[#52b274]">Admin Panel</span>
-                </DropdownMenuItem>
+          <Link
+            href="/profile"
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
+              isActive('/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
+            )}
+            aria-label="Profile"
+            data-testid="user-profile-menu"
+          >
+            <DisplayAvatar
+              avatar={user?.avatar as string | Record<string, unknown> | undefined}
+              username={avatarSeed}
+              size={24}
+              className={cn(
+                'size-6 transition-all',
+                isActive('/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer gap-2.5 py-2.5 focus:bg-destructive/10">
-                <LogOut className="size-4 text-red-500" />
-                <span className="text-sm font-medium text-red-500">Sign out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            />
+            <span className="text-[10px] font-semibold">Profile</span>
+          </Link>
         ) : (
           <button
             type="button"
@@ -587,6 +640,15 @@ export function DashboardShell({
       </main>
 
       <ChatPanel />
+
+      {loggedIn && (
+        <AuthenticatedAccountSheet
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          isAdmin={isAdmin}
+          onLogout={handleLogout}
+        />
+      )}
 
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
