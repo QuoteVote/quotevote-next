@@ -3,7 +3,7 @@
  * 
  * Tests for the MessageBox component including:
  * - Room selection and display
- * - Header actions (back, block, remove buddy, delete chat)
+ * - Header actions (back, block, remove buddy, close chat)
  * - Message rendering integration
  * - Loading and error states
  */
@@ -176,6 +176,7 @@ describe('MessageBox', () => {
           presenceMap: {},
         },
         setSelectedChatRoom: jest.fn(),
+        setChatOpen: jest.fn(),
         setSnackbar: jest.fn(),
       }
       return selector(state)
@@ -189,6 +190,7 @@ describe('MessageBox', () => {
         user: { data: mockCurrentUser },
         chat: { selectedRoom: null, buddyList: [], presenceMap: {} },
         setSelectedChatRoom: jest.fn(),
+        setChatOpen: jest.fn(),
         setSnackbar: jest.fn(),
       }
       return selector(state)
@@ -234,6 +236,7 @@ describe('MessageBox', () => {
           presenceMap: {},
         },
         setSelectedChatRoom: jest.fn(),
+        setChatOpen: jest.fn(),
         setSnackbar: jest.fn(),
       }
       return selector(state)
@@ -271,6 +274,7 @@ describe('MessageBox', () => {
         user: { data: mockCurrentUser },
         chat: { selectedRoom: 'room1', buddyList: [], presenceMap: {} },
         setSelectedChatRoom,
+        setChatOpen: jest.fn(),
         setSnackbar: jest.fn(),
       }
       return selector(state)
@@ -299,7 +303,7 @@ describe('MessageBox', () => {
     expect(screen.getByTestId('typing-indicator')).toBeInTheDocument()
   })
 
-  it('renders settings menu with block, remove buddy, and delete options for USER rooms', async () => {
+  it('renders settings menu with block and remove buddy options for USER rooms', async () => {
     render(<MessageBox />)
 
     await waitFor(() => {
@@ -310,12 +314,53 @@ describe('MessageBox', () => {
     fireEvent.click(settingsButton)
 
     await waitFor(() => {
-      // The dropdown content should be rendered
       expect(screen.getByTestId('dropdown-content')).toBeInTheDocument()
       expect(screen.getByText('Block User')).toBeInTheDocument()
       expect(screen.getByText('Remove Buddy')).toBeInTheDocument()
-      expect(screen.getByText('Close Chat')).toBeInTheDocument()
+      expect(screen.queryByText('Close Chat')).not.toBeInTheDocument()
     })
+  })
+
+  it('renders close chat button and calls setChatOpen(false) when clicked', async () => {
+    const setChatOpen = jest.fn()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) => {
+      const state = {
+        user: { data: mockCurrentUser },
+        chat: { selectedRoom: 'room1', buddyList: [], presenceMap: {} },
+        setSelectedChatRoom: jest.fn(),
+        setChatOpen,
+        setSnackbar: jest.fn(),
+      }
+      return selector(state)
+    })
+
+    render(<MessageBox />)
+
+    const closeButton = await screen.findByRole('button', { name: /close chat/i })
+    fireEvent.click(closeButton)
+
+    expect(setChatOpen).toHaveBeenCalledWith(false)
+  })
+
+  it('hides settings menu for POST rooms and does not render Close Chat', async () => {
+    const groupRoom: ChatRoom = {
+      _id: 'group-room-1',
+      title: 'Group Chat',
+      messageType: 'POST',
+      users: ['user1', 'user2', 'user3'],
+      created: new Date().toISOString(),
+    }
+
+    render(<MessageBox roomOverride={groupRoom} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Group Chat')).toBeInTheDocument()
+    })
+
+    expect(screen.queryByLabelText('Chat settings')).not.toBeInTheDocument()
+    expect(screen.queryByText('Close Chat')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /close chat/i })).toBeInTheDocument()
   })
 
   it('accepts roomOverride prop to override selected room', async () => {

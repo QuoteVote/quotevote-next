@@ -81,19 +81,28 @@ function ChatPanel() {
   const chatOpen = useAppStore((s) => s.chat.open);
   const setChatOpen = useAppStore((s) => s.setChatOpen);
   const isXlUp = useMediaQuery('(min-width: 1280px)');
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   if (routeHasPersistentChatPanel(pathname) && isXlUp) return null;
 
   return (
     <Sheet open={chatOpen} onOpenChange={setChatOpen} modal={false}>
-        <SheetContent
-        side="right"
-        overlayClassName="bottom-[56px] md:bottom-0"
-        className="w-full sm:w-[400px] p-0 bottom-[56px] h-[calc(100%-56px)] md:inset-y-0 md:h-full"
+      <SheetContent
+        side={isMobile ? 'bottom' : 'right'}
+        overlayClassName={isMobile ? 'bottom-[56px]' : 'bottom-0'}
+        className={cn(
+          'w-full p-0 gap-0 overflow-hidden',
+          isMobile
+            ? 'bottom-[56px] h-[calc(100dvh-6.5rem)] max-h-[85dvh] rounded-t-2xl sm:max-w-none'
+            : 'sm:w-[400px] sm:max-w-[400px] inset-y-0 h-full',
+        )}
+        data-testid="messages-panel"
         onInteractOutside={(e) => e.preventDefault()}
       >
         <SheetTitle className="sr-only">Messages</SheetTitle>
-        <div className="h-full"><ChatContent /></div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <ChatContent />
+        </div>
       </SheetContent>
     </Sheet>
   );
@@ -277,6 +286,10 @@ export function DashboardShell({
 
   const handleCreateClick = () => {
     requireAuthForAction(() => setSubmitDialogOpen(true));
+  };
+
+  const closeMessages = () => {
+    if (chatOpen) setChatOpen(false);
   };
 
   return (
@@ -491,6 +504,7 @@ export function DashboardShell({
         {/* Home */}
         <Link
           href="/"
+          onClick={closeMessages}
           className={cn(
             'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
             isActive('/') ? 'text-[#52b274]' : 'text-muted-foreground'
@@ -504,12 +518,13 @@ export function DashboardShell({
         {/* Messages */}
         <button
           type="button"
-          onClick={() => requireAuthForAction(() => setChatOpen(true))}
+          onClick={() => requireAuthForAction(() => setChatOpen(!chatOpen))}
           className={cn(
             'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
             chatOpen ? 'text-[#52b274]' : 'text-muted-foreground'
           )}
           aria-label="Messages"
+          aria-expanded={chatOpen}
         >
           <div className="relative">
             <MessageSquare className="size-[22px]" fill={chatOpen ? 'currentColor' : 'none'} />
@@ -526,7 +541,10 @@ export function DashboardShell({
         <button
           type="button"
           data-testid="create-post-button"
-          onClick={handleCreateClick}
+          onClick={() => {
+            closeMessages();
+            handleCreateClick();
+          }}
           className="flex flex-col items-center justify-center flex-1 h-full cursor-pointer border-0 bg-transparent"
           aria-label="Create"
         >
@@ -541,7 +559,10 @@ export function DashboardShell({
         {/* Notifications */}
         <button
           type="button"
-          onClick={() => requireAuthForAction(() => router.push('/notifications'))}
+          onClick={() => requireAuthForAction(() => {
+            closeMessages();
+            router.push('/notifications');
+          })}
           className={cn(
             'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
             isActive('/notifications') ? 'text-[#52b274]' : 'text-muted-foreground'
