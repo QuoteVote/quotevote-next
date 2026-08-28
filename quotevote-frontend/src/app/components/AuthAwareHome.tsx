@@ -19,6 +19,12 @@ export function AuthAwareHome(): ReactElement {
   return <AuthenticatedFeed />
 }
 
+/**
+ * Signed-in home feed. Mobile: search + filters stay pinned while posts scroll
+ * (same contract as the guest directory, #487 / #488). DashboardShell already
+ * owns the fixed nav, so only the toolbar sits in the non-scrolling chrome.
+ * Desktop: page scroll is unchanged; the toolbar is not pinned.
+ */
 function AuthenticatedFeed(): ReactElement {
   const searchParams = useSearchParams()
 
@@ -32,19 +38,31 @@ function AuthenticatedFeed(): ReactElement {
 
   return (
     <DashboardShell>
-      <DirectoryToolbar />
-      <div className="w-full max-w-2xl mx-auto min-w-0">
-        <PaginatedPostsList
-          defaultPageSize={20}
-          maxVisiblePages={5}
-          searchKey={q}
-          startDateRange={from || undefined}
-          endDateRange={to || undefined}
-          sortOrder={sortOrder}
-          interactions={interactions}
-          groupId={groupId}
-          compact
-        />
+      <div
+        data-testid="authenticated-directory"
+        className="flex h-full min-h-0 flex-col overflow-hidden md:h-auto md:overflow-visible"
+      >
+        <div data-testid="directory-sticky-chrome" className="z-40 shrink-0 bg-background">
+          <DirectoryToolbar />
+        </div>
+        <div
+          data-testid="directory-scroll"
+          className="min-h-0 w-full flex-1 overflow-y-auto md:overflow-visible"
+        >
+          <div className="mx-auto w-full min-w-0 max-w-2xl">
+            <PaginatedPostsList
+              defaultPageSize={20}
+              maxVisiblePages={5}
+              searchKey={q}
+              startDateRange={from || undefined}
+              endDateRange={to || undefined}
+              sortOrder={sortOrder}
+              interactions={interactions}
+              groupId={groupId}
+              compact
+            />
+          </div>
+        </div>
       </div>
     </DashboardShell>
   )

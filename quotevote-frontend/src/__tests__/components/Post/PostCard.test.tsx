@@ -232,22 +232,31 @@ describe('PostCard Component', () => {
       const bodyDiv = container.querySelector('.line-clamp-3')
       expect(bodyDiv).toBeInTheDocument()
     })
+
+    it('shows a truncated body preview on compact directory cards without Show More', () => {
+      const longText = 'B'.repeat(250)
+      const { container } = render(
+        <PostCard {...mockPostCardProps} compact text={longText} />
+      )
+
+      expect(screen.getByText(`${'B'.repeat(150)}...`)).toBeInTheDocument()
+      expect(screen.queryByText('Show More')).not.toBeInTheDocument()
+      expect(container.querySelector('.line-clamp-3')).toBeInTheDocument()
+    })
   })
 
   describe('Compact directory cards (#454)', () => {
-    it('hides body text, Show More, and bookmark/share actions', () => {
+    it('shows body preview and hides bookmark/share actions', () => {
       render(
         <PostCard
           {...mockPostCardProps}
           compact
-          text="This body should not appear in the directory."
+          text="This body should appear in the directory."
         />
       )
 
       expect(screen.getByTestId('post-card')).toHaveAttribute('data-compact', 'true')
-      expect(
-        screen.queryByText('This body should not appear in the directory.')
-      ).not.toBeInTheDocument()
+      expect(screen.getByText('This body should appear in the directory.')).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Show More' })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Bookmark' })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument()
