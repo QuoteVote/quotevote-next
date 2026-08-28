@@ -21,7 +21,7 @@ export function AdminIconButton({ fontSize, onNavigate }: AdminIconButtonProps) 
     if (onNavigate) {
       onNavigate();
     }
-    router.push('/dashboard/control-panel');
+    router.push('/control-panel');
   };
 
   // Only render if user is admin

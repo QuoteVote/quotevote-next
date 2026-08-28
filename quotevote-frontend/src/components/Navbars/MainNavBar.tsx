@@ -158,7 +158,7 @@ export function MainNavBar({}: MainNavBarProps) {
                   <Github className="size-5" />
                 </a>
               </Button>
-              <Link href={`/dashboard/profile/${user?.username}`} className="no-underline">
+              <Link href={`/profile/${user?.username}`} className="no-underline">
                 <Button
                   variant="ghost"
                   onClick={handleProfileClick}
@@ -279,7 +279,7 @@ export function MainNavBar({}: MainNavBarProps) {
 
                 <div className="h-0.5 bg-gradient-to-r from-[#2AE6B2] via-[#27C4E1] to-[#178BE1] my-4" />
 
-                <Link href={`/dashboard/profile/${user?.username}`} className="w-full no-underline" onClick={closeDrawer}>
+                <Link href={`/profile/${user?.username}`} className="w-full no-underline" onClick={closeDrawer}>
                   <Button
                     variant="ghost"
                     onClick={() => {

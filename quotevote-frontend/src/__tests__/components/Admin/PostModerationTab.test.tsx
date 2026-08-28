@@ -7,7 +7,7 @@ import { GET_TOP_POSTS } from '@/graphql/queries'
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
-  usePathname: () => '/dashboard/control-panel',
+  usePathname: () => '/control-panel',
 }))
 
 const adminUser = {

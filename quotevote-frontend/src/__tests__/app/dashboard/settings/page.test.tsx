@@ -9,7 +9,7 @@ import { GET_USER, GET_USER_BIO } from '@/graphql/queries'
 const mockPush = jest.fn()
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
-  usePathname: () => '/dashboard/settings',
+  usePathname: () => '/settings',
   useSearchParams: () => new URLSearchParams(),
 }))
 
@@ -31,7 +31,7 @@ jest.mock('@/context/ThemeContext', () => ({
 
 let SettingsPageClient: React.ComponentType
 beforeAll(async () => {
-  const mod = await import('@/app/dashboard/settings/SettingsPageClient')
+  const mod = await import('@/app/(dashboard)/settings/SettingsPageClient')
   SettingsPageClient = mod.default
 })
 
@@ -202,7 +202,7 @@ describe('Settings Page', () => {
   it('navigates to avatar page when avatar is clicked', () => {
     render(<SettingsPageClient />, { mocks: [getUserMock, getUserBioMock] })
     fireEvent.click(screen.getByLabelText('Change avatar'))
-    expect(mockPush).toHaveBeenCalledWith('/dashboard/profile/testuser/avatar')
+    expect(mockPush).toHaveBeenCalledWith('/profile/testuser/avatar')
   })
 
   it('renders sign out button', () => {

@@ -88,7 +88,7 @@ export function ProfileView({
           <CardContent className="pt-6 text-center space-y-2">
             <h3 className="text-lg font-semibold">Couldn&apos;t load this profile</h3>
             <p className="text-sm text-muted-foreground">{errorMessage}</p>
-            <Link href="/dashboard/explore" className="text-primary hover:underline inline-block mt-2">
+            <Link href="/" className="text-primary hover:underline inline-block mt-2">
               Back to Explore
             </Link>
           </CardContent>

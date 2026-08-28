@@ -109,7 +109,7 @@ describe('ProfileView', () => {
       expect(screen.queryByText('Invalid user')).not.toBeInTheDocument();
       expect(screen.getByRole('link', { name: /back to explore/i })).toHaveAttribute(
         'href',
-        '/dashboard/explore'
+        '/'
       );
     });
   });
