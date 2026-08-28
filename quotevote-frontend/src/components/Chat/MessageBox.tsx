@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Settings, Ban, UserX, Trash2 } from 'lucide-react'
+import { ArrowLeft, Settings, Ban, UserX, X } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 
 import MessageSend from './MessageSend'
@@ -19,7 +19,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { ChatRoom, StagedChatRoom } from '@/types/chat'
@@ -140,13 +139,8 @@ function Header({ room, stagedProfileUsername }: HeaderProps) {
     }
   }
 
-  const handleDeleteChat = () => {
-    setSelectedChatRoom(null)
-    setChatOpen(false)
-    toast('Chat closed')
-  }
-
   const isUserRoom = messageType === 'USER'
+  const showSettingsMenu = isUserRoom && !!otherUserId
 
   return (
     <div className="sticky top-0 z-10 border-b bg-gradient-to-b from-white to-[#fafbfc] px-4 py-3 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)]">
@@ -195,47 +189,47 @@ function Header({ room, stagedProfileUsername }: HeaderProps) {
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="ml-auto h-8 w-8 rounded-full text-muted-foreground hover:bg-muted hover:text-[#52b274] hover:scale-105 transition-all duration-200"
-              aria-label="Chat settings"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {isUserRoom && otherUserId && (
-              <>
-                <DropdownMenuItem
-                  onClick={handleBlockUser}
-                  className="text-red-600 focus:bg-red-50 dark:text-red-400 dark:focus:bg-red-950/40"
-                >
-                  <Ban className="mr-2 h-4 w-4" />
-                  <span>{isBlocked ? 'Unblock User' : 'Block User'}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleRemoveBuddy}
-                  className="text-red-600 focus:bg-red-50 dark:text-red-400 dark:focus:bg-red-950/40"
-                >
-                  <UserX className="mr-2 h-4 w-4" />
-                  <span>Remove Buddy</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            <DropdownMenuItem
-              onClick={handleDeleteChat}
-              className="text-red-600 focus:bg-red-50 dark:text-red-400 dark:focus:bg-red-950/40"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              <span>Close Chat</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {showSettingsMenu && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted hover:text-[#52b274] hover:scale-105 transition-all duration-200"
+                aria-label="Chat settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem
+                onClick={handleBlockUser}
+                className="text-red-600 focus:bg-red-50 dark:text-red-400 dark:focus:bg-red-950/40"
+              >
+                <Ban className="mr-2 h-4 w-4" />
+                <span>{isBlocked ? 'Unblock User' : 'Block User'}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleRemoveBuddy}
+                className="text-red-600 focus:bg-red-50 dark:text-red-400 dark:focus:bg-red-950/40"
+              >
+                <UserX className="mr-2 h-4 w-4" />
+                <span>Remove Buddy</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setChatOpen(false)}
+          className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted hover:scale-105 transition-all duration-200"
+          aria-label="Close chat"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   )
