@@ -5,8 +5,10 @@
  * and no marketing landing sections.
  */
 
+import { type ReactNode } from 'react'
 import { render, screen } from '../utils/test-utils'
 import { PublicDirectoryContent } from '@/app/components/PublicDirectory/PublicDirectoryContent'
+import { AuthAwareHome } from '@/app/components/AuthAwareHome'
 import { useAppStore } from '@/store'
 
 const mockPush = jest.fn()
@@ -35,6 +37,12 @@ jest.mock('@apollo/client/react', () => ({
 
 jest.mock('@/hooks/useDebounce', () => ({
   useDebounce: <T,>(value: T) => value,
+}))
+
+jest.mock('@/components/DashboardShell', () => ({
+  DashboardShell: ({ children }: { children: ReactNode }) => (
+    <div data-testid="dashboard-shell">{children}</div>
+  ),
 }))
 
 function renderDirectory() {
@@ -150,5 +158,33 @@ describe('Public directory (`/`)', () => {
     })
     renderDirectory()
     expect(mockPush).not.toHaveBeenCalled()
+  })
+})
+
+describe('Authenticated directory (`/`)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    useAppStore.getState().setUserData({
+      _id: 'user-1',
+      username: 'tester',
+      name: 'Tester',
+    })
+  })
+
+  it('keeps search and filters pinned above the scrolling post list on mobile', () => {
+    render(<AuthAwareHome />)
+    const chrome = screen.getByTestId('directory-sticky-chrome')
+    const scroll = screen.getByTestId('directory-scroll')
+    expect(screen.getByTestId('authenticated-directory')).toBeInTheDocument()
+    expect(chrome).toContainElement(screen.getByTestId('directory-toolbar'))
+    expect(chrome).toHaveClass('shrink-0')
+    expect(screen.getByTestId('authenticated-directory')).toHaveClass(
+      'h-full',
+      'overflow-hidden',
+      'md:h-auto',
+      'md:overflow-visible'
+    )
+    expect(scroll).toHaveClass('overflow-y-auto', 'md:overflow-visible')
+    expect(scroll).not.toContainElement(screen.getByTestId('directory-toolbar'))
   })
 })

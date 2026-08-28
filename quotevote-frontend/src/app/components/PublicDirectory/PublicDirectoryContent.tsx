@@ -27,14 +27,9 @@ export function PublicDirectoryContent(): ReactElement {
   return (
     <div
       data-testid="public-directory"
-      className="h-dvh overflow-hidden md:h-auto md:min-h-screen md:overflow-visible w-full max-w-[100vw] min-w-0 flex flex-col"
-      style={{ background: '#eef4f9' }}
+      className="bg-background h-dvh overflow-hidden md:h-auto md:min-h-screen md:overflow-visible w-full max-w-[100vw] min-w-0 flex flex-col"
     >
-      <div
-        data-testid="directory-sticky-chrome"
-        className="shrink-0 z-50"
-        style={{ background: '#eef4f9' }}
-      >
+      <div data-testid="directory-sticky-chrome" className="shrink-0 z-50 bg-background">
         <DirectoryHeader />
         <DirectoryToolbar />
       </div>

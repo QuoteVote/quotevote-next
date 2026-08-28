@@ -548,8 +548,10 @@ export function DashboardShell({
       <main
         id="main-content"
         className={cn(
-          'h-full overflow-y-auto overscroll-contain pt-[56px] md:pt-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible',
+          'h-full overscroll-contain pt-[56px] md:pt-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible',
           mobileDiscussionOpen ? 'pb-0' : 'pb-[60px]',
+          // Home pins search/filters above the post list on mobile (#487 / #488).
+          pathname === '/' ? 'overflow-hidden' : 'overflow-y-auto',
         )}
       >
         {pathname.startsWith('/profile') || pathname.startsWith('/settings') ? (
@@ -566,7 +568,11 @@ export function DashboardShell({
           </div>
         ) : (
           <div
-            className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/post/') && 'md:px-8 lg:px-12 h-full md:h-auto')}
+            className={cn(
+              'mx-auto px-0 md:px-4',
+              pathname === '/' && 'h-full min-h-0 md:h-auto',
+              pathname.startsWith('/post/') && 'md:px-8 lg:px-12 h-full md:h-auto',
+            )}
             style={{
               maxWidth: pathname.startsWith('/control-panel')
                 ? 'none'
