@@ -363,7 +363,7 @@ function PostCardComponent({
         <h3
           className={cn(
             'font-bold text-foreground leading-snug mb-2 break-words group-hover/card:text-[#52b274] transition-colors',
-            compact ? 'text-lg text-center' : 'text-xl'
+            compact ? 'text-lg' : 'text-xl'
           )}
         >
           <HighlightText text={title || 'Untitled'} highlightTerms={searchKey || ''} />
@@ -404,7 +404,7 @@ function PostCardComponent({
         <div
           className={cn(
             'text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-3',
-            compact ? 'text-sm text-center' : 'text-base'
+            compact ? 'text-sm' : 'text-base'
           )}
         >
           {displayText}
