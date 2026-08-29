@@ -1,32 +1,40 @@
-import { ParsedSelection } from "@/types/store"
-export const CONTENT_REGEX = /(\w|\.)+/g
+import { ParsedSelection } from "@/types/store";
+export const CONTENT_REGEX = /(\w|\.)+/g;
 
 // Backward-compatible overloads: accept positional args or object args
 // Note: repeated-text cases should use parserDom.ts (DOM-aware) instead.
 // This legacy parser is retained for desktop fallback and existing callers.
-export function parser(doc: string, selected: string, _ranges?: unknown): ParsedSelection | undefined
-export function parser(args: { doc: string; selected: string }): ParsedSelection | undefined
-export function parser(arg1: string | { doc: string; selected: string }, arg2?: string, _ranges?: unknown): ParsedSelection | undefined {
-  let doc: string
-  let selected: string
+export function parser(
+  doc: string,
+  selected: string,
+  _ranges?: unknown
+): ParsedSelection | undefined;
+export function parser(args: { doc: string; selected: string }): ParsedSelection | undefined;
+export function parser(
+  arg1: string | { doc: string; selected: string },
+  arg2?: string,
+  _ranges?: unknown
+): ParsedSelection | undefined {
+  let doc: string;
+  let selected: string;
 
-  if (typeof arg1 === 'string') {
-    doc = arg1
-    selected = arg2 ?? ''
+  if (typeof arg1 === "string") {
+    doc = arg1;
+    selected = arg2 ?? "";
   } else {
-    doc = arg1.doc
-    selected = arg1.selected
+    doc = arg1.doc;
+    selected = arg1.selected;
   }
 
-  if (!selected) return
-  const charStartIndex = doc.indexOf(selected)
-  const charEndIndex = charStartIndex !== -1 ? charStartIndex + selected.length : -1
+  if (!selected) return;
+  const charStartIndex = doc.indexOf(selected);
+  const charEndIndex = charStartIndex !== -1 ? charStartIndex + selected.length : -1;
   return {
     startIndex: charStartIndex,
     endIndex: charEndIndex,
     text: selected,
     points: charEndIndex !== -1 ? charEndIndex - charStartIndex : 0,
-  }
+  };
 }
 
-export { parseDomSelection, isValidRangeForRoot, domApproximateStartOffset } from "./parserDom"
+export { parseDomSelection, isValidRangeForRoot, domApproximateStartOffset } from "./parserDom";
