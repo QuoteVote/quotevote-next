@@ -1,4 +1,4 @@
-import { ParsedSelection } from "@/types/store";
+import type { ParsedSelection } from "@/types/store";
 export const CONTENT_REGEX = /(\w|\.)+/g;
 
 export function parser(

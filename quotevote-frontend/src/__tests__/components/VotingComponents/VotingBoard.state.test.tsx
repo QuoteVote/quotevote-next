@@ -470,6 +470,7 @@ describe("VotingBoard — state machine", () => {
   it("touch: dialog target clears stale toolbar without swallowing the dialog event", async () => {
     jest.useFakeTimers();
     mockTouch(true);
+    const clearIntervalSpy = jest.spyOn(globalThis, "clearInterval");
     const onDeselect = jest.fn();
     const { container } = render(
       <VotingBoard content={CONTENT} onDeselect={onDeselect}>
@@ -504,8 +505,52 @@ describe("VotingBoard — state machine", () => {
     });
 
     expect(onDeselect).toHaveBeenCalled();
+    expect(clearIntervalSpy).toHaveBeenCalled();
     expect(defaultPreventedBefore.called).toBe(false);
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
+  });
+
+  it("touch: content reset clears pending click suppression", async () => {
+    jest.useFakeTimers();
+    mockTouch(true);
+    const onDeselect = jest.fn();
+    const { container, rerender } = render(
+      <VotingBoard content={CONTENT} onDeselect={onDeselect}>
+        {(sel) => <span>{sel.text}</span>}
+      </VotingBoard>
+    );
+
+    setSelectionForSubstring(container as unknown as HTMLElement, "hello");
+    fireEvent(
+      container.querySelector("[data-selectable]") as HTMLElement,
+      new Event("selectstart")
+    );
+    act(() => {
+      jest.advanceTimersByTime(150);
+    });
+
+    await act(async () => {
+      dispatchPointer(document, "pointerdown", { pointerId: 11, clientX: 5, clientY: 5 });
+    });
+    await waitFor(() => expect(screen.getByTestId("selection-popover").dataset.show).toBe("true"));
+
+    rerender(
+      <VotingBoard content="completely new content for reset" onDeselect={onDeselect}>
+        {(sel) => <span>{sel.text}</span>}
+      </VotingBoard>
+    );
+
+    const underlying = document.createElement("button");
+    document.body.appendChild(underlying);
+    const underlyingClick = jest.fn();
+    underlying.addEventListener("click", underlyingClick);
+
+    const clickEvent = await act(async () => dispatchClick(underlying, 11));
+
+    expect(clickEvent.defaultPrevented).toBe(false);
+    expect(underlyingClick).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
+    expect(onDeselect).toHaveBeenCalled();
   });
 
   it("resets on content change", async () => {

@@ -138,6 +138,11 @@ export default function VotingBoard({
   }, []);
 
   const resetToIdle = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    clearSuppress();
     cachedRectRef.current = null;
     cachedSelectionRef.current = null;
     touchModeRef.current = false;
@@ -147,7 +152,7 @@ export default function VotingBoard({
     setSelection({ startIndex: 0, endIndex: 0, text: "", points: 0 });
     setPhaseSynced("idle");
     onDeselect?.();
-  }, [onDeselect, setPhaseSynced]);
+  }, [clearSuppress, onDeselect, setPhaseSynced]);
 
   const armSuppress = useCallback(
     (pointerId: number | null) => {
