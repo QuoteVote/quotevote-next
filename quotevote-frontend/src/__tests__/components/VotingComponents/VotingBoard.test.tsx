@@ -31,7 +31,7 @@ jest.mock('react-highlight-words', () => ({
   },
 }))
 
-// Mock SelectionPopover
+// Mock SelectionPopover — new pure portal API
 jest.mock('@/components/VotingComponents/SelectionPopover', () => ({
   __esModule: true,
   default: ({
@@ -41,7 +41,7 @@ jest.mock('@/components/VotingComponents/SelectionPopover', () => ({
     children: React.ReactNode
     showPopover: boolean
   }) => (
-    <div data-testid="selection-popover" data-show={showPopover}>
+    <div data-testid="selection-popover" data-show={String(showPopover)}>
       {children}
     </div>
   ),
@@ -55,11 +55,24 @@ describe('VotingBoard', () => {
 
   beforeEach(() => {
     Element.prototype.scrollIntoView = jest.fn()
+    // Default to desktop media (toolbar immediate)
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: jest.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    })
   })
 
   it('renders content correctly', () => {
     const { container } = render(<VotingBoard {...defaultProps} />)
-    // Content is split into spans, so we check for the container
     expect(container.textContent).toContain('This is test content for voting board')
   })
 
@@ -76,92 +89,53 @@ describe('VotingBoard', () => {
   it('calls onSelect when text is selected', () => {
     const onSelect = jest.fn()
     const { container } = render(<VotingBoard {...defaultProps} onSelect={onSelect} />)
-
-    // Verify the selectable element exists
     const selectableElement = container.querySelector('[data-selectable]')
     expect(selectableElement).toBeInTheDocument()
   })
 
   it('renders children with selection data', () => {
     const children = jest.fn(() => <div>Child content</div>)
-    render(
-      <VotingBoard {...defaultProps}>
-        {children}
-      </VotingBoard>,
-    )
-
-    // Children should be called with selection data
+    render(<VotingBoard {...defaultProps}>{children}</VotingBoard>)
     expect(children).toHaveBeenCalled()
   })
 
   it('applies custom styles', () => {
     const customStyle = { backgroundColor: 'red' }
-    const { container } = render(
-      <VotingBoard {...defaultProps} style={customStyle} />,
-    )
+    const { container } = render(<VotingBoard {...defaultProps} style={customStyle} />)
     const boardElement = container.querySelector('.h-full.flex.flex-col') as HTMLElement
     expect(boardElement).toBeInTheDocument()
-    // Check that style prop is passed (inline styles are applied directly)
     expect(boardElement.style.backgroundColor || getComputedStyle(boardElement).backgroundColor).toBeTruthy()
   })
 
   it('handles focused comment highlighting', () => {
-    const focusedComment = {
-      startWordIndex: 0,
-      endWordIndex: 4,
-    }
-    render(
-      <VotingBoard
-        {...defaultProps}
-        highlights={true}
-        focusedComment={focusedComment}
-      />,
-    )
+    const focusedComment = { startWordIndex: 0, endWordIndex: 4 }
+    render(<VotingBoard {...defaultProps} highlights={true} focusedComment={focusedComment} />)
     expect(screen.getByTestId('highlighter')).toBeInTheDocument()
   })
 
   it('handles empty content', () => {
-    const { container } = render(
-      <VotingBoard {...defaultProps} content="" />,
-    )
-    // Empty content may render as whitespace due to line breaks
+    const { container } = render(<VotingBoard {...defaultProps} content="" />)
     expect(container.textContent?.trim()).toBe('')
   })
 
   it('handles content with newlines', () => {
     const contentWithNewlines = 'Line 1\nLine 2\nLine 3'
-    const { container } = render(
-      <VotingBoard {...defaultProps} content={contentWithNewlines} />,
-    )
+    const { container } = render(<VotingBoard {...defaultProps} content={contentWithNewlines} />)
     expect(container.textContent).toContain('Line 1')
     expect(container.textContent).toContain('Line 2')
     expect(container.textContent).toContain('Line 3')
   })
 
   it('handles focused comment with invalid indices', () => {
-    const focusedComment = {
-      startWordIndex: 100,
-      endWordIndex: 50, // end < start
-    }
+    const focusedComment = { startWordIndex: 100, endWordIndex: 50 }
     const { container } = render(
-      <VotingBoard
-        {...defaultProps}
-        highlights={true}
-        focusedComment={focusedComment}
-      />,
+      <VotingBoard {...defaultProps} highlights={true} focusedComment={focusedComment} />
     )
-    // Should still render without crashing
     expect(container.textContent).toContain('This is test content')
   })
 
   it('handles null focused comment', () => {
-    render(
-      <VotingBoard
-        {...defaultProps}
-        highlights={true}
-        focusedComment={null}
-      />,
-    )
+    render(<VotingBoard {...defaultProps} highlights={true} focusedComment={null} />)
     expect(screen.getByTestId('highlighter')).toBeInTheDocument()
   })
 
@@ -173,7 +147,7 @@ describe('VotingBoard', () => {
         highlights={true}
         focusedComment={{ startWordIndex: 0, endWordIndex: 4, actionId: 'c1' }}
         onHighlightClick={onHighlightClick}
-      />,
+      />
     )
     fireEvent.click(screen.getByTestId('linked-passage'))
     expect(onHighlightClick).toHaveBeenCalledTimes(1)
@@ -182,41 +156,36 @@ describe('VotingBoard', () => {
   it('calls onSelect with correct selection data', () => {
     const onSelect = jest.fn()
     render(<VotingBoard {...defaultProps} onSelect={onSelect} />)
-    
-    // onSelect is called internally when selection is made
-    // The actual selection would be handled by SelectionPopover
-    // This test verifies the prop is passed correctly
     expect(onSelect).toBeDefined()
   })
 
   it('handles votes prop (for future use)', () => {
-    const votes = [
-      {
-        _id: 'vote1',
-        type: 'up',
-        userId: 'user1',
-      },
-    ]
-    const { container } = render(
-      <VotingBoard {...defaultProps} votes={votes} />,
-    )
-    // Votes prop is currently unused but should not cause errors
+    const votes = [{ _id: 'vote1', type: 'up', userId: 'user1' }]
+    const { container } = render(<VotingBoard {...defaultProps} votes={votes} />)
     expect(container.textContent).toContain('This is test content')
   })
 
   it('applies topOffset to SelectionPopover', () => {
     render(<VotingBoard {...defaultProps} topOffset={50} />)
-    // SelectionPopover should receive topOffset prop
     expect(screen.getByTestId('selection-popover')).toBeInTheDocument()
   })
 
   it('handles selection with empty text', () => {
     const onSelect = jest.fn()
     render(<VotingBoard {...defaultProps} onSelect={onSelect} />)
-    
-    // Empty selection should not trigger onSelect
-    // This is handled internally by the component
     expect(onSelect).toBeDefined()
   })
-})
 
+  it('resets on content change', () => {
+    const { rerender } = render(<VotingBoard {...defaultProps} content="first content" />)
+    rerender(<VotingBoard {...defaultProps} content="second content" />)
+    // Should not crash and show new content
+    expect(document.body.textContent).toContain('second content')
+  })
+
+  it('exposes onDeselect prop', () => {
+    const onDeselect = jest.fn()
+    render(<VotingBoard {...defaultProps} onDeselect={onDeselect} />)
+    expect(onDeselect).toBeDefined()
+  })
+})

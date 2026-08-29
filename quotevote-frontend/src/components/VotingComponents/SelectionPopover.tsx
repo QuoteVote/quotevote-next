@@ -1,18 +1,20 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import type { SelectionPopoverProps } from '@/types/voting'
 
 /**
- * SelectionPopover component
- * Handles text selection and displays a popover at the selection position
+ * SelectionPopover — pure portal/positioning (issue #484).
+ * No selection polling, no onSelect/onDeselect. Owner (VotingBoard) owns
+ * selection state and provides `resolveAnchorRect` + `popoverRef`.
+ * Preserves above/below placement, clamping, scroll handlers, z-index 50.
  */
 export default function SelectionPopover({
   showPopover,
   topOffset = 30,
-  onSelect,
-  onDeselect,
+  resolveAnchorRect,
+  popoverRef,
   style,
   children,
 }: SelectionPopoverProps) {
@@ -21,42 +23,15 @@ export default function SelectionPopover({
     top: 0,
     left: 0,
   })
-  const popoverRef = useRef<HTMLDivElement>(null)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
-  const selectionExists = useCallback(() => {
-    const selection = window.getSelection()
-    return (
-      selection &&
-      selection.rangeCount > 0 &&
-      selection.getRangeAt(0) &&
-      !selection.getRangeAt(0).collapsed &&
-      selection.getRangeAt(0).getBoundingClientRect().width > 0 &&
-      selection.getRangeAt(0).getBoundingClientRect().height > 0
-    )
-  }, [])
-
-  const clearSelection = useCallback(() => {
-    if (window.getSelection) {
-      window.getSelection()?.removeAllRanges()
-    } else if (
-      (document as unknown as { selection?: { empty: () => void } }).selection
-    ) {
-      ;(document as unknown as { selection: { empty: () => void } }).selection?.empty()
-    }
-  }, [])
-
   const computePopoverBox = useCallback(() => {
-    const selection = window.getSelection()
-    if (!selectionExists() || !selection || selection.rangeCount === 0) {
-      return
-    }
-    const selectionBox = selection.getRangeAt(0).getBoundingClientRect()
+    const selectionBox = resolveAnchorRect()
+    if (!selectionBox) return
     const popoverElement = popoverRef.current
     if (!popoverElement) return
 
@@ -88,82 +63,27 @@ export default function SelectionPopover({
       top: pageTop,
       left: pageLeft,
     })
-  }, [topOffset, selectionExists])
-
-  const selectionChange = useCallback(() => {
-    const selection = window.getSelection()
-    if (selectionExists() && selection) {
-      onSelect(selection)
-      computePopoverBox()
-      return
-    }
-    onDeselect()
-  }, [onSelect, onDeselect, selectionExists, computePopoverBox])
-
-  const handleRemoveInterval = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }, [])
-
-  const handleMobileSelection = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-    }
-    intervalRef.current = setInterval(() => {
-      selectionChange()
-    }, 100)
-  }, [selectionChange])
-
-  useEffect(() => {
-    if (showPopover === false) {
-      clearSelection()
-    }
-  }, [showPopover, clearSelection])
-
-  useEffect(() => {
-    const target = document.querySelector('[data-selectable]')
-    if (target) {
-      target.addEventListener('selectstart', handleMobileSelection)
-      target.addEventListener('pointerup', handleRemoveInterval)
-      target.addEventListener('pointermove', selectionChange)
-
-      return () => {
-        target.removeEventListener('selectstart', handleMobileSelection)
-        target.removeEventListener('pointerup', handleRemoveInterval)
-        target.removeEventListener('pointermove', selectionChange)
-      }
-    }
-    return undefined
-  }, [handleMobileSelection, handleRemoveInterval, selectionChange])
+  }, [topOffset, resolveAnchorRect, popoverRef])
 
   useEffect(() => {
     if (showPopover) {
-      // Run on next frames to handle potential layout adjustments and avoid cascading renders lint rule
       const rafId1 = requestAnimationFrame(computePopoverBox)
       const rafId2 = requestAnimationFrame(() => requestAnimationFrame(computePopoverBox))
 
       window.addEventListener('resize', computePopoverBox)
+      window.addEventListener('orientationchange', computePopoverBox)
       window.addEventListener('scroll', computePopoverBox, { passive: true })
 
       return () => {
         cancelAnimationFrame(rafId1)
         cancelAnimationFrame(rafId2)
         window.removeEventListener('resize', computePopoverBox)
+        window.removeEventListener('orientationchange', computePopoverBox)
         window.removeEventListener('scroll', computePopoverBox)
       }
     }
     return undefined
   }, [showPopover, computePopoverBox])
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [])
 
   if (!mounted) return null
 
@@ -181,8 +101,6 @@ export default function SelectionPopover({
         position: 'absolute',
         top: popoverBox.top,
         left: popoverBox.left,
-        // Must sit above the post's sticky action bar (Disagree/Support,
-        // z-10 in Post.tsx) so the selection interaction isn't hidden behind it.
         zIndex: 50,
         ...style,
       }}
@@ -192,4 +110,3 @@ export default function SelectionPopover({
     document.body
   )
 }
-

@@ -19,6 +19,10 @@ import { PUBLIC_TAG_NAME } from './helpers/post-composer';
 test.describe('E2E-HILITE-001: Highlight Action Popup', () => {
   test.skip(!AUTHOR_PASSWORD, 'E2E_AUTHOR_PASSWORD is required');
 
+  test.beforeEach(({ isMobile }) => {
+    test.skip(!!isMobile, 'Desktop-only: mobile uses delayed two-tap workflow (see mobile.spec.ts)')
+  })
+
   let createdPostId: string | null = null;
   let authToken: string | null = null;
 
@@ -84,9 +88,14 @@ test.describe('E2E-HILITE-001: Highlight Action Popup', () => {
     }
 
     // Step 3: Select a passage of text within the post body
+    // This spec is desktop-only (delayed mobile workflow not applicable)
+    await page.evaluate(() => {
+      // Ensure desktop media: not coarse touch, so toolbar opens immediately
+      // Playwright's desktop project already matches this; no override needed.
+    })
     await selectPostText(page);
 
-    // Step 4: Confirm that the highlight action popup appears
+    // Step 4: Confirm that the highlight action popup appears immediately (desktop)
     const highlightPopup = page.getByTestId('highlight-popup');
     await expect(highlightPopup).toBeVisible({ timeout: 15_000 });
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, lazy, Suspense } from 'react'
+import { useState, lazy, Suspense, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { includes } from 'lodash'
 import moment from 'moment'
@@ -96,6 +96,10 @@ export default function Post({
     endIndex: 0,
     points: 0,
   })
+
+  const handleDeselect = useCallback(() => {
+    setSelectedText({ text: '', startIndex: 0, endIndex: 0, points: 0 })
+  }, [])
 
   const isFollowing = includes(_followingId, userId)
   const admin = user.admin || false
@@ -597,6 +601,7 @@ export default function Post({
           <VotingBoard
             content={post.text || ''}
             onSelect={setSelectedText}
+            onDeselect={handleDeselect}
             highlights={true}
             votes={post.votes || []}
             focusedComment={linkedPassage}

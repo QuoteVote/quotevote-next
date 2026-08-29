@@ -2,6 +2,8 @@ import { ParsedSelection } from "@/types/store"
 export const CONTENT_REGEX = /(\w|\.)+/g
 
 // Backward-compatible overloads: accept positional args or object args
+// Note: repeated-text cases should use parserDom.ts (DOM-aware) instead.
+// This legacy parser is retained for desktop fallback and existing callers.
 export function parser(doc: string, selected: string, _ranges?: unknown): ParsedSelection | undefined
 export function parser(args: { doc: string; selected: string }): ParsedSelection | undefined
 export function parser(arg1: string | { doc: string; selected: string }, arg2?: string, _ranges?: unknown): ParsedSelection | undefined {
@@ -26,3 +28,5 @@ export function parser(arg1: string | { doc: string; selected: string }, arg2?: 
     points: charEndIndex !== -1 ? charEndIndex - charStartIndex : 0,
   }
 }
+
+export { parseDomSelection, isValidRangeForRoot, domApproximateStartOffset } from "./parserDom"

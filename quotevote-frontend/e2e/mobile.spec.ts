@@ -1,29 +1,29 @@
 /**
- * E2E-MOB-005 — Mobile Highlight Selection
+ * E2E-MOB-005 — Mobile Highlight Selection (delayed two-tap, issue #484)
  *
  * Sheet mapping:
  * - Feature Area: Mobile
- * - Scenario: Mobile Highlight Selection
+ * - Scenario: Mobile Highlight Selection (delayed toolbar)
  * - Priority: P0
  * - Actor: Registered User (authorUser)
  * - Auth State: Logged in
  * - Required Data: Public post
  * - Viewport: Mobile
- * - Suggested Spec File: mobile.spec.ts
  *
- * Test Steps:
- * 1. Log in as authorUser in a mobile viewport.
- * 2. Navigate to an existing public post.
- * 3. Select a passage of text within the post body.
- * 4. Confirm the highlight action popup appears.
- * 5. Confirm the popup is fully visible within the viewport (not cut off by left or right edge).
- * 6. Confirm native copy/paste controls do not prevent interaction with the Quote.Vote popup.
- * 7. Tap the available popup actions enough to confirm they are visible, reachable, and responsive.
+ * Steps (delayed workflow):
+ * 1. Select passage → native Selection contains text, toolbar hidden, retained mark absent
+ * 2. First background tap → native cleared, retained mark + toolbar visible, clamped
+ * 3. Actions interactive (Comment tap)
+ * 4. Second background tap → toolbar/highlight dismissed, URL unchanged
  */
 import { test, expect } from '@playwright/test';
 import { deletePostViaApi, loginViaApi } from './helpers/api';
 import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from './helpers/auth';
-import { selectMobilePostText } from './helpers/selection';
+import {
+  selectMobilePostText,
+  advanceMobileSelectionToToolbar,
+  dismissMobileToolbar,
+} from './helpers/selection';
 
 import { PUBLIC_TAG_NAME } from './helpers/post-composer';
 
@@ -49,16 +49,14 @@ test.describe('E2E-MOB-005: Mobile Highlight Selection', () => {
     }
   });
 
-  test('mobile user can select text and interact with highlight popup without clipping or overlap', async ({ page }) => {
+  test('mobile delayed toolbar: selection → first tap shows retained highlight → second tap dismisses', async ({ page }) => {
     const uniqueSuffix = `${Date.now()}-mob`;
     const postTitle = `E2E-MOB-005 ${uniqueSuffix}`;
     const postBody = `Automated mobile post body for testing touch highlight selection in ${uniqueSuffix}. Please select this passage of text on a mobile viewport to see the action popup.`;
 
-    // Step 1: Log in as authorUser in a mobile viewport
     await page.goto('/');
     await expect(page).toHaveURL((url) => url.pathname === '/');
 
-    // Ensure at least one public post exists on the explore feed
     const firstPostCard = page.getByTestId('post-card').first();
     const hasExistingPost = await firstPostCard.isVisible().catch(() => false);
 
@@ -81,12 +79,10 @@ test.describe('E2E-MOB-005: Mobile Highlight Selection', () => {
       await expect(page).toHaveURL((url) => url.pathname === '/', { timeout: 30_000 });
     }
 
-    // Step 2: Navigate to an existing public post
     const targetPostCard = page.getByTestId('post-card').first();
     await expect(targetPostCard).toBeVisible({ timeout: 30_000 });
     await targetPostCard.click();
 
-    // Confirm mobile post page loads successfully and post body text is visible
     await expect(page).toHaveURL(/\/dashboard\/post\/.+\/.+\/.+/, { timeout: 30_000 });
     const postBodyElement = page.getByTestId('post-detail-body');
     await expect(postBodyElement).toBeVisible({ timeout: 30_000 });
@@ -97,43 +93,57 @@ test.describe('E2E-MOB-005: Mobile Highlight Selection', () => {
       createdPostId = postIdMatch[1];
     }
 
-    // Step 3: Select a passage of text within the post body using mobile selection helper
+    const highlightPopup = page.getByTestId('highlight-popup');
+    const retainedMark = page.getByTestId('retained-selection-highlight');
+
+    // Step 1: Create DOM selection — toolbar and retained must remain hidden
     await selectMobilePostText(page);
 
-    // Step 4: Confirm the highlight action popup appears
-    const highlightPopup = page.getByTestId('highlight-popup');
-    await expect(highlightPopup).toBeVisible({ timeout: 15_000 });
+    // Native Selection contains text
+    const nativeText = await page.evaluate(() => window.getSelection()?.toString() ?? '')
+    expect(nativeText.length).toBeGreaterThan(0)
 
-    // Step 5: Confirm the popup is fully visible within the viewport without side-of-screen clipping
+    await expect(highlightPopup).toBeHidden({ timeout: 5_000 })
+    await expect(retainedMark).toBeHidden({ timeout: 5_000 })
+
+    // Step 2: First background tap → retained + toolbar appear, native cleared
+    await advanceMobileSelectionToToolbar(page);
+
+    await expect.poll(async () => await page.evaluate(() => window.getSelection()?.toString() ?? ''), { timeout: 5_000 }).toBe('')
+
+    await expect(retainedMark).toBeVisible({ timeout: 10_000 })
+    // Retained mark contains the selected passage
+    await expect(retainedMark).toContainText(nativeText.slice(0, 20))
+
+    await expect(highlightPopup).toBeVisible({ timeout: 10_000 })
+
+    // Viewport clamped
     const popupBox = await highlightPopup.boundingBox();
     expect(popupBox).not.toBeNull();
     if (popupBox) {
       const viewportSize = page.viewportSize() || { width: 393, height: 851 };
-      // Popup must not be cut off by left edge (x >= 0) or right edge (x + width <= viewportWidth)
       expect(popupBox.x).toBeGreaterThanOrEqual(0);
       expect(popupBox.x + popupBox.width).toBeLessThanOrEqual(viewportSize.width);
     }
 
-    // Step 6 & 7: Confirm native copy/paste controls do not prevent interaction with the Quote.Vote popup,
-    // and tap available popup actions to confirm they are visible, reachable, and responsive.
-    const agreeButton = page.getByTestId('highlight-agree-button').first();
-    const disagreeButton = page.getByTestId('highlight-disagree-button').first();
+    await expect(page.getByTestId('highlight-agree-button').first()).toBeVisible();
+    await expect(page.getByTestId('highlight-disagree-button').first()).toBeVisible();
+    await expect(page.getByTestId('highlight-comment-button').first()).toBeVisible();
+    await expect(page.getByTestId('highlight-quote-button').first()).toBeVisible();
+
+    // Comment input remains usable
     const commentButton = page.getByTestId('highlight-comment-button').first();
-    const quoteButton = page.getByTestId('highlight-quote-button').first();
-
-    await expect(agreeButton).toBeVisible();
-    await expect(disagreeButton).toBeVisible();
-    await expect(commentButton).toBeVisible();
-    await expect(quoteButton).toBeVisible();
-
-    // Tap comment action: Playwright's .tap() ensures the button receives touch events and is not obscured
-    // by native OS selection handles or copy/paste popups.
     await commentButton.tap();
-
-    // Verify tapping responsive action expanded the comment input or state cleanly
     await expect(highlightPopup).toBeVisible();
 
-    // Confirm no runtime error or error toast appears
+    // Step 3: Second background tap dismisses toolbar/highlight, URL unchanged
+    const urlBeforeDismiss = page.url()
+    await dismissMobileToolbar(page);
+
+    await expect(highlightPopup).toBeHidden({ timeout: 5_000 })
+    await expect(retainedMark).toBeHidden({ timeout: 5_000 })
+    expect(page.url()).toBe(urlBeforeDismiss)
+
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 });

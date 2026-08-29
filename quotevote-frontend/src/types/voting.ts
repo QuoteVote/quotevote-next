@@ -95,6 +95,11 @@ export interface VotingPopupProps {
 }
 
 /**
+ * Explicit delayed-mobile selection state machine (issue #484).
+ */
+export type SelectionPhase = "idle" | "native" | "toolbar"
+
+/**
  * VotingBoard component props
  */
 export interface VotingBoardProps {
@@ -106,6 +111,11 @@ export interface VotingBoardProps {
    * Handler function called when text is selected
    */
   onSelect?: SelectionHandler
+  /**
+   * Handler called when selection is dismissed (background tap, reset, mode change).
+   * Parent should clear its selectedText to empty indices/text.
+   */
+  onDeselect?: () => void
   /**
    * Whether to show highlights for votes/comments
    */
@@ -141,7 +151,8 @@ export interface VotingBoardProps {
 }
 
 /**
- * SelectionPopover component props
+ * SelectionPopover component props — pure portal/positioning (issue #484).
+ * No selection polling, no onSelect/onDeselect. Owner (VotingBoard) resolves the anchor.
  */
 export interface SelectionPopoverProps {
   /**
@@ -153,13 +164,14 @@ export interface SelectionPopoverProps {
    */
   topOffset?: number
   /**
-   * Handler function called when text is selected
+   * Resolve the current anchor rectangle for positioning.
+   * Desktop: live browser range rect; Mobile toolbar: retained mark rect or cached native rect.
    */
-  onSelect: (selection: Selection) => void
+  resolveAnchorRect: () => DOMRect | null
   /**
-   * Handler function called when selection is cleared
+   * Ref to the popover element (owned by VotingBoard)
    */
-  onDeselect: () => void
+  popoverRef: React.RefObject<HTMLDivElement | null>
   /**
    * Additional style props
    */
