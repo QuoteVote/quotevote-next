@@ -17,10 +17,6 @@ const RETAINED_PASSAGE_CLASS =
 
 const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
 
-/**
- * Stable highlight tag so Highlighter does not remount on parent re-renders.
- * Clicks bubble to the passage container, which owns the reverse-nav handler.
- */
 function LinkedPassageMark({
   children,
   className,
@@ -48,10 +44,6 @@ function LinkedPassageMark({
   );
 }
 
-/**
- * Retained passage mark (issue #484): plain semantic <mark>, no button
- * semantics — the text stays in the accessibility tree.
- */
 function RetainedPassageMark({
   children,
   className,
@@ -80,12 +72,6 @@ function isDialogTarget(target: EventTarget | null): boolean {
   return !!target.closest('dialog[open], [role="dialog"], [role="alertdialog"]');
 }
 
-/**
- * VotingBoard — explicit selection state machine for issue #484.
- * Touch-first devices use the delayed (two-tap) workflow; desktop opens
- * the toolbar immediately from the live selection and never renders the
- * retained mark nor installs outside-tap suppression.
- */
 export default function VotingBoard({
   topOffset,
   onSelect,
@@ -108,16 +94,9 @@ export default function VotingBoard({
     points: 0,
   });
 
-  /**
-   * Touch mode captured at the moment a selection becomes valid.
-   * Gates ALL retained-mobile behavior so desktop never renders the retained
-   * mark, never installs outside-tap suppression, and keeps its legacy
-   * selection-driven dismissal (P1 #1).
-   */
   const [touchMode, setTouchMode] = useState(false);
   const touchModeRef = useRef(false);
 
-  // Retained toolbar anchor: cached native rect for immediate positioning after flushSync
   const cachedRectRef = useRef<DOMRect | null>(null);
   const cachedSelectionRef = useRef<SelectedText | null>(null);
   const contentRef = useRef<HTMLParagraphElement>(null);
@@ -125,18 +104,14 @@ export default function VotingBoard({
   const popoverRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Click suppression — mounted listener with pointerId + deadline (refinement 5)
   const suppressNextClickRef = useRef(false);
   const suppressPointerIdRef = useRef<number | null>(null);
   const suppressDeadlineRef = useRef<number>(0);
   const suppressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Tap-vs-drag discrimination for taps inside selectable content (P1 #2)
   const pendingTapRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   const tapDraggedRef = useRef(false);
 
-  // Pending dismiss for second tap (P1 #1): keep click listener alive until
-  // the delayed compatibility click is consumed
   const pendingDismissRef = useRef(false);
 
   const setPhaseSynced = useCallback((next: SelectionPhase) => {
@@ -182,8 +157,6 @@ export default function VotingBoard({
       if (suppressTimerRef.current) clearTimeout(suppressTimerRef.current);
       suppressTimerRef.current = setTimeout(() => {
         clearSuppress();
-        // Fallback: if the delayed click never arrived (e.g. compat click
-        // was swallowed), still dismiss the pending toolbar
         if (pendingDismissRef.current) {
           pendingDismissRef.current = false;
           resetToIdle();
@@ -201,10 +174,6 @@ export default function VotingBoard({
     .replace(/(\r\n|\n|\r)/gm, "");
   const hasLinkedRange = endWordIndex > startWordIndex;
 
-  /**
-   * Retained rendering is gated on the captured touch-mode flag (P1 #1):
-   * desktop reaches 'toolbar' phase too, but never renders the mark.
-   */
   const hasValidRetainedSelection =
     phase === "toolbar" &&
     touchMode &&
@@ -214,7 +183,6 @@ export default function VotingBoard({
 
   useLayoutEffect(() => {
     if (!hasLinkedRange) return;
-    // Retained highlight takes precedence while toolbar open; don't auto-scroll linked
     if (phase === "toolbar" && hasValidRetainedSelection) return;
     const frame = window.requestAnimationFrame(() => {
       scrollLinkedPassageIntoView();
@@ -229,7 +197,6 @@ export default function VotingBoard({
     hasValidRetainedSelection,
   ]);
 
-  // Content change resets state (skip initial mount)
   const prevContentRef = useRef(content);
   useEffect(() => {
     if (prevContentRef.current === content) return;
@@ -242,7 +209,6 @@ export default function VotingBoard({
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mql = window.matchMedia(TOUCH_MEDIA_QUERY);
     const handler = () => {
-      // Input-mode change resets state and removes stale listeners/timers
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -256,12 +222,10 @@ export default function VotingBoard({
       setPhaseSynced("idle");
       onDeselect?.();
     };
-    // Modern browsers
     if (typeof mql.addEventListener === "function") {
       mql.addEventListener("change", handler);
       return () => mql.removeEventListener("change", handler);
     }
-    // Safari fallback
     const legacy = mql as unknown as {
       addListener: (cb: () => void) => void;
       removeListener: (cb: () => void) => void;
@@ -298,8 +262,6 @@ export default function VotingBoard({
       }
       if (rect.width <= 0 || rect.height <= 0) return null;
 
-      // DOM-aware parser only (P2 #2): no legacy indexOf fallback —
-      // rejecting the selection is safer than binding the wrong passage.
       const domParsed = parseDomSelection({
         content,
         selectedText: text,
@@ -318,7 +280,6 @@ export default function VotingBoard({
       if (startIndex < 0 || endIndex > content.length || endIndex <= startIndex) {
         return null;
       }
-      // Final verification: normalized slice must match normalized selection
       const slice = content.slice(startIndex, endIndex);
       const normSlice = slice.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
       const normText = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -340,14 +301,10 @@ export default function VotingBoard({
     const sel = window.getSelection();
     const collapsedOrEmpty = !sel || sel.rangeCount === 0 || sel.getRangeAt(0).collapsed;
     if (collapsedOrEmpty) {
-      // Refinement 2: collapsed with no cached passage → idle; with cached passage → ignore
       if (phaseRef.current === "native") {
         if (!cachedSelectionRef.current) resetToIdle();
         return;
       }
-      // Desktop toolbar: selection cleared (click elsewhere) → dismiss.
-      // Retained (touch) toolbar clears the native selection deliberately
-      // during the transition, so it must NOT reset here.
       if (phaseRef.current === "toolbar" && !touchModeRef.current) {
         resetToIdle();
       }
@@ -363,22 +320,17 @@ export default function VotingBoard({
     cachedRectRef.current = rect;
     setSelection(parsed);
 
-    // Capture input mode at the moment the selection becomes valid (P1 #1)
     const delayed = isCoarseTouchEnvironment();
     touchModeRef.current = delayed;
     setTouchMode(delayed);
     if (delayed) {
-      // Touch-first: store but keep toolbar hidden (native menu active)
       setPhaseSynced("native");
-      // Don't call onSelect yet; toolbar not shown
     } else {
-      // Desktop: open immediately, live selection drives rendering/positioning
       setPhaseSynced("toolbar");
       onSelect?.(parsed);
     }
   }, [tryParseSelection, resetToIdle, setPhaseSynced, onSelect]);
 
-  // Selection ownership scoped to local selectable-content ref + polling fallback
   useEffect(() => {
     const target = selectableRef.current;
     if (!target) return;
@@ -386,7 +338,6 @@ export default function VotingBoard({
     const onSelectStart = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => {
-        // Polling fallback for mobile handle drag; also observe selectionchange in native
         handleSelectionChange();
       }, 100);
     };
@@ -395,16 +346,11 @@ export default function VotingBoard({
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      // Let selection settle then refresh
       window.setTimeout(handleSelectionChange, 0);
     };
 
     target.addEventListener("selectstart", onSelectStart);
     target.addEventListener("pointerup", onPointerUp);
-    // While in native, selectionchange from handle drag should refresh;
-    // desktop selectionchange drives both open (idle→toolbar) and dismissal
-    // (toolbar→idle when the selection collapses). Retained toolbar ignores
-    // it because the native selection was deliberately cleared.
     const onDocSelectionChange = () => {
       if (phaseRef.current === "native") handleSelectionChange();
       else if (phaseRef.current === "idle" && !isCoarseTouchEnvironment()) handleSelectionChange();
@@ -423,14 +369,8 @@ export default function VotingBoard({
     };
   }, [handleSelectionChange]);
 
-  /**
-   * Perform the native → toolbar transition (first tap).
-   * Ordering (refinement 1): cache rect → phase → flushSync mark → clear
-   * native → position. flushSync runs only from this pointer-event path.
-   */
   const performNativeToToolbarTransition = useCallback(
     (pointerId: number | null) => {
-      // Refresh cached selection if still valid
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
         const refreshed = tryParseSelection(sel);
@@ -451,9 +391,7 @@ export default function VotingBoard({
         setPhase("toolbar");
         setSelection(parsedToCommit);
       });
-      // Now retained <mark> exists; clear native
       clearNativeSelection();
-      // Prime popover positioning from cached rect; popover recomputes from mark
       cachedRectRef.current = rectToCache;
       onSelect?.(parsedToCommit);
       armSuppress(pointerId);
@@ -461,25 +399,18 @@ export default function VotingBoard({
     [tryParseSelection, resetToIdle, clearNativeSelection, onSelect, armSuppress]
   );
 
-  // Outside-tap handlers: only for the touch workflow (native phase, or the
-  // retained toolbar). Desktop toolbar installs NO document-level capture
-  // handlers — dismissal is selection-driven, so normal desktop clicks are
-  // never consumed (P1 #1).
   useEffect(() => {
     const active = phase === "native" || (phase === "toolbar" && touchMode);
     if (!active) return;
 
     const onPointerDownCapture = (e: PointerEvent) => {
       const target = e.target;
-      // Protect guest auth dialog
       if (isDialogTarget(target)) {
-        // Clear stale toolbar but don't swallow dialog interaction
         if (phaseRef.current === "toolbar" || phaseRef.current === "native") {
           resetToIdle();
         }
         return;
       }
-      // Inside popover — preserve
       if (popoverRef.current && target instanceof Node && popoverRef.current.contains(target)) {
         return;
       }
@@ -488,14 +419,10 @@ export default function VotingBoard({
 
       if (phaseRef.current === "native") {
         if (insideSelectable) {
-          // Tap-vs-drag (P1 #2): a stationary tap inside the quote should
-          // transition; dragging the selection handles should not. Track the
-          // gesture and decide on pointerup.
           pendingTapRef.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY };
           tapDraggedRef.current = false;
           return;
         }
-        // First outside tap: native → toolbar
         performNativeToToolbarTransition(e.pointerId ?? null);
         e.preventDefault();
         e.stopPropagation();
@@ -503,9 +430,6 @@ export default function VotingBoard({
       }
 
       if (phaseRef.current === "toolbar") {
-        // Second outside tap: toolbar → idle. Keep the click-capture
-        // listener alive until the delayed compatibility click is consumed
-        // (P1 #1), so the click does not activate UI underneath.
         pendingDismissRef.current = true;
         armSuppress(e.pointerId ?? null);
         e.preventDefault();
@@ -516,7 +440,6 @@ export default function VotingBoard({
     const onPointerMoveCapture = (e: PointerEvent) => {
       if (!pendingTapRef.current) return;
       const tap = pendingTapRef.current;
-      // Mark as drag once the pointer moves beyond a small slop threshold
       if (
         e.pointerId === tap.pointerId &&
         (Math.abs(e.clientX - tap.x) > 8 || Math.abs(e.clientY - tap.y) > 8)
@@ -531,7 +454,6 @@ export default function VotingBoard({
       pendingTapRef.current = null;
       if (e.pointerId !== tap.pointerId) return;
       if (tapDraggedRef.current) return;
-      // Stationary tap inside the quote: perform the first transition
       if (phaseRef.current === "native" && cachedSelectionRef.current) {
         performNativeToToolbarTransition(e.pointerId ?? null);
         e.preventDefault();
@@ -549,9 +471,6 @@ export default function VotingBoard({
     };
   }, [phase, touchMode, performNativeToToolbarTransition, resetToIdle, armSuppress]);
 
-  // Click-suppression listener — lives independently of toolbar phase so the
-  // delayed compatibility click is still consumed after we enter idle via
-  // pendingDismiss (P1 #1). Also guards popover interactions (P1 #3).
   useEffect(() => {
     const onClickCapture = (e: MouseEvent) => {
       const hasSuppress = suppressNextClickRef.current;
@@ -566,24 +485,16 @@ export default function VotingBoard({
         return;
       }
       const target = e.target;
-      // Dialogs are higher-priority UI (guest auth): let the click through
       if (isDialogTarget(target)) {
         clearSuppress();
         pendingDismissRef.current = false;
         return;
       }
-      // Popover interactions are never suppressed (P1 #3): a quick
-      // Agree/Comment/Quote tap after the transition must work.
       if (popoverRef.current && target instanceof Node && popoverRef.current.contains(target)) {
         clearSuppress();
         pendingDismissRef.current = false;
         return;
       }
-      // If suppression is not armed but a dismiss is pending, the click is
-      // the second-tap's compatibility click without a matching pointerId
-      // (e.g. mouse compat click) — still need to dismiss without swallowing
-      // if it matches the pending gesture. We only swallow when suppression
-      // is armed; otherwise just handle the pending dismiss.
       if (!hasSuppress) {
         if (hasPendingDismiss) {
           pendingDismissRef.current = false;
@@ -591,7 +502,6 @@ export default function VotingBoard({
         }
         return;
       }
-      // Suppress only the click matching the consumed pointer (P1 #3).
       const clickPointerId = (e as unknown as { pointerId?: number }).pointerId;
       if (
         suppressPointerIdRef.current !== null &&
@@ -651,8 +561,6 @@ export default function VotingBoard({
   );
 
   const resolveAnchorRect = useCallback((): DOMRect | null => {
-    // Retained (touch) toolbar: prefer retained mark rect, fall back to cached
-    // native rect during the transition frame.
     if (phaseRef.current === "toolbar" && touchModeRef.current) {
       const mark = document.querySelector(
         '[data-testid="retained-selection-highlight"]'
@@ -664,7 +572,6 @@ export default function VotingBoard({
       if (cachedRectRef.current) return cachedRectRef.current;
       return null;
     }
-    // Desktop toolbar (immediate) or native measurement: live range
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0) {
       try {
@@ -678,7 +585,6 @@ export default function VotingBoard({
     return null;
   }, []);
 
-  // Popover visibility: retained (touch) or desktop-immediate toolbar
   const showRetainedPopover = phase === "toolbar" && hasValidRetainedSelection;
   const showDesktopPopover = phase === "toolbar" && !touchMode && selection.text.length > 0;
   const effectiveShowPopover = showRetainedPopover || showDesktopPopover;
@@ -697,9 +603,6 @@ export default function VotingBoard({
   );
 
   const renderHighlights = () => {
-    // Explicit priority branch (refinement 4): retained takes precedence,
-    // hasLinkedRange is not mutated so the linked highlight returns after
-    // dismissal.
     if (phase === "toolbar" && hasValidRetainedSelection) {
       return renderRetained();
     }

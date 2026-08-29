@@ -4,7 +4,6 @@ import {
   domApproximateStartOffset,
 } from "@/lib/utils/parserDom";
 
-// JSDOM's Range may not have getBoundingClientRect in some versions — polyfill
 if (typeof Range !== "undefined" && !Range.prototype.getBoundingClientRect) {
   Range.prototype.getBoundingClientRect = function () {
     return {
@@ -41,7 +40,6 @@ function stubRangeRect(range: Range, rect: Partial<DOMRect> = {}) {
     toJSON() {},
     ...rect,
   } as DOMRect;
-  // Range instances have own getBoundingClientRect in JSDOM — stub directly
   (range as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect = () => fake;
   return range;
 }
@@ -89,9 +87,6 @@ describe("parserDom — parseDomSelection", () => {
   });
 
   function selectSubstring(root: HTMLElement, content: string, needle: string, occurrence: number) {
-    // Find the occurrence index in original content, then create a range that
-    // spans that occurrence inside the DOM. For simplicity we populate the root
-    // with a text node equal to content and select within it.
     const p = document.createElement("p");
     p.textContent = content.replace(/\r\n/g, "\n");
     root.appendChild(p);
@@ -125,12 +120,10 @@ describe("parserDom — parseDomSelection", () => {
   it("picks the occurrence nearest the DOM offset for repeated text", () => {
     const content = "foo bar foo bar foo";
     const root = makeRoot("");
-    // Select the second "foo" (index 8 in normalized content: "foo bar [foo] bar foo")
     const needle = "foo";
     const range = selectSubstring(root, content, needle, 1);
     const res = parseDomSelection({ content, selectedText: needle, range, contentRoot: root });
     expect(res).toBeDefined();
-    // Second "foo" starts at 8
     expect(res!.startIndex).toBe(8);
     expect(res!.endIndex).toBe(11);
   });
@@ -140,7 +133,6 @@ describe("parserDom — parseDomSelection", () => {
     const normalizedNeedle = "line2";
     const root = makeRoot("");
     const range = selectSubstring(root, content, normalizedNeedle, 0);
-    // DOM text normalizes CRLF to LF, so selectedText arrives as "line2"
     const res = parseDomSelection({
       content,
       selectedText: "line2",
@@ -148,7 +140,6 @@ describe("parserDom — parseDomSelection", () => {
       contentRoot: root,
     });
     expect(res).toBeDefined();
-    // "line1\r\n" is 7 chars original, line2 starts at 7
     expect(res!.startIndex).toBe(7);
     expect(res!.endIndex).toBe(12);
     expect(res!.text).toBe("line2");
@@ -157,7 +148,6 @@ describe("parserDom — parseDomSelection", () => {
   it("handles selection spanning a CRLF boundary", () => {
     const content = "a\r\nb\r\nc";
     const root = makeRoot("");
-    // Select "b\nc" in normalized space -> original "b\r\nc"
     const range = selectSubstring(root, content, "b\nc", 0);
     const res = parseDomSelection({
       content,
@@ -214,7 +204,6 @@ describe("parserDom — parseDomSelection", () => {
   });
 
   it("derives correct offset when DOM approximate matches the second occurrence", () => {
-    // Content has "abc abc abc", selection is "abc" at DOM position of third occurrence
     const content = "abc abc abc";
     const root = makeRoot("");
     const range = selectSubstring(root, content, "abc", 2);
@@ -222,8 +211,7 @@ describe("parserDom — parseDomSelection", () => {
     expect(res!.startIndex).toBe(8);
   });
 
-  it("CRLF: preceding CRLFs do not shift the approximate offset (P2 #2)", () => {
-    // "x" + 5×CRLF + "foo foo" — first foo normalized at 6, original at 11
+  it("CRLF: preceding CRLFs do not shift the approximate offset", () => {
     const content = "x\r\n\r\n\r\n\r\n\r\nfoo foo";
     const root = makeRoot("");
     const range = selectSubstring(root, content, "foo", 0);
@@ -287,12 +275,10 @@ describe("parserDom — domApproximateStartOffset", () => {
 
   it("returns null when Range API throws", () => {
     const root = makeRoot("<p>hi</p>");
-    // Force prefix creation to throw
     const originalCreateRange = document.createRange.bind(document);
     jest.spyOn(document, "createRange").mockImplementation(() => {
       throw new Error("forced");
     });
-    // domApproximateStartOffset should catch and return null
     const dummyRange = originalCreateRange();
     dummyRange.selectNodeContents(root.querySelector("p")!);
     expect(domApproximateStartOffset(dummyRange, root)).toBeNull();

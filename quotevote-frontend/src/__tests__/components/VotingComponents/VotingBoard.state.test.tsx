@@ -1,13 +1,6 @@
-/**
- * VotingBoard — state machine tests (issue #484)
- * Covers P1#1 desktop gating, P1#2 tap-vs-drag, P1#3 popover exemption is via
- * suppression logic in the component, and P2#3 coverage gaps.
- */
-
 import { render, screen, fireEvent, waitFor, act } from "@/__tests__/utils/test-utils";
 import VotingBoard from "@/components/VotingComponents/VotingBoard";
 
-// Polyfill PointerEvent for jsdom
 if (typeof window !== "undefined" && typeof window.PointerEvent === "undefined") {
   class PointerEventPolyfill extends MouseEvent {
     pointerId: number;
@@ -22,7 +15,6 @@ if (typeof window !== "undefined" && typeof window.PointerEvent === "undefined")
     PointerEventPolyfill as unknown as typeof PointerEvent;
 }
 
-// Keep Highlighter mock simple but allow findChunks to determine visibility
 jest.mock("react-highlight-words", () => ({
   __esModule: true,
   default: ({
@@ -47,7 +39,6 @@ jest.mock("react-highlight-words", () => ({
   },
 }));
 
-// Pure portal mock that forwards popoverRef so suppression exemption can be tested
 jest.mock("@/components/VotingComponents/SelectionPopover", () => {
   function MockSelectionPopover({
     children,
@@ -150,7 +141,6 @@ function setSelectionForSubstring(container: HTMLElement, substring: string): Ra
   const range = document.createRange();
   range.setStart(startNode, startOffset);
   range.setEnd(endNode, endOffset);
-  // Direct stub — Range instances in jsdom may not have own getBoundingClientRect
   (range as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect = () =>
     FAKE_RECT;
   const sel = window.getSelection();
@@ -177,7 +167,6 @@ function dispatchPointer(
     pointerId: (init as { pointerId?: number }).pointerId ?? 1,
     ...init,
   } as PointerEventInit);
-  // Ensure pointerId is set even if ctor ignored it
   if ((init as { pointerId?: number }).pointerId !== undefined) {
     Object.defineProperty(event, "pointerId", {
       value: (init as { pointerId?: number }).pointerId,
@@ -204,10 +193,9 @@ function dispatchClick(target: Element, pointerId?: number, init: Partial<MouseE
   return event;
 }
 
-describe("VotingBoard — state machine (issue #484)", () => {
+describe("VotingBoard — state machine", () => {
   beforeEach(() => {
     Element.prototype.scrollIntoView = jest.fn();
-    // Stub Range rect globally for all ranges created in these tests
     if (!Range.prototype.getBoundingClientRect) {
       Range.prototype.getBoundingClientRect = () => FAKE_RECT;
     }
@@ -220,7 +208,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
     jest.restoreAllMocks();
     window.getSelection()?.removeAllRanges();
     document.body.innerHTML = "";
-    // Clear any interval/suppression timers that were using real timers
     jest.clearAllTimers();
     jest.useRealTimers();
   });
@@ -245,12 +232,11 @@ describe("VotingBoard — state machine (issue #484)", () => {
     expect(onSelect.mock.calls[0][0].text).toBe("hello");
     const popover = screen.getByTestId("selection-popover");
     expect(popover.dataset.show).toBe("true");
-    // Desktop never renders the retained mobile mark
     expect(screen.queryByTestId("retained-selection-highlight")).not.toBeInTheDocument();
     expect(onDeselect).not.toHaveBeenCalled();
   });
 
-  it("desktop: selection collapse dismisses the toolbar (no outside-tap handler)", async () => {
+  it("desktop: selection collapse dismisses the toolbar", async () => {
     mockTouch(false);
     const onSelect = jest.fn();
     const onDeselect = jest.fn();
@@ -266,7 +252,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
     });
     await waitFor(() => expect(onSelect).toHaveBeenCalled());
 
-    // Collapse the selection (click elsewhere) — desktop should dismiss via selectionchange
     window.getSelection()?.removeAllRanges();
     await act(async () => {
       document.dispatchEvent(new Event("selectionchange"));
@@ -276,7 +261,7 @@ describe("VotingBoard — state machine (issue #484)", () => {
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
   });
 
-  it("touch: valid selection enters native (popover hidden) before first tap", async () => {
+  it("touch: valid selection enters native before first tap", async () => {
     jest.useFakeTimers();
     mockTouch(true);
     const onSelect = jest.fn();
@@ -294,15 +279,13 @@ describe("VotingBoard — state machine (issue #484)", () => {
       jest.advanceTimersByTime(150);
     });
 
-    // Polling should have stored the selection but not opened the toolbar
     expect(onSelect).not.toHaveBeenCalled();
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
     expect(screen.queryByTestId("retained-selection-highlight")).not.toBeInTheDocument();
-    // Native selection still intact
     expect(window.getSelection()?.toString()).toBe("hello");
   });
 
-  it("touch: first outside tap transitions to toolbar, retains highlight, clears native", async () => {
+  it("touch: first outside tap transitions to toolbar", async () => {
     jest.useFakeTimers();
     mockTouch(true);
     const onSelect = jest.fn();
@@ -319,10 +302,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
       jest.advanceTimersByTime(150);
     });
 
-    const outside = document.createElement("div");
-    outside.setAttribute("data-testid", "outside");
-    document.body.appendChild(outside);
-
     await act(async () => {
       dispatchPointer(document, "pointerdown", { pointerId: 1, clientX: 5, clientY: 5 });
     });
@@ -331,7 +310,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
     expect(onSelect.mock.calls[0][0].text).toBe("hello");
     expect(window.getSelection()?.toString()).toBe("");
     await waitFor(() => expect(screen.getByTestId("selection-popover").dataset.show).toBe("true"));
-    // Retained mark rendered with exact occurrence (findChunks mock renders Tag)
     expect(screen.getByTestId("retained-selection-highlight")).toBeInTheDocument();
   });
 
@@ -345,7 +323,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
       </VotingBoard>
     );
 
-    // First selection -> native
     setSelectionForSubstring(container as unknown as HTMLElement, "hello");
     fireEvent(
       container.querySelector("[data-selectable]") as HTMLElement,
@@ -358,9 +335,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
 
     const p = container.querySelector(".voting_board-content") as HTMLElement;
 
-    // Stationary tap inside the quote — must dispatch only on the inside
-    // target. Dispatching on document first would already trigger the
-    // outside-transition and give false confidence (P2 #3).
     await act(async () => {
       dispatchPointer(p, "pointerdown", { pointerId: 2, clientX: 60, clientY: 60 });
       dispatchPointer(p, "pointerup", { pointerId: 2, clientX: 60, clientY: 60 });
@@ -369,7 +343,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
 
-    // Reset for drag case
     window.getSelection()?.removeAllRanges();
     jest.useRealTimers();
     jest.useFakeTimers();
@@ -398,7 +371,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
       dispatchPointer(p2, "pointerup", { pointerId: 3, clientX: 120, clientY: 60 });
     });
 
-    // Dragged gesture should NOT transition
     expect(onSelect).not.toHaveBeenCalled();
     expect(screen.getAllByTestId("selection-popover").pop()?.dataset.show).toBe("false");
   });
@@ -428,24 +400,18 @@ describe("VotingBoard — state machine (issue #484)", () => {
     });
     await waitFor(() => expect(screen.getByTestId("selection-popover").dataset.show).toBe("true"));
 
-    // Underlying UI that would be activated if click were not suppressed
     const underlying = document.createElement("button");
     underlying.setAttribute("data-testid", "underlying-button");
     document.body.appendChild(underlying);
     const underlyingClick = jest.fn();
     underlying.addEventListener("click", underlyingClick);
 
-    // Second outside tap — arms suppression and sets pendingDismiss, does NOT
-    // reset immediately (P1 #1). The delayed compatibility click must be
-    // consumed before we go idle.
     await act(async () => {
       dispatchPointer(document, "pointerdown", { pointerId: 6, clientX: 5, clientY: 5 });
     });
-    // Toolbar is still visible until the click is handled
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
     expect(onDeselect).not.toHaveBeenCalled();
 
-    // Delayed click on the underlying button — should be suppressed
     const clickEvent = await act(async () => {
       return dispatchClick(underlying, 6);
     });
@@ -491,15 +457,12 @@ describe("VotingBoard — state machine (issue #484)", () => {
     const actionClick = jest.fn();
     action.addEventListener("click", actionClick);
 
-    // Quick tap on the toolbar action within the 750ms suppression window.
-    // The click target is inside popoverRef, so it must be let through (P1 #3).
     const toolbarClick = await act(async () => {
       return dispatchClick(action, 10);
     });
 
     expect(toolbarClick.defaultPrevented).toBe(false);
     expect(actionClick).toHaveBeenCalledTimes(1);
-    // Toolbar stays open — suppression was cleared without dismissing
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
     expect(popover.contains(action)).toBe(true);
   });
@@ -541,7 +504,6 @@ describe("VotingBoard — state machine (issue #484)", () => {
     });
 
     expect(onDeselect).toHaveBeenCalled();
-    // Dialog events must not be prevented
     expect(defaultPreventedBefore.called).toBe(false);
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
   });

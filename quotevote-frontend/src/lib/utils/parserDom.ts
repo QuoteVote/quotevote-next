@@ -1,17 +1,5 @@
 import type { ParsedSelection } from "@/types/store";
 
-/**
- * DOM-aware parser for VotingBoard (issue #484).
- *
- * Legacy parser.ts used `doc.indexOf(selected)` which always returns the first
- * occurrence — wrong for repeated passages.
- *
- * This module derives the *approximate* offset from a live Range → prefix text
- * length, then enumerates every exact occurrence and picks the nearest to the
- * DOM offset. Safer to return undefined (no toolbar) than to bind a vote to
- * the wrong passage.
- */
-
 export interface DomParserArgs {
   content: string;
   selectedText: string;
@@ -21,7 +9,6 @@ export interface DomParserArgs {
 
 interface NormalizedContent {
   normalized: string;
-  /** map[normalizedIndex] = originalIndex for every normalized char */
   map: number[];
 }
 
@@ -31,11 +18,10 @@ function buildNormalizedIndexMap(content: string): NormalizedContent {
   for (let i = 0; i < content.length; i++) {
     const ch = content[i];
     if (ch === "\r") {
-      // CRLF → single LF, lone CR → LF
       if (i + 1 < content.length && content[i + 1] === "\n") {
         normalized += "\n";
         map.push(i);
-        i++; // skip the '\n' half of the CRLF pair
+        i++;
       } else {
         normalized += "\n";
         map.push(i);
@@ -65,12 +51,6 @@ function enumerateOccurrences(haystack: string, needle: string): number[] {
   return out;
 }
 
-/**
- * Convert a normalized-space [start, end) range back to original-content
- * offsets, advancing over CRLF pairs as a single normalized char.
- * This is the only end-point derivation — no length arithmetic in original
- * space, so a selection can never end midway through a CRLF (P2 #2).
- */
 function normalizedRangeToOriginal(
   content: string,
   map: number[],
@@ -89,13 +69,10 @@ function normalizedRangeToOriginal(
     }
     n += 1;
   }
-  if (n < normLength) return null; // ran off the end of content
+  if (n < normLength) return null;
   return { start, end: o };
 }
 
-/**
- * Validate range belongs to contentRoot and is non-collapsed with geometry.
- */
 export function isValidRangeForRoot(range: Range, contentRoot: HTMLElement): boolean {
   if (!range || range.collapsed) return false;
   if (!contentRoot.contains(range.startContainer) || !contentRoot.contains(range.endContainer)) {
@@ -110,10 +87,6 @@ export function isValidRangeForRoot(range: Range, contentRoot: HTMLElement): boo
   return true;
 }
 
-/**
- * Derive approximate start offset from DOM: length of text from contentRoot
- * start to range.start. This is a *normalized* offset (DOM text has no CRLF).
- */
 export function domApproximateStartOffset(range: Range, contentRoot: HTMLElement): number | null {
   try {
     const prefix = document.createRange();
@@ -127,10 +100,6 @@ export function domApproximateStartOffset(range: Range, contentRoot: HTMLElement
   }
 }
 
-/**
- * Main entry: resolve a Selection Range to character offsets within `content`.
- * Returns undefined if no defensible match exists.
- */
 export function parseDomSelection(args: DomParserArgs): ParsedSelection | undefined {
   const { content, selectedText, range, contentRoot } = args;
   if (!selectedText) return undefined;
@@ -140,11 +109,8 @@ export function parseDomSelection(args: DomParserArgs): ParsedSelection | undefi
   const normalizedSelected = normalizeText(selectedText);
   if (!normalizedSelected) return undefined;
 
-  // Normalize content once; all matching happens in normalized space and both
-  // endpoints map back through the index map (P2 #2 — fast path included).
   const { normalized: normContent, map } = buildNormalizedIndexMap(content);
 
-  // Fast path: validate directly at the DOM-derived offset in normalized space
   if (approx != null && approx >= 0 && approx + normalizedSelected.length <= normContent.length) {
     const normSlice = normContent.slice(approx, approx + normalizedSelected.length);
     if (normSlice === normalizedSelected) {
@@ -160,12 +126,9 @@ export function parseDomSelection(args: DomParserArgs): ParsedSelection | undefi
     }
   }
 
-  // Enumerate every exact occurrence in normalized space
   const occurrences = enumerateOccurrences(normContent, normalizedSelected);
   if (occurrences.length === 0) return undefined;
 
-  // Reject uncertain matches: with no anchor and multiple candidates we cannot
-  // defensibly choose. Single occurrence is unambiguous even without approx.
   if (approx == null) {
     if (occurrences.length > 1) return undefined;
     const original = normalizedRangeToOriginal(
@@ -185,7 +148,6 @@ export function parseDomSelection(args: DomParserArgs): ParsedSelection | undefi
     };
   }
 
-  // Pick the occurrence nearest the DOM-derived approximate offset
   const target = approx;
   let best = occurrences[0];
   let bestDist = Math.abs(best - target);
@@ -200,7 +162,6 @@ export function parseDomSelection(args: DomParserArgs): ParsedSelection | undefi
   const original = normalizedRangeToOriginal(content, map, best, normalizedSelected.length);
   if (!original) return undefined;
 
-  // Final verification: raw slice must normalize back to the selection
   const rawSlice = content.slice(original.start, original.end);
   if (normalizeText(rawSlice) !== normalizedSelected) return undefined;
   return {

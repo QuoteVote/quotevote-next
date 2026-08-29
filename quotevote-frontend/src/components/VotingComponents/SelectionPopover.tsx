@@ -4,15 +4,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { SelectionPopoverProps } from "@/types/voting";
 
-/**
- * SelectionPopover — pure portal/positioning (issue #484).
- * No selection polling, no onSelect/onDeselect. Owner (VotingBoard) owns
- * selection state and provides `resolveAnchorRect` + `popoverRef`.
- * Preserves above/below placement, clamping, scroll handlers, z-index 50.
- *
- * The portal stays visually hidden until the first position has been
- * computed, so the popup is never exposed at (0, 0) (P2 #1).
- */
 export default function SelectionPopover({
   showPopover,
   topOffset = 30,
@@ -44,7 +35,6 @@ export default function SelectionPopover({
     const popoverWidth = popoverBoxRect.width || 285;
     const popoverHeight = popoverBoxRect.height || 48;
 
-    // Clamp horizontally within viewport
     const margin = 10;
     const viewportLeft = selectionBox.left + selectionBox.width / 2 - popoverWidth / 2;
     const clampedViewportLeft = Math.max(
@@ -53,14 +43,11 @@ export default function SelectionPopover({
     );
     const pageLeft = clampedViewportLeft + window.scrollX;
 
-    // Determine vertical position: top or bottom
     const spaceAtTop = selectionBox.top;
     let pageTop: number;
     if (spaceAtTop < popoverHeight + topOffset + 10) {
-      // Position below the selection
       pageTop = selectionBox.bottom + window.scrollY + topOffset;
     } else {
-      // Position above the selection
       pageTop = selectionBox.top + window.scrollY - popoverHeight - topOffset;
     }
 
@@ -79,7 +66,6 @@ export default function SelectionPopover({
       positionedRef.current = false;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- reset positioning state when popover opens
       setPositioned(false);
-      // Run on next frames to handle potential layout adjustments
       const rafId1 = requestAnimationFrame(computePopoverBox);
       const rafId2 = requestAnimationFrame(() => requestAnimationFrame(computePopoverBox));
 
@@ -101,7 +87,6 @@ export default function SelectionPopover({
 
   if (!mounted) return null;
 
-  // Hidden until both shown AND positioned — never visible at (0, 0)
   const visible = showPopover && positioned;
   const visibility = visible ? "visible" : "hidden";
   const display = visible ? "inline-block" : "none";

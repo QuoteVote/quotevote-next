@@ -1,9 +1,6 @@
 import { ParsedSelection } from "@/types/store";
 export const CONTENT_REGEX = /(\w|\.)+/g;
 
-// Backward-compatible overloads: accept positional args or object args
-// Note: repeated-text cases should use parserDom.ts (DOM-aware) instead.
-// This legacy parser is retained for desktop fallback and existing callers.
 export function parser(
   doc: string,
   selected: string,
