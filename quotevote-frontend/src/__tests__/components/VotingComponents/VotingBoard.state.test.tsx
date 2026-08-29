@@ -188,6 +188,22 @@ function dispatchPointer(
   return event;
 }
 
+function dispatchClick(target: Element, pointerId?: number, init: Partial<MouseEventInit> = {}) {
+  const event = new MouseEvent("click", {
+    bubbles: true,
+    cancelable: true,
+    ...init,
+  });
+  if (pointerId !== undefined) {
+    Object.defineProperty(event, "pointerId", {
+      value: pointerId,
+      writable: true,
+    });
+  }
+  target.dispatchEvent(event);
+  return event;
+}
+
 describe("VotingBoard — state machine (issue #484)", () => {
   beforeEach(() => {
     Element.prototype.scrollIntoView = jest.fn();
@@ -342,12 +358,11 @@ describe("VotingBoard — state machine (issue #484)", () => {
 
     const p = container.querySelector(".voting_board-content") as HTMLElement;
 
-    // Stationary tap inside the quote
+    // Stationary tap inside the quote — must dispatch only on the inside
+    // target. Dispatching on document first would already trigger the
+    // outside-transition and give false confidence (P2 #3).
     await act(async () => {
-      dispatchPointer(document, "pointerdown", { pointerId: 2, clientX: 60, clientY: 60 });
-      // pointerdown target is document in this dispatch; simulate inside by dispatching on p
       dispatchPointer(p, "pointerdown", { pointerId: 2, clientX: 60, clientY: 60 });
-      dispatchPointer(document, "pointerup", { pointerId: 2, clientX: 60, clientY: 60 });
       dispatchPointer(p, "pointerup", { pointerId: 2, clientX: 60, clientY: 60 });
     });
 
@@ -388,7 +403,7 @@ describe("VotingBoard — state machine (issue #484)", () => {
     expect(screen.getAllByTestId("selection-popover").pop()?.dataset.show).toBe("false");
   });
 
-  it("touch: second outside tap dismisses the toolbar via click suppression window", async () => {
+  it("touch: second outside tap dismisses via click and does not activate underlying UI", async () => {
     jest.useFakeTimers();
     mockTouch(true);
     const onDeselect = jest.fn();
@@ -413,20 +428,80 @@ describe("VotingBoard — state machine (issue #484)", () => {
     });
     await waitFor(() => expect(screen.getByTestId("selection-popover").dataset.show).toBe("true"));
 
-    // Second outside tap — should arm suppression and schedule idle
+    // Underlying UI that would be activated if click were not suppressed
+    const underlying = document.createElement("button");
+    underlying.setAttribute("data-testid", "underlying-button");
+    document.body.appendChild(underlying);
+    const underlyingClick = jest.fn();
+    underlying.addEventListener("click", underlyingClick);
+
+    // Second outside tap — arms suppression and sets pendingDismiss, does NOT
+    // reset immediately (P1 #1). The delayed compatibility click must be
+    // consumed before we go idle.
     await act(async () => {
       dispatchPointer(document, "pointerdown", { pointerId: 6, clientX: 5, clientY: 5 });
-      jest.advanceTimersByTime(10);
+    });
+    // Toolbar is still visible until the click is handled
+    expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
+    expect(onDeselect).not.toHaveBeenCalled();
+
+    // Delayed click on the underlying button — should be suppressed
+    const clickEvent = await act(async () => {
+      return dispatchClick(underlying, 6);
     });
 
-    // The dismissal is scheduled via setTimeout(0) after arming suppression
-    act(() => {
-      jest.advanceTimersByTime(10);
-    });
-
-    await waitFor(() => expect(onDeselect).toHaveBeenCalled());
+    expect(clickEvent.defaultPrevented).toBe(true);
+    expect(underlyingClick).not.toHaveBeenCalled();
+    expect(onDeselect).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
     expect(screen.queryByTestId("retained-selection-highlight")).not.toBeInTheDocument();
+  });
+
+  it("touch: first-transition suppression does not swallow toolbar actions", async () => {
+    jest.useFakeTimers();
+    mockTouch(true);
+    const onSelect = jest.fn();
+    const { container } = render(
+      <VotingBoard content={CONTENT} onSelect={onSelect}>
+        {(sel) => (
+          <span>
+            {sel.text}
+            <button data-testid="toolbar-action">Agree</button>
+          </span>
+        )}
+      </VotingBoard>
+    );
+
+    setSelectionForSubstring(container as unknown as HTMLElement, "hello");
+    fireEvent(
+      container.querySelector("[data-selectable]") as HTMLElement,
+      new Event("selectstart")
+    );
+    act(() => {
+      jest.advanceTimersByTime(150);
+    });
+
+    await act(async () => {
+      dispatchPointer(document, "pointerdown", { pointerId: 10, clientX: 5, clientY: 5 });
+    });
+    await waitFor(() => expect(screen.getByTestId("selection-popover").dataset.show).toBe("true"));
+
+    const popover = screen.getByTestId("selection-popover");
+    const action = screen.getByTestId("toolbar-action");
+    const actionClick = jest.fn();
+    action.addEventListener("click", actionClick);
+
+    // Quick tap on the toolbar action within the 750ms suppression window.
+    // The click target is inside popoverRef, so it must be let through (P1 #3).
+    const toolbarClick = await act(async () => {
+      return dispatchClick(action, 10);
+    });
+
+    expect(toolbarClick.defaultPrevented).toBe(false);
+    expect(actionClick).toHaveBeenCalledTimes(1);
+    // Toolbar stays open — suppression was cleared without dismissing
+    expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
+    expect(popover.contains(action)).toBe(true);
   });
 
   it("touch: dialog target clears stale toolbar without swallowing the dialog event", async () => {

@@ -135,6 +135,10 @@ export default function VotingBoard({
   const pendingTapRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   const tapDraggedRef = useRef(false);
 
+  // Pending dismiss for second tap (P1 #1): keep click listener alive until
+  // the delayed compatibility click is consumed
+  const pendingDismissRef = useRef(false);
+
   const setPhaseSynced = useCallback((next: SelectionPhase) => {
     phaseRef.current = next;
     setPhase(next);
@@ -150,17 +154,6 @@ export default function VotingBoard({
     }
   }, []);
 
-  const armSuppress = useCallback(
-    (pointerId: number | null) => {
-      suppressNextClickRef.current = true;
-      suppressPointerIdRef.current = pointerId;
-      suppressDeadlineRef.current = Date.now() + 750;
-      if (suppressTimerRef.current) clearTimeout(suppressTimerRef.current);
-      suppressTimerRef.current = setTimeout(clearSuppress, 800);
-    },
-    [clearSuppress]
-  );
-
   const clearNativeSelection = useCallback(() => {
     try {
       window.getSelection()?.removeAllRanges();
@@ -175,10 +168,30 @@ export default function VotingBoard({
     touchModeRef.current = false;
     setTouchMode(false);
     pendingTapRef.current = null;
+    pendingDismissRef.current = false;
     setSelection({ startIndex: 0, endIndex: 0, text: "", points: 0 });
     setPhaseSynced("idle");
     onDeselect?.();
   }, [onDeselect, setPhaseSynced]);
+
+  const armSuppress = useCallback(
+    (pointerId: number | null) => {
+      suppressNextClickRef.current = true;
+      suppressPointerIdRef.current = pointerId;
+      suppressDeadlineRef.current = Date.now() + 750;
+      if (suppressTimerRef.current) clearTimeout(suppressTimerRef.current);
+      suppressTimerRef.current = setTimeout(() => {
+        clearSuppress();
+        // Fallback: if the delayed click never arrived (e.g. compat click
+        // was swallowed), still dismiss the pending toolbar
+        if (pendingDismissRef.current) {
+          pendingDismissRef.current = false;
+          resetToIdle();
+        }
+      }, 800);
+    },
+    [clearSuppress, resetToIdle]
+  );
 
   const commentData = focusedComment || null;
   const startWordIndex = commentData?.startWordIndex ?? 0;
@@ -490,12 +503,13 @@ export default function VotingBoard({
       }
 
       if (phaseRef.current === "toolbar") {
-        // Second outside tap: toolbar → idle
+        // Second outside tap: toolbar → idle. Keep the click-capture
+        // listener alive until the delayed compatibility click is consumed
+        // (P1 #1), so the click does not activate UI underneath.
+        pendingDismissRef.current = true;
         armSuppress(e.pointerId ?? null);
         e.preventDefault();
         e.stopPropagation();
-        // Clear after suppress armed so click suppression can fire
-        window.setTimeout(() => resetToIdle(), 0);
       }
     };
 
@@ -525,35 +539,67 @@ export default function VotingBoard({
       }
     };
 
+    document.addEventListener("pointerdown", onPointerDownCapture, true);
+    document.addEventListener("pointermove", onPointerMoveCapture, true);
+    document.addEventListener("pointerup", onPointerUpCapture, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDownCapture, true);
+      document.removeEventListener("pointermove", onPointerMoveCapture, true);
+      document.removeEventListener("pointerup", onPointerUpCapture, true);
+    };
+  }, [phase, touchMode, performNativeToToolbarTransition, resetToIdle, armSuppress]);
+
+  // Click-suppression listener — lives independently of toolbar phase so the
+  // delayed compatibility click is still consumed after we enter idle via
+  // pendingDismiss (P1 #1). Also guards popover interactions (P1 #3).
+  useEffect(() => {
     const onClickCapture = (e: MouseEvent) => {
-      if (!suppressNextClickRef.current) return;
-      if (Date.now() > suppressDeadlineRef.current) {
+      const hasSuppress = suppressNextClickRef.current;
+      const hasPendingDismiss = pendingDismissRef.current;
+      if (!hasSuppress && !hasPendingDismiss) return;
+      if (hasSuppress && Date.now() > suppressDeadlineRef.current) {
         clearSuppress();
+        if (hasPendingDismiss) {
+          pendingDismissRef.current = false;
+          resetToIdle();
+        }
         return;
       }
       const target = e.target;
       // Dialogs are higher-priority UI (guest auth): let the click through
       if (isDialogTarget(target)) {
         clearSuppress();
+        pendingDismissRef.current = false;
         return;
       }
       // Popover interactions are never suppressed (P1 #3): a quick
       // Agree/Comment/Quote tap after the transition must work.
       if (popoverRef.current && target instanceof Node && popoverRef.current.contains(target)) {
         clearSuppress();
+        pendingDismissRef.current = false;
+        return;
+      }
+      // If suppression is not armed but a dismiss is pending, the click is
+      // the second-tap's compatibility click without a matching pointerId
+      // (e.g. mouse compat click) — still need to dismiss without swallowing
+      // if it matches the pending gesture. We only swallow when suppression
+      // is armed; otherwise just handle the pending dismiss.
+      if (!hasSuppress) {
+        if (hasPendingDismiss) {
+          pendingDismissRef.current = false;
+          resetToIdle();
+        }
         return;
       }
       // Suppress only the click matching the consumed pointer (P1 #3).
-      // MouseEvent has no pointerId; for touch, PointerEvent-driven clicks
-      // carry a matching pointerId when available.
       const clickPointerId = (e as unknown as { pointerId?: number }).pointerId;
       if (
         suppressPointerIdRef.current !== null &&
         clickPointerId !== undefined &&
         clickPointerId !== suppressPointerIdRef.current
       ) {
-        // Different pointer than the consumed gesture — let it through
         clearSuppress();
+        pendingDismissRef.current = false;
         return;
       }
       e.preventDefault();
@@ -565,28 +611,15 @@ export default function VotingBoard({
         (e as unknown as { stopImmediatePropagation: () => void }).stopImmediatePropagation!();
       }
       clearSuppress();
+      if (hasPendingDismiss) {
+        pendingDismissRef.current = false;
+        resetToIdle();
+      }
     };
 
-    document.addEventListener("pointerdown", onPointerDownCapture, true);
-    document.addEventListener("pointermove", onPointerMoveCapture, true);
-    document.addEventListener("pointerup", onPointerUpCapture, true);
     document.addEventListener("click", onClickCapture, true);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDownCapture, true);
-      document.removeEventListener("pointermove", onPointerMoveCapture, true);
-      document.removeEventListener("pointerup", onPointerUpCapture, true);
-      document.removeEventListener("click", onClickCapture, true);
-    };
-  }, [
-    phase,
-    touchMode,
-    performNativeToToolbarTransition,
-    resetToIdle,
-    onSelect,
-    onDeselect,
-    armSuppress,
-    clearSuppress,
-  ]);
+    return () => document.removeEventListener("click", onClickCapture, true);
+  }, [clearSuppress, resetToIdle]);
 
   const findChunksAtBeginningOfWords = useCallback(
     () => [{ start: startWordIndex > 0 ? startWordIndex : 0, end: endWordIndex }],

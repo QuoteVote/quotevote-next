@@ -221,6 +221,53 @@ describe("parserDom — parseDomSelection", () => {
     const res = parseDomSelection({ content, selectedText: "abc", range, contentRoot: root });
     expect(res!.startIndex).toBe(8);
   });
+
+  it("CRLF: preceding CRLFs do not shift the approximate offset (P2 #2)", () => {
+    // "x" + 5×CRLF + "foo foo" — first foo normalized at 6, original at 11
+    const content = "x\r\n\r\n\r\n\r\n\r\nfoo foo";
+    const root = makeRoot("");
+    const range = selectSubstring(root, content, "foo", 0);
+    const res = parseDomSelection({ content, selectedText: "foo", range, contentRoot: root });
+    expect(res).toBeDefined();
+    expect(res!.startIndex).toBe(11);
+    expect(res!.endIndex).toBe(14);
+    expect(res!.text).toBe("foo");
+  });
+
+  it("returns undefined when approx is null and multiple occurrences exist", () => {
+    const content = "foo foo foo";
+    const root = makeRoot("");
+    const p = document.createElement("p");
+    p.textContent = "foo";
+    root.appendChild(p);
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    stubRangeRect(range);
+    jest.spyOn(document, "createRange").mockImplementation(() => {
+      throw new Error("forced");
+    });
+    const res = parseDomSelection({ content, selectedText: "foo", range, contentRoot: root });
+    expect(res).toBeUndefined();
+    jest.restoreAllMocks();
+  });
+
+  it("returns single occurrence even when approx is null", () => {
+    const content = "unique foo end";
+    const root = makeRoot("");
+    const p = document.createElement("p");
+    p.textContent = "foo";
+    root.appendChild(p);
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    stubRangeRect(range);
+    jest.spyOn(document, "createRange").mockImplementation(() => {
+      throw new Error("forced");
+    });
+    const res = parseDomSelection({ content, selectedText: "foo", range, contentRoot: root });
+    expect(res).toBeDefined();
+    expect(res!.startIndex).toBe(7);
+    jest.restoreAllMocks();
+  });
 });
 
 describe("parserDom — domApproximateStartOffset", () => {

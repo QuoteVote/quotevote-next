@@ -121,7 +121,7 @@ export function domApproximateStartOffset(range: Range, contentRoot: HTMLElement
     prefix.setEnd(range.startContainer, range.startOffset);
     const text = prefix.toString();
     prefix.detach?.();
-    return text.length;
+    return normalizeText(text).length;
   } catch {
     return null;
   }
@@ -164,8 +164,29 @@ export function parseDomSelection(args: DomParserArgs): ParsedSelection | undefi
   const occurrences = enumerateOccurrences(normContent, normalizedSelected);
   if (occurrences.length === 0) return undefined;
 
+  // Reject uncertain matches: with no anchor and multiple candidates we cannot
+  // defensibly choose. Single occurrence is unambiguous even without approx.
+  if (approx == null) {
+    if (occurrences.length > 1) return undefined;
+    const original = normalizedRangeToOriginal(
+      content,
+      map,
+      occurrences[0],
+      normalizedSelected.length
+    );
+    if (!original) return undefined;
+    const rawSlice = content.slice(original.start, original.end);
+    if (normalizeText(rawSlice) !== normalizedSelected) return undefined;
+    return {
+      startIndex: original.start,
+      endIndex: original.end,
+      text: rawSlice,
+      points: original.end - original.start,
+    };
+  }
+
   // Pick the occurrence nearest the DOM-derived approximate offset
-  const target = approx ?? 0;
+  const target = approx;
   let best = occurrences[0];
   let bestDist = Math.abs(best - target);
   for (let i = 1; i < occurrences.length; i++) {
