@@ -34,6 +34,18 @@ function buildNormalizedIndexMap(content: string): NormalizedContent {
   return { normalized, map };
 }
 
+let normalizedContentCache: { content: string; value: NormalizedContent } | null = null;
+
+function getNormalizedContent(content: string): NormalizedContent {
+  if (normalizedContentCache?.content === content) {
+    return normalizedContentCache.value;
+  }
+
+  const value = buildNormalizedIndexMap(content);
+  normalizedContentCache = { content, value };
+  return value;
+}
+
 function normalizeText(text: string): string {
   return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
@@ -109,7 +121,7 @@ export function parseDomSelection(args: DomParserArgs): ParsedSelection | undefi
   const normalizedSelected = normalizeText(selectedText);
   if (!normalizedSelected) return undefined;
 
-  const { normalized: normContent, map } = buildNormalizedIndexMap(content);
+  const { normalized: normContent, map } = getNormalizedContent(content);
 
   if (approx != null && approx >= 0 && approx + normalizedSelected.length <= normContent.length) {
     const normSlice = normContent.slice(approx, approx + normalizedSelected.length);
