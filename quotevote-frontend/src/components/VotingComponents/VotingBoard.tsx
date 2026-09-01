@@ -182,9 +182,8 @@ export default function VotingBoard({
   const hasValidRetainedSelection =
     phase === "toolbar" &&
     touchMode &&
-    cachedSelectionRef.current != null &&
-    cachedSelectionRef.current.endIndex > cachedSelectionRef.current.startIndex &&
-    cachedSelectionRef.current.text.length > 0;
+    selection.endIndex > selection.startIndex &&
+    selection.text.length > 0;
 
   useLayoutEffect(() => {
     if (!hasLinkedRange) return;
@@ -206,6 +205,7 @@ export default function VotingBoard({
   useEffect(() => {
     if (prevContentRef.current === content) return;
     prevContentRef.current = content;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- replacing content invalidates the active selection state
     resetToIdle();
   }, [content, resetToIdle]);
 
