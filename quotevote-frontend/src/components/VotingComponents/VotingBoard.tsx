@@ -207,25 +207,13 @@ export default function VotingBoard({
     if (prevContentRef.current === content) return;
     prevContentRef.current = content;
     resetToIdle();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content]);
+  }, [content, resetToIdle]);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mql = window.matchMedia(TOUCH_MEDIA_QUERY);
     const handler = () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      clearSuppress();
-      cachedRectRef.current = null;
-      cachedSelectionRef.current = null;
-      touchModeRef.current = false;
-      setTouchMode(false);
-      setSelection({ startIndex: 0, endIndex: 0, text: "", points: 0 });
-      setPhaseSynced("idle");
-      onDeselect?.();
+      resetToIdle();
     };
     if (typeof mql.addEventListener === "function") {
       mql.addEventListener("change", handler);
@@ -240,7 +228,7 @@ export default function VotingBoard({
       return () => legacy.removeListener(handler);
     }
     return undefined;
-  }, [clearSuppress, onDeselect, setPhaseSynced]);
+  }, [resetToIdle]);
 
   useEffect(() => {
     return () => {
@@ -519,12 +507,7 @@ export default function VotingBoard({
       }
       e.preventDefault();
       e.stopPropagation();
-      if (
-        typeof (e as unknown as { stopImmediatePropagation?: () => void })
-          .stopImmediatePropagation === "function"
-      ) {
-        (e as unknown as { stopImmediatePropagation: () => void }).stopImmediatePropagation!();
-      }
+      e.stopImmediatePropagation();
       clearSuppress();
       if (hasPendingDismiss) {
         pendingDismissRef.current = false;

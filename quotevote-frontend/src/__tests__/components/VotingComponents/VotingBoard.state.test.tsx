@@ -103,6 +103,29 @@ function mockTouch(isTouch: boolean) {
   });
 }
 
+function mockTouchWithChangeListener() {
+  let changeListener: (() => void) | null = null;
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: jest.fn().mockImplementation((query: string) => ({
+      matches: query === "(hover: none) and (pointer: coarse)",
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn((type: string, listener: () => void) => {
+        if (type === "change") changeListener = listener;
+      }),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+  return () => {
+    if (!changeListener) throw new Error("matchMedia change listener not registered");
+    changeListener();
+  };
+}
+
 function textNodesUnder(el: Element): Text[] {
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   const nodes: Text[] = [];
@@ -546,6 +569,48 @@ describe("VotingBoard — state machine", () => {
     underlying.addEventListener("click", underlyingClick);
 
     const clickEvent = await act(async () => dispatchClick(underlying, 11));
+
+    expect(clickEvent.defaultPrevented).toBe(false);
+    expect(underlyingClick).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
+    expect(onDeselect).toHaveBeenCalled();
+  });
+
+  it("touch: media query change clears pending click suppression", async () => {
+    jest.useFakeTimers();
+    const dispatchMediaChange = mockTouchWithChangeListener();
+    const onDeselect = jest.fn();
+    const { container } = render(
+      <VotingBoard content={CONTENT} onDeselect={onDeselect}>
+        {(sel) => <span>{sel.text}</span>}
+      </VotingBoard>
+    );
+
+    setSelectionForSubstring(container as unknown as HTMLElement, "hello");
+    fireEvent(
+      container.querySelector("[data-selectable]") as HTMLElement,
+      new Event("selectstart")
+    );
+    act(() => {
+      jest.advanceTimersByTime(150);
+    });
+
+    await act(async () => {
+      dispatchPointer(document, "pointerdown", { pointerId: 12, clientX: 5, clientY: 5 });
+    });
+    await waitFor(() => expect(screen.getByTestId("selection-popover").dataset.show).toBe("true"));
+
+    const underlying = document.createElement("button");
+    document.body.appendChild(underlying);
+    const underlyingClick = jest.fn();
+    underlying.addEventListener("click", underlyingClick);
+
+    await act(async () => {
+      dispatchPointer(underlying, "pointerdown", { pointerId: 13, clientX: 5, clientY: 5 });
+      dispatchMediaChange();
+    });
+
+    const clickEvent = await act(async () => dispatchClick(underlying, 13));
 
     expect(clickEvent.defaultPrevented).toBe(false);
     expect(underlyingClick).toHaveBeenCalledTimes(1);

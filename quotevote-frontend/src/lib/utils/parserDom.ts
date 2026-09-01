@@ -34,15 +34,19 @@ function buildNormalizedIndexMap(content: string): NormalizedContent {
   return { normalized, map };
 }
 
-let normalizedContentCache: { content: string; value: NormalizedContent } | null = null;
+const normalizedContentCache = new WeakMap<
+  HTMLElement,
+  { content: string; value: NormalizedContent }
+>();
 
-function getNormalizedContent(content: string): NormalizedContent {
-  if (normalizedContentCache?.content === content) {
-    return normalizedContentCache.value;
+function getNormalizedContent(contentRoot: HTMLElement, content: string): NormalizedContent {
+  const cached = normalizedContentCache.get(contentRoot);
+  if (cached?.content === content) {
+    return cached.value;
   }
 
   const value = buildNormalizedIndexMap(content);
-  normalizedContentCache = { content, value };
+  normalizedContentCache.set(contentRoot, { content, value });
   return value;
 }
 
@@ -121,7 +125,7 @@ export function parseDomSelection(args: DomParserArgs): ParsedSelection | undefi
   const normalizedSelected = normalizeText(selectedText);
   if (!normalizedSelected) return undefined;
 
-  const { normalized: normContent, map } = getNormalizedContent(content);
+  const { normalized: normContent, map } = getNormalizedContent(contentRoot, content);
 
   if (approx != null && approx >= 0 && approx + normalizedSelected.length <= normContent.length) {
     const normSlice = normContent.slice(approx, approx + normalizedSelected.length);
