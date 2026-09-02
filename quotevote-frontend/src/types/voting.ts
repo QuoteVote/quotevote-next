@@ -3,58 +3,58 @@
  * Types for voting components and vote-related data structures
  */
 
-import type { PostVote } from './post'
-import type { ParsedSelection } from './store'
+import type { PostVote } from "./post";
+import type { ParsedSelection } from "./store";
 
 /**
  * Vote type (upvote or downvote)
  */
-export type VoteType = 'up' | 'down'
+export type VoteType = "up" | "down";
 
 /**
  * Vote option tags
  */
-export type VoteOption = '#true' | '#agree' | '#like' | '#false' | '#disagree' | '#dislike'
+export type VoteOption = "#true" | "#agree" | "#like" | "#false" | "#disagree" | "#dislike";
 
 /**
  * Voted by entry structure
  */
 export interface VotedByEntry {
-  userId: string
-  type: VoteType
-  _id?: string
-  [key: string]: unknown
+  userId: string;
+  type: VoteType;
+  _id?: string;
+  [key: string]: unknown;
 }
 
 /**
  * Selected text structure from parser
  */
 export interface SelectedText extends ParsedSelection {
-  startIndex: number
-  endIndex: number
-  text: string
-  points?: number
+  startIndex: number;
+  endIndex: number;
+  text: string;
+  points?: number;
 }
 
 /**
  * Vote handler function type
  */
-export type VoteHandler = (vote: { type: VoteType; tags: VoteOption }) => void
+export type VoteHandler = (vote: { type: VoteType; tags: VoteOption }) => void;
 
 /**
  * Comment handler function type
  */
-export type CommentHandler = (comment: string, withQuote: boolean) => void | Promise<void>
+export type CommentHandler = (comment: string, withQuote: boolean) => void | Promise<void>;
 
 /**
  * Quote handler function type
  */
-export type QuoteHandler = () => void
+export type QuoteHandler = () => void;
 
 /**
  * Selection handler function type
  */
-export type SelectionHandler = (selection: SelectedText) => void
+export type SelectionHandler = (selection: SelectedText) => void;
 
 /**
  * VotingPopup component props
@@ -63,36 +63,41 @@ export interface VotingPopupProps {
   /**
    * Array of users who have voted
    */
-  votedBy: VotedByEntry[]
+  votedBy: VotedByEntry[];
   /**
    * Handler function called when a vote is submitted
    */
-  onVote: VoteHandler
+  onVote: VoteHandler;
   /**
    * Handler function called when a comment is added
    */
-  onAddComment: CommentHandler
+  onAddComment: CommentHandler;
   /**
    * Handler function called when a quote is added
    */
-  onAddQuote: QuoteHandler
+  onAddQuote: QuoteHandler;
   /**
    * Currently selected text
    */
-  selectedText: SelectedText
+  selectedText: SelectedText;
   /**
    * Whether the current user has already voted
    */
-  hasVoted: boolean
+  hasVoted: boolean;
   /**
    * Type of vote the current user has cast (if any)
    */
-  userVoteType?: VoteType | null
+  userVoteType?: VoteType | null;
   /**
    * Handler function called when a vote is retracted/deleted
    */
-  onDeleteVote?: () => void
+  onDeleteVote?: () => void;
 }
+
+/**
+ * Explicit delayed-mobile selection state machine (issue #484).
+ */
+export type SelectionPhase = "idle" | "native" | "toolbar";
 
 /**
  * VotingBoard component props
@@ -101,72 +106,78 @@ export interface VotingBoardProps {
   /**
    * Top offset for positioning the popover
    */
-  topOffset?: number
+  topOffset?: number;
   /**
    * Handler function called when text is selected
    */
-  onSelect?: SelectionHandler
+  onSelect?: SelectionHandler;
+  /**
+   * Handler called when selection is dismissed (background tap, reset, mode change).
+   * Parent should clear its selectedText to empty indices/text.
+   */
+  onDeselect?: () => void;
   /**
    * Whether to show highlights for votes/comments
    */
-  highlights?: boolean
+  highlights?: boolean;
   /**
    * The content text to display and make selectable
    */
-  content: string
+  content: string;
   /**
    * Render prop function that receives selection data
    */
-  children?: (selection: SelectedText) => React.ReactNode
+  children?: (selection: SelectedText) => React.ReactNode;
   /**
    * Array of votes to highlight
    */
-  votes?: PostVote[]
+  votes?: PostVote[];
   /**
    * Additional style props
    */
-  style?: React.CSSProperties
+  style?: React.CSSProperties;
   /**
    * Focused comment data (optional, for highlighting specific comment ranges)
    */
   focusedComment?: {
-    startWordIndex: number
-    endWordIndex: number
-    actionId?: string
-  } | null
+    startWordIndex: number;
+    endWordIndex: number;
+    actionId?: string;
+  } | null;
   /**
    * Called when the highlighted (linked) passage is tapped.
    */
-  onHighlightClick?: () => void
+  onHighlightClick?: () => void;
 }
 
 /**
- * SelectionPopover component props
+ * SelectionPopover component props — pure portal/positioning (issue #484).
+ * No selection polling, no onSelect/onDeselect. Owner (VotingBoard) resolves the anchor.
  */
 export interface SelectionPopoverProps {
   /**
    * Whether to show the popover
    */
-  showPopover: boolean
+  showPopover: boolean;
   /**
    * Top offset for positioning
    */
-  topOffset?: number
+  topOffset?: number;
   /**
-   * Handler function called when text is selected
+   * Resolve the current anchor rectangle for positioning.
+   * Desktop: live browser range rect; Mobile toolbar: retained mark rect or cached native rect.
    */
-  onSelect: (selection: Selection) => void
+  resolveAnchorRect: () => DOMRect | null;
   /**
-   * Handler function called when selection is cleared
+   * Ref to the popover element (owned by VotingBoard)
    */
-  onDeselect: () => void
+  popoverRef: React.RefObject<HTMLDivElement | null>;
   /**
    * Additional style props
    */
-  style?: React.CSSProperties
+  style?: React.CSSProperties;
   /**
    * Child components to render inside the popover
    */
-  children: React.ReactNode
+  children: React.ReactNode;
 }
-

@@ -9,15 +9,22 @@
  * - Expected: Highlight popup appears with Agree, Disagree, Comment, Quote actions
  * - Viewports: Desktop, Mobile (playwright.config.ts projects)
  */
-import { test, expect } from '@playwright/test';
-import { deletePostViaApi, loginViaApi } from './helpers/api';
-import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from './helpers/auth';
-import { selectPostText } from './helpers/selection';
+import { test, expect } from "@playwright/test";
+import { deletePostViaApi, loginViaApi } from "./helpers/api";
+import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from "./helpers/auth";
+import { selectPostText } from "./helpers/selection";
 
-import { PUBLIC_TAG_NAME } from './helpers/post-composer';
+import { PUBLIC_TAG_NAME } from "./helpers/post-composer";
 
-test.describe('E2E-HILITE-001: Highlight Action Popup', () => {
-  test.skip(!AUTHOR_PASSWORD, 'E2E_AUTHOR_PASSWORD is required');
+test.describe("E2E-HILITE-001: Highlight Action Popup", () => {
+  test.skip(!AUTHOR_PASSWORD, "E2E_AUTHOR_PASSWORD is required");
+
+  test.beforeEach(({ isMobile }) => {
+    test.skip(
+      !!isMobile,
+      "Desktop-only: mobile uses delayed two-tap workflow (see mobile.spec.ts)"
+    );
+  });
 
   let createdPostId: string | null = null;
   let authToken: string | null = null;
@@ -34,47 +41,47 @@ test.describe('E2E-HILITE-001: Highlight Action Popup', () => {
     }
   });
 
-  test('opens highlight popup on text selection with expected actions', async ({ page }) => {
+  test("opens highlight popup on text selection with expected actions", async ({ page }) => {
     const uniqueSuffix = `${Date.now()}-${test.info().project.name}`;
     const postTitle = `E2E-HILITE-001 ${uniqueSuffix}`;
     const postBody = `Automated post body for testing text highlight selection in ${uniqueSuffix}. Please select this passage of text to see the action popup.`;
 
     // Step 1: Log in as authorUser (precondition via global-setup storageState)
-    await page.goto('/');
-    await expect(page).toHaveURL((url) => url.pathname === '/');
+    await page.goto("/");
+    await expect(page).toHaveURL((url) => url.pathname === "/");
 
     // Ensure at least one public post exists on the explore feed
-    const firstPostCard = page.getByTestId('post-card').first();
+    const firstPostCard = page.getByTestId("post-card").first();
     const hasExistingPost = await firstPostCard.isVisible().catch(() => false);
 
     if (!hasExistingPost) {
       // If no public posts exist in this environment, create one via the composer
-      const createButton = page.getByTestId('create-post-button').locator('visible=true');
+      const createButton = page.getByTestId("create-post-button").locator("visible=true");
       await createButton.click();
 
-      const composer = page.getByTestId('post-composer');
+      const composer = page.getByTestId("post-composer");
       await expect(composer).toBeVisible();
 
-      await page.getByTestId('post-title-input').fill(postTitle);
-      await page.getByTestId('post-body-input').fill(postBody);
+      await page.getByTestId("post-title-input").fill(postTitle);
+      await page.getByTestId("post-body-input").fill(postBody);
 
-      await page.getByTestId('post-tag-select').click();
-      await page.getByPlaceholder('Search or type new tag name...').fill(PUBLIC_TAG_NAME);
-      await page.getByRole('button', { name: PUBLIC_TAG_NAME, exact: true }).click();
+      await page.getByTestId("post-tag-select").click();
+      await page.getByPlaceholder("Search or type new tag name...").fill(PUBLIC_TAG_NAME);
+      await page.getByRole("button", { name: PUBLIC_TAG_NAME, exact: true }).click();
 
-      await page.getByTestId('post-submit-button').click();
-      await expect(page.getByTestId('post-composer')).toBeHidden({ timeout: 30_000 });
-      await expect(page).toHaveURL((url) => url.pathname === '/', { timeout: 30_000 });
+      await page.getByTestId("post-submit-button").click();
+      await expect(page.getByTestId("post-composer")).toBeHidden({ timeout: 30_000 });
+      await expect(page).toHaveURL((url) => url.pathname === "/", { timeout: 30_000 });
     }
 
     // Step 2: Navigate to an existing public post
-    const targetPostCard = page.getByTestId('post-card').first();
+    const targetPostCard = page.getByTestId("post-card").first();
     await expect(targetPostCard).toBeVisible({ timeout: 30_000 });
     await targetPostCard.click();
 
     // Confirm public post page loads successfully and post body text is visible
     await expect(page).toHaveURL(/\/dashboard\/post\/.+\/.+\/.+/, { timeout: 30_000 });
-    const postBodyElement = page.getByTestId('post-detail-body');
+    const postBodyElement = page.getByTestId("post-detail-body");
     await expect(postBodyElement).toBeVisible({ timeout: 30_000 });
 
     const postUrl = page.url();
@@ -84,20 +91,25 @@ test.describe('E2E-HILITE-001: Highlight Action Popup', () => {
     }
 
     // Step 3: Select a passage of text within the post body
+    // This spec is desktop-only (delayed mobile workflow not applicable)
+    await page.evaluate(() => {
+      // Ensure desktop media: not coarse touch, so toolbar opens immediately
+      // Playwright's desktop project already matches this; no override needed.
+    });
     await selectPostText(page);
 
-    // Step 4: Confirm that the highlight action popup appears
-    const highlightPopup = page.getByTestId('highlight-popup');
+    // Step 4: Confirm that the highlight action popup appears immediately (desktop)
+    const highlightPopup = page.getByTestId("highlight-popup");
     await expect(highlightPopup).toBeVisible({ timeout: 15_000 });
 
     // Step 5: Confirm that the popup includes the expected passage-level actions
-    await expect(page.getByTestId('highlight-agree-button')).toBeVisible();
-    await expect(page.getByTestId('highlight-disagree-button')).toBeVisible();
-    await expect(page.getByTestId('highlight-comment-button')).toBeVisible();
-    await expect(page.getByTestId('highlight-quote-button')).toBeVisible();
+    await expect(page.getByTestId("highlight-agree-button")).toBeVisible();
+    await expect(page.getByTestId("highlight-disagree-button")).toBeVisible();
+    await expect(page.getByTestId("highlight-comment-button")).toBeVisible();
+    await expect(page.getByTestId("highlight-quote-button")).toBeVisible();
 
     // Check optional chat action if enabled
-    const chatButton = page.getByTestId('highlight-chat-button');
+    const chatButton = page.getByTestId("highlight-chat-button");
     if ((await chatButton.count()) > 0) {
       await expect(chatButton).toBeVisible();
     }
