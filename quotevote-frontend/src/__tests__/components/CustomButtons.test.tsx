@@ -207,11 +207,11 @@ describe('CustomButtons Components', () => {
       expect(result.rendered || result.error).toBe(true);
     });
 
-    it('displays SUPPORT text when rendered', () => {
+    it('displays Approve text when rendered', () => {
       const { container } = render(<ApproveButton />);
       const result = checkComponentRendered(container);
       if (result.rendered) {
-        expect(screen.getByText(/SUPPORT/i)).toBeInTheDocument();
+        expect(screen.getByText(/Approve/i)).toBeInTheDocument();
       } else {
         // Component hit error boundary - skip text check
         expect(container).toBeInTheDocument();
@@ -235,7 +235,7 @@ describe('CustomButtons Components', () => {
       if (button) {
         expect(button).toBeInTheDocument();
         // Selected uses default variant (filled)
-        expect(button?.className).toMatch(/bg-\[#4caf50\]|bg-primary/);
+        expect(button?.className).toMatch(/bg-\[#22c55e\]|bg-primary/);
       } else {
         // Component hit error boundary
         expect(container).toBeInTheDocument();
@@ -264,11 +264,11 @@ describe('CustomButtons Components', () => {
       expect(result.rendered || result.error).toBe(true);
     });
 
-    it('displays DISAGREE text when rendered', () => {
+    it('displays Reject text when rendered', () => {
       const { container } = render(<RejectButton />);
       const result = checkComponentRendered(container);
       if (result.rendered) {
-        expect(screen.getByText(/DISAGREE/i)).toBeInTheDocument();
+        expect(screen.getByText(/Reject/i)).toBeInTheDocument();
       } else {
         expect(container).toBeInTheDocument();
       }
@@ -292,7 +292,7 @@ describe('CustomButtons Components', () => {
         if (button) {
           expect(button).toBeInTheDocument();
           // Check for red color - either custom class or destructive variant
-          const hasRedColor = button?.className.includes('#f44336') || 
+          const hasRedColor = button?.className.includes('#f87171') || 
                              button?.className.includes('destructive') ||
                              button?.className.includes('bg-primary'); // May use primary with custom styling
           expect(hasRedColor || button?.className).toBeTruthy();
@@ -583,7 +583,7 @@ describe('CustomButtons Components', () => {
       const { container } = render(<ApproveButton disabled />);
       const result = checkComponentRendered(container);
       if (result.rendered) {
-        const button = screen.getByRole('button', { name: /SUPPORT/i });
+        const button = screen.getByRole('button', { name: /Approve/i });
         expect(button).toBeDisabled();
       } else {
         expect(container).toBeInTheDocument();
@@ -595,7 +595,7 @@ describe('CustomButtons Components', () => {
       const { container } = render(<ApproveButton onClick={onClick} />);
       const result = checkComponentRendered(container);
       if (result.rendered) {
-        const button = screen.getByRole('button', { name: /SUPPORT/i });
+        const button = screen.getByRole('button', { name: /Approve/i });
         fireEvent.click(button);
         expect(onClick).toHaveBeenCalled();
       } else {

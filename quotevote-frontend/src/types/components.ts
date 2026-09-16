@@ -382,6 +382,15 @@ export interface BookmarkIconButtonProps {
    * Limit for queries
    */
   limit?: number;
+  /**
+   * Show a text label (Save) beside the bookmark icon.
+   * @default false
+   */
+  showLabel?: boolean;
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
 }
 
 export interface ApproveButtonProps extends React.ComponentProps<'button'> {
@@ -463,6 +472,16 @@ export interface FollowButtonProps {
    * @default false
    */
   showIcon?: boolean;
+  /**
+   * Label shown while following. Defaults to "Un-Follow".
+   * Post detail uses "Following".
+   */
+  followingLabel?: string;
+  /**
+   * Button variant for the text Follow control
+   * @default 'default'
+   */
+  buttonVariant?: 'default' | 'outline';
   /**
    * Additional CSS classes
    */

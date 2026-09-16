@@ -59,6 +59,18 @@ describe('FollowButton', () => {
     expect(screen.getByText('Un-Follow')).toBeInTheDocument();
   });
 
+  it('renders Following when followingLabel is provided', () => {
+    render(
+      <FollowButton
+        isFollowing={true}
+        profileUserId="profile-user-id"
+        username="targetuser"
+        followingLabel="Following"
+      />
+    );
+    expect(screen.getByText('Following')).toBeInTheDocument();
+  });
+
   it('calls optimistic update on follow click', async () => {
     render(
       <FollowButton

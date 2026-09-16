@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { UserPlus, UserMinus } from 'lucide-react';
-import { useMutation } from '@apollo/client/react';
-import { Button } from '@/components/ui/button';
-import { useAppStore } from '@/store';
-import { FOLLOW_USER } from '@/graphql/mutations';
-import { GET_USER } from '@/graphql/queries';
-import useGuestGuard from '@/hooks/useGuestGuard';
-import type { FollowButtonProps } from '@/types/components';
-import { cn } from '@/lib/utils';
+import { UserPlus, UserMinus } from "lucide-react";
+import { useMutation } from "@apollo/client/react";
+import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/store";
+import { FOLLOW_USER } from "@/graphql/mutations";
+import { GET_USER } from "@/graphql/queries";
+import useGuestGuard from "@/hooks/useGuestGuard";
+import type { FollowButtonProps } from "@/types/components";
+import { cn } from "@/lib/utils";
 
 /**
  * FollowButton Component
@@ -20,26 +20,30 @@ export function FollowButton({
   username,
   profileUserId,
   showIcon = false,
+  followingLabel = "Un-Follow",
+  buttonVariant = "default",
   className,
 }: FollowButtonProps) {
   const ensureAuth = useGuestGuard();
   const user = useAppStore((state) => state.user.data);
   const updateFollowing = useAppStore((state) => state.updateFollowing);
   const followingId = user?._followingId;
-  const followingArray = Array.isArray(followingId) ? followingId : typeof followingId === 'string' ? [followingId] : [];
+  const followingArray = Array.isArray(followingId)
+    ? followingId
+    : typeof followingId === "string"
+      ? [followingId]
+      : [];
 
   const [followMutation, { loading }] = useMutation(FOLLOW_USER, {
-    refetchQueries: username
-      ? [{ query: GET_USER, variables: { username } }]
-      : [],
+    refetchQueries: username ? [{ query: GET_USER, variables: { username } }] : [],
   });
 
-  async function handleClick(action: 'follow' | 'un-follow') {
+  async function handleClick(action: "follow" | "un-follow") {
     if (!ensureAuth()) return;
 
     // Optimistic local state update
     const newFollowingArray =
-      action === 'un-follow'
+      action === "un-follow"
         ? followingArray.filter((id) => id !== profileUserId)
         : [...followingArray, profileUserId];
 
@@ -58,7 +62,7 @@ export function FollowButton({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => handleClick('un-follow')}
+        onClick={() => handleClick("un-follow")}
         className={cn(className)}
         aria-label="Unfollow"
         disabled={loading}
@@ -67,12 +71,13 @@ export function FollowButton({
       </Button>
     ) : (
       <Button
-        variant="default"
-        onClick={() => handleClick('un-follow')}
+        variant={buttonVariant}
+        onClick={() => handleClick("un-follow")}
         className={cn(className)}
+        aria-label="Unfollow"
         disabled={loading}
       >
-        Un-Follow
+        {followingLabel}
       </Button>
     );
   }
@@ -81,7 +86,7 @@ export function FollowButton({
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => handleClick('follow')}
+      onClick={() => handleClick("follow")}
       className={cn(className)}
       aria-label="Follow"
       disabled={loading}
@@ -90,9 +95,10 @@ export function FollowButton({
     </Button>
   ) : (
     <Button
-      variant="default"
-      onClick={() => handleClick('follow')}
+      variant={buttonVariant}
+      onClick={() => handleClick("follow")}
       className={cn(className)}
+      aria-label="Follow"
       disabled={loading}
     >
       Follow

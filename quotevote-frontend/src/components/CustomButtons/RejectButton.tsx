@@ -1,36 +1,38 @@
-'use client';
+"use client";
 
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import type { RejectButtonProps } from '@/types/components';
-import { cn } from '@/lib/utils';
+import { ThumbsDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { RejectButtonProps } from "@/types/components";
+import { cn } from "@/lib/utils";
 
 /**
  * RejectButton Component
- * 
- * Button for rejecting/disagreeing with posts with red styling.
+ *
+ * Whole-post reject control. Selected state is filled; unselected is outlined.
  */
-export function RejectButton({ selected = false, count = 0, className, ...props }: RejectButtonProps) {
+export function RejectButton({
+  selected = false,
+  count = 0,
+  className,
+  ...props
+}: RejectButtonProps) {
   return (
     <Button
-      variant={selected ? 'default' : 'outline'}
+      variant="outline"
+      size="sm"
+      aria-pressed={selected}
       className={cn(
+        "h-8 rounded-full px-2.5 text-xs font-semibold border shadow-none gap-1 shrink-0",
         selected
-          ? 'bg-[#f44336] text-white border-[#f44336] hover:bg-[#d32f2f]'
-          : 'bg-transparent text-[#f44336] border-[#f44336] hover:bg-[#f44336]/10',
-        'flex items-center gap-1',
+          ? "bg-[#f87171] border-[#f87171] text-white hover:bg-[#ef4444] hover:text-white"
+          : "bg-[#fdecec] border-[#f5b7b7] text-[#e85d5d] hover:bg-[#f9dede] hover:text-[#d94848]",
         className
       )}
       {...props}
     >
-      <X size={24} />
-      <div className="flex items-center gap-1">
-        DISAGREE
-        {count > 0 && (
-          <span className="text-xs font-bold ml-1">👎 {count}</span>
-        )}
-      </div>
+      <ThumbsDown className="size-4" fill="currentColor" strokeWidth={1.5} />
+      Reject
+      <span className="tabular-nums font-bold">{count}</span>
     </Button>
   );
 }
-
