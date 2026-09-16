@@ -2,21 +2,14 @@
  * Test suite for notification resolver utilities.
  */
 
-/* eslint-disable @typescript-eslint/no-require-imports */
-
 import { addNotification } from '~/data/resolvers/utils/notifications';
 import type { AddNotificationInput } from '~/data/resolvers/utils/notifications';
+import type { PrismaClient } from '@prisma/client';
 
-// Mock Notification model
-const mockSave = jest.fn();
-jest.mock('~/data/models/Notification', () => {
-  return jest.fn().mockImplementation((data: Record<string, unknown>) => {
-    const doc: Record<string, unknown> = { ...data, _id: 'notif-1' };
-    mockSave.mockResolvedValue(doc);
-    doc.save = mockSave;
-    return doc;
-  });
-});
+const mockNotificationCreate = jest.fn();
+const mockPrisma = {
+  notification: { create: mockNotificationCreate },
+} as unknown as PrismaClient;
 
 // Mock pubsub
 const mockPublish = jest.fn().mockResolvedValue(undefined);
@@ -33,6 +26,15 @@ jest.mock('~/data/utils/constants', () => ({
 describe('notifications resolver utilities', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockNotificationCreate.mockImplementation(({ data }) =>
+      Promise.resolve({
+        id: 'notif-1',
+        ...data,
+        postId: data.postId ?? null,
+        createdAt: data.created,
+        updatedAt: data.created,
+      })
+    );
   });
 
   describe('addNotification', () => {
@@ -44,12 +46,11 @@ describe('notifications resolver utilities', () => {
       postId: 'post1',
     };
 
-    it('should create and save a notification', async () => {
-      const result = await addNotification(input);
+    it('creates a notification through Prisma', async () => {
+      const result = await addNotification(input, mockPrisma);
 
-      const Notification = require('~/data/models/Notification');
-      expect(Notification).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(mockNotificationCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
           userId: 'user1',
           userIdBy: 'user2',
           notificationType: 'UPVOTED',
@@ -57,14 +58,13 @@ describe('notifications resolver utilities', () => {
           postId: 'post1',
           status: 'new',
           created: expect.any(Date),
-        })
-      );
-      expect(mockSave).toHaveBeenCalled();
-      expect(result).toBeDefined();
+        }),
+      });
+      expect(result).toMatchObject({ _id: 'notif-1', userId: 'user1' });
     });
 
     it('should publish notification via pubsub', async () => {
-      await addNotification(input);
+      await addNotification(input, mockPrisma);
 
       expect(mockPublish).toHaveBeenCalledWith('NOTIFICATION_CREATED', {
         notification: expect.objectContaining({
@@ -82,15 +82,14 @@ describe('notifications resolver utilities', () => {
         label: 'Someone followed you',
       };
 
-      await addNotification(inputWithoutPost);
+      await addNotification(inputWithoutPost, mockPrisma);
 
-      const Notification = require('~/data/models/Notification');
-      expect(Notification).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(mockNotificationCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
           userId: 'user1',
           postId: undefined,
-        })
-      );
+        }),
+      });
     });
   });
 });

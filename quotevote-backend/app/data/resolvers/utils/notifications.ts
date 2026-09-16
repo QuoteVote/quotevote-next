@@ -1,7 +1,7 @@
-import Notification from '~/data/models/Notification';
+import type { PrismaClient } from '@prisma/client';
+import type { Notification, NotificationType } from '~/types/common';
 import { pubsub } from '~/data/utils/pubsub';
 import { NOTIFICATION_CREATED } from '~/data/utils/constants';
-import type { NotificationType } from '~/types/common';
 
 export interface AddNotificationInput {
   userId: string;
@@ -14,20 +14,39 @@ export interface AddNotificationInput {
 /**
  * Create a notification and publish it via PubSub for real-time delivery.
  */
-export const addNotification = async (input: AddNotificationInput) => {
+export const addNotification = async (
+  input: AddNotificationInput,
+  prisma: PrismaClient
+): Promise<Notification> => {
   const { userId, userIdBy, notificationType, label, postId } = input;
 
-  const notification = await new Notification({
-    userId,
-    userIdBy,
-    postId,
-    notificationType,
-    label,
-    status: 'new',
-    created: new Date(),
-  }).save();
+  const notification = await prisma.notification.create({
+    data: {
+      userId,
+      userIdBy,
+      postId,
+      notificationType,
+      label,
+      status: 'new',
+      created: new Date(),
+    },
+  });
 
-  await pubsub.publish(NOTIFICATION_CREATED, { notification });
+  const {
+    id,
+    postId: notificationPostId,
+    notificationType: resultNotificationType,
+    ...rest
+  } = notification;
 
-  return notification;
+  const result: Notification = {
+    ...rest,
+    _id: id,
+    notificationType: resultNotificationType as NotificationType,
+    postId: notificationPostId ?? undefined,
+  };
+
+  await pubsub.publish(NOTIFICATION_CREATED, { notification: result });
+
+  return result;
 };

@@ -1,12 +1,7 @@
-import mongoose from 'mongoose';
 import { GraphQLError } from 'graphql';
 import { activityResolver, normalizeActivityEvents } from '~/data/resolvers/activityResolver';
-import Activity from '~/data/models/Activity';
-import User from '~/data/models/User';
 import type { GraphQLContext } from '~/types/graphql';
 
-jest.mock('~/data/models/Activity');
-jest.mock('~/data/models/User');
 jest.mock('~/data/utils/logger', () => ({
   logger: {
     warn: jest.fn(),
@@ -17,6 +12,18 @@ jest.mock('~/data/utils/logger', () => ({
 
 const actorId = '60d5ec49ad414d7a8d5464a0';
 const profileId = '60d5ec49ad414d7a8d5464a1';
+const mockActivityCount = jest.fn();
+const mockActivityFindMany = jest.fn();
+const mockUserFindUnique = jest.fn();
+const mockPrisma = {
+  activity: {
+    count: mockActivityCount,
+    findMany: mockActivityFindMany,
+  },
+  user: {
+    findUnique: mockUserFindUnique,
+  },
+} as unknown as GraphQLContext['prisma'];
 
 function mockContext(overrides: Partial<NonNullable<GraphQLContext['user']>> = {}): GraphQLContext {
   const user = {
@@ -27,7 +34,7 @@ function mockContext(overrides: Partial<NonNullable<GraphQLContext['user']>> = {
     ...overrides,
   } as NonNullable<GraphQLContext['user']>;
   return {
-    prisma: {} as GraphQLContext['prisma'],
+    prisma: mockPrisma,
     req: {} as GraphQLContext['req'],
     res: {} as GraphQLContext['res'],
     pubsub: {} as GraphQLContext['pubsub'],
@@ -74,26 +81,21 @@ describe('activityResolver', () => {
     });
 
     it('returns paginated activities for a user', async () => {
-      const activityId = new mongoose.Types.ObjectId();
-      (Activity.countDocuments as jest.Mock).mockResolvedValue(1);
-      (Activity.find as jest.Mock).mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          skip: jest.fn().mockReturnValue({
-            limit: jest.fn().mockReturnValue({
-              lean: jest.fn().mockResolvedValue([
-                {
-                  _id: activityId,
-                  userId: new mongoose.Types.ObjectId(profileId),
-                  postId: new mongoose.Types.ObjectId(),
-                  activityType: 'VOTED',
-                  content: 'voted',
-                  created: new Date('2024-01-01T00:00:00Z'),
-                },
-              ]),
-            }),
-          }),
-        }),
-      });
+      const activityId = '60d5ec49ad414d7a8d5464a3';
+      mockActivityCount.mockResolvedValue(1);
+      mockActivityFindMany.mockResolvedValue([
+        {
+          id: activityId,
+          userId: profileId,
+          postId: '60d5ec49ad414d7a8d5464a4',
+          activityType: 'VOTED',
+          content: 'voted',
+          voteId: null,
+          commentId: null,
+          quoteId: null,
+          created: new Date('2024-01-01T00:00:00Z'),
+        },
+      ]);
 
       const result = await activityResolver.Query.activities(
         null,
@@ -107,12 +109,21 @@ describe('activityResolver', () => {
         mockContext()
       );
 
-      expect(Activity.countDocuments).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(mockActivityCount).toHaveBeenCalledWith({
+        where: expect.objectContaining({
           userId: profileId,
-          activityType: { $in: ['VOTED'] },
-        })
-      );
+          activityType: { in: ['VOTED'] },
+        }),
+      });
+      expect(mockActivityFindMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          userId: profileId,
+          activityType: { in: ['VOTED'] },
+        }),
+        orderBy: { created: 'desc' },
+        skip: 0,
+        take: 15,
+      });
       expect(result.pagination).toEqual({ total_count: 1, limit: 15, offset: 0 });
       expect(result.entities).toHaveLength(1);
       expect(result.entities[0].activityType).toBe('VOTED');
@@ -121,23 +132,20 @@ describe('activityResolver', () => {
     });
 
     it('rejects activities missing userId', async () => {
-      (Activity.countDocuments as jest.Mock).mockResolvedValue(1);
-      (Activity.find as jest.Mock).mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          skip: jest.fn().mockReturnValue({
-            limit: jest.fn().mockReturnValue({
-              lean: jest.fn().mockResolvedValue([
-                {
-                  _id: new mongoose.Types.ObjectId(),
-                  userId: null,
-                  activityType: 'VOTED',
-                  created: new Date(),
-                },
-              ]),
-            }),
-          }),
-        }),
-      });
+      mockActivityCount.mockResolvedValue(1);
+      mockActivityFindMany.mockResolvedValue([
+        {
+          id: '60d5ec49ad414d7a8d5464a5',
+          userId: null,
+          postId: null,
+          activityType: 'VOTED',
+          content: null,
+          voteId: null,
+          commentId: null,
+          quoteId: null,
+          created: new Date(),
+        },
+      ]);
 
       await expect(
         activityResolver.Query.activities(
@@ -156,23 +164,9 @@ describe('activityResolver', () => {
 
     it('falls back to following feed when user_id is omitted', async () => {
       const followingId = '60d5ec49ad414d7a8d5464a2';
-      (User.findById as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          lean: jest.fn().mockResolvedValue({
-            _followingId: [new mongoose.Types.ObjectId(followingId)],
-          }),
-        }),
-      });
-      (Activity.countDocuments as jest.Mock).mockResolvedValue(0);
-      (Activity.find as jest.Mock).mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          skip: jest.fn().mockReturnValue({
-            limit: jest.fn().mockReturnValue({
-              lean: jest.fn().mockResolvedValue([]),
-            }),
-          }),
-        }),
-      });
+      mockUserFindUnique.mockResolvedValue({ followingIds: [followingId] });
+      mockActivityCount.mockResolvedValue(0);
+      mockActivityFindMany.mockResolvedValue([]);
 
       await activityResolver.Query.activities(
         null,
@@ -186,11 +180,42 @@ describe('activityResolver', () => {
         mockContext()
       );
 
-      expect(Activity.countDocuments).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: { $in: [followingId] },
-        })
+      expect(mockActivityCount).toHaveBeenCalledWith({
+        where: expect.objectContaining({ userId: { in: [followingId] } }),
+      });
+    });
+
+    it('passes text and date filters to Prisma', async () => {
+      mockActivityCount.mockResolvedValue(0);
+      mockActivityFindMany.mockResolvedValue([]);
+
+      await activityResolver.Query.activities(
+        null,
+        {
+          user_id: profileId,
+          limit: 10,
+          offset: 5,
+          searchKey: 'Voted',
+          startDateRange: '2026-09-01T00:00:00.000Z',
+          endDateRange: '2026-09-02T00:00:00.000Z',
+          activityEvent: [],
+        },
+        mockContext()
       );
+
+      expect(mockActivityFindMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          userId: profileId,
+          content: { contains: 'Voted', mode: 'insensitive' },
+          created: {
+            gte: new Date('2026-09-01T00:00:00.000Z'),
+            lte: new Date('2026-09-02T00:00:00.000Z'),
+          },
+        }),
+        orderBy: { created: 'desc' },
+        skip: 5,
+        take: 10,
+      });
     });
   });
 });

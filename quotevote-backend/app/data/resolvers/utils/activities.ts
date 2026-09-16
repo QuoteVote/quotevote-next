@@ -1,4 +1,4 @@
-import Activity from '~/data/models/Activity';
+import type { PrismaClient } from '@prisma/client';
 import { logger } from '~/data/utils/logger';
 import type { ActivityEventType } from '~/types/common';
 
@@ -16,14 +16,16 @@ export interface ActivityIds {
 export const logActivity = async (
   activityType: ActivityEventType,
   ids: ActivityIds,
-  content?: string
+  content: string | undefined,
+  prisma: PrismaClient
 ): Promise<void> => {
-  const newActivity = {
-    activityType,
-    ...ids,
-    content,
-    created: new Date(),
-  };
-  await new Activity(newActivity).save();
+  await prisma.activity.create({
+    data: {
+      activityType,
+      ...ids,
+      content,
+      created: new Date(),
+    },
+  });
   logger.debug('Added new activity', { activityType, ids, content });
 };

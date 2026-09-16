@@ -1,14 +1,15 @@
-import Notification from '~/data/models/Notification';
 import { notificationResolver } from '~/data/resolvers/notificationResolver';
 import type { GraphQLContext } from '~/types/graphql';
 
-jest.mock('~/data/models/Notification');
-
 const userId = '60d5ec49ad414d7a8d5464a0';
+const mockFindMany = jest.fn();
+const mockPrisma = {
+  notification: { findMany: mockFindMany },
+} as unknown as GraphQLContext['prisma'];
 
 function mockContext(user: GraphQLContext['user'] = null): GraphQLContext {
   return {
-    prisma: {} as GraphQLContext['prisma'],
+    prisma: mockPrisma,
     req: {} as GraphQLContext['req'],
     res: {} as GraphQLContext['res'],
     pubsub: {} as GraphQLContext['pubsub'],
@@ -31,10 +32,7 @@ describe('notificationResolver', () => {
     });
 
     it('returns an empty list when the user has no notifications', async () => {
-      const lean = jest.fn().mockResolvedValue([]);
-      const limit = jest.fn().mockReturnValue({ lean });
-      const sort = jest.fn().mockReturnValue({ limit });
-      (Notification.find as jest.Mock).mockReturnValue({ sort });
+      mockFindMany.mockResolvedValue([]);
 
       const result = await notificationResolver.Query.notifications(
         null,
@@ -46,19 +44,16 @@ describe('notificationResolver', () => {
         } as NonNullable<GraphQLContext['user']>)
       );
 
-      expect(Notification.find).toHaveBeenCalledWith({
-        userId,
-        status: 'new',
+      expect(mockFindMany).toHaveBeenCalledWith({
+        where: { userId, status: 'new' },
+        orderBy: { created: 'desc' },
+        take: 50,
       });
-      expect(limit).toHaveBeenCalledWith(50);
       expect(result).toEqual([]);
     });
 
     it('clamps limit to a maximum of 100', async () => {
-      const lean = jest.fn().mockResolvedValue([]);
-      const limit = jest.fn().mockReturnValue({ lean });
-      const sort = jest.fn().mockReturnValue({ limit });
-      (Notification.find as jest.Mock).mockReturnValue({ sort });
+      mockFindMany.mockResolvedValue([]);
 
       await notificationResolver.Query.notifications(
         null,
@@ -70,7 +65,42 @@ describe('notificationResolver', () => {
         } as NonNullable<GraphQLContext['user']>)
       );
 
-      expect(limit).toHaveBeenCalledWith(100);
+      expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }));
+    });
+
+    it('maps the Prisma id to the GraphQL _id field', async () => {
+      const created = new Date('2026-09-16T12:00:00Z');
+      mockFindMany.mockResolvedValue([
+        {
+          id: '60d5ec49ad414d7a8d5464a9',
+          userId,
+          userIdBy: '60d5ec49ad414d7a8d5464a8',
+          label: 'New vote',
+          status: 'new',
+          notificationType: 'UPVOTED',
+          postId: null,
+          created,
+          createdAt: created,
+          updatedAt: created,
+        },
+      ]);
+
+      const result = await notificationResolver.Query.notifications(
+        null,
+        {},
+        mockContext({
+          _id: userId,
+          username: 'alice',
+          email: 'alice@example.com',
+        } as NonNullable<GraphQLContext['user']>)
+      );
+
+      expect(result).toEqual([
+        expect.objectContaining({
+          _id: '60d5ec49ad414d7a8d5464a9',
+          postId: undefined,
+        }),
+      ]);
     });
   });
 });
