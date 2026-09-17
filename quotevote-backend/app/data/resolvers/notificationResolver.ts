@@ -1,5 +1,4 @@
 import { GraphQLError } from 'graphql';
-import Notification from '../models/Notification';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -25,25 +24,24 @@ export const notificationResolver = {
       }
 
       const requested =
-        typeof args.limit === 'number' && Number.isFinite(args.limit) ? Math.floor(args.limit) : DEFAULT_NOTIFICATION_LIMIT;
+        typeof args.limit === 'number' && Number.isFinite(args.limit)
+          ? Math.floor(args.limit)
+          : DEFAULT_NOTIFICATION_LIMIT;
       const limit = Math.min(Math.max(requested, 1), MAX_NOTIFICATION_LIMIT);
 
       const userId = context.user._id.toString();
-      const notifications = await Notification.find({
-        userId,
-        status: 'new',
-      })
-        .sort({ created: -1 })
-        .limit(limit)
-        .lean();
+      const notifications = await context.prisma.notification.findMany({
+        where: { userId, status: 'new' },
+        orderBy: { created: 'desc' },
+        take: limit,
+      });
 
-      return notifications.map((n) => ({
-        ...n,
-        _id: n._id.toString(),
-        userId: n.userId?.toString?.() ?? String(n.userId),
-        userIdBy: n.userIdBy?.toString?.() ?? String(n.userIdBy),
-        postId: n.postId ? n.postId.toString() : undefined,
-      })) as unknown as Common.Notification[];
+      return notifications.map(({ id, postId, notificationType, ...rest }) => ({
+        ...rest,
+        _id: id,
+        notificationType: notificationType as Common.NotificationType,
+        postId: postId ?? undefined,
+      }));
     },
   },
 };
