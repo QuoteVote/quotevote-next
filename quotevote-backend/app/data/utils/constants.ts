@@ -64,7 +64,7 @@ export const ActivityEventTypeValues = {
   DOWNVOTED: 'DOWNVOTED',
 } as const;
 
-export const GroupPrivacyValues = {
+export const TagPrivacyValues = {
   PUBLIC: 'public',
   PRIVATE: 'private',
   RESTRICTED: 'restricted',

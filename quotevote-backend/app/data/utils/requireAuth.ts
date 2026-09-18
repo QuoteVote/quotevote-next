@@ -29,8 +29,8 @@ const PUBLIC_QUERIES: readonly string[] = [
   'messageReactions',
   'user',
   'getUserFollowInfo',
-  'group',
-  'groups',
+  'tag',
+  'tags',
   // add more public queries/mutations
 ] as const;
 

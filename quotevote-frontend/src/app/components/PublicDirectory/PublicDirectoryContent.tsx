@@ -22,7 +22,7 @@ export function PublicDirectoryContent(): ReactElement {
   const sortParam = searchParams.get('sort')
   const sortOrder = sortParam === 'asc' ? 'asc' : 'desc'
   const interactions = searchParams.get('interactions') === 'true'
-  const groupId = searchParams.get('group') || undefined
+  const tagId = searchParams.get('tag') || undefined
 
   return (
     <div
@@ -46,7 +46,7 @@ export function PublicDirectoryContent(): ReactElement {
             endDateRange={to || undefined}
             sortOrder={sortOrder}
             interactions={interactions}
-            groupId={groupId}
+            tagId={tagId}
             compact
           />
         </div>

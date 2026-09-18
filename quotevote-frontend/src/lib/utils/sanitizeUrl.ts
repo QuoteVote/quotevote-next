@@ -73,7 +73,7 @@ export const sanitizeUrl = (url: string): string | null => {
 /**
  * Normalise a backend post URL to the Next.js app route.
  *
- * The backend stores post URLs as `/post/<group>/<title>/<id>` (monorepo
+ * The backend stores post URLs as `/post/<tag>/<title>/<id>` (monorepo
  * format).  The Next.js app routes them under `/post/...` as well, so
  * this helper just strips stray `?` characters.
  *

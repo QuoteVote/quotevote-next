@@ -18,14 +18,14 @@ import { CommentType } from './Comment';
 import { VoteType } from './Vote';
 import { PresenceType } from './Presence';
 import { RosterType } from './Roster';
-import { GroupType } from './Group';
+import { TagType } from './Tag';
 
 import Post from '../models/Post';
 import Comment from '../models/Comment';
 import Vote from '../models/Vote';
 import Presence from '../models/Presence';
 import Roster from '../models/Roster';
-import Group from '../models/Group';
+import Tag from '../models/Tag';
 
 export const UserType: GraphQLObjectType<Common.User, GraphQLContext> = new GraphQLObjectType<
   Common.User,
@@ -109,13 +109,13 @@ export const UserType: GraphQLObjectType<Common.User, GraphQLContext> = new Grap
       type: new GraphQLList(RosterType),
       resolve: (user) => Roster.find({ userId: user._id }).lean(),
     },
-    createdGroups: {
-      type: new GraphQLList(GroupType),
-      resolve: (user) => Group.find({ creatorId: user._id }).lean(),
+    createdTags: {
+      type: new GraphQLList(TagType),
+      resolve: (user) => Tag.find({ creatorId: user._id }).lean(),
     },
-    memberOfGroups: {
-      type: new GraphQLList(GroupType),
-      resolve: (user) => Group.find({ allowedUserIds: user._id }).lean(),
+    memberOfTags: {
+      type: new GraphQLList(TagType),
+      resolve: (user) => Tag.find({ allowedUserIds: user._id }).lean(),
     },
   }),
 });

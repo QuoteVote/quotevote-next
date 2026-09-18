@@ -68,7 +68,7 @@ export function UserPosts({ userId }: UserPostsProps) {
       comments={post.comments || undefined}
       quotes={post.quotes || undefined}
       messageRoom={post.messageRoom || undefined}
-      groupId={post.groupId}
+      tagId={post.tagId}
       citationUrl={post.citationUrl || undefined}
     />
   )

@@ -150,7 +150,7 @@ export interface RouteParams {
   messageId?: string;
   messageRoomId?: string;
   notificationId?: string;
-  groupId?: string;
+  tagId?: string;
 }
 
 // ============================================================================
@@ -177,7 +177,7 @@ export interface QueryParams {
   endDateRange?: string;
   userId?: string;
   postId?: string;
-  groupId?: string;
+  tagId?: string;
   status?: string;
   type?: string;
 }

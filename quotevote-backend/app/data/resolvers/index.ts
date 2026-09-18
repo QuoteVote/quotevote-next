@@ -1,2 +1,2 @@
 // GraphQL Resolvers
-// Export all GraphQL resolvers here as they are created
+export { tagResolver } from './tagResolver';

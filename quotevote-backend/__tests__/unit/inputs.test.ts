@@ -46,7 +46,7 @@ describe('GraphQL Input Types Validation', () => {
       mutation {
         testPostInput(input: {
           userId: "123",
-          groupId: "456",
+          tagId: "456",
           title: "My Title"
           # missing required 'text' field
         })
@@ -62,7 +62,7 @@ describe('GraphQL Input Types Validation', () => {
       mutation {
         testPostInput(input: {
           userId: "123",
-          groupId: "456",
+          tagId: "456",
           title: "My Title"
           text: "Some content"
         })

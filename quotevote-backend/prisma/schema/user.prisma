@@ -59,8 +59,8 @@ model User {
   userReportsReceived UserReport[]    @relation("ReportedUser")
   botReportsMade      BotReport[]     @relation("BotReporter")
   botReportsReceived  BotReport[]     @relation("BotReportedUser")
-  createdGroups       Group[]         @relation("GroupCreator")
-  memberOfGroups      String[]        @db.ObjectId
+  createdTags         Tag[]           @relation("TagCreator")
+  memberOfTags        String[]        @map("memberOfGroups") @db.ObjectId
   voteLog             VoteLog[]
   collections         Collection[]
 

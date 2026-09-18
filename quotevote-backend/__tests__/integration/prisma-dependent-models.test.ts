@@ -16,7 +16,7 @@ const prisma = new PrismaClient();
 // Typed delete functions for cleanup — no `any` needed
 const deleteFns: Record<string, (id: string) => Promise<unknown>> = {
   user: (id) => prisma.user.delete({ where: { id } }),
-  group: (id) => prisma.group.delete({ where: { id } }),
+  group: (id) => prisma.tag.delete({ where: { id } }),
   post: (id) => prisma.post.delete({ where: { id } }),
   comment: (id) => prisma.comment.delete({ where: { id } }),
   quote: (id) => prisma.quote.delete({ where: { id } }),
@@ -65,7 +65,7 @@ async function createTestUser(suffix: string) {
 
 // Helper to create a test group
 async function createTestGroup(creatorId: string) {
-  const group = await prisma.group.create({
+  const group = await prisma.tag.create({
     data: {
       creatorId,
       title: `Test Group ${Date.now()}`,
@@ -77,11 +77,11 @@ async function createTestGroup(creatorId: string) {
 }
 
 // Helper to create a test post
-async function createTestPost(userId: string, groupId: string) {
+async function createTestPost(userId: string, tagId: string) {
   const post = await prisma.post.create({
     data: {
       userId,
-      groupId,
+      tagId,
       title: `Test Post ${Date.now()}`,
       text: 'Test post content for relationship testing.',
     },
@@ -180,7 +180,7 @@ describe('Post Model & Relations', () => {
     const post = await createTestPost(user.id, group.id);
 
     expect(post.userId).toBe(user.id);
-    expect(post.groupId).toBe(group.id);
+    expect(post.tagId).toBe(group.id);
     expect(post.deleted).toBe(false);
     expect(post.upvotes).toBe(0);
   });
@@ -1199,7 +1199,7 @@ describe('All 24 models — delegate smoke test', () => {
   it('should have working count() on every model', async () => {
     const counts = await Promise.all([
       prisma.user.count(),
-      prisma.group.count(),
+      prisma.tag.count(),
       prisma.post.count(),
       prisma.comment.count(),
       prisma.quote.count(),

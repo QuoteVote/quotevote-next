@@ -17,7 +17,7 @@ describe('Post Schema', () => {
     it('should be valid with all required fields', () => {
       const doc = new Post({
         userId: createObjectId(),
-        groupId: createObjectId(),
+        tagId: createObjectId(),
         title: 'Test Post',
         text: 'Post body content',
       });
@@ -27,7 +27,7 @@ describe('Post Schema', () => {
     it('should set default values', () => {
       const doc = new Post({
         userId: createObjectId(),
-        groupId: createObjectId(),
+        tagId: createObjectId(),
         title: 'Test',
         text: 'Body',
       });
@@ -45,7 +45,7 @@ describe('Post Schema', () => {
     it('should accept optional fields', () => {
       const doc = new Post({
         userId: createObjectId(),
-        groupId: createObjectId(),
+        tagId: createObjectId(),
         title: 'Test',
         text: 'Body',
         url: 'https://example.com',
@@ -63,7 +63,7 @@ describe('Post Schema', () => {
     it('should reject featuredSlot below min', () => {
       const doc = new Post({
         userId: createObjectId(),
-        groupId: createObjectId(),
+        tagId: createObjectId(),
         title: 'Test',
         text: 'Body',
         featuredSlot: 0,
@@ -75,7 +75,7 @@ describe('Post Schema', () => {
     it('should reject featuredSlot above max', () => {
       const doc = new Post({
         userId: createObjectId(),
-        groupId: createObjectId(),
+        tagId: createObjectId(),
         title: 'Test',
         text: 'Body',
         featuredSlot: 13,

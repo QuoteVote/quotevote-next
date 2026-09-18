@@ -40,7 +40,7 @@ export type AccountStatus = 'active' | 'disabled' | 'suspended' | 'pending';
 
 export type VoteOption = '#true' | '#agree' | '#like' | '#false' | '#disagree' | '#dislike';
 
-export type GroupPrivacy = 'public' | 'private' | 'restricted';
+export type TagPrivacy = 'public' | 'private' | 'restricted';
 
 // ============================================================================
 // User Types
@@ -116,7 +116,7 @@ export interface User {
 export interface Post {
   _id: string;
   userId: string;
-  groupId: string;
+  tagId: string;
   title: string;
   text: string;
   url?: string;
@@ -288,15 +288,15 @@ export interface Activity {
 }
 
 // ============================================================================
-// Group Types
+// Tag Types
 // ============================================================================
 
-export interface Group {
+export interface Tag {
   _id: string;
   creatorId: string;
   adminIds?: string[];
   allowedUserIds?: string[];
-  privacy: GroupPrivacy;
+  privacy: TagPrivacy;
   title: string;
   url?: string;
   description?: string;
@@ -460,7 +460,7 @@ export interface PaginatedResult<T> {
 
 export interface PostInput {
   userId: string;
-  groupId?: string;
+  tagId?: string;
   title?: string;
   text?: string;
   url?: string;
@@ -514,11 +514,11 @@ export interface ReactionInput {
   emoji: string;
 }
 
-export interface GroupInput {
+export interface TagInput {
   creatorId: string;
   adminIds?: string[];
   allowedUserIds?: string[];
-  privacy: GroupPrivacy;
+  privacy: TagPrivacy;
   title: string;
   url?: string;
   description?: string;

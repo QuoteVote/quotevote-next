@@ -38,7 +38,7 @@ import {
   DeletedPostType,
   DeletedQuoteType,
   DeletedVoteType,
-  GroupType,
+  TagType,
   MessageType,
   ReadByDetailedEntryType,
   MessageRoomType,
@@ -79,7 +79,7 @@ const LEGACY_TYPE_NAMES = [
   'DeletedPost',
   'DeletedQuote',
   'DeletedVote',
-  'Group',
+  'Tag',
   'Message',
   'MessageRoom',
   'Notification',
@@ -109,7 +109,7 @@ describe('GraphQL domain typedefs (7.28 migration)', () => {
       ['DeletedPost', DeletedPostType],
       ['DeletedQuote', DeletedQuoteType],
       ['DeletedVote', DeletedVoteType],
-      ['Group', GroupType],
+      ['Tag', TagType],
       ['Message', MessageType],
       ['MessageRoom', MessageRoomType],
       ['Notification', NotificationType],
@@ -214,7 +214,7 @@ describe('GraphQL domain typedefs (7.28 migration)', () => {
         'MessageType',
         'NotificationType',
         'ActivityEventType',
-        'GroupPrivacy',
+        'TagPrivacy',
         'InviteStatus',
         'ReportStatus',
         'ReportSeverity',
@@ -279,7 +279,7 @@ describe('GraphQL domain typedefs (7.28 migration)', () => {
         lean: () => Promise.resolve([{ _id: 'roster1', userId: 'user1', buddyId: 'user2' }])
       })) as unknown as typeof RosterMock.find);
 
-      const groupFields = GroupType.getFields();
+      const groupFields = TagType.getFields();
       expect(groupFields.rosters).toBeDefined();
       expect(groupFields.rosters.resolve).toBeInstanceOf(Function);
 

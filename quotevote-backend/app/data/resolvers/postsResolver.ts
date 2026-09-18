@@ -13,7 +13,7 @@ import type * as Common from '~/types/common';
  *  - `@username`  → filter posts by the user's `_id`
  *  - `#hashtag`   → case-insensitive regex on `title` and `text`
  *  - plain text   → MongoDB `$text` full-text search
- *  - date range, friends-only, interactions, userId, groupId, approved filters
+ *  - date range, friends-only, interactions, userId, tagId, approved filters
  */
 async function buildPostFilter(
   args: PostQueryArgs,
@@ -96,14 +96,14 @@ async function buildPostFilter(
     filter.userId = new mongoose.Types.ObjectId(args.userId);
   }
 
-  // ── Group filter ──────────────────────────────────────────────────────
-  if (args.groupId) {
-    if (!mongoose.Types.ObjectId.isValid(args.groupId)) {
-      throw new GraphQLError('Invalid groupId format', {
+  // ── Tag filter ──────────────────────────────────────────────────────
+  if (args.tagId) {
+    if (!mongoose.Types.ObjectId.isValid(args.tagId)) {
+      throw new GraphQLError('Invalid tagId format', {
         extensions: { code: 'BAD_USER_INPUT' },
       });
     }
-    filter.groupId = new mongoose.Types.ObjectId(args.groupId);
+    filter.tagId = new mongoose.Types.ObjectId(args.tagId);
   }
 
   // ── Approved filter ───────────────────────────────────────────────────
@@ -175,7 +175,7 @@ export const postsResolver = {
         ...post,
         _id: post._id.toString(),
         userId: post.userId.toString(),
-        groupId: post.groupId.toString(),
+        tagId: post.tagId.toString(),
         creator: creatorMap.get(post.userId.toString()) ?? null,
         votedBy: Array.isArray(post.votedBy) ? post.votedBy : [],
       }));

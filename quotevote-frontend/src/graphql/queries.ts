@@ -78,9 +78,9 @@ export const VERIFY_PASSWORD_RESET_TOKEN = gql`
 /**
  * Get groups query for post creation
  */
-export const GROUPS_QUERY = gql`
-  query groups($limit: Int!) {
-    groups(limit: $limit) {
+export const TAGS_QUERY = gql`
+  query tags($limit: Int!) {
+    tags(limit: $limit) {
       _id
       creatorId
       adminIds
@@ -96,9 +96,9 @@ export const GROUPS_QUERY = gql`
 /**
  * Get a single group by ID
  */
-export const GET_GROUP = gql`
-  query getGroup($groupId: String!) {
-    group(groupId: $groupId) {
+export const GET_TAG = gql`
+  query getTag($tagId: String!) {
+    tag(tagId: $tagId) {
       _id
       title
     }
@@ -128,7 +128,7 @@ export const GET_POST = gql`
       _id
       userId
       created
-      groupId
+      tagId
       title
       text
       url
@@ -220,7 +220,7 @@ export const GET_TOP_POSTS = gql`
     $interactions: Boolean
     $userId: String
     $sortOrder: String
-    $groupId: String
+    $tagId: String
   ) {
     posts(
       limit: $limit
@@ -232,12 +232,12 @@ export const GET_TOP_POSTS = gql`
       interactions: $interactions
       userId: $userId
       sortOrder: $sortOrder
-      groupId: $groupId
+      tagId: $tagId
     ) {
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
@@ -315,7 +315,7 @@ export const GET_PAGINATED_POSTS = gql`
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
@@ -442,7 +442,7 @@ export const GET_FEATURED_POSTS = gql`
     $startDateRange: String
     $endDateRange: String
     $friendsOnly: Boolean
-    $groupId: String
+    $tagId: String
     $userId: String
     $approved: Boolean
     $deleted: Boolean
@@ -456,7 +456,7 @@ export const GET_FEATURED_POSTS = gql`
       startDateRange: $startDateRange
       endDateRange: $endDateRange
       friendsOnly: $friendsOnly
-      groupId: $groupId
+      tagId: $tagId
       userId: $userId
       approved: $approved
       deleted: $deleted
@@ -466,7 +466,7 @@ export const GET_FEATURED_POSTS = gql`
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
@@ -649,7 +649,7 @@ export const SEARCH = gql`
         title
         text
         url
-        groupId
+        tagId
         creator {
           _id
           name

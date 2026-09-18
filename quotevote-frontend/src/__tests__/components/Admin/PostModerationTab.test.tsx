@@ -37,7 +37,7 @@ const postsMock = {
           {
             _id: 'post-1',
             userId: 'user-1',
-            groupId: 'group-1',
+            tagId: 'group-1',
             title: 'Unapproved Post',
             text: 'This post needs moderation',
             upvotes: 0,
@@ -57,7 +57,7 @@ const postsMock = {
           {
             _id: 'post-2',
             userId: 'user-2',
-            groupId: 'group-1',
+            tagId: 'group-1',
             title: 'Approved Post',
             text: 'Already approved',
             upvotes: 5,

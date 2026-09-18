@@ -9,22 +9,22 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { UserType } from './User';
 import { RosterType } from './Roster';
-import { GroupPrivacyEnum } from './enums';
+import { TagPrivacyEnum } from './enums';
 
 import User from '../models/User';
 import Roster from '../models/Roster';
 
-interface GroupShape extends Common.Group {
+interface TagShape extends Common.Tag {
   pendingUsers?: Common.User[];
 }
 
-export const GroupType: GraphQLObjectType<GroupShape, GraphQLContext> = new GraphQLObjectType<
-  GroupShape,
+export const TagType: GraphQLObjectType<TagShape, GraphQLContext> = new GraphQLObjectType<
+  TagShape,
   GraphQLContext
 >({
-  name: 'Group',
-  description: 'Group / community, aligned with Prisma Group.',
-  fields: (): GraphQLFieldConfigMap<GroupShape, GraphQLContext> => ({
+  name: 'Tag',
+  description: 'Tag / community, aligned with Prisma Tag.',
+  fields: (): GraphQLFieldConfigMap<TagShape, GraphQLContext> => ({
     _id: { type: new GraphQLNonNull(GraphQLString) },
     creatorId: { type: new GraphQLNonNull(GraphQLString) },
     created: {
@@ -37,7 +37,7 @@ export const GroupType: GraphQLObjectType<GroupShape, GraphQLContext> = new Grap
       resolve: (g) => g.description ?? '',
     },
     url: { type: new GraphQLNonNull(GraphQLString), resolve: (g) => g.url ?? '' },
-    privacy: { type: new GraphQLNonNull(GroupPrivacyEnum) },
+    privacy: { type: new GraphQLNonNull(TagPrivacyEnum) },
     allowedUserIds: {
       type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
       resolve: (g) => g.allowedUserIds ?? [],
@@ -52,22 +52,22 @@ export const GroupType: GraphQLObjectType<GroupShape, GraphQLContext> = new Grap
     },
     creator: {
       type: UserType,
-      resolve: (group) => User.findById(group.creatorId).lean(),
+      resolve: (Tag) => User.findById(Tag.creatorId).lean(),
     },
     adminUsers: {
       type: new GraphQLList(UserType),
-      resolve: (group) => User.find({ _id: { $in: group.adminIds ?? [] } }).lean(),
+      resolve: (Tag) => User.find({ _id: { $in: Tag.adminIds ?? [] } }).lean(),
     },
     allowedUsers: {
       type: new GraphQLList(UserType),
-      resolve: (group) => User.find({ _id: { $in: group.allowedUserIds ?? [] } }).lean(),
+      resolve: (Tag) => User.find({ _id: { $in: Tag.allowedUserIds ?? [] } }).lean(),
     },
     rosters: {
       type: new GraphQLList(RosterType),
-      resolve: (group) => {
+      resolve: (Tag) => {
         const memberIds = [
-          group.creatorId,
-          ...(group.allowedUserIds ?? []),
+          Tag.creatorId,
+          ...(Tag.allowedUserIds ?? []),
         ];
         return Roster.find({
           $or: [
@@ -80,4 +80,4 @@ export const GroupType: GraphQLObjectType<GroupShape, GraphQLContext> = new Grap
   }),
 });
 
-export const Group = GroupType;
+export const Tag = TagType;

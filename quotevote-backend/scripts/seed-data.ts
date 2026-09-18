@@ -49,13 +49,13 @@ async function seed() {
 
   console.log('Created Alice, Bob, and Charlie');
 
-  const dummyGroupId = new mongoose.Types.ObjectId();
+  const dummytagId = new mongoose.Types.ObjectId();
 
   // Create Posts
   await Post.create([
     {
       userId: alice._id,
-      groupId: dummyGroupId,
+      tagId: dummytagId,
       title: 'Building modern interfaces',
       text: 'I really love building user interfaces using #react! The component model is incredibly elegant.',
       enable_voting: true,
@@ -63,7 +63,7 @@ async function seed() {
     },
     {
       userId: bob._id,
-      groupId: dummyGroupId,
+      tagId: dummytagId,
       title: 'State of Next.js in 2026',
       text: 'Next.js App Router combined with #nextjs and #typescript gives a fantastic DX (developer experience). highly recommend it.',
       enable_voting: true,
@@ -71,7 +71,7 @@ async function seed() {
     },
     {
       userId: charlie._id,
-      groupId: dummyGroupId,
+      tagId: dummytagId,
       title: 'Decentralized Voting',
       text: 'Exploring #web3 decentralized curation patterns in #react applications. Exciting times ahead!',
       enable_voting: true,
@@ -79,7 +79,7 @@ async function seed() {
     },
     {
       userId: alice._id,
-      groupId: dummyGroupId,
+      tagId: dummytagId,
       title: 'TypeScript Advanced Types tips',
       text: 'Deep dive into #typescript advanced types: conditional types, mapped types, and template literal types.',
       enable_voting: true,

@@ -50,7 +50,7 @@ export const featuredPostsResolver = {
         ...post,
         _id: post._id.toString(),
         userId: post.userId.toString(),
-        groupId: post.groupId.toString(),
+        tagId: post.tagId.toString(),
         creator: creatorMap.get(post.userId.toString()) ?? null,
         votedBy: Array.isArray(post.votedBy) ? post.votedBy : [],
       }));

@@ -30,7 +30,7 @@ import { config } from 'dotenv';
 import User from '../app/data/models/User';
 import Post from '../app/data/models/Post';
 import MessageRoom from '../app/data/models/MessageRoom';
-import Group from '../app/data/models/Group';
+import Group from '../app/data/models/Tag';
 
 config();
 
@@ -202,7 +202,7 @@ async function checkPost(suffix: string): Promise<void> {
   // --- Mongoose → Prisma
   const mongoosePost = await Post.create({
     userId: user._id,
-    groupId: group._id,
+    tagId: group._id,
     title: 'Mongoose post',
     text: 'Body',
     enable_voting: true,
@@ -228,7 +228,7 @@ async function checkPost(suffix: string): Promise<void> {
   const prismaPost = await prisma.post.create({
     data: {
       userId: String(user._id),
-      groupId: String(group._id),
+      tagId: String(group._id),
       title: 'Prisma post',
       text: 'Body',
       enableVoting: true,
@@ -336,7 +336,7 @@ async function checkFunctionalParity(suffix: string): Promise<void> {
 
   const post = await Post.create({
     userId: author._id,
-    groupId: group._id,
+    tagId: group._id,
     title: 'Functional parity post',
     text: 'Body',
   });

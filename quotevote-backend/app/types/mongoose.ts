@@ -57,9 +57,10 @@ export interface ReputationModel extends Model<ReputationDocument> {
 // ============================================================================
 
 export interface PostDocument
-  extends BaseDocument, Omit<Common.Post, '_id' | 'userId' | 'groupId' | 'updatedAt'> {
+  extends BaseDocument, Omit<Common.Post, '_id' | 'userId' | 'tagId' | 'updatedAt'> {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
+  tagId: Types.ObjectId;
   groupId: Types.ObjectId;
   dayPoints: number;
   pointTimestamp: Date;
@@ -200,21 +201,21 @@ export interface ActivityModel extends Model<ActivityDocument> {
 }
 
 // ============================================================================
-// Group Document Interfaces
+// Tag Document Interfaces
 // ============================================================================
 
-export interface GroupDocument
+export interface TagDocument
   extends
     BaseDocument,
-    Omit<Common.Group, '_id' | 'creatorId' | 'adminIds' | 'allowedUserIds' | 'updatedAt'> {
+    Omit<Common.Tag, '_id' | 'creatorId' | 'adminIds' | 'allowedUserIds' | 'updatedAt'> {
   _id: Types.ObjectId;
   creatorId: Types.ObjectId;
   adminIds?: Types.ObjectId[];
   allowedUserIds?: Types.ObjectId[];
 }
 
-export interface GroupModel extends Model<GroupDocument> {
-  findByCreatorId(creatorId: string): Promise<GroupDocument[]>;
+export interface TagModel extends Model<TagDocument> {
+  findByCreatorId(creatorId: string): Promise<TagDocument[]>;
 }
 
 // ============================================================================

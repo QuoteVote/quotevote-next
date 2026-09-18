@@ -6,7 +6,7 @@ import { JSONScalar, DateScalar, DateTimeScalar, ObjectIdScalar } from './types'
 import { solidResolvers } from './resolvers/solidResolvers';
 import { postsResolver } from './resolvers/postsResolver';
 import { userResolver } from './resolvers/userResolver';
-import { groupResolver } from './resolvers/groupResolver';
+import { tagResolver } from './resolvers/tagResolver';
 import { chatResolver } from './resolvers/chatResolver';
 import { rosterResolver } from './resolvers/rosterResolver';
 import { quoteResolver } from './resolvers/quoteResolver';
@@ -31,7 +31,7 @@ export const schema = makeExecutableSchema({
     solidResolvers,
     postsResolver,
     userResolver,
-    groupResolver,
+    tagResolver,
     chatResolver,
     rosterResolver,
     quoteResolver,

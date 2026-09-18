@@ -41,7 +41,7 @@ export const PostType: GraphQLObjectType<PostShape, GraphQLContext> = new GraphQ
     _id: { type: GraphQLString },
     userId: { type: GraphQLString },
     created: { type: DateScalar },
-    groupId: { type: GraphQLString },
+    tagId: { type: GraphQLString },
     title: { type: GraphQLString },
     text: { type: GraphQLString },
     citationUrl: { type: GraphQLString },

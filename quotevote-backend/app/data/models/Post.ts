@@ -4,7 +4,7 @@ import type { PostDocument, PostModel } from '~/types/mongoose';
 const PostSchema = new Schema<PostDocument, PostModel>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    groupId: { type: Schema.Types.ObjectId, ref: 'Group', required: true },
+    groupId: { type: Schema.Types.ObjectId, ref: 'Tag', required: true, alias: 'tagId' },
     title: { type: String, required: true },
     text: { type: String, required: true },
     url: { type: String },

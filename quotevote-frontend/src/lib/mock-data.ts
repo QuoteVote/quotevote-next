@@ -36,7 +36,7 @@ const userIds = {
   reader15: oid('e3f4a5b6c7d8e3f4a5b6c7d8'),
 }
 
-const mockGroupId = oid('aabbccddeeff001122334455')
+const mocktagId = oid('aabbccddeeff001122334455')
 
 // Timestamps: from today back ~2 weeks
 function daysAgo(days: number): string {
@@ -101,7 +101,7 @@ export const MOCK_POSTS: Post[] = [
     quotes: [
       { _id: oid('qq01000000000000000001'), quote: 'The question is not whether AI will replace jobs, but whether we will prepare people for the jobs it creates.' },
     ],
-    groupId: null,
+    tagId: null,
     enable_voting: true,
   },
 
@@ -150,7 +150,7 @@ export const MOCK_POSTS: Post[] = [
     quotes: [
       { _id: oid('qq02000000000000000001'), quote: 'We do not need perfect policy — we need good policy that people will actually support long enough to work.' },
     ],
-    groupId: null,
+    tagId: null,
     enable_voting: true,
   },
 
@@ -215,7 +215,7 @@ export const MOCK_POSTS: Post[] = [
     quotes: [
       { _id: oid('qq03000000000000000001'), quote: 'Open source is not free — the cost is just hidden and deferred.' },
     ],
-    groupId: null,
+    tagId: null,
     enable_voting: true,
   },
 
@@ -265,7 +265,7 @@ export const MOCK_POSTS: Post[] = [
     quotes: [
       { _id: oid('qq04000000000000000001'), quote: 'What if a feed algorithm optimized for the probability you would feel good about your time spent, rather than just the amount of it?' },
     ],
-    groupId: null,
+    tagId: null,
     enable_voting: true,
   },
 
@@ -313,7 +313,7 @@ export const MOCK_POSTS: Post[] = [
     quotes: [
       { _id: oid('qq05000000000000000001'), quote: 'We do not need flying cars — we need to let people live near where they work and shop.' },
     ],
-    groupId: mockGroupId,
+    tagId: mocktagId,
     enable_voting: true,
   },
 
@@ -371,7 +371,7 @@ export const MOCK_POSTS: Post[] = [
     quotes: [
       { _id: oid('qq06000000000000000001'), quote: 'Creativity, critical thinking, and intrinsic motivation cannot be measured by bubble sheets.' },
     ],
-    groupId: null,
+    tagId: null,
     enable_voting: true,
   },
 
@@ -420,7 +420,7 @@ export const MOCK_POSTS: Post[] = [
       { _id: oid('qq07000000000000000001'), quote: 'The surveillance state did not need to be imposed. We bought the cameras, installed them in our homes, and carry them in our pockets.' },
       { _id: oid('qq07000000000000000002'), quote: 'The dystopia is opt-in.' },
     ],
-    groupId: null,
+    tagId: null,
     enable_voting: true,
   },
 
@@ -485,7 +485,7 @@ export const MOCK_POSTS: Post[] = [
     quotes: [
       { _id: oid('qq08000000000000000001'), quote: 'Good regulation protects the former from the latter.' },
     ],
-    groupId: mockGroupId,
+    tagId: mocktagId,
     enable_voting: true,
   },
 ]

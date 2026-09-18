@@ -181,13 +181,13 @@ describe("Post Component", () => {
   describe("Post metadata", () => {
     it("renders community, source, and timestamp in a metadata row", () => {
       mockUseQuery.mockImplementation(() => ({
-        data: { group: { _id: "g1", title: "community-planning" } },
+        data: { tag: { _id: "g1", title: "community-planning" } },
         loading: false,
         error: undefined,
       }));
       const postWithMeta = {
         ...mockPost,
-        groupId: "g1",
+        tagId: "g1",
         citationUrl: "https://www.example.com/article",
       };
       const { getByTestId } = render(<Post {...mockProps} post={postWithMeta} />);

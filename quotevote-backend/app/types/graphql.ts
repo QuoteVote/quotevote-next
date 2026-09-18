@@ -166,9 +166,9 @@ export interface QueryResolvers {
   // Quote queries
   latestQuotes: ResolverFn<Common.Quote[], unknown, { limit: number }>;
 
-  // Group queries
-  group: ResolverFn<Common.Group | null, unknown, { groupId: string }>;
-  groups: ResolverFn<Common.Group[], unknown, { limit: number }>;
+  // Tag queries
+  tag: ResolverFn<Common.Tag | null, unknown, { tagId: string }>;
+  tags: ResolverFn<Common.Tag[], unknown, { limit: number }>;
 
   // Activity queries
   activities: ResolverFn<Common.PaginatedResult<Common.Activity>, unknown, ActivityQueryArgs>;
@@ -285,8 +285,8 @@ export interface MutationResolvers {
   addMessageReaction: ResolverFn<Common.Reaction, unknown, { reaction: Common.ReactionInput }>;
   updateReaction: ResolverFn<Common.Reaction, unknown, { _id: string; emoji: string }>;
 
-  // Group mutations
-  createGroup: ResolverFn<Common.Group, unknown, { group: Common.GroupInput }>;
+  // Tag mutations
+  createTag: ResolverFn<Common.Tag, unknown, { tag: Common.TagInput }>;
 
   // Roster mutations
   addBuddy: ResolverFn<Common.Roster, unknown, { roster: Common.RosterInput }>;
@@ -431,7 +431,7 @@ export interface PostQueryArgs {
   interactions?: boolean;
   userId?: string;
   sortOrder?: string;
-  groupId?: string;
+  tagId?: string;
   approved?: boolean;
   deleted?: boolean;
 }

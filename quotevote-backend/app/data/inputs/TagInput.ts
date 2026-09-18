@@ -1,7 +1,7 @@
 import { GraphQLInputObjectType, GraphQLString, GraphQLNonNull } from 'graphql';
 
-export const GroupInput = new GraphQLInputObjectType({
-  name: 'GroupInput',
+export const TagInput = new GraphQLInputObjectType({
+  name: 'TagInput',
   fields: {
     creatorId: { type: new GraphQLNonNull(GraphQLString) },
     title: { type: new GraphQLNonNull(GraphQLString) },

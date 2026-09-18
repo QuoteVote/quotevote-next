@@ -38,7 +38,7 @@ import {
   DELETE_VOTE,
 } from "@/graphql/mutations";
 import {
-  GET_GROUP,
+  GET_TAG,
   GET_POST,
   GET_TOP_POSTS,
   GET_USER_ACTIVITY,
@@ -117,11 +117,11 @@ export default function Post({
     errorPolicy: "all",
   });
 
-  // Post has no nested `group` field; cache-first reuses GET_GROUP (also used by PostCard)
-  // so the same groupId does not refetch on re-render or return visits in this session.
-  const { data: groupData } = useQuery<{ group?: { _id: string; title: string } }>(GET_GROUP, {
-    variables: { groupId: post.groupId || "" },
-    skip: !post.groupId,
+  // Post has no nested `group` field; cache-first reuses GET_TAG (also used by PostCard)
+  // so the same tagId does not refetch on re-render or return visits in this session.
+  const { data: tagData } = useQuery<{ tag?: { _id: string; title: string } }>(GET_TAG, {
+    variables: { tagId: post.tagId || "" },
+    skip: !post.tagId,
     errorPolicy: "all",
     fetchPolicy: "cache-first",
   });
@@ -471,7 +471,7 @@ export default function Post({
   const discussionCount = post.comments?.length || 0;
   const citationHref = post.citationUrl ? sanitizeUrl(post.citationUrl) : null;
   const citationDomain = citationHref ? getDomain(citationHref) : null;
-  const communityTitle = groupData?.group?.title;
+  const communityTitle = tagData?.tag?.title;
 
   return (
     <div className="flex flex-col" role="article" aria-label={title || "Post"}>

@@ -41,7 +41,7 @@ describe('Executable GraphQL Schema', () => {
     expect(fields).toHaveProperty('status');
     expect(fields).toHaveProperty('posts');
     expect(fields).toHaveProperty('activities');
-    expect(fields).toHaveProperty('groups');
+    expect(fields).toHaveProperty('tags');
     expect(fields).toHaveProperty('user');
     expect(fields).toHaveProperty('searchUser');
     expect(fields).toHaveProperty('messages');

@@ -39,13 +39,13 @@ describe('requireAuth', () => {
       expect(requireAuth(query)).toBe(false);
     });
 
-    it('should return false for "group" query', () => {
-      const query = 'query { group(groupId: "123") { id } }';
+    it('should return false for "tag" query', () => {
+      const query = 'query { tag(tagId: "123") { id } }';
       expect(requireAuth(query)).toBe(false);
     });
 
-    it('should return false for "groups" query', () => {
-      const query = 'query { groups { id } }';
+    it('should return false for "tags" query', () => {
+      const query = 'query { tags { id } }';
       expect(requireAuth(query)).toBe(false);
     });
 

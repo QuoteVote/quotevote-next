@@ -8,7 +8,7 @@
  * levels correctly (user → posts → comments, room → messages → reactions, etc.).
  *
  * Models covered (24):
- *   User, Group, Post, Comment, Quote, Vote, VoteLog, Reaction,
+ *   User, tag, Post, Comment, Quote, Vote, VoteLog, Reaction,
  *   Message, DirectMessage, MessageRoom, Notification,
  *   Activity, Roster, Presence, Typing,
  *   UserInvite, UserReport, BotReport, UserReputation,
@@ -39,7 +39,7 @@ type PrismaDelegate = {
 function delegateFor(model: string): PrismaDelegate | null {
   const map: Record<string, PrismaDelegate> = {
     user: prisma.user,
-    group: prisma.group,
+    tag: prisma.tag,
     post: prisma.post,
     comment: prisma.comment,
     quote: prisma.quote,
@@ -125,32 +125,32 @@ async function testUser(): Promise<string> {
 }
 
 async function testGroup(ownerId: string): Promise<string> {
-  console.log('\n👥 Group');
-  let groupId = '';
-  await step('CREATE group', async () => {
-    const group = await prisma.group.create({
-      data: { creatorId: ownerId, title: `Group ${uniq()}`, privacy: 'public' },
+  console.log('\n👥 tag');
+  let tagId = '';
+  await step('CREATE tag', async () => {
+    const tag = await prisma.tag.create({
+      data: { creatorId: ownerId, title: `tag ${uniq()}`, privacy: 'public' },
     });
-    track('group', group.id);
-    groupId = group.id;
+    track('tag', tag.id);
+    tagId = tag.id;
   });
-  await step('UPDATE group', async () => {
-    await prisma.group.update({
-      where: { id: groupId },
-      data: { title: 'Renamed Group' },
+  await step('UPDATE tag', async () => {
+    await prisma.tag.update({
+      where: { id: tagId },
+      data: { title: 'Renamed tag' },
     });
   });
-  return groupId;
+  return tagId;
 }
 
-async function testPost(userId: string, groupId: string): Promise<string> {
+async function testPost(userId: string, tagId: string): Promise<string> {
   console.log('\n📝 Post');
   let postId = '';
   await step('CREATE post', async () => {
     const post = await prisma.post.create({
       data: {
         userId,
-        groupId,
+        tagId,
         title: 'CRUD Post',
         text: 'Body',
         enableVoting: true,
@@ -162,7 +162,7 @@ async function testPost(userId: string, groupId: string): Promise<string> {
   await step('READ post → user relation', async () => {
     const p = await prisma.post.findUnique({
       where: { id: postId },
-      include: { user: true, group: true },
+      include: { user: true, tag: true },
     });
     if (!p || p.user.id !== userId) throw new Error('relation broken');
   });
@@ -603,7 +603,7 @@ async function testDeepTraversal(userId: string, postId: string, roomId: string)
     // Verify every model's delegate is callable — catches missing/broken models
     await Promise.all([
       prisma.user.count(),
-      prisma.group.count(),
+      prisma.tag.count(),
       prisma.post.count(),
       prisma.comment.count(),
       prisma.quote.count(),
@@ -690,9 +690,9 @@ async function main(): Promise<void> {
     track('user', secondary.id);
     const secondaryId = secondary.id;
 
-    // Group + Post + engagement
-    const groupId = await testGroup(primaryId);
-    const postId = await testPost(primaryId, groupId);
+    // tag + Post + engagement
+    const tagId = await testGroup(primaryId);
+    const postId = await testPost(primaryId, tagId);
     await testComment(primaryId, postId);
     await testQuote(primaryId, postId);
     const voteId = await testVote(primaryId, postId);

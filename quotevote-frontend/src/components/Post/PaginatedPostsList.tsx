@@ -29,7 +29,7 @@ export default function PaginatedPostsList({
   interactions = false,
   userId,
   sortOrder,
-  groupId,
+  tagId,
   approved,
   showPageInfo = true,
   showFirstLast = true,
@@ -62,7 +62,7 @@ export default function PaginatedPostsList({
       onPageChange,
       onPageSizeChange,
     },
-    [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved]
+    [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, tagId, approved]
   )
 
   // Create GraphQL variables
@@ -77,7 +77,7 @@ export default function PaginatedPostsList({
     interactions,
     userId,
     sortOrder,
-    groupId,
+    tagId,
     approved,
   })
 
@@ -117,7 +117,7 @@ export default function PaginatedPostsList({
       setAllLoadedPosts([])
       setLoadMorePage(1)
     }
-  }, [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved, loadMoreMode])
+  }, [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, tagId, approved, loadMoreMode])
 
   // Accumulate posts in load-more mode
   useEffect(() => {
@@ -159,7 +159,7 @@ export default function PaginatedPostsList({
       interactions,
       userId,
       sortOrder,
-      groupId,
+      tagId,
       approved,
     })
 
@@ -168,7 +168,7 @@ export default function PaginatedPostsList({
     }).catch(() => {
       setIsLoadingMore(false)
     })
-  }, [isLoadingMore, loading, loadMorePage, defaultPageSize, searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved, fetchMore])
+  }, [isLoadingMore, loading, loadMorePage, defaultPageSize, searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, tagId, approved, fetchMore])
 
   // Determine which posts to display
   const basePosts = loadMoreMode ? allLoadedPosts : (entities || [])
@@ -215,7 +215,7 @@ export default function PaginatedPostsList({
       comments={post.comments || undefined}
       quotes={post.quotes || undefined}
       messageRoom={post.messageRoom || undefined}
-      groupId={post.groupId}
+      tagId={post.tagId}
       citationUrl={post.citationUrl || undefined}
       attribution={post.attribution || undefined}
       searchKey={searchKey}

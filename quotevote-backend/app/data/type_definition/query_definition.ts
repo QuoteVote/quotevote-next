@@ -12,11 +12,11 @@ type Query {
   " This will give the public news feed "
   activities(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, user_id: String, activityEvent: JSON): Activities
 
-  " Get all groups "
-  groups(created: String, key: String, title: String, limit: Int): [Group]
+  " Get all tags "
+  tags(created: String, key: String, title: String, limit: Int): [Tag]
 
-  " Get a specific group by ID "
-  group(groupId: String!): Group
+  " Get a specific tag by ID "
+  tag(tagId: String!): Tag
 
   " This will query the list of user invite requests "
   userInviteRequests: [UserInvite]
@@ -28,13 +28,13 @@ type Query {
   latestQuotes(limit: Int!): [Quote!]!
 
   " This will query the list of posts "
-  posts(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, friendsOnly: Boolean, groupId: String, userId: String, approved: Boolean, deleted: Boolean, interactions: Boolean, sortOrder: String): Posts
+  posts(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, friendsOnly: Boolean, tagId: String, userId: String, approved: Boolean, deleted: Boolean, interactions: Boolean, sortOrder: String): Posts
 
   " This will query the top posts (alias for posts) "
   topPosts(limit: Int!, offset: Int!, searchKey: String!, startDateRange: String, endDateRange: String, friendsOnly: Boolean, interactions: Boolean, userId: String, sortOrder: String): Posts
 
   " Posts selected for homepage carousel "
-  featuredPosts(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, friendsOnly: Boolean, groupId: String, userId: String, approved: Boolean, deleted: Boolean, interactions: Boolean, sortOrder: String): Posts
+  featuredPosts(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, friendsOnly: Boolean, tagId: String, userId: String, approved: Boolean, deleted: Boolean, interactions: Boolean, sortOrder: String): Posts
 
   " This will query a post message room"
   postMessageRoom(postId: String!): MessageRoom

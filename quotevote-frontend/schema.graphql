@@ -121,7 +121,7 @@ type DeletedVote {
   _id: String
 }
 
-type Group {
+type Tag {
   _id: String!
   adminIds: [String!]
   allowedUserIds: [String!]
@@ -134,7 +134,7 @@ type Group {
   url: String!
 }
 
-input GroupInput {
+input TagInput {
   creatorId: String!
   description: String!
   privacy: String!
@@ -213,7 +213,7 @@ type Mutation {
   approvePost(postId: String!, remove: Boolean, userId: String!): Post
   blockBuddy(buddyId: String!): Roster
   clearPresence: Boolean
-  createGroup(group: GroupInput!): Group
+  createTag(tag: TagInput!): Tag
   createMessage(message: MessageInput!): Message
   createPostMessageRoom(postId: String!): MessageRoom
   declineBuddy(rosterId: String!): DeletedRoster
@@ -287,7 +287,7 @@ type Post {
   downvotes: Int
   enable_voting: Boolean
   featuredSlot: Int
-  groupId: String
+  tagId: String
   messageRoom: MessageRoom
   pointTimestamp: String
   quotes: [Quote]
@@ -314,7 +314,7 @@ input PostInput {
   attribution: String
   attributionType: String
   citationUrl: String
-  groupId: String!
+  tagId: String!
   text: String!
   title: String!
   userId: String!
@@ -366,7 +366,7 @@ type Query {
   checkDuplicateEmail(email: String!): JSON
 
   """ Posts selected for homepage carousel """
-  featuredPosts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, groupId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
+  featuredPosts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, tagId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
 
   """ Get users reported as bots (admin only) """
   getBotReportedUsers(limit: Int, sortBy: String): [User]
@@ -395,11 +395,11 @@ type Query {
   """ Get user reputation information """
   getUserReputation(userId: String!): UserReputation
 
-  """ Get a specific group by ID """
-  group(groupId: String!): Group
+  """ Get a specific Tag by ID """
+  tag(tagId: String!): Tag
 
-  """ Get all groups """
-  groups(created: String, key: String, limit: Int, title: String): [Group]
+  """ Get all Tags """
+  tags(created: String, key: String, limit: Int, title: String): [Tag]
 
   """ This will query the message Reactions"""
   messageReactions(messageId: String!): [Reaction]
@@ -423,7 +423,7 @@ type Query {
   postMessageRoom(postId: String!): MessageRoom
 
   """ This will query the list of posts """
-  posts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, groupId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
+  posts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, tagId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
 
   """ Search content by text """
   searchContent(text: String!): [Content]

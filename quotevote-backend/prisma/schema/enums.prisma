@@ -47,7 +47,7 @@ enum ActivityEventType {
   DOWNVOTED
 }
 
-enum GroupPrivacy {
+enum TagPrivacy {
   public
   private
   restricted

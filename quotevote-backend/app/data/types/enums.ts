@@ -11,7 +11,7 @@ import {
   MessageTypeValues,
   NotificationTypeValues,
   ActivityEventTypeValues,
-  GroupPrivacyValues,
+  TagPrivacyValues,
   InviteStatusValues,
   ReportStatusValues,
   ReportSeverityValues,
@@ -64,9 +64,9 @@ export const ActivityEventTypeEnum = new GraphQLEnumType({
   values: toEnumValues(ActivityEventTypeValues),
 });
 
-export const GroupPrivacyEnum = new GraphQLEnumType({
-  name: 'GroupPrivacy',
-  values: toEnumValues(GroupPrivacyValues),
+export const TagPrivacyEnum = new GraphQLEnumType({
+  name: 'TagPrivacy',
+  values: toEnumValues(TagPrivacyValues),
 });
 
 export const InviteStatusEnum = new GraphQLEnumType({

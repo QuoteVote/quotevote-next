@@ -1,11 +1,11 @@
-// Group model
+// Tag model
 
-model Group {
+model Tag {
   id             String       @id @default(auto()) @map("_id") @db.ObjectId
   creatorId      String       @db.ObjectId
   adminIds       String[]     @db.ObjectId
   allowedUserIds String[]     @db.ObjectId
-  privacy        GroupPrivacy @default(public)
+  privacy        TagPrivacy   @default(public)
   title          String
   url            String?
   description    String?
@@ -14,7 +14,7 @@ model Group {
   updatedAt      DateTime     @updatedAt
 
   // Relations
-  creator User   @relation("GroupCreator", fields: [creatorId], references: [id])
+  creator User   @relation("TagCreator", fields: [creatorId], references: [id])
   posts   Post[]
 
   @@index([creatorId])

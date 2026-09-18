@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
-import type { GroupDocument, GroupModel } from '~/types/mongoose';
+import type { TagDocument, TagModel } from '~/types/mongoose';
 
-const GroupSchema = new Schema<GroupDocument, GroupModel>(
+const TagSchema = new Schema<TagDocument, TagModel>(
   {
     creatorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     adminIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
@@ -12,15 +12,15 @@ const GroupSchema = new Schema<GroupDocument, GroupModel>(
     description: { type: String },
     created: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true, collection: 'groups' }
 );
 
-GroupSchema.statics.findByCreatorId = function (creatorId: string) {
+TagSchema.statics.findByCreatorId = function (creatorId: string) {
   return this.find({ creatorId });
 };
 
-const Group =
-  (mongoose.models.Group as GroupModel) ||
-  mongoose.model<GroupDocument, GroupModel>('Group', GroupSchema);
+const Tag =
+  (mongoose.models.Tag as TagModel) ||
+  mongoose.model<TagDocument, TagModel>('Tag', TagSchema, 'groups');
 
-export default Group;
+export default Tag;

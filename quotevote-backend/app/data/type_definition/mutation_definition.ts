@@ -33,8 +33,8 @@ export const Mutation = `type Mutation {
   " Update a post's featured slot (admin only) "
   updateFeaturedSlot(postId: String!, featuredSlot: Int): Post
 
-  " Create a group "
-  createGroup(group: GroupInput!): Group
+  " Create a tag "
+  createTag(tag: TagInput!): Tag
 
   " Add or update a vote "
   addVote(vote: VoteInput!): Vote

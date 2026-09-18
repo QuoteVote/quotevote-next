@@ -72,7 +72,7 @@ export interface Post {
   _id: string
   userId: string
   created: string
-  groupId?: string | null
+  tagId?: string | null
   title?: string | null
   text?: string | null
   url?: string | null
@@ -141,7 +141,7 @@ export interface PostCardProps {
   comments?: PostComment[]
   quotes?: PostQuote[]
   messageRoom?: PostMessageRoom
-  groupId?: string | null
+  tagId?: string | null
   searchKey?: string
   /** Directory cards center metadata and hide bookmark/share (#454). Body preview still shows (#474). */
   compact?: boolean
@@ -228,7 +228,7 @@ export interface PaginatedPostsListProps {
   interactions?: boolean
   userId?: string
   sortOrder?: string
-  groupId?: string
+  tagId?: string
   approved?: number
   
   // Component props

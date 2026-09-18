@@ -25,7 +25,7 @@ import {
   MessageTypeEnum,
   NotificationTypeEnum,
   ActivityEventTypeEnum,
-  GroupPrivacyEnum,
+  TagPrivacyEnum,
   InviteStatusEnum,
   ReportStatusEnum,
   ReportSeverityEnum,
@@ -38,7 +38,7 @@ import { ActivitiesType } from './Activities';
 import { PaginationType } from './Pagination';
 import { CommentType } from './Comment';
 import { ChatRoomType } from './ChatRooms';
-import { GroupType } from './Group';
+import { TagType } from './Tag';
 import { MessageType, ReadByDetailedEntryType } from './Message';
 import { MessageRoomType, PostDetailsType } from './MessageRoom';
 import { NotificationType } from './Notification';
@@ -72,7 +72,7 @@ export * from './Activities';
 export * from './Pagination';
 export * from './Comment';
 export * from './ChatRooms';
-export * from './Group';
+export * from './Tag';
 export * from './Message';
 export * from './MessageRoom';
 export * from './Notification';
@@ -109,7 +109,7 @@ export const domainTypes: readonly GraphQLNamedType[] = [
   MessageTypeEnum,
   NotificationTypeEnum,
   ActivityEventTypeEnum,
-  GroupPrivacyEnum,
+  TagPrivacyEnum,
   InviteStatusEnum,
   ReportStatusEnum,
   ReportSeverityEnum,
@@ -129,7 +129,7 @@ export const domainTypes: readonly GraphQLNamedType[] = [
   CommentType,
   VoteType,
   QuoteType,
-  GroupType,
+  TagType,
   NotificationType,
   ActivityType,
   ReactionType,

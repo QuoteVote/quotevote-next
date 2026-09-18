@@ -5,17 +5,17 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Calendar, Clock, Hash, ListFilter, Search as SearchIcon } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 import { useDebounce } from '@/hooks/useDebounce'
-import { GROUPS_QUERY } from '@/graphql/queries'
+import { TAGS_QUERY } from '@/graphql/queries'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import DateRangeFilter from '@/components/SearchContainer/DateRangeFilter'
-import type { Group } from '@/types/components'
+import type { Tag } from '@/types/components'
 
 type SortOrder = 'desc' | 'asc'
 
-interface GroupsQueryData {
-  groups: Group[]
+interface tagsQueryData {
+  tags: Tag[]
 }
 
 function chipClass(active: boolean): string {
@@ -40,17 +40,17 @@ export function DirectoryToolbar(): ReactElement {
   const to = searchParams.get('to') || ''
   const sortOrder = (searchParams.get('sort') || 'desc') as SortOrder
   const interactions = searchParams.get('interactions') === 'true'
-  const groupId = searchParams.get('group') || ''
+  const tagId = searchParams.get('tag') || ''
 
   const [searchInput, setSearchInput] = useState(q)
   const debouncedSearch = useDebounce(searchInput, 300)
 
-  const { data: groupsData } = useQuery<GroupsQueryData>(GROUPS_QUERY, {
+  const { data: tagsData } = useQuery<tagsQueryData>(TAGS_QUERY, {
     variables: { limit: 100 },
     errorPolicy: 'all',
   })
-  const groups = (groupsData?.groups ?? []).filter((group) => group.privacy !== 'private')
-  const selectedGroup = groups.find((group) => group._id === groupId)
+  const tags = (tagsData?.tags ?? []).filter((tag) => tag.privacy !== 'private')
+  const selectedGroup = tags.find((tag) => tag._id === tagId)
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -161,8 +161,8 @@ export function DirectoryToolbar(): ReactElement {
             <button
               type="button"
               data-testid="filter-tag"
-              aria-pressed={!!groupId}
-              className={chipClass(!!groupId)}
+              aria-pressed={!!tagId}
+              className={chipClass(!!tagId)}
             >
               <Hash className="size-3.5" aria-hidden />
               {selectedGroup ? `# ${selectedGroup.title}` : 'Tag'}
@@ -171,25 +171,25 @@ export function DirectoryToolbar(): ReactElement {
           <PopoverContent align="start" className="w-64 p-2 max-h-60 overflow-y-auto overflow-x-hidden">
             <button
               type="button"
-              onClick={() => updateParams({ group: null })}
+              onClick={() => updateParams({ tag: null })}
               className={cn(
                 'w-full text-left rounded-md px-2 py-1.5 text-sm hover:bg-muted',
-                !groupId && 'text-[#52b274] font-medium'
+                !tagId && 'text-[#52b274] font-medium'
               )}
             >
               All tags
             </button>
-            {groups.map((group) => (
+            {tags.map((tag) => (
               <button
-                key={group._id}
+                key={tag._id}
                 type="button"
-                onClick={() => updateParams({ group: group._id })}
+                onClick={() => updateParams({ tag: tag._id })}
                 className={cn(
                   'w-full text-left rounded-md px-2 py-1.5 text-sm hover:bg-muted truncate',
-                  groupId === group._id && 'text-[#52b274] font-medium'
+                  tagId === tag._id && 'text-[#52b274] font-medium'
                 )}
               >
-                #{group.title}
+                #{tag.title}
               </button>
             ))}
           </PopoverContent>

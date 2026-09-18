@@ -1,6 +1,6 @@
 import { CardPaymentMethodInput } from './CardPaymentMethodInput';
 import { CommentInput } from './CommentInput';
-import { GroupInput } from './GroupInput';
+import { TagInput } from './TagInput';
 import { MessageInput } from './MessageInput';
 import { PostInput } from './PostInput';
 import { PresenceInput } from './PresenceInput';
@@ -14,7 +14,7 @@ import { VoteInput } from './VoteInput';
 
 export * from './CardPaymentMethodInput';
 export * from './CommentInput';
-export * from './GroupInput';
+export * from './TagInput';
 export * from './MessageInput';
 export * from './PostInput';
 export * from './PresenceInput';
@@ -29,7 +29,7 @@ export * from './VoteInput';
 export const domainInputTypes = [
   CardPaymentMethodInput,
   CommentInput,
-  GroupInput,
+  TagInput,
   MessageInput,
   PostInput,
   PresenceInput,
