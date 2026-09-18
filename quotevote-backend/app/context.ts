@@ -16,7 +16,7 @@ import { prisma as defaultPrisma } from './lib/prisma';
 import { pubsub as defaultPubsub } from './data/utils/pubsub';
 import { requireAuth } from './data/utils/requireAuth';
 import * as auth from './data/utils/authentication';
-import User from './data/models/User';
+import { toPublicUser, type PrismaUserRecord } from './data/utils/userPrismaMapper';
 import type * as Common from './types/common';
 
 /**
@@ -65,7 +65,12 @@ export async function createHttpContext(
     try {
       const decoded = await auth.verifyToken(token);
       if (decoded && typeof decoded === 'object' && decoded.userId) {
-        user = (await User.findById(decoded.userId)) as unknown as Common.User;
+        const prismaUser = await prisma.user.findUnique({
+          where: { id: decoded.userId }
+        });
+        if (prismaUser) {
+          user = toPublicUser(prismaUser as PrismaUserRecord);
+        }
       }
     } catch {
       // Token invalid or expired, proceed as unauthenticated

@@ -11,8 +11,9 @@ import { GraphQLError } from 'graphql';
 import type { GraphQLContext, PubSub } from '../../app/types/graphql';
 import { requireAuth } from '../../app/data/utils/requireAuth';
 import * as auth from '../../app/data/utils/authentication';
-import User from '../../app/data/models/User';
+import { prisma } from '../../app/lib/prisma';
 import type * as Common from '../../app/types/common';
+import { toPublicUser } from '../../app/data/utils/userPrismaMapper';
 
 // Mock logger
 jest.mock('../../app/data/utils/logger', () => ({
@@ -23,11 +24,12 @@ jest.mock('../../app/data/utils/logger', () => ({
   },
 }));
 
-// Mock User model
-jest.mock('../../app/data/models/User', () => ({
-  __esModule: true,
-  default: {
-    findById: jest.fn(),
+// Mock Prisma client
+jest.mock('../../app/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
   },
 }));
 
@@ -122,7 +124,12 @@ describe('requireAuth Integration Tests', () => {
             try {
               const decoded = await auth.verifyToken(token);
               if (decoded && typeof decoded === 'object' && decoded.userId) {
-                user = (await User.findById(decoded.userId)) as unknown as Common.User;
+                const prismaUser = await prisma.user.findUnique({
+                  where: { id: decoded.userId },
+                });
+                if (prismaUser) {
+                  user = toPublicUser(prismaUser);
+                }
               }
             } catch {
               // Token invalid or expired, proceed as unauthenticated
@@ -236,13 +243,16 @@ describe('requireAuth Integration Tests', () => {
     });
 
     it('should allow "notifications" query with valid authentication', async () => {
-      const mockUser: Common.User = {
-        _id: 'user123',
+      const mockPrismaUser = {
+        id: 'user123',
         username: 'testuser',
         email: 'test@example.com',
-      } as Common.User;
+        isAdmin: false,
+        followingIds: [],
+        followerIds: [],
+      };
 
-      (User.findById as jest.Mock).mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockPrismaUser);
       (auth.verifyToken as jest.Mock).mockResolvedValue({
         userId: 'user123',
         username: 'testuser',
@@ -309,13 +319,16 @@ describe('requireAuth Integration Tests', () => {
     });
 
     it('should allow "createPost" mutation with valid authentication', async () => {
-      const mockUser: Common.User = {
-        _id: 'user123',
+      const mockPrismaUser = {
+        id: 'user123',
         username: 'testuser',
         email: 'test@example.com',
-      } as Common.User;
+        isAdmin: false,
+        followingIds: [],
+        followerIds: [],
+      };
 
-      (User.findById as jest.Mock).mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockPrismaUser);
       (auth.verifyToken as jest.Mock).mockResolvedValue({
         userId: 'user123',
         username: 'testuser',
@@ -391,13 +404,16 @@ describe('requireAuth Integration Tests', () => {
 
   describe('Mixed Queries', () => {
     it('should allow query with both public and protected operations if user is authenticated', async () => {
-      const mockUser: Common.User = {
-        _id: 'user123',
+      const mockPrismaUser = {
+        id: 'user123',
         username: 'testuser',
         email: 'test@example.com',
-      } as Common.User;
+        isAdmin: false,
+        followingIds: [],
+        followerIds: [],
+      };
 
-      (User.findById as jest.Mock).mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockPrismaUser);
       (auth.verifyToken as jest.Mock).mockResolvedValue({
         userId: 'user123',
         username: 'testuser',

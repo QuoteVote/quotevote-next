@@ -16,7 +16,6 @@ import type { GraphQLContext } from '../../app/types/graphql';
 import { createHttpContext } from '../../app/context';
 import { prisma as singletonPrisma } from '../../app/lib/prisma';
 import * as auth from '../../app/data/utils/authentication';
-import User from '../../app/data/models/User';
 import type { PrismaClient } from '@prisma/client';
 
 // Mock logger
@@ -28,11 +27,12 @@ jest.mock('../../app/data/utils/logger', () => ({
   },
 }));
 
-// Mock User model
-jest.mock('../../app/data/models/User', () => ({
-  __esModule: true,
-  default: {
-    findById: jest.fn(),
+// Mock Prisma client
+jest.mock('../../app/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
   },
 }));
 
@@ -145,12 +145,15 @@ describe('Typed GraphQL Context Integration Tests', () => {
 
   it('populates userId and hydrates user on authenticated requests', async () => {
     const mockUser = {
-      _id: { toString: () => 'user-abc-123' },
+      id: 'user-abc-123',
       username: 'test_apollo_user',
+      isAdmin: false,
+      followingIds: [],
+      followerIds: [],
     };
 
     (auth.verifyToken as jest.Mock).mockResolvedValue({ userId: 'user-abc-123' });
-    (User.findById as jest.Mock).mockResolvedValue(mockUser);
+    (singletonPrisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
     const res = await request(app)
       .post('/graphql')

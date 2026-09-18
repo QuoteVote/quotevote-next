@@ -1,31 +1,27 @@
-import mongoose from 'mongoose';
 import { GraphQLError } from 'graphql';
+import { Prisma } from '@prisma/client';
 import { userResolver } from '~/data/resolvers/userResolver';
-import User from '~/data/models/User';
 import type { GraphQLContext } from '~/types/graphql';
 
-jest.mock('~/data/models/User');
+const actorId = '507f1f77bcf86cd799439011';
+const otherId = '507f1f77bcf86cd799439012';
 
-const actorId = '60d5ec49ad414d7a8d5464a0';
-const otherId = '60d5ec49ad414d7a8d5464a1';
-
-function mockContext(overrides: Partial<NonNullable<GraphQLContext['user']>> = {}): GraphQLContext {
-  const user = {
-    _id: actorId,
-    username: 'alice',
-    email: 'alice@example.com',
-    admin: false,
-    ...overrides,
-  } as NonNullable<GraphQLContext['user']>;
+function mockContext(overrides: Partial<GraphQLContext['user']> = {}): GraphQLContext {
   return {
-    prisma: {} as GraphQLContext['prisma'],
-    req: {} as GraphQLContext['req'],
-    res: {} as GraphQLContext['res'],
-    pubsub: {} as GraphQLContext['pubsub'],
-    user,
-    userId: String(user._id),
-    requestId: 'test-request-id',
-  };
+    prisma: {
+      user: {
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
+    } as unknown as GraphQLContext['prisma'],
+    user: {
+      _id: actorId,
+      admin: false,
+      ...overrides,
+    },
+  } as GraphQLContext;
 }
 
 describe('userResolver', () => {
@@ -33,58 +29,69 @@ describe('userResolver', () => {
     jest.clearAllMocks();
   });
 
-  describe('Query.searchUser', () => {
-    it('returns an empty array early if queryName is empty or whitespace only', async () => {
-      const resultEmpty = await userResolver.Query.searchUser(null, { queryName: '' });
-      const resultWhitespace = await userResolver.Query.searchUser(null, { queryName: '   ' });
+  describe('Query.user', () => {
+    it('returns null when user not found', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
-      expect(resultEmpty).toEqual([]);
-      expect(resultWhitespace).toEqual([]);
-      expect(User.find).not.toHaveBeenCalled();
+      const result = await userResolver.Query.user(null, { username: 'alice' }, ctx);
+
+      expect(result).toBeNull();
+      expect(ctx.prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { username: 'alice', accountStatus: 'active' },
+        select: expect.any(Object),
+      });
     });
 
-    it('escapes special regex characters to prevent injection', async () => {
-      (User.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue({
-            lean: jest.fn().mockResolvedValue([
-              {
-                _id: new mongoose.Types.ObjectId('60d5ec49ad414d7a8d5464a0'),
-                name: 'Alice Cooper',
-                username: 'alice',
-                accountStatus: 'active',
-              },
-            ]),
-          }),
-        }),
+    it('returns public user profile when found', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue({
+        id: actorId,
+        username: 'alice',
+        name: 'Alice',
+        accountStatus: 'active',
       });
 
-      const result = await userResolver.Query.searchUser(null, { queryName: '@.*' });
+      const result = await userResolver.Query.user(null, { username: 'alice' }, ctx);
 
-      expect(User.find).toHaveBeenCalledWith(
-        expect.objectContaining({
-          $or: [
-            { name: expect.any(RegExp) },
-            { username: expect.any(RegExp) },
+      expect(result).toMatchObject({
+        _id: actorId,
+        username: 'alice',
+        name: 'Alice',
+      });
+    });
+  });
+
+  describe('Query.searchUser', () => {
+    it('returns empty array when queryName is empty', async () => {
+      const ctx = mockContext();
+      const result = await userResolver.Query.searchUser(null, { queryName: '' }, ctx);
+
+      expect(result).toEqual([]);
+      expect(ctx.prisma.user.findMany).not.toHaveBeenCalled();
+    });
+
+    it('uses Prisma contains with mode insensitive for safe search', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([
+        { id: actorId, username: 'alice', accountStatus: 'active' },
+      ]);
+
+      // Attempt injection — Prisma parameterizes this safely
+      const result = await userResolver.Query.searchUser(null, { queryName: '@.*' }, ctx);
+
+      expect(ctx.prisma.user.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { name: { contains: '@.*', mode: 'insensitive' } },
+            { username: { contains: '@.*', mode: 'insensitive' } },
           ],
           accountStatus: 'active',
-        })
-      );
-
-      // Verify that the regex matches the escaped pattern
-      const callArg = (User.find as jest.Mock).mock.calls[0][0];
-      const nameRegex = callArg.$or[0].name;
-      expect(nameRegex.source).toBe('@\\.\\*');
-      expect(nameRegex.flags).toBe('i');
-
-      expect(result).toEqual([
-        {
-          _id: '60d5ec49ad414d7a8d5464a0',
-          name: 'Alice Cooper',
-          username: 'alice',
-          accountStatus: 'active',
         },
-      ]);
+        select: expect.any(Object),
+        take: 10,
+      });
+      expect(result).toHaveLength(1);
     });
   });
 
@@ -100,37 +107,36 @@ describe('userResolver', () => {
     });
 
     it('updates own bio as plain text', async () => {
-      (User.findByIdAndUpdate as jest.Mock).mockReturnValue({
-        lean: jest.fn().mockResolvedValue({
-          _id: new mongoose.Types.ObjectId(actorId),
-          username: 'alice',
-          bio: 'Thoughtful dialogue',
-        }),
+      const ctx = mockContext();
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
+        id: actorId,
+        username: 'alice',
+        bio: 'Thoughtful dialogue',
       });
 
       const result = await userResolver.Mutation.updateUser(
         null,
         { user: { _id: actorId, bio: '  Thoughtful dialogue  ' } },
-        mockContext()
+        ctx
       );
 
-      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
-        actorId,
-        { $set: { bio: 'Thoughtful dialogue' } },
-        { new: true }
-      );
+      expect(ctx.prisma.user.update).toHaveBeenCalledWith({
+        where: { id: actorId },
+        data: { bio: 'Thoughtful dialogue' },
+      });
       expect(result.bio).toBe('Thoughtful dialogue');
     });
 
     it('rejects HTML in bio', async () => {
+      const ctx = mockContext();
       await expect(
         userResolver.Mutation.updateUser(
           null,
           { user: { _id: actorId, bio: '<b>nope</b>' } },
-          mockContext()
+          ctx
         )
       ).rejects.toThrow(/plain text/);
-      expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
     });
 
     it('forbids non-admin from updating another user', async () => {
@@ -144,26 +150,41 @@ describe('userResolver', () => {
     });
 
     it('allows admin to update contributorBadge on another user', async () => {
-      (User.findByIdAndUpdate as jest.Mock).mockReturnValue({
-        lean: jest.fn().mockResolvedValue({
-          _id: new mongoose.Types.ObjectId(otherId),
-          username: 'bob',
-          contributorBadge: true,
-        }),
+      const ctx = mockContext({ admin: true });
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
+        id: otherId,
+        username: 'bob',
+        contributorBadge: true,
       });
 
       const result = await userResolver.Mutation.updateUser(
         null,
         { user: { _id: otherId, contributorBadge: true } },
-        mockContext({ admin: true })
+        ctx
       );
 
-      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
-        otherId,
-        { $set: { contributorBadge: true } },
-        { new: true }
-      );
+      expect(ctx.prisma.user.update).toHaveBeenCalledWith({
+        where: { id: otherId },
+        data: { contributorBadge: true },
+      });
       expect(result.contributorBadge).toBe(true);
+    });
+
+    it('throws NOT_FOUND when Prisma P2025 error occurs', async () => {
+      const ctx = mockContext();
+      const prismaError = new Prisma.PrismaClientKnownRequestError('Record not found', {
+        code: 'P2025',
+        clientVersion: '6.0.0',
+      });
+      (ctx.prisma.user.update as jest.Mock).mockRejectedValue(prismaError);
+
+      await expect(
+        userResolver.Mutation.updateUser(
+          null,
+          { user: { _id: actorId, bio: 'Test' } },
+          ctx
+        )
+      ).rejects.toThrow(/User not found/);
     });
   });
 
@@ -185,25 +206,23 @@ describe('userResolver', () => {
     });
 
     it('updates own avatar qualities', async () => {
-      (User.findByIdAndUpdate as jest.Mock).mockReturnValue({
-        lean: jest.fn().mockResolvedValue({
-          _id: new mongoose.Types.ObjectId(actorId),
-          username: 'alice',
-          avatar: avatarQualities,
-        }),
+      const ctx = mockContext();
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
+        id: actorId,
+        username: 'alice',
+        avatar: avatarQualities,
       });
 
       const result = await userResolver.Mutation.updateUserAvatar(
         null,
         { user_id: actorId, avatarQualities },
-        mockContext()
+        ctx
       );
 
-      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
-        actorId,
-        { $set: { avatar: avatarQualities } },
-        { new: true }
-      );
+      expect(ctx.prisma.user.update).toHaveBeenCalledWith({
+        where: { id: actorId },
+        data: { avatar: avatarQualities },
+      });
       expect(result.avatar).toEqual(avatarQualities);
     });
 
@@ -215,7 +234,6 @@ describe('userResolver', () => {
           mockContext({ admin: false })
         )
       ).rejects.toThrow(/Not authorized/);
-      expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
     });
 
     it('rejects non-object avatarQualities', async () => {

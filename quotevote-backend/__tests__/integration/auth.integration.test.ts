@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import * as auth from '../../app/data/utils/authentication';
-import User from '../../app/data/models/User';
+import { prisma } from '../../app/lib/prisma';
 
 // Setup Express app for integration testing
 const app = express();
@@ -10,18 +10,16 @@ app.post('/auth/register', auth.register);
 app.post('/auth/login', auth.login);
 app.post('/auth/refresh', auth.refresh);
 
-// Connect to a test database (in-memory or separate test DB recommended)
-// For this example, we mock the mongoose connection or use helper if available.
-// However, since we want TRUE integration, we should ideally use a real DB or mongodb-memory-server.
-// Given the environment, we might mock the models for a "service integration" test 
-// OR simpler: we mock the database calls but test the express+auth logic together.
+jest.mock('../../app/lib/prisma', () => ({
+    prisma: {
+        user: {
+            findFirst: jest.fn(),
+            create: jest.fn(),
+            findUnique: jest.fn(),
+        },
+    },
+}));
 
-// BUT, user asked for integration tests. True integration tests need a DB.
-// Let's assume we can mock Mongoose for now to test the "Controller + Service" integration 
-// without spinning up a real Mongo instance, OR we use the existing mocking strategy 
-// but test via Supertest to verify the HTTP layer.
-
-jest.mock('../../app/data/models/User');
 jest.mock('jsonwebtoken', () => ({
     ...jest.requireActual('jsonwebtoken'),
     sign: jest.fn().mockReturnValue('mock_token'),
@@ -44,9 +42,9 @@ describe('Auth Integration (Mocked DB)', () => {
 
     describe('POST /auth/register', () => {
         it('should register a new user', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue(null);
-            (User.create as jest.Mock).mockResolvedValue({
-                _id: 'mockId',
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+            (prisma.user.create as jest.Mock).mockResolvedValue({
+                id: 'mockId',
                 username: 'test',
                 email: 'test@test.com',
                 name: 'Test'
@@ -75,12 +73,12 @@ describe('Auth Integration (Mocked DB)', () => {
 
     describe('POST /auth/login', () => {
         it('should login and return tokens', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue({
-                _id: 'mockId',
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+                id: 'mockId',
                 username: 'test',
                 email: 'test@test.com',
-                comparePassword: jest.fn().mockResolvedValue(true),
-                admin: false
+                password: 'hashed_password',
+                isAdmin: false
             });
 
             const res = await request(app)
@@ -95,8 +93,8 @@ describe('Auth Integration (Mocked DB)', () => {
 
     describe('POST /auth/refresh', () => {
         it('should refresh token', async () => {
-            (User.findById as jest.Mock).mockResolvedValue({
-                _id: 'mockId',
+            (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+                id: 'mockId',
                 username: 'test',
                 email: 'test@test.com',
                 accountStatus: 'active'

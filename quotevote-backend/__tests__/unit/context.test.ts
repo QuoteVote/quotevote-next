@@ -3,7 +3,7 @@
  *
  * Verifies:
  * - Singleton Prisma Client lifecycle and injection
- * - User authentication and hydration
+ * - User authentication and hydration via Prisma
  * - userId derivation from authenticated user
  * - Request ID generation and extraction
  * - Protected query enforcement via requireAuth
@@ -17,12 +17,10 @@ import { createHttpContext } from '~/context';
 import { prisma as defaultPrisma } from '~/lib/prisma';
 import { pubsub as defaultPubsub } from '~/data/utils/pubsub';
 import * as auth from '~/data/utils/authentication';
-import User from '~/data/models/User';
 import type { PrismaClient } from '@prisma/client';
 import type { PubSub } from '~/types/graphql';
 
 jest.mock('~/data/utils/authentication');
-jest.mock('~/data/models/User');
 jest.mock('~/data/utils/logger', () => ({
   logger: {
     debug: jest.fn(),
@@ -45,8 +43,22 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
       ...overrides,
     }) as unknown as Response;
 
+  const mockPrismaUser = {
+    id: 'user-123',
+    username: 'testuser',
+    email: 'test@example.com',
+    isAdmin: false,
+    followingIds: [],
+    followerIds: [],
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock prisma.user.findUnique
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (defaultPrisma as any).user = {
+      findUnique: jest.fn(),
+    };
   });
 
   describe('Prisma Client Lifecycle', () => {
@@ -137,14 +149,8 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
 
   describe('Authentication and User Hydration', () => {
     it('populates user and userId when a valid Bearer token is provided', async () => {
-      const mockUser = {
-        _id: { toString: () => 'user-123' },
-        username: 'testuser',
-        email: 'test@example.com',
-      };
-
       (auth.verifyToken as jest.Mock).mockResolvedValue({ userId: 'user-123' });
-      (User.findById as jest.Mock).mockResolvedValue(mockUser);
+      (defaultPrisma.user.findUnique as jest.Mock).mockResolvedValue(mockPrismaUser);
 
       const req = mockReq({
         headers: { authorization: 'Bearer valid-jwt-token' },
@@ -154,8 +160,12 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
       const context = await createHttpContext({ req, res });
 
       expect(auth.verifyToken).toHaveBeenCalledWith('valid-jwt-token');
-      expect(User.findById).toHaveBeenCalledWith('user-123');
-      expect(context.user).toBe(mockUser);
+      expect(defaultPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+      });
+      expect(context.user).toBeDefined();
+      expect(context.user?._id).toBe('user-123');
+      expect(context.user?.username).toBe('testuser');
       expect(context.userId).toBe('user-123');
     });
 
@@ -166,7 +176,7 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
       const context = await createHttpContext({ req, res });
 
       expect(auth.verifyToken).not.toHaveBeenCalled();
-      expect(User.findById).not.toHaveBeenCalled();
+      expect(defaultPrisma.user.findUnique).not.toHaveBeenCalled();
       expect(context.user).toBeNull();
       expect(context.userId).toBeNull();
     });
@@ -224,13 +234,17 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
     });
 
     it('allows protected query when valid authentication is present', async () => {
-      const mockUser = {
-        _id: { toString: () => 'auth-user-id' },
+      const authUser = {
+        id: 'auth-user-id',
         username: 'authuser',
+        email: 'auth@example.com',
+        isAdmin: false,
+        followingIds: [],
+        followerIds: [],
       };
 
       (auth.verifyToken as jest.Mock).mockResolvedValue({ userId: 'auth-user-id' });
-      (User.findById as jest.Mock).mockResolvedValue(mockUser);
+      (defaultPrisma.user.findUnique as jest.Mock).mockResolvedValue(authUser);
 
       const req = mockReq({
         headers: { authorization: 'Bearer valid-token' },
@@ -239,7 +253,8 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
       const res = mockRes();
 
       const context = await createHttpContext({ req, res });
-      expect(context.user).toBe(mockUser);
+      expect(context.user).toBeDefined();
+      expect(context.user?._id).toBe('auth-user-id');
       expect(context.userId).toBe('auth-user-id');
     });
   });

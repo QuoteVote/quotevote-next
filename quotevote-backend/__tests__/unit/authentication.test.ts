@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcryptjs';
 import * as auth from '~/data/utils/authentication';
-import User from '~/data/models/User';
+import { prisma } from '~/lib/prisma';
 import { logger } from '~/data/utils/logger';
 
 // Mock dependencies
@@ -19,14 +19,16 @@ jest.mock('~/data/utils/logger', () => ({
     },
 }));
 
-// Mock Mongoose User model
-jest.mock('~/data/models/User', () => ({
-    __esModule: true,
-    default: {
-        findOne: jest.fn(),
-        create: jest.fn(),
-        findById: jest.fn(),
-        findOneAndUpdate: jest.fn(),
+// Mock Prisma client
+jest.mock('~/lib/prisma', () => ({
+    prisma: {
+        user: {
+            findOne: jest.fn(),
+            findFirst: jest.fn(),
+            create: jest.fn(),
+            findUnique: jest.fn(),
+            findOneAndUpdate: jest.fn(),
+        },
     },
 }));
 
@@ -58,20 +60,21 @@ describe('Authentication Utils', () => {
 
     describe('createGuestUser', () => {
         it('should create and return a guest user', async () => {
-            (User.create as jest.Mock).mockResolvedValue({
-                _id: 'mockId',
+            (prisma.user.create as jest.Mock).mockResolvedValue({
+                id: 'mockId',
                 username: 'guestUser',
                 name: 'guest',
             });
 
             await auth.createGuestUser(req as Request, res as Response);
 
-            expect(User.create).toHaveBeenCalled();
+            expect(prisma.user.create).toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(201);
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ username: 'guestUser', name: 'guest' }));
         });
 
         it('should handle creation error', async () => {
-            (User.create as jest.Mock).mockRejectedValue(new Error('DB Error'));
+            (prisma.user.create as jest.Mock).mockRejectedValue(new Error('DB Error'));
             await auth.createGuestUser(req as Request, res as Response);
             expect(status).toHaveBeenCalledWith(500);
             expect(json).toHaveBeenCalledWith({ message: expect.stringMatching(/Internal server error/) });
@@ -87,9 +90,9 @@ describe('Authentication Utils', () => {
         });
 
         it('should register a new user', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue(null);
-            (User.create as jest.Mock).mockResolvedValue({
-                _id: 'newId',
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+            (prisma.user.create as jest.Mock).mockResolvedValue({
+                id: 'newId',
                 name: 'Test',
                 email: 'test@example.com',
                 username: 'testuser',
@@ -104,12 +107,12 @@ describe('Authentication Utils', () => {
 
             await auth.register(req as Request, res as Response);
 
-            expect(User.create).toHaveBeenCalled();
+            expect(prisma.user.create).toHaveBeenCalled();
             expect(res.status).toHaveBeenCalledWith(201);
         });
 
         it('should handle duplicate user', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue({ username: 'testuser' });
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue({ username: 'testuser' });
             req.body = {
                 name: 'Test',
                 email: 'test@example.com',
@@ -123,8 +126,8 @@ describe('Authentication Utils', () => {
         });
 
         it('should handle generic error during registration', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue(null);
-            (User.create as jest.Mock).mockRejectedValue(new Error('Unexpected'));
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+            (prisma.user.create as jest.Mock).mockRejectedValue(new Error('Unexpected'));
             req.body = { name: 'n', email: 'e', username: 'u', password: 'p' };
             await auth.register(req as Request, res as Response);
             expect(status).toHaveBeenCalledWith(500);
@@ -156,21 +159,22 @@ describe('Authentication Utils', () => {
 
     it('should login successfully with valid credentials', async () => {
             const mockUser = {
-                _id: 'mockId',
+                id: 'mockId',
                 username: 'testuser',
                 name: 'Test User',
                 email: 'test@example.com',
-                admin: false,
+                password: 'hashed',
+                isAdmin: false,
                 accountStatus: 'active',
                 avatar: { topType: 'ShortHairShortFlat', hairColor: 'Brown' },
                 bio: 'Hello',
-                comparePassword: jest.fn().mockResolvedValue(true),
             };
-            (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
             req.body = { username: 'testuser', password: 'password123' };
 
             await auth.login(req as Request, res as Response);
 
+            expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashed');
             expect(jwt.sign).toHaveBeenCalled();
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
                 accessToken: 'token',
@@ -201,13 +205,13 @@ describe('Authentication Utils', () => {
 
         it('should authenticate successfully', async () => {
             const mockUser = {
-                _id: 'mockId',
+                id: 'mockId',
                 username: 'testu',
                 email: 'test@t.com',
-                admin: false,
-                comparePassword: jest.fn().mockResolvedValue(true),
+                password: 'hashed',
+                isAdmin: false,
             };
-            (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
             req.body = { username: 'testu', password: 'password' };
             await auth.authenticate(req as Request, res as Response);
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -219,30 +223,32 @@ describe('Authentication Utils', () => {
 
     describe('addCreatorToUser extra behavior', () => {
         it('should return 401 if user not found', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue(null);
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
             await auth.login({ body: { username: 'missing', password: 'p' } } as Request, res as Response);
             expect(status).toHaveBeenCalledWith(401);
         });
 
         it('should return 403 if account is disabled', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue({ accountStatus: 'disabled' });
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue({ accountStatus: 'disabled' });
             await auth.login({ body: { username: 'bot', password: 'p' } } as Request, res as Response);
             expect(status).toHaveBeenCalledWith(403);
             expect(json).toHaveBeenCalledWith(expect.objectContaining({ accountDisabled: true }));
         });
 
         it('should return 401 for password mismatch', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue({ 
+            (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue({ 
+                id: '123',
                 accountStatus: 'active',
-                comparePassword: jest.fn().mockResolvedValue(false)
+                password: 'hashed',
             });
             await auth.login({ body: { username: 'user', password: 'wrong' } } as Request, res as Response);
             expect(status).toHaveBeenCalledWith(401);
         });
 
         it('should return token only if tokenOnly is true', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue({
-                _id: '123', username: 'u', email: 'e', admin: false, comparePassword: jest.fn().mockResolvedValue(true)
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+                id: '123', username: 'u', email: 'e', isAdmin: false, password: 'hashed'
             });
             // Using type assertion to access exported but not normally used params if needed
             const result = await (auth as unknown as { 
@@ -319,13 +325,13 @@ describe('Authentication Utils', () => {
             (jwt.verify as jest.Mock).mockReturnValue({ userId: '123', type: 'refresh' });
 
             const mockUser = {
-                _id: '123',
+                id: '123',
                 username: 'test',
                 email: 'test@test.com',
-                admin: false,
+                isAdmin: false,
                 accountStatus: 'active'
             };
-            (User.findById as jest.Mock).mockResolvedValue(mockUser);
+            (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
             await auth.refresh(req as Request, res as Response);
 
@@ -346,11 +352,11 @@ describe('Authentication Utils', () => {
         it('should return 401 if user is not found or disabled', async () => {
             req.body = { refreshToken: 'valid' };
             (jwt.verify as jest.Mock).mockReturnValue({ userId: '123', type: 'refresh' });
-            (User.findById as jest.Mock).mockResolvedValue(null);
+            (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
             await auth.refresh(req as Request, res as Response);
             expect(status).toHaveBeenCalledWith(401);
 
-            (User.findById as jest.Mock).mockResolvedValue({ accountStatus: 'disabled' });
+            (prisma.user.findUnique as jest.Mock).mockResolvedValue({ accountStatus: 'disabled' });
             await auth.refresh(req as Request, res as Response);
             expect(status).toHaveBeenCalledWith(401);
         });
@@ -405,39 +411,41 @@ describe('Authentication Utils', () => {
         });
 
         it('should handle registration with status disabled', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue(null);
-            (User.create as jest.Mock).mockResolvedValue({ _id: '1', name: 'n', email: 'e', username: 'u' });
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+            (prisma.user.create as jest.Mock).mockResolvedValue({ id: '1', name: 'n', email: 'e', username: 'u' });
             await auth.register({ body: { name: 'n', email: 'e', username: 'u', password: 'p', status: 'disabled' } } as Request, res as Response);
-            expect(User.create).toHaveBeenCalledWith(expect.objectContaining({ accountStatus: 'disabled' }));
+            expect(prisma.user.create).toHaveBeenCalledWith(expect.objectContaining({
+                data: expect.objectContaining({ accountStatus: 'disabled' }),
+            }));
         });
 
         it('should handle email username in addCreatorToUser', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue({
-                _id: '123', email: 'test@example.com', username: 'test', accountStatus: 'active', admin: false, comparePassword: jest.fn().mockResolvedValue(true)
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+                id: '123', email: 'test@example.com', username: 'test', accountStatus: 'active', isAdmin: false, password: 'hashed'
             });
             await auth.addCreatorToUser({ username: 'test@example.com', password: 'p', requirePassword: true }, res as Response, false);
-            expect(User.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
+            expect(prisma.user.findFirst).toHaveBeenCalledWith({ where: { email: 'test@example.com' } });
         });
 
         it('should handle missing password when required in addCreatorToUser', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue({ _id: '123' });
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: '123', password: 'hashed' });
             await auth.addCreatorToUser({ username: 'u', requirePassword: true }, res as Response, false);
             expect(status).toHaveBeenCalledWith(401);
         });
 
         it('should handle createGuestUser catch block with non-Error object', async () => {
-            (User.create as jest.Mock).mockRejectedValue('Guest creation failed string');
+            (prisma.user.create as jest.Mock).mockRejectedValue('Guest creation failed string');
             await auth.createGuestUser({ body: {} } as Request, res as Response);
             expect(status).toHaveBeenCalledWith(500);
             expect(logger.error).toHaveBeenCalledWith('createGuestUser error', expect.objectContaining({ error: 'Guest creation failed string' }));
         });
 
         it('should handle addCreatorToUser without password requirement', async () => {
-            (User.findOne as jest.Mock).mockResolvedValue({
-                _id: '123', email: 'e', username: 'u', accountStatus: 'active', admin: false, comparePassword: jest.fn().mockResolvedValue(true)
+            (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+                id: '123', email: 'e', username: 'u', accountStatus: 'active', isAdmin: false, password: 'hashed'
             });
             await auth.addCreatorToUser({ username: 'u', requirePassword: false }, res as Response, false);
-            expect(User.findOne).toHaveBeenCalledWith({ username: 'u' });
+            expect(prisma.user.findFirst).toHaveBeenCalledWith({ where: { username: 'u' } });
             expect(json).toHaveBeenCalledWith(expect.objectContaining({ accessToken: 'token' }));
         });
     });

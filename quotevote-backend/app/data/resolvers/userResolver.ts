@@ -1,7 +1,8 @@
 import * as bcrypt from 'bcryptjs';
 import { GraphQLError } from 'graphql';
-import User from '../models/User';
+import { Prisma } from '@prisma/client';
 import { normalizeBio } from '../utils/bioValidation';
+import { toPublicUser, type PrismaUserRecord } from '~/data/utils/userPrismaMapper';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -17,75 +18,76 @@ type UpdateUserInput = {
   themePreference?: string | null;
 };
 
-function toPublicUser(user: {
-  _id: { toString(): string } | string;
-  reputation?: Common.Reputation | null;
-  [key: string]: unknown;
-}): Common.User {
-  const userId = typeof user._id === 'string' ? user._id : user._id.toString();
-  return {
-    ...user,
-    _id: userId,
-    reputation: user.reputation
-      ? { ...user.reputation, _id: user.reputation._id ?? userId }
-      : undefined,
-  } as unknown as Common.User;
-}
-
-function asPublicUserDoc(user: unknown): Common.User {
-  return toPublicUser(user as {
-    _id: { toString(): string } | string;
-    reputation?: Common.Reputation | null;
-    [key: string]: unknown;
-  });
-}
+/**
+ * Public profile fields — mirrors the Mongoose .select() whitelist.
+ * Prisma field names (not the @map names): followingIds, followerIds, etc.
+ * The mapper translates to legacy shape (_followingId, _followersId, etc.)
+ */
+const PUBLIC_USER_SELECT = {
+  id: true,
+  name: true,
+  username: true,
+  avatar: true,
+  bio: true,
+  contributorBadge: true,
+  upvotes: true,
+  downvotes: true,
+  followingIds: true,
+  followerIds: true,
+  reputation: true,
+} as const;
 
 export const userResolver = {
   Query: {
     user: async (
       _parent: unknown,
-      args: { username: string }
+      args: { username: string },
+      context: GraphQLContext
     ): Promise<Common.User | null> => {
       // `user` is a public (unauthenticated) query — select only public-profile
       // fields so this can't be used to harvest email addresses or other
       // sensitive data, and match searchUser's active-account filter.
-      const user = await User.findOne({
-        username: args.username?.trim(),
-        accountStatus: 'active',
-      })
-        .select(
-          '_id name username avatar bio contributorBadge upvotes downvotes _followingId _followersId reputation'
-        )
-        .lean();
-      if (!user) return null;
+      const user = await context.prisma.user.findFirst({
+        where: {
+          username: args.username?.trim(),
+          accountStatus: 'active',
+        },
+        select: PUBLIC_USER_SELECT,
+      });
 
-      return asPublicUserDoc(user);
+      if (!user) return null;
+      return toPublicUser(user as PrismaUserRecord);
     },
+
     searchUser: async (
       _parent: unknown,
-      args: { queryName: string }
+      args: { queryName: string },
+      context: GraphQLContext
     ): Promise<Common.User[]> => {
       const queryName = args.queryName?.trim();
       if (!queryName) {
         return [];
       }
 
-      // ponytail: escape regex special chars to prevent injection (e.g. @.* matching all users)
-      const escaped = queryName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(escaped, 'i');
-      const users = await User.find({
-        $or: [{ name: regex }, { username: regex }],
-        accountStatus: 'active',
-      })
-        .select(
-          '_id name username avatar bio contributorBadge upvotes downvotes _followingId _followersId reputation'
-        )
-        .limit(10)
-        .lean();
+      // Prisma's contains + mode: 'insensitive' is safe from injection —
+      // the string is parameterized, never interpreted as a pattern.
+      // This replaces the old Mongoose regex-escape approach.
+      const users = await context.prisma.user.findMany({
+        where: {
+          OR: [
+            { name: { contains: queryName, mode: 'insensitive' } },
+            { username: { contains: queryName, mode: 'insensitive' } },
+          ],
+          accountStatus: 'active',
+        },
+        select: PUBLIC_USER_SELECT,
+        take: 10,
+      });
 
-      return users.map((user) => asPublicUserDoc(user));
+      return users.map((u) => toPublicUser(u as PrismaUserRecord));
     },
   },
+
   Mutation: {
     updateUser: async (
       _parent: unknown,
@@ -124,22 +126,23 @@ export const userResolver = {
           });
         }
 
-        const adminUpdated = await User.findByIdAndUpdate(
-          targetId,
-          { $set: { contributorBadge: Boolean(input.contributorBadge) } },
-          { new: true }
-        ).lean();
-
-        if (!adminUpdated) {
-          throw new GraphQLError('User not found', {
-            extensions: { code: 'NOT_FOUND' },
+        try {
+          const adminUpdated = await context.prisma.user.update({
+            where: { id: targetId },
+            data: { contributorBadge: Boolean(input.contributorBadge) },
           });
+          return toPublicUser(adminUpdated as PrismaUserRecord);
+        } catch (err) {
+          if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+            throw new GraphQLError('User not found', {
+              extensions: { code: 'NOT_FOUND' },
+            });
+          }
+          throw err;
         }
-
-        return asPublicUserDoc(adminUpdated);
       }
 
-      const updates: Record<string, unknown> = {};
+      const updates: Prisma.UserUpdateInput = {};
 
       if (input.name !== undefined && input.name !== null) {
         const name = input.name.trim();
@@ -164,12 +167,14 @@ export const userResolver = {
           });
         }
 
-        const existingUsername = await User.findOne({
-          _id: { $ne: targetId },
-          username,
-        })
-          .select('_id')
-          .lean();
+        const existingUsername = await context.prisma.user.findFirst({
+          where: {
+            username,
+            NOT: { id: targetId },
+          },
+          select: { id: true },
+        });
+
         if (existingUsername) {
           throw new GraphQLError('Username already exists!', {
             extensions: { code: 'BAD_USER_INPUT' },
@@ -186,12 +191,14 @@ export const userResolver = {
           });
         }
 
-        const existingEmail = await User.findOne({
-          _id: { $ne: targetId },
-          email,
-        })
-          .select('_id')
-          .lean();
+        const existingEmail = await context.prisma.user.findFirst({
+          where: {
+            email,
+            NOT: { id: targetId },
+          },
+          select: { id: true },
+        });
+
         if (existingEmail) {
           throw new GraphQLError('Email address already exists!', {
             extensions: { code: 'BAD_USER_INPUT' },
@@ -219,15 +226,18 @@ export const userResolver = {
         }
       }
 
-      if (input.themePreference !== undefined && input.themePreference !== null) {
-        const theme = input.themePreference.trim();
-        if (theme !== 'light' && theme !== 'dark') {
-          throw new GraphQLError('themePreference must be light or dark', {
-            extensions: { code: 'BAD_USER_INPUT' },
-          });
-        }
-        updates.themePreference = theme;
-      }
+      // TODO: themePreference field doesn't exist in Prisma schema yet.
+      // Mongoose silently dropped it (strict mode). To match current behavior,
+      // we skip it here. Once P0 (schema migration) is done, uncomment this.
+      // if (input.themePreference !== undefined && input.themePreference !== null) {
+      //   const theme = input.themePreference.trim();
+      //   if (theme !== 'light' && theme !== 'dark') {
+      //     throw new GraphQLError('themePreference must be light or dark', {
+      //       extensions: { code: 'BAD_USER_INPUT' },
+      //     });
+      //   }
+      //   updates.themePreference = theme;
+      // }
 
       if (input.contributorBadge !== undefined && input.contributorBadge !== null) {
         if (!isAdmin) {
@@ -239,24 +249,39 @@ export const userResolver = {
       }
 
       if (Object.keys(updates).length === 0) {
-        const current = await User.findById(targetId).lean();
+        const current = await context.prisma.user.findUnique({
+          where: { id: targetId },
+        });
         if (!current) {
           throw new GraphQLError('User not found', {
             extensions: { code: 'NOT_FOUND' },
           });
         }
-        return asPublicUserDoc(current);
+        return toPublicUser(current as PrismaUserRecord);
       }
 
-      const updated = await User.findByIdAndUpdate(targetId, { $set: updates }, { new: true }).lean();
-
-      if (!updated) {
-        throw new GraphQLError('User not found', {
-          extensions: { code: 'NOT_FOUND' },
+      try {
+        const updated = await context.prisma.user.update({
+          where: { id: targetId },
+          data: updates,
         });
+        return toPublicUser(updated as PrismaUserRecord);
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+          throw new GraphQLError('User not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
+        }
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          // Race condition: uniqueness check passed, but another request won the race
+          const target = (err.meta?.target as string[]) ?? [];
+          const field = target.includes('username') ? 'Username' : 'Email address';
+          throw new GraphQLError(`${field} already exists!`, {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
+        }
+        throw err;
       }
-
-      return asPublicUserDoc(updated);
     },
 
     updateUserAvatar: async (
@@ -296,19 +321,20 @@ export const userResolver = {
         });
       }
 
-      const updated = await User.findByIdAndUpdate(
-        targetId,
-        { $set: { avatar: args.avatarQualities } },
-        { new: true }
-      ).lean();
-
-      if (!updated) {
-        throw new GraphQLError('User not found', {
-          extensions: { code: 'NOT_FOUND' },
+      try {
+        const updated = await context.prisma.user.update({
+          where: { id: targetId },
+          data: { avatar: args.avatarQualities as Prisma.InputJsonValue },
         });
+        return toPublicUser(updated as PrismaUserRecord);
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+          throw new GraphQLError('User not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
+        }
+        throw err;
       }
-
-      return asPublicUserDoc(updated);
     },
   },
 };
