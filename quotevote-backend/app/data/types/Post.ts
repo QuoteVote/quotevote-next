@@ -19,7 +19,6 @@ import User from '../models/User';
 import Comment from '../models/Comment';
 import Vote from '../models/Vote';
 import Quote from '../models/Quote';
-import MessageRoom from '../models/MessageRoom';
 
 interface PostShape extends Common.Post {
   creator?: Common.User;
@@ -92,7 +91,27 @@ export const PostType: GraphQLObjectType<PostShape, GraphQLContext> = new GraphQ
     },
     messageRoom: {
       type: MessageRoomType,
-      resolve: (p) => p.messageRoom ?? MessageRoom.findOne({ postId: p._id }).lean(),
+      resolve: async (p, _args, context) => {
+        if (p.messageRoom) return p.messageRoom;
+        const room = await context.prisma.messageRoom.findFirst({
+          where: { postId: p._id },
+        });
+        if (!room) return null;
+        return {
+          _id: room.id,
+          users: room.userIds,
+          postId: room.postId ?? undefined,
+          messageType: room.messageType,
+          title: room.title ?? undefined,
+          avatar: room.avatar as string | undefined,
+          isDirect: room.isDirect,
+          lastMessageTime: room.lastMessageTime ?? undefined,
+          lastActivity: room.lastActivity ?? undefined,
+          unreadMessages: room.unreadMessages,
+          created: room.created,
+          updatedAt: room.updatedAt,
+        };
+      },
     },
   }),
 });
