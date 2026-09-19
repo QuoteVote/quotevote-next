@@ -9,13 +9,23 @@ import type { GraphQLContext } from '~/types/graphql';
 jest.mock('~/data/models/Post');
 jest.mock('~/data/models/User');
 
-function mockContext(user: GraphQLContext['user'] = null): GraphQLContext {
+const validUserId = '60d5ec49ad414d7a8d5464a0';
+const otherUserId = '60d5ec49ad414d7a8d5464a1';
+const validPostId = '60d5ec49ad414d7a8d5464a2';
+
+function mockContext(overrides: Partial<NonNullable<GraphQLContext['user']>> = {}): GraphQLContext {
   return {
     req: {} as GraphQLContext['req'],
     res: {} as GraphQLContext['res'],
     pubsub: {} as GraphQLContext['pubsub'],
-    user,
-  };
+    user: {
+      _id: validUserId,
+      username: 'alice',
+      email: 'alice@example.com',
+      admin: false,
+      ...overrides,
+    } as NonNullable<GraphQLContext['user']>,
+  } as GraphQLContext;
 }
 
 describe('postsResolver', () => {
@@ -116,22 +126,12 @@ describe('postsResolver', () => {
   });
 
   describe('Mutation.reportPost', () => {
-    const validUserId = '60d5ec49ad414d7a8d5464a0';
-    const otherUserId = '60d5ec49ad414d7a8d5464a1';
-    const validPostId = '60d5ec49ad414d7a8d5464a2';
-
-    const authContext = mockContext({
-      _id: validUserId,
-      username: 'alice',
-      email: 'alice@example.com',
-    } as NonNullable<GraphQLContext['user']>);
-
     it('throws UNAUTHENTICATED GraphQLError when user is not authenticated', async () => {
       await expect(
         postsResolver.Mutation.reportPost(
           null,
           { postId: validPostId, userId: validUserId },
-          mockContext(null)
+          { ...mockContext(), user: null }
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -146,7 +146,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: '', userId: validUserId },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -159,7 +159,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: validPostId, userId: '' },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -174,7 +174,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: 'invalid-post-id', userId: validUserId },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -189,7 +189,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: validPostId, userId: 'invalid-user-id' },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -204,7 +204,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: validPostId, userId: otherUserId },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -221,7 +221,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: validPostId, userId: validUserId },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -242,7 +242,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: validPostId, userId: validUserId },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -263,7 +263,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: validPostId, userId: validUserId },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -285,7 +285,7 @@ describe('postsResolver', () => {
         postsResolver.Mutation.reportPost(
           null,
           { postId: validPostId, userId: validUserId },
-          authContext
+          mockContext()
         )
       ).rejects.toThrow(
         expect.objectContaining({
@@ -322,7 +322,7 @@ describe('postsResolver', () => {
       const result = await postsResolver.Mutation.reportPost(
         null,
         { postId: validPostId, userId: validUserId },
-        authContext
+        mockContext()
       );
 
       expect(Post.findByIdAndUpdate).toHaveBeenCalledWith(
