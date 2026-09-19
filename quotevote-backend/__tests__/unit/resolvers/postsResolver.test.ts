@@ -3,10 +3,20 @@ import { GraphQLError } from 'graphql';
 import { postsResolver } from '~/data/resolvers/postsResolver';
 import Post from '~/data/models/Post';
 import User from '~/data/models/User';
+import type { GraphQLContext } from '~/types/graphql';
 
 // Mock the models
 jest.mock('~/data/models/Post');
 jest.mock('~/data/models/User');
+
+function mockContext(user: GraphQLContext['user'] = null): GraphQLContext {
+  return {
+    req: {} as GraphQLContext['req'],
+    res: {} as GraphQLContext['res'],
+    pubsub: {} as GraphQLContext['pubsub'],
+    user,
+  };
+}
 
 describe('postsResolver', () => {
   beforeEach(() => {
@@ -102,6 +112,234 @@ describe('postsResolver', () => {
         })
       );
       expect(result.entities[0].userId).toBe(mockUserId.toString());
+    });
+  });
+
+  describe('Mutation.reportPost', () => {
+    const validUserId = '60d5ec49ad414d7a8d5464a0';
+    const otherUserId = '60d5ec49ad414d7a8d5464a1';
+    const validPostId = '60d5ec49ad414d7a8d5464a2';
+
+    const authContext = mockContext({
+      _id: validUserId,
+      username: 'alice',
+      email: 'alice@example.com',
+    } as NonNullable<GraphQLContext['user']>);
+
+    it('throws UNAUTHENTICATED GraphQLError when user is not authenticated', async () => {
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: validPostId, userId: validUserId },
+          mockContext(null)
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Authentication required',
+          extensions: expect.objectContaining({ code: 'UNAUTHENTICATED' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when postId or userId is missing', async () => {
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: '', userId: validUserId },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Post ID and User ID are required',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: validPostId, userId: '' },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Post ID and User ID are required',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when postId is invalid ObjectId', async () => {
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: 'invalid-post-id', userId: validUserId },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Invalid ID format',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when userId is invalid ObjectId', async () => {
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: validPostId, userId: 'invalid-user-id' },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Invalid ID format',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('throws FORBIDDEN GraphQLError when reporting on behalf of another user', async () => {
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: validPostId, userId: otherUserId },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Not authorized to report on behalf of another user',
+          extensions: expect.objectContaining({ code: 'FORBIDDEN' }),
+        })
+      );
+    });
+
+    it('throws NOT_FOUND GraphQLError when post does not exist', async () => {
+      (Post.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: validPostId, userId: validUserId },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Post not found',
+          extensions: expect.objectContaining({ code: 'NOT_FOUND' }),
+        })
+      );
+    });
+
+    it('throws NOT_FOUND GraphQLError when post is deleted', async () => {
+      (Post.findById as jest.Mock).mockResolvedValue({
+        _id: new mongoose.Types.ObjectId(validPostId),
+        userId: new mongoose.Types.ObjectId(otherUserId),
+        deleted: true,
+      });
+
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: validPostId, userId: validUserId },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Post not found',
+          extensions: expect.objectContaining({ code: 'NOT_FOUND' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when author attempts to report own post', async () => {
+      (Post.findById as jest.Mock).mockResolvedValue({
+        _id: new mongoose.Types.ObjectId(validPostId),
+        userId: new mongoose.Types.ObjectId(validUserId),
+        deleted: false,
+      });
+
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: validPostId, userId: validUserId },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Cannot report your own post',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when user has already reported the post', async () => {
+      (Post.findById as jest.Mock).mockResolvedValue({
+        _id: new mongoose.Types.ObjectId(validPostId),
+        userId: new mongoose.Types.ObjectId(otherUserId),
+        reportedBy: [validUserId],
+        deleted: false,
+      });
+
+      await expect(
+        postsResolver.Mutation.reportPost(
+          null,
+          { postId: validPostId, userId: validUserId },
+          authContext
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'You have already reported this post',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('successfully reports post and returns updated post object', async () => {
+      (Post.findById as jest.Mock).mockResolvedValue({
+        _id: new mongoose.Types.ObjectId(validPostId),
+        userId: new mongoose.Types.ObjectId(otherUserId),
+        reportedBy: [],
+        reported: 0,
+        deleted: false,
+      });
+
+      const updatedDoc = {
+        _id: new mongoose.Types.ObjectId(validPostId),
+        userId: new mongoose.Types.ObjectId(otherUserId),
+        groupId: new mongoose.Types.ObjectId(),
+        title: 'Reported Post',
+        text: 'Post content',
+        reportedBy: [validUserId],
+        reported: 1,
+        votedBy: [],
+      };
+
+      (Post.findByIdAndUpdate as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(updatedDoc),
+      });
+
+      const result = await postsResolver.Mutation.reportPost(
+        null,
+        { postId: validPostId, userId: validUserId },
+        authContext
+      );
+
+      expect(Post.findByIdAndUpdate).toHaveBeenCalledWith(
+        validPostId,
+        {
+          $addToSet: { reportedBy: validUserId },
+          $inc: { reported: 1 },
+        },
+        { new: true }
+      );
+
+      expect(result).toMatchObject({
+        _id: validPostId,
+        userId: otherUserId,
+        reportedBy: [validUserId],
+        reported: 1,
+      });
     });
   });
 });

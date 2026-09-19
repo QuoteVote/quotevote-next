@@ -3,7 +3,7 @@ import { GraphQLError } from 'graphql';
 import Post from '../models/Post';
 import User from '../models/User';
 import { parseSearchQuery } from '../utils/parseSearchQuery';
-import type { PostQueryArgs } from '~/types/graphql';
+import type { PostQueryArgs, GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 
 /**
@@ -184,6 +184,86 @@ export const postsResolver = {
         entities: entities as unknown as Common.Post[],
         pagination: { total_count: totalPosts, limit, offset },
       };
+    },
+  },
+  Mutation: {
+    reportPost: async (
+      _parent: unknown,
+      args: { postId: string; userId: string },
+      context: GraphQLContext
+    ): Promise<Common.Post> => {
+      if (!context?.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      if (!args.postId || !args.userId) {
+        throw new GraphQLError('Post ID and User ID are required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      if (
+        !mongoose.Types.ObjectId.isValid(args.postId) ||
+        !mongoose.Types.ObjectId.isValid(args.userId)
+      ) {
+        throw new GraphQLError('Invalid ID format', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const actorId = context.user._id.toString();
+      if (actorId !== args.userId) {
+        throw new GraphQLError('Not authorized to report on behalf of another user', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      const post = await Post.findById(args.postId);
+      if (!post || post.deleted) {
+        throw new GraphQLError('Post not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      if (post.userId.toString() === args.userId) {
+        throw new GraphQLError('Cannot report your own post', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const reportedBy = Array.isArray(post.reportedBy) ? post.reportedBy : [];
+      if (reportedBy.includes(args.userId)) {
+        throw new GraphQLError('You have already reported this post', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const updatedPost = await Post.findByIdAndUpdate(
+        args.postId,
+        {
+          $addToSet: { reportedBy: args.userId },
+          $inc: { reported: 1 },
+        },
+        { new: true }
+      ).lean();
+
+      if (!updatedPost) {
+        throw new GraphQLError('Post not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      return {
+        ...updatedPost,
+        _id: updatedPost._id.toString(),
+        userId: updatedPost.userId.toString(),
+        groupId: updatedPost.groupId ? updatedPost.groupId.toString() : undefined,
+        reportedBy: Array.isArray(updatedPost.reportedBy) ? updatedPost.reportedBy : [],
+        reported: updatedPost.reported ?? 0,
+        votedBy: Array.isArray(updatedPost.votedBy) ? updatedPost.votedBy : [],
+      } as unknown as Common.Post;
     },
   },
 };
