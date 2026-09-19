@@ -1,157 +1,124 @@
-/**
- * Test suite for message resolver utilities.
- */
+import type { PrismaClient } from '@prisma/client';
+import { addUserToPostRoom, getMessages, getUnreadMessages } from '~/data/resolvers/utils/messages';
 
-import Message from '~/data/models/Message';
-import MessageRoom from '~/data/models/MessageRoom';
-import {
-  getMessages,
-  getUnreadMessages,
-  addUserToPostRoom,
-} from '~/data/resolvers/utils/messages';
+type PrismaMock = {
+  message: {
+    findMany: jest.Mock;
+  };
+  messageRoom: {
+    findFirst: jest.Mock;
+    findUnique: jest.Mock;
+    updateMany: jest.Mock;
+    update: jest.Mock;
+    create: jest.Mock;
+  };
+};
 
-jest.mock('~/data/models/Message', () => ({
-  find: jest.fn(),
-}));
-
-const mockSave = jest.fn();
-jest.mock('~/data/models/MessageRoom', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const MockMessageRoom: any = jest.fn().mockImplementation((data: Record<string, unknown>) => {
-    const doc: Record<string, unknown> = { ...data, _id: 'room-new' };
-    mockSave.mockResolvedValue(doc);
-    doc.save = mockSave;
-    return doc;
-  });
-  MockMessageRoom.findOne = jest.fn();
-  MockMessageRoom.findByIdAndUpdate = jest.fn();
-  return MockMessageRoom;
+const createPrismaMock = (): PrismaMock => ({
+  message: {
+    findMany: jest.fn(),
+  },
+  messageRoom: {
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    updateMany: jest.fn(),
+    update: jest.fn(),
+    create: jest.fn(),
+  },
 });
 
 describe('messages resolver utilities', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  it('gets non-deleted messages for a room', async () => {
+    const prisma = createPrismaMock();
+    const messages = [{ id: 'm1', text: 'hello' }];
+    prisma.message.findMany.mockResolvedValue(messages);
+
+    await expect(getMessages(prisma as unknown as PrismaClient, 'room1')).resolves.toEqual(
+      messages
+    );
+    expect(prisma.message.findMany).toHaveBeenCalledWith({
+      where: { messageRoomId: 'room1', deleted: false },
+    });
   });
 
-  describe('getMessages', () => {
-    it('should return non-deleted messages for a room', async () => {
-      const messages = [
-        { _id: 'm1', text: 'hello' },
-        { _id: 'm2', text: 'world' },
-      ];
-      (Message.find as jest.Mock).mockResolvedValue(messages);
+  it('gets unread messages excluding the current user and read messages', async () => {
+    const prisma = createPrismaMock();
+    const unread = [{ id: 'm1', text: 'new message' }];
+    prisma.message.findMany.mockResolvedValue(unread);
 
-      const result = await getMessages('room1');
-
-      expect(Message.find).toHaveBeenCalledWith({
+    await expect(
+      getUnreadMessages(prisma as unknown as PrismaClient, 'room1', 'user1')
+    ).resolves.toEqual(unread);
+    expect(prisma.message.findMany).toHaveBeenCalledWith({
+      where: {
         messageRoomId: 'room1',
-        deleted: { $ne: true },
-      });
-      expect(result).toEqual(messages);
-    });
-
-    it('should return empty array when no messages', async () => {
-      (Message.find as jest.Mock).mockResolvedValue([]);
-
-      const result = await getMessages('room1');
-      expect(result).toEqual([]);
+        userId: { not: 'user1' },
+        NOT: { readBy: { has: 'user1' } },
+        deleted: false,
+      },
     });
   });
 
-  describe('getUnreadMessages', () => {
-    it('should return unread messages excluding own messages', async () => {
-      const unread = [{ _id: 'm1', text: 'new msg' }];
-      (Message.find as jest.Mock).mockResolvedValue(unread);
+  it('creates a post room when one does not exist', async () => {
+    const prisma = createPrismaMock();
+    const room = { id: 'room-new', userIds: ['user1'] };
+    prisma.messageRoom.findFirst.mockResolvedValue(null);
+    prisma.messageRoom.create.mockResolvedValue(room);
 
-      const result = await getUnreadMessages('room1', 'user1');
-
-      expect(Message.find).toHaveBeenCalledWith({
-        messageRoomId: 'room1',
-        userId: { $ne: 'user1' },
-        readBy: { $nin: ['user1'] },
-        deleted: { $ne: true },
-      });
-      expect(result).toEqual(unread);
+    await expect(
+      addUserToPostRoom(prisma as unknown as PrismaClient, 'post1', 'user1')
+    ).resolves.toEqual(room);
+    expect(prisma.messageRoom.findFirst).toHaveBeenCalledWith({
+      where: { postId: 'post1', messageType: 'POST' },
+    });
+    expect(prisma.messageRoom.create).toHaveBeenCalledWith({
+      data: {
+        userIds: ['user1'],
+        postId: 'post1',
+        messageType: 'POST',
+        lastActivity: expect.any(Date),
+      },
     });
   });
 
-  describe('addUserToPostRoom', () => {
-    it('should create a new room if none exists for the post', async () => {
-      (MessageRoom.findOne as jest.Mock).mockResolvedValue(null);
+  it('adds a user and updates activity for an existing room', async () => {
+    const prisma = createPrismaMock();
+    const existingRoom = { id: 'room1', userIds: ['other-user'] };
+    const updatedRoom = { ...existingRoom, userIds: ['other-user', 'user1'] };
+    prisma.messageRoom.findFirst.mockResolvedValue(existingRoom);
+    prisma.messageRoom.updateMany.mockResolvedValue({ count: 1 });
+    prisma.messageRoom.findUnique.mockResolvedValue(updatedRoom);
 
-      const result = await addUserToPostRoom('663a1234567890abcdef1234', '663a1234567890abcdef5678');
-
-      expect(MessageRoom.findOne).toHaveBeenCalledWith(
-        expect.objectContaining({ messageType: 'POST' })
-      );
-      expect(mockSave).toHaveBeenCalled();
-      expect(result).toBeDefined();
+    await expect(
+      addUserToPostRoom(prisma as unknown as PrismaClient, 'post1', 'user1')
+    ).resolves.toEqual(updatedRoom);
+    expect(prisma.messageRoom.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'room1',
+        NOT: { userIds: { has: 'user1' } },
+      },
+      data: {
+        userIds: { push: 'user1' },
+        lastActivity: expect.any(Date),
+      },
     });
+  });
 
-    it('should add user to existing room if not already a member', async () => {
-      const existingRoom = {
-        _id: 'room1',
-        users: [{ toString: () => '663a1234567890abcdef9999' }],
-      };
-      (MessageRoom.findOne as jest.Mock).mockResolvedValue(existingRoom);
-      (MessageRoom.findByIdAndUpdate as jest.Mock).mockResolvedValue({
-        ...existingRoom,
-        users: [...existingRoom.users, '663a1234567890abcdef5678'],
-      });
+  it('does not duplicate an existing room member', async () => {
+    const prisma = createPrismaMock();
+    const existingRoom = { id: 'room1', userIds: ['user1'] };
+    prisma.messageRoom.findFirst.mockResolvedValue(existingRoom);
+    prisma.messageRoom.updateMany.mockResolvedValue({ count: 0 });
+    prisma.messageRoom.findUnique.mockResolvedValue(existingRoom);
+    prisma.messageRoom.update.mockResolvedValue(existingRoom);
 
-      const result = await addUserToPostRoom('663a1234567890abcdef1234', '663a1234567890abcdef5678');
+    await addUserToPostRoom(prisma as unknown as PrismaClient, 'post1', 'user1');
 
-      expect(MessageRoom.findByIdAndUpdate).toHaveBeenCalledWith(
-        'room1',
-        expect.objectContaining({
-          $addToSet: expect.any(Object),
-          $set: expect.objectContaining({ lastActivity: expect.any(Date) }),
-        }),
-        { new: true }
-      );
-      expect(result).toBeDefined();
-    });
-
-    it('should update lastActivity if user is already a member', async () => {
-      const userId = '663a1234567890abcdef5678';
-      const existingRoom = {
-        _id: 'room1',
-        users: [{ toString: () => userId }],
-      };
-      (MessageRoom.findOne as jest.Mock).mockResolvedValue(existingRoom);
-      (MessageRoom.findByIdAndUpdate as jest.Mock).mockResolvedValue(existingRoom);
-
-      const result = await addUserToPostRoom('663a1234567890abcdef1234', userId);
-
-      expect(MessageRoom.findByIdAndUpdate).toHaveBeenCalledWith(
-        'room1',
-        { $set: { lastActivity: expect.any(Date) } },
-        { new: true }
-      );
-      expect(result).toBeDefined();
-    });
-
-    it('should handle room with undefined users array', async () => {
-      const existingRoom = {
-        _id: 'room1',
-        users: undefined,
-      };
-      (MessageRoom.findOne as jest.Mock).mockResolvedValue(existingRoom);
-      (MessageRoom.findByIdAndUpdate as jest.Mock).mockResolvedValue({
-        ...existingRoom,
-        users: ['663a1234567890abcdef5678'],
-      });
-
-      const result = await addUserToPostRoom('663a1234567890abcdef1234', '663a1234567890abcdef5678');
-
-      expect(MessageRoom.findByIdAndUpdate).toHaveBeenCalledWith(
-        'room1',
-        expect.objectContaining({
-          $addToSet: expect.any(Object),
-        }),
-        { new: true }
-      );
-      expect(result).toBeDefined();
+    expect(prisma.messageRoom.update).toHaveBeenCalledWith({
+      where: { id: 'room1' },
+      data: {
+        lastActivity: expect.any(Date),
+      },
     });
   });
 });

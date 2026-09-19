@@ -1,19 +1,18 @@
-import { Types } from 'mongoose';
-import Message from '~/data/models/Message';
-import MessageRoom from '~/data/models/MessageRoom';
-import type { MessageDocument, MessageRoomDocument } from '~/types/mongoose';
+import type { Message, MessageRoom, PrismaClient } from '@prisma/client';
 
 /**
  * Get all non-deleted messages in a message room.
  */
 export const getMessages = async (
+  prisma: PrismaClient,
   messageRoomId: string
-): Promise<MessageDocument[]> => {
-  const messages = await Message.find({
-    messageRoomId,
-    deleted: { $ne: true },
+): Promise<Message[]> => {
+  return prisma.message.findMany({
+    where: {
+      messageRoomId,
+      deleted: false,
+    },
   });
-  return messages as MessageDocument[];
 };
 
 /**
@@ -21,16 +20,18 @@ export const getMessages = async (
  * Excludes messages sent by the user and messages already read.
  */
 export const getUnreadMessages = async (
+  prisma: PrismaClient,
   messageRoomId: string,
   userId: string
-): Promise<MessageDocument[]> => {
-  const messages = await Message.find({
-    messageRoomId,
-    userId: { $ne: userId },
-    readBy: { $nin: [userId] },
-    deleted: { $ne: true },
+): Promise<Message[]> => {
+  return prisma.message.findMany({
+    where: {
+      messageRoomId,
+      userId: { not: userId },
+      NOT: { readBy: { has: userId } },
+      deleted: false,
+    },
   });
-  return messages as MessageDocument[];
 };
 
 /**
@@ -38,43 +39,47 @@ export const getUnreadMessages = async (
  * Creates the room if it doesn't exist. Idempotent for existing members.
  */
 export const addUserToPostRoom = async (
+  prisma: PrismaClient,
   postId: string,
   userId: string
-): Promise<MessageRoomDocument> => {
-  const postObjectId = new Types.ObjectId(postId);
-  const userObjectId = new Types.ObjectId(userId);
-
-  let messageRoom = await MessageRoom.findOne({
-    postId: postObjectId,
-    messageType: 'POST',
-  }) as MessageRoomDocument | null;
+): Promise<MessageRoom> => {
+  let messageRoom = await prisma.messageRoom.findFirst({
+    where: {
+      postId,
+      messageType: 'POST',
+    },
+  });
 
   if (messageRoom) {
-    const userIds = (messageRoom.users ?? []).map((u) => u.toString());
-
-    if (!userIds.includes(userObjectId.toString())) {
-      messageRoom = await MessageRoom.findByIdAndUpdate(
-        messageRoom._id,
-        {
-          $addToSet: { users: userObjectId },
-          $set: { lastActivity: new Date() },
-        },
-        { new: true }
-      ) as MessageRoomDocument;
-    } else {
-      messageRoom = await MessageRoom.findByIdAndUpdate(
-        messageRoom._id,
-        { $set: { lastActivity: new Date() } },
-        { new: true }
-      ) as MessageRoomDocument;
+    const now = new Date();
+    const addMemberResult = await prisma.messageRoom.updateMany({
+      where: {
+        id: messageRoom.id,
+        NOT: { userIds: { has: userId } },
+      },
+      data: {
+        userIds: { push: userId },
+        lastActivity: now,
+      },
+    });
+    if (addMemberResult.count === 0) {
+      await prisma.messageRoom.update({
+        where: { id: messageRoom.id },
+        data: { lastActivity: now },
+      });
     }
+    messageRoom = await prisma.messageRoom.findUnique({
+      where: { id: messageRoom.id },
+    });
   } else {
-    messageRoom = await new MessageRoom({
-      users: [userObjectId],
-      postId: postObjectId,
-      messageType: 'POST',
-      lastActivity: new Date(),
-    }).save() as MessageRoomDocument;
+    messageRoom = await prisma.messageRoom.create({
+      data: {
+        userIds: [userId],
+        postId,
+        messageType: 'POST',
+        lastActivity: new Date(),
+      },
+    });
   }
 
   return messageRoom;
