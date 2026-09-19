@@ -1,6 +1,8 @@
+import mongoose from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { GraphQLError } from 'graphql';
 import User from '../models/User';
+import BotReport from '../models/BotReport';
 import { normalizeBio } from '../utils/bioValidation';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
@@ -309,6 +311,89 @@ export const userResolver = {
       }
 
       return asPublicUserDoc(updated);
+    },
+
+    reportBot: async (
+      _parent: unknown,
+      args: { userId: string; reporterId: string },
+      context: GraphQLContext
+    ): Promise<boolean> => {
+      if (!context?.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      if (!args.userId || !args.reporterId) {
+        throw new GraphQLError('User ID and Reporter ID are required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      if (
+        !mongoose.Types.ObjectId.isValid(args.userId) ||
+        !mongoose.Types.ObjectId.isValid(args.reporterId)
+      ) {
+        throw new GraphQLError('Invalid ID format', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const actorId = context.user._id.toString();
+      if (actorId !== args.reporterId) {
+        throw new GraphQLError('Not authorized to report on behalf of another user', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      if (args.userId === args.reporterId) {
+        throw new GraphQLError('Cannot report yourself as a bot', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const targetUser = await User.findById(args.userId);
+      if (!targetUser) {
+        throw new GraphQLError('User not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const existingReport = await BotReport.findOne({
+        reporterId: args.reporterId,
+        userId: args.userId,
+      });
+      if (existingReport) {
+        throw new GraphQLError('You have already reported this user as a bot', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      try {
+        await BotReport.create({
+          reporterId: new mongoose.Types.ObjectId(args.reporterId),
+          userId: new mongoose.Types.ObjectId(args.userId),
+        });
+      } catch (err: unknown) {
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'code' in err &&
+          (err as { code: number }).code === 11000
+        ) {
+          throw new GraphQLError('You have already reported this user as a bot', {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
+        }
+        throw err;
+      }
+
+      await User.findByIdAndUpdate(args.userId, {
+        $inc: { botReports: 1 },
+        $set: { lastBotReportDate: new Date() },
+      });
+
+      return true;
     },
   },
 };

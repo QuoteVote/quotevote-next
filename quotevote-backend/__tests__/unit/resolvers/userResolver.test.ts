@@ -2,9 +2,11 @@ import mongoose from 'mongoose';
 import { GraphQLError } from 'graphql';
 import { userResolver } from '~/data/resolvers/userResolver';
 import User from '~/data/models/User';
+import BotReport from '~/data/models/BotReport';
 import type { GraphQLContext } from '~/types/graphql';
 
 jest.mock('~/data/models/User');
+jest.mock('~/data/models/BotReport');
 
 const actorId = '60d5ec49ad414d7a8d5464a0';
 const otherId = '60d5ec49ad414d7a8d5464a1';
@@ -226,6 +228,203 @@ describe('userResolver', () => {
           mockContext()
         )
       ).rejects.toThrow(/avatarQualities/);
+    });
+  });
+
+  describe('Mutation.reportBot', () => {
+    it('throws UNAUTHENTICATED GraphQLError when user is not authenticated', async () => {
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: otherId, reporterId: actorId },
+          { ...mockContext(), user: null }
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Authentication required',
+          extensions: expect.objectContaining({ code: 'UNAUTHENTICATED' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when userId or reporterId is missing', async () => {
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: '', reporterId: actorId },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'User ID and Reporter ID are required',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: otherId, reporterId: '' },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'User ID and Reporter ID are required',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when userId is invalid ObjectId', async () => {
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: 'not-valid-id', reporterId: actorId },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Invalid ID format',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when reporterId is invalid ObjectId', async () => {
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: otherId, reporterId: 'not-valid-id' },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Invalid ID format',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('throws FORBIDDEN GraphQLError when reporting on behalf of another user', async () => {
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: otherId, reporterId: otherId },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Not authorized to report on behalf of another user',
+          extensions: expect.objectContaining({ code: 'FORBIDDEN' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when reporting yourself as a bot', async () => {
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: actorId, reporterId: actorId },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'Cannot report yourself as a bot',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('throws NOT_FOUND GraphQLError when target user does not exist', async () => {
+      (User.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: otherId, reporterId: actorId },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'User not found',
+          extensions: expect.objectContaining({ code: 'NOT_FOUND' }),
+        })
+      );
+    });
+
+    it('throws BAD_USER_INPUT GraphQLError when user has already reported this bot', async () => {
+      (User.findById as jest.Mock).mockResolvedValue({ _id: new mongoose.Types.ObjectId(otherId) });
+      (BotReport.findOne as jest.Mock).mockResolvedValue({
+        _id: new mongoose.Types.ObjectId(),
+        reporterId: new mongoose.Types.ObjectId(actorId),
+        userId: new mongoose.Types.ObjectId(otherId),
+      });
+
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: otherId, reporterId: actorId },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'You have already reported this user as a bot',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('handles MongoDB duplicate key error (code 11000) as BAD_USER_INPUT', async () => {
+      (User.findById as jest.Mock).mockResolvedValue({ _id: new mongoose.Types.ObjectId(otherId) });
+      (BotReport.findOne as jest.Mock).mockResolvedValue(null);
+      const duplicateError = new Error('Duplicate key error') as Error & { code?: number };
+      duplicateError.code = 11000;
+      (BotReport.create as jest.Mock).mockRejectedValue(duplicateError);
+
+      await expect(
+        userResolver.Mutation.reportBot(
+          null,
+          { userId: otherId, reporterId: actorId },
+          mockContext()
+        )
+      ).rejects.toThrow(
+        expect.objectContaining({
+          message: 'You have already reported this user as a bot',
+          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+        })
+      );
+    });
+
+    it('successfully reports bot, persists BotReport, increments User botReports, and returns true', async () => {
+      (User.findById as jest.Mock).mockResolvedValue({ _id: new mongoose.Types.ObjectId(otherId) });
+      (BotReport.findOne as jest.Mock).mockResolvedValue(null);
+      (BotReport.create as jest.Mock).mockResolvedValue({
+        _id: new mongoose.Types.ObjectId(),
+        reporterId: new mongoose.Types.ObjectId(actorId),
+        userId: new mongoose.Types.ObjectId(otherId),
+      });
+      (User.findByIdAndUpdate as jest.Mock).mockResolvedValue({ _id: otherId });
+
+      const result = await userResolver.Mutation.reportBot(
+        null,
+        { userId: otherId, reporterId: actorId },
+        mockContext()
+      );
+
+      expect(BotReport.create).toHaveBeenCalledWith({
+        reporterId: new mongoose.Types.ObjectId(actorId),
+        userId: new mongoose.Types.ObjectId(otherId),
+      });
+
+      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
+        otherId,
+        {
+          $inc: { botReports: 1 },
+          $set: { lastBotReportDate: expect.any(Date) },
+        }
+      );
+
+      expect(result).toBe(true);
     });
   });
 });
