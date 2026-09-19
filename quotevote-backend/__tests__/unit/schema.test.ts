@@ -50,6 +50,27 @@ describe('Executable GraphQL Schema', () => {
   });
 
   it('exposes reportPost and reportBot in GraphQL introspection', async () => {
+    interface IntrospectionArg {
+      name: string;
+    }
+
+    interface IntrospectionField {
+      name: string;
+      args: IntrospectionArg[];
+    }
+
+    interface IntrospectionObjectType {
+      name: string;
+      fields?: IntrospectionField[];
+    }
+
+    interface IntrospectionData {
+      __schema?: {
+        mutationType?: { name: string } | null;
+        types?: IntrospectionObjectType[];
+      };
+    }
+
     const { graphql, getIntrospectionQuery } = await import('graphql');
     const result = await graphql({
       schema,
@@ -57,24 +78,24 @@ describe('Executable GraphQL Schema', () => {
     });
 
     expect(result.errors).toBeUndefined();
-    const introspectionData = result.data as any;
+    const introspectionData = result.data as unknown as IntrospectionData;
     const mutationType = introspectionData?.__schema?.mutationType;
     expect(mutationType?.name).toBe('Mutation');
 
     const schemaTypes = introspectionData?.__schema?.types ?? [];
-    const mutationSchemaType = schemaTypes.find((t: any) => t.name === 'Mutation');
+    const mutationSchemaType = schemaTypes.find((t) => t.name === 'Mutation');
     expect(mutationSchemaType).toBeDefined();
 
     const mutationFields = mutationSchemaType?.fields ?? [];
-    const reportPostIntrospection = mutationFields.find((f: any) => f.name === 'reportPost');
+    const reportPostIntrospection = mutationFields.find((f) => f.name === 'reportPost');
     expect(reportPostIntrospection).toBeDefined();
-    expect(reportPostIntrospection.args.map((a: any) => a.name)).toEqual(
+    expect(reportPostIntrospection?.args.map((a) => a.name)).toEqual(
       expect.arrayContaining(['postId', 'userId'])
     );
 
-    const reportBotIntrospection = mutationFields.find((f: any) => f.name === 'reportBot');
+    const reportBotIntrospection = mutationFields.find((f) => f.name === 'reportBot');
     expect(reportBotIntrospection).toBeDefined();
-    expect(reportBotIntrospection.args.map((a: any) => a.name)).toEqual(
+    expect(reportBotIntrospection?.args.map((a) => a.name)).toEqual(
       expect.arrayContaining(['userId', 'reporterId'])
     );
   });
