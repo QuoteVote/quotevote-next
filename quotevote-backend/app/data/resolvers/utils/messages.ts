@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import Message from '~/data/models/Message';
 import MessageRoom from '~/data/models/MessageRoom';
 import type { MessageDocument, MessageRoomDocument } from '~/types/mongoose';
+import type { RoomAccessInput } from '~/types/roomAccess';
 
 /**
  * Get all non-deleted messages in a message room.
@@ -78,4 +79,13 @@ export const addUserToPostRoom = async (
   }
 
   return messageRoom;
+};
+
+
+export const toRoomAccessInput = (room: MessageRoomDocument | null): RoomAccessInput | null => {
+  if (!room) return null;
+  return {
+    messageType: room.messageType as RoomAccessInput['messageType'],
+    userIds: (room.users ?? []).map((id) => id.toString()),
+  };
 };

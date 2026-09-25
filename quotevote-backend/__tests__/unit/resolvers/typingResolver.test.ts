@@ -11,6 +11,7 @@ function mockContext(
   options: {
     user?: GraphQLContext['user'];
     typing?: Record<string, jest.Mock>;
+    messageRoom?: Record<string, jest.Mock>;
   } = {}
 ): GraphQLContext {
   const user =
@@ -25,6 +26,13 @@ function mockContext(
         deleteMany: jest.fn(),
         findMany: jest.fn(),
         ...options.typing,
+      },
+        messageRoom: {
+        findUnique: jest.fn().mockResolvedValue({
+          messageType: 'USER',
+          userIds: [actorId],
+        }),
+        ...options.messageRoom,
       },
     } as unknown as GraphQLContext['prisma'],
     req: {} as GraphQLContext['req'],
@@ -59,6 +67,19 @@ describe('typingResolver', () => {
           mockContext({ user: null })
         )
       ).rejects.toThrow(GraphQLError);
+    });
+
+     it('rejects an unknown room', async () => {
+      const context = mockContext({
+        messageRoom: { findUnique: jest.fn().mockResolvedValue(null) },
+      });
+      await expect(
+        typingResolver.Mutation.updateTyping(
+          null,
+          { typing: { messageRoomId, isTyping: true } },
+          context
+        )
+      ).rejects.toThrow('Room not found');
     });
 
     it('upserts typing state with a ten-second expiration and publishes it', async () => {
@@ -172,6 +193,21 @@ describe('typingResolver', () => {
         },
       });
       expect(result).toEqual(records);
+    });
+
+    it('rejects a non-member of a USER room', async () => {
+      const context = mockContext({
+        messageRoom: {
+          findUnique: jest.fn().mockResolvedValue({ messageType: 'USER', userIds: ['other-user'] }),
+        },
+      });
+      await expect(
+        typingResolver.Mutation.updateTyping(
+          null,
+          { typing: { messageRoomId, isTyping: true } },
+          context
+        )
+      ).rejects.toThrow('Not a member of this room');
     });
   });
 });

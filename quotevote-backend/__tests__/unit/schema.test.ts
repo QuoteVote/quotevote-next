@@ -181,8 +181,15 @@ describe('Executable GraphQL Schema', () => {
           user: {
             _id: '60d5ec49ad414d7a8d5464a0',
           },
+          userId: '60d5ec49ad414d7a8d5464a0',
           prisma: {
             typing: { upsert },
+             messageRoom: {
+            findUnique: jest.fn().mockResolvedValue({
+              messageType: 'USER',
+              userIds: ['60d5ec49ad414d7a8d5464a0'],
+            }),
+          },
           },
           pubsub: { publish },
         },
