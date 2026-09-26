@@ -6,7 +6,9 @@ import {
   type TypingPayload,
   type TypingResult,
 } from '~/types/graphql';
-
+import type { RoomAccessInput } from '~/types/roomAccess';
+import { assertRoomAccess } from '~/data/utils/roomAccess';
+import { toGraphQLError } from '~/data/utils/graphqlErrors';
 const TYPING_EXPIRATION_MS = 10_000;
 
 type UpdateTypingArgs = {
@@ -16,6 +18,17 @@ type UpdateTypingArgs = {
   };
 };
 
+const loadRoomAccessInput = async (
+  context: GraphQLContext,
+  messageRoomId: string
+): Promise<RoomAccessInput | null> => {
+  const room = await context.prisma.messageRoom.findUnique({
+    where: { id: messageRoomId },
+    select: { messageType: true, userIds: true },
+  });
+  return room ? { messageType: room.messageType, userIds: room.userIds } : null;
+};
+
 export const typingResolver = {
   Query: {
     getTypingUsers: async (
@@ -23,6 +36,12 @@ export const typingResolver = {
       args: { messageRoomId: string },
       context: GraphQLContext
     ): Promise<Common.Typing[]> => {
+            try {
+        const room = await loadRoomAccessInput(context, args.messageRoomId);
+        assertRoomAccess(room, context.userId);
+      } catch (error) {
+        throw toGraphQLError(error);
+      }
       const now = new Date();
       return context.prisma.typing.findMany({
         where: {
@@ -53,7 +72,14 @@ export const typingResolver = {
       }
 
       const { messageRoomId, isTyping } = args.typing;
-      const userId = context.user._id.toString();
+         const userId = context.userId;
+
+      try {
+       const room = await loadRoomAccessInput(context, messageRoomId);
+       assertRoomAccess(room, userId);
+      } catch (error) {
+       throw toGraphQLError(error);      }
+
       const now = new Date();
 
       if (isTyping) {
