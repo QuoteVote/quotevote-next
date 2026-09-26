@@ -1,5 +1,6 @@
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
+import { getReadableMessageRoom } from './utils/messages';
 
 function toMessageRoom(room: {
   id: string;
@@ -121,20 +122,13 @@ export const chatResolver = {
       args: { messageRoomId: string },
       context: GraphQLContext
     ): Promise<Common.Message[]> => {
-      if (!context.userId) return [];
-      const room = await context.prisma.messageRoom.findFirst({
-        where: {
-          id: args.messageRoomId,
-          userIds: { has: context.userId },
-        },
-        select: { id: true },
-      });
+      const room = await getReadableMessageRoom(context.prisma, args.messageRoomId, context.userId);
       if (!room) return [];
       const messages = await context.prisma.message.findMany({
-        where: { messageRoomId: args.messageRoomId },
+        where: { messageRoomId: args.messageRoomId, deleted: false },
         orderBy: { created: 'asc' },
       });
-      return messages.map((message) => toMessage(message));
+      return messages.filter((message) => !message.deleted).map((message) => toMessage(message));
     },
 
     messageReactions: async (
@@ -166,20 +160,13 @@ export const chatResolver = {
       _args: unknown,
       context: GraphQLContext
     ): Promise<Common.Message[]> => {
-      if (!context.userId) return [];
-      const room = await context.prisma.messageRoom.findFirst({
-        where: {
-          id: parent._id,
-          userIds: { has: context.userId },
-        },
-        select: { id: true },
-      });
+      const room = await getReadableMessageRoom(context.prisma, parent._id, context.userId);
       if (!room) return [];
       const messages = await context.prisma.message.findMany({
-        where: { messageRoomId: parent._id },
+        where: { messageRoomId: parent._id, deleted: false },
         orderBy: { created: 'asc' },
       });
-      return messages.map((message) => toMessage(message));
+      return messages.filter((message) => !message.deleted).map((message) => toMessage(message));
     },
   },
 };

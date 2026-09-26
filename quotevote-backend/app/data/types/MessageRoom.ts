@@ -16,6 +16,11 @@ import { TypingIndicatorType } from './TypingIndicator';
 import { PostType } from './Post';
 import { MessageTypeEnum } from './enums';
 
+import User from '../models/User';
+import Message from '../models/Message';
+import Typing from '../models/Typing';
+import Post from '../models/Post';
+
 interface PostDetailsShape {
   _id?: string;
   title?: string;
@@ -59,80 +64,20 @@ export const MessageRoomType: GraphQLObjectType<MessageRoomShape, GraphQLContext
       postId: { type: GraphQLString },
       messages: {
         type: new GraphQLList(MessageType),
-        resolve: async (r, _args, context) => {
-          if (!context.userId) return [];
-          const room = await context.prisma.messageRoom.findFirst({
-            where: {
-              id: r._id,
-              userIds: { has: context.userId },
-            },
-            select: { id: true },
-          });
-          if (!room) return [];
-          if (r.messages) return r.messages;
-          const messages = await context.prisma.message.findMany({
-            where: { messageRoomId: r._id },
-            orderBy: { created: 'asc' },
-          });
-          return messages.map((message) => ({
-            _id: message.id,
-            messageRoomId: message.messageRoomId,
-            userId: message.userId,
-            userName: message.userName ?? undefined,
-            title: message.title ?? undefined,
-            text: message.text,
-            type: (message.type as Common.MessageType | null) ?? undefined,
-            mutation_type: message.mutationType ?? undefined,
-            deleted: message.deleted,
-            readBy: message.readBy,
-            readByDetailed: message.readByDetailed,
-            deliveredTo: message.deliveredTo,
-            created: message.created,
-            updatedAt: message.updatedAt,
-          }));
-        },
+        resolve: (r) => r.messages ?? Message.find({ messageRoomId: r._id }).sort({ created: 1 }).lean(),
       },
       postDetails: { type: PostDetailsType },
       usersData: {
         type: new GraphQLList(UserType),
-        resolve: async (r, _args, context) => {
-          const users = await context.prisma.user.findMany({
-            where: { id: { in: r.users ?? [] } },
-          });
-          return users.map((user) => ({
-            _id: user.id,
-            username: user.username,
-            name: user.name ?? undefined,
-            email: user.email,
-            avatar: user.avatar as Common.User['avatar'],
-            bio: user.bio ?? undefined,
-            contributorBadge: user.contributorBadge,
-            upvotes: user.upvotes,
-            downvotes: user.downvotes,
-            admin: user.isAdmin,
-            accountStatus: user.accountStatus,
-            joined: user.joined,
-          }));
-        },
+        resolve: (r) => User.find({ _id: { $in: r.users ?? [] } }).lean(),
       },
       typingIndicators: {
         type: new GraphQLList(TypingIndicatorType),
-        resolve: async (r, _args, context) => {
-          const typing = await context.prisma.typing.findMany({
-            where: { messageRoomId: r._id },
-          });
-          return typing.map((entry) => ({
-            messageRoomId: entry.messageRoomId,
-            userId: entry.userId,
-            isTyping: entry.isTyping,
-            timestamp: entry.timestamp,
-          }));
-        },
+        resolve: (r) => Typing.find({ messageRoomId: r._id }).lean(),
       },
       post: {
         type: PostType,
-        resolve: (_r, _args, context) =>
-          _r.postId ? context.prisma.post.findUnique({ where: { id: _r.postId } }) : null,
+        resolve: (r) => Post.findById(r.postId).lean(),
       },
     }),
   });

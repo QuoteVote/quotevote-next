@@ -1,6 +1,26 @@
 import type { Message, MessageRoom, PrismaClient } from '@prisma/client';
 
 /**
+ * Return a room when the caller may read its history.
+ * Post-room history is public; direct/user-room history requires membership.
+ */
+export const getReadableMessageRoom = async (
+  prisma: PrismaClient,
+  messageRoomId: string,
+  userId: string | null
+): Promise<Pick<MessageRoom, 'messageType' | 'userIds'> | null> => {
+  const room = await prisma.messageRoom.findUnique({
+    where: { id: messageRoomId },
+    select: { messageType: true, userIds: true },
+  });
+
+  if (!room) return null;
+  if (room.messageType === 'POST') return room;
+  if (userId && room.userIds.includes(userId)) return room;
+  return null;
+};
+
+/**
  * Get all non-deleted messages in a message room.
  */
 export const getMessages = async (
