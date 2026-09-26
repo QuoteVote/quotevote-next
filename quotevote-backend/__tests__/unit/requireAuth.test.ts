@@ -49,9 +49,9 @@ describe('requireAuth', () => {
       expect(requireAuth(query)).toBe(false);
     });
 
-    it('should return true for "messages" query', () => {
+    it('should return false for "messages" query', () => {
       const query = 'query { messages(messageRoomId: "123") { id } }';
-      expect(requireAuth(query)).toBe(true);
+      expect(requireAuth(query)).toBe(false);
     });
 
     it('should return false for "actionReactions" query', () => {

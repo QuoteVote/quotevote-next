@@ -24,6 +24,7 @@ const PUBLIC_QUERIES: readonly string[] = [
   'featuredPosts',
   'post',
   'topPosts',
+  'messages',
   'actionReactions',
   'messageReactions',
   'user',

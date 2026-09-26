@@ -64,16 +64,24 @@ export const chatResolver = {
       args: { messageRoomId: string },
       context: GraphQLContext
     ): Promise<Common.Message[]> => {
-      const userId = requireUserId(context);
       const room = await MessageRoom.findById(args.messageRoomId).lean();
+      const roomAccess = toRoomAccessInput(room);
+
+       if (roomAccess?.messageType !== 'POST' && !context.userId) {
+        throw new GraphQLError('Authentication required', {
+         extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
 
       try {
-        assertRoomAccess(toRoomAccessInput(room), userId);
+        assertRoomAccess(roomAccess, context.userId ?? '');
       } catch (error) {
         throw toGraphQLError(error);
       }
-      
-      const messages = await Message.find({ messageRoomId: args.messageRoomId })
+
+      const messages = await Message.find({ 
+        messageRoomId: args.messageRoomId,
+        deleted: { $ne: true }, })
         .sort({ created: 1 })
         .lean();
       return messages.map((m) => ({
