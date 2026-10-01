@@ -3,9 +3,12 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { UserType } from './User';
 import { MessageType } from './Message';
-
-import User from '../models/User';
-import Message from '../models/Message';
+import {
+  PUBLIC_USER_SELECT,
+  toPublicUser,
+  type PrismaUserRecord,
+} from '~/data/utils/userPrismaMapper';
+import { MESSAGE_RECORD_SELECT, toMessageEntity } from '~/data/resolvers/utils/commentsQuotes';
 
 export const ReactionType: GraphQLObjectType<Common.Reaction, GraphQLContext> =
   new GraphQLObjectType<Common.Reaction, GraphQLContext>({
@@ -20,11 +23,24 @@ export const ReactionType: GraphQLObjectType<Common.Reaction, GraphQLContext> =
       emoji: { type: GraphQLString },
       user: {
         type: UserType,
-        resolve: (rxn) => User.findById(rxn.userId).lean(),
+        resolve: async (rxn, _args, context) => {
+          const user = await context.prisma.user.findUnique({
+            where: { id: rxn.userId },
+            select: PUBLIC_USER_SELECT,
+          });
+          return user ? toPublicUser(user as PrismaUserRecord) : null;
+        },
       },
       message: {
         type: MessageType,
-        resolve: (rxn) => Message.findById(rxn.messageId).lean(),
+        resolve: async (rxn, _args, context) => {
+          if (!rxn.messageId) return null;
+          const message = await context.prisma.message.findUnique({
+            where: { id: rxn.messageId },
+            select: MESSAGE_RECORD_SELECT,
+          });
+          return message ? toMessageEntity(message) : null;
+        },
       },
     }),
   });

@@ -16,10 +16,14 @@ import { QuoteType } from './Quote';
 import { MessageRoomType } from './MessageRoom';
 
 import User from '../models/User';
-import Comment from '../models/Comment';
 import Vote from '../models/Vote';
-import Quote from '../models/Quote';
 import MessageRoom from '../models/MessageRoom';
+import {
+  COMMENT_SELECT,
+  QUOTE_SELECT,
+  toComment,
+  toQuote,
+} from '~/data/resolvers/utils/commentsQuotes';
 
 interface PostShape extends Common.Post {
   creator?: Common.User;
@@ -80,7 +84,15 @@ export const PostType: GraphQLObjectType<PostShape, GraphQLContext> = new GraphQ
     },
     comments: {
       type: new GraphQLList(CommentType),
-      resolve: (p) => p.comments ?? Comment.find({ postId: p._id }).lean(),
+      resolve: async (p, _args, context) => {
+        if (p.comments) return p.comments;
+        const comments = await context.prisma.comment.findMany({
+          where: { postId: p._id, deleted: { not: true } },
+          orderBy: { created: 'asc' },
+          select: COMMENT_SELECT,
+        });
+        return comments.map(toComment);
+      },
     },
     votes: {
       type: new GraphQLList(VoteType),
@@ -88,7 +100,15 @@ export const PostType: GraphQLObjectType<PostShape, GraphQLContext> = new GraphQ
     },
     quotes: {
       type: new GraphQLList(QuoteType),
-      resolve: (p) => p.quotes ?? Quote.find({ postId: p._id }).lean(),
+      resolve: async (p, _args, context) => {
+        if (p.quotes) return p.quotes;
+        const quotes = await context.prisma.quote.findMany({
+          where: { postId: p._id, deleted: { not: true } },
+          orderBy: { created: 'asc' },
+          select: QUOTE_SELECT,
+        });
+        return quotes.map(toQuote);
+      },
     },
     messageRoom: {
       type: MessageRoomType,

@@ -21,11 +21,11 @@ import { RosterType } from './Roster';
 import { TagType } from './Tag';
 
 import Post from '../models/Post';
-import Comment from '../models/Comment';
 import Vote from '../models/Vote';
 import Presence from '../models/Presence';
 import Roster from '../models/Roster';
 import Tag from '../models/Tag';
+import { COMMENT_SELECT, toComment } from '~/data/resolvers/utils/commentsQuotes';
 
 export const UserType: GraphQLObjectType<Common.User, GraphQLContext> = new GraphQLObjectType<
   Common.User,
@@ -87,7 +87,14 @@ export const UserType: GraphQLObjectType<Common.User, GraphQLContext> = new Grap
     },
     comments: {
       type: new GraphQLList(CommentType),
-      resolve: (user) => Comment.find({ userId: user._id }).lean(),
+      resolve: async (user, _args, context) => {
+        const comments = await context.prisma.comment.findMany({
+          where: { userId: user._id, deleted: { not: true } },
+          orderBy: { created: 'desc' },
+          select: COMMENT_SELECT,
+        });
+        return comments.map(toComment);
+      },
     },
     votes: {
       type: new GraphQLList(VoteType),

@@ -2,7 +2,11 @@ import * as bcrypt from 'bcryptjs';
 import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import { normalizeBio } from '../utils/bioValidation';
-import { toPublicUser, type PrismaUserRecord } from '~/data/utils/userPrismaMapper';
+import {
+  PUBLIC_USER_SELECT,
+  toPublicUser,
+  type PrismaUserRecord,
+} from '~/data/utils/userPrismaMapper';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -22,25 +26,6 @@ type UpdateUserInput = {
   bio?: string | null;
   contributorBadge?: boolean | null;
 };
-
-/**
- * Public profile fields — mirrors the Mongoose .select() whitelist.
- * Prisma field names (not the @map names): followingIds, followerIds, etc.
- * The mapper translates to legacy shape (_followingId, _followersId, etc.)
- */
-const PUBLIC_USER_SELECT = {
-  id: true,
-  name: true,
-  username: true,
-  avatar: true,
-  bio: true,
-  contributorBadge: true,
-  upvotes: true,
-  downvotes: true,
-  followingIds: true,
-  followerIds: true,
-  reputation: true,
-} as const;
 
 export const userResolver = {
   Query: {

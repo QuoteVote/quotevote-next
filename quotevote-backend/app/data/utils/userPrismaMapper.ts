@@ -20,7 +20,27 @@
  * @see app/types/common.ts — Common.User target shape
  */
 
+import type { Prisma } from '@prisma/client';
 import type * as Common from '~/types/common';
+
+/**
+ * Public profile fields — mirrors the Mongoose .select() whitelist.
+ * Omits createdAt/updatedAt so legacy user docs without timestamps still load,
+ * and omits password/email so nested GraphQL user fields stay non-sensitive.
+ */
+export const PUBLIC_USER_SELECT = {
+  id: true,
+  name: true,
+  username: true,
+  avatar: true,
+  bio: true,
+  contributorBadge: true,
+  upvotes: true,
+  downvotes: true,
+  followingIds: true,
+  followerIds: true,
+  reputation: true,
+} as const satisfies Prisma.UserSelect;
 
 /**
  * Explicit input shape describing the fields a Prisma User record carries.
@@ -31,7 +51,8 @@ import type * as Common from '~/types/common';
  */
 export interface PrismaUserRecord {
   id: string;
-  email: string;
+  /** Optional when loaded via PUBLIC_USER_SELECT. */
+  email?: string;
   username: string;
   name?: string | null;
   password?: string | null;
@@ -103,7 +124,7 @@ export function toPublicUser(u: PrismaUserRecord): Common.User {
   return {
     _id: u.id,
     name: u.name ?? undefined,
-    email: u.email,
+    email: u.email ?? '',
     username: u.username,
     avatar: (u.avatar as string | Record<string, unknown> | undefined) ?? undefined,
     bio: u.bio ?? undefined,

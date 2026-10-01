@@ -12,8 +12,12 @@ import { ActivityEventTypeEnum } from './enums';
 import User from '../models/User';
 import Post from '../models/Post';
 import Vote from '../models/Vote';
-import Quote from '../models/Quote';
-import Comment from '../models/Comment';
+import {
+  COMMENT_SELECT,
+  QUOTE_SELECT,
+  toComment,
+  toQuote,
+} from '~/data/resolvers/utils/commentsQuotes';
 
 interface ActivityShape extends Common.Activity {
   post?: Common.Post;
@@ -46,12 +50,28 @@ export const ActivityType: GraphQLObjectType<ActivityShape, GraphQLContext> = ne
     quoteId: { type: GraphQLString },
     quote: {
       type: QuoteType,
-      resolve: (act) => act.quote ?? (act.quoteId ? Quote.findById(act.quoteId).lean() : null),
+      resolve: async (act, _args, context) => {
+        if (act.quote) return act.quote;
+        if (!act.quoteId) return null;
+        const quote = await context.prisma.quote.findUnique({
+          where: { id: act.quoteId },
+          select: QUOTE_SELECT,
+        });
+        return quote ? toQuote(quote) : null;
+      },
     },
     commentId: { type: GraphQLString },
     comment: {
       type: CommentType,
-      resolve: (act) => act.comment ?? (act.commentId ? Comment.findById(act.commentId).lean() : null),
+      resolve: async (act, _args, context) => {
+        if (act.comment) return act.comment;
+        if (!act.commentId) return null;
+        const comment = await context.prisma.comment.findUnique({
+          where: { id: act.commentId },
+          select: COMMENT_SELECT,
+        });
+        return comment ? toComment(comment) : null;
+      },
     },
     content: { type: GraphQLString },
     userId: { type: GraphQLString },

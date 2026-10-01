@@ -6,8 +6,7 @@ export const SubscriptionEvents = {
   NOTIFICATION_CREATED: 'NOTIFICATION_CREATED',
 } as const;
 
-export type SubscriptionEvent =
-  typeof SubscriptionEvents[keyof typeof SubscriptionEvents];
+export type SubscriptionEvent = (typeof SubscriptionEvents)[keyof typeof SubscriptionEvents];
 
 // Export individual constants for backward compatibility, ensuring existing imports continue to function.
 
@@ -46,6 +45,8 @@ export const NotificationTypeValues = {
   FOLLOW: 'FOLLOW',
   VOTE: 'VOTE',
   COMMENT: 'COMMENT',
+  /** Legacy addComment wrote this; frontend NotificationLists switches on it. */
+  COMMENTED: 'COMMENTED',
   QUOTE: 'QUOTE',
   MESSAGE: 'MESSAGE',
   MENTION: 'MENTION',
@@ -106,4 +107,3 @@ export const PresenceStatusValues = {
   INVISIBLE: 'invisible',
   OFFLINE: 'offline',
 } as const;
-

@@ -7,6 +7,15 @@ export type { ActivityIds } from './activities';
 export { addNotification } from './notifications';
 export type { AddNotificationInput } from './notifications';
 export { updateTrending } from './posts';
+export {
+  COMMENT_SELECT,
+  QUOTE_SELECT,
+  REACTION_SELECT,
+  toComment,
+  toQuote,
+  toReaction,
+} from './commentsQuotes';
+export type { CommentRecord, QuoteRecord, ReactionRecord } from './commentsQuotes';
 export { scoreUtil, voteTypeUtil, upvotes, downvotes, topUsers } from './scores';
 export {
   calculateUserReputation,

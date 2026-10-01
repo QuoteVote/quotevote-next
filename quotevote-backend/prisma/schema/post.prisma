@@ -82,11 +82,15 @@ model Comment {
 
 model Quote {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String   @db.ObjectId
+  // Legacy Mongo field is `quoter`; Prisma exposes it as userId.
+  userId         String   @map("quoter") @db.ObjectId
+  // Legacy post-author id; optional on older docs that never set it.
+  quoted         String?  @db.ObjectId
   postId         String   @db.ObjectId
   quote          String
   startWordIndex Int?
   endWordIndex   Int?
+  deleted        Boolean  @default(false)
   created        DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

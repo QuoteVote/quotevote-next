@@ -23,6 +23,7 @@ export type NotificationType =
   | 'FOLLOW'
   | 'VOTE'
   | 'COMMENT'
+  | 'COMMENTED'
   | 'QUOTE'
   | 'MESSAGE'
   | 'MENTION'
@@ -30,11 +31,8 @@ export type NotificationType =
   | 'UPVOTED'
   | 'DOWNVOTED';
 
-/**
- * notificationType values that can exist on stored documents. Legacy addComment
- * wrote 'COMMENTED', which is not part of the GraphQL NotificationType enum.
- */
-export type StoredNotificationType = NotificationType | 'COMMENTED';
+/** Alias kept for call sites that distinguish GraphQL vs stored values. */
+export type StoredNotificationType = NotificationType;
 
 export type VoteType = 'up' | 'down';
 
@@ -203,10 +201,13 @@ export interface VoteLog {
 export interface Quote {
   _id: string;
   userId: string;
+  /** Post author id (legacy `quoted` field). */
+  quoted?: string;
   postId: string;
   quote: string;
   startWordIndex?: number;
   endWordIndex?: number;
+  deleted?: boolean;
   created: Date | string;
   updatedAt?: Date | string;
 }
@@ -380,7 +381,12 @@ export interface UserInvite {
   expiresAt?: Date | string;
 }
 
-export type ReportReason = 'spam' | 'harassment' | 'inappropriate_content' | 'fake_account' | 'other';
+export type ReportReason =
+  | 'spam'
+  | 'harassment'
+  | 'inappropriate_content'
+  | 'fake_account'
+  | 'other';
 export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
 export type ReportSeverity = 'low' | 'medium' | 'high' | 'critical';
 
@@ -496,7 +502,10 @@ export interface VoteInput {
 }
 
 export interface QuoteInput {
-  userId: string;
+  /** Authenticated quoter; resolvers prefer context.userId over this field. */
+  quoter: string;
+  /** Post author being quoted (not persisted on Prisma Quote). */
+  quoted: string;
   postId: string;
   quote: string;
   startWordIndex?: number;
