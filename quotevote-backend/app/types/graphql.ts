@@ -168,7 +168,11 @@ export interface QueryResolvers {
 
   // Tag queries
   tag: ResolverFn<Common.Tag | null, unknown, { tagId: string }>;
-  tags: ResolverFn<Common.Tag[], unknown, { limit: number }>;
+  tags: ResolverFn<
+    Common.Tag[],
+    unknown,
+    { limit?: number; created?: string; key?: string; title?: string }
+  >;
 
   // Activity queries
   activities: ResolverFn<Common.PaginatedResult<Common.Activity>, unknown, ActivityQueryArgs>;
