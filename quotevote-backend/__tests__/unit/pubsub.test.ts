@@ -7,40 +7,56 @@ import { pubsub } from '~/data/utils/pubsub';
 /**
  * PubSub Utility Tests.
  */
-describe('pubsub utility (NoOp)', () => {
-  it('should have a publish method that resolves', async () => {
-    await expect(pubsub.publish('TEST_EVENT', { data: 'test' })).resolves.toBeUndefined();
+describe('pubsub utility', () => {
+  it('delivers published events to an async iterator', async () => {
+    const iterator = pubsub.asyncIterableIterator<{ data: string }>('TEST_EVENT');
+
+    await pubsub.publish('TEST_EVENT', { data: 'test' });
+
+    await expect(iterator.next()).resolves.toEqual({
+      done: false,
+      value: { data: 'test' },
+    });
+    await iterator.return?.();
   });
 
-  it('should have a subscribe method that returns 0', async () => {
-    const result = await pubsub.subscribe('TEST_EVENT', () => {});
-    expect(result).toBe(0);
+  it('delivers an event to multiple subscribers', async () => {
+    const first = pubsub.asyncIterableIterator<{ value: number }>('TEST_EVENT');
+    const second = pubsub.asyncIterableIterator<{ value: number }>('TEST_EVENT');
+
+    await pubsub.publish('TEST_EVENT', { value: 1 });
+
+    await expect(first.next()).resolves.toEqual({ done: false, value: { value: 1 } });
+    await expect(second.next()).resolves.toEqual({ done: false, value: { value: 1 } });
+    await first.return?.();
+    await second.return?.();
   });
 
-  it('should have an unsubscribe method that does nothing', () => {
-    expect(() => pubsub.unsubscribe(0)).not.toThrow();
+  it('stops delivery after an iterator is closed', async () => {
+    const iterator = pubsub.asyncIterableIterator<{ value: number }>('TEST_EVENT');
+    await iterator.return?.();
+
+    await pubsub.publish('TEST_EVENT', { value: 1 });
+
+    await expect(iterator.next()).resolves.toEqual({ done: true, value: undefined });
   });
 
-  it('should have an asyncIterableIterator method that returns an empty iterator', async () => {
-    const iterator = pubsub.asyncIterableIterator<string>(['TEST_EVENT']);
-    expect(iterator).toBeDefined();
-    expect(typeof iterator.next).toBe('function');
-    
-    const result = await iterator.next();
-    expect(result.done).toBe(true);
-    expect(result.value).toBeUndefined();
+  it('supports callback subscriptions and explicit unsubscribe', async () => {
+    const callback = jest.fn();
+    const subscriptionId = await pubsub.subscribe('TEST_EVENT', callback);
+
+    await pubsub.publish('TEST_EVENT', { data: 'test' });
+    expect(callback).toHaveBeenCalledWith({ data: 'test' });
+
+    pubsub.unsubscribe(subscriptionId);
+    await pubsub.publish('TEST_EVENT', { data: 'ignored' });
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  it('should handle return and throw on the iterator', async () => {
-    const iterator = pubsub.asyncIterableIterator<string>(['TEST_EVENT']);
-    
-    if (iterator.return) {
-      const returnResult = await iterator.return();
-      expect(returnResult.done).toBe(true);
-    }
-    
-    if (iterator.throw) {
-      await expect(iterator.throw(new Error('test'))).rejects.toThrow('test');
-    }
+  it('supports return and throw on the iterator', async () => {
+    const iterator = pubsub.asyncIterableIterator<string>('TEST_EVENT');
+
+    await expect(iterator.return?.()).resolves.toEqual({ done: true, value: undefined });
+    await expect(iterator.throw?.(new Error('test'))).rejects.toThrow('test');
   });
 });

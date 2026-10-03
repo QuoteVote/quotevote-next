@@ -77,26 +77,3 @@ export const TYPING_SUBSCRIPTION = gql`
     }
   }
 `
-
-/**
- * Roster subscription - subscribes to roster (buddy list) updates
- */
-export const ROSTER_SUBSCRIPTION = gql`
-  subscription roster($userId: String!) {
-    roster(userId: $userId) {
-      _id
-      userId
-      buddyId
-      status
-      initiatedBy
-      created
-      updated
-      buddy {
-        _id
-        name
-        username
-        avatar
-      }
-    }
-  }
-`

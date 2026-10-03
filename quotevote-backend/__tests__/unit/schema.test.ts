@@ -132,8 +132,8 @@ describe('Executable GraphQL Schema', () => {
     expect(fields).toHaveProperty('message');
     expect(fields).toHaveProperty('notification');
     expect(fields).toHaveProperty('presence');
-    expect(fields).toHaveProperty('roster');
     expect(fields).toHaveProperty('typing');
+    expect(fields).not.toHaveProperty('roster');
   });
 
   it('registers custom scalars correctly', () => {
@@ -248,12 +248,12 @@ describe('Executable GraphQL Schema', () => {
           userId: '60d5ec49ad414d7a8d5464a0',
           prisma: {
             typing: { upsert },
-             messageRoom: {
-            findUnique: jest.fn().mockResolvedValue({
-              messageType: 'USER',
-              userIds: ['60d5ec49ad414d7a8d5464a0'],
-            }),
-          },
+            messageRoom: {
+              findUnique: jest.fn().mockResolvedValue({
+                messageType: 'USER',
+                userIds: ['60d5ec49ad414d7a8d5464a0'],
+              }),
+            },
           },
           pubsub: { publish },
         },

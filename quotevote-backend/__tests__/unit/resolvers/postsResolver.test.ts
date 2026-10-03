@@ -216,11 +216,7 @@ describe('postsResolver', () => {
 
     it('throws BAD_USER_INPUT GraphQLError when postId or userId is missing', async () => {
       await expect(
-        postsResolver.Mutation.reportPost(
-          null,
-          { postId: '', userId: validUserId },
-          authContext
-        )
+        postsResolver.Mutation.reportPost(null, { postId: '', userId: validUserId }, authContext)
       ).rejects.toThrow(
         expect.objectContaining({
           message: 'Post ID and User ID are required',
@@ -229,11 +225,7 @@ describe('postsResolver', () => {
       );
 
       await expect(
-        postsResolver.Mutation.reportPost(
-          null,
-          { postId: validPostId, userId: '' },
-          authContext
-        )
+        postsResolver.Mutation.reportPost(null, { postId: validPostId, userId: '' }, authContext)
       ).rejects.toThrow(
         expect.objectContaining({
           message: 'Post ID and User ID are required',

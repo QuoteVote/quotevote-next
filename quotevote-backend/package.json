@@ -49,13 +49,15 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "graphql": "^16.12.0",
+    "graphql-ws": "^6.3.0",
     "helmet": "^8.1.0",
     "jest": "^30.2.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
     "morgan": "^1.10.1",
     "stripe": "^20.4.1",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

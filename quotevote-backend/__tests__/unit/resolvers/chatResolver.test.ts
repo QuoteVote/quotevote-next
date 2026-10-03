@@ -1,4 +1,5 @@
 import { chatResolver } from '~/data/resolvers/chatResolver';
+import { SUBSCRIPTION_EVENTS } from '~/types/graphql';
 
 const date = new Date('2026-01-01T00:00:00.000Z');
 
@@ -9,9 +10,11 @@ const createContext = () => ({
       findUnique: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      update: jest.fn(),
     },
     message: {
       findMany: jest.fn(),
+      create: jest.fn(),
     },
     reaction: {
       findMany: jest.fn(),
@@ -20,6 +23,10 @@ const createContext = () => ({
       findUnique: jest.fn(),
     },
   },
+  pubsub: {
+    publish: jest.fn(),
+  },
+  user: { _id: 'user-1', username: 'alice', name: 'Alice' },
 });
 
 describe('chatResolver Prisma queries', () => {
@@ -270,5 +277,69 @@ describe('chatResolver Prisma queries', () => {
       where: { messageRoomId: 'post-room', deleted: false },
       orderBy: { created: 'asc' },
     });
+  });
+
+  it('persists and publishes an authenticated room message', async () => {
+    const context = createContext();
+    context.prisma.messageRoom.findUnique.mockResolvedValue({
+      messageType: 'USER',
+      userIds: ['user-1', 'user-2'],
+    });
+    context.prisma.message.create.mockResolvedValue({
+      id: 'message-1',
+      messageRoomId: 'room-1',
+      userId: 'user-1',
+      userName: 'alice',
+      title: null,
+      text: 'Hello',
+      type: 'USER',
+      mutationType: null,
+      deleted: false,
+      readBy: [],
+      readByDetailed: [],
+      deliveredTo: [],
+      created: date,
+      updatedAt: date,
+    });
+
+    const result = await chatResolver.Mutation.createMessage(
+      {},
+      { message: { messageRoomId: 'room-1', text: ' Hello ', type: 'USER' } },
+      context as never
+    );
+
+    expect(result).toMatchObject({ _id: 'message-1', text: 'Hello' });
+    expect(context.prisma.message.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          messageRoomId: 'room-1',
+          userId: 'user-1',
+          text: 'Hello',
+        }),
+      })
+    );
+    expect(context.prisma.messageRoom.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'room-1' } })
+    );
+    expect(context.pubsub.publish).toHaveBeenCalledWith(
+      SUBSCRIPTION_EVENTS.MESSAGE_CREATED,
+      expect.objectContaining({ message: expect.objectContaining({ _id: 'message-1' }) })
+    );
+  });
+
+  it('rejects message creation for a non-member', async () => {
+    const context = createContext();
+    context.prisma.messageRoom.findUnique.mockResolvedValue({
+      messageType: 'USER',
+      userIds: ['user-2'],
+    });
+
+    await expect(
+      chatResolver.Mutation.createMessage(
+        {},
+        { message: { messageRoomId: 'room-1', text: 'Hello' } },
+        context as never
+      )
+    ).rejects.toMatchObject({ extensions: { code: 'FORBIDDEN' } });
   });
 });

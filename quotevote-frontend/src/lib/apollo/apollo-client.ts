@@ -1,22 +1,30 @@
-import { ApolloClient, InMemoryCache, HttpLink, from, split, ApolloLink, type ApolloClient as ApolloClientType } from '@apollo/client';
-import { CombinedGraphQLErrors, CombinedProtocolErrors } from '@apollo/client/errors';
-import { setContext } from '@apollo/client/link/context';
-import { ErrorLink } from '@apollo/client/link/error';
-import { getMainDefinition } from '@apollo/client/utilities';
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
-import { createClient } from 'graphql-ws';
-import { map, Observable } from 'rxjs';
-import { toast } from 'sonner';
-import { env } from '@/config/env';
-import { getGraphqlWsServerUrl, areGraphqlSubscriptionsEnabled } from '@/lib/utils/getServerUrl';
-import { serializeObjectIds } from '@/lib/utils/objectIdSerializer';
-import { getToken, removeToken } from '@/lib/auth';
-import { triggerAuthGate } from '@/lib/auth-gate';
-import { useAppStore } from '@/store/useAppStore';
+import {
+  ApolloClient,
+  InMemoryCache,
+  HttpLink,
+  from,
+  split,
+  ApolloLink,
+  type ApolloClient as ApolloClientType,
+} from "@apollo/client";
+import { CombinedGraphQLErrors, CombinedProtocolErrors } from "@apollo/client/errors";
+import { setContext } from "@apollo/client/link/context";
+import { ErrorLink } from "@apollo/client/link/error";
+import { getMainDefinition } from "@apollo/client/utilities";
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { createClient } from "graphql-ws";
+import { map, Observable } from "rxjs";
+import { toast } from "sonner";
+import { env } from "@/config/env";
+import { getGraphqlWsServerUrl, areGraphqlSubscriptionsEnabled } from "@/lib/utils/getServerUrl";
+import { serializeObjectIds } from "@/lib/utils/objectIdSerializer";
+import { getToken, removeToken } from "@/lib/auth";
+import { triggerAuthGate } from "@/lib/auth-gate";
+import { useAppStore } from "@/store/useAppStore";
 
 /**
  * Get the GraphQL endpoint URL from validated environment configuration
- * 
+ *
  * @returns The GraphQL endpoint URL
  * @throws {Error} If required environment variables are not set
  */
@@ -27,15 +35,15 @@ function getGraphqlEndpoint(): string {
 /**
  * Create an HTTP link for GraphQL requests
  * This is SSR-safe as it doesn't reference window or other browser-only APIs
- * 
+ *
  * @returns Configured HttpLink instance
  */
 function createHttpLink(): HttpLink {
   return new HttpLink({
     uri: getGraphqlEndpoint(),
-    credentials: 'include', // Include cookies for authentication
+    credentials: "include", // Include cookies for authentication
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 }
@@ -43,13 +51,13 @@ function createHttpLink(): HttpLink {
 /**
  * Create an auth link that adds authorization headers from localStorage
  * This only runs on the client side (browser)
- * 
+ *
  * @returns Configured auth link
  */
 function createAuthLink() {
   return setContext((_, { headers }) => {
     // Only access localStorage on the client side
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return { headers };
     }
 
@@ -58,7 +66,7 @@ function createAuthLink() {
 
     if (token) {
       // Remove 'Bearer ' prefix if already present to avoid duplication
-      const cleanToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      const cleanToken = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
       authHeaders.authorization = cleanToken;
     }
 
@@ -72,16 +80,16 @@ function createAuthLink() {
  * Create a WebSocket link for GraphQL subscriptions
  * Only available on the client side (browser)
  * Includes enhanced error handling and logging for disconnects/reconnects
- * 
+ *
  * @returns Configured WebSocket link or null if on server
  */
 function createWsLink(): GraphQLWsLink | null {
   // WebSocket links only work in the browser
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
 
-  // Local backend has no subscription transport — avoid noisy reconnect loops.
+  // Local and hosted backends both expose the GraphQL WebSocket transport.
   if (!areGraphqlSubscriptionsEnabled()) {
     return null;
   }
@@ -94,13 +102,13 @@ function createWsLink(): GraphQLWsLink | null {
 
   // Logging utility (only in development)
   const log = (message: string, ...args: unknown[]): void => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.log(`[WebSocket] ${message}`, ...args);
     }
   };
 
   const logError = (message: string, error?: unknown): void => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.error(`[WebSocket Error] ${message}`, error);
     }
   };
@@ -110,8 +118,12 @@ function createWsLink(): GraphQLWsLink | null {
       url: getGraphqlWsServerUrl(),
       connectionParams: () => {
         const token = getToken();
-        const authToken = token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : undefined;
-        log('Connecting with auth token', authToken ? 'present' : 'missing');
+        const authToken = token
+          ? token.startsWith("Bearer ")
+            ? token
+            : `Bearer ${token}`
+          : undefined;
+        log("Connecting with auth token", authToken ? "present" : "missing");
         return {
           authToken,
         };
@@ -126,7 +138,7 @@ function createWsLink(): GraphQLWsLink | null {
             clearTimeout(retryResetTimeout);
           }
           retryResetTimeout = setTimeout(() => {
-            log('Resetting retry count after delay');
+            log("Resetting retry count after delay");
             retryCount = 0;
           }, RETRY_RESET_DELAY);
           return false;
@@ -139,7 +151,7 @@ function createWsLink(): GraphQLWsLink | null {
         }
 
         // Check for specific error codes that shouldn't be retried
-        if (errOrCloseEvent && typeof errOrCloseEvent === 'object' && 'code' in errOrCloseEvent) {
+        if (errOrCloseEvent && typeof errOrCloseEvent === "object" && "code" in errOrCloseEvent) {
           const code = errOrCloseEvent.code as number;
           if (code === 1001 || code === 1002) {
             // 1001: Going Away, 1002: Protocol Error - don't retry
@@ -148,8 +160,8 @@ function createWsLink(): GraphQLWsLink | null {
           }
 
           // Check if connection was cleanly closed (code 1000)
-          if (code === 1000 && 'wasClean' in errOrCloseEvent && errOrCloseEvent.wasClean) {
-            log('Connection cleanly closed - not retrying');
+          if (code === 1000 && "wasClean" in errOrCloseEvent && errOrCloseEvent.wasClean) {
+            log("Connection cleanly closed - not retrying");
             return false;
           }
         }
@@ -160,7 +172,7 @@ function createWsLink(): GraphQLWsLink | null {
       },
       on: {
         opened: () => {
-          log('WebSocket connection opened');
+          log("WebSocket connection opened");
           // Reset retry count on successful connection
           retryCount = 0;
           if (retryResetTimeout) {
@@ -169,15 +181,17 @@ function createWsLink(): GraphQLWsLink | null {
           }
         },
         closed: (event?: unknown) => {
-          if (event && typeof event === 'object' && 'code' in event) {
+          if (event && typeof event === "object" && "code" in event) {
             const closeEvent = event as { code?: number; reason?: string; wasClean?: boolean };
-            log(`WebSocket connection closed: code=${closeEvent.code}, reason=${closeEvent.reason || 'none'}, wasClean=${closeEvent.wasClean}`);
+            log(
+              `WebSocket connection closed: code=${closeEvent.code}, reason=${closeEvent.reason || "none"}, wasClean=${closeEvent.wasClean}`
+            );
           } else {
-            log('WebSocket connection closed');
+            log("WebSocket connection closed");
           }
         },
         error: (error?: unknown) => {
-          logError('WebSocket connection error', error);
+          logError("WebSocket connection error", error);
         },
       },
     })
@@ -186,17 +200,17 @@ function createWsLink(): GraphQLWsLink | null {
 
 /**
  * Create an error link to handle network and GraphQL errors
- * 
+ *
  * @returns Configured error link
  */
 function createErrorLink() {
   return new ErrorLink(({ error, operation }) => {
     if (CombinedGraphQLErrors.is(error)) {
       for (const err of error.errors) {
-        const code = (err.extensions?.code as string) ?? '';
+        const code = (err.extensions?.code as string) ?? "";
 
-        if (code === 'UNAUTHENTICATED') {
-          if (typeof window !== 'undefined') {
+        if (code === "UNAUTHENTICATED") {
+          if (typeof window !== "undefined") {
             removeToken();
             // Keep UI auth state in sync with the cleared token.
             useAppStore.getState().logout();
@@ -206,48 +220,47 @@ function createErrorLink() {
             // Interactive mutations still open the login gate.
             const definition = getMainDefinition(operation.query);
             const isMutation =
-              definition.kind === 'OperationDefinition' &&
-              definition.operation === 'mutation';
+              definition.kind === "OperationDefinition" && definition.operation === "mutation";
             if (isMutation) {
-              triggerAuthGate({ view: 'login' });
+              triggerAuthGate({ view: "login" });
             }
           }
           return;
         }
 
-        if (typeof window !== 'undefined') {
-          const message = err.message || 'An error occurred';
-          if (code !== 'NOT_FOUND') {
+        if (typeof window !== "undefined") {
+          const message = err.message || "An error occurred";
+          if (code !== "NOT_FOUND") {
             toast.error(message);
           }
         }
 
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === "development") {
           console.error(`[GraphQL error] op=${operation.operationName} code=${code}`, err);
         }
       }
     } else if (CombinedProtocolErrors.is(error)) {
       // WebSocket protocol error — don't surface a misleading "network error" toast
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Protocol error]', operation.operationName, error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("[Protocol error]", operation.operationName, error);
       }
     } else if (
       error instanceof Error &&
-      (error.message.includes('fetch') ||
-        error.message.includes('network') ||
-        error.message.includes('Failed to') ||
-        error.message.includes('Network request'))
+      (error.message.includes("fetch") ||
+        error.message.includes("network") ||
+        error.message.includes("Failed to") ||
+        error.message.includes("Network request"))
     ) {
       // Genuine HTTP/network failure
-      if (typeof window !== 'undefined') {
-        toast.error('Network error — please check your connection.');
+      if (typeof window !== "undefined") {
+        toast.error("Network error — please check your connection.");
       }
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Network error]', operation.operationName, error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("[Network error]", operation.operationName, error);
       }
     } else {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Unknown error]', operation.operationName, error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("[Unknown error]", operation.operationName, error);
       }
     }
   });
@@ -255,7 +268,7 @@ function createErrorLink() {
 
 /**
  * Create a link to handle ObjectID serialization
- * 
+ *
  * @returns Configured ObjectID serialization link
  */
 function createObjectIdSerializationLink() {
@@ -266,7 +279,7 @@ function createObjectIdSerializationLink() {
           // Recursively serialize ObjectIDs in the response
           const serialized = serializeObjectIds(response.data);
           // Ensure we return the correct type
-          if (typeof serialized === 'object' && serialized !== null && !Array.isArray(serialized)) {
+          if (typeof serialized === "object" && serialized !== null && !Array.isArray(serialized)) {
             response.data = serialized as Record<string, unknown>;
           }
         }
@@ -282,15 +295,18 @@ function createObjectIdSerializationLink() {
  * (which produces INTERNAL_SERVER_ERROR / validation noise).
  */
 function createNoopSubscriptionLink(): ApolloLink {
-  return new ApolloLink(() => new Observable((subscriber) => {
-    subscriber.complete();
-  }));
+  return new ApolloLink(
+    () =>
+      new Observable((subscriber) => {
+        subscriber.complete();
+      })
+  );
 }
 
 /**
  * Create and configure Apollo Client instance
  * This is SSR-aware and safe to use in both server and client components
- * 
+ *
  * @returns Configured Apollo Client instance
  */
 function createApolloClient(): ApolloClientType {
@@ -312,17 +328,15 @@ function createApolloClient(): ApolloClientType {
 
   // Split link: subscriptions go to WebSocket (or a no-op on localhost),
   // queries/mutations go to HTTP. On the server, only use HTTP.
-  const subscriptionLink =
-    (wsLink as unknown as ApolloLink | null) ?? createNoopSubscriptionLink();
+  const subscriptionLink = (wsLink as unknown as ApolloLink | null) ?? createNoopSubscriptionLink();
 
   const link =
-    typeof window !== 'undefined'
+    typeof window !== "undefined"
       ? (split(
           ({ query }) => {
             const definition = getMainDefinition(query);
             return (
-              definition.kind === 'OperationDefinition' &&
-              definition.operation === 'subscription'
+              definition.kind === "OperationDefinition" && definition.operation === "subscription"
             );
           },
           subscriptionLink,
@@ -335,23 +349,23 @@ function createApolloClient(): ApolloClientType {
     cache: new InMemoryCache({
       typePolicies: {
         Post: {
-          keyFields: ['_id'],
+          keyFields: ["_id"],
         },
         User: {
-          keyFields: ['_id'],
+          keyFields: ["_id"],
         },
       },
     }),
     // Enable SSR mode for Next.js
-    ssrMode: typeof window === 'undefined',
+    ssrMode: typeof window === "undefined",
     // Default options for queries
     defaultOptions: {
       watchQuery: {
-        errorPolicy: 'all',
-        fetchPolicy: 'cache-and-network',
+        errorPolicy: "all",
+        fetchPolicy: "cache-and-network",
       },
       query: {
-        errorPolicy: 'all',
+        errorPolicy: "all",
       },
     },
   });
@@ -366,12 +380,12 @@ let apolloClient: ApolloClientType | null = null;
  * Get or create Apollo Client instance
  * For SSR, creates a new instance per request
  * For client-side, reuses the same instance
- * 
+ *
  * @returns Apollo Client instance
  */
 export function getApolloClient(): ApolloClientType {
   // On the server, create a new client for each request
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return createApolloClient();
   }
 
@@ -385,4 +399,3 @@ export function getApolloClient(): ApolloClientType {
 
 // Export the client creation function for testing or advanced use cases
 export { createApolloClient };
-

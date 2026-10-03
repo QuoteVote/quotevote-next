@@ -558,7 +558,6 @@ type Subscription {
   message(messageRoomId: String!): Message
   notification(userId: String!): Notification
   presence(userId: String): PresenceUpdate
-  roster(userId: String!): Roster
   typing(messageRoomId: String!): TypingIndicator
 }
 

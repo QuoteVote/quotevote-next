@@ -30,6 +30,59 @@ export interface ContextFactoryOptions {
   pubsub?: PubSub;
 }
 
+export interface WsContextFactoryOptions {
+  prisma?: GraphQLContext['prisma'];
+  pubsub?: PubSub;
+}
+
+export async function createWsContext(
+  connectionParams: Record<string, unknown> | undefined,
+  options?: WsContextFactoryOptions
+): Promise<import('./types/graphql').WsGraphQLContext> {
+  const prisma = options?.prisma ?? defaultPrisma;
+  const pubsub = options?.pubsub ?? defaultPubsub;
+  const rawToken =
+    connectionParams?.authToken ?? connectionParams?.authorization ?? connectionParams?.token;
+  const token = typeof rawToken === 'string' ? rawToken.replace(/^Bearer\s+/i, '') : undefined;
+  let user: Common.User | null = null;
+
+  if (token) {
+    try {
+      const decoded = await auth.verifyToken(token);
+      if (decoded && typeof decoded === 'object' && decoded.userId) {
+        const prismaUser = await prisma.user.findUnique({
+          where: { id: decoded.userId },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            name: true,
+            avatar: true,
+            bio: true,
+            isAdmin: true,
+            accountStatus: true,
+            followingIds: true,
+            followerIds: true,
+            reputation: true,
+          },
+        });
+        if (prismaUser) user = toPublicUser(prismaUser as PrismaUserRecord);
+      }
+    } catch {
+      user = null;
+    }
+  }
+
+  return {
+    prisma,
+    user,
+    userId: user?._id?.toString() ?? null,
+    pubsub,
+    requestId: crypto.randomUUID(),
+    connectionParams,
+  };
+}
+
 /**
  * Creates the canonical typed GraphQL context for HTTP operations.
  *

@@ -11,6 +11,7 @@ import { createHttpContext } from './context';
 import { disconnectPrisma } from './lib/prisma';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
 import * as auth from './data/utils/authentication';
+import { createSubscriptionServer } from './subscriptions';
 
 // Load environment variables
 dotenv.config();
@@ -41,6 +42,7 @@ async function startServer() {
   });
 
   await server.start();
+  const subscriptionServer = createSubscriptionServer(httpServer);
 
   // 3. Middleware & Routes Integration
   app.use(
@@ -86,6 +88,7 @@ async function startServer() {
       console.error('Error stopping Apollo Server:', err);
     }
 
+    await subscriptionServer.dispose();
     httpServer.close();
 
     // Disconnect database clients in parallel — allSettled ensures one

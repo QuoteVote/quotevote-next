@@ -12,7 +12,7 @@ function basePost(overrides: Partial<PrismaPostRecord> = {}): PrismaPostRecord {
   return {
     id: '507f1f77bcf86cd799439011',
     userId: '507f1f77bcf86cd799439012',
-    tagId: '507f1f77bcf86cd799439013',
+    groupId: '507f1f77bcf86cd799439013',
     title: 'A title',
     text: 'A body',
     created: new Date('2026-01-01T00:00:00.000Z'),

@@ -1,6 +1,12 @@
+import { GraphQLError } from 'graphql';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
+import { SUBSCRIPTION_EVENTS } from '~/types/graphql';
+import { assertRoomAccess } from '~/data/utils/roomAccess';
+import { toGraphQLError } from '~/data/utils/graphqlErrors';
 import { getReadableMessageRoom } from './utils/messages';
+
+type CreateMessageInput = Pick<Common.MessageInput, 'messageRoomId' | 'text' | 'title' | 'type'>;
 
 function toMessageRoom(room: {
   id: string;
@@ -140,6 +146,66 @@ export const chatResolver = {
         where: { messageId: args.messageId },
       });
       return reactions.map(toReaction);
+    },
+  },
+
+  Mutation: {
+    createMessage: async (
+      _parent: unknown,
+      args: { message: CreateMessageInput },
+      context: GraphQLContext
+    ): Promise<Common.Message> => {
+      if (!context.userId) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const { messageRoomId, text, title, type } = args.message;
+      if (!messageRoomId || !text?.trim()) {
+        throw new GraphQLError('Message room and text are required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      try {
+        const room = await context.prisma.messageRoom.findUnique({
+          where: { id: messageRoomId },
+          select: { messageType: true, userIds: true },
+        });
+        assertRoomAccess(room, context.userId);
+
+        const now = new Date();
+        const createdMessage = await context.prisma.message.create({
+          data: {
+            messageRoomId,
+            userId: context.userId,
+            userName: context.user?.username ?? context.user?.name ?? null,
+            title: title ?? null,
+            text: text.trim(),
+            type: type ?? null,
+            readBy: [],
+            readByDetailed: [],
+            deliveredTo: [],
+            deleted: false,
+            created: now,
+          },
+        });
+
+        await context.prisma.messageRoom.update({
+          where: { id: messageRoomId },
+          data: { lastMessageTime: now, lastActivity: now },
+        });
+
+        const mappedMessage = toMessage(createdMessage);
+        await context.pubsub.publish(SUBSCRIPTION_EVENTS.MESSAGE_CREATED, {
+          message: mappedMessage,
+        });
+        return mappedMessage;
+      } catch (error) {
+        if (error instanceof GraphQLError) throw error;
+        throw toGraphQLError(error);
+      }
     },
   },
 
