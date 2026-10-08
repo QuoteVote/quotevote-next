@@ -1,11 +1,11 @@
-import Vote from '~/data/models/Vote';
-import User from '~/data/models/User';
+import type { Prisma, PrismaClient, VoteType } from '@prisma/client';
 import { logger } from '~/data/utils/logger';
-import type { VoteDocument } from '~/types/mongoose';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+export type ScoresPrisma = Pick<PrismaClient, 'vote' | 'user'>;
 
 interface ScoreFilterArgs {
   user_id?: string;
@@ -23,22 +23,33 @@ interface LeaderboardEntry {
   user: string;
 }
 
+const VOTE_TYPE_SELECT = {
+  type: true,
+} as const;
+
 // ============================================================================
 // Internal Helpers
 // ============================================================================
 
-const buildFilter = (args: ScoreFilterArgs): Record<string, unknown> => {
-  const filter: Record<string, unknown> = {};
-  if (args.user_id) filter.userId = args.user_id;
-  if (args.song_id) filter._songId = args.song_id;
-  if (args.artist_id) filter._artistId = args.artist_id;
-  return filter;
+/**
+ * Build a Prisma vote filter from legacy score args.
+ * `song_id` / `artist_id` have no Prisma Vote columns (and were never on the
+ * Mongoose Vote schema). Callers that pass them get an empty result without querying.
+ */
+const buildWhere = (args: ScoreFilterArgs): Prisma.VoteWhereInput | null => {
+  if (args.song_id || args.artist_id) {
+    return null;
+  }
+
+  const where: Prisma.VoteWhereInput = {};
+  if (args.user_id) where.userId = args.user_id;
+  return where;
 };
 
-const voteReducer = (total: number, vote: VoteDocument): number => {
-  const polar = vote.type === 'up' ? 1 : -1;
-  return total + polar;
-};
+const votePolarity = (type: VoteType): number => (type === 'up' ? 1 : -1);
+
+const sumVoteScore = (votes: Array<{ type: VoteType }>): number =>
+  votes.reduce((total, vote) => total + votePolarity(vote.type), 0);
 
 // ============================================================================
 // Score Utilities
@@ -47,56 +58,90 @@ const voteReducer = (total: number, vote: VoteDocument): number => {
 /**
  * Calculate the net score for votes matching the given filter.
  */
-export const scoreUtil = async (args: ScoreFilterArgs): Promise<number> => {
-  const votes = await Vote.find({ ...buildFilter(args) });
-  return (votes as VoteDocument[]).reduce(voteReducer, 0);
+export const scoreUtil = async (
+  prisma: ScoresPrisma,
+  args: ScoreFilterArgs
+): Promise<number> => {
+  const where = buildWhere(args);
+  if (where === null) return 0;
+
+  const votes = await prisma.vote.findMany({
+    where,
+    select: VOTE_TYPE_SELECT,
+  });
+  return sumVoteScore(votes);
 };
 
 /**
  * Calculate the score for a specific vote type (up or down).
  */
-export const voteTypeUtil = async (args: VoteFilterArgs): Promise<number> => {
-  const votes = await Vote.find({
-    ...buildFilter(args),
-    type: args.vote_type ? 'up' : 'down',
+export const voteTypeUtil = async (
+  prisma: ScoresPrisma,
+  args: VoteFilterArgs
+): Promise<number> => {
+  const where = buildWhere(args);
+  if (where === null) return 0;
+
+  const votes = await prisma.vote.findMany({
+    where: {
+      ...where,
+      type: args.vote_type ? 'up' : 'down',
+    },
+    select: VOTE_TYPE_SELECT,
   });
-  return (votes as VoteDocument[]).reduce(voteReducer, 0);
+  return sumVoteScore(votes);
 };
 
 /**
  * Count upvotes matching the given filter.
  */
-export const upvotes = async (args: ScoreFilterArgs): Promise<number> => {
+export const upvotes = async (prisma: ScoresPrisma, args: ScoreFilterArgs): Promise<number> => {
   logger.debug('Function: upvotes', { args });
-  const votes = await Vote.find({ ...buildFilter(args), type: 'up' });
-  return votes.length;
+  const where = buildWhere(args);
+  if (where === null) return 0;
+
+  return prisma.vote.count({
+    where: { ...where, type: 'up' },
+  });
 };
 
 /**
  * Count downvotes matching the given filter.
  */
-export const downvotes = async (args: ScoreFilterArgs): Promise<number> => {
+export const downvotes = async (
+  prisma: ScoresPrisma,
+  args: ScoreFilterArgs
+): Promise<number> => {
   logger.debug('Function: downvotes', { args });
-  const votes = await Vote.find({ ...buildFilter(args), type: 'down' });
-  return votes.length;
+  const where = buildWhere(args);
+  if (where === null) return 0;
+
+  return prisma.vote.count({
+    where: { ...where, type: 'down' },
+  });
 };
 
 /**
  * Get top users by net vote score.
  */
-export const topUsers = async (limit: number): Promise<LeaderboardEntry[]> => {
-  const users = await User.find({});
-  const userIds = users.map((u) => u._id);
+export const topUsers = async (
+  prisma: ScoresPrisma,
+  limit: number
+): Promise<LeaderboardEntry[]> => {
+  const users = await prisma.user.findMany({
+    select: { id: true, username: true },
+  });
 
   const entries = await Promise.all(
-    userIds.map(async (id) => {
-      const userVotes = await Vote.find({ userId: id });
-      const score = (userVotes as VoteDocument[]).reduce(voteReducer, 0);
-      const user = await User.findById(id);
+    users.map(async (user) => {
+      const userVotes = await prisma.vote.findMany({
+        where: { userId: user.id },
+        select: VOTE_TYPE_SELECT,
+      });
       return {
-        score,
-        userId: id.toString(),
-        user: user?.username ?? 'unknown',
+        score: sumVoteScore(userVotes),
+        userId: user.id,
+        user: user.username ?? 'unknown',
       };
     })
   );

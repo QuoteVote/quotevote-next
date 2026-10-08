@@ -2,8 +2,7 @@
  * Test suite for score resolver utilities.
  */
 
-import Vote from '~/data/models/Vote';
-import User from '~/data/models/User';
+import type { PrismaClient } from '@prisma/client';
 import {
   scoreUtil,
   voteTypeUtil,
@@ -11,15 +10,6 @@ import {
   downvotes,
   topUsers,
 } from '~/data/resolvers/utils/scores';
-
-jest.mock('~/data/models/Vote', () => ({
-  find: jest.fn(),
-}));
-
-jest.mock('~/data/models/User', () => ({
-  find: jest.fn(),
-  findById: jest.fn(),
-}));
 
 jest.mock('~/data/utils/logger', () => ({
   logger: {
@@ -30,6 +20,18 @@ jest.mock('~/data/utils/logger', () => ({
   },
 }));
 
+function mockPrisma() {
+  return {
+    vote: {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+    },
+    user: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  } as unknown as Pick<PrismaClient, 'vote' | 'user'>;
+}
+
 describe('scores resolver utilities', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -37,115 +39,131 @@ describe('scores resolver utilities', () => {
 
   describe('scoreUtil', () => {
     it('should calculate net score from mixed votes', async () => {
-      (Vote.find as jest.Mock).mockResolvedValue([
+      const prisma = mockPrisma();
+      (prisma.vote.findMany as jest.Mock).mockResolvedValue([
         { type: 'up' },
         { type: 'up' },
         { type: 'down' },
       ]);
 
-      const result = await scoreUtil({ user_id: 'user1' });
+      const result = await scoreUtil(prisma, { user_id: 'user1' });
       expect(result).toBe(1); // 2 ups (+2) - 1 down (-1) = 1
+      expect(prisma.vote.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user1' },
+        select: { type: true },
+      });
     });
 
     it('should return 0 for no votes', async () => {
-      (Vote.find as jest.Mock).mockResolvedValue([]);
+      const prisma = mockPrisma();
 
-      const result = await scoreUtil({});
+      const result = await scoreUtil(prisma, {});
       expect(result).toBe(0);
     });
 
-    it('should build filter with song_id and artist_id', async () => {
-      (Vote.find as jest.Mock).mockResolvedValue([]);
+    it('should return 0 without querying for legacy song_id / artist_id filters', async () => {
+      const prisma = mockPrisma();
 
-      await scoreUtil({ song_id: 'song1', artist_id: 'artist1' });
-      expect(Vote.find).toHaveBeenCalledWith({
-        _songId: 'song1',
-        _artistId: 'artist1',
-      });
+      const result = await scoreUtil(prisma, { song_id: 'song1', artist_id: 'artist1' });
+      expect(result).toBe(0);
+      expect(prisma.vote.findMany).not.toHaveBeenCalled();
     });
   });
 
   describe('voteTypeUtil', () => {
     it('should filter by upvotes when vote_type is true', async () => {
-      (Vote.find as jest.Mock).mockResolvedValue([
-        { type: 'up' },
-        { type: 'up' },
-      ]);
+      const prisma = mockPrisma();
+      (prisma.vote.findMany as jest.Mock).mockResolvedValue([{ type: 'up' }, { type: 'up' }]);
 
-      const result = await voteTypeUtil({ vote_type: true });
+      const result = await voteTypeUtil(prisma, { vote_type: true });
       expect(result).toBe(2);
-      expect(Vote.find).toHaveBeenCalledWith(expect.objectContaining({ type: 'up' }));
+      expect(prisma.vote.findMany).toHaveBeenCalledWith({
+        where: { type: 'up' },
+        select: { type: true },
+      });
     });
 
     it('should filter by downvotes when vote_type is false', async () => {
-      (Vote.find as jest.Mock).mockResolvedValue([
-        { type: 'down' },
-      ]);
+      const prisma = mockPrisma();
+      (prisma.vote.findMany as jest.Mock).mockResolvedValue([{ type: 'down' }]);
 
-      const result = await voteTypeUtil({ vote_type: false });
+      const result = await voteTypeUtil(prisma, { vote_type: false });
       expect(result).toBe(-1);
-      expect(Vote.find).toHaveBeenCalledWith(expect.objectContaining({ type: 'down' }));
+      expect(prisma.vote.findMany).toHaveBeenCalledWith({
+        where: { type: 'down' },
+        select: { type: true },
+      });
     });
   });
 
   describe('upvotes', () => {
     it('should count upvotes matching the filter', async () => {
-      (Vote.find as jest.Mock).mockResolvedValue([{ type: 'up' }, { type: 'up' }]);
+      const prisma = mockPrisma();
+      (prisma.vote.count as jest.Mock).mockResolvedValue(2);
 
-      const result = await upvotes({ user_id: 'user1' });
+      const result = await upvotes(prisma, { user_id: 'user1' });
       expect(result).toBe(2);
-      expect(Vote.find).toHaveBeenCalledWith({ userId: 'user1', type: 'up' });
+      expect(prisma.vote.count).toHaveBeenCalledWith({
+        where: { userId: 'user1', type: 'up' },
+      });
     });
 
     it('should return 0 for no upvotes', async () => {
-      (Vote.find as jest.Mock).mockResolvedValue([]);
+      const prisma = mockPrisma();
 
-      const result = await upvotes({});
+      const result = await upvotes(prisma, {});
       expect(result).toBe(0);
+    });
+
+    it('should return 0 without querying for legacy song_id filters', async () => {
+      const prisma = mockPrisma();
+
+      const result = await upvotes(prisma, { song_id: 'song1' });
+      expect(result).toBe(0);
+      expect(prisma.vote.count).not.toHaveBeenCalled();
     });
   });
 
   describe('downvotes', () => {
     it('should count downvotes matching the filter', async () => {
-      (Vote.find as jest.Mock).mockResolvedValue([{ type: 'down' }]);
+      const prisma = mockPrisma();
+      (prisma.vote.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await downvotes({ user_id: 'user1' });
+      const result = await downvotes(prisma, { user_id: 'user1' });
       expect(result).toBe(1);
-      expect(Vote.find).toHaveBeenCalledWith({ userId: 'user1', type: 'down' });
+      expect(prisma.vote.count).toHaveBeenCalledWith({
+        where: { userId: 'user1', type: 'down' },
+      });
     });
   });
 
   describe('topUsers', () => {
     it('should return top users sorted by net vote score', async () => {
-      (User.find as jest.Mock).mockResolvedValue([
-        { _id: 'u1' },
-        { _id: 'u2' },
-        { _id: 'u3' },
+      const prisma = mockPrisma();
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([
+        { id: 'u1', username: 'alice' },
+        { id: 'u2', username: 'bob' },
+        { id: 'u3', username: 'charlie' },
       ]);
 
-      (Vote.find as jest.Mock)
-        .mockResolvedValueOnce([{ type: 'up' }, { type: 'up' }])   // u1: +2
-        .mockResolvedValueOnce([{ type: 'down' }])                  // u2: -1
+      (prisma.vote.findMany as jest.Mock)
+        .mockResolvedValueOnce([{ type: 'up' }, { type: 'up' }]) // u1: +2
+        .mockResolvedValueOnce([{ type: 'down' }]) // u2: -1
         .mockResolvedValueOnce([{ type: 'up' }, { type: 'up' }, { type: 'up' }]); // u3: +3
 
-      (User.findById as jest.Mock)
-        .mockResolvedValueOnce({ username: 'alice' })
-        .mockResolvedValueOnce({ username: 'bob' })
-        .mockResolvedValueOnce({ username: 'charlie' });
-
-      const result = await topUsers(2);
+      const result = await topUsers(prisma, 2);
 
       expect(result).toHaveLength(2);
       expect(result[0].user).toBe('charlie'); // score 3
-      expect(result[1].user).toBe('alice');   // score 2
+      expect(result[1].user).toBe('alice'); // score 2
     });
 
     it('should show "unknown" for users without a username', async () => {
-      (User.find as jest.Mock).mockResolvedValue([{ _id: 'u1' }]);
-      (Vote.find as jest.Mock).mockResolvedValue([]);
-      (User.findById as jest.Mock).mockResolvedValue(null);
+      const prisma = mockPrisma();
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([{ id: 'u1', username: null }]);
+      (prisma.vote.findMany as jest.Mock).mockResolvedValue([]);
 
-      const result = await topUsers(10);
+      const result = await topUsers(prisma, 10);
       expect(result[0].user).toBe('unknown');
     });
   });

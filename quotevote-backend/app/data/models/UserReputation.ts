@@ -33,8 +33,9 @@ UserReputationSchema.statics.findByUserId = function (userId: string) {
 };
 
 UserReputationSchema.statics.calculateScore = async function (userId: string) {
+  const { prisma } = await import('~/lib/prisma');
   const { calculateUserReputation } = await import('~/data/resolvers/utils/reputation');
-  const reputationData = await calculateUserReputation(userId);
+  const reputationData = await calculateUserReputation(prisma, userId);
 
   return this.findOneAndUpdate(
     { userId },

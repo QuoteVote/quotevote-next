@@ -1,14 +1,12 @@
-import User from '~/data/models/User';
-import Post from '~/data/models/Post';
-import Comment from '~/data/models/Comment';
-import Vote from '~/data/models/Vote';
+import type { PrismaClient } from '@prisma/client';
 import { logger } from '~/data/utils/logger';
 import type { ReputationMetrics } from '~/types/common';
-import type { UserDocument, VoteDocument } from '~/types/mongoose';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+export type ReputationPrisma = Pick<PrismaClient, 'user' | 'post' | 'comment' | 'vote'>;
 
 export interface ReputationData {
   _userId: string;
@@ -37,6 +35,50 @@ const WEIGHTS = {
   ACTIVITY: 0.2,
 } as const;
 
+const USER_AGE_SELECT = {
+  id: true,
+  joined: true,
+  createdAt: true,
+} as const;
+
+const VOTE_TYPE_SELECT = {
+  type: true,
+} as const;
+
+// ============================================================================
+// Internal Helpers
+// ============================================================================
+
+const countVotesByType = async (
+  prisma: ReputationPrisma,
+  userId: string
+): Promise<{ upvoteCount: number; downvoteCount: number; totalVotes: number }> => {
+  const votes = await prisma.vote.findMany({
+    where: { userId },
+    select: VOTE_TYPE_SELECT,
+  });
+
+  let upvoteCount = 0;
+  let downvoteCount = 0;
+  for (const vote of votes) {
+    if (vote.type === 'up') upvoteCount += 1;
+    else if (vote.type === 'down') downvoteCount += 1;
+  }
+
+  return { upvoteCount, downvoteCount, totalVotes: votes.length };
+};
+
+const countUserContent = async (
+  prisma: ReputationPrisma,
+  userId: string
+): Promise<{ postCount: number; commentCount: number }> => {
+  const [postCount, commentCount] = await Promise.all([
+    prisma.post.count({ where: { userId } }),
+    prisma.comment.count({ where: { userId } }),
+  ]);
+  return { postCount, commentCount };
+};
+
 // ============================================================================
 // Reputation Calculator
 // ============================================================================
@@ -45,26 +87,32 @@ const WEIGHTS = {
  * Calculate reputation for a specific user.
  * Overall score = inviteNetwork (40%) + conduct (40%) + activity (20%)
  */
-export const calculateUserReputation = async (userId: string): Promise<ReputationData> => {
+export const calculateUserReputation = async (
+  prisma: ReputationPrisma,
+  userId: string
+): Promise<ReputationData> => {
   try {
-    const user = await User.findById(userId);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
     if (!user) {
       throw new Error('User not found');
     }
 
     const inviteNetworkScore = await calculateInviteNetworkScore(userId);
-    const conductScore = await calculateConductScore(userId);
-    const activityScore = await calculateActivityScore(userId);
+    const conductScore = await calculateConductScore(prisma, userId);
+    const activityScore = await calculateActivityScore(prisma, userId);
 
     const overallScore = Math.round(
       inviteNetworkScore * WEIGHTS.INVITE_NETWORK +
-      conductScore * WEIGHTS.CONDUCT +
-      activityScore * WEIGHTS.ACTIVITY
+        conductScore * WEIGHTS.CONDUCT +
+        activityScore * WEIGHTS.ACTIVITY
     );
 
-    const metrics = await getDetailedMetrics(userId);
+    const metrics = await getDetailedMetrics(prisma, userId);
 
-    const reputationData: ReputationData = {
+    return {
       _userId: userId,
       overallScore,
       inviteNetworkScore,
@@ -73,8 +121,6 @@ export const calculateUserReputation = async (userId: string): Promise<Reputatio
       metrics,
       lastCalculated: new Date(),
     };
-
-    return reputationData;
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('Error calculating user reputation', {
@@ -103,24 +149,22 @@ export const calculateInviteNetworkScore = async (_userId: string): Promise<numb
  * Calculate conduct score (0-500).
  * Based on reports received, voting behavior, and content quality.
  */
-export const calculateConductScore = async (userId: string): Promise<number> => {
+export const calculateConductScore = async (
+  prisma: ReputationPrisma,
+  userId: string
+): Promise<number> => {
   let score = 300; // Neutral baseline
 
-  // Voting behavior
-  const userVotes = await Vote.find({ userId });
-  const upvoteCount = (userVotes as VoteDocument[]).filter((v) => v.type === 'up').length;
-  const downvoteCount = (userVotes as VoteDocument[]).filter((v) => v.type === 'down').length;
+  const { upvoteCount, downvoteCount } = await countVotesByType(prisma, userId);
 
   if (upvoteCount > downvoteCount) {
     score += Math.min((upvoteCount - downvoteCount) * 2, 100);
   }
 
-  // Content creation bonus
-  const userPosts = await Post.find({ userId });
-  const userComments = await Comment.find({ userId });
+  const { postCount, commentCount } = await countUserContent(prisma, userId);
 
-  score += Math.min(userPosts.length * 5, 50);
-  score += Math.min(userComments.length * 2, 50);
+  score += Math.min(postCount * 5, 50);
+  score += Math.min(commentCount * 2, 50);
 
   return Math.max(0, Math.min(score, 500));
 };
@@ -129,22 +173,29 @@ export const calculateConductScore = async (userId: string): Promise<number> => 
  * Calculate activity score (0-200).
  * Based on posts, comments, votes, and account age.
  */
-export const calculateActivityScore = async (userId: string): Promise<number> => {
+export const calculateActivityScore = async (
+  prisma: ReputationPrisma,
+  userId: string
+): Promise<number> => {
   let score = 0;
 
-  const user = await User.findById(userId) as UserDocument | null;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: USER_AGE_SELECT,
+  });
   if (!user) return 0;
 
-  const userPosts = await Post.find({ userId });
-  const userComments = await Comment.find({ userId });
-  const userVotes = await Vote.find({ userId });
+  const [{ postCount, commentCount }, { totalVotes }] = await Promise.all([
+    countUserContent(prisma, userId),
+    countVotesByType(prisma, userId),
+  ]);
 
-  score += Math.min(userPosts.length * 10, 100);
-  score += Math.min(userComments.length * 5, 50);
-  score += Math.min(userVotes.length * 2, 50);
+  score += Math.min(postCount * 10, 100);
+  score += Math.min(commentCount * 5, 50);
+  score += Math.min(totalVotes * 2, 50);
 
   // Account age bonus
-  const joined = user.joined ? new Date(user.joined as string | Date) : user.createdAt;
+  const joined = user.joined ?? user.createdAt;
   if (joined) {
     const daysSinceJoined = (Date.now() - new Date(joined).getTime()) / (1000 * 60 * 60 * 24);
     score += Math.min(daysSinceJoined * 0.5, 20);
@@ -156,42 +207,48 @@ export const calculateActivityScore = async (userId: string): Promise<number> =>
 /**
  * Get detailed metrics for a user's reputation dashboard.
  */
-export const getDetailedMetrics = async (userId: string): Promise<ReputationMetrics> => {
-  const userPosts = await Post.find({ userId });
-  const userComments = await Comment.find({ userId });
-  const userVotes = await Vote.find({ userId });
-  const upvoteCount = (userVotes as VoteDocument[]).filter((v) => v.type === 'up').length;
-  const downvoteCount = (userVotes as VoteDocument[]).filter((v) => v.type === 'down').length;
+export const getDetailedMetrics = async (
+  prisma: ReputationPrisma,
+  userId: string
+): Promise<ReputationMetrics> => {
+  const [{ postCount, commentCount }, { upvoteCount, downvoteCount }] = await Promise.all([
+    countUserContent(prisma, userId),
+    countVotesByType(prisma, userId),
+  ]);
 
   return {
-    totalInvitesSent: 0,       // TODO: Implement with UserInviteModel
-    totalInvitesAccepted: 0,   // TODO: Implement with UserInviteModel
-    totalInvitesDeclined: 0,   // TODO: Implement with UserInviteModel
+    totalInvitesSent: 0, // TODO: Implement with UserInviteModel
+    totalInvitesAccepted: 0, // TODO: Implement with UserInviteModel
+    totalInvitesDeclined: 0, // TODO: Implement with UserInviteModel
     averageInviteeReputation: 0, // TODO: Implement with UserReputationModel
-    totalReportsReceived: 0,   // TODO: Implement with UserReportModel
-    totalReportsResolved: 0,   // TODO: Implement with UserReportModel
+    totalReportsReceived: 0, // TODO: Implement with UserReportModel
+    totalReportsResolved: 0, // TODO: Implement with UserReportModel
     totalUpvotes: upvoteCount,
     totalDownvotes: downvoteCount,
-    totalPosts: userPosts.length,
-    totalComments: userComments.length,
+    totalPosts: postCount,
+    totalComments: commentCount,
   };
 };
 
 /**
  * Recalculate reputation for all users (admin function).
  */
-export const recalculateAllReputations = async (): Promise<RecalculationResult[]> => {
-  const users = await User.find({});
+export const recalculateAllReputations = async (
+  prisma: ReputationPrisma
+): Promise<RecalculationResult[]> => {
+  const users = await prisma.user.findMany({
+    select: { id: true },
+  });
   const results: RecalculationResult[] = [];
 
   for (const user of users) {
     try {
-      const reputation = await calculateUserReputation(user._id.toString());
-      results.push({ userId: user._id.toString(), success: true, reputation });
+      const reputation = await calculateUserReputation(prisma, user.id);
+      results.push({ userId: user.id, success: true, reputation });
     } catch (error: unknown) {
-      // calculateUserReputation always wraps non-Error throws into Error (line 79)
+      // calculateUserReputation always wraps non-Error throws into Error
       const err = error as Error;
-      results.push({ userId: user._id.toString(), success: false, error: err.message });
+      results.push({ userId: user.id, success: false, error: err.message });
     }
   }
 
