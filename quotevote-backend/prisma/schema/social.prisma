@@ -43,44 +43,44 @@ model UserInvite {
 }
 
 model UserReport {
-  id             String          @id @default(auto()) @map("_id") @db.ObjectId
-  reportedUserId String          @db.ObjectId
-  reporterId     String          @db.ObjectId
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  reportedUserId String         @map("_reportedUserId") @db.ObjectId
+  reporterId     String         @map("_reporterId") @db.ObjectId
   reason         ReportReason
   description    String?
-  status         ReportStatus    @default(pending)
-  severity       ReportSeverity  @default(medium)
+  status         ReportStatus   @default(pending)
+  severity       ReportSeverity @default(medium)
   adminNotes     String?
-  created        DateTime        @default(now())
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  created        DateTime?      @default(now())
+  createdAt      DateTime?      @default(now())
+  updatedAt      DateTime?      @updatedAt
 
   // Relations
   reportedUser User @relation("ReportedUser", fields: [reportedUserId], references: [id])
   reporter     User @relation("Reporter", fields: [reporterId], references: [id])
 
-  @@index([reportedUserId])
-  @@index([reporterId])
+  @@index([reportedUserId], map: "_reportedUserId_1")
+  @@index([reporterId], map: "_reporterId_1")
   @@index([status])
+  @@index([createdAt(sort: Desc)], map: "createdAt_-1")
   @@map("userreports")
 }
 
 model BotReport {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String   @db.ObjectId
-  reporterId String   @db.ObjectId
-  created    DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @map("_reportedUserId") @db.ObjectId
+  reporterId String    @map("_reporterId") @db.ObjectId
+  created    DateTime? @default(now())
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
 
   // Relations
   reportedUser User @relation("BotReportedUser", fields: [userId], references: [id])
   reporter     User @relation("BotReporter", fields: [reporterId], references: [id])
 
-  @@unique([reporterId, userId])
-  @@index([userId])
-  @@index([reporterId])
-  @@index([createdAt(sort: Desc)])
+  @@unique([reporterId, userId], map: "_reporterId_1__reportedUserId_1")
+  @@index([userId], map: "_reportedUserId_1")
+  @@index([createdAt(sort: Desc)], map: "createdAt_-1")
   @@map("botreports")
 }
 

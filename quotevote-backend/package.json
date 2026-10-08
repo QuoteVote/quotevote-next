@@ -23,6 +23,7 @@
     "prisma:health": "tsx scripts/prisma-health-check.ts",
     "prisma:test": "tsx scripts/check-replica-set.ts && tsx scripts/prisma-crud-test.ts",
     "prisma:parity": "tsx scripts/check-replica-set.ts && tsx scripts/prisma-mongoose-parity.ts",
+    "botreport:repair": "tsx scripts/repair-bot-reports.ts",
     "postinstall": "prisma generate --schema=./prisma/schema"
   },
   "prisma": {

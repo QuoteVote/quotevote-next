@@ -24,6 +24,26 @@ Since Mongoose and Prisma share the same MongoDB collections, Prisma field names
 | `Post.enableVoting` | `enable_voting` | `@map("enable_voting")` |
 | `MessageRoom.userIds` | `users` | `@map("users")` |
 | `Message.mutationType` | `mutation_type` | `@map("mutation_type")` |
+| `BotReport.userId` | `_reportedUserId` | `@map("_reportedUserId")` |
+| `BotReport.reporterId` | `_reporterId` | `@map("_reporterId")` |
+| `UserReport.reportedUserId` | `_reportedUserId` | `@map("_reportedUserId")` |
+| `UserReport.reporterId` | `_reporterId` | `@map("_reporterId")` |
+
+## Legacy Index & Field Compatibility
+
+### BotReport & UserReport
+
+Production MongoDB collections `botreports` and `userreports` store legacy field names `_reporterId` and `_reportedUserId`. In addition, legacy documents only contain `createdAt` (no `created` or `updatedAt`).
+
+1. **Field Mapping**: Prisma models map `reporterId` to `_reporterId` and `userId`/`reportedUserId` to `_reportedUserId` using `@map()`.
+2. **Optional Timestamps**: Fields `created` and `updatedAt` are optional (`DateTime?`) in Prisma so legacy documents lacking them can be read without `P2032` missing-required-value errors.
+3. **Index Preservation**:
+   - `BotReport` preserves the exact legacy index set with legacy MongoDB index names:
+     - `@@unique([reporterId, userId], map: "_reporterId_1__reportedUserId_1")`
+     - `@@index([userId], map: "_reportedUserId_1")`
+     - `@@index([createdAt(sort: Desc)], map: "createdAt_-1")`
+   - The redundant index `@@index([reporterId])` is omitted because `_reporterId_1__reportedUserId_1` already covers lookups by reporter.
+   - This ensures `prisma db push` preserves the legacy unique index and does not remove duplicate protection.
 
 ## Model Naming
 

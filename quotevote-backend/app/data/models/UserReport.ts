@@ -3,8 +3,8 @@ import type { UserReportDocument, UserReportModel } from '~/types/mongoose';
 
 const UserReportSchema = new Schema<UserReportDocument, UserReportModel>(
   {
-    reporterId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    reportedUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    _reporterId: { type: Schema.Types.ObjectId, ref: 'User', required: true, alias: 'reporterId' },
+    _reportedUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true, alias: 'reportedUserId' },
     reason: {
       type: String,
       enum: ['spam', 'harassment', 'inappropriate_content', 'fake_account', 'other'],
@@ -27,10 +27,10 @@ const UserReportSchema = new Schema<UserReportDocument, UserReportModel>(
   { timestamps: true }
 );
 
-// Indexes
-UserReportSchema.index({ reportedUserId: 1, status: 1 });
-UserReportSchema.index({ reporterId: 1 });
-UserReportSchema.index({ createdAt: -1 });
+// Indexes matching legacy naming
+UserReportSchema.index({ _reportedUserId: 1, status: 1 }, { name: '_reportedUserId_1_status_1' });
+UserReportSchema.index({ _reporterId: 1 }, { name: '_reporterId_1' });
+UserReportSchema.index({ createdAt: -1 }, { name: 'createdAt_-1' });
 
 const UserReport =
   (mongoose.models.UserReport as UserReportModel) ||
