@@ -1,8 +1,20 @@
 import { createObjectId, getValidationErrors, closeConnection } from './_helpers';
 import UserReputation from '~/data/models/UserReputation';
+import { prisma } from '~/lib/prisma';
+import { calculateUserReputation } from '~/data/resolvers/utils/reputation';
+
+jest.mock('~/lib/prisma', () => ({
+  prisma: { user: {}, post: {}, comment: {}, vote: {} },
+}));
+
+jest.mock('~/data/resolvers/utils/reputation', () => ({
+  calculateUserReputation: jest.fn(),
+}));
 
 describe('UserReputation Schema', () => {
-  afterAll(async () => { await closeConnection(); });
+  afterAll(async () => {
+    await closeConnection();
+  });
 
   describe('Validation', () => {
     it('should be invalid if required fields are empty', () => {
@@ -45,6 +57,10 @@ describe('UserReputation Schema', () => {
   });
 
   describe('Static Methods', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('findByUserId should use findOne', async () => {
       const userId = createObjectId().toHexString();
       const findOneSpy = jest.spyOn(UserReputation, 'findOne').mockResolvedValue(null);
@@ -77,10 +93,7 @@ describe('UserReputation Schema', () => {
         lastCalculated: new Date(),
       };
 
-      // Mock the dynamic import
-      jest.mock('~/data/resolvers/utils/reputation', () => ({
-        calculateUserReputation: jest.fn().mockResolvedValue(mockReputationData),
-      }), { virtual: true });
+      (calculateUserReputation as jest.Mock).mockResolvedValue(mockReputationData);
 
       const findOneAndUpdateSpy = jest
         .spyOn(UserReputation, 'findOneAndUpdate')
@@ -88,6 +101,7 @@ describe('UserReputation Schema', () => {
 
       await UserReputation.calculateScore(userId);
 
+      expect(calculateUserReputation).toHaveBeenCalledWith(prisma, userId);
       expect(findOneAndUpdateSpy).toHaveBeenCalledWith(
         { userId },
         expect.objectContaining({
