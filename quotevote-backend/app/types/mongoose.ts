@@ -298,8 +298,10 @@ export interface UserInviteModel extends Model<UserInviteDocument> {
 export interface UserReportDocument
   extends BaseDocument, Omit<Common.UserReport, '_id' | 'reportedUserId' | 'reporterId'> {
   _id: Types.ObjectId;
-  reportedUserId: Types.ObjectId;
-  reporterId: Types.ObjectId;
+  _reportedUserId: Types.ObjectId;
+  _reporterId: Types.ObjectId;
+  reportedUserId?: Types.ObjectId;
+  reporterId?: Types.ObjectId;
 }
 
 export type UserReportModel = Model<UserReportDocument>;
@@ -307,8 +309,10 @@ export type UserReportModel = Model<UserReportDocument>;
 export interface BotReportDocument
   extends BaseDocument, Omit<Common.BotReport, '_id' | 'userId' | 'reporterId'> {
   _id: Types.ObjectId;
-  userId: Types.ObjectId;
-  reporterId: Types.ObjectId;
+  _reportedUserId: Types.ObjectId;
+  _reporterId: Types.ObjectId;
+  userId?: Types.ObjectId;
+  reporterId?: Types.ObjectId;
 }
 
 export type BotReportModel = Model<BotReportDocument>;

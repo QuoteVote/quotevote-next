@@ -8,18 +8,31 @@ describe('UserReport Schema', () => {
     it('should be invalid if required fields are empty', () => {
       const doc = new UserReport();
       const errors = getValidationErrors(doc);
-      expect(errors?.reporterId).toBeDefined();
-      expect(errors?.reportedUserId).toBeDefined();
+      expect(errors?._reporterId).toBeDefined();
+      expect(errors?._reportedUserId).toBeDefined();
       expect(errors?.reason).toBeDefined();
     });
 
-    it('should be valid with all required fields', () => {
+    it('should be valid with legacy required fields', () => {
+      const doc = new UserReport({
+        _reporterId: createObjectId(),
+        _reportedUserId: createObjectId(),
+        reason: 'spam',
+      });
+      expect(getValidationErrors(doc)).toBeUndefined();
+    });
+
+    it('should be valid when instantiated with alias field names', () => {
       const doc = new UserReport({
         reporterId: createObjectId(),
         reportedUserId: createObjectId(),
         reason: 'spam',
       });
       expect(getValidationErrors(doc)).toBeUndefined();
+      expect(doc._reporterId).toBeDefined();
+      expect(doc._reportedUserId).toBeDefined();
+      expect(doc.reporterId).toEqual(doc._reporterId);
+      expect(doc.reportedUserId).toEqual(doc._reportedUserId);
     });
 
     it('should set default values', () => {
