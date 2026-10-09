@@ -6,13 +6,13 @@
 import type { Request, Response } from 'express';
 import type { GraphQLContext } from '~/types/graphql';
 import type { AuthenticatedRequest, NextFunction } from '~/types/express';
+import { parse, visit, Kind, type SelectionNode } from 'graphql';
 import { logger } from './logger';
 
 /**
  * List of public GraphQL queries/mutations that don't require authentication
  */
 const PUBLIC_QUERIES: readonly string[] = [
-  'addStripeCustomer',
   'requestUserAccess',
   'checkDuplicateEmail',
   'sendInvestorMail',
@@ -31,8 +31,37 @@ const PUBLIC_QUERIES: readonly string[] = [
   'getUserFollowInfo',
   'tag',
   'tags',
-  // add more public queries/mutations
 ] as const;
+
+/**
+ * Extracts root field names from a parsed GraphQL document.
+ * Handles aliases, fragment spreads, inline fragments, and multiple operations.
+ */
+function extractRootFieldNames(doc: ReturnType<typeof parse>): string[] {
+  const fieldNames: string[] = [];
+
+  visit(doc, {
+    OperationDefinition(node) {
+      for (const selection of node.selectionSet.selections) {
+        collectFieldNames(selection, fieldNames);
+      }
+    },
+  });
+
+  return fieldNames;
+}
+
+function collectFieldNames(selection: SelectionNode, fieldNames: string[]): void {
+  if (selection.kind === Kind.FIELD) {
+    fieldNames.push(selection.name.value);
+  } else if (selection.kind === Kind.FRAGMENT_SPREAD) {
+    // Fragment spreads are resolved by the visitor entering the fragment definition
+  } else if (selection.kind === Kind.INLINE_FRAGMENT) {
+    for (const subSelection of selection.selectionSet.selections) {
+      collectFieldNames(subSelection, fieldNames);
+    }
+  }
+}
 
 /**
  * Checks if a GraphQL query string requires authentication.
@@ -61,35 +90,34 @@ export function requireAuth(context: GraphQLContext): boolean;
 export function requireAuth(
   input: string | null | undefined | Request | GraphQLContext
 ): boolean {
-  // Extract query string from different input types
   let query: string | null | undefined;
 
   if (typeof input === 'string' || input === null || input === undefined) {
     query = input as string | null | undefined;
   } else if ('req' in input && 'res' in input) {
-    // GraphQLContext
     const context = input as GraphQLContext;
     query = (context.req?.body as { query?: string } | undefined)?.query;
   } else {
-    // Request object
     const req = input as Request;
     query = (req.body as { query?: string } | undefined)?.query;
   }
 
-  // If query is null or undefined, require authentication for safety
   if (!query) {
     logger.debug('requireAuth check', { requireAuth: true, query: null });
     return true;
   }
 
-  // Check if query contains any public query names
   let requiresAuth = true;
-  for (const publicQuery of PUBLIC_QUERIES) {
-    const isFound = query.includes(publicQuery);
-    if (isFound) {
-      requiresAuth = false;
-      break;
-    }
+
+  try {
+    const doc = parse(query);
+    const rootFieldNames = extractRootFieldNames(doc);
+
+    requiresAuth = rootFieldNames.some(
+      fieldName => !(PUBLIC_QUERIES as readonly string[]).includes(fieldName)
+    );
+  } catch {
+    requiresAuth = true;
   }
 
   logger.debug('requireAuth check', { requireAuth: requiresAuth, query });
