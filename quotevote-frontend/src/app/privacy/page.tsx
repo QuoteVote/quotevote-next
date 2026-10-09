@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         <p className="leading-7">{"We believe people should understand what information a platform collects, how it is used, who can access it, and what choices are available to them."}</p>
         <p className="leading-7">{"This Privacy Notice explains how personal information is handled when you visit Quote.Vote, create an account, participate in discussions, communicate with other members, or contact us."}</p>
         <p className="leading-7">{"Quote.Vote is operated by "}<strong>{"Quote Dot Vote, PBC"}</strong>{", a Delaware public benefit corporation (\"Quote.Vote,\" \"we,\" \"us,\" or \"our\")."}</p>
-        <p className="leading-7">{"Questions or requests concerning privacy may be directed to "}<strong>{"admin@quote.vote"}</strong>{"."}</p>
+        <p className="leading-7">{"Questions or requests concerning privacy may be directed to "}<strong><a href="mailto:admin@quote.vote" className="underline underline-offset-2">{"admin@quote.vote"}</a></strong>{"."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"1. Information We Collect"}</h2>
         <p className="leading-7">{"We collect and process information necessary to provide, maintain, secure, and improve Quote.Vote."}</p>
         <h3 className="pt-3 text-lg font-semibold">{"Account and profile information"}</h3>
@@ -128,7 +128,7 @@ export default function PrivacyPage() {
         <p className="leading-7">{"When information is no longer reasonably necessary, or when deletion is required under applicable law, we will take appropriate steps to delete or otherwise handle that information."}</p>
         <p className="leading-7">{"Certain records may need to be preserved for security, legal compliance, dispute resolution, or other lawful purposes."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"10. Account Deletion and Your Contributions"}</h2>
-        <p className="leading-7">{"You may request deletion of your account and personal information by contacting "}<strong>{"admin@quote.vote"}</strong>{"."}</p>
+        <p className="leading-7">{"You may request deletion of your account and personal information by contacting "}<strong><a href="mailto:admin@quote.vote" className="underline underline-offset-2">{"admin@quote.vote"}</a></strong>{"."}</p>
         <p className="leading-7">{"Our intended policy is to remove the requesting participant's account information and their own authored public contributions from active service systems after the request has been appropriately verified and processed, subject to applicable legal requirements and technical limitations."}</p>
         <p className="leading-7">{"Deletion may affect posts, quotations, comments, votes, and other contributions associated with an account."}</p>
         <p className="leading-7">{"However, other participants' independently authored contributions may remain where lawful and appropriate, even when they refer to content that has been removed."}</p>
@@ -136,7 +136,7 @@ export default function PrivacyPage() {
         <p className="leading-7">{"Information previously copied or shared outside Quote.Vote may remain beyond our control."}</p>
         <p className="leading-7">{"We will explain material limitations or exceptions when responding to deletion requests."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"11. Your Privacy Rights and Choices"}</h2>
-        <p className="leading-7">{"You may contact "}<strong>{"admin@quote.vote"}</strong>{" to request:"}</p>
+        <p className="leading-7">{"You may contact "}<strong><a href="mailto:admin@quote.vote" className="underline underline-offset-2">{"admin@quote.vote"}</a></strong>{" to request:"}</p>
         <ul className="ml-6 list-disc space-y-2">
         <li className="pl-1">{"Access to personal information associated with your account."}</li>
         <li className="pl-1">{"Correction of inaccurate personal information."}</li>
@@ -154,12 +154,12 @@ export default function PrivacyPage() {
         <p className="leading-7">{"These practices include account authentication, password hashing, and access restrictions."}</p>
         <p className="leading-7">{"We continue to evaluate and improve security as the platform develops."}</p>
         <p className="leading-7">{"No internet-based service can guarantee absolute security."}</p>
-        <p className="leading-7">{"If you believe your account has been compromised or discover a security concern, contact "}<strong>{"admin@quote.vote"}</strong>{"."}</p>
+        <p className="leading-7">{"If you believe your account has been compromised or discover a security concern, contact "}<strong><a href="mailto:admin@quote.vote" className="underline underline-offset-2">{"admin@quote.vote"}</a></strong>{"."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"13. Children's Privacy"}</h2>
         <p className="leading-7">{"Quote.Vote is intended for participants who meet the eligibility requirements described in our "}<a href="/terms" className="underline underline-offset-2">{"Terms of Service"}</a>{"."}</p>
         <p className="leading-7">{"We do not knowingly solicit personal information from children under 13."}</p>
         <p className="leading-7">{"If we learn that information has been collected from a child in circumstances requiring parental consent that was not obtained, we will take appropriate action consistent with applicable law."}</p>
-        <p className="leading-7">{"Parents or guardians may contact "}<strong>{"admin@quote.vote"}</strong>{" with concerns."}</p>
+        <p className="leading-7">{"Parents or guardians may contact "}<strong><a href="mailto:admin@quote.vote" className="underline underline-offset-2">{"admin@quote.vote"}</a></strong>{" with concerns."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"14. International Participation"}</h2>
         <p className="leading-7">{"Quote.Vote may be accessible to people located outside the United States."}</p>
         <p className="leading-7">{"Information may be processed or stored in the United States or other jurisdictions where our service providers maintain infrastructure."}</p>
