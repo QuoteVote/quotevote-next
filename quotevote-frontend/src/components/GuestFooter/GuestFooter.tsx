@@ -74,6 +74,15 @@ export function GuestFooter({ isRequestAccess = false }: GuestFooterProps) {
             <span className="text-gray-400">on Earth</span>
           </div>
 
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            <Link href="/terms" className="text-gray-600 underline underline-offset-2 hover:text-gray-900">
+              Terms of Service
+            </Link>
+            <Link href="/privacy" className="text-gray-600 underline underline-offset-2 hover:text-gray-900">
+              Privacy Notice
+            </Link>
+          </div>
+
           {/* Copyright */}
           <p
             className="text-xs sm:text-sm font-normal text-gray-500"
