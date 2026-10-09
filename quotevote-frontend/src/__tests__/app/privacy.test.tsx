@@ -11,7 +11,7 @@ describe('Privacy Notice', () => {
     expect(screen.getByText(/MongoDB/)).toBeInTheDocument()
     expect(screen.getByText(/SendGrid/)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /admin@quote.vote/i }).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: 'Terms of Service' })).toHaveAttribute('href', '/terms')
+    expect(screen.getAllByRole('link', { name: 'Terms of Service' })[0]).toHaveAttribute('href', '/terms')
     expect(metadata.title).toBe('Privacy Notice - Quote.Vote')
   })
 })
