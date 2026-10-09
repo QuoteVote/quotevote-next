@@ -94,11 +94,6 @@ describe('requireAuth', () => {
       expect(requireAuth(query)).toBe(false);
     });
 
-    it('should return false for "addStripeCustomer" mutation', () => {
-      const query = 'mutation { addStripeCustomer(input: {}) { id } }';
-      expect(requireAuth(query)).toBe(false);
-    });
-
     it('should return false for "sendInvestorMail" mutation', () => {
       const query = 'mutation { sendInvestorMail(email: "test@example.com") }';
       expect(requireAuth(query)).toBe(false);

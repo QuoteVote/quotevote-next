@@ -25,13 +25,6 @@ describe('GraphQL Input Types Validation', () => {
           },
           resolve: (_, { input }) => `Success: ${input.title}`,
         },
-        testStripeInput: {
-          type: GraphQLString,
-          args: {
-            input: { type: domainInputTypes.find(t => t.name === 'StripeCustomerInput')! },
-          },
-          resolve: (_, { input }) => `Success: ${input.email}`,
-        },
       },
     });
 
@@ -71,24 +64,5 @@ describe('GraphQL Input Types Validation', () => {
     const result = await graphql({ schema, source });
     expect(result.errors).toBeUndefined();
     expect(result.data?.testPostInput).toBe('Success: My Title');
-  });
-
-  it('should fail StripeCustomerInput validation if nested required field is missing', async () => {
-    const source = `
-      mutation {
-        testStripeInput(input: {
-          first_name: "John",
-          email: "john@example.com",
-          card: {
-            number: "4242",
-            exp_month: "12"
-            # missing exp_year and cvc
-          }
-        })
-      }
-    `;
-    const result = await graphql({ schema, source });
-    expect(result.errors).toBeDefined();
-    expect(result.errors![0].message).toContain('Field "CardPaymentMethodInput.exp_year" of required type "String!" was not provided.');
   });
 });

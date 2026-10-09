@@ -38,7 +38,6 @@ const config: Config = {
     'app/types/environment.ts',
     'app/data/resolvers/utils/**/*.{ts,tsx}',
     '!app/data/resolvers/utils/index.ts',
-    '!app/data/resolvers/utils/stripe/index.ts',
   ],
   // Strict coverage thresholds for utility modules to maintain professional quality.
   coverageThreshold: {

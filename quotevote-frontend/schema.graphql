@@ -30,13 +30,6 @@ type BuddyWithPresence {
   user: User!
 }
 
-input CardPaymentMethodInput {
-  cvc: String!
-  exp_month: String!
-  exp_year: String!
-  number: String!
-}
-
 type ChatRoom {
   _id: ID!
   created: Date
@@ -208,7 +201,6 @@ type Mutation {
   addMessageReaction(reaction: ReactionInput!): Reaction
   addPost(post: PostInput!): Post
   addQuote(quote: QuoteInput!): Quote
-  addStripeCustomer(stripeCustomer: StripeCustomerInput!): JSON
   addVote(vote: VoteInput!): Vote
   approvePost(postId: String!, remove: Boolean, userId: String!): Post
   blockBuddy(buddyId: String!): Roster
@@ -545,13 +537,6 @@ enum RosterStatus {
 
 input SendUserInviteInput {
   email: String!
-}
-
-input StripeCustomerInput {
-  card: CardPaymentMethodInput!
-  email: String!
-  first_name: String!
-  last_name: String
 }
 
 type Subscription {

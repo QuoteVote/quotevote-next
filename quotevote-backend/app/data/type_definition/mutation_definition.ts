@@ -66,9 +66,6 @@ export const Mutation = `type Mutation {
   " Update messages as read in a room "
   updateMessageReadBy(messageRoomId: String!): [Message]
 
-  " Create a Stripe customer record "
-  addStripeCustomer(stripeCustomer: StripeCustomerInput!): JSON
-
   " Follow or unfollow a user "
   followUser(user_id: String!, action: String!): User
 

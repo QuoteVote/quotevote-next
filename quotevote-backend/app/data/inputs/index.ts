@@ -1,4 +1,3 @@
-import { CardPaymentMethodInput } from './CardPaymentMethodInput';
 import { CommentInput } from './CommentInput';
 import { TagInput } from './TagInput';
 import { MessageInput } from './MessageInput';
@@ -8,11 +7,9 @@ import { QuoteInput } from './QuoteInput';
 import { ReactionInput } from './ReactionInput';
 import { ReportUserInput, SendUserInviteInput } from './ReportUserInput';
 import { RequestUserAccessInput } from './RequestUserAccessInput';
-import { StripeCustomerInput } from './StripeCustomerInput';
 import { UserInput } from './UserInput';
 import { VoteInput } from './VoteInput';
 
-export * from './CardPaymentMethodInput';
 export * from './CommentInput';
 export * from './TagInput';
 export * from './MessageInput';
@@ -22,12 +19,10 @@ export * from './QuoteInput';
 export * from './ReactionInput';
 export * from './ReportUserInput';
 export * from './RequestUserAccessInput';
-export * from './StripeCustomerInput';
 export * from './UserInput';
 export * from './VoteInput';
 
 export const domainInputTypes = [
-  CardPaymentMethodInput,
   CommentInput,
   TagInput,
   MessageInput,
@@ -38,7 +33,6 @@ export const domainInputTypes = [
   ReportUserInput,
   SendUserInviteInput,
   RequestUserAccessInput,
-  StripeCustomerInput,
   UserInput,
   VoteInput,
 ];
