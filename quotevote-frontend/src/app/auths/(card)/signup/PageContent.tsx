@@ -215,6 +215,7 @@ export default function SignupPageContent() {
               type="checkbox"
               {...register('tos')}
               data-testid="signup-tos-checkbox"
+              aria-label="I agree to the Terms of Service"
               aria-invalid={Boolean(errors.tos)}
               aria-describedby={errors.tos ? 'signup-tos-error' : undefined}
               className="mt-1 h-4 w-4 accent-primary"
