@@ -181,7 +181,7 @@ export function SignupForm({ user, token: _token, onSubmit, loading, signupError
                                     >
                                         I agree to the{' '}
                                         <Link
-                                            href="https://github.com/QuoteVote/quotevote-monorepo/blob/main/quote_vote_terms_of_service.md"
+                                            href="/terms"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-primary underline hover:no-underline"
