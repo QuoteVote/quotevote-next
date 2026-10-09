@@ -183,6 +183,15 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
     await passwordInput.fill(validPassword);
     await confirmPasswordInput.fill(validPassword);
 
+    // New accounts must explicitly accept the Terms before an account request is sent.
+    const termsCheckbox = page.getByTestId("signup-tos-checkbox");
+    await expect(termsCheckbox).not.toBeChecked();
+    await expect(page.getByRole("link", { name: "Terms of Service" })).toHaveAttribute("href", "/terms");
+    await submitButton.click();
+    await expect(page.getByRole("alert")).toContainText("You must agree to the Terms of Service");
+    await expect(page).toHaveURL(/\/auths\/signup/);
+    await termsCheckbox.check();
+
     // 5. Submit the signup form
     await submitButton.click();
 

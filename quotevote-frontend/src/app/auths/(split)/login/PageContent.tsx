@@ -255,7 +255,7 @@ export default function LoginPageContent() {
                   <label htmlFor="tos" style={{ fontSize: '0.875rem', cursor: 'pointer', lineHeight: 1.4 }}>
                     I agree to the{' '}
                     <Link
-                      href="https://github.com/QuoteVote/quotevote-monorepo/blob/main/quote_vote_terms_of_service.md"
+                      href="/terms"
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ color: '#00bcd4', textDecoration: 'underline' }}
