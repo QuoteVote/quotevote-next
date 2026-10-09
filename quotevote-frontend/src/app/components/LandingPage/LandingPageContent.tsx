@@ -79,7 +79,7 @@ const socialLinks = [
 
 const baseStats = [
   { value: '100%', label: 'Open Source', icon: Globe },
-  { value: '0', label: 'Ads or trackers', icon: ShieldOff },
+  { value: '0', label: 'Ads', icon: ShieldOff },
   { value: '∞', label: 'Community-driven', icon: Users },
 ] as const;
 
