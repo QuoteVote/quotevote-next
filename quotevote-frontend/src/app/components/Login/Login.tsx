@@ -12,7 +12,7 @@ import type { LoginProps } from '@/types/login';
 
 const trustPoints = [
   { icon: Globe,    label: 'Open source & non-profit' },
-  { icon: ShieldOff, label: 'No ads, no algorithms, no tracking' },
+  { icon: ShieldOff, label: 'No ads, no algorithms' },
   { icon: Users,    label: 'Community-driven discourse' },
 ];
 
