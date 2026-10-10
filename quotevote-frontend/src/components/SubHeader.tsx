@@ -1,4 +1,4 @@
-import type { SubHeaderProps } from '@/types/components';
+import type { SubHeaderProps } from "@/types/components";
 
 export function SubHeader({
   headerName,
@@ -17,4 +17,3 @@ export function SubHeader({
     </div>
   );
 }
-

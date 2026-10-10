@@ -1,19 +1,19 @@
-import { getLoginToken, postLogin } from '../../src/lib/auth/restLogin';
+import { getLoginToken, postLogin } from "../../src/lib/auth/restLogin";
 
-const DEFAULT_API_URL = 'http://localhost:4000';
+const DEFAULT_API_URL = "http://localhost:4000";
 
 export function getApiUrl(): string {
   const graphqlEndpoint =
     process.env.E2E_GRAPHQL_ENDPOINT ??
     process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ??
-    'https://api.quote.vote/graphql';
+    "https://api.quote.vote/graphql";
 
   if (process.env.E2E_API_URL) {
-    return process.env.E2E_API_URL.replace(/\/$/, '');
+    return process.env.E2E_API_URL.replace(/\/$/, "");
   }
 
-  if (graphqlEndpoint.includes('/graphql')) {
-    return graphqlEndpoint.replace(/\/graphql\/?$/, '');
+  if (graphqlEndpoint.includes("/graphql")) {
+    return graphqlEndpoint.replace(/\/graphql\/?$/, "");
   }
 
   return DEFAULT_API_URL;
@@ -30,10 +30,7 @@ export interface AuthSession {
   };
 }
 
-export async function loginViaApi(
-  username: string,
-  password: string
-): Promise<AuthSession> {
+export async function loginViaApi(username: string, password: string): Promise<AuthSession> {
   const trimmedUsername = username.trim();
   const { response, data } = await postLogin(getApiUrl(), trimmedUsername, password);
 
@@ -43,10 +40,10 @@ export async function loginViaApi(
 
   const token = getLoginToken(data);
   if (!token || !data.user?._id) {
-    throw new Error('Login response missing token or user');
+    throw new Error("Login response missing token or user");
   }
 
-  return { token, user: data.user as AuthSession['user'] };
+  return { token, user: data.user as AuthSession["user"] };
 }
 
 export async function registerAuthorUser(input: {
@@ -56,12 +53,12 @@ export async function registerAuthorUser(input: {
   email: string;
 }): Promise<void> {
   const baseUrl = getApiUrl();
-  const paths = ['/auth/register', '/register'];
+  const paths = ["/auth/register", "/register"];
 
   for (const path of paths) {
     const response = await fetch(`${baseUrl}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
 
@@ -69,8 +66,8 @@ export async function registerAuthorUser(input: {
       return;
     }
 
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.includes('application/json')) {
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
       continue;
     }
 
@@ -84,14 +81,14 @@ export async function registerAuthorUser(input: {
     );
   }
 
-  throw new Error('Registration failed: no register endpoint responded with JSON');
+  throw new Error("Registration failed: no register endpoint responded with JSON");
 }
 
 export async function deletePostViaApi(postId: string, token: string): Promise<void> {
   const response = await fetch(`${getApiUrl()}/graphql`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({

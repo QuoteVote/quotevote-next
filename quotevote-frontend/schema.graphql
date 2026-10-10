@@ -93,7 +93,9 @@ type Creator {
 
 scalar Date
 
-"""Returns a Date of format of "YYYY-MM-DD HH:mm:ss" in String"""
+"""
+Returns a Date of format of "YYYY-MM-DD HH:mm:ss" in String
+"""
 scalar DateTime
 
 type DeletedComment {
@@ -169,19 +171,29 @@ type Message {
 }
 
 input MessageInput {
-  """ Either user._id or post._id """
+  """
+  Either user._id or post._id
+  """
   componentId: String
 
-  """ Message Room ID"""
+  """
+  Message Room ID
+  """
   messageRoomId: String
 
-  """ Content of the chat message """
+  """
+  Content of the chat message
+  """
   text: String!
 
-  """ Title of the chat message """
+  """
+  Title of the chat message
+  """
   title: String!
 
-  """ Type of the message USER or POST """
+  """
+  Type of the message USER or POST
+  """
   type: String
 }
 
@@ -356,97 +368,203 @@ type PresenceUpdate {
 }
 
 type Query {
-  """ This will query the action Reactions"""
+  """
+  This will query the action Reactions
+  """
   actionReactions(actionId: String!): [Reaction]
 
-  """ This will give the public news feed """
-  activities(activityEvent: JSON, endDateRange: String, limit: Int, offset: Int, searchKey: String, startDateRange: String, user_id: String): Activities
+  """
+  This will give the public news feed
+  """
+  activities(
+    activityEvent: JSON
+    endDateRange: String
+    limit: Int
+    offset: Int
+    searchKey: String
+    startDateRange: String
+    user_id: String
+  ): Activities
 
-  """ This will query duplicate email"""
+  """
+  This will query duplicate email
+  """
   checkDuplicateEmail(email: String!): JSON
 
-  """ Posts selected for homepage carousel """
-  featuredPosts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, groupId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
+  """
+  Posts selected for homepage carousel
+  """
+  featuredPosts(
+    approved: Boolean
+    deleted: Boolean
+    endDateRange: String
+    friendsOnly: Boolean
+    groupId: String
+    interactions: Boolean
+    limit: Int
+    offset: Int
+    searchKey: String
+    sortOrder: String
+    startDateRange: String
+    userId: String
+  ): Posts
 
-  """ Get users reported as bots (admin only) """
+  """
+  Get users reported as bots (admin only)
+  """
   getBotReportedUsers(limit: Int, sortBy: String): [User]
 
-  """ Get buddy list with presence information"""
+  """
+  Get buddy list with presence information
+  """
   getBuddyList: [BuddyWithPresence]
 
-  """ Get user presence by user ID"""
+  """
+  Get user presence by user ID
+  """
   getPresence(userId: String!): Presence
 
-  """ Get roster entries"""
+  """
+  Get roster entries
+  """
   getRoster: [Roster]
 
-  """ Get typing users in a message room"""
+  """
+  Get typing users in a message room
+  """
   getTypingUsers(messageRoomId: String!): [TypingIndicator]
 
-  """ This will query the user follow info """
+  """
+  This will query the user follow info
+  """
   getUserFollowInfo(filter: String, username: String): JSON
 
-  """ Get user invites """
+  """
+  Get user invites
+  """
   getUserInvites(status: String, userId: String!): [UserInvite]
 
-  """ Get user reports """
+  """
+  Get user reports
+  """
   getUserReports(status: String, userId: String!): [UserReport]
 
-  """ Get user reputation information """
+  """
+  Get user reputation information
+  """
   getUserReputation(userId: String!): UserReputation
 
-  """ Get a specific group by ID """
+  """
+  Get a specific group by ID
+  """
   group(groupId: String!): Group
 
-  """ Get all groups """
+  """
+  Get all groups
+  """
   groups(created: String, key: String, limit: Int, title: String): [Group]
 
-  """ This will query the message Reactions"""
+  """
+  This will query the message Reactions
+  """
   messageReactions(messageId: String!): [Reaction]
 
-  """ This will query the user message room"""
+  """
+  This will query the user message room
+  """
   messageRoom(otherUserId: String!): MessageRoom
 
-  """ This will query the list user message rooms"""
+  """
+  This will query the list user message rooms
+  """
   messageRooms: [MessageRoom]
 
-  """ This will query the user messages by Message Room ID"""
+  """
+  This will query the user messages by Message Room ID
+  """
   messages(messageRoomId: String!): [Message]
 
-  """ This will query user notifications"""
+  """
+  This will query user notifications
+  """
   notifications: [Notification]
 
-  """ This will query a post """
+  """
+  This will query a post
+  """
   post(postId: String!): Post
 
-  """ This will query a post message room"""
+  """
+  This will query a post message room
+  """
   postMessageRoom(postId: String!): MessageRoom
 
-  """ This will query the list of posts """
-  posts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, groupId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
+  """
+  This will query the list of posts
+  """
+  posts(
+    approved: Boolean
+    deleted: Boolean
+    endDateRange: String
+    friendsOnly: Boolean
+    groupId: String
+    interactions: Boolean
+    limit: Int
+    offset: Int
+    searchKey: String
+    sortOrder: String
+    startDateRange: String
+    userId: String
+  ): Posts
 
-  """ Search content by text """
+  """
+  Search content by text
+  """
   searchContent(text: String!): [Content]
 
-  """ Search creators by name """
+  """
+  Search creators by name
+  """
   searchCreator(text: String!): [Creator]
 
-  """ This will search for users by username or name """
+  """
+  This will search for users by username or name
+  """
   searchUser(queryName: String!): [User]
 
-  """ This will query the top posts (alias for posts) """
-  topPosts(endDateRange: String, friendsOnly: Boolean, interactions: Boolean, limit: Int!, offset: Int!, searchKey: String!, sortOrder: String, startDateRange: String, userId: String): Posts
+  """
+  This will query the top posts (alias for posts)
+  """
+  topPosts(
+    endDateRange: String
+    friendsOnly: Boolean
+    interactions: Boolean
+    limit: Int!
+    offset: Int!
+    searchKey: String!
+    sortOrder: String
+    startDateRange: String
+    userId: String
+  ): Posts
 
-  """ This will query the user """
+  """
+  This will query the user
+  """
   user(creatorId: String, user_id: String, username: String): User
 
-  """ This will query the list of user invite requests """
+  """
+  This will query the list of user invite requests
+  """
   userInviteRequests: [UserInvite]
 
-  """ This will query the list of available users (Admin only) """
+  """
+  This will query the list of available users (Admin only)
+  """
   users(limit: Int, offset: Int): [User]
 
-  """ This will query user info if token is valid"""
+  """
+  This will query user info if token is valid
+  """
   verifyUserPasswordResetToken(token: String!): JSON
 }
 

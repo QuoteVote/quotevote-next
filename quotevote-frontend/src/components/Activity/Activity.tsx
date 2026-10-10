@@ -1,32 +1,32 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useAppStore } from '@/store'
-import { SubHeader } from '@/components/SubHeader'
-import { PaginatedActivityList } from './PaginatedActivityList'
-import ErrorBoundary from '@/components/ErrorBoundary'
-import type { ActivityProps, ActivityEventType, DateRangeFilter } from '@/types/activity'
+import { useEffect, useState } from "react";
+import { useAppStore } from "@/store";
+import { SubHeader } from "@/components/SubHeader";
+import { PaginatedActivityList } from "./PaginatedActivityList";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import type { ActivityProps, ActivityEventType, DateRangeFilter } from "@/types/activity";
 
-const DEFAULT_CONDITIONS: ActivityEventType[] = ['POSTED']
+const DEFAULT_CONDITIONS: ActivityEventType[] = ["POSTED"];
 
-export function Activity({ showSubHeader = true, userId = '' }: ActivityProps) {
-  const setFilterValue = useAppStore((state) => state.setFilterValue)
-  const [selectedEvent] = useState<ActivityEventType[]>(DEFAULT_CONDITIONS)
+export function Activity({ showSubHeader = true, userId = "" }: ActivityProps) {
+  const setFilterValue = useAppStore((state) => state.setFilterValue);
+  const [selectedEvent] = useState<ActivityEventType[]>(DEFAULT_CONDITIONS);
   const [dateRangeFilter] = useState<DateRangeFilter>({
-    startDate: '',
-    endDate: '',
-  })
+    startDate: "",
+    endDate: "",
+  });
 
   // Initialize filter value on mount
   useEffect(() => {
     if (setFilterValue) {
-      setFilterValue(DEFAULT_CONDITIONS)
+      setFilterValue(DEFAULT_CONDITIONS);
     }
-  }, [setFilterValue])
+  }, [setFilterValue]);
 
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -58,6 +58,5 @@ export function Activity({ showSubHeader = true, userId = '' }: ActivityProps) {
         </div>
       </div>
     </ErrorBoundary>
-  )
+  );
 }
-

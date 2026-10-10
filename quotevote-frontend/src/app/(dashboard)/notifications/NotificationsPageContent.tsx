@@ -1,23 +1,25 @@
-'use client';
+"use client";
 
-import { useQuery, useSubscription } from '@apollo/client/react';
-import { Bell } from 'lucide-react';
-import { GET_NOTIFICATIONS } from '@/graphql/queries';
-import { NEW_NOTIFICATION_SUBSCRIPTION } from '@/graphql/subscriptions';
-import { useAppStore } from '@/store';
-import { NotificationLists } from '@/components/Notifications/NotificationLists';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { Notification } from '@/types/notification';
+import { useQuery, useSubscription } from "@apollo/client/react";
+import { Bell } from "lucide-react";
+import { GET_NOTIFICATIONS } from "@/graphql/queries";
+import { NEW_NOTIFICATION_SUBSCRIPTION } from "@/graphql/subscriptions";
+import { useAppStore } from "@/store";
+import { NotificationLists } from "@/components/Notifications/NotificationLists";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Notification } from "@/types/notification";
 
 export function NotificationsPageContent() {
-  const userId = useAppStore((state) => (state.user.data._id || state.user.data.id) as string | undefined);
+  const userId = useAppStore(
+    (state) => (state.user.data._id || state.user.data.id) as string | undefined
+  );
 
   const { loading, data, refetch, error } = useQuery(GET_NOTIFICATIONS, {
     skip: !userId,
   });
 
   useSubscription(NEW_NOTIFICATION_SUBSCRIPTION, {
-    variables: { userId: userId || '' },
+    variables: { userId: userId || "" },
     skip: !userId,
     onData: async () => {
       await refetch();
@@ -38,7 +40,7 @@ export function NotificationsPageContent() {
         </div>
         {!loading && notifications.length > 0 && (
           <span className="text-sm text-muted-foreground">
-            {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
+            {notifications.length} notification{notifications.length !== 1 ? "s" : ""}
           </span>
         )}
       </div>

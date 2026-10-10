@@ -21,7 +21,7 @@ const LoginOptionsModal = ({ email, isOpen, onClose }: LoginOptionsModalProps) =
           e.preventDefault();
         }}
       >
-       <DialogHeader>
+        <DialogHeader>
           <DialogTitle data-testid="registered-user-message">We recognize this email.</DialogTitle>
           <DialogDescription>Choose how you&apos;d like to log in</DialogDescription>
         </DialogHeader>

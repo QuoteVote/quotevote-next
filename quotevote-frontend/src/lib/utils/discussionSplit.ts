@@ -96,7 +96,7 @@ function canScrollOverflowY(element: HTMLElement): boolean {
 
 export function getOverflowParent(
   element: HTMLElement,
-  boundary?: HTMLElement | null,
+  boundary?: HTMLElement | null
 ): HTMLElement | null {
   let current: HTMLElement | null = element.parentElement;
   while (current && current !== document.body) {
@@ -114,7 +114,7 @@ export function getOverflowParent(
 export function scrollChildIntoContainer(
   container: HTMLElement | null,
   child: HTMLElement | null,
-  block: "start" | "center" | "nearest" = "center",
+  block: "start" | "center" | "nearest" = "center"
 ): void {
   if (!container || !child || !container.contains(child)) return;
 
@@ -123,8 +123,7 @@ export function scrollChildIntoContainer(
   let delta = 0;
 
   if (block === "center") {
-    delta =
-      childRect.top - containerRect.top - container.clientHeight / 2 + childRect.height / 2;
+    delta = childRect.top - containerRect.top - container.clientHeight / 2 + childRect.height / 2;
   } else if (block === "start") {
     delta = childRect.top - containerRect.top - 8;
   } else if (childRect.top < containerRect.top) {
@@ -157,7 +156,7 @@ export function scrollLinkedPassageIntoView(): void {
 
 export function scrollActionIntoDiscussion(
   actionId: string,
-  block: "center" | "nearest" = "center",
+  block: "center" | "nearest" = "center"
 ): void {
   const child = document.getElementById(actionId);
   if (!child) return;

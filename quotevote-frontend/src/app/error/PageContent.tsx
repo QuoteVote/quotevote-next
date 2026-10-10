@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
 /**
  * Error Page Content
- * 
+ *
  * Displays error messages for 404 and expired/invalid links.
  * Migrated from ErrorPage.jsx to Next.js App Router with Tailwind and shadcn/ui.
  */
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, FileQuestion } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, FileQuestion } from "lucide-react";
+import Link from "next/link";
 
 export default function ErrorPageContent(): React.ReactNode {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Check if user came from signup page (expired/invalid token)
-  const fromSignup = searchParams.get('from') === 'signup';
+  const fromSignup = searchParams.get("from") === "signup";
 
   const handleBack = () => {
-    router.push('/');
+    router.push("/");
   };
 
   return (
@@ -40,22 +40,18 @@ export default function ErrorPageContent(): React.ReactNode {
             <>
               <FileQuestion className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h1 className="text-4xl font-bold text-foreground">404</h1>
-              <h2 className="text-2xl font-semibold text-muted-foreground">
-                Page not found
-              </h2>
+              <h2 className="text-2xl font-semibold text-muted-foreground">Page not found</h2>
             </>
           )}
         </div>
 
-        <Alert variant={fromSignup ? 'warning' : 'default'} className="text-left">
+        <Alert variant={fromSignup ? "warning" : "default"} className="text-left">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>
-            {fromSignup ? 'Invitation Link Expired' : 'Page Not Found'}
-          </AlertTitle>
+          <AlertTitle>{fromSignup ? "Invitation Link Expired" : "Page Not Found"}</AlertTitle>
           <AlertDescription>
             {fromSignup
-              ? 'Your invitation link has expired or is invalid. Invitation links are valid for 24 hours. Please request a new invitation or contact support.'
-              : 'Oooops! Looks like you got lost.'}
+              ? "Your invitation link has expired or is invalid. Invitation links are valid for 24 hours. Please request a new invitation or contact support."
+              : "Oooops! Looks like you got lost."}
           </AlertDescription>
         </Alert>
 

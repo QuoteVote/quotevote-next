@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useMutation } from '@apollo/client/react';
-import { Loader2 } from 'lucide-react';
-import type { SendInviteDialogProps } from '@/types/profile';
-import { SEND_USER_INVITE } from '@/graphql/mutations';
+import { useState } from "react";
+import { useMutation } from "@apollo/client/react";
+import { Loader2 } from "lucide-react";
+import type { SendInviteDialogProps } from "@/types/profile";
+import { SEND_USER_INVITE } from "@/graphql/mutations";
 import {
   Dialog,
   DialogContent,
@@ -12,20 +12,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export function SendInviteDialog({
-  open,
-  onClose,
-  onSuccess,
-}: SendInviteDialogProps) {
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+export function SendInviteDialog({ open, onClose, onSuccess }: SendInviteDialogProps) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   // `sendUserInvite` resolves to a JSON scalar, so the payload is untyped on the
   // wire — narrow it here and treat a missing body as a failure.
@@ -33,37 +29,37 @@ export function SendInviteDialog({
     sendUserInvite: { code?: string; message?: string } | null;
   }>(SEND_USER_INVITE, {
     onCompleted: (data) => {
-      if (data.sendUserInvite?.code === 'SUCCESS') {
-        setSuccess('Invitation sent successfully!');
-        setEmail('');
+      if (data.sendUserInvite?.code === "SUCCESS") {
+        setSuccess("Invitation sent successfully!");
+        setEmail("");
         if (onSuccess) onSuccess();
         setTimeout(() => {
           onClose();
-          setSuccess('');
+          setSuccess("");
         }, 2000);
       } else {
-        setError(data.sendUserInvite?.message || 'Failed to send invitation');
+        setError(data.sendUserInvite?.message || "Failed to send invitation");
       }
     },
     onError: (err: Error) => {
-      setError(err.message || 'Failed to send invitation');
+      setError(err.message || "Failed to send invitation");
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     if (!email) {
-      setError('Please enter an email address');
+      setError("Please enter an email address");
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return;
     }
 
@@ -77,9 +73,9 @@ export function SendInviteDialog({
   };
 
   const handleClose = () => {
-    setEmail('');
-    setError('');
-    setSuccess('');
+    setEmail("");
+    setError("");
+    setSuccess("");
     onClose();
   };
 
@@ -89,8 +85,8 @@ export function SendInviteDialog({
         <DialogHeader>
           <DialogTitle>Send User Invitation</DialogTitle>
           <DialogDescription>
-            Invite someone to join Quote.Vote. Your reputation score may be
-            affected by the quality of users you invite.
+            Invite someone to join Quote.Vote. Your reputation score may be affected by the quality
+            of users you invite.
           </DialogDescription>
         </DialogHeader>
 
@@ -103,9 +99,7 @@ export function SendInviteDialog({
 
           {success && (
             <Alert className="mb-4 border-green-500 bg-green-50">
-              <AlertDescription className="text-green-800">
-                {success}
-              </AlertDescription>
+              <AlertDescription className="text-green-800">{success}</AlertDescription>
             </Alert>
           )}
 
@@ -125,25 +119,19 @@ export function SendInviteDialog({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              <strong>Note:</strong> Inviting high-quality users who contribute
-              positively to the platform will improve your reputation score.
-              Conversely, inviting users who receive reports or behave poorly may
-              negatively impact your reputation.
+              <strong>Note:</strong> Inviting high-quality users who contribute positively to the
+              platform will improve your reputation score. Conversely, inviting users who receive
+              reports or behave poorly may negatively impact your reputation.
             </p>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={loading}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !email}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Sending...' : 'Send Invitation'}
+              {loading ? "Sending..." : "Send Invitation"}
             </Button>
           </DialogFooter>
         </form>
@@ -151,4 +139,3 @@ export function SendInviteDialog({
     </Dialog>
   );
 }
-

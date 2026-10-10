@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Terms of Service - Quote.Vote',
+  title: "Terms of Service - Quote.Vote",
 };
 
 export default function TermsPage() {

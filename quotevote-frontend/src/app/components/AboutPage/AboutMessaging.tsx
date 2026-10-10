@@ -30,7 +30,10 @@ export function AboutMessaging() {
             </p>
           </div>
 
-          <div className="mx-auto w-full min-w-0 max-w-lg overflow-hidden lg:max-w-none" aria-hidden>
+          <div
+            className="mx-auto w-full min-w-0 max-w-lg overflow-hidden lg:max-w-none"
+            aria-hidden
+          >
             <Image
               src={aboutSrc("messaging-ui.png")}
               alt=""

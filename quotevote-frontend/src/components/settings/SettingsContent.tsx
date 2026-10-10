@@ -1,14 +1,14 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useForm, type SubmitHandler, type Control } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { useMutation } from '@apollo/client/react' 
-import { Camera, Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useState } from "react";
+import { useForm, type SubmitHandler, type Control } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useMutation } from "@apollo/client/react";
+import { Camera, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -16,64 +16,64 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
-import { UPDATE_USER } from '@/graphql/mutations'
-import { replaceGqlError } from '@/lib/utils/replaceGqlError'
-import Avatar from '@/components/Avatar'
-import { parseAvatarToUrl } from '@/lib/avatar'
-import { useAppStore } from '@/store/useAppStore'
+import { UPDATE_USER } from "@/graphql/mutations";
+import { replaceGqlError } from "@/lib/utils/replaceGqlError";
+import Avatar from "@/components/Avatar";
+import { parseAvatarToUrl } from "@/lib/avatar";
+import { useAppStore } from "@/store/useAppStore";
 import type {
-  SettingsFormValues, 
-  SettingsContentProps, 
-  SettingsUserData, 
-  UserAvatar 
-} from '@/types/settings'
-import type { UpdateUserResponse } from '@/types/test'
+  SettingsFormValues,
+  SettingsContentProps,
+  SettingsUserData,
+  UserAvatar,
+} from "@/types/settings";
+import type { UpdateUserResponse } from "@/types/test";
 
 const settingsSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, "Name is required"),
   username: z
     .string()
-    .min(5, 'Username should be more than 4 characters')
-    .max(50, 'Username should be less than 50 characters'),
-  email: z.string().email('Entered value does not match email format'),
+    .min(5, "Username should be more than 4 characters")
+    .max(50, "Username should be less than 50 characters"),
+  email: z.string().email("Entered value does not match email format"),
   password: z
     .string()
     .optional()
-    .or(z.literal('')) 
+    .or(z.literal(""))
     .refine(
       (val) => {
-        if (!val || val.length === 0) return true
-        if (val.length < 8) return false 
-        return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/.test(val)
+        if (!val || val.length === 0) return true;
+        if (val.length < 8) return false;
+        return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/.test(val);
       },
       {
-        message: 'Password should contain at least 8 chars, a number, an uppercase, and lowercase letter',
+        message:
+          "Password should contain at least 8 chars, a number, an uppercase, and lowercase letter",
       }
     ),
-})
+});
 
 export default function SettingsContent({ setOpen }: SettingsContentProps) {
-  const router = useRouter()
-  const [showSuccess, setShowSuccess] = useState(false)
+  const router = useRouter();
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined
-  const setUserData = useAppStore((state) => state.setUserData)
+  const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined;
+  const setUserData = useAppStore((state) => state.setUserData);
 
-  const avatar = userData?.avatar as UserAvatar | string | Record<string, unknown> | undefined
-  const avatarSrc =
-    parseAvatarToUrl(avatar) ?? (typeof avatar === 'string' ? avatar : undefined)
-  const username = userData?.username ?? ''
-  const email = userData?.email ?? ''
-  const name = userData?.name ?? ''
-  const userId = userData?.id ?? userData?._id ?? ''
+  const avatar = userData?.avatar as UserAvatar | string | Record<string, unknown> | undefined;
+  const avatarSrc = parseAvatarToUrl(avatar) ?? (typeof avatar === "string" ? avatar : undefined);
+  const username = userData?.username ?? "";
+  const email = userData?.email ?? "";
+  const name = userData?.name ?? "";
+  const userId = userData?.id ?? userData?._id ?? "";
 
-  const [updateUser, { loading, error }] = useMutation<UpdateUserResponse>(UPDATE_USER)
+  const [updateUser, { loading, error }] = useMutation<UpdateUserResponse>(UPDATE_USER);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -81,9 +81,9 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
       username,
       name,
       email,
-      password: '',
+      password: "",
     },
-  })
+  });
 
   const onSubmit: SubmitHandler<SettingsFormValues> = async (values) => {
     const { password, ...otherValues } = values;
@@ -107,7 +107,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
           // updates must not coerce avataaars objects into an empty string.
           avatar: userData?.avatar,
         });
-        
+
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
         form.reset(values);
@@ -118,7 +118,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
   };
 
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch is safe here, compiler skips memoization
-  const watchedName = (form.watch('name') as string) || name || '';
+  const watchedName = (form.watch("name") as string) || name || "";
 
   return (
     <div className="flex h-[90vh] max-w-[350px] flex-col gap-4 overflow-auto p-4 md:min-w-[350px] sm:max-w-full sm:p-6">
@@ -131,17 +131,17 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
               <button
                 type="button"
                 onClick={() => {
-                   if (setOpen) setOpen(false)
-                   router.push(`/profile/${username}/avatar`)
+                  if (setOpen) setOpen(false);
+                  router.push(`/profile/${username}/avatar`);
                 }}
                 className="group relative flex-shrink-0"
                 aria-label="Change avatar"
               >
                 <Avatar
                   src={avatarSrc}
-                  alt={watchedName || 'User avatar'}
+                  alt={watchedName || "User avatar"}
                   size={96}
-                  fallback={watchedName.charAt(0).toUpperCase() || 'U'}
+                  fallback={watchedName.charAt(0).toUpperCase() || "U"}
                   className="h-20 w-20 md:h-24 md:w-24"
                 />
                 <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
@@ -245,24 +245,25 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
             )}
           </div>
 
-          <div className={cn(
-            "mt-auto flex items-center justify-between gap-2 border-t pt-4",
-            "sm:sticky sm:bottom-0 sm:bg-background"
-          )}>
+          <div
+            className={cn(
+              "mt-auto flex items-center justify-between gap-2 border-t pt-4",
+              "sm:sticky sm:bottom-0 sm:bg-background"
+            )}
+          >
             <Button
               type="button"
               variant="outline"
               onClick={() => {
-                if (setOpen) setOpen(false)
-                localStorage.removeItem('token')
-                useAppStore.getState().logout()
-                router.push('/login')
+                if (setOpen) setOpen(false);
+                localStorage.removeItem("token");
+                useAppStore.getState().logout();
+                router.push("/login");
               }}
               disabled={loading}
             >
               Sign Out
             </Button>
-
 
             <Button type="submit" disabled={!form.formState.isDirty || loading}>
               {loading ? (
@@ -271,7 +272,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                   Saving...
                 </>
               ) : (
-                'Save'
+                "Save"
               )}
             </Button>
           </div>
@@ -284,5 +285,5 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

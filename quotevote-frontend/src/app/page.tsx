@@ -1,39 +1,39 @@
-import type { Metadata } from 'next'
-import type { ReactElement } from 'react'
-import { Suspense } from 'react'
-import { AuthAwareHome } from './components/AuthAwareHome'
+import type { Metadata } from "next";
+import type { ReactElement } from "react";
+import { Suspense } from "react";
+import { AuthAwareHome } from "./components/AuthAwareHome";
 
 export const metadata: Metadata = {
-  title: 'Quote.Vote – Share Ideas. Vote on What Matters.',
+  title: "Quote.Vote – Share Ideas. Vote on What Matters.",
   description:
-    'An open-source, text-first platform for thoughtful dialogue. Quote, vote, and engage — no ads, no algorithms, no noise.',
+    "An open-source, text-first platform for thoughtful dialogue. Quote, vote, and engage — no ads, no algorithms, no noise.",
   keywords: [
-    'quote',
-    'vote',
-    'dialogue',
-    'civic engagement',
-    'open source',
-    'democracy',
-    'discussion',
+    "quote",
+    "vote",
+    "dialogue",
+    "civic engagement",
+    "open source",
+    "democracy",
+    "discussion",
   ],
-  authors: [{ name: 'Quote.Vote Team' }],
+  authors: [{ name: "Quote.Vote Team" }],
   openGraph: {
-    title: 'Quote.Vote – Share Ideas. Vote on What Matters.',
+    title: "Quote.Vote – Share Ideas. Vote on What Matters.",
     description:
-      'An open-source, text-first platform for thoughtful dialogue. Quote, vote, and engage — no ads, no algorithms.',
-    type: 'website',
-    url: 'https://quote.vote',
+      "An open-source, text-first platform for thoughtful dialogue. Quote, vote, and engage — no ads, no algorithms.",
+    type: "website",
+    url: "https://quote.vote",
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'Quote.Vote – Share Ideas. Vote on What Matters.',
-    description: 'An open-source, text-first platform for thoughtful dialogue.',
+    card: "summary_large_image",
+    title: "Quote.Vote – Share Ideas. Vote on What Matters.",
+    description: "An open-source, text-first platform for thoughtful dialogue.",
   },
-}
+};
 
 function DirectorySkeleton(): ReactElement {
   return (
-    <div className="min-h-screen w-full overflow-x-hidden" style={{ background: '#eef4f9' }}>
+    <div className="min-h-screen w-full overflow-x-hidden" style={{ background: "#eef4f9" }}>
       <div className="h-14 border-b bg-white" />
       <div className="max-w-2xl mx-auto px-4 pt-3 space-y-4">
         <div className="h-11 w-full animate-pulse rounded-full bg-muted" />
@@ -47,7 +47,7 @@ function DirectorySkeleton(): ReactElement {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -58,5 +58,5 @@ export default function RootPage(): ReactElement {
     <Suspense fallback={<DirectorySkeleton />}>
       <AuthAwareHome />
     </Suspense>
-  )
+  );
 }

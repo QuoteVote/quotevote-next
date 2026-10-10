@@ -1,6 +1,6 @@
 /**
  * ReputationDisplay Component Tests
- * 
+ *
  * Tests for the ReputationDisplay component including:
  * - Rendering reputation data
  * - Score calculations and colors
@@ -8,12 +8,12 @@
  * - Refresh functionality
  */
 
-import { render, screen, fireEvent } from '../../utils/test-utils';
-import { ReputationDisplay } from '../../../components/Profile/ReputationDisplay';
-import type { Reputation } from '@/types/profile';
+import { render, screen, fireEvent } from "../../utils/test-utils";
+import { ReputationDisplay } from "../../../components/Profile/ReputationDisplay";
+import type { Reputation } from "@/types/profile";
 
 const mockReputation: Reputation = {
-  _id: 'rep1',
+  _id: "rep1",
   overallScore: 750,
   inviteNetworkScore: 200,
   conductScore: 250,
@@ -30,49 +30,49 @@ const mockReputation: Reputation = {
     totalPosts: 20,
     totalComments: 30,
   },
-  lastCalculated: '2024-01-01T00:00:00Z',
+  lastCalculated: "2024-01-01T00:00:00Z",
 };
 
-describe('ReputationDisplay', () => {
-  describe('With Reputation Data', () => {
-    it('renders reputation score', () => {
+describe("ReputationDisplay", () => {
+  describe("With Reputation Data", () => {
+    it("renders reputation score", () => {
       render(<ReputationDisplay reputation={mockReputation} />);
-      expect(screen.getByText('Reputation Score')).toBeInTheDocument();
-      expect(screen.getByText('750')).toBeInTheDocument();
+      expect(screen.getByText("Reputation Score")).toBeInTheDocument();
+      expect(screen.getByText("750")).toBeInTheDocument();
     });
 
-    it('displays score breakdown', () => {
+    it("displays score breakdown", () => {
       render(<ReputationDisplay reputation={mockReputation} />);
-      expect(screen.getByText('Score Breakdown')).toBeInTheDocument();
-      expect(screen.getByText('200')).toBeInTheDocument(); // inviteNetworkScore
-      expect(screen.getByText('250')).toBeInTheDocument(); // conductScore
-      expect(screen.getByText('300')).toBeInTheDocument(); // activityScore
+      expect(screen.getByText("Score Breakdown")).toBeInTheDocument();
+      expect(screen.getByText("200")).toBeInTheDocument(); // inviteNetworkScore
+      expect(screen.getByText("250")).toBeInTheDocument(); // conductScore
+      expect(screen.getByText("300")).toBeInTheDocument(); // activityScore
     });
 
-    it('displays detailed metrics', () => {
+    it("displays detailed metrics", () => {
       render(<ReputationDisplay reputation={mockReputation} />);
-      expect(screen.getByText('Detailed Metrics')).toBeInTheDocument();
-      expect(screen.getByText('10')).toBeInTheDocument(); // totalInvitesSent
-      expect(screen.getByText('20')).toBeInTheDocument(); // totalPosts
-      expect(screen.getByText('30')).toBeInTheDocument(); // totalComments
+      expect(screen.getByText("Detailed Metrics")).toBeInTheDocument();
+      expect(screen.getByText("10")).toBeInTheDocument(); // totalInvitesSent
+      expect(screen.getByText("20")).toBeInTheDocument(); // totalPosts
+      expect(screen.getByText("30")).toBeInTheDocument(); // totalComments
     });
 
-    it('displays last calculated date', () => {
+    it("displays last calculated date", () => {
       render(<ReputationDisplay reputation={mockReputation} />);
       expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
       expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
     });
 
-    it('shows Not available when lastCalculated is invalid', () => {
+    it("shows Not available when lastCalculated is invalid", () => {
       const badReputation: Reputation = {
         ...mockReputation,
-        lastCalculated: 'not-a-date',
+        lastCalculated: "not-a-date",
       };
       render(<ReputationDisplay reputation={badReputation} />);
       expect(screen.getByText(/Last updated: Not available/)).toBeInTheDocument();
     });
 
-    it('parses digit-only epoch strings defensively for lastCalculated', () => {
+    it("parses digit-only epoch strings defensively for lastCalculated", () => {
       // GraphQL returns ISO strings; this covers older/non-GraphQL payloads.
       const stamped: Reputation = {
         ...mockReputation,
@@ -83,37 +83,37 @@ describe('ReputationDisplay', () => {
       expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
     });
 
-    it('calls onRefresh when refresh button is clicked', () => {
+    it("calls onRefresh when refresh button is clicked", () => {
       const onRefresh = jest.fn();
       render(<ReputationDisplay reputation={mockReputation} onRefresh={onRefresh} />);
-      
+
       // Find button by aria-label or tooltip trigger
-      const refreshButton = screen.getByRole('button');
+      const refreshButton = screen.getByRole("button");
       fireEvent.click(refreshButton);
-      
+
       expect(onRefresh).toHaveBeenCalledTimes(1);
     });
 
-    it('shows loading state on refresh button when loading', () => {
+    it("shows loading state on refresh button when loading", () => {
       render(<ReputationDisplay reputation={mockReputation} loading={true} />);
-      const refreshButton = screen.getByRole('button');
+      const refreshButton = screen.getByRole("button");
       expect(refreshButton).toBeDisabled();
     });
   });
 
-  describe('Score Labels and Colors', () => {
+  describe("Score Labels and Colors", () => {
     it('displays "Excellent" for score >= 800', () => {
       const highReputation: Reputation = {
         ...mockReputation,
         overallScore: 850,
       };
       render(<ReputationDisplay reputation={highReputation} />);
-      expect(screen.getByText('Excellent')).toBeInTheDocument();
+      expect(screen.getByText("Excellent")).toBeInTheDocument();
     });
 
     it('displays "Good" for score >= 600', () => {
       render(<ReputationDisplay reputation={mockReputation} />);
-      expect(screen.getByText('Good')).toBeInTheDocument();
+      expect(screen.getByText("Good")).toBeInTheDocument();
     });
 
     it('displays "Fair" for score >= 400', () => {
@@ -122,7 +122,7 @@ describe('ReputationDisplay', () => {
         overallScore: 450,
       };
       render(<ReputationDisplay reputation={fairReputation} />);
-      expect(screen.getByText('Fair')).toBeInTheDocument();
+      expect(screen.getByText("Fair")).toBeInTheDocument();
     });
 
     it('displays "Poor" for score < 400', () => {
@@ -131,20 +131,19 @@ describe('ReputationDisplay', () => {
         overallScore: 300,
       };
       render(<ReputationDisplay reputation={poorReputation} />);
-      expect(screen.getByText('Poor')).toBeInTheDocument();
+      expect(screen.getByText("Poor")).toBeInTheDocument();
     });
   });
 
-  describe('Empty State', () => {
-    it('renders empty state when no reputation data', () => {
+  describe("Empty State", () => {
+    it("renders empty state when no reputation data", () => {
       render(<ReputationDisplay />);
-      expect(screen.getByText('No reputation data available')).toBeInTheDocument();
+      expect(screen.getByText("No reputation data available")).toBeInTheDocument();
     });
 
-    it('renders empty state when reputation is undefined', () => {
+    it("renders empty state when reputation is undefined", () => {
       render(<ReputationDisplay reputation={undefined} />);
-      expect(screen.getByText('No reputation data available')).toBeInTheDocument();
+      expect(screen.getByText("No reputation data available")).toBeInTheDocument();
     });
   });
 });
-

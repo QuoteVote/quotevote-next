@@ -1,6 +1,6 @@
 /**
  * MessageSend Component Tests
- * 
+ *
  * Tests for the MessageSend component including:
  * - Message input handling
  * - Send actions and mutations
@@ -9,102 +9,104 @@
  * - Error handling
  */
 
-import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
-import MessageSend from '@/components/Chat/MessageSend'
-import { useAppStore } from '@/store'
-import { GET_ROSTER } from '@/graphql/queries'
-import { toast } from 'sonner'
+import { render, screen, fireEvent, waitFor } from "@/__tests__/utils/test-utils";
+import MessageSend from "@/components/Chat/MessageSend";
+import { useAppStore } from "@/store";
+import { GET_ROSTER } from "@/graphql/queries";
+import { toast } from "sonner";
 
-jest.mock('sonner', () => ({
+jest.mock("sonner", () => ({
   toast: Object.assign(jest.fn(), {
     success: jest.fn(),
     error: jest.fn(),
     info: jest.fn(),
   }),
-}))
+}));
 
 // Mock useQuery and useMutation from Apollo Client
-const mockUseQuery = jest.fn()
-const mockMutate = jest.fn()
-let mutationCallbacks: { onCompleted?: (data: unknown) => void; onError?: (error: Error) => void } = {}
+const mockUseQuery = jest.fn();
+const mockMutate = jest.fn();
+let mutationCallbacks: { onCompleted?: (data: unknown) => void; onError?: (error: Error) => void } =
+  {};
 const mockUseMutation = jest.fn((_mutation, options) => {
   // Store callbacks for later use
   mutationCallbacks = {
     onCompleted: options?.onCompleted,
     onError: options?.onError,
-  }
-  
+  };
+
   // Make mutate function call callbacks when invoked
   const mutateFn = async (mutateOptions?: { variables?: unknown }) => {
     try {
-      const result = await mockMutate(mutateOptions)
+      const result = await mockMutate(mutateOptions);
       // Call onCompleted asynchronously to simulate Apollo behavior
       if (mutationCallbacks.onCompleted && result?.data) {
         // Use setTimeout to call in next tick
         setTimeout(() => {
-          mutationCallbacks.onCompleted?.(result.data)
-        }, 0)
+          mutationCallbacks.onCompleted?.(result.data);
+        }, 0);
       }
-      return result
+      return result;
     } catch (error) {
       // Call onError asynchronously to simulate Apollo behavior
       if (mutationCallbacks.onError && error instanceof Error) {
         // Use setTimeout to call in next tick
         setTimeout(() => {
-          mutationCallbacks.onError?.(error)
-        }, 0)
+          mutationCallbacks.onError?.(error);
+        }, 0);
       }
-      throw error
+      throw error;
     }
-  }
-  
-  return [mutateFn, { loading: false, error: null }]
-})
-jest.mock('@apollo/client/react', () => ({
-  ...jest.requireActual('@apollo/client/react'),
+  };
+
+  return [mutateFn, { loading: false, error: null }];
+});
+jest.mock("@apollo/client/react", () => ({
+  ...jest.requireActual("@apollo/client/react"),
   useQuery: (query: unknown, options?: unknown) => mockUseQuery(query, options),
   useMutation: (mutation: unknown, options?: unknown) => mockUseMutation(mutation, options),
-}))
+}));
 
 // Mock Zustand store
-jest.mock('@/store', () => ({
+jest.mock("@/store", () => ({
   useAppStore: jest.fn(),
-}))
+}));
 
 // Mock useGuestGuard
-jest.mock('@/hooks/useGuestGuard', () => ({
+jest.mock("@/hooks/useGuestGuard", () => ({
   __esModule: true,
   default: jest.fn(() => () => true),
-}))
+}));
 
 // Mock useTypingIndicator
-const mockHandleTyping = jest.fn()
-const mockStopTyping = jest.fn()
-jest.mock('@/hooks/useTypingIndicator', () => ({
+const mockHandleTyping = jest.fn();
+const mockStopTyping = jest.fn();
+jest.mock("@/hooks/useTypingIndicator", () => ({
   useTypingIndicator: jest.fn(() => ({
     handleTyping: mockHandleTyping,
     stopTyping: mockStopTyping,
   })),
-}))
+}));
 
-const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 
 const mockCurrentUser = {
-  _id: 'user1',
-  name: 'Test User',
-  username: 'testuser',
-  avatar: 'https://example.com/avatar.jpg',
-}
+  _id: "user1",
+  name: "Test User",
+  username: "testuser",
+  avatar: "https://example.com/avatar.jpg",
+};
 
-
-describe('MessageSend', () => {
+describe("MessageSend", () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    mockHandleTyping.mockClear()
-    mockStopTyping.mockClear()
-    mockMutate.mockClear()
-    mutationCallbacks = {}
-    mockMutate.mockResolvedValue({ data: { createMessage: { _id: 'msg1', messageRoomId: 'room1' } } })
+    jest.clearAllMocks();
+    mockHandleTyping.mockClear();
+    mockStopTyping.mockClear();
+    mockMutate.mockClear();
+    mutationCallbacks = {};
+    mockMutate.mockResolvedValue({
+      data: { createMessage: { _id: "msg1", messageRoomId: "room1" } },
+    });
 
     // Mock useQuery to return roster data by default
     mockUseQuery.mockImplementation((query) => {
@@ -113,10 +115,10 @@ describe('MessageSend', () => {
           data: { getRoster: [] },
           loading: false,
           error: undefined,
-        }
+        };
       }
-      return { data: undefined, loading: false, error: undefined }
-    })
+      return { data: undefined, loading: false, error: undefined };
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
@@ -127,44 +129,44 @@ describe('MessageSend', () => {
         chat: {
           selectedRoom: {
             room: {
-              users: ['user1', 'user2'],
+              users: ["user1", "user2"],
             },
           },
         },
         setSnackbar: jest.fn(),
         setChatSubmitting: jest.fn(),
-      }
-      return selector(state)
-    })
-  })
+      };
+      return selector(state);
+    });
+  });
 
-  it('renders message input and send button', () => {
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+  it("renders message input and send button", () => {
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
-    expect(screen.getByPlaceholderText('Type a message...')).toBeInTheDocument()
-    expect(screen.getByLabelText('Send message')).toBeInTheDocument()
-  })
+    expect(screen.getByPlaceholderText("Type a message...")).toBeInTheDocument();
+    expect(screen.getByLabelText("Send message")).toBeInTheDocument();
+  });
 
-  it('updates input value when typing', () => {
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+  it("updates input value when typing", () => {
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    fireEvent.change(input, { target: { value: 'Hello world' } })
+    const input = screen.getByPlaceholderText("Type a message...");
+    fireEvent.change(input, { target: { value: "Hello world" } });
 
-    expect(input).toHaveValue('Hello world')
-  })
+    expect(input).toHaveValue("Hello world");
+  });
 
-  it('calls handleTyping when user types', () => {
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+  it("calls handleTyping when user types", () => {
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    fireEvent.change(input, { target: { value: 'H' } })
+    const input = screen.getByPlaceholderText("Type a message...");
+    fireEvent.change(input, { target: { value: "H" } });
 
-    expect(mockHandleTyping).toHaveBeenCalled()
-  })
+    expect(mockHandleTyping).toHaveBeenCalled();
+  });
 
-  it('sends message when send button is clicked', async () => {
-    const setChatSubmitting = jest.fn()
+  it("sends message when send button is clicked", async () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -172,38 +174,38 @@ describe('MessageSend', () => {
         chat: {
           selectedRoom: {
             room: {
-              users: ['user1', 'user2'],
+              users: ["user1", "user2"],
             },
           },
         },
         setSnackbar: jest.fn(),
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    const sendButton = screen.getByLabelText('Send message')
+    const input = screen.getByPlaceholderText("Type a message...");
+    const sendButton = screen.getByLabelText("Send message");
 
-    fireEvent.change(input, { target: { value: 'Test message' } })
-    fireEvent.click(sendButton)
-
-    await waitFor(() => {
-      expect(setChatSubmitting).toHaveBeenCalledWith(true)
-    })
+    fireEvent.change(input, { target: { value: "Test message" } });
+    fireEvent.click(sendButton);
 
     await waitFor(() => {
-      expect(setChatSubmitting).toHaveBeenCalledWith(false)
-    })
+      expect(setChatSubmitting).toHaveBeenCalledWith(true);
+    });
 
-    expect(mockStopTyping).toHaveBeenCalled()
-    expect(input).toHaveValue('')
-  })
+    await waitFor(() => {
+      expect(setChatSubmitting).toHaveBeenCalledWith(false);
+    });
 
-  it('sends message when Enter key is pressed', async () => {
-    const setChatSubmitting = jest.fn()
+    expect(mockStopTyping).toHaveBeenCalled();
+    expect(input).toHaveValue("");
+  });
+
+  it("sends message when Enter key is pressed", async () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -211,29 +213,29 @@ describe('MessageSend', () => {
         chat: {
           selectedRoom: {
             room: {
-              users: ['user1', 'user2'],
+              users: ["user1", "user2"],
             },
           },
         },
         setSnackbar: jest.fn(),
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    fireEvent.change(input, { target: { value: 'Test message' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
+    const input = screen.getByPlaceholderText("Type a message...");
+    fireEvent.change(input, { target: { value: "Test message" } });
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: false });
 
     await waitFor(() => {
-      expect(setChatSubmitting).toHaveBeenCalled()
-    })
-  })
+      expect(setChatSubmitting).toHaveBeenCalled();
+    });
+  });
 
-  it('does not send message when Shift+Enter is pressed', () => {
-    const setChatSubmitting = jest.fn()
+  it("does not send message when Shift+Enter is pressed", () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -241,43 +243,43 @@ describe('MessageSend', () => {
         chat: {
           selectedRoom: {
             room: {
-              users: ['user1', 'user2'],
+              users: ["user1", "user2"],
             },
           },
         },
         setSnackbar: jest.fn(),
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    fireEvent.change(input, { target: { value: 'Test message' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true })
+    const input = screen.getByPlaceholderText("Type a message...");
+    fireEvent.change(input, { target: { value: "Test message" } });
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
 
-    expect(setChatSubmitting).not.toHaveBeenCalled()
-  })
+    expect(setChatSubmitting).not.toHaveBeenCalled();
+  });
 
-  it('disables send button when input is empty', () => {
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+  it("disables send button when input is empty", () => {
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
-    const sendButton = screen.getByLabelText('Send message')
-    expect(sendButton).toBeDisabled()
-  })
+    const sendButton = screen.getByLabelText("Send message");
+    expect(sendButton).toBeDisabled();
+  });
 
-  it('disables input and shows blocked message when user is blocked', async () => {
+  it("disables input and shows blocked message when user is blocked", async () => {
     // Mock useQuery to return blocked user via flat roster array
     mockUseQuery.mockReturnValueOnce({
       data: {
         getRoster: [
-          { _id: 'r1', userId: 'user2', buddyId: 'user1', status: 'blocked', initiatedBy: 'user2' },
+          { _id: "r1", userId: "user2", buddyId: "user1", status: "blocked", initiatedBy: "user2" },
         ],
       },
       loading: false,
       error: undefined,
-    })
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
@@ -286,27 +288,27 @@ describe('MessageSend', () => {
         chat: {
           selectedRoom: {
             room: {
-              users: ['user1', 'user2'],
+              users: ["user1", "user2"],
             },
           },
         },
         setSnackbar: jest.fn(),
         setChatSubmitting: jest.fn(),
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
     await waitFor(() => {
-      const input = screen.getByPlaceholderText('You cannot send messages to this user')
-      expect(input).toBeDisabled()
-    })
-  })
+      const input = screen.getByPlaceholderText("You cannot send messages to this user");
+      expect(input).toBeDisabled();
+    });
+  });
 
-  it('handles mutation errors and shows snackbar', async () => {
-    const setSnackbar = jest.fn()
-    const setChatSubmitting = jest.fn()
+  it("handles mutation errors and shows snackbar", async () => {
+    const setSnackbar = jest.fn();
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -314,43 +316,43 @@ describe('MessageSend', () => {
         chat: {
           selectedRoom: {
             room: {
-              users: ['user1', 'user2'],
+              users: ["user1", "user2"],
             },
           },
         },
         setSnackbar,
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
     // Suppress console.error for this test since the component logs errors
-    const originalError = console.error
-    console.error = jest.fn()
+    const originalError = console.error;
+    console.error = jest.fn();
 
     try {
       // Mock mutation to throw error
-      mockMutate.mockRejectedValueOnce(new Error('Failed to send message'))
+      mockMutate.mockRejectedValueOnce(new Error("Failed to send message"));
 
-      render(<MessageSend messageRoomId="room1" type="USER" />)
+      render(<MessageSend messageRoomId="room1" type="USER" />);
 
-      const input = screen.getByPlaceholderText('Type a message...')
-      const sendButton = screen.getByLabelText('Send message')
+      const input = screen.getByPlaceholderText("Type a message...");
+      const sendButton = screen.getByLabelText("Send message");
 
-      fireEvent.change(input, { target: { value: 'Test message' } })
-      fireEvent.click(sendButton)
+      fireEvent.change(input, { target: { value: "Test message" } });
+      fireEvent.click(sendButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(expect.any(String))
-        expect(setChatSubmitting).toHaveBeenCalledWith(false)
-      })
+        expect(toast.error).toHaveBeenCalledWith(expect.any(String));
+        expect(setChatSubmitting).toHaveBeenCalledWith(false);
+      });
     } finally {
-      console.error = originalError
+      console.error = originalError;
     }
-  })
+  });
 
-  it('does not send empty messages', () => {
-    const setChatSubmitting = jest.fn()
+  it("does not send empty messages", () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -358,23 +360,22 @@ describe('MessageSend', () => {
         chat: {
           selectedRoom: {
             room: {
-              users: ['user1', 'user2'],
+              users: ["user1", "user2"],
             },
           },
         },
         setSnackbar: jest.fn(),
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<MessageSend messageRoomId="room1" type="USER" />)
+    render(<MessageSend messageRoomId="room1" type="USER" />);
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    fireEvent.change(input, { target: { value: '   ' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
+    const input = screen.getByPlaceholderText("Type a message...");
+    fireEvent.change(input, { target: { value: "   " } });
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: false });
 
-    expect(setChatSubmitting).not.toHaveBeenCalled()
-  })
-})
-
+    expect(setChatSubmitting).not.toHaveBeenCalled();
+  });
+});

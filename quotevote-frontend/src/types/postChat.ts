@@ -8,11 +8,11 @@
  */
 export interface PostChatUser {
   /** Display name */
-  name: string
+  name: string;
   /** Username handle */
-  username: string
+  username: string;
   /** Avatar — avataaars qualities object, JSON string, URL, or undefined */
-  avatar?: string | Record<string, unknown>
+  avatar?: string | Record<string, unknown>;
 }
 
 /**
@@ -20,15 +20,15 @@ export interface PostChatUser {
  */
 export interface PostChatMessageData {
   /** Unique message identifier */
-  _id: string
+  _id: string;
   /** Author user identifier */
-  userId: string
+  userId: string;
   /** Text content of the message */
-  text: string
+  text: string;
   /** ISO timestamp of creation */
-  created: string
+  created: string;
   /** User details */
-  user: PostChatUser
+  user: PostChatUser;
 }
 
 /**
@@ -36,13 +36,13 @@ export interface PostChatMessageData {
  */
 export interface MessageReaction {
   /** Unique reaction identifier */
-  _id: string
+  _id: string;
   /** Emoji character */
-  emoji: string
+  emoji: string;
   /** Message this reaction belongs to */
-  messageId: string
+  messageId: string;
   /** User who made this reaction */
-  userId: string
+  userId: string;
 }
 
 /**
@@ -50,7 +50,7 @@ export interface MessageReaction {
  */
 export interface PostChatMessageProps {
   /** The message data to display */
-  message: PostChatMessageData
+  message: PostChatMessageData;
 }
 
 /**
@@ -58,17 +58,17 @@ export interface PostChatMessageProps {
  */
 export interface PostChatReactionsProps {
   /** ISO timestamp when message was created */
-  created: string
+  created: string;
   /** Message identifier for reactions */
-  messageId: string
+  messageId: string;
   /** Array of reactions on the message */
-  reactions?: MessageReaction[]
+  reactions?: MessageReaction[];
   /** Whether message is from another user (affects styling) */
-  isDefaultDirection: boolean
+  isDefaultDirection: boolean;
   /** Display name of message author */
-  userName: string
+  userName: string;
   /** Username handle of message author */
-  username: string
+  username: string;
 }
 
 /**
@@ -76,24 +76,24 @@ export interface PostChatReactionsProps {
  */
 export interface PostChatSendProps {
   /** Room ID for the message (null if room doesn't exist yet) */
-  messageRoomId?: string | null
+  messageRoomId?: string | null;
   /** Title for the message/room */
-  title?: string
+  title?: string;
   /** Post ID for creating room if needed */
-  postId?: string
+  postId?: string;
   /** Post URL as stored by the API, sent with quote comments */
-  postUrl?: string
+  postUrl?: string;
   /** Post author's user ID, required to create a Quote */
-  postOwnerId?: string
+  postOwnerId?: string;
 }
 
 /**
  * Input for creating a new message reaction
  */
 export interface ReactionInput {
-  userId: string
-  messageId: string
-  emoji: string
+  userId: string;
+  messageId: string;
+  emoji: string;
 }
 
 /**
@@ -101,15 +101,15 @@ export interface ReactionInput {
  */
 export interface MessagesData {
   messages: Array<{
-    _id: string
-    messageRoomId: string
-    userId: string
-    userName: string
-    title: string
-    text: string
-    type: string
-    created: string
-  }>
+    _id: string;
+    messageRoomId: string;
+    userId: string;
+    userName: string;
+    title: string;
+    text: string;
+    type: string;
+    created: string;
+  }>;
 }
 
 /**
@@ -117,21 +117,21 @@ export interface MessagesData {
  */
 export interface CreateMessageData {
   createMessage: {
-    __typename?: string
-    _id: string
-    messageRoomId: string
-    userId: string
-    userName: string
-    title: string
-    text: string
-    type: string
-    created: string
+    __typename?: string;
+    _id: string;
+    messageRoomId: string;
+    userId: string;
+    userName: string;
+    title: string;
+    text: string;
+    type: string;
+    created: string;
     user: {
-      __typename?: string
-      _id: string
-      name: string
-      username: string
-      avatar?: string | Record<string, unknown>
-    }
-  }
+      __typename?: string;
+      _id: string;
+      name: string;
+      username: string;
+      avatar?: string | Record<string, unknown>;
+    };
+  };
 }

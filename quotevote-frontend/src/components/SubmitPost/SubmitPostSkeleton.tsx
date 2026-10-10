@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { Card, CardFooter, CardHeader } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-import { useResponsive } from '@/hooks/useResponsive'
+import { Card, CardFooter, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { useResponsive } from "@/hooks/useResponsive";
 
 export function SubmitPostSkeleton() {
-  const { isMobile } = useResponsive()
+  const { isMobile } = useResponsive();
 
   return (
     <Card
       className={cn(
-        'flex h-full min-h-0 w-full flex-col gap-0 rounded-none border-0 py-0 shadow-none',
-        !isMobile && 'sm:rounded-lg sm:border sm:shadow-sm'
+        "flex h-full min-h-0 w-full flex-col gap-0 rounded-none border-0 py-0 shadow-none",
+        !isMobile && "sm:rounded-lg sm:border sm:shadow-sm"
       )}
     >
       <CardHeader className="flex shrink-0 flex-row items-center justify-between border-b px-4 py-3">
@@ -40,5 +40,5 @@ export function SubmitPostSkeleton() {
         <Skeleton className="h-11 w-full" />
       </CardFooter>
     </Card>
-  )
+  );
 }

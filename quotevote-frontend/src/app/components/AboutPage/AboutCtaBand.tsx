@@ -93,15 +93,13 @@ export function AboutCtaBand() {
                 placeholder="your@email.com"
                 required
                 aria-invalid={!!errorMessage}
-                aria-describedby={
-                  [
-                    "about-touch-privacy",
-                    errorMessage ? "about-touch-error" : null,
-                    successMessage ? "about-touch-success" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")
-                }
+                aria-describedby={[
+                  "about-touch-privacy",
+                  errorMessage ? "about-touch-error" : null,
+                  successMessage ? "about-touch-success" : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 className="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#16a34a]"
               />
               <button

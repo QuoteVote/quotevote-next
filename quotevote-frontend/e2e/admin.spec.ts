@@ -2,8 +2,10 @@ import { test, expect, type Page } from "@playwright/test";
 
 const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql";
 
-const fakeAdminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbi0xMjMiLCJhZG1pbiI6dHJ1ZX0.signature";
-const fakeUserToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyLTEyMyIsImFkbWluIjpmYWxzZX0.signature";
+const fakeAdminToken =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbi0xMjMiLCJhZG1pbiI6dHJ1ZX0.signature";
+const fakeUserToken =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyLTEyMyIsImFkbWluIjpmYWxzZX0.signature";
 
 async function mockGraphQLOperation(
   page: Page,
@@ -36,22 +38,22 @@ async function mockGraphQLOperation(
 }
 
 test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", () => {
-  test.use({ 
-    storageState: { 
+  test.use({
+    storageState: {
       cookies: [
         {
-          name: 'qv-token',
+          name: "qv-token",
           value: fakeAdminToken,
-          domain: 'localhost',
-          path: '/',
+          domain: "localhost",
+          path: "/",
           expires: -1,
           httpOnly: false,
           secure: false,
-          sameSite: 'Lax',
-        }
-      ], 
-      origins: [] 
-    } 
+          sameSite: "Lax",
+        },
+      ],
+      origins: [],
+    },
   });
 
   const visitorEmail = `e2e-pending-${Date.now()}@example.com`;
@@ -63,12 +65,12 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
           _id: "mock-invite-1",
           email: visitorEmail,
           joined: new Date().toISOString(),
-          status: "1" // 1 = Pending
-        }
-      ]
+          status: "1", // 1 = Pending
+        },
+      ],
     });
     await mockGraphQLOperation(page, "Heartbeat", {
-      heartbeat: { success: true, timestamp: new Date().toISOString() }
+      heartbeat: { success: true, timestamp: new Date().toISOString() },
     });
     await mockGraphQLOperation(page, "getChatRooms", { messageRooms: [] });
     await mockGraphQLOperation(page, "notifications", { notifications: [] });
@@ -79,21 +81,29 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
 
     await expect(page.getByRole("heading", { name: "Manage Invites" })).toBeVisible();
 
-    const receivedTab = page.getByRole('tab', { name: /Received Requests/i });
+    const receivedTab = page.getByRole("tab", { name: /Received Requests/i });
     await expect(receivedTab).toBeVisible();
 
     const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
-    
+
     if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText(visitorEmail)).toBeVisible();
-      await expect(page.locator('.md\\:hidden').getByText("Pending", { exact: true })).toBeVisible();
+      await expect(page.locator(".md\\:hidden").getByText(visitorEmail)).toBeVisible();
+      await expect(
+        page.locator(".md\\:hidden").getByText("Pending", { exact: true })
+      ).toBeVisible();
     } else {
-      await expect(page.locator('.hidden.md\\:block').getByText(visitorEmail)).toBeVisible();
-      await expect(page.locator('.hidden.md\\:block').getByText("Pending", { exact: true })).toBeVisible();
+      await expect(page.locator(".hidden.md\\:block").getByText(visitorEmail)).toBeVisible();
+      await expect(
+        page.locator(".hidden.md\\:block").getByText("Pending", { exact: true })
+      ).toBeVisible();
     }
 
-    const acceptButton = page.locator('button', { hasText: 'Accept' }).and(page.locator(':visible'));
-    const declineButton = page.locator('button', { hasText: 'Decline' }).and(page.locator(':visible'));
+    const acceptButton = page
+      .locator("button", { hasText: "Accept" })
+      .and(page.locator(":visible"));
+    const declineButton = page
+      .locator("button", { hasText: "Decline" })
+      .and(page.locator(":visible"));
     await expect(acceptButton).toBeVisible();
     await expect(declineButton).toBeVisible();
   });
@@ -121,11 +131,11 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
                   _id: "mock-invite-1",
                   email: visitorEmail,
                   joined: new Date().toISOString(),
-                  status: currentStatus
-                }
-              ]
-            }
-          })
+                  status: currentStatus,
+                },
+              ],
+            },
+          }),
         });
         return;
       } else if (body?.operationName === "sendUserInviteApproval") {
@@ -135,9 +145,9 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
           contentType: "application/json",
           body: JSON.stringify({
             data: {
-              sendUserInviteApproval: { _id: "mock-invite-1", status: "4" }
-            }
-          })
+              sendUserInviteApproval: { _id: "mock-invite-1", status: "4" },
+            },
+          }),
         });
         return;
       }
@@ -146,31 +156,33 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
 
     await page.goto("/dashboard/manage-invites");
 
-    const acceptButton = page.locator('button', { hasText: 'Accept' }).and(page.locator(':visible'));
+    const acceptButton = page
+      .locator("button", { hasText: "Accept" })
+      .and(page.locator(":visible"));
     await acceptButton.click();
 
     await expect(page.getByText("Invitation accepted")).toBeVisible();
 
-    const sentTab = page.getByRole('tab', { name: /Sent Invites/i });
+    const sentTab = page.getByRole("tab", { name: /Sent Invites/i });
     await sentTab.click();
 
     const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
     if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText(visitorEmail)).toBeVisible();
-      await expect(page.locator('.md\\:hidden').getByText("Accepted")).toBeVisible();
+      await expect(page.locator(".md\\:hidden").getByText(visitorEmail)).toBeVisible();
+      await expect(page.locator(".md\\:hidden").getByText("Accepted")).toBeVisible();
     } else {
-      await expect(page.locator('.hidden.md\\:block').getByText(visitorEmail)).toBeVisible();
-      await expect(page.locator('.hidden.md\\:block').getByText("Accepted")).toBeVisible();
+      await expect(page.locator(".hidden.md\\:block").getByText(visitorEmail)).toBeVisible();
+      await expect(page.locator(".hidden.md\\:block").getByText("Accepted")).toBeVisible();
     }
 
     // Verify persistence after reload
     await page.reload();
-    await page.getByRole('tab', { name: /Sent Invites/i }).click();
+    await page.getByRole("tab", { name: /Sent Invites/i }).click();
 
     if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText("Accepted")).toBeVisible();
+      await expect(page.locator(".md\\:hidden").getByText("Accepted")).toBeVisible();
     } else {
-      await expect(page.locator('.hidden.md\\:block').getByText("Accepted")).toBeVisible();
+      await expect(page.locator(".hidden.md\\:block").getByText("Accepted")).toBeVisible();
     }
   });
 
@@ -197,11 +209,11 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
                   _id: "mock-invite-1",
                   email: visitorEmail,
                   joined: new Date().toISOString(),
-                  status: currentStatus
-                }
-              ]
-            }
-          })
+                  status: currentStatus,
+                },
+              ],
+            },
+          }),
         });
         return;
       } else if (body?.operationName === "sendUserInviteApproval") {
@@ -211,9 +223,9 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
           contentType: "application/json",
           body: JSON.stringify({
             data: {
-              sendUserInviteApproval: { _id: "mock-invite-1", status: "2" }
-            }
-          })
+              sendUserInviteApproval: { _id: "mock-invite-1", status: "2" },
+            },
+          }),
         });
         return;
       }
@@ -222,66 +234,67 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
 
     await page.goto("/dashboard/manage-invites");
 
-    const declineButton = page.locator('button', { hasText: 'Decline' }).and(page.locator(':visible')).first();
+    const declineButton = page
+      .locator("button", { hasText: "Decline" })
+      .and(page.locator(":visible"))
+      .first();
     await declineButton.click();
 
-    const confirmButton = page.getByRole('alertdialog').locator('button', { hasText: 'Decline' });
+    const confirmButton = page.getByRole("alertdialog").locator("button", { hasText: "Decline" });
     await confirmButton.click();
 
     await expect(page.getByText("Invitation declined")).toBeVisible();
 
     const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
     if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText("Declined")).toBeVisible();
+      await expect(page.locator(".md\\:hidden").getByText("Declined")).toBeVisible();
     } else {
-      await expect(page.locator('.hidden.md\\:block').getByText("Declined")).toBeVisible();
+      await expect(page.locator(".hidden.md\\:block").getByText("Declined")).toBeVisible();
     }
 
     // Verify persistence after reload
     await page.reload();
 
     if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText("Declined")).toBeVisible();
+      await expect(page.locator(".md\\:hidden").getByText("Declined")).toBeVisible();
     } else {
-      await expect(page.locator('.hidden.md\\:block').getByText("Declined")).toBeVisible();
+      await expect(page.locator(".hidden.md\\:block").getByText("Declined")).toBeVisible();
     }
   });
 });
 
 test.describe("Admin Invitation Request Authorization Validation", () => {
-  test.use({ 
-    storageState: { 
+  test.use({
+    storageState: {
       cookies: [
         {
-          name: 'qv-token',
+          name: "qv-token",
           value: fakeUserToken, // Non-admin user
-          domain: 'localhost',
-          path: '/',
+          domain: "localhost",
+          path: "/",
           expires: -1,
           httpOnly: false,
           secure: false,
-          sameSite: 'Lax',
-        }
-      ], 
-      origins: [] 
-    } 
+          sameSite: "Lax",
+        },
+      ],
+      origins: [],
+    },
   });
 
   test("Regular authenticated users receive authorization error", async ({ page }) => {
-    await mockGraphQLOperation(page, "userInviteRequests", null, [
-      { message: "Not Authorized" }
-    ]);
+    await mockGraphQLOperation(page, "userInviteRequests", null, [{ message: "Not Authorized" }]);
 
     await mockGraphQLOperation(page, "Heartbeat", {
-      heartbeat: { success: true, timestamp: new Date().toISOString() }
+      heartbeat: { success: true, timestamp: new Date().toISOString() },
     });
     await mockGraphQLOperation(page, "getChatRooms", { messageRooms: [] });
     await mockGraphQLOperation(page, "notifications", { notifications: [] });
 
     await page.goto("/dashboard/manage-invites");
 
-    await expect(page.getByRole('alert').getByText("Not Authorized")).toBeVisible();
-    
-    await expect(page.getByRole('tab', { name: /Received Requests/i })).not.toBeVisible();
+    await expect(page.getByRole("alert").getByText("Not Authorized")).toBeVisible();
+
+    await expect(page.getByRole("tab", { name: /Received Requests/i })).not.toBeVisible();
   });
 });

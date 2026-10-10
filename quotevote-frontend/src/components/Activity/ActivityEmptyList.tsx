@@ -1,30 +1,30 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { useAppStore } from '@/store'
-import type { ActivityEmptyListProps } from '@/types/activity'
-import Image from 'next/image'
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAppStore } from "@/store";
+import type { ActivityEmptyListProps } from "@/types/activity";
+import Image from "next/image";
 
 export function ActivityEmptyList({}: ActivityEmptyListProps) {
-  const router = useRouter()
-  const setSelectedPage = useAppStore((state) => state.setSelectedPage)
+  const router = useRouter();
+  const setSelectedPage = useAppStore((state) => state.setSelectedPage);
 
   const handleGoToSearch = () => {
-    setSelectedPage('1')
-    router.push('/search')
-  }
+    setSelectedPage("1");
+    router.push("/search");
+  };
 
   return (
     <div className="w-full sm:w-[90%] text-center mx-auto my-5 sm:my-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
       <Card className="bg-transparent border-0 shadow-none">
         <CardContent className="pt-6">
           <p className="w-full sm:w-[45%] mx-auto mb-5 sm:mt-5 text-base text-muted-foreground">
-            Welcome to Quote Vote. To read some ideas you need to start following people. You can find your friends or you
-            could go to the search page and follow anyone.
+            Welcome to Quote Vote. To read some ideas you need to start following people. You can
+            find your friends or you could go to the search page and follow anyone.
           </p>
-          
+
           <div className="flex justify-center mb-5">
             <Image
               alt="Add Buddy / Find Posts"
@@ -34,7 +34,7 @@ export function ActivityEmptyList({}: ActivityEmptyListProps) {
               className="sm:h-[130px]"
             />
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button variant="secondary" className="w-full sm:w-auto">
               FIND FRIENDS
@@ -50,6 +50,5 @@ export function ActivityEmptyList({}: ActivityEmptyListProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

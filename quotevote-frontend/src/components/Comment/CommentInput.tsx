@@ -1,51 +1,48 @@
-"use client"
+"use client";
 
-import { useState } from 'react'
-import { Send, Loader2 } from 'lucide-react'
-import { useMutation } from '@apollo/client/react'
-import { gql } from '@apollo/client'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { DisplayAvatar } from '@/components/DisplayAvatar'
-import { ADD_COMMENT } from '@/graphql/mutations'
-import { useAppStore } from '@/store/useAppStore'
-import { toast } from 'sonner'
-import useGuestGuard from '@/hooks/useGuestGuard'
+import { useState } from "react";
+import { Send, Loader2 } from "lucide-react";
+import { useMutation } from "@apollo/client/react";
+import { gql } from "@apollo/client";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { ADD_COMMENT } from "@/graphql/mutations";
+import { useAppStore } from "@/store/useAppStore";
+import { toast } from "sonner";
+import useGuestGuard from "@/hooks/useGuestGuard";
 
 interface CommentInputProps {
-  actionId: string
-  onSuccess?: () => void
+  actionId: string;
+  onSuccess?: () => void;
 }
 
 interface AddCommentData {
   addComment: {
-    _id: string
-    userId: string
-    content: string
-    created: string
+    _id: string;
+    userId: string;
+    content: string;
+    created: string;
     user: {
-      _id: string
-      username: string
-      avatar: string
-    }
-  }
+      _id: string;
+      username: string;
+      avatar: string;
+    };
+  };
 }
 
-export default function CommentInput({
-  actionId,
-  onSuccess
-}: CommentInputProps) {
-  const [content, setContent] = useState('')
-  const [isFocused, setIsFocused] = useState(false)
-  const userId = useAppStore((state) => state.user.data.id || state.user.data._id)
-  const userData = useAppStore((state) => state.user.data)
-  const ensureAuth = useGuestGuard()
+export default function CommentInput({ actionId, onSuccess }: CommentInputProps) {
+  const [content, setContent] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  const userId = useAppStore((state) => state.user.data.id || state.user.data._id);
+  const userData = useAppStore((state) => state.user.data);
+  const ensureAuth = useGuestGuard();
 
-  const displayName = (userData.name as string) || (userData.username as string) || ''
+  const displayName = (userData.name as string) || (userData.username as string) || "";
 
   const [addComment, { loading }] = useMutation<AddCommentData>(ADD_COMMENT, {
     update(cache, { data }) {
-      if (!data?.addComment) return
+      if (!data?.addComment) return;
       cache.modify({
         fields: {
           comments(existing = []) {
@@ -63,18 +60,18 @@ export default function CommentInput({
                     avatar
                   }
                 }
-              `
-            })
-            return [newCommentRef, ...existing]
-          }
-        }
-      })
-    }
-  })
+              `,
+            });
+            return [newCommentRef, ...existing];
+          },
+        },
+      });
+    },
+  });
 
   const handleSubmit = async () => {
-    if (!content.trim()) return
-    if (!ensureAuth()) return
+    if (!content.trim()) return;
+    if (!ensureAuth()) return;
 
     try {
       await addComment({
@@ -85,24 +82,24 @@ export default function CommentInput({
             content,
             startWordIndex: 0,
             endWordIndex: 0,
-          }
-        }
-      })
-      toast.success('Comment posted!')
-      setContent('')
-      setIsFocused(false)
-      if (onSuccess) onSuccess()
+          },
+        },
+      });
+      toast.success("Comment posted!");
+      setContent("");
+      setIsFocused(false);
+      if (onSuccess) onSuccess();
     } catch (err: unknown) {
-      toast.error(`Error: ${(err as Error).message}`)
+      toast.error(`Error: ${(err as Error).message}`);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit()
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
-  }
+  };
 
   return (
     <div className="flex gap-3">
@@ -118,11 +115,13 @@ export default function CommentInput({
 
       {/* Input area */}
       <div className="flex-1 min-w-0">
-        <div className={
-          isFocused || content
-            ? 'rounded-xl border border-border/80 bg-card overflow-hidden transition-all shadow-sm'
-            : ''
-        }>
+        <div
+          className={
+            isFocused || content
+              ? "rounded-xl border border-border/80 bg-card overflow-hidden transition-all shadow-sm"
+              : ""
+          }
+        >
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -132,8 +131,8 @@ export default function CommentInput({
             placeholder="Post your reply..."
             className={
               isFocused || content
-                ? 'min-h-[80px] resize-none border-0 bg-transparent focus-visible:ring-0 px-3 pt-3 pb-1 text-base md:text-sm placeholder:text-muted-foreground/50'
-                : 'min-h-[44px] resize-none border border-border/60 bg-muted/30 hover:bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:bg-card rounded-full px-4 text-base md:text-sm placeholder:text-muted-foreground/50 transition-all'
+                ? "min-h-[80px] resize-none border-0 bg-transparent focus-visible:ring-0 px-3 pt-3 pb-1 text-base md:text-sm placeholder:text-muted-foreground/50"
+                : "min-h-[44px] resize-none border border-border/60 bg-muted/30 hover:bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:bg-card rounded-full px-4 text-base md:text-sm placeholder:text-muted-foreground/50 transition-all"
             }
             rows={isFocused ? 3 : 1}
           />
@@ -160,5 +159,5 @@ export default function CommentInput({
         </div>
       </div>
     </div>
-  )
+  );
 }

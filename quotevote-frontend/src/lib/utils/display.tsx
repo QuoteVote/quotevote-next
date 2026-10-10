@@ -1,5 +1,5 @@
-import moment from 'moment'
-import type { Activity, ThemeShape } from '@/types/store'
+import moment from "moment";
+import type { Activity, ThemeShape } from "@/types/store";
 // Responsive hooks are available in '@/hooks/useResponsive' if needed
 
 export const getGridListCols = {
@@ -8,330 +8,326 @@ export const getGridListCols = {
   md: 2,
   sm: 1,
   xs: 1,
-}
+};
 
 // Note: responsive hooks moved to '@/hooks/useResponsive'
 
 export function composePost(activity: Activity, theme: ThemeShape) {
-  const created = activity?.data?.created
-  const time = created ? formatContentDate(typeof created === 'string' || created instanceof Date ? created : String(created)) : ''
+  const created = activity?.data?.created;
+  const time = created
+    ? formatContentDate(
+        typeof created === "string" || created instanceof Date ? created : String(created)
+      )
+    : "";
 
   const ACTIVITY_COLORS = {
     QUOTED: theme.activityCards.quoted.color,
-    UP: '#55B559',
-    DOWN: '#FF1100',
+    UP: "#55B559",
+    DOWN: "#FF1100",
     COMMENTED: theme.activityCards.commented.color,
-    HEARTED: '#E91E63',
-    POSTED: '#020202',
-  }
+    HEARTED: "#E91E63",
+    POSTED: "#020202",
+  };
 
   switch (activity.event) {
-    case 'VOTED':
+    case "VOTED":
       return {
         id: activity.data._id,
         AlertTitle: `${String(activity.data.type).toUpperCase()}VOTED`,
-        color: ACTIVITY_COLORS[String(activity.data.type).toUpperCase() as keyof typeof ACTIVITY_COLORS],
-        AlertBody: (activity.data.content && typeof activity.data.content === 'object' && 'title' in activity.data.content ? String(activity.data.content.title) : '') ?? '',
+        color:
+          ACTIVITY_COLORS[String(activity.data.type).toUpperCase() as keyof typeof ACTIVITY_COLORS],
+        AlertBody:
+          (activity.data.content &&
+          typeof activity.data.content === "object" &&
+          "title" in activity.data.content
+            ? String(activity.data.content.title)
+            : "") ?? "",
         time,
-        points: activity.data.type === 'up' ? `+${activity.data.points}` : `-${activity.data.points}`,
+        points:
+          activity.data.type === "up" ? `+${activity.data.points}` : `-${activity.data.points}`,
         creator: activity.data.creator,
-      }
-    case 'POSTED':
+      };
+    case "POSTED":
       return {
         id: activity.data._id,
-        AlertTitle: 'CONTENT',
+        AlertTitle: "CONTENT",
         color: ACTIVITY_COLORS.POSTED,
         AlertBody: activity.data.title,
         time,
-        points: '',
+        points: "",
         creator: activity.data.creator,
-      }
-    case 'QUOTED':
+      };
+    case "QUOTED":
       return {
         id: activity.data._id,
         AlertTitle: activity.event,
         color: ACTIVITY_COLORS.QUOTED,
         AlertBody: `'${activity.data.quote}'`,
         time,
-        points: '',
+        points: "",
         creator: activity.data.creator,
-      }
-    case 'COMMENTED':
+      };
+    case "COMMENTED":
       return {
         id: activity.data._id,
         AlertTitle: activity.event,
         color: ACTIVITY_COLORS.COMMENTED,
         AlertBody: `'${activity.data.content}'`,
         time,
-        points: '',
+        points: "",
         creator: activity.data.creator,
-      }
-    case 'HEARTED':
+      };
+    case "HEARTED":
       return {
         id: activity.data._id,
         AlertTitle: activity.event,
         color: ACTIVITY_COLORS.HEARTED,
-        AlertBody: (activity.data.content && typeof activity.data.content === 'object' && 'title' in activity.data.content ? String(activity.data.content.title) : '') ?? '',
+        AlertBody:
+          (activity.data.content &&
+          typeof activity.data.content === "object" &&
+          "title" in activity.data.content
+            ? String(activity.data.content.title)
+            : "") ?? "",
         time,
-        points: '',
+        points: "",
         creator: activity.data.creator,
-      }
+      };
     default:
-      break
+      break;
   }
-  return null
+  return null;
 }
 
 function formatContentDate(sDate: Date | string) {
-  const a = moment.utc()
-  const b = moment.utc(sDate)
-  const dateDiff = a.diff(b, 'days')
+  const a = moment.utc();
+  const b = moment.utc(sDate);
+  const dateDiff = a.diff(b, "days");
   if (dateDiff <= 1) {
-    return moment(sDate)
-      .calendar()
-      .toString()
-      .replace('at', '@')
+    return moment(sDate).calendar().toString().replace("at", "@");
   }
 
-  return moment(sDate).format('MMM Do')
+  return moment(sDate).format("MMM Do");
 }
 
 export const avatarOptions = [
   {
-    name: 'topType',
-    displayName: 'Top Type',
+    name: "topType",
+    displayName: "Top Type",
     options: [
-      'NoHair',
-      'Eyepatch',
-      'Hat',
-      'Hijab',
-      'Turban',
-      'WinterHat1',
-      'WinterHat2',
-      'WinterHat3',
-      'WinterHat4',
-      'LongHairBigHair',
-      'LongHairBob',
-      'LongHairBun',
-      'LongHairCurly',
-      'LongHairCurvy',
-      'LongHairDreads',
-      'LongHairFrida',
-      'LongHairFro',
-      'LongHairFroBand',
-      'LongHairNotTooLong',
-      'LongHairShavedSides',
-      'LongHairMiaWallace',
-      'LongHairStraight',
-      'LongHairStraight2',
-      'LongHairStraightStrand',
-      'ShortHairDreads01',
-      'ShortHairDreads02',
-      'ShortHairFrizzle',
-      'ShortHairShaggyMullet',
-      'ShortHairShortCurly',
-      'ShortHairShortFlat',
-      'ShortHairShortRound',
-      'ShortHairShortWaved',
-      'ShortHairSides',
-      'ShortHairTheCaesar',
-      'ShortHairTheCaesarSidePart',
+      "NoHair",
+      "Eyepatch",
+      "Hat",
+      "Hijab",
+      "Turban",
+      "WinterHat1",
+      "WinterHat2",
+      "WinterHat3",
+      "WinterHat4",
+      "LongHairBigHair",
+      "LongHairBob",
+      "LongHairBun",
+      "LongHairCurly",
+      "LongHairCurvy",
+      "LongHairDreads",
+      "LongHairFrida",
+      "LongHairFro",
+      "LongHairFroBand",
+      "LongHairNotTooLong",
+      "LongHairShavedSides",
+      "LongHairMiaWallace",
+      "LongHairStraight",
+      "LongHairStraight2",
+      "LongHairStraightStrand",
+      "ShortHairDreads01",
+      "ShortHairDreads02",
+      "ShortHairFrizzle",
+      "ShortHairShaggyMullet",
+      "ShortHairShortCurly",
+      "ShortHairShortFlat",
+      "ShortHairShortRound",
+      "ShortHairShortWaved",
+      "ShortHairSides",
+      "ShortHairTheCaesar",
+      "ShortHairTheCaesarSidePart",
     ],
   },
   {
-    name: 'accessoriesType',
-    displayName: 'Accessories Type',
+    name: "accessoriesType",
+    displayName: "Accessories Type",
     options: [
-      'Blank',
-      'Kurt',
-      'Prescription01',
-      'Prescription02',
-      'Round',
-      'Sunglasses',
-      'Wayfarers',
+      "Blank",
+      "Kurt",
+      "Prescription01",
+      "Prescription02",
+      "Round",
+      "Sunglasses",
+      "Wayfarers",
     ],
   },
   {
-    name: 'hatColor',
-    displayName: 'Hat Color',
+    name: "hatColor",
+    displayName: "Hat Color",
     options: [
-      'Black',
-      'Blue01',
-      'Blue02',
-      'Blue03',
-      'Gray01',
-      'Gray02',
-      'Heather',
-      'PastelBlue',
-      'PastelGreen',
-      'PastelOrange',
-      'PastelRed',
-      'PastelYellow',
-      'Pink',
-      'Red',
-      'White',
+      "Black",
+      "Blue01",
+      "Blue02",
+      "Blue03",
+      "Gray01",
+      "Gray02",
+      "Heather",
+      "PastelBlue",
+      "PastelGreen",
+      "PastelOrange",
+      "PastelRed",
+      "PastelYellow",
+      "Pink",
+      "Red",
+      "White",
     ],
   },
   {
-    name: 'hairColor',
-    displayName: 'hairColor',
+    name: "hairColor",
+    displayName: "hairColor",
     options: [
-      'Auburn',
-      'Black',
-      'Blonde',
-      'BlondeGolden',
-      'Brown',
-      'BrownDark',
-      'PastelPink',
-      'Platinum',
-      'Red',
-      'SilverGray',
+      "Auburn",
+      "Black",
+      "Blonde",
+      "BlondeGolden",
+      "Brown",
+      "BrownDark",
+      "PastelPink",
+      "Platinum",
+      "Red",
+      "SilverGray",
     ],
   },
   {
-    name: 'facialHairType',
-    displayName: 'facialHairType',
+    name: "facialHairType",
+    displayName: "facialHairType",
     options: [
-      'Blank',
-      'BeardMedium',
-      'BeardLight',
-      'BeardMajestic',
-      'MoustacheFancy',
-      'MoustacheMagnum',
+      "Blank",
+      "BeardMedium",
+      "BeardLight",
+      "BeardMajestic",
+      "MoustacheFancy",
+      "MoustacheMagnum",
     ],
   },
   {
-    name: 'facialHairColor',
-    displayName: 'facialHairColor',
+    name: "facialHairColor",
+    displayName: "facialHairColor",
+    options: ["Auburn", "Black", "Blonde", "BlondeGolden", "Brown", "BrownDark", "Platinum", "Red"],
+  },
+  {
+    name: "clotheType",
+    displayName: "clotheType",
     options: [
-      'Auburn',
-      'Black',
-      'Blonde',
-      'BlondeGolden',
-      'Brown',
-      'BrownDark',
-      'Platinum',
-      'Red',
+      "BlazerShirt",
+      "BlazerSweater",
+      "CollarSweater",
+      "GraphicShirt",
+      "Hoodie",
+      "Overall",
+      "ShirtCrewNeck",
+      "ShirtScoopNeck",
+      "ShirtVNeck",
     ],
   },
   {
-    name: 'clotheType',
-    displayName: 'clotheType',
+    name: "clotheColor",
+    displayName: "clotheColor",
     options: [
-      'BlazerShirt',
-      'BlazerSweater',
-      'CollarSweater',
-      'GraphicShirt',
-      'Hoodie',
-      'Overall',
-      'ShirtCrewNeck',
-      'ShirtScoopNeck',
-      'ShirtVNeck',
+      "Black",
+      "Blue01",
+      "Blue02",
+      "Blue03",
+      "Gray01",
+      "Gray02",
+      "Heather",
+      "PastelBlue",
+      "PastelGreen",
+      "PastelOrange",
+      "PastelRed",
+      "PastelYellow",
+      "Pink",
+      "Red",
+      "White",
     ],
   },
   {
-    name: 'clotheColor',
-    displayName: 'clotheColor',
+    name: "graphicType",
+    displayName: "graphicType",
     options: [
-      'Black',
-      'Blue01',
-      'Blue02',
-      'Blue03',
-      'Gray01',
-      'Gray02',
-      'Heather',
-      'PastelBlue',
-      'PastelGreen',
-      'PastelOrange',
-      'PastelRed',
-      'PastelYellow',
-      'Pink',
-      'Red',
-      'White',
+      "Bat",
+      "Cumbia",
+      "Deer",
+      "Diamond",
+      "Hola",
+      "Pizza",
+      "Resist",
+      "Selena",
+      "Bear",
+      "SkullOutline",
+      "Skull",
     ],
   },
   {
-    name: 'graphicType',
-    displayName: 'graphicType',
+    name: "eyeType",
+    displayName: "eyeType",
     options: [
-      'Bat',
-      'Cumbia',
-      'Deer',
-      'Diamond',
-      'Hola',
-      'Pizza',
-      'Resist',
-      'Selena',
-      'Bear',
-      'SkullOutline',
-      'Skull',
+      "Close",
+      "Cry",
+      "Default",
+      "Dizzy",
+      "EyeRoll",
+      "Happy",
+      "Hearts",
+      "Side",
+      "Squint",
+      "Surprised",
+      "Wink",
+      "WinkWacky",
     ],
   },
   {
-    name: 'eyeType',
-    displayName: 'eyeType',
+    name: "eyebrowType",
+    displayName: "eyebrowType",
     options: [
-      'Close',
-      'Cry',
-      'Default',
-      'Dizzy',
-      'EyeRoll',
-      'Happy',
-      'Hearts',
-      'Side',
-      'Squint',
-      'Surprised',
-      'Wink',
-      'WinkWacky',
+      "Angry",
+      "AngryNatural",
+      "Default",
+      "DefaultNatural",
+      "FlatNatural",
+      "RaisedExcited",
+      "RaisedExcitedNatural",
+      "SadConcerned",
+      "SadConcernedNatural",
+      "UnibrowNatural",
+      "UpDown",
+      "UpDownNatural",
     ],
   },
   {
-    name: 'eyebrowType',
-    displayName: 'eyebrowType',
+    name: "mouthType",
+    displayName: "Mouth Type",
     options: [
-      'Angry',
-      'AngryNatural',
-      'Default',
-      'DefaultNatural',
-      'FlatNatural',
-      'RaisedExcited',
-      'RaisedExcitedNatural',
-      'SadConcerned',
-      'SadConcernedNatural',
-      'UnibrowNatural',
-      'UpDown',
-      'UpDownNatural',
+      "Concerned",
+      "Default",
+      "Disbelief",
+      "Eating",
+      "Grimace",
+      "Sad",
+      "ScreamOpen",
+      "Serious",
+      "Smile",
+      "Tongue",
+      "Twinkle",
+      "Vomit",
     ],
   },
   {
-    name: 'mouthType',
-    displayName: 'Mouth Type',
-    options: [
-      'Concerned',
-      'Default',
-      'Disbelief',
-      'Eating',
-      'Grimace',
-      'Sad',
-      'ScreamOpen',
-      'Serious',
-      'Smile',
-      'Tongue',
-      'Twinkle',
-      'Vomit',
-    ],
+    name: "skinColor",
+    displayName: "Skin Color",
+    options: ["Tanned", "Yellow", "Pale", "Light", "Brown", "DarkBrown", "Black"],
   },
-  {
-    name: 'skinColor',
-    displayName: 'Skin Color',
-    options: [
-      'Tanned',
-      'Yellow',
-      'Pale',
-      'Light',
-      'Brown',
-      'DarkBrown',
-      'Black',
-    ],
-  },
-]
+];

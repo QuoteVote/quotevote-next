@@ -188,7 +188,11 @@ describe("discussionSplit utils", () => {
         toJSON: () => ({}),
       });
       Object.defineProperty(container, "clientHeight", { value: 200, configurable: true });
-      Object.defineProperty(container, "scrollTop", { value: 0, writable: true, configurable: true });
+      Object.defineProperty(container, "scrollTop", {
+        value: 0,
+        writable: true,
+        configurable: true,
+      });
       const scrollTo = jest.fn();
       container.scrollTo = scrollTo;
 

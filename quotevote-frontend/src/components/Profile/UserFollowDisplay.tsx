@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import type { UserFollowDisplayProps } from '@/types/profile';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import { FollowButton } from '../CustomButtons/FollowButton';
+import Link from "next/link";
+import type { UserFollowDisplayProps } from "@/types/profile";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { FollowButton } from "../CustomButtons/FollowButton";
 
 export function UserFollowDisplay({
   avatar,
@@ -30,10 +30,7 @@ export function UserFollowDisplay({
         />
       </Link>
       <div className="flex-1 flex flex-col gap-1">
-        <Link
-          href={`/profile/${username}`}
-          className="font-medium hover:underline"
-        >
+        <Link href={`/profile/${username}`} className="font-medium hover:underline">
           {username}
         </Link>
         <p className="text-sm text-muted-foreground">
@@ -41,13 +38,8 @@ export function UserFollowDisplay({
         </p>
       </div>
       <div className="flex-shrink-0">
-        <FollowButton
-          isFollowing={isFollowing}
-          profileUserId={id}
-          username={username}
-        />
+        <FollowButton isFollowing={isFollowing} profileUserId={id} username={username} />
       </div>
     </div>
   );
 }
-

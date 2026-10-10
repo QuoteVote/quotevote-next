@@ -1,28 +1,22 @@
-import type { IconProps } from '@/types/icons';
-import { cn } from '@/lib/utils';
+import type { IconProps } from "@/types/icons";
+import { cn } from "@/lib/utils";
 
 /**
  * Search icon component
  * Custom SVG icon migrated from Material UI
  */
-export function Search({
-  size = 24,
-  className,
-  color,
-  fill,
-  ...props
-}: IconProps) {
-  const sizeValue = typeof size === 'number' ? `${size}px` : size;
-  const fillValue = color || fill || 'currentColor';
-  
+export function Search({ size = 24, className, color, fill, ...props }: IconProps) {
+  const sizeValue = typeof size === "number" ? `${size}px` : size;
+  const fillValue = color || fill || "currentColor";
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width={sizeValue}
       height={sizeValue}
       viewBox="0 0 28 30"
-      fill={typeof fillValue === 'string' ? fillValue : 'currentColor'}
-      className={cn('inline-block', className)}
+      fill={typeof fillValue === "string" ? fillValue : "currentColor"}
+      className={cn("inline-block", className)}
       {...props}
     >
       <path d="M10.7539 15.9434L0.93343 24.7674C-0.297824 25.9511 -0.313061 27.9052 0.899953 29.1076C1.50023 29.7028 2.28635 29.9997 3.07225 29.9997C3.87362 29.9997 4.67498 29.6905 5.27779 29.0741L14.1743 19.3432C13.5011 18.9092 12.8729 18.4047 12.2952 17.8321C11.7102 17.2522 11.1958 16.6205 10.7539 15.9434Z" />
@@ -32,4 +26,3 @@ export function Search({
 }
 
 export default Search;
-

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useId } from 'react';
-import type { IconProps } from '@/types/icons';
-import { cn } from '@/lib/utils';
+import { useId } from "react";
+import type { IconProps } from "@/types/icons";
+import { cn } from "@/lib/utils";
 
 /**
  * Globe icon component
@@ -21,7 +21,7 @@ export function Globe({
 }: IconProps & { title?: string; showSignal?: boolean }) {
   const sizeValue = typeof size === "number" ? `${size}px` : size;
   const label = ariaLabel || title;
-  const gradientId = `quotevote-globe-gradient-${useId().replace(/:/g, '')}`;
+  const gradientId = `quotevote-globe-gradient-${useId().replace(/:/g, "")}`;
 
   return (
     <svg
@@ -32,8 +32,8 @@ export function Globe({
       fill="none"
       overflow="visible"
       preserveAspectRatio="xMidYMid meet"
-      className={cn('block shrink-0 overflow-visible', className)}
-      role={label ? 'img' : undefined}
+      className={cn("block shrink-0 overflow-visible", className)}
+      role={label ? "img" : undefined}
       aria-label={label}
       {...props}
     >

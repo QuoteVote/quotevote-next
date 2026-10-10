@@ -9,53 +9,46 @@
  * - RC1-007: Multi-select activity filters, union filtering, All reset
  */
 
-import { render, screen, act, waitFor } from '../../utils/test-utils';
-import userEvent from '@testing-library/user-event';
-import { ProfileView } from '../../../components/Profile/ProfileView';
-import type { ProfileUser } from '@/types/profile';
+import { render, screen, act, waitFor } from "../../utils/test-utils";
+import userEvent from "@testing-library/user-event";
+import { ProfileView } from "../../../components/Profile/ProfileView";
+import type { ProfileUser } from "@/types/profile";
 
 // Mock child components
-jest.mock('../../../components/Profile/ProfileHeader', () => ({
+jest.mock("../../../components/Profile/ProfileHeader", () => ({
   ProfileHeader: ({ profileUser }: { profileUser: ProfileUser }) => (
-    <div data-testid="profile-header">
-      Header for {profileUser.username}
-    </div>
+    <div data-testid="profile-header">Header for {profileUser.username}</div>
   ),
 }));
 
-jest.mock('../../../components/Profile/ReputationDisplay', () => ({
+jest.mock("../../../components/Profile/ReputationDisplay", () => ({
   ReputationDisplay: ({ reputation }: { reputation?: unknown }) => (
-    <div data-testid="reputation-display">
-      {reputation ? 'Reputation' : 'No Reputation'}
-    </div>
+    <div data-testid="reputation-display">{reputation ? "Reputation" : "No Reputation"}</div>
   ),
 }));
 
-jest.mock('@/components/LoadingSpinner', () => ({
+jest.mock("@/components/LoadingSpinner", () => ({
   LoadingSpinner: () => <div data-testid="loading-spinner">Loading...</div>,
 }));
 
-jest.mock('@/components/Activity/PaginatedActivityList', () => ({
+jest.mock("@/components/Activity/PaginatedActivityList", () => ({
   PaginatedActivityList: ({ activityEvent = [] }: { activityEvent?: string[] }) => (
-    <div
-      data-testid="paginated-activity-list"
-      data-events={activityEvent.join(',')}
-    >
-      {activityEvent.length === 0 ? 'ALL' : activityEvent.join(',')}
+    <div data-testid="paginated-activity-list" data-events={activityEvent.join(",")}>
+      {activityEvent.length === 0 ? "ALL" : activityEvent.join(",")}
     </div>
   ),
 }));
 
 const mockProfileUser: ProfileUser = {
-  _id: 'user1',
-  username: 'testuser',
-  name: 'Test User',
-  avatar: 'https://example.com/avatar.jpg',
+  _id: "user1",
+  username: "testuser",
+  name: "Test User",
+  avatar: "https://example.com/avatar.jpg",
   contributorBadge: true,
-  _followingId: ['user2'],
-  _followersId: ['user3', 'user4'],
+  _followingId: ["user2"],
+  _followersId: ["user3", "user4"],
   reputation: {
-    _id: 'rep1',
+    _id: "rep1",
     overallScore: 750,
     inviteNetworkScore: 200,
     conductScore: 250,
@@ -72,281 +65,287 @@ const mockProfileUser: ProfileUser = {
       totalPosts: 20,
       totalComments: 30,
     },
-    lastCalculated: '2024-01-01T00:00:00Z',
+    lastCalculated: "2024-01-01T00:00:00Z",
   },
 };
 
-describe('ProfileView', () => {
-  describe('Loading State', () => {
-    it('renders loading spinner when loading', () => {
+describe("ProfileView", () => {
+  describe("Loading State", () => {
+    it("renders loading spinner when loading", () => {
       render(<ProfileView loading={true} />);
-      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+      expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
     });
   });
 
-  describe('Invalid User State', () => {
-    it('renders invalid user message when no profileUser', () => {
+  describe("Invalid User State", () => {
+    it("renders invalid user message when no profileUser", () => {
       render(<ProfileView profileUser={undefined} />);
-      expect(screen.getByText('Invalid user')).toBeInTheDocument();
-      expect(screen.getByText('Return to homepage.')).toBeInTheDocument();
+      expect(screen.getByText("Invalid user")).toBeInTheDocument();
+      expect(screen.getByText("Return to homepage.")).toBeInTheDocument();
     });
 
-    it('has link to home page', () => {
+    it("has link to home page", () => {
       render(<ProfileView profileUser={undefined} />);
-      const link = screen.getByText('Return to homepage.');
-      expect(link.closest('a')).toHaveAttribute('href', '/');
+      const link = screen.getByText("Return to homepage.");
+      expect(link.closest("a")).toHaveAttribute("href", "/");
     });
   });
 
-  describe('Query error state (#440)', () => {
-    it('renders a recoverable error instead of Invalid user', () => {
+  describe("Query error state (#440)", () => {
+    it("renders a recoverable error instead of Invalid user", () => {
       render(
-        <ProfileView
-          errorMessage="This profile could not be loaded. Try again, or return to Explore."
-        />
+        <ProfileView errorMessage="This profile could not be loaded. Try again, or return to Explore." />
       );
       expect(screen.getByText(/couldn.t load this profile/i)).toBeInTheDocument();
-      expect(screen.queryByText('Invalid user')).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /back to explore/i })).toHaveAttribute(
-        'href',
-        '/'
-      );
+      expect(screen.queryByText("Invalid user")).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /back to explore/i })).toHaveAttribute("href", "/");
     });
   });
 
-  describe('Valid Profile - RC1-006 Filter Taxonomy & RC1-007 Multi-Select', () => {
-    it('renders profile header', async () => {
+  describe("Valid Profile - RC1-006 Filter Taxonomy & RC1-007 Multi-Select", () => {
+    it("renders profile header", async () => {
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
       await waitFor(() => {
-        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+        expect(screen.getByTestId("profile-header")).toBeInTheDocument();
       });
       expect(screen.getByText(/Header for testuser/)).toBeInTheDocument();
     });
 
-    it('renders the five activity tabs without an About tab', async () => {
+    it("renders the five activity tabs without an About tab", async () => {
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Posts' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Voted' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Commented' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Quoted' })).toBeInTheDocument();
-        expect(screen.queryByRole('tab', { name: 'About' })).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Posts" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Voted" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Commented" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Quoted" })).toBeInTheDocument();
+        expect(screen.queryByRole("tab", { name: "About" })).not.toBeInTheDocument();
       });
     });
 
-    it('keeps reputation visible after removing the About tab', async () => {
+    it("keeps reputation visible after removing the About tab", async () => {
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId('reputation-display')).toBeInTheDocument();
-        expect(screen.getByTestId('profile-activity-section')).toBeInTheDocument();
+        expect(screen.getByTestId("reputation-display")).toBeInTheDocument();
+        expect(screen.getByTestId("profile-activity-section")).toBeInTheDocument();
       });
     });
 
-    it('shows All activity by default with All button active', async () => {
+    it("shows All activity by default with All button active", async () => {
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
       await waitFor(() => {
-        const allButton = screen.getByRole('button', { name: 'All' });
-        expect(allButton).toHaveAttribute('aria-pressed', 'true');
-        expect(allButton).toHaveAttribute('data-state', 'active');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveTextContent('ALL');
+        const allButton = screen.getByRole("button", { name: "All" });
+        expect(allButton).toHaveAttribute("aria-pressed", "true");
+        expect(allButton).toHaveAttribute("data-state", "active");
+        expect(screen.getByTestId("paginated-activity-list")).toHaveTextContent("ALL");
       });
     });
 
-    it('filters by single activity type when Posts is clicked', async () => {
+    it("filters by single activity type when Posts is clicked", async () => {
       const user = userEvent.setup();
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
-      const postsButton = screen.getByRole('button', { name: 'Posts' });
+      const postsButton = screen.getByRole("button", { name: "Posts" });
       await user.click(postsButton);
 
       await waitFor(() => {
-        expect(postsButton).toHaveAttribute('aria-pressed', 'true');
-        expect(postsButton).toHaveAttribute('data-state', 'active');
-        expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveTextContent('POSTED');
+        expect(postsButton).toHaveAttribute("aria-pressed", "true");
+        expect(postsButton).toHaveAttribute("data-state", "active");
+        expect(screen.getByRole("button", { name: "All" })).toHaveAttribute(
+          "aria-pressed",
+          "false"
+        );
+        expect(screen.getByTestId("paginated-activity-list")).toHaveTextContent("POSTED");
       });
     });
 
-    it('filters by single activity type when Voted, Commented, and Quoted are clicked', async () => {
+    it("filters by single activity type when Voted, Commented, and Quoted are clicked", async () => {
       const user = userEvent.setup();
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
 
-      const votedButton = screen.getByRole('button', { name: 'Voted' });
+      const votedButton = screen.getByRole("button", { name: "Voted" });
       await user.click(votedButton);
       await waitFor(() => {
-        expect(votedButton).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveTextContent('VOTED');
+        expect(votedButton).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByTestId("paginated-activity-list")).toHaveTextContent("VOTED");
       });
 
-      const allButton = screen.getByRole('button', { name: 'All' });
+      const allButton = screen.getByRole("button", { name: "All" });
       await user.click(allButton);
       await waitFor(() => {
-        expect(allButton).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveTextContent('ALL');
+        expect(allButton).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByTestId("paginated-activity-list")).toHaveTextContent("ALL");
       });
 
-      const commentedButton = screen.getByRole('button', { name: 'Commented' });
+      const commentedButton = screen.getByRole("button", { name: "Commented" });
       await user.click(commentedButton);
       await waitFor(() => {
-        expect(commentedButton).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveTextContent('COMMENTED');
+        expect(commentedButton).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByTestId("paginated-activity-list")).toHaveTextContent("COMMENTED");
       });
     });
 
-    it('supports selecting multiple filters simultaneously (union of Posts and Commented)', async () => {
+    it("supports selecting multiple filters simultaneously (union of Posts and Commented)", async () => {
       const user = userEvent.setup();
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
 
-      const postsButton = screen.getByRole('button', { name: 'Posts' });
-      const commentedButton = screen.getByRole('button', { name: 'Commented' });
+      const postsButton = screen.getByRole("button", { name: "Posts" });
+      const commentedButton = screen.getByRole("button", { name: "Commented" });
 
       await user.click(postsButton);
       await user.click(commentedButton);
 
       await waitFor(() => {
-        expect(postsButton).toHaveAttribute('aria-pressed', 'true');
-        expect(commentedButton).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false');
-        expect(screen.getByRole('button', { name: 'Voted' })).toHaveAttribute('aria-pressed', 'false');
-        expect(screen.getByRole('button', { name: 'Quoted' })).toHaveAttribute('aria-pressed', 'false');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveAttribute(
-          'data-events',
-          'POSTED,COMMENTED'
+        expect(postsButton).toHaveAttribute("aria-pressed", "true");
+        expect(commentedButton).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByRole("button", { name: "All" })).toHaveAttribute(
+          "aria-pressed",
+          "false"
+        );
+        expect(screen.getByRole("button", { name: "Voted" })).toHaveAttribute(
+          "aria-pressed",
+          "false"
+        );
+        expect(screen.getByRole("button", { name: "Quoted" })).toHaveAttribute(
+          "aria-pressed",
+          "false"
+        );
+        expect(screen.getByTestId("paginated-activity-list")).toHaveAttribute(
+          "data-events",
+          "POSTED,COMMENTED"
         );
       });
     });
 
-    it('toggles off a selected filter and updates union query', async () => {
+    it("toggles off a selected filter and updates union query", async () => {
       const user = userEvent.setup();
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
 
-      const postsButton = screen.getByRole('button', { name: 'Posts' });
-      const commentedButton = screen.getByRole('button', { name: 'Commented' });
+      const postsButton = screen.getByRole("button", { name: "Posts" });
+      const commentedButton = screen.getByRole("button", { name: "Commented" });
 
       await user.click(postsButton);
       await user.click(commentedButton);
       await waitFor(() => {
-        expect(screen.getByTestId('paginated-activity-list')).toHaveAttribute(
-          'data-events',
-          'POSTED,COMMENTED'
+        expect(screen.getByTestId("paginated-activity-list")).toHaveAttribute(
+          "data-events",
+          "POSTED,COMMENTED"
         );
       });
 
       // Untoggle Posts
       await user.click(postsButton);
       await waitFor(() => {
-        expect(postsButton).toHaveAttribute('aria-pressed', 'false');
-        expect(commentedButton).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveAttribute(
-          'data-events',
-          'COMMENTED'
+        expect(postsButton).toHaveAttribute("aria-pressed", "false");
+        expect(commentedButton).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByTestId("paginated-activity-list")).toHaveAttribute(
+          "data-events",
+          "COMMENTED"
         );
       });
     });
 
-    it('reverts to All when all specific active filters are unchecked', async () => {
+    it("reverts to All when all specific active filters are unchecked", async () => {
       const user = userEvent.setup();
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
 
-      const postsButton = screen.getByRole('button', { name: 'Posts' });
+      const postsButton = screen.getByRole("button", { name: "Posts" });
       await user.click(postsButton);
       await waitFor(() => {
-        expect(postsButton).toHaveAttribute('aria-pressed', 'true');
+        expect(postsButton).toHaveAttribute("aria-pressed", "true");
       });
 
       // Uncheck Posts
       await user.click(postsButton);
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveTextContent('ALL');
+        expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByTestId("paginated-activity-list")).toHaveTextContent("ALL");
       });
     });
 
-    it('resets multi-selection to All when All button is clicked', async () => {
+    it("resets multi-selection to All when All button is clicked", async () => {
       const user = userEvent.setup();
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
 
-      const postsButton = screen.getByRole('button', { name: 'Posts' });
-      const votedButton = screen.getByRole('button', { name: 'Voted' });
-      const allButton = screen.getByRole('button', { name: 'All' });
+      const postsButton = screen.getByRole("button", { name: "Posts" });
+      const votedButton = screen.getByRole("button", { name: "Voted" });
+      const allButton = screen.getByRole("button", { name: "All" });
 
       await user.click(postsButton);
       await user.click(votedButton);
 
       await waitFor(() => {
-        expect(postsButton).toHaveAttribute('aria-pressed', 'true');
-        expect(votedButton).toHaveAttribute('aria-pressed', 'true');
+        expect(postsButton).toHaveAttribute("aria-pressed", "true");
+        expect(votedButton).toHaveAttribute("aria-pressed", "true");
       });
 
       await user.click(allButton);
       await waitFor(() => {
-        expect(allButton).toHaveAttribute('aria-pressed', 'true');
-        expect(postsButton).toHaveAttribute('aria-pressed', 'false');
-        expect(votedButton).toHaveAttribute('aria-pressed', 'false');
-        expect(screen.getByTestId('paginated-activity-list')).toHaveTextContent('ALL');
+        expect(allButton).toHaveAttribute("aria-pressed", "true");
+        expect(postsButton).toHaveAttribute("aria-pressed", "false");
+        expect(votedButton).toHaveAttribute("aria-pressed", "false");
+        expect(screen.getByTestId("paginated-activity-list")).toHaveTextContent("ALL");
       });
     });
-
   });
 
-  describe('Layout', () => {
-    it('has proper container structure', async () => {
+  describe("Layout", () => {
+    it("has proper container structure", async () => {
       let container: HTMLElement;
       await act(async () => {
         const result = render(<ProfileView profileUser={mockProfileUser} />);
         container = result.container;
       });
-      const mainContainer = container!.querySelector('.w-full');
+      const mainContainer = container!.querySelector(".w-full");
       expect(mainContainer).toBeInTheDocument();
     });
 
-    it('has vertical spacing', async () => {
+    it("has vertical spacing", async () => {
       let container: HTMLElement;
       await act(async () => {
         const result = render(<ProfileView profileUser={mockProfileUser} />);
         container = result.container;
       });
-      const contentContainer = container!.querySelector('.pb-8');
+      const contentContainer = container!.querySelector(".pb-8");
       expect(contentContainer).toBeInTheDocument();
     });
   });
 
-  describe('Edge Cases', () => {
-    it('handles profile user with minimal data', async () => {
+  describe("Edge Cases", () => {
+    it("handles profile user with minimal data", async () => {
       const minimalUser: ProfileUser = {
-        _id: 'user1',
-        username: 'minimaluser',
+        _id: "user1",
+        username: "minimaluser",
       };
       await act(async () => {
         render(<ProfileView profileUser={minimalUser} />);
       });
       await waitFor(() => {
-        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+        expect(screen.getByTestId("profile-header")).toBeInTheDocument();
       });
     });
 
-    it('handles profile user with empty arrays for following/followers', async () => {
+    it("handles profile user with empty arrays for following/followers", async () => {
       const userWithEmptyArrays: ProfileUser = {
         ...mockProfileUser,
         _followingId: [],
@@ -356,11 +355,11 @@ describe('ProfileView', () => {
         render(<ProfileView profileUser={userWithEmptyArrays} />);
       });
       await waitFor(() => {
-        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+        expect(screen.getByTestId("profile-header")).toBeInTheDocument();
       });
     });
 
-    it('keeps the activity list visible when reputation is missing', async () => {
+    it("keeps the activity list visible when reputation is missing", async () => {
       const userWithNullReputation: ProfileUser = {
         ...mockProfileUser,
         reputation: undefined,
@@ -369,59 +368,59 @@ describe('ProfileView', () => {
         render(<ProfileView profileUser={userWithNullReputation} />);
       });
       await waitFor(() => {
-        expect(screen.getByTestId('profile-activity-section')).toBeInTheDocument();
+        expect(screen.getByTestId("profile-activity-section")).toBeInTheDocument();
       });
     });
   });
 
-  describe('Component Integration', () => {
-    it('renders profile header and filter group together', async () => {
+  describe("Component Integration", () => {
+    it("renders profile header and filter group together", async () => {
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
       await waitFor(() => {
-        expect(screen.getByTestId('profile-header')).toBeInTheDocument();
-        expect(screen.getByRole('group', { name: /activity filters/i })).toBeInTheDocument();
+        expect(screen.getByTestId("profile-header")).toBeInTheDocument();
+        expect(screen.getByRole("group", { name: /activity filters/i })).toBeInTheDocument();
       });
     });
 
-    it('maintains proper spacing between components', async () => {
+    it("maintains proper spacing between components", async () => {
       let container: HTMLElement;
       await act(async () => {
         const result = render(<ProfileView profileUser={mockProfileUser} />);
         container = result.container;
       });
-      const spaceYContainer = container!.querySelector('.pb-8');
+      const spaceYContainer = container!.querySelector(".pb-8");
       expect(spaceYContainer).toBeInTheDocument();
     });
   });
 
-  describe('RC1-009: Activity Button Colors by Type', () => {
-    it('applies activity-specific color classes when filters are active', async () => {
+  describe("RC1-009: Activity Button Colors by Type", () => {
+    it("applies activity-specific color classes when filters are active", async () => {
       const user = userEvent.setup();
       await act(async () => {
         render(<ProfileView profileUser={mockProfileUser} />);
       });
 
-      const votedButton = screen.getByRole('button', { name: 'Voted' });
+      const votedButton = screen.getByRole("button", { name: "Voted" });
       await user.click(votedButton);
       await waitFor(() => {
-        expect(votedButton.className).toContain('border-[#52b274]');
-        expect(votedButton.className).toContain('text-[#52b274]');
+        expect(votedButton.className).toContain("border-[#52b274]");
+        expect(votedButton.className).toContain("text-[#52b274]");
       });
 
-      const commentedButton = screen.getByRole('button', { name: 'Commented' });
+      const commentedButton = screen.getByRole("button", { name: "Commented" });
       await user.click(commentedButton);
       await waitFor(() => {
-        expect(commentedButton.className).toContain('border-[#ca8a04]');
-        expect(commentedButton.className).toContain('text-[#ca8a04]');
+        expect(commentedButton.className).toContain("border-[#ca8a04]");
+        expect(commentedButton.className).toContain("text-[#ca8a04]");
       });
 
-      const quotedButton = screen.getByRole('button', { name: 'Quoted' });
+      const quotedButton = screen.getByRole("button", { name: "Quoted" });
       await user.click(quotedButton);
       await waitFor(() => {
-        expect(quotedButton.className).toContain('border-[#c026d3]');
-        expect(quotedButton.className).toContain('text-[#c026d3]');
+        expect(quotedButton.className).toContain("border-[#c026d3]");
+        expect(quotedButton.className).toContain("text-[#c026d3]");
       });
     });
   });

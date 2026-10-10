@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -10,8 +10,8 @@ interface ErrorProps {
 
 export default function DashboardError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[DashboardError]', error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("[DashboardError]", error);
     }
   }, [error]);
 
@@ -20,7 +20,7 @@ export default function DashboardError({ error, reset }: ErrorProps) {
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold tracking-tight">Something went wrong</h2>
         <p className="text-sm text-muted-foreground max-w-sm">
-          {error.message || 'An unexpected error occurred. Please try again.'}
+          {error.message || "An unexpected error occurred. Please try again."}
         </p>
       </div>
       <Button onClick={reset}>Try again</Button>

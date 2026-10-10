@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { LogoutPage } from '@/components/LogoutPage'
+import { LogoutPage } from "@/components/LogoutPage";
 
 export default function LogoutRoute() {
-  return <LogoutPage />
+  return <LogoutPage />;
 }

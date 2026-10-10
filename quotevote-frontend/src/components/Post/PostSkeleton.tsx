@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 export default function PostSkeleton() {
   return (
@@ -7,7 +7,7 @@ export default function PostSkeleton() {
         <div
           key={i}
           className="bg-card rounded-[7px] border border-border/60 overflow-hidden animate-pulse"
-          style={{ borderBottom: '10px solid #e2e8f0' }}
+          style={{ borderBottom: "10px solid #e2e8f0" }}
         >
           {/* Vote row skeleton */}
           <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b border-border/30">
@@ -50,5 +50,5 @@ export default function PostSkeleton() {
         </div>
       ))}
     </div>
-  )
+  );
 }

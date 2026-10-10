@@ -1,16 +1,16 @@
-import { Suspense } from 'react';
-import type { Metadata } from 'next';
-import { SubHeader } from '@/components/SubHeader';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { ProfileController } from '@/components/Profile/ProfileController';
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import { SubHeader } from "@/components/SubHeader";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ProfileController } from "@/components/Profile/ProfileController";
 
 export const metadata: Metadata = {
-  title: 'Profile - Quote.Vote',
-  description: 'View and manage your Quote.Vote profile',
+  title: "Profile - Quote.Vote",
+  description: "View and manage your Quote.Vote profile",
 };
 
 // Mark as dynamic to prevent static optimization issues
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * Profile Page (Server Component)

@@ -1,14 +1,10 @@
 "use client";
 
-import type { CSSProperties, FC, ReactElement, ReactNode } from 'react';
+import type { CSSProperties, FC, ReactElement, ReactNode } from "react";
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-type TooltipPlacement = 'top' | 'right' | 'bottom' | 'left';
+type TooltipPlacement = "top" | "right" | "bottom" | "left";
 
 interface RichTooltipProps {
   content: ReactNode;
@@ -26,15 +22,15 @@ interface RichTooltipProps {
   arrow?: boolean;
 }
 
-const sideMap: Record<TooltipPlacement, 'top' | 'right' | 'bottom' | 'left'> = {
-  top: 'top',
-  right: 'right',
-  bottom: 'bottom',
-  left: 'left',
+const sideMap: Record<TooltipPlacement, "top" | "right" | "bottom" | "left"> = {
+  top: "top",
+  right: "right",
+  bottom: "bottom",
+  left: "left",
 };
 
 const RichTooltip: FC<RichTooltipProps> = ({
-  placement = 'top',
+  placement = "top",
   open,
   onClose,
   content,
@@ -43,7 +39,7 @@ const RichTooltip: FC<RichTooltipProps> = ({
   spacing,
   tipBackgroundImage,
 }) => {
-  const side = sideMap[placement] ?? 'top';
+  const side = sideMap[placement] ?? "top";
 
   const style: CSSProperties = {};
   if (tipColor) {
@@ -52,7 +48,7 @@ const RichTooltip: FC<RichTooltipProps> = ({
   if (tipBackgroundImage) {
     style.backgroundImage = tipBackgroundImage;
   }
-  if (typeof spacing === 'number') {
+  if (typeof spacing === "number") {
     style.padding = `${spacing}px`;
   }
 
@@ -60,23 +56,20 @@ const RichTooltip: FC<RichTooltipProps> = ({
     <Popover
       open={open}
       onOpenChange={(nextOpen: boolean) => {
-      if (!nextOpen && onClose) {
-        onClose();
-      }
+        if (!nextOpen && onClose) {
+          onClose();
+        }
       }}
     >
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
-      side={side}
-      sideOffset={8}
-      className="max-w-xl rounded-md border bg-popover p-0 text-sm text-popover-foreground shadow-md"
+        side={side}
+        sideOffset={8}
+        className="max-w-xl rounded-md border bg-popover p-0 text-sm text-popover-foreground shadow-md"
       >
-      <div
-        className="relative max-w-full rounded-md"
-        style={style}
-      >
-        {content}
-      </div>
+        <div className="relative max-w-full rounded-md" style={style}>
+          {content}
+        </div>
       </PopoverContent>
     </Popover>
   );

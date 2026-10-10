@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Calendar, ChevronDown } from 'lucide-react'
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar, ChevronDown } from "lucide-react";
 
 /**
  * DateSearchBar component
@@ -12,32 +12,32 @@ import { Calendar, ChevronDown } from 'lucide-react'
  * Collapsible date range filter that syncs from/to values to URL search params.
  */
 export default function DateSearchBar() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isOpen, setIsOpen] = useState(false);
 
-  const from = searchParams.get('from') || ''
-  const to = searchParams.get('to') || ''
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
 
   const handleFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams.toString());
     if (e.target.value) {
-      params.set('from', e.target.value)
+      params.set("from", e.target.value);
     } else {
-      params.delete('from')
+      params.delete("from");
     }
-    router.replace(`?${params.toString()}`)
-  }
+    router.replace(`?${params.toString()}`);
+  };
 
   const handleToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams.toString());
     if (e.target.value) {
-      params.set('to', e.target.value)
+      params.set("to", e.target.value);
     } else {
-      params.delete('to')
+      params.delete("to");
     }
-    router.replace(`?${params.toString()}`)
-  }
+    router.replace(`?${params.toString()}`);
+  };
 
   return (
     <div>
@@ -48,9 +48,7 @@ export default function DateSearchBar() {
       >
         <Calendar className="h-4 w-4" />
         Date Range
-        <ChevronDown
-          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
+        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
       {isOpen && (
         <div className="flex gap-4 mt-2">
@@ -66,16 +64,10 @@ export default function DateSearchBar() {
           </div>
           <div>
             <Label htmlFor="to">To</Label>
-            <Input
-              id="to"
-              type="date"
-              value={to}
-              onChange={handleToChange}
-              className="w-40"
-            />
+            <Input id="to" type="date" value={to} onChange={handleToChange} className="w-40" />
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

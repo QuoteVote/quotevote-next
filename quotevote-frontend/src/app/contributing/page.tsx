@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Contributing - Quote.Vote',
+  title: "Contributing - Quote.Vote",
 };
 
 export default function ContributingPage() {

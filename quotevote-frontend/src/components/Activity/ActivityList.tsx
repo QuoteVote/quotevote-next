@@ -1,52 +1,39 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { useMutation } from '@apollo/client/react'
-import { useAppStore } from '@/store'
-import { ActivityCard } from '@/components/ui/ActivityCard'
-import { ActivitySkeletonLoader } from './ActivitySkeleton'
-import { ActivityEmptyList } from './ActivityEmptyList'
-import { useWidth } from '@/hooks/useResponsive'
-import getCardBackgroundColor from '@/lib/utils/getCardBackgroundColor'
-import { getActivityContent } from '@/lib/utils/getActivityContent'
-import { CREATE_POST_MESSAGE_ROOM, UPDATE_POST_BOOKMARK } from '@/graphql/mutations'
-import {
-  GET_CHAT_ROOMS,
-  GET_POST,
-  GET_TOP_POSTS,
-  GET_USER_ACTIVITY,
-} from '@/graphql/queries'
-import useGuestGuard from '@/hooks/useGuestGuard'
-import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
-import type { ActivityListProps, ActivityEntity } from '@/types/activity'
+import { useRouter } from "next/navigation";
+import { useMutation } from "@apollo/client/react";
+import { useAppStore } from "@/store";
+import { ActivityCard } from "@/components/ui/ActivityCard";
+import { ActivitySkeletonLoader } from "./ActivitySkeleton";
+import { ActivityEmptyList } from "./ActivityEmptyList";
+import { useWidth } from "@/hooks/useResponsive";
+import getCardBackgroundColor from "@/lib/utils/getCardBackgroundColor";
+import { getActivityContent } from "@/lib/utils/getActivityContent";
+import { CREATE_POST_MESSAGE_ROOM, UPDATE_POST_BOOKMARK } from "@/graphql/mutations";
+import { GET_CHAT_ROOMS, GET_POST, GET_TOP_POSTS, GET_USER_ACTIVITY } from "@/graphql/queries";
+import useGuestGuard from "@/hooks/useGuestGuard";
+import { toAppPostUrl } from "@/lib/utils/sanitizeUrl";
+import type { ActivityListProps, ActivityEntity } from "@/types/activity";
 
 function LoadActivityCard({
   width,
   activity,
 }: {
-  width: 'lg' | 'md' | 'sm' | 'xl' | 'xs'
-  activity: ActivityEntity
+  width: "lg" | "md" | "sm" | "xl" | "xs";
+  activity: ActivityEntity;
 }) {
-  const router = useRouter()
-  const {
-    post,
-    user,
-    quote,
-    comment,
-    vote,
-    created,
-    activityType,
-  } = activity
+  const router = useRouter();
+  const { post, user, quote, comment, vote, created, activityType } = activity;
 
   // Hooks must be called unconditionally before any early returns
-  const currentUser = useAppStore((state) => state.user.data)
-  const [createPostMessageRoom] = useMutation(CREATE_POST_MESSAGE_ROOM)
-  const [updatePostBookmark] = useMutation(UPDATE_POST_BOOKMARK)
-  const ensureAuth = useGuestGuard()
-  const setSelectedPost = useAppStore((state) => state.setSelectedPost)
+  const currentUser = useAppStore((state) => state.user.data);
+  const [createPostMessageRoom] = useMutation(CREATE_POST_MESSAGE_ROOM);
+  const [updatePostBookmark] = useMutation(UPDATE_POST_BOOKMARK);
+  const ensureAuth = useGuestGuard();
+  const setSelectedPost = useAppStore((state) => state.setSelectedPost);
 
   if (!post) {
-    return null
+    return null;
   }
 
   const {
@@ -58,32 +45,35 @@ function LoadActivityCard({
     votes = [],
     quotes = [],
     messageRoom,
-  } = post
+  } = post;
 
-  const messages = messageRoom?.messages || []
-  const postId = post._id
-  const { username, avatar, name } = user
-  const limit = 5
+  const messages = messageRoom?.messages || [];
+  const postId = post._id;
+  const { username, avatar, name } = user;
+  const limit = 5;
 
-  const type =
-    activityType === 'VOTED' && vote
-      ? `${vote.type}${activityType}`
-      : activityType
+  const type = activityType === "VOTED" && vote ? `${vote.type}${activityType}` : activityType;
 
   const content = getActivityContent(
     type,
     post as unknown as { text: string; [key: string]: unknown },
-    quote as unknown as { startWordIndex: number; endWordIndex: number; [key: string]: unknown } | undefined,
-    vote as unknown as { startWordIndex: number; endWordIndex: number; type?: string; [key: string]: unknown } | undefined,
-    comment as unknown as { startWordIndex: number; endWordIndex: number; [key: string]: unknown } | undefined
-  )
+    quote as unknown as
+      | { startWordIndex: number; endWordIndex: number; [key: string]: unknown }
+      | undefined,
+    vote as unknown as
+      | { startWordIndex: number; endWordIndex: number; type?: string; [key: string]: unknown }
+      | undefined,
+    comment as unknown as
+      | { startWordIndex: number; endWordIndex: number; [key: string]: unknown }
+      | undefined
+  );
 
   const handleLike = async () => {
-    if (!ensureAuth() || !currentUser?._id) return
+    if (!ensureAuth() || !currentUser?._id) return;
 
     await updatePostBookmark({
       variables: { postId, userId: currentUser._id },
-    })
+    });
 
     await createPostMessageRoom({
       variables: { postId },
@@ -103,28 +93,31 @@ function LoadActivityCard({
             user_id: currentUser._id,
             limit,
             offset: 0,
-            searchKey: '',
+            searchKey: "",
             activityEvent: [],
           },
         },
         {
           query: GET_TOP_POSTS,
-          variables: { limit, offset: 0, searchKey: '', interactions: false },
+          variables: { limit, offset: 0, searchKey: "", interactions: false },
         },
       ],
-    })
-  }
+    });
+  };
 
   const handleRedirectToProfile = (profileUsername: string) => {
-    router.push(`/profile/${profileUsername}`)
-  }
+    router.push(`/profile/${profileUsername}`);
+  };
 
-  const isLiked = currentUser?._id && typeof currentUser._id === 'string' ? bookmarkedBy.includes(currentUser._id) : false
+  const isLiked =
+    currentUser?._id && typeof currentUser._id === "string"
+      ? bookmarkedBy.includes(currentUser._id)
+      : false;
 
   const handleCardClick = () => {
-    setSelectedPost(postId)
-    router.push(toAppPostUrl(url.replace(/\?/g, '')))
-  }
+    setSelectedPost(postId);
+    router.push(toAppPostUrl(url.replace(/\?/g, "")));
+  };
 
   return (
     <ActivityCard
@@ -140,7 +133,15 @@ function LoadActivityCard({
       votes={votes}
       quotes={quotes}
       liked={isLiked}
-      post={post ? { ...post, created: typeof post.created === 'number' ? String(post.created) : post.created, title: post.title ?? null } as Partial<import('@/types/post').Post> : undefined}
+      post={
+        post
+          ? ({
+              ...post,
+              created: typeof post.created === "number" ? String(post.created) : post.created,
+              title: post.title ?? null,
+            } as Partial<import("@/types/post").Post>)
+          : undefined
+      }
       content={content}
       width={width}
       onLike={handleLike}
@@ -148,28 +149,27 @@ function LoadActivityCard({
       onCardClick={handleCardClick}
       activityType={type}
     />
-  )
+  );
 }
 
 function LoadActivityList({
   data,
   onLoadMore,
 }: {
-  data: ActivityListProps['data']
-  onLoadMore?: () => void
+  data: ActivityListProps["data"];
+  onLoadMore?: () => void;
 }) {
-  const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts) || []
-  const width = useWidth()
+  const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts) || [];
+  const width = useWidth();
 
   if (!data || !data.activities.pagination.total_count) {
-    return <ActivityEmptyList />
+    return <ActivityEmptyList />;
   }
 
   const activities = data.activities.entities.filter(
     (activity) => !hiddenPosts.includes(activity._id)
-  )
-  const hasMore =
-    data.activities.pagination.total_count > activities.length
+  );
+  const hasMore = data.activities.pagination.total_count > activities.length;
 
   return (
     <div className="space-y-5">
@@ -177,9 +177,15 @@ function LoadActivityList({
         <div
           key={
             activity._id ||
-            [activity.postId, activity.activityType, activity.voteId, activity.commentId, activity.quoteId]
+            [
+              activity.postId,
+              activity.activityType,
+              activity.voteId,
+              activity.commentId,
+              activity.quoteId,
+            ]
               .filter(Boolean)
-              .join('-')
+              .join("-")
           }
           className="rounded-lg shadow-lg border"
           style={{ borderRadius: 7 }}
@@ -199,18 +205,13 @@ function LoadActivityList({
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export function ActivityList({
-  data,
-  loading,
-  fetchMore,
-  variables,
-}: ActivityListProps) {
-  if (loading) return <ActivitySkeletonLoader cols={1} />
+export function ActivityList({ data, loading, fetchMore, variables }: ActivityListProps) {
+  if (loading) return <ActivitySkeletonLoader cols={1} />;
 
-  const newOffset = data && data.activities.entities.length
+  const newOffset = data && data.activities.entities.length;
 
   return (
     <LoadActivityList
@@ -224,7 +225,7 @@ export function ActivityList({
                   offset: newOffset,
                 },
                 updateQuery: (prev, { fetchMoreResult }) => {
-                  if (!fetchMoreResult) return prev
+                  if (!fetchMoreResult) return prev;
                   return {
                     ...prev,
                     activities: {
@@ -234,12 +235,11 @@ export function ActivityList({
                         ...fetchMoreResult.activities.entities,
                       ],
                     },
-                  }
+                  };
                 },
               })
           : undefined
       }
     />
-  )
+  );
 }
-

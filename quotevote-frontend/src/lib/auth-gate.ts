@@ -1,4 +1,4 @@
-export type AuthGateView = 'invite' | 'login';
+export type AuthGateView = "invite" | "login";
 
 export interface AuthGateOptions {
   view?: AuthGateView;

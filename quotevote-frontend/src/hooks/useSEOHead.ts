@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import type { SEOHeadProps } from '@/types/components';
+import { useEffect } from "react";
+import type { SEOHeadProps } from "@/types/components";
 
 /**
  * useSEOHead Hook
- * 
+ *
  * Hook for managing SEO meta tags including pagination.
  * Uses native DOM manipulation instead of react-helmet.
- * 
+ *
  * NOTE: For Next.js 16, the preferred approach is to use the Metadata API
  * in page.tsx or layout.tsx files. This hook is provided for cases where
  * client-side dynamic SEO updates are needed.
- * 
+ *
  * @example
  * ```tsx
  * 'use client'
  * import { useSEOHead } from '@/hooks/useSEOHead'
- * 
+ *
  * export default function Page() {
  *   useSEOHead({
  *     title: 'My Page',
@@ -35,7 +35,7 @@ export function useSEOHead({
   nextUrl,
   keywords,
   ogImage,
-  ogType = 'website',
+  ogType = "website",
   noIndex = false,
 }: SEOHeadProps) {
   useEffect(() => {
@@ -45,23 +45,23 @@ export function useSEOHead({
     }
 
     // Helper function to update or create meta tag
-    const updateMetaTag = (selector: string, content: string, attribute = 'content') => {
+    const updateMetaTag = (selector: string, content: string, attribute = "content") => {
       let element = document.querySelector(selector);
       if (element) {
         element.setAttribute(attribute, content);
       } else {
-        element = document.createElement('meta');
-        if (selector.startsWith('meta[name=')) {
+        element = document.createElement("meta");
+        if (selector.startsWith("meta[name=")) {
           const match = selector.match(/meta\[name="([^"]+)"/);
           if (match) {
             const name = match[1];
-            element.setAttribute('name', name);
+            element.setAttribute("name", name);
           }
-        } else if (selector.startsWith('meta[property=')) {
+        } else if (selector.startsWith("meta[property=")) {
           const match = selector.match(/meta\[property="([^"]+)"/);
           if (match) {
             const property = match[1];
-            element.setAttribute('property', property);
+            element.setAttribute("property", property);
           }
         }
         element.setAttribute(attribute, content);
@@ -73,11 +73,11 @@ export function useSEOHead({
     const updateLinkTag = (rel: string, href: string) => {
       let element = document.querySelector(`link[rel="${rel}"]`);
       if (element) {
-        element.setAttribute('href', href);
+        element.setAttribute("href", href);
       } else {
-        element = document.createElement('link');
-        element.setAttribute('rel', rel);
-        element.setAttribute('href', href);
+        element = document.createElement("link");
+        element.setAttribute("rel", rel);
+        element.setAttribute("href", href);
         document.head.appendChild(element);
       }
     };
@@ -92,15 +92,15 @@ export function useSEOHead({
 
     // Update canonical URL
     if (canonicalUrl) {
-      updateLinkTag('canonical', canonicalUrl);
+      updateLinkTag("canonical", canonicalUrl);
     }
 
     // Update pagination links
     if (prevUrl) {
-      updateLinkTag('prev', prevUrl);
+      updateLinkTag("prev", prevUrl);
     }
     if (nextUrl) {
-      updateLinkTag('next', nextUrl);
+      updateLinkTag("next", nextUrl);
     }
 
     // Update Open Graph tags
@@ -128,11 +128,11 @@ export function useSEOHead({
     if (ogImage) {
       updateMetaTag('meta[name="twitter:image"]', ogImage);
     }
-    updateMetaTag('meta[name="twitter:card"]', 'summary_large_image');
+    updateMetaTag('meta[name="twitter:card"]', "summary_large_image");
 
     // Update robots meta
     if (noIndex) {
-      updateMetaTag('meta[name="robots"]', 'noindex, nofollow');
+      updateMetaTag('meta[name="robots"]', "noindex, nofollow");
     }
 
     // Cleanup function to remove dynamic meta tags when component unmounts
@@ -152,14 +152,13 @@ export function useSEOHead({
 
 /**
  * SEOHead Component (Legacy compatibility)
- * 
+ *
  * Component wrapper for useSEOHead hook.
  * This component doesn't render anything visible.
- * 
+ *
  * @deprecated Prefer using useSEOHead hook directly or Next.js Metadata API
  */
 export function SEOHead(props: SEOHeadProps) {
   useSEOHead(props);
   return null;
 }
-

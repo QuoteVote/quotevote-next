@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Avatar Editor Page
@@ -12,24 +12,24 @@
  * redirects back to the user's profile page.
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { useMutation } from '@apollo/client/react';
-import { toast } from 'sonner';
-import { Dices, Save, ArrowLeft, Loader2 } from 'lucide-react';
-import { useAppStore } from '@/store';
-import { UPDATE_USER_AVATAR } from '@/graphql/mutations';
-import { GET_USER } from '@/graphql/queries';
-import { buildAvatarUrl, getDefaultAvatar, type AvatarQualities } from '@/lib/avatar';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation } from "@apollo/client/react";
+import { toast } from "sonner";
+import { Dices, Save, ArrowLeft, Loader2 } from "lucide-react";
+import { useAppStore } from "@/store";
+import { UPDATE_USER_AVATAR } from "@/graphql/mutations";
+import { GET_USER } from "@/graphql/queries";
+import { buildAvatarUrl, getDefaultAvatar, type AvatarQualities } from "@/lib/avatar";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 // ---------------------------------------------------------------------------
 // Avatar option definitions (migrated from monorepo utils/display.jsx)
@@ -43,233 +43,224 @@ interface AvatarOption {
 
 const avatarOptions: AvatarOption[] = [
   {
-    name: 'topType',
-    displayName: 'Top / Hair',
+    name: "topType",
+    displayName: "Top / Hair",
     options: [
-      'NoHair',
-      'Eyepatch',
-      'Hat',
-      'Hijab',
-      'Turban',
-      'WinterHat1',
-      'WinterHat2',
-      'WinterHat3',
-      'WinterHat4',
-      'LongHairBigHair',
-      'LongHairBob',
-      'LongHairBun',
-      'LongHairCurly',
-      'LongHairCurvy',
-      'LongHairDreads',
-      'LongHairFrida',
-      'LongHairFro',
-      'LongHairFroBand',
-      'LongHairNotTooLong',
-      'LongHairShavedSides',
-      'LongHairMiaWallace',
-      'LongHairStraight',
-      'LongHairStraight2',
-      'LongHairStraightStrand',
-      'ShortHairDreads01',
-      'ShortHairDreads02',
-      'ShortHairFrizzle',
-      'ShortHairShaggyMullet',
-      'ShortHairShortCurly',
-      'ShortHairShortFlat',
-      'ShortHairShortRound',
-      'ShortHairShortWaved',
-      'ShortHairSides',
-      'ShortHairTheCaesar',
-      'ShortHairTheCaesarSidePart',
+      "NoHair",
+      "Eyepatch",
+      "Hat",
+      "Hijab",
+      "Turban",
+      "WinterHat1",
+      "WinterHat2",
+      "WinterHat3",
+      "WinterHat4",
+      "LongHairBigHair",
+      "LongHairBob",
+      "LongHairBun",
+      "LongHairCurly",
+      "LongHairCurvy",
+      "LongHairDreads",
+      "LongHairFrida",
+      "LongHairFro",
+      "LongHairFroBand",
+      "LongHairNotTooLong",
+      "LongHairShavedSides",
+      "LongHairMiaWallace",
+      "LongHairStraight",
+      "LongHairStraight2",
+      "LongHairStraightStrand",
+      "ShortHairDreads01",
+      "ShortHairDreads02",
+      "ShortHairFrizzle",
+      "ShortHairShaggyMullet",
+      "ShortHairShortCurly",
+      "ShortHairShortFlat",
+      "ShortHairShortRound",
+      "ShortHairShortWaved",
+      "ShortHairSides",
+      "ShortHairTheCaesar",
+      "ShortHairTheCaesarSidePart",
     ],
   },
   {
-    name: 'accessoriesType',
-    displayName: 'Accessories',
+    name: "accessoriesType",
+    displayName: "Accessories",
     options: [
-      'Blank',
-      'Kurt',
-      'Prescription01',
-      'Prescription02',
-      'Round',
-      'Sunglasses',
-      'Wayfarers',
+      "Blank",
+      "Kurt",
+      "Prescription01",
+      "Prescription02",
+      "Round",
+      "Sunglasses",
+      "Wayfarers",
     ],
   },
   {
-    name: 'hatColor',
-    displayName: 'Hat Color',
+    name: "hatColor",
+    displayName: "Hat Color",
     options: [
-      'Black',
-      'Blue01',
-      'Blue02',
-      'Blue03',
-      'Gray01',
-      'Gray02',
-      'Heather',
-      'PastelBlue',
-      'PastelGreen',
-      'PastelOrange',
-      'PastelRed',
-      'PastelYellow',
-      'Pink',
-      'Red',
-      'White',
+      "Black",
+      "Blue01",
+      "Blue02",
+      "Blue03",
+      "Gray01",
+      "Gray02",
+      "Heather",
+      "PastelBlue",
+      "PastelGreen",
+      "PastelOrange",
+      "PastelRed",
+      "PastelYellow",
+      "Pink",
+      "Red",
+      "White",
     ],
   },
   {
-    name: 'hairColor',
-    displayName: 'Hair Color',
+    name: "hairColor",
+    displayName: "Hair Color",
     options: [
-      'Auburn',
-      'Black',
-      'Blonde',
-      'BlondeGolden',
-      'Brown',
-      'BrownDark',
-      'PastelPink',
-      'Platinum',
-      'Red',
-      'SilverGray',
+      "Auburn",
+      "Black",
+      "Blonde",
+      "BlondeGolden",
+      "Brown",
+      "BrownDark",
+      "PastelPink",
+      "Platinum",
+      "Red",
+      "SilverGray",
     ],
   },
   {
-    name: 'facialHairType',
-    displayName: 'Facial Hair',
+    name: "facialHairType",
+    displayName: "Facial Hair",
     options: [
-      'Blank',
-      'BeardMedium',
-      'BeardLight',
-      'BeardMajestic',
-      'MoustacheFancy',
-      'MoustacheMagnum',
+      "Blank",
+      "BeardMedium",
+      "BeardLight",
+      "BeardMajestic",
+      "MoustacheFancy",
+      "MoustacheMagnum",
     ],
   },
   {
-    name: 'facialHairColor',
-    displayName: 'Facial Hair Color',
+    name: "facialHairColor",
+    displayName: "Facial Hair Color",
+    options: ["Auburn", "Black", "Blonde", "BlondeGolden", "Brown", "BrownDark", "Platinum", "Red"],
+  },
+  {
+    name: "clotheType",
+    displayName: "Clothes",
     options: [
-      'Auburn',
-      'Black',
-      'Blonde',
-      'BlondeGolden',
-      'Brown',
-      'BrownDark',
-      'Platinum',
-      'Red',
+      "BlazerShirt",
+      "BlazerSweater",
+      "CollarSweater",
+      "GraphicShirt",
+      "Hoodie",
+      "Overall",
+      "ShirtCrewNeck",
+      "ShirtScoopNeck",
+      "ShirtVNeck",
     ],
   },
   {
-    name: 'clotheType',
-    displayName: 'Clothes',
+    name: "clotheColor",
+    displayName: "Clothes Color",
     options: [
-      'BlazerShirt',
-      'BlazerSweater',
-      'CollarSweater',
-      'GraphicShirt',
-      'Hoodie',
-      'Overall',
-      'ShirtCrewNeck',
-      'ShirtScoopNeck',
-      'ShirtVNeck',
+      "Black",
+      "Blue01",
+      "Blue02",
+      "Blue03",
+      "Gray01",
+      "Gray02",
+      "Heather",
+      "PastelBlue",
+      "PastelGreen",
+      "PastelOrange",
+      "PastelRed",
+      "PastelYellow",
+      "Pink",
+      "Red",
+      "White",
     ],
   },
   {
-    name: 'clotheColor',
-    displayName: 'Clothes Color',
+    name: "graphicType",
+    displayName: "Graphic",
     options: [
-      'Black',
-      'Blue01',
-      'Blue02',
-      'Blue03',
-      'Gray01',
-      'Gray02',
-      'Heather',
-      'PastelBlue',
-      'PastelGreen',
-      'PastelOrange',
-      'PastelRed',
-      'PastelYellow',
-      'Pink',
-      'Red',
-      'White',
+      "Bat",
+      "Cumbia",
+      "Deer",
+      "Diamond",
+      "Hola",
+      "Pizza",
+      "Resist",
+      "Selena",
+      "Bear",
+      "SkullOutline",
+      "Skull",
     ],
   },
   {
-    name: 'graphicType',
-    displayName: 'Graphic',
+    name: "eyeType",
+    displayName: "Eyes",
     options: [
-      'Bat',
-      'Cumbia',
-      'Deer',
-      'Diamond',
-      'Hola',
-      'Pizza',
-      'Resist',
-      'Selena',
-      'Bear',
-      'SkullOutline',
-      'Skull',
+      "Close",
+      "Cry",
+      "Default",
+      "Dizzy",
+      "EyeRoll",
+      "Happy",
+      "Hearts",
+      "Side",
+      "Squint",
+      "Surprised",
+      "Wink",
+      "WinkWacky",
     ],
   },
   {
-    name: 'eyeType',
-    displayName: 'Eyes',
+    name: "eyebrowType",
+    displayName: "Eyebrows",
     options: [
-      'Close',
-      'Cry',
-      'Default',
-      'Dizzy',
-      'EyeRoll',
-      'Happy',
-      'Hearts',
-      'Side',
-      'Squint',
-      'Surprised',
-      'Wink',
-      'WinkWacky',
+      "Angry",
+      "AngryNatural",
+      "Default",
+      "DefaultNatural",
+      "FlatNatural",
+      "RaisedExcited",
+      "RaisedExcitedNatural",
+      "SadConcerned",
+      "SadConcernedNatural",
+      "UnibrowNatural",
+      "UpDown",
+      "UpDownNatural",
     ],
   },
   {
-    name: 'eyebrowType',
-    displayName: 'Eyebrows',
+    name: "mouthType",
+    displayName: "Mouth",
     options: [
-      'Angry',
-      'AngryNatural',
-      'Default',
-      'DefaultNatural',
-      'FlatNatural',
-      'RaisedExcited',
-      'RaisedExcitedNatural',
-      'SadConcerned',
-      'SadConcernedNatural',
-      'UnibrowNatural',
-      'UpDown',
-      'UpDownNatural',
+      "Concerned",
+      "Default",
+      "Disbelief",
+      "Eating",
+      "Grimace",
+      "Sad",
+      "ScreamOpen",
+      "Serious",
+      "Smile",
+      "Tongue",
+      "Twinkle",
+      "Vomit",
     ],
   },
   {
-    name: 'mouthType',
-    displayName: 'Mouth',
-    options: [
-      'Concerned',
-      'Default',
-      'Disbelief',
-      'Eating',
-      'Grimace',
-      'Sad',
-      'ScreamOpen',
-      'Serious',
-      'Smile',
-      'Tongue',
-      'Twinkle',
-      'Vomit',
-    ],
-  },
-  {
-    name: 'skinColor',
-    displayName: 'Skin Color',
-    options: ['Tanned', 'Yellow', 'Pale', 'Light', 'Brown', 'DarkBrown', 'Black'],
+    name: "skinColor",
+    displayName: "Skin Color",
+    options: ["Tanned", "Yellow", "Pale", "Light", "Brown", "DarkBrown", "Black"],
   },
 ];
 
@@ -298,11 +289,11 @@ function parseStoredAvatar(
   if (!avatar) return null;
 
   // If avatar is already an object with known keys, extract them
-  if (typeof avatar === 'object') {
+  if (typeof avatar === "object") {
     const qualities: AvatarQualities = {};
     const knownKeys = new Set(avatarOptions.map((o) => o.name));
     for (const [key, value] of Object.entries(avatar)) {
-      if (knownKeys.has(key) && typeof value === 'string') {
+      if (knownKeys.has(key) && typeof value === "string") {
         qualities[key] = value;
       }
     }
@@ -310,10 +301,10 @@ function parseStoredAvatar(
   }
 
   // If avatar is a JSON string, try to parse it
-  if (typeof avatar === 'string') {
+  if (typeof avatar === "string") {
     try {
       const parsed = JSON.parse(avatar);
-      if (typeof parsed === 'object' && parsed !== null) {
+      if (typeof parsed === "object" && parsed !== null) {
         return parseStoredAvatar(parsed);
       }
     } catch {
@@ -351,9 +342,7 @@ export default function AvatarEditorPage(): React.ReactNode {
 
   // Deterministic default so SSR and the first client paint match.
   // Persist-rehydrated store avatar is applied after mount.
-  const [avatar, setAvatar] = useState<AvatarQualities>(() =>
-    getDefaultAvatar('avatar-editor')
-  );
+  const [avatar, setAvatar] = useState<AvatarQualities>(() => getDefaultAvatar("avatar-editor"));
   const seededFromStore = useRef(false);
 
   /* eslint-disable react-hooks/set-state-in-effect -- seed editor from rehydrated Zustand avatar once */
@@ -375,7 +364,8 @@ export default function AvatarEditorPage(): React.ReactNode {
     }
   }, [userData.avatar, userId]);
   /* eslint-enable react-hooks/set-state-in-effect */
-  const [updateUserAvatar, { loading: saving }] = useMutation<UpdateUserAvatarData>(UPDATE_USER_AVATAR);
+  const [updateUserAvatar, { loading: saving }] =
+    useMutation<UpdateUserAvatarData>(UPDATE_USER_AVATAR);
 
   // Live preview URL
   const previewUrl = useMemo(() => buildAvatarUrl(avatar), [avatar]);
@@ -392,18 +382,16 @@ export default function AvatarEditorPage(): React.ReactNode {
 
   const handleSave = useCallback(async () => {
     if (!userId) {
-      toast.error('You must be logged in to update your avatar.');
+      toast.error("You must be logged in to update your avatar.");
       return;
     }
 
-    const username = typeof userData.username === 'string' ? userData.username : undefined;
+    const username = typeof userData.username === "string" ? userData.username : undefined;
 
     try {
       const result = await updateUserAvatar({
         variables: { user_id: userId, avatarQualities: avatar },
-        refetchQueries: username
-          ? [{ query: GET_USER, variables: { username } }]
-          : [],
+        refetchQueries: username ? [{ query: GET_USER, variables: { username } }] : [],
         awaitRefetchQueries: Boolean(username),
       });
 
@@ -411,16 +399,13 @@ export default function AvatarEditorPage(): React.ReactNode {
       // Prefer the qualities we just saved so the store keeps a parseable object
       // even if the API returns a serialized/odd shape.
       updateStoreAvatar(
-        returnedAvatar && typeof returnedAvatar === 'object'
-          ? returnedAvatar
-          : avatar
+        returnedAvatar && typeof returnedAvatar === "object" ? returnedAvatar : avatar
       );
 
-      toast.success('Avatar updated successfully!');
+      toast.success("Avatar updated successfully!");
       router.back();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to update avatar.';
+      const message = err instanceof Error ? err.message : "Failed to update avatar.";
       toast.error(message);
     }
   }, [userId, avatar, updateUserAvatar, updateStoreAvatar, router, userData.username]);
@@ -445,34 +430,17 @@ export default function AvatarEditorPage(): React.ReactNode {
       <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
         <div className="relative h-[180px] w-[180px] overflow-hidden rounded-full bg-gray-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={previewUrl}
-            alt="Avatar preview"
-            className="h-full w-full object-cover"
-          />
+          <img src={previewUrl} alt="Avatar preview" className="h-full w-full object-cover" />
         </div>
 
         <div className="flex flex-row gap-2 sm:flex-col">
-          <Button
-            variant="outline"
-            onClick={handleRandomize}
-            className="gap-2"
-            disabled={saving}
-          >
+          <Button variant="outline" onClick={handleRandomize} className="gap-2" disabled={saving}>
             <Dices className="h-4 w-4" />
             Randomize
           </Button>
-          <Button
-            onClick={handleSave}
-            className="gap-2"
-            disabled={saving || !userId}
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {saving ? 'Saving...' : 'Save'}
+          <Button onClick={handleSave} className="gap-2" disabled={saving || !userId}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {saving ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>
@@ -483,7 +451,7 @@ export default function AvatarEditorPage(): React.ReactNode {
           <div key={opt.name} className="space-y-1.5">
             <Label htmlFor={`avatar-${opt.name}`}>{opt.displayName}</Label>
             <Select
-              value={avatar[opt.name] || ''}
+              value={avatar[opt.name] || ""}
               onValueChange={(value) => handleChange(opt.name, value)}
             >
               <SelectTrigger id={`avatar-${opt.name}`} className="w-full">

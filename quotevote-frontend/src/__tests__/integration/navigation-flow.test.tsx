@@ -1,19 +1,19 @@
 /**
  * Navigation Flow Integration Tests
- * 
+ *
  * Tests navigation between components, routing behavior,
  * and state persistence across route changes.
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
-import { useRouter } from 'next/navigation';
-import { TestWrapper } from '../utils/test-utils';
-import { useAppStore } from '@/store';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { useRouter } from "next/navigation";
+import { TestWrapper } from "../utils/test-utils";
+import { useAppStore } from "@/store";
 
 // Mock Next.js router
-jest.mock('next/navigation', () => ({
+jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
-  usePathname: jest.fn(() => '/test'),
+  usePathname: jest.fn(() => "/test"),
   useSearchParams: jest.fn(() => new URLSearchParams()),
 }));
 
@@ -22,7 +22,7 @@ const MockComponent = ({ title }: { title: string }) => (
   <div data-testid="mock-component">{title}</div>
 );
 
-describe('Navigation Flow Integration', () => {
+describe("Navigation Flow Integration", () => {
   const mockPush = jest.fn();
   const mockRouter = {
     push: mockPush,
@@ -38,16 +38,13 @@ describe('Navigation Flow Integration', () => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
-  describe('Router Navigation', () => {
-    it('should navigate programmatically using useRouter', async () => {
+  describe("Router Navigation", () => {
+    it("should navigate programmatically using useRouter", async () => {
       const NavigationComponent = () => {
         const router = useRouter();
-        
+
         return (
-          <button
-            onClick={() => router.push('/test-route')}
-            data-testid="nav-button"
-          >
+          <button onClick={() => router.push("/test-route")} data-testid="nav-button">
             Navigate
           </button>
         );
@@ -59,19 +56,19 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      const navButton = screen.getByTestId('nav-button');
+      const navButton = screen.getByTestId("nav-button");
       fireEvent.click(navButton);
 
-      expect(mockPush).toHaveBeenCalledWith('/test-route');
+      expect(mockPush).toHaveBeenCalledWith("/test-route");
     });
 
-    it('should handle navigation with parameters', async () => {
+    it("should handle navigation with parameters", async () => {
       const NavigationComponent = () => {
         const router = useRouter();
-        
+
         return (
           <button
-            onClick={() => router.push('/posts/123?tab=comments')}
+            onClick={() => router.push("/posts/123?tab=comments")}
             data-testid="nav-with-params"
           >
             Navigate with Params
@@ -85,15 +82,15 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      const navButton = screen.getByTestId('nav-with-params');
+      const navButton = screen.getByTestId("nav-with-params");
       fireEvent.click(navButton);
 
-      expect(mockPush).toHaveBeenCalledWith('/posts/123?tab=comments');
+      expect(mockPush).toHaveBeenCalledWith("/posts/123?tab=comments");
     });
   });
 
-  describe('State Persistence', () => {
-    it('should maintain Zustand store state across navigation', async () => {
+  describe("State Persistence", () => {
+    it("should maintain Zustand store state across navigation", async () => {
       const StateComponent = () => {
         const user = useAppStore((state) => state.user.data);
         const setUserData = useAppStore((state) => state.setUserData);
@@ -102,18 +99,15 @@ describe('Navigation Flow Integration', () => {
         return (
           <div>
             <div data-testid="user-display">
-              {user && user.username ? user.username : 'No user'}
+              {user && user.username ? user.username : "No user"}
             </div>
             <button
-              onClick={() => setUserData({ id: '1', username: 'testuser' })}
+              onClick={() => setUserData({ id: "1", username: "testuser" })}
               data-testid="set-user"
             >
               Set User
             </button>
-            <button
-              onClick={() => router.push('/other-page')}
-              data-testid="navigate-away"
-            >
+            <button onClick={() => router.push("/other-page")} data-testid="navigate-away">
               Navigate Away
             </button>
           </div>
@@ -127,36 +121,30 @@ describe('Navigation Flow Integration', () => {
       );
 
       // Initially no user
-      expect(screen.getByTestId('user-display')).toHaveTextContent('No user');
+      expect(screen.getByTestId("user-display")).toHaveTextContent("No user");
 
       // Set user data
-      fireEvent.click(screen.getByTestId('set-user'));
-      expect(screen.getByTestId('user-display')).toHaveTextContent('testuser');
+      fireEvent.click(screen.getByTestId("set-user"));
+      expect(screen.getByTestId("user-display")).toHaveTextContent("testuser");
 
       // Navigate away (state should persist)
-      fireEvent.click(screen.getByTestId('navigate-away'));
-      expect(mockPush).toHaveBeenCalledWith('/other-page');
+      fireEvent.click(screen.getByTestId("navigate-away"));
+      expect(mockPush).toHaveBeenCalledWith("/other-page");
 
       // State should still be available after navigation
-      expect(screen.getByTestId('user-display')).toHaveTextContent('testuser');
+      expect(screen.getByTestId("user-display")).toHaveTextContent("testuser");
     });
 
-    it('should handle navigation history correctly', async () => {
+    it("should handle navigation history correctly", async () => {
       const HistoryComponent = () => {
         const router = useRouter();
-        
+
         return (
           <div>
-            <button
-              onClick={() => router.back()}
-              data-testid="go-back"
-            >
+            <button onClick={() => router.back()} data-testid="go-back">
               Go Back
             </button>
-            <button
-              onClick={() => router.forward()}
-              data-testid="go-forward"
-            >
+            <button onClick={() => router.forward()} data-testid="go-forward">
               Go Forward
             </button>
           </div>
@@ -169,19 +157,19 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByTestId('go-back'));
+      fireEvent.click(screen.getByTestId("go-back"));
       expect(mockRouter.back).toHaveBeenCalled();
 
-      fireEvent.click(screen.getByTestId('go-forward'));
+      fireEvent.click(screen.getByTestId("go-forward"));
       expect(mockRouter.forward).toHaveBeenCalled();
     });
   });
 
-  describe('Component Integration', () => {
-    it('should handle cross-component navigation', async () => {
+  describe("Component Integration", () => {
+    it("should handle cross-component navigation", async () => {
       const ParentComponent = () => {
         const router = useRouter();
-        
+
         const handleChildNavigation = (path: string) => {
           router.push(path);
         };
@@ -189,10 +177,7 @@ describe('Navigation Flow Integration', () => {
         return (
           <div>
             <MockComponent title="Parent Component" />
-            <button
-              onClick={() => handleChildNavigation('/child-route')}
-              data-testid="child-nav"
-            >
+            <button onClick={() => handleChildNavigation("/child-route")} data-testid="child-nav">
               Navigate to Child
             </button>
           </div>
@@ -205,29 +190,26 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      expect(screen.getByTestId('mock-component')).toHaveTextContent('Parent Component');
+      expect(screen.getByTestId("mock-component")).toHaveTextContent("Parent Component");
 
-      fireEvent.click(screen.getByTestId('child-nav'));
-      expect(mockPush).toHaveBeenCalledWith('/child-route');
+      fireEvent.click(screen.getByTestId("child-nav"));
+      expect(mockPush).toHaveBeenCalledWith("/child-route");
     });
 
-    it('should handle navigation errors gracefully', async () => {
+    it("should handle navigation errors gracefully", async () => {
       const ErrorNavigationComponent = () => {
         const router = useRouter();
-        
+
         const handleErrorNavigation = () => {
           try {
-            router.push('/invalid-route');
+            router.push("/invalid-route");
           } catch {
             // navigation errors are handled silently in tests
           }
         };
 
         return (
-          <button
-            onClick={handleErrorNavigation}
-            data-testid="error-nav"
-          >
+          <button onClick={handleErrorNavigation} data-testid="error-nav">
             Error Navigation
           </button>
         );
@@ -239,21 +221,18 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByTestId('error-nav'));
-      expect(mockPush).toHaveBeenCalledWith('/invalid-route');
+      fireEvent.click(screen.getByTestId("error-nav"));
+      expect(mockPush).toHaveBeenCalledWith("/invalid-route");
     });
   });
 
-  describe('Route Parameters', () => {
-    it('should handle dynamic route parameters', async () => {
+  describe("Route Parameters", () => {
+    it("should handle dynamic route parameters", async () => {
       const DynamicRouteComponent = () => {
         const router = useRouter();
-        
+
         return (
-          <button
-            onClick={() => router.push('/posts/123')}
-            data-testid="dynamic-route"
-          >
+          <button onClick={() => router.push("/posts/123")} data-testid="dynamic-route">
             Navigate to Dynamic Route
           </button>
         );
@@ -265,17 +244,17 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByTestId('dynamic-route'));
-      expect(mockPush).toHaveBeenCalledWith('/posts/123');
+      fireEvent.click(screen.getByTestId("dynamic-route"));
+      expect(mockPush).toHaveBeenCalledWith("/posts/123");
     });
 
-    it('should handle query parameters', async () => {
+    it("should handle query parameters", async () => {
       const QueryParamsComponent = () => {
         const router = useRouter();
-        
+
         return (
           <button
-            onClick={() => router.push('/search?q=test&category=posts')}
+            onClick={() => router.push("/search?q=test&category=posts")}
             data-testid="query-params"
           >
             Navigate with Query
@@ -289,16 +268,16 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByTestId('query-params'));
-      expect(mockPush).toHaveBeenCalledWith('/search?q=test&category=posts');
+      fireEvent.click(screen.getByTestId("query-params"));
+      expect(mockPush).toHaveBeenCalledWith("/search?q=test&category=posts");
     });
   });
 
-  describe('Navigation Performance', () => {
-    it('should handle rapid navigation calls', async () => {
+  describe("Navigation Performance", () => {
+    it("should handle rapid navigation calls", async () => {
       const RapidNavigationComponent = () => {
         const router = useRouter();
-        
+
         const handleRapidNavigation = () => {
           for (let i = 0; i < 5; i++) {
             router.push(`/route-${i}`);
@@ -306,10 +285,7 @@ describe('Navigation Flow Integration', () => {
         };
 
         return (
-          <button
-            onClick={handleRapidNavigation}
-            data-testid="rapid-nav"
-          >
+          <button onClick={handleRapidNavigation} data-testid="rapid-nav">
             Rapid Navigation
           </button>
         );
@@ -321,19 +297,16 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByTestId('rapid-nav'));
+      fireEvent.click(screen.getByTestId("rapid-nav"));
       expect(mockPush).toHaveBeenCalledTimes(5);
     });
 
-    it('should handle prefetch calls', async () => {
+    it("should handle prefetch calls", async () => {
       const PrefetchComponent = () => {
         const router = useRouter();
-        
+
         return (
-          <button
-            onClick={() => router.prefetch('/prefetch-route')}
-            data-testid="prefetch"
-          >
+          <button onClick={() => router.prefetch("/prefetch-route")} data-testid="prefetch">
             Prefetch Route
           </button>
         );
@@ -345,8 +318,8 @@ describe('Navigation Flow Integration', () => {
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByTestId('prefetch'));
-      expect(mockRouter.prefetch).toHaveBeenCalledWith('/prefetch-route');
+      fireEvent.click(screen.getByTestId("prefetch"));
+      expect(mockRouter.prefetch).toHaveBeenCalledWith("/prefetch-route");
     });
   });
 });

@@ -1,13 +1,13 @@
-import type { Metadata } from 'next'
-import ManageInvitesClient from './ManageInvitesClient'
+import type { Metadata } from "next";
+import ManageInvitesClient from "./ManageInvitesClient";
 
 export const metadata: Metadata = {
-  title: 'Manage Invites — Quote.Vote',
-  description: 'Manage your sent and received invitations',
-}
+  title: "Manage Invites — Quote.Vote",
+  description: "Manage your sent and received invitations",
+};
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default function ManageInvitesPage() {
-  return <ManageInvitesClient />
+  return <ManageInvitesClient />;
 }

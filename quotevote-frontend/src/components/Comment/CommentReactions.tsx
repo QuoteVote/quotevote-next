@@ -1,92 +1,96 @@
-"use client"
+"use client";
 
-import { useState, useCallback, lazy, Suspense } from 'react'
+import { useState, useCallback, lazy, Suspense } from "react";
 
-import { Smile, Loader2 } from 'lucide-react'
-import { useMutation } from '@apollo/client/react'
+import { Smile, Loader2 } from "lucide-react";
+import { useMutation } from "@apollo/client/react";
 
 const EmojiPicker = lazy(() =>
-  Promise.all([
-    import('@emoji-mart/data'),
-    import('@emoji-mart/react'),
-  ]).then(([dataModule, pickerModule]) => ({
-    default: (props: { onEmojiSelect: (emoji: { native: string }) => void; theme?: string }) => {
-      const Picker = pickerModule.default
-      return <Picker data={dataModule.default} {...props} />
-    },
-  }))
-)
-import _ from 'lodash'
-import { ADD_ACTION_REACTION, UPDATE_ACTION_REACTION } from '@/graphql/mutations'
-import { GET_ACTION_REACTIONS } from '@/graphql/queries'
-import { useAppStore } from '@/store/useAppStore'
-import { Button } from '@/components/ui/button'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { Reaction } from '@/types/comment'
-import useGuestGuard from '@/hooks/useGuestGuard'
+  Promise.all([import("@emoji-mart/data"), import("@emoji-mart/react")]).then(
+    ([dataModule, pickerModule]) => ({
+      default: (props: { onEmojiSelect: (emoji: { native: string }) => void; theme?: string }) => {
+        const Picker = pickerModule.default;
+        return <Picker data={dataModule.default} {...props} />;
+      },
+    })
+  )
+);
+import _ from "lodash";
+import { ADD_ACTION_REACTION, UPDATE_ACTION_REACTION } from "@/graphql/mutations";
+import { GET_ACTION_REACTIONS } from "@/graphql/queries";
+import { useAppStore } from "@/store/useAppStore";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Reaction } from "@/types/comment";
+import useGuestGuard from "@/hooks/useGuestGuard";
 
 interface CommentReactionsProps {
-  actionId: string
-  reactions: Reaction[]
+  actionId: string;
+  reactions: Reaction[];
 }
 
 export default function CommentReactions({ actionId, reactions }: CommentReactionsProps) {
-  const userId = useAppStore((state) => state.user.data?.id || state.user.data?._id || '') as string
-  const [open, setOpen] = useState(false)
-  const ensureAuth = useGuestGuard()
+  const userId = useAppStore(
+    (state) => state.user.data?.id || state.user.data?._id || ""
+  ) as string;
+  const [open, setOpen] = useState(false);
+  const ensureAuth = useGuestGuard();
 
   const [addReaction] = useMutation(ADD_ACTION_REACTION, {
     onError: (err: unknown) => {
-      console.error(err)
+      console.error(err);
     },
-    refetchQueries: [{
-      query: GET_ACTION_REACTIONS,
-      variables: {
-        actionId,
+    refetchQueries: [
+      {
+        query: GET_ACTION_REACTIONS,
+        variables: {
+          actionId,
+        },
       },
-    }],
-  })
+    ],
+  });
 
   const [updateReaction] = useMutation(UPDATE_ACTION_REACTION, {
     onError: (err: unknown) => {
-      console.error(err)
+      console.error(err);
     },
-    refetchQueries: [{
-      query: GET_ACTION_REACTIONS,
-      variables: {
-        actionId,
+    refetchQueries: [
+      {
+        query: GET_ACTION_REACTIONS,
+        variables: {
+          actionId,
+        },
       },
-    }],
-  })
+    ],
+  });
 
-  const groupedReactions = _.groupBy(reactions, 'emoji')
-  const userReaction = _.find(reactions, { userId }) || null
+  const groupedReactions = _.groupBy(reactions, "emoji");
+  const userReaction = _.find(reactions, { userId }) || null;
 
-  const handleEmojiSelect = useCallback(async (emoji: { native: string }) => {
-    if (!ensureAuth()) return
-    const newEmoji = emoji.native
-    const reaction = {
-      userId,
-      actionId,
-      emoji: newEmoji,
-    }
+  const handleEmojiSelect = useCallback(
+    async (emoji: { native: string }) => {
+      if (!ensureAuth()) return;
+      const newEmoji = emoji.native;
+      const reaction = {
+        userId,
+        actionId,
+        emoji: newEmoji,
+      };
 
-    if (userReaction) {
-      await updateReaction({
-        variables: { _id: userReaction._id, emoji: reaction.emoji },
-      })
-    } else {
-      await addReaction({
-        variables: { reaction },
-      })
-    }
+      if (userReaction) {
+        await updateReaction({
+          variables: { _id: userReaction._id, emoji: reaction.emoji },
+        });
+      } else {
+        await addReaction({
+          variables: { reaction },
+        });
+      }
 
-    setOpen(false)
-  }, [userId, actionId, userReaction, addReaction, updateReaction, ensureAuth])
+      setOpen(false);
+    },
+    [userId, actionId, userReaction, addReaction, updateReaction, ensureAuth]
+  );
 
   return (
     <div className="flex items-start gap-2" onClick={(e) => e.stopPropagation()}>
@@ -101,7 +105,7 @@ export default function CommentReactions({ actionId, reactions }: CommentReactio
           </div>
         ))}
       </div>
-      
+
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -109,14 +113,17 @@ export default function CommentReactions({ actionId, reactions }: CommentReactio
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 border-none">
-          <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>}>
-            <EmojiPicker
-              onEmojiSelect={handleEmojiSelect}
-              theme="light"
-            />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="size-6 animate-spin text-muted-foreground" />
+              </div>
+            }
+          >
+            <EmojiPicker onEmojiSelect={handleEmojiSelect} theme="light" />
           </Suspense>
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

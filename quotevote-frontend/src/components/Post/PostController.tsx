@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useQuery } from '@apollo/client/react'
-import { useAppStore } from '@/store'
-import { GET_POST } from '@/graphql/queries'
-import Post from './Post'
-import PostSkeleton from './PostSkeleton'
-import type { PostControllerProps, PostQueryData } from '@/types/post'
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@apollo/client/react";
+import { useAppStore } from "@/store";
+import { GET_POST } from "@/graphql/queries";
+import Post from "./Post";
+import PostSkeleton from "./PostSkeleton";
+import type { PostControllerProps, PostQueryData } from "@/types/post";
 
 /**
  * PostController Component
@@ -20,35 +20,35 @@ export default function PostController({
   onOpenDiscussion,
   onActivateLinkedComment,
 }: PostControllerProps) {
-  const router = useRouter()
-  const userData = useAppStore((state) => state.user.data)
-  const setSelectedPage = useAppStore((state) => state.setSelectedPage)
+  const router = useRouter();
+  const userData = useAppStore((state) => state.user.data);
+  const setSelectedPage = useAppStore((state) => state.setSelectedPage);
 
   const { loading, error, data, refetch } = useQuery<PostQueryData>(GET_POST, {
     variables: { postId },
-    fetchPolicy: 'network-only',
+    fetchPolicy: "network-only",
     skip: !postId,
-  })
+  });
 
   useEffect(() => {
-    setSelectedPage('')
-  }, [setSelectedPage])
+    setSelectedPage("");
+  }, [setSelectedPage]);
 
   if (!postId) {
     return (
       <div className="container mx-auto p-4">
         <p className="text-muted-foreground">Post not found</p>
       </div>
-    )
+    );
   }
 
   // Only the first load shows the skeleton; refetches after a vote keep the post (and the
   // open selection popup) on screen.
-  if (loading && !data) return <PostSkeleton />
+  if (loading && !data) return <PostSkeleton />;
 
   if (error) {
-    router.push('/error')
-    return null
+    router.push("/error");
+    return null;
   }
 
   if (!data?.post) {
@@ -56,10 +56,10 @@ export default function PostController({
       <div className="container mx-auto p-4">
         <p className="text-muted-foreground">Post not found</p>
       </div>
-    )
+    );
   }
 
-  const post = data.post
+  const post = data.post;
 
   // Normalize user data to match PostProps.user shape
   const user = {
@@ -70,13 +70,13 @@ export default function PostController({
       : userData._followingId
         ? [userData._followingId as string]
         : [],
-  }
+  };
 
   const postActions = [
-    ...(post.comments || []).map((c) => ({ ...c, __typename: 'Comment' })),
-    ...(post.votes || []).map((v) => ({ ...v, __typename: 'Vote' })),
-    ...(post.quotes || []).map((q) => ({ ...q, __typename: 'Quote' })),
-  ]
+    ...(post.comments || []).map((c) => ({ ...c, __typename: "Comment" })),
+    ...(post.votes || []).map((v) => ({ ...v, __typename: "Vote" })),
+    ...(post.quotes || []).map((q) => ({ ...q, __typename: "Quote" })),
+  ];
 
   return (
     <Post
@@ -87,5 +87,5 @@ export default function PostController({
       onOpenDiscussion={onOpenDiscussion}
       onActivateLinkedComment={onActivateLinkedComment}
     />
-  )
+  );
 }

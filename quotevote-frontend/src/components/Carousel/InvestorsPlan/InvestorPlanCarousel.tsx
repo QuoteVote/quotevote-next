@@ -1,23 +1,23 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Carousel } from '../Carousel'
-import { InvestorCarouselFirstContent } from './InvestorCarouselFirstContent'
-import { InvestorCarouselSecondContent } from './InvestorCarouselSecondContent'
-import { InvestorCarouselThirdContent } from './InvestorCarouselThirdContent'
-import type { PlanCarouselProps } from '@/types/carousel'
+import { useState } from "react";
+import { Carousel } from "../Carousel";
+import { InvestorCarouselFirstContent } from "./InvestorCarouselFirstContent";
+import { InvestorCarouselSecondContent } from "./InvestorCarouselSecondContent";
+import { InvestorCarouselThirdContent } from "./InvestorCarouselThirdContent";
+import type { PlanCarouselProps } from "@/types/carousel";
 
-export const MOBILE_IMAGE_WIDTH = 250
+export const MOBILE_IMAGE_WIDTH = 250;
 
 export function InvestorPlanCarousel({ classes, setCarouselCurrentIndex }: PlanCarouselProps) {
-  const [contentIndex, setContentIndex] = useState(0)
+  const [contentIndex, setContentIndex] = useState(0);
 
   return (
     <Carousel
       navButtonsAlwaysVisible
       index={contentIndex}
       onChange={(index) => {
-        setCarouselCurrentIndex?.(index)
+        setCarouselCurrentIndex?.(index);
       }}
       activeIndicatorProps={{
         className: classes?.activeIndicator,
@@ -30,6 +30,5 @@ export function InvestorPlanCarousel({ classes, setCarouselCurrentIndex }: PlanC
       <InvestorCarouselSecondContent classes={classes} setContentIndex={setContentIndex} />
       <InvestorCarouselThirdContent classes={classes} />
     </Carousel>
-  )
+  );
 }
-

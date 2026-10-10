@@ -2,11 +2,7 @@ import { createEvent, fireEvent, render, screen } from "@/__tests__/utils/test-u
 import MobileDiscussionSplit from "@/components/Post/MobileDiscussionSplit";
 import { DEFAULT_QUOTE_RATIO, SPLIT_RATIO_STORAGE_KEY } from "@/types/discussionSplit";
 
-function firePointer(
-  element: Element,
-  type: "pointerDown" | "pointerMove",
-  clientY: number
-) {
+function firePointer(element: Element, type: "pointerDown" | "pointerMove", clientY: number) {
   const event = createEvent[type](element, { bubbles: true, pointerId: 1 });
   Object.assign(event, { clientY, pointerId: 1, pointerType: "touch" });
   fireEvent(element, event);
@@ -153,9 +149,7 @@ describe("MobileDiscussionSplit", () => {
     firePointer(screen.getByText("Discussion · 2"), "pointerDown", 400);
     firePointer(screen.getByTestId("discussion-resize-handle"), "pointerMove", 500);
 
-    const quotePane = split.querySelector(
-      '[data-post-detail-pane="content"]'
-    ) as HTMLElement;
+    const quotePane = split.querySelector('[data-post-detail-pane="content"]') as HTMLElement;
     expect(quotePane).toHaveStyle({ height: "55%" });
   });
 
@@ -179,9 +173,7 @@ describe("MobileDiscussionSplit", () => {
     firePointer(collapse, "pointerDown", 400);
     firePointer(screen.getByTestId("discussion-resize-handle"), "pointerMove", 500);
 
-    const quotePane = split.querySelector(
-      '[data-post-detail-pane="content"]'
-    ) as HTMLElement;
+    const quotePane = split.querySelector('[data-post-detail-pane="content"]') as HTMLElement;
     expect(quotePane).toHaveStyle({
       height: `${Math.round(DEFAULT_QUOTE_RATIO * 100)}%`,
     });

@@ -59,7 +59,9 @@ export function AboutCommunities() {
                 className="size-12 object-contain sm:size-14"
                 unoptimized
               />
-              <p className="text-xs font-semibold leading-snug text-[#0A2342] sm:text-sm">{label}</p>
+              <p className="text-xs font-semibold leading-snug text-[#0A2342] sm:text-sm">
+                {label}
+              </p>
             </div>
           ))}
         </div>

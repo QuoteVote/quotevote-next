@@ -9,7 +9,6 @@ export interface LoadingSpinnerProps {
    * @default '15px'
    */
   marginTop?: string;
-  
 }
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -32,14 +31,14 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
    * Size variant: 'sm', 'md', 'lg', 'xl', or a custom number in pixels
    * @default 'md'
    */
-  size?: 'sm' | 'md' | 'lg' | 'xl' | number;
+  size?: "sm" | "md" | "lg" | "xl" | number;
   /**
    * Optional click handler
    */
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-export type AlertVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
+export type AlertVariant = "default" | "destructive" | "success" | "warning" | "info";
 
 export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -217,7 +216,7 @@ export interface PaginatedListProps<T = unknown> {
    * Total count of items (required for pagination)
    */
   totalCount: number;
-  
+
   // Pagination props
   /**
    * Default page size
@@ -249,7 +248,7 @@ export interface PaginatedListProps<T = unknown> {
    * @default 5
    */
   maxVisiblePages?: number;
-  
+
   // Render props
   /**
    * Function to render each item
@@ -267,7 +266,7 @@ export interface PaginatedListProps<T = unknown> {
    * Custom loading state renderer
    */
   renderLoading?: () => React.ReactNode;
-  
+
   // Callbacks
   /**
    * Callback when page changes
@@ -281,7 +280,7 @@ export interface PaginatedListProps<T = unknown> {
    * Callback to refresh/retry data fetch
    */
   onRefresh?: () => void;
-  
+
   // Styling
   /**
    * Additional CSS classes for root container
@@ -295,7 +294,7 @@ export interface PaginatedListProps<T = unknown> {
    * Additional CSS classes for pagination
    */
   paginationClassName?: string;
-  
+
   // Other props
   /**
    * Child content (alternative to renderItem)
@@ -393,7 +392,7 @@ export interface BookmarkIconButtonProps {
   className?: string;
 }
 
-export interface ApproveButtonProps extends React.ComponentProps<'button'> {
+export interface ApproveButtonProps extends React.ComponentProps<"button"> {
   /**
    * Whether the button is in selected/active state
    * @default false
@@ -406,7 +405,7 @@ export interface ApproveButtonProps extends React.ComponentProps<'button'> {
   count?: number;
 }
 
-export interface RejectButtonProps extends React.ComponentProps<'button'> {
+export interface RejectButtonProps extends React.ComponentProps<"button"> {
   /**
    * Whether the button is in selected/active state
    * @default false
@@ -419,7 +418,7 @@ export interface RejectButtonProps extends React.ComponentProps<'button'> {
   count?: number;
 }
 
-export interface ManageInviteButtonProps extends React.ComponentProps<'button'> {
+export interface ManageInviteButtonProps extends React.ComponentProps<"button"> {
   /**
    * Additional CSS classes
    */
@@ -437,7 +436,7 @@ export interface InvestButtonProps {
   width?: string;
 }
 
-export interface SignOutButtonProps extends React.ComponentProps<'button'> {
+export interface SignOutButtonProps extends React.ComponentProps<"button"> {
   /**
    * Additional CSS classes
    */
@@ -447,7 +446,7 @@ export interface SignOutButtonProps extends React.ComponentProps<'button'> {
 // GetAccessButton has no props - it's a self-contained button
 export type GetAccessButtonProps = Record<string, never>;
 
-export interface SettingsSaveButtonProps extends React.ComponentProps<'button'> {
+export interface SettingsSaveButtonProps extends React.ComponentProps<"button"> {
   /**
    * Additional CSS classes
    */
@@ -481,7 +480,7 @@ export interface FollowButtonProps {
    * Button variant for the text Follow control
    * @default 'default'
    */
-  buttonVariant?: 'default' | 'outline';
+  buttonVariant?: "default" | "outline";
   /**
    * Additional CSS classes
    */
@@ -495,7 +494,7 @@ export interface SettingsIconButtonProps {
   fontSize?: string;
 }
 
-export type SelectPlansButtonProps = React.ComponentProps<'button'>;
+export type SelectPlansButtonProps = React.ComponentProps<"button">;
 
 // Navbar Component Types
 // MainNavBar doesn't require props - it reads from store
@@ -505,7 +504,7 @@ export interface AuthNavbarProps {
   /**
    * Color variant for the navbar
    */
-  color?: 'primary' | 'info' | 'success' | 'warning' | 'danger';
+  color?: "primary" | "info" | "success" | "warning" | "danger";
   /**
    * Brand text to display
    */
@@ -568,7 +567,7 @@ export interface SidebarProps {
    * Background color variant
    * @default 'blue'
    */
-  bgColor?: 'white' | 'black' | 'blue';
+  bgColor?: "white" | "black" | "blue";
   /**
    * Whether RTL (right-to-left) mode is active
    * @default false
@@ -577,7 +576,7 @@ export interface SidebarProps {
   /**
    * Color variant for the sidebar
    */
-  color?: 'white' | 'red' | 'orange' | 'green' | 'blue' | 'purple' | 'rose';
+  color?: "white" | "red" | "orange" | "green" | "blue" | "purple" | "rose";
   /**
    * Whether mini sidebar mode is active
    * @default false
@@ -655,7 +654,7 @@ export interface Group {
   title: string;
   description?: string;
   url?: string;
-  privacy?: 'public' | 'private';
+  privacy?: "public" | "private";
   creatorId?: string;
   adminIds?: string[];
   allowedUserIds?: string[];
@@ -758,7 +757,7 @@ export interface RequestInviteDialogProps {
   /**
    * Which panel to show when the dialog opens
    */
-  view?: 'invite' | 'login';
+  view?: "invite" | "login";
 }
 
 export interface CardDetails {
@@ -776,7 +775,9 @@ export interface PersonalFormProps {
   /**
    * React Hook Form handleSubmit function
    */
-  handleSubmit: (onSubmit: (data: unknown) => void) => (e?: React.BaseSyntheticEvent) => Promise<void>;
+  handleSubmit: (
+    onSubmit: (data: unknown) => void
+  ) => (e?: React.BaseSyntheticEvent) => Promise<void>;
   /**
    * Whether the form has been continued to payment step
    */
@@ -823,7 +824,9 @@ export interface BusinessFormProps {
   /**
    * React Hook Form handleSubmit function
    */
-  handleSubmit: (onSubmit: (data: unknown) => void) => (e?: React.BaseSyntheticEvent) => Promise<void>;
+  handleSubmit: (
+    onSubmit: (data: unknown) => void
+  ) => (e?: React.BaseSyntheticEvent) => Promise<void>;
   /**
    * Whether the form has been continued to payment step
    */
@@ -1021,7 +1024,7 @@ export interface SidebarSearchViewProps {
    * Display style for the container
    * @default 'block'
    */
-  Display?: 'block' | 'flex' | 'none' | string;
+  Display?: "block" | "flex" | "none" | string;
 }
 
 export interface HighlightTextProps {
@@ -1161,4 +1164,3 @@ export interface PopoverMenuProps {
    */
   className?: string;
 }
-

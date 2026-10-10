@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import { useResponsive } from '@/hooks/useResponsive'
-import { RequestInviteCarouselButton } from '../RequestInviteCarouselButton'
-import type { CarouselContentProps } from '@/types/carousel'
+import Image from "next/image";
+import { useResponsive } from "@/hooks/useResponsive";
+import { RequestInviteCarouselButton } from "../RequestInviteCarouselButton";
+import type { CarouselContentProps } from "@/types/carousel";
 
 export function PersonalCarouselFourthContent({ classes }: CarouselContentProps) {
-  const { width, isMobile } = useResponsive()
-  const imageWidth = isMobile ? 200 : width === 'md' ? '365.43px' : '400.43px'
+  const { width, isMobile } = useResponsive();
+  const imageWidth = isMobile ? 200 : width === "md" ? "365.43px" : "400.43px";
 
   return (
     <div className="flex flex-row justify-center items-center pl-[60px] pr-[60px] md:pr-[60px] pr-0">
@@ -15,17 +15,17 @@ export function PersonalCarouselFourthContent({ classes }: CarouselContentProps)
         <Image
           alt="Personal 4"
           src="/assets/PersonalContent4.svg"
-          width={typeof imageWidth === 'string' ? parseInt(imageWidth) : imageWidth}
+          width={typeof imageWidth === "string" ? parseInt(imageWidth) : imageWidth}
           height={isMobile ? 200 : 350}
           className="object-contain"
           style={{
             width: imageWidth,
-            height: isMobile ? 'auto' : '350.51px',
+            height: isMobile ? "auto" : "350.51px",
           }}
         />
       </div>
       <div className="w-full md:w-5/12">
-        <div className={classes?.opinionsText || 'text-base'}>
+        <div className={classes?.opinionsText || "text-base"}>
           <p>
             <strong>See posts with the most activity.</strong> Filter by keyword, date range, or
             follows. See what people are talking about and sharing the most.
@@ -39,6 +39,5 @@ export function PersonalCarouselFourthContent({ classes }: CarouselContentProps)
       </div>
       <RequestInviteCarouselButton classes={classes} />
     </div>
-  )
+  );
 }
-

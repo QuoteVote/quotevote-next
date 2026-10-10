@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import { useResponsive } from '@/hooks/useResponsive'
-import { RequestInviteCarouselButton } from '../RequestInviteCarouselButton'
-import type { CarouselContentProps } from '@/types/carousel'
+import Image from "next/image";
+import { useResponsive } from "@/hooks/useResponsive";
+import { RequestInviteCarouselButton } from "../RequestInviteCarouselButton";
+import type { CarouselContentProps } from "@/types/carousel";
 
 export function PersonalCarouselFirstContent({ classes }: CarouselContentProps) {
-  const { width, isMobile } = useResponsive()
+  const { width, isMobile } = useResponsive();
 
   return (
     <div className="flex flex-row justify-end items-baseline pl-10 pr-2.5">
@@ -20,8 +20,8 @@ export function PersonalCarouselFirstContent({ classes }: CarouselContentProps) 
               height={isMobile ? 50 : 350}
               className="object-contain"
               style={{
-                width: isMobile ? '50px' : '90%',
-                height: isMobile ? 'auto' : '350.51px',
+                width: isMobile ? "50px" : "90%",
+                height: isMobile ? "auto" : "350.51px",
               }}
             />
           </div>
@@ -33,8 +33,8 @@ export function PersonalCarouselFirstContent({ classes }: CarouselContentProps) 
               height={isMobile ? 200 : 350}
               className="object-contain"
               style={{
-                height: isMobile ? 'auto' : '350.51px',
-                width: isMobile ? '200px' : '100%',
+                height: isMobile ? "auto" : "350.51px",
+                width: isMobile ? "200px" : "100%",
               }}
             />
           </div>
@@ -48,13 +48,12 @@ export function PersonalCarouselFirstContent({ classes }: CarouselContentProps) 
           height={isMobile ? 200 : 400}
           className="object-cover"
           style={{
-            width: isMobile ? '200px' : '100%',
-            marginLeft: width === 'xs' ? '20px' : '10px',
+            width: isMobile ? "200px" : "100%",
+            marginLeft: width === "xs" ? "20px" : "10px",
           }}
         />
       </div>
       <RequestInviteCarouselButton classes={classes} />
     </div>
-  )
+  );
 }
-

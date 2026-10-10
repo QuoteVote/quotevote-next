@@ -1,73 +1,77 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useQuery, useMutation } from '@apollo/client/react'
-import { Loader2, AlertCircle, FileText, CheckCircle2, XCircle, User } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState } from "react";
+import { useQuery, useMutation } from "@apollo/client/react";
+import { Loader2, AlertCircle, FileText, CheckCircle2, XCircle, User } from "lucide-react";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { GET_TOP_POSTS } from '@/graphql/queries'
-import { APPROVE_POST, REJECT_POST } from '@/graphql/mutations'
-import { replaceGqlError } from '@/lib/utils/replaceGqlError'
-import { useAppStore } from '@/store/useAppStore'
-import type { SettingsUserData } from '@/types/settings'
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { GET_TOP_POSTS } from "@/graphql/queries";
+import { APPROVE_POST, REJECT_POST } from "@/graphql/mutations";
+import { replaceGqlError } from "@/lib/utils/replaceGqlError";
+import { useAppStore } from "@/store/useAppStore";
+import type { SettingsUserData } from "@/types/settings";
 
 interface PostEntity {
-  _id: string
-  title: string
-  text?: string
-  created: string
-  approvedBy?: string[]
-  rejectedBy?: string[]
-  creator?: { _id: string; name?: string; username?: string }
+  _id: string;
+  title: string;
+  text?: string;
+  created: string;
+  approvedBy?: string[];
+  rejectedBy?: string[];
+  creator?: { _id: string; name?: string; username?: string };
 }
 
 export default function PostModerationTab() {
-  const userData = useAppStore((s) => s.user.data) as SettingsUserData | undefined
-  const userId = userData?.id ?? userData?._id ?? ''
+  const userData = useAppStore((s) => s.user.data) as SettingsUserData | undefined;
+  const userId = userData?.id ?? userData?._id ?? "";
 
   const { data, loading, error, refetch } = useQuery<{ posts: { entities: PostEntity[] } }>(
     GET_TOP_POSTS,
     {
-      variables: { limit: 50, offset: 0, searchKey: '', startDateRange: null, endDateRange: null, friendsOnly: false, interactions: false },
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-and-network',
+      variables: {
+        limit: 50,
+        offset: 0,
+        searchKey: "",
+        startDateRange: null,
+        endDateRange: null,
+        friendsOnly: false,
+        interactions: false,
+      },
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
     }
-  )
+  );
 
-  const [approvePost, { loading: approving }] = useMutation(APPROVE_POST)
-  const [rejectPost, { loading: rejecting }] = useMutation(REJECT_POST)
-  const [rejectReason, setRejectReason] = useState('')
-  const [rejectingPostId, setRejectingPostId] = useState<string | null>(null)
+  const [approvePost, { loading: approving }] = useMutation(APPROVE_POST);
+  const [rejectPost, { loading: rejecting }] = useMutation(REJECT_POST);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectingPostId, setRejectingPostId] = useState<string | null>(null);
 
   const handleApprove = async (postId: string) => {
     try {
-      await approvePost({ variables: { postId, userId, remove: false } })
-      toast.success('Post approved')
-      refetch()
+      await approvePost({ variables: { postId, userId, remove: false } });
+      toast.success("Post approved");
+      refetch();
     } catch (err) {
-      toast.error(replaceGqlError(err instanceof Error ? err.message : 'Failed to approve post'))
+      toast.error(replaceGqlError(err instanceof Error ? err.message : "Failed to approve post"));
     }
-  }
+  };
 
   const handleReject = async (postId: string) => {
     try {
-      await rejectPost({ variables: { postId, userId, remove: false } })
-      toast.success('Post rejected')
-      setRejectingPostId(null)
-      setRejectReason('')
-      refetch()
+      await rejectPost({ variables: { postId, userId, remove: false } });
+      toast.success("Post rejected");
+      setRejectingPostId(null);
+      setRejectReason("");
+      refetch();
     } catch (err) {
-      toast.error(replaceGqlError(err instanceof Error ? err.message : 'Failed to reject post'))
+      toast.error(replaceGqlError(err instanceof Error ? err.message : "Failed to reject post"));
     }
-  }
+  };
 
   if (error) {
     return (
@@ -78,7 +82,7 @@ export default function PostModerationTab() {
         </div>
         <p className="text-sm text-muted-foreground mt-1">{error.message}</p>
       </div>
-    )
+    );
   }
 
   if (loading || !data) {
@@ -88,11 +92,11 @@ export default function PostModerationTab() {
           <Skeleton key={i} className="h-24 rounded-xl" />
         ))}
       </div>
-    )
+    );
   }
 
-  const posts: PostEntity[] = data.posts?.entities || []
-  const pendingPosts = posts.filter((p) => !p.approvedBy || p.approvedBy.length === 0)
+  const posts: PostEntity[] = data.posts?.entities || [];
+  const pendingPosts = posts.filter((p) => !p.approvedBy || p.approvedBy.length === 0);
 
   return (
     <div className="space-y-5">
@@ -129,10 +133,18 @@ export default function PostModerationTab() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/60 bg-muted/30">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Post</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Author</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Post
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Author
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Preview
+                  </th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
@@ -141,18 +153,22 @@ export default function PostModerationTab() {
                     <td className="px-5 py-4 max-w-[200px]">
                       <div className="flex items-start gap-2">
                         <FileText className="size-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                        <span className="text-sm font-semibold line-clamp-2 leading-snug">{post.title}</span>
+                        <span className="text-sm font-semibold line-clamp-2 leading-snug">
+                          {post.title}
+                        </span>
                       </div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5">
                         <User className="size-3.5 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">@{post.creator?.username || 'Unknown'}</span>
+                        <span className="text-sm text-muted-foreground">
+                          @{post.creator?.username || "Unknown"}
+                        </span>
                       </div>
                     </td>
                     <td className="px-5 py-4 max-w-[240px]">
                       <p className="text-sm text-muted-foreground line-clamp-2 leading-snug">
-                        {(post.text || '').slice(0, 120) || '—'}
+                        {(post.text || "").slice(0, 120) || "—"}
                       </p>
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -163,18 +179,27 @@ export default function PostModerationTab() {
                           disabled={approving}
                           className="bg-[#52b274] hover:bg-[#3d9659] text-white gap-1"
                         >
-                          {approving ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
+                          {approving ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="size-3" />
+                          )}
                           Approve
                         </Button>
                         <Popover
                           open={rejectingPostId === post._id}
                           onOpenChange={(open) => {
-                            setRejectingPostId(open ? post._id : null)
-                            if (!open) setRejectReason('')
+                            setRejectingPostId(open ? post._id : null);
+                            if (!open) setRejectReason("");
                           }}
                         >
                           <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={rejecting} className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-900 dark:hover:bg-red-950 gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={rejecting}
+                              className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-900 dark:hover:bg-red-950 gap-1"
+                            >
                               <XCircle className="size-3" />
                               Reject
                             </Button>
@@ -182,7 +207,9 @@ export default function PostModerationTab() {
                           <PopoverContent className="w-72 space-y-3" align="end">
                             <div>
                               <p className="text-sm font-semibold">Reject post</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">Optionally provide a reason</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Optionally provide a reason
+                              </p>
                             </div>
                             <Textarea
                               placeholder="Reason for rejection..."
@@ -192,10 +219,22 @@ export default function PostModerationTab() {
                               className="text-sm"
                             />
                             <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => { setRejectingPostId(null); setRejectReason('') }}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setRejectingPostId(null);
+                                  setRejectReason("");
+                                }}
+                              >
                                 Cancel
                               </Button>
-                              <Button variant="destructive" size="sm" onClick={() => handleReject(post._id)} disabled={rejecting}>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleReject(post._id)}
+                                disabled={rejecting}
+                              >
                                 {rejecting && <Loader2 className="mr-1 size-3 animate-spin" />}
                                 Confirm Rejection
                               </Button>
@@ -216,16 +255,29 @@ export default function PostModerationTab() {
               <div key={post._id} className="p-4 space-y-3">
                 <div>
                   <p className="text-sm font-semibold line-clamp-2">{post.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">@{post.creator?.username || 'Unknown'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    @{post.creator?.username || "Unknown"}
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {(post.text || '').slice(0, 140) || '—'}
+                  {(post.text || "").slice(0, 140) || "—"}
                 </p>
                 <div className="flex gap-2">
-                  <Button size="sm" className="flex-1 bg-[#52b274] hover:bg-[#3d9659] text-white" onClick={() => handleApprove(post._id)} disabled={approving}>
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-[#52b274] hover:bg-[#3d9659] text-white"
+                    onClick={() => handleApprove(post._id)}
+                    disabled={approving}
+                  >
                     Approve
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1 border-red-200 text-red-600 hover:bg-red-50" onClick={() => handleReject(post._id)} disabled={rejecting}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                    onClick={() => handleReject(post._id)}
+                    disabled={rejecting}
+                  >
                     Reject
                   </Button>
                 </div>
@@ -235,5 +287,5 @@ export default function PostModerationTab() {
         </div>
       )}
     </div>
-  )
+  );
 }

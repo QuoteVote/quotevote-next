@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { DashboardShell } from '@/components/DashboardShell';
+import { DashboardShell } from "@/components/DashboardShell";
 
 export default function DashboardGroupLayout({
   children,

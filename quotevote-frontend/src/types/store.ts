@@ -3,8 +3,8 @@
  * These types define the structure of state that will be managed by Zustand
  */
 
-import type { StagedChatRoom } from './chat';
-import type { LinkedPassage } from './discussionSplit';
+import type { StagedChatRoom } from "./chat";
+import type { LinkedPassage } from "./discussionSplit";
 
 // User state interface
 export interface UserState {
@@ -65,11 +65,14 @@ export interface ChatState {
   selectedRoom: string | StagedChatRoom | null;
   open: boolean;
   buddyList: unknown[];
-  presenceMap: Record<string, {
-    status: string;
-    statusMessage: string;
-    lastSeen: number;
-  }>;
+  presenceMap: Record<
+    string,
+    {
+      status: string;
+      statusMessage: string;
+      lastSeen: number;
+    }
+  >;
   typingUsers: Record<string, string[]>;
   userStatus: string;
   userStatusMessage: string;
@@ -159,7 +162,7 @@ export interface Vote {
   [key: string]: unknown;
 }
 
-import type { CSSProperties } from 'react';
+import type { CSSProperties } from "react";
 
 export type VoteStyle = CSSProperties | null;
 

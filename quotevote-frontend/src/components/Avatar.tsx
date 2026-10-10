@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { useState, useMemo } from 'react';
-import { User } from 'lucide-react';
-import type { AvatarProps } from '@/types/components';
-import { cn } from '@/lib/utils';
-import { parseAvatarToUrl } from '@/lib/avatar';
+import Image from "next/image";
+import { useState, useMemo } from "react";
+import { User } from "lucide-react";
+import type { AvatarProps } from "@/types/components";
+import { cn } from "@/lib/utils";
+import { parseAvatarToUrl } from "@/lib/avatar";
 
 /**
  * Avatar Component
@@ -17,31 +17,31 @@ export default function Avatar({
   src,
   alt,
   fallback,
-  size = 'md',
+  size = "md",
   className,
   onClick,
   ...props
 }: AvatarProps) {
   const resolvedSrc = useMemo(
-    () => parseAvatarToUrl(src ?? undefined) ?? (typeof src === 'string' ? src : undefined),
+    () => parseAvatarToUrl(src ?? undefined) ?? (typeof src === "string" ? src : undefined),
     [src]
   );
 
   // Calculate size classes and dimensions
   const sizeConfig = useMemo(() => {
-    if (typeof size === 'number') {
+    if (typeof size === "number") {
       return {
-        className: '',
+        className: "",
         dimension: size,
-        textSize: size <= 24 ? 'text-xs' : size <= 40 ? 'text-sm' : 'text-base',
+        textSize: size <= 24 ? "text-xs" : size <= 40 ? "text-sm" : "text-base",
       };
     }
 
     const configs = {
-      sm: { className: 'w-8 h-8', dimension: 32, textSize: 'text-xs' },
-      md: { className: 'w-10 h-10', dimension: 40, textSize: 'text-sm' },
-      lg: { className: 'w-16 h-16', dimension: 64, textSize: 'text-base' },
-      xl: { className: 'w-24 h-24', dimension: 96, textSize: 'text-lg' },
+      sm: { className: "w-8 h-8", dimension: 32, textSize: "text-xs" },
+      md: { className: "w-10 h-10", dimension: 40, textSize: "text-sm" },
+      lg: { className: "w-16 h-16", dimension: 64, textSize: "text-base" },
+      xl: { className: "w-24 h-24", dimension: 96, textSize: "text-lg" },
     };
 
     return configs[size] || configs.md;
@@ -50,7 +50,7 @@ export default function Avatar({
   // Generate initials from alt text if fallback is not provided
   const fallbackContent = useMemo(() => {
     if (fallback !== undefined) {
-      return typeof fallback === 'string' ? fallback : fallback;
+      return typeof fallback === "string" ? fallback : fallback;
     }
 
     // Generate initials from alt text
@@ -68,12 +68,12 @@ export default function Avatar({
   }, [alt, fallback]);
 
   const baseClasses = cn(
-    'relative inline-flex items-center justify-center',
-    'rounded-full overflow-hidden',
-    'bg-[var(--color-gray-light)]',
-    'flex-shrink-0',
+    "relative inline-flex items-center justify-center",
+    "rounded-full overflow-hidden",
+    "bg-[var(--color-gray-light)]",
+    "flex-shrink-0",
     sizeConfig.className,
-    onClick && 'cursor-pointer transition-opacity hover:opacity-80',
+    onClick && "cursor-pointer transition-opacity hover:opacity-80",
     className
   );
 
@@ -81,12 +81,12 @@ export default function Avatar({
     <div
       className={baseClasses}
       onClick={onClick}
-      role={onClick ? 'button' : undefined}
+      role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={
         onClick
           ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+              if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 // Trigger click handler for keyboard accessibility
                 onClick(e as unknown as React.MouseEvent<HTMLDivElement>);
@@ -96,7 +96,7 @@ export default function Avatar({
       }
       aria-label={onClick ? alt : undefined}
       style={
-        typeof size === 'number'
+        typeof size === "number"
           ? {
               width: `${sizeConfig.dimension}px`,
               height: `${sizeConfig.dimension}px`,
@@ -107,7 +107,7 @@ export default function Avatar({
     >
       {/* Keyed by src so load/error state resets when the avatar changes */}
       <AvatarMedia
-        key={resolvedSrc ?? 'fallback'}
+        key={resolvedSrc ?? "fallback"}
         resolvedSrc={resolvedSrc}
         alt={alt}
         dimension={sizeConfig.dimension}
@@ -140,19 +140,16 @@ function AvatarMedia({
     return (
       <Image
         src={resolvedSrc}
-        alt={alt || 'User avatar'}
+        alt={alt || "User avatar"}
         width={dimension}
         height={dimension}
         loading="lazy"
-        className={cn(
-          'object-cover w-full h-full',
-          !imageLoaded && 'opacity-0'
-        )}
+        className={cn("object-cover w-full h-full", !imageLoaded && "opacity-0")}
         onError={() => setImageError(true)}
         onLoad={() => setImageLoaded(true)}
-        {...(resolvedSrc.startsWith('data:') ||
-        resolvedSrc.startsWith('blob:') ||
-        resolvedSrc.includes('avataaars.io')
+        {...(resolvedSrc.startsWith("data:") ||
+        resolvedSrc.startsWith("blob:") ||
+        resolvedSrc.includes("avataaars.io")
           ? { unoptimized: true }
           : {})}
       />
@@ -162,10 +159,10 @@ function AvatarMedia({
   return (
     <div
       className={cn(
-        'w-full h-full flex items-center justify-center',
-        'bg-[var(--color-primary)] text-[var(--color-primary-contrast)]',
+        "w-full h-full flex items-center justify-center",
+        "bg-[var(--color-primary)] text-[var(--color-primary-contrast)]",
         textSize,
-        'font-medium'
+        "font-medium"
       )}
       aria-hidden="true"
     >
@@ -173,9 +170,7 @@ function AvatarMedia({
         <span>{fallbackContent}</span>
       ) : (
         <User
-          className={cn(
-            dimension <= 32 ? 'w-4 h-4' : dimension <= 40 ? 'w-5 h-5' : 'w-6 h-6'
-          )}
+          className={cn(dimension <= 32 ? "w-4 h-4" : dimension <= 40 ? "w-5 h-5" : "w-6 h-6")}
           aria-hidden="true"
         />
       )}

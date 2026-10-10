@@ -44,10 +44,7 @@ export function AboutValues() {
       </h2>
       <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-8 lg:grid-cols-4 lg:px-8">
         {VALUES.map(({ title, body, Icon, wrapClassName }) => (
-          <div
-            key={title}
-            className="flex min-w-0 flex-col items-center text-center"
-          >
+          <div key={title} className="flex min-w-0 flex-col items-center text-center">
             <div
               className={`mb-3 flex size-12 items-center justify-center rounded-2xl ${wrapClassName}`}
             >

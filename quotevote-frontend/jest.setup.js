@@ -1,105 +1,105 @@
 // Learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom'
-import { TextDecoder, TextEncoder } from 'util'
-import { webcrypto } from 'crypto'
+import "@testing-library/jest-dom";
+import { TextDecoder, TextEncoder } from "util";
+import { webcrypto } from "crypto";
 
 // jose / Web Crypto consumers need these globals in jsdom
-if (typeof globalThis.TextEncoder === 'undefined') {
-  globalThis.TextEncoder = TextEncoder
+if (typeof globalThis.TextEncoder === "undefined") {
+  globalThis.TextEncoder = TextEncoder;
 }
-if (typeof globalThis.TextDecoder === 'undefined') {
-  globalThis.TextDecoder = TextDecoder
+if (typeof globalThis.TextDecoder === "undefined") {
+  globalThis.TextDecoder = TextDecoder;
 }
-if (typeof globalThis.structuredClone !== 'function') {
-  globalThis.structuredClone = (value) => JSON.parse(JSON.stringify(value))
+if (typeof globalThis.structuredClone !== "function") {
+  globalThis.structuredClone = (value) => JSON.parse(JSON.stringify(value));
 }
 // Always use Node's Web Crypto in Jest — jsdom's crypto.subtle is incomplete.
-Object.defineProperty(globalThis, 'crypto', {
+Object.defineProperty(globalThis, "crypto", {
   value: webcrypto,
   configurable: true,
   writable: true,
-})
+});
 
 // Mock Next.js router
-jest.mock('next/navigation', () => ({
+jest.mock("next/navigation", () => ({
   useRouter() {
     return {
       push: jest.fn(),
       replace: jest.fn(),
       prefetch: jest.fn(),
       back: jest.fn(),
-      pathname: '/',
+      pathname: "/",
       query: {},
-      asPath: '/',
-    }
+      asPath: "/",
+    };
   },
   usePathname() {
-    return '/'
+    return "/";
   },
   useSearchParams() {
-    return new URLSearchParams()
+    return new URLSearchParams();
   },
-}))
+}));
 
 // Mock Next.js Image component
-jest.mock('next/image', () => ({
+jest.mock("next/image", () => ({
   __esModule: true,
   default: ({ ...props }) => {
     // Filter out Next.js-specific props that shouldn't be passed to DOM
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img {...props} />
+    return <img {...props} />;
   },
-}))
+}));
 
 // Mock Next.js Link component
-jest.mock('next/link', () => ({
+jest.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href, ...props }) => {
     return (
       <a href={href} {...props}>
         {children}
       </a>
-    )
+    );
   },
-}))
+}));
 
 // Mock window.scrollTo (only in jsdom environment)
-if (typeof window !== 'undefined') {
-  Object.defineProperty(window, 'scrollTo', {
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "scrollTo", {
     writable: true,
     value: jest.fn(),
-  })
-  
+  });
+
   // Mock window.location.origin for components that need it
   if (!window.location.origin) {
-    Object.defineProperty(window.location, 'origin', {
+    Object.defineProperty(window.location, "origin", {
       writable: false,
       configurable: true,
-      value: 'http://localhost',
-    })
+      value: "http://localhost",
+    });
   }
-  
+
   // Mock Element.prototype.scrollIntoView for components that use it
   if (!Element.prototype.scrollIntoView) {
-    Element.prototype.scrollIntoView = jest.fn()
+    Element.prototype.scrollIntoView = jest.fn();
   }
 }
 
 // Mock window.matchMedia (only in jsdom environment)
-if (typeof window !== 'undefined') {
-  Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-  })
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
 }
 
 // Mock IntersectionObserver
@@ -108,10 +108,10 @@ global.IntersectionObserver = class IntersectionObserver {
   disconnect() {}
   observe() {}
   takeRecords() {
-    return []
+    return [];
   }
   unobserve() {}
-}
+};
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -119,7 +119,7 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
   observe() {}
   unobserve() {}
-}
+};
 
 // Mock localStorage
 const localStorageMock = {
@@ -127,13 +127,13 @@ const localStorageMock = {
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
-}
-global.localStorage = localStorageMock
-if (typeof window !== 'undefined') {
-  Object.defineProperty(window, 'localStorage', {
+};
+global.localStorage = localStorageMock;
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "localStorage", {
     value: localStorageMock,
     writable: true,
-  })
+  });
 }
 
 // Mock sessionStorage
@@ -142,122 +142,131 @@ const sessionStorageMock = {
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
-}
-global.sessionStorage = sessionStorageMock
-if (typeof window !== 'undefined') {
-  Object.defineProperty(window, 'sessionStorage', {
+};
+global.sessionStorage = sessionStorageMock;
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "sessionStorage", {
     value: sessionStorageMock,
     writable: true,
-  })
+  });
 }
 
 // Suppress console errors and warnings from ErrorBoundary and Radix UI during tests
 // These are expected when components hit error boundaries or Radix UI validation in test environment
-const originalError = console.error
-const originalWarn = console.warn
+const originalError = console.error;
+const originalWarn = console.warn;
 beforeAll(() => {
   console.error = jest.fn((...args) => {
     // Only suppress errors related to ErrorBoundary, undefined component types, and Radix UI accessibility warnings
     // This prevents noise from expected error boundary catches and test environment warnings while preserving real errors
     const errorString = args
-      .map(arg => {
-        if (typeof arg === 'string') return arg
-        if (arg instanceof Error) return arg.message + ' ' + arg.stack
-        if (arg?.message) return arg.message
-        if (arg?.toString) return arg.toString()
-        return String(arg)
+      .map((arg) => {
+        if (typeof arg === "string") return arg;
+        if (arg instanceof Error) return arg.message + " " + arg.stack;
+        if (arg?.message) return arg.message;
+        if (arg?.toString) return arg.toString();
+        return String(arg);
       })
-      .join(' ')
-    
+      .join(" ");
+
     // Check if this is an expected ErrorBoundary error
-    const isExpectedError = 
-      errorString.includes('Element type is invalid') ||
-      errorString.includes('Check the render method of') ||
-      (errorString.includes('ErrorBoundary') && errorString.includes('undefined'))
-    
+    const isExpectedError =
+      errorString.includes("Element type is invalid") ||
+      errorString.includes("Check the render method of") ||
+      (errorString.includes("ErrorBoundary") && errorString.includes("undefined"));
+
     // Check if this is a Radix UI Dialog accessibility warning
     // These appear in test environment even when DialogTitle/DialogDescription are properly included
-    const isRadixDialogWarning = 
-      (errorString.includes('DialogContent') && errorString.includes('DialogTitle')) ||
-      (errorString.includes('DialogContent') && errorString.includes('DialogDescription')) ||
-      (errorString.includes('requires a `DialogTitle`')) ||
-      (errorString.includes('requires a `DialogDescription`')) ||
-      (errorString.includes('DialogContent') && errorString.includes('accessible for screen reader'))
-    
+    const isRadixDialogWarning =
+      (errorString.includes("DialogContent") && errorString.includes("DialogTitle")) ||
+      (errorString.includes("DialogContent") && errorString.includes("DialogDescription")) ||
+      errorString.includes("requires a `DialogTitle`") ||
+      errorString.includes("requires a `DialogDescription`") ||
+      (errorString.includes("DialogContent") &&
+        errorString.includes("accessible for screen reader"));
+
     // Check if this is a jsdom navigation error (expected in test environment)
-    const isJsdomNavigationError = 
-      errorString.includes('Not implemented: navigation') ||
-      errorString.includes('navigation (except hash changes)')
-    
+    const isJsdomNavigationError =
+      errorString.includes("Not implemented: navigation") ||
+      errorString.includes("navigation (except hash changes)");
+
     // Check if this is a React 19 fill attribute warning (we handle fill properly in components)
-    const isFillAttributeWarning = 
-      errorString.includes('Received `true` for a non-boolean attribute `fill`') ||
-      (errorString.includes('fill') && errorString.includes('non-boolean attribute'))
-    
+    const isFillAttributeWarning =
+      errorString.includes("Received `true` for a non-boolean attribute `fill`") ||
+      (errorString.includes("fill") && errorString.includes("non-boolean attribute"));
+
     // Check if this is a Next.js Image component attribute warning (priority, unoptimized)
     // These are valid Next.js Image props but React 19 warns about them in test environment
-    const isNextImageAttributeWarning = 
-      errorString.includes('Received `true` for a non-boolean attribute `priority`') ||
-      errorString.includes('Received `true` for a non-boolean attribute `unoptimized`') ||
-      (errorString.includes('priority') && errorString.includes('non-boolean attribute')) ||
-      (errorString.includes('unoptimized') && errorString.includes('non-boolean attribute'))
-    
+    const isNextImageAttributeWarning =
+      errorString.includes("Received `true` for a non-boolean attribute `priority`") ||
+      errorString.includes("Received `true` for a non-boolean attribute `unoptimized`") ||
+      (errorString.includes("priority") && errorString.includes("non-boolean attribute")) ||
+      (errorString.includes("unoptimized") && errorString.includes("non-boolean attribute"));
+
     // Check if this is a React async Client Component warning (expected in test environment for Server Components)
     const isAsyncClientComponentWarning =
-      errorString.includes('is an async Client Component') ||
-      errorString.includes('Only Server Components can be async')
+      errorString.includes("is an async Client Component") ||
+      errorString.includes("Only Server Components can be async");
 
     // Check if this is a React act() / suspended resource warning (expected in test environment)
     const isActSuspenseWarning =
-      errorString.includes('suspended resource finished loading inside a test') ||
-      errorString.includes('was not wrapped in act(...)') ||
-      errorString.includes('component suspended inside an `act` scope') ||
-      errorString.includes('the `act` call was not awaited')
+      errorString.includes("suspended resource finished loading inside a test") ||
+      errorString.includes("was not wrapped in act(...)") ||
+      errorString.includes("component suspended inside an `act` scope") ||
+      errorString.includes("the `act` call was not awaited");
 
-    if (isExpectedError || isRadixDialogWarning || isJsdomNavigationError || isFillAttributeWarning || isNextImageAttributeWarning || isAsyncClientComponentWarning || isActSuspenseWarning) {
+    if (
+      isExpectedError ||
+      isRadixDialogWarning ||
+      isJsdomNavigationError ||
+      isFillAttributeWarning ||
+      isNextImageAttributeWarning ||
+      isAsyncClientComponentWarning ||
+      isActSuspenseWarning
+    ) {
       // Suppress these expected errors - they're caught by ErrorBoundary or are test environment warnings
-      return
+      return;
     }
 
     // Log all other errors normally
-    originalError(...args)
-  })
+    originalError(...args);
+  });
 
   console.warn = jest.fn((...args) => {
     // Suppress Radix UI DialogDescription warnings in test environment
     // These warnings appear even when DialogDescription is properly included
     // due to timing issues in test rendering
     const warnString = args
-      .map(arg => {
-        if (typeof arg === 'string') return arg
-        if (arg?.toString) return arg.toString()
-        return String(arg)
+      .map((arg) => {
+        if (typeof arg === "string") return arg;
+        if (arg?.toString) return arg.toString();
+        return String(arg);
       })
-      .join(' ')
-    
+      .join(" ");
+
     // Suppress DialogDescription warnings - we properly include DialogDescription in components
-    if (warnString.includes('Missing `Description`') && warnString.includes('DialogContent')) {
-      return
+    if (warnString.includes("Missing `Description`") && warnString.includes("DialogContent")) {
+      return;
     }
 
     // Suppress Apollo MockLink "No more mocked responses" warnings
     // These occur when components fire queries not covered by test mocks
-    if (warnString.includes('No more mocked responses for the query')) {
-      return
+    if (warnString.includes("No more mocked responses for the query")) {
+      return;
     }
 
     // Log all other warnings normally
-    originalWarn(...args)
-  })
-})
+    originalWarn(...args);
+  });
+});
 
 afterAll(() => {
-  console.error = originalError
-  console.warn = originalWarn
-})
+  console.error = originalError;
+  console.warn = originalWarn;
+});
 
 // Set up environment variables for tests
-process.env.NEXT_PUBLIC_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000'
-process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql'
-process.env.NODE_ENV = 'test'
-
+process.env.NEXT_PUBLIC_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:4000";
+process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT =
+  process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql";
+process.env.NODE_ENV = "test";

@@ -6,7 +6,7 @@ import {
   PaginationUrlsResult,
   LocationLike,
   PaginationStructuredData,
-} from '@/types/store'
+} from "@/types/store";
 
 /**
  * Generate canonical URL for paginated content
@@ -33,50 +33,50 @@ export const generateCanonicalUrl = (baseUrl: string, params: SeoParams = {}): s
     startDateRange,
     endDateRange,
     ...otherParams
-  } = params
+  } = params;
 
-  const urlParams = new URLSearchParams()
+  const urlParams = new URLSearchParams();
 
   // Add pagination parameters (always include page if provided)
-  if (typeof page === 'number') {
-    urlParams.set('page', page.toString())
+  if (typeof page === "number") {
+    urlParams.set("page", page.toString());
   }
   if (pageSize && pageSize !== 20) {
-    urlParams.set('page_size', pageSize.toString())
+    urlParams.set("page_size", pageSize.toString());
   }
 
   // Add search parameters
   if (searchKey && searchKey.trim()) {
-    urlParams.set('q', searchKey.trim())
+    urlParams.set("q", searchKey.trim());
   }
 
   // Add filter parameters
-  if (sortOrder && sortOrder !== 'desc') {
-    urlParams.set('sort', sortOrder)
+  if (sortOrder && sortOrder !== "desc") {
+    urlParams.set("sort", sortOrder);
   }
   if (friendsOnly) {
-    urlParams.set('friends', 'true')
+    urlParams.set("friends", "true");
   }
   if (interactions) {
-    urlParams.set('interactions', 'true')
+    urlParams.set("interactions", "true");
   }
-  if (startDateRange && typeof startDateRange === 'string') {
-    urlParams.set('start_date', startDateRange)
+  if (startDateRange && typeof startDateRange === "string") {
+    urlParams.set("start_date", startDateRange);
   }
-  if (endDateRange && typeof endDateRange === 'string') {
-    urlParams.set('end_date', endDateRange)
+  if (endDateRange && typeof endDateRange === "string") {
+    urlParams.set("end_date", endDateRange);
   }
 
   // Add other parameters
   Object.entries(otherParams).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
-      urlParams.set(key, String(value))
+      urlParams.set(key, String(value));
     }
-  })
+  });
 
-  const queryString = urlParams.toString()
-  return queryString ? `${baseUrl}?${queryString}` : baseUrl
-}
+  const queryString = urlParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+};
 
 /**
  * Generate pagination URLs (prev/next)
@@ -90,21 +90,21 @@ export const generatePaginationUrls = (
   baseUrl: string,
   params: SeoParams,
   currentPage: number,
-  _totalPages: number,
+  _totalPages: number
 ): PaginationUrlsResult => {
-  const prevUrl = currentPage > 1
-    ? generateCanonicalUrl(baseUrl, { ...params, page: currentPage - 1 })
-    : null
+  const prevUrl =
+    currentPage > 1 ? generateCanonicalUrl(baseUrl, { ...params, page: currentPage - 1 }) : null;
 
-  const nextUrl = currentPage < _totalPages
-    ? generateCanonicalUrl(baseUrl, { ...params, page: currentPage + 1 })
-    : null
+  const nextUrl =
+    currentPage < _totalPages
+      ? generateCanonicalUrl(baseUrl, { ...params, page: currentPage + 1 })
+      : null;
 
-  return { 
+  return {
     prevUrl: prevUrl || undefined,
     nextUrl: nextUrl || undefined,
-  }
-}
+  };
+};
 
 /**
  * Generate page title for paginated content
@@ -118,20 +118,20 @@ export const generatePageTitle = (
   baseTitle: string,
   currentPage: number,
   _totalPages: number,
-  searchKey?: string,
+  searchKey?: string
 ): string => {
-  let title = baseTitle
+  let title = baseTitle;
 
   if (searchKey && searchKey.trim()) {
-    title = `"${searchKey.trim()}" - ${title}`
+    title = `"${searchKey.trim()}" - ${title}`;
   }
 
   if (currentPage > 1) {
-    title = `${title} - Page ${currentPage}`
+    title = `${title} - Page ${currentPage}`;
   }
 
-  return title
-}
+  return title;
+};
 
 /**
  * Generate page description for paginated content
@@ -149,26 +149,26 @@ export const generatePageDescription = (
   totalPages: number,
   searchKey: string | undefined,
   totalCount: number,
-  pageSize: number,
+  pageSize: number
 ): string => {
-  let description = baseDescription
+  let description = baseDescription;
 
   if (searchKey && searchKey.trim()) {
-    description = `Search results for "${searchKey.trim()}" - ${description}`
+    description = `Search results for "${searchKey.trim()}" - ${description}`;
   }
 
   if (totalCount > 0) {
-    const startItem = (currentPage - 1) * pageSize + 1
-    const endItem = Math.min(currentPage * pageSize, totalCount)
-    description = `${description} Showing ${startItem}-${endItem} of ${totalCount} results.`
+    const startItem = (currentPage - 1) * pageSize + 1;
+    const endItem = Math.min(currentPage * pageSize, totalCount);
+    description = `${description} Showing ${startItem}-${endItem} of ${totalCount} results.`;
   }
 
   if (currentPage > 1) {
-    description = `${description} Page ${currentPage} of ${totalPages}.`
+    description = `${description} Page ${currentPage} of ${totalPages}.`;
   }
 
-  return description
-}
+  return description;
+};
 
 /**
  * Extract URL parameters for SEO
@@ -176,19 +176,19 @@ export const generatePageDescription = (
  * @returns {Object} Extracted parameters
  */
 export const extractUrlParams = (location: LocationLike): SeoParams => {
-  const params = new URLSearchParams(location.search)
+  const params = new URLSearchParams(location.search);
 
   return {
-    page: parseInt(params.get('page') ?? '', 10) || 1,
-    pageSize: parseInt(params.get('page_size') ?? '', 10) || 20,
-    searchKey: params.get('q') || '',
-    sortOrder: params.get('sort') || 'desc',
-    friendsOnly: params.get('friends') === 'true',
-    interactions: params.get('interactions') === 'true',
-    startDateRange: params.get('start_date') || '',
-    endDateRange: params.get('end_date') || '',
-  }
-}
+    page: parseInt(params.get("page") ?? "", 10) || 1,
+    pageSize: parseInt(params.get("page_size") ?? "", 10) || 20,
+    searchKey: params.get("q") || "",
+    sortOrder: params.get("sort") || "desc",
+    friendsOnly: params.get("friends") === "true",
+    interactions: params.get("interactions") === "true",
+    startDateRange: params.get("start_date") || "",
+    endDateRange: params.get("end_date") || "",
+  };
+};
 
 /**
  * Generate structured data for pagination
@@ -200,30 +200,30 @@ export const extractUrlParams = (location: LocationLike): SeoParams => {
 export const generatePaginationStructuredData = (
   baseUrl: string,
   // currentPage: number,
-  totalPages: number,
+  totalPages: number
 ): PaginationStructuredData | null => {
-  if (totalPages <= 1) return null
+  if (totalPages <= 1) return null;
 
-  const items: unknown[] = []
+  const items: unknown[] = [];
 
   for (let i = 1; i <= totalPages; i++) {
     items.push({
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: i,
       url: generateCanonicalUrl(baseUrl, { page: i }),
-    })
+    });
   }
 
   return {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
     mainEntity: {
-      '@type': 'ItemList',
+      "@type": "ItemList",
       numberOfItems: totalPages,
       itemListElement: items,
     },
-  }
-}
+  };
+};
 
 const seoUtils = {
   generateCanonicalUrl,
@@ -232,5 +232,5 @@ const seoUtils = {
   generatePageDescription,
   extractUrlParams,
   generatePaginationStructuredData,
-}
-export default seoUtils
+};
+export default seoUtils;

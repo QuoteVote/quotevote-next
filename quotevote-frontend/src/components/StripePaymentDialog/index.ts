@@ -1,1 +1,1 @@
-export { default as StripePaymentDialog } from './StripePaymentDialog'
+export { default as StripePaymentDialog } from "./StripePaymentDialog";

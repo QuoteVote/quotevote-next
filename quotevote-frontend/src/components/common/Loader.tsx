@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import type { LoaderProps } from '@/types/components';
-import { cn } from '@/lib/utils';
+import { useMemo } from "react";
+import type { LoaderProps } from "@/types/components";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_LOADER_STYLE: React.CSSProperties = {
-  width: 'auto',
-  height: 'auto',
+  width: "auto",
+  height: "auto",
   zIndex: 100,
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
 };
 
 const ABSOLUTELY_POSITIONED_STYLE: React.CSSProperties = {
-  position: 'absolute',
-  top: 'calc(50% - 15px)',
-  left: 'calc(50% - 36px)',
+  position: "absolute",
+  top: "calc(50% - 15px)",
+  left: "calc(50% - 36px)",
 };
 
 /**
  * Loader Component
- * 
+ *
  * A loading spinner component with customizable size and positioning.
  * Replaces Material UI CircularProgress with a Tailwind-based spinner.
  */
@@ -53,8 +53,8 @@ export function Loader({
     <div style={computedStyle} {...PulseLoaderProps}>
       <div
         className={cn(
-          'animate-spin rounded-full border-solid',
-          'border-[var(--color-primary)] border-t-transparent'
+          "animate-spin rounded-full border-solid",
+          "border-[var(--color-primary)] border-t-transparent"
         )}
         style={{
           width: `${size}px`,
@@ -67,11 +67,8 @@ export function Loader({
         <span className="sr-only">Loading...</span>
       </div>
       {loadingLabel && (
-        <div className="ml-2.5 text-sm text-[var(--color-text-secondary)]">
-          Loading...
-        </div>
+        <div className="ml-2.5 text-sm text-[var(--color-text-secondary)]">Loading...</div>
       )}
     </div>
   );
 }
-

@@ -1,36 +1,33 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { Menu, Plus, Github, Search, User, LogOut } from 'lucide-react';
-import { Globe } from '@/components/Icons';
-import { cn } from '@/lib/utils';
-import { useAppStore } from '@/store';
-import { useResponsive } from '@/hooks/useResponsive';
-import { getApolloClient } from '@/lib/apollo';
-import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-} from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
-import ChatMenu from '@/components/Chat/ChatMenu';
-import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
-import { AdminIconButton } from '../CustomButtons/AdminIconButton';
-import { SettingsIconButton } from '../CustomButtons/SettingsIconButton';
-import type { SidebarProps, SidebarWrapperProps } from '@/types/components';
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { Menu, Plus, Github, Search, User, LogOut } from "lucide-react";
+import { Globe } from "@/components/Icons";
+import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store";
+import { useResponsive } from "@/hooks/useResponsive";
+import { getApolloClient } from "@/lib/apollo";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { NotificationMenu } from "@/components/Notifications/NotificationMenu";
+import ChatMenu from "@/components/Chat/ChatMenu";
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from "@/components/SubmitPost";
+import { AdminIconButton } from "../CustomButtons/AdminIconButton";
+import { SettingsIconButton } from "../CustomButtons/SettingsIconButton";
+import type { SidebarProps, SidebarWrapperProps } from "@/types/components";
 
 /**
  * SidebarWrapper Component
- * 
+ *
  * Wrapper component for sidebar content sections
  */
 function SidebarWrapper({ className, user, headerLinks, links }: SidebarWrapperProps) {
   return (
-    <div className={cn('flex flex-col', className)}>
+    <div className={cn("flex flex-col", className)}>
       {user}
       {headerLinks}
       {links}
@@ -40,27 +37,23 @@ function SidebarWrapper({ className, user, headerLinks, links }: SidebarWrapperP
 
 /**
  * Sidebar Component
- * 
+ *
  * Main sidebar component using shadcn/ui Sheet instead of MUI Drawer.
  * Handles navigation, user menu, and responsive behavior.
  */
-export function Sidebar({
-  open,
-  onOpenChange,
-  bgColor = 'blue',
-  rtlActive = false,
-}: SidebarProps) {
+export function Sidebar({ open, onOpenChange, bgColor = "blue", rtlActive = false }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { isSmallScreen } = useResponsive();
-  
+
   // Get user data from Zustand store
   const user = useAppStore((state) => state.user.data);
   const logout = useAppStore((state) => state.logout);
   const loggedIn = !!user?._id;
-  const name = (typeof user?.name === 'string' ? user.name : undefined) ||
-               (typeof user?.username === 'string' ? user.username : undefined) || 
-               'Profile';
+  const name =
+    (typeof user?.name === "string" ? user.name : undefined) ||
+    (typeof user?.username === "string" ? user.username : undefined) ||
+    "Profile";
 
   // State management
   const [openCreateQuote, setOpenCreateQuote] = useState(false);
@@ -89,34 +82,36 @@ export function Sidebar({
 
   const handleLogout = () => {
     handleDrawerToggle(false);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
       const client = getApolloClient();
       client.stop();
       client.resetStore();
       logout();
     }
-    router.push('/login');
+    router.push("/login");
   };
 
   // Check if route is active
   const isActiveRoute = (routePath: string): boolean => {
-    return routePath === '/' ? pathname === '/' : pathname === routePath || pathname.startsWith(routePath + '/');
+    return routePath === "/"
+      ? pathname === "/"
+      : pathname === routePath || pathname.startsWith(routePath + "/");
   };
 
   // Create guest links
   const createGuestLinks = () => {
     return (
       <div className="flex flex-col gap-1 p-4">
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           className="inline-block w-full"
           onClick={() => handleDrawerToggle(false)}
           aria-label="Quote.Vote home"
         >
           <Globe size={30} className="cursor-pointer" aria-label="QuoteVote Logo" />
         </Link>
-        
+
         <Link
           href="mailto:admin@quote.vote"
           target="_blank"
@@ -153,7 +148,7 @@ export function Sidebar({
           href="/auth/request-access"
           className={cn(
             "flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors",
-            isActiveRoute('/auth/request-access') && "bg-accent"
+            isActiveRoute("/auth/request-access") && "bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >
@@ -165,7 +160,7 @@ export function Sidebar({
           href="/login"
           className={cn(
             "flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors",
-            isActiveRoute('/login') && "bg-accent"
+            isActiveRoute("/login") && "bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >
@@ -185,7 +180,7 @@ export function Sidebar({
           href={`/profile/${user?.username}`}
           className={cn(
             "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-            isActiveRoute('/profile') ? "bg-accent" : "hover:bg-accent"
+            isActiveRoute("/profile") ? "bg-accent" : "hover:bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >
@@ -195,7 +190,7 @@ export function Sidebar({
             size={32}
             className="size-8"
           />
-          <span className="text-sm font-medium">{name || 'Profile'}</span>
+          <span className="text-sm font-medium">{name || "Profile"}</span>
         </Link>
 
         <div className="h-px bg-border my-2" />
@@ -205,7 +200,7 @@ export function Sidebar({
           href="/search"
           className={cn(
             "flex items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md transition-colors",
-            isActiveRoute('/search') ? "bg-accent" : "hover:bg-accent"
+            isActiveRoute("/search") ? "bg-accent" : "hover:bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >
@@ -218,7 +213,7 @@ export function Sidebar({
           href={`/profile/${user?.username}`}
           className={cn(
             "flex items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md transition-colors",
-            isActiveRoute('/profile') ? "bg-accent" : "hover:bg-accent"
+            isActiveRoute("/profile") ? "bg-accent" : "hover:bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >
@@ -270,9 +265,9 @@ export function Sidebar({
             >
               <Menu />
             </Button>
-            <Link 
-              href="/" 
-              className="inline-block" 
+            <Link
+              href="/"
+              className="inline-block"
               onClick={handleLogoClick}
               aria-label="Quote.Vote home"
             >
@@ -287,7 +282,7 @@ export function Sidebar({
                 variant="default"
                 size="sm"
                 onClick={() => {
-                  router.push('/auth/request-access');
+                  router.push("/auth/request-access");
                 }}
               >
                 Request Invite
@@ -296,7 +291,7 @@ export function Sidebar({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  router.push('/login');
+                  router.push("/login");
                 }}
               >
                 Login
@@ -313,7 +308,7 @@ export function Sidebar({
               >
                 <Plus size={16} />
               </Button>
-              
+
               {!isSmallScreen && (
                 <Link
                   href="https://github.com/QuoteVote/quotevote-monorepo"
@@ -325,7 +320,7 @@ export function Sidebar({
                   <Github size={28} />
                 </Link>
               )}
-              
+
               <ChatMenu fontSize="small" />
               <NotificationMenu fontSize="small" />
               <AdminIconButton fontSize="default" onNavigate={() => handleDrawerToggle(false)} />
@@ -337,13 +332,13 @@ export function Sidebar({
 
       {/* Sidebar Sheet */}
       <Sheet open={open} onOpenChange={handleDrawerToggle}>
-        <SheetContent 
-          side={rtlActive ? 'left' : 'right'}
+        <SheetContent
+          side={rtlActive ? "left" : "right"}
           className={cn(
             "w-3/4 sm:max-w-sm p-0",
-            bgColor === 'white' && "bg-white",
-            bgColor === 'black' && "bg-black",
-            bgColor === 'blue' && "bg-background"
+            bgColor === "white" && "bg-white",
+            bgColor === "black" && "bg-black",
+            bgColor === "blue" && "bg-background"
           )}
         >
           <SidebarWrapper
@@ -363,4 +358,3 @@ export function Sidebar({
     </>
   );
 }
-

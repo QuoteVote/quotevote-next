@@ -1,31 +1,31 @@
-'use client'
+"use client";
 
-import { useQuery } from '@apollo/client/react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { GET_TOP_POSTS } from '@/graphql/queries'
-import type { LatestQuotesProps } from '@/types/components'
+import { useQuery } from "@apollo/client/react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GET_TOP_POSTS } from "@/graphql/queries";
+import type { LatestQuotesProps } from "@/types/components";
 
 interface QuoteData {
-  _id: string
-  quote?: string
-  startWordIndex?: number
-  endWordIndex?: number
+  _id: string;
+  quote?: string;
+  startWordIndex?: number;
+  endWordIndex?: number;
   user?: {
-    _id: string
-    username: string
-  }
+    _id: string;
+    username: string;
+  };
 }
 
 interface PostEntity {
-  _id: string
-  title: string
-  quotes?: QuoteData[]
+  _id: string;
+  title: string;
+  quotes?: QuoteData[];
 }
 
 interface TopPostsResponse {
   posts: {
-    entities: PostEntity[]
-  }
+    entities: PostEntity[];
+  };
 }
 
 /**
@@ -37,27 +37,27 @@ export function LatestQuotes({ limit = 5 }: LatestQuotesProps) {
     variables: {
       limit: 10,
       offset: 0,
-      searchKey: '',
+      searchKey: "",
     },
-    fetchPolicy: 'cache-first',
-  })
+    fetchPolicy: "cache-first",
+  });
 
   // Extract quotes from the fetched posts
-  const quotes: (QuoteData & { postTitle: string })[] = []
+  const quotes: (QuoteData & { postTitle: string })[] = [];
   if (data?.posts?.entities) {
     for (const post of data.posts.entities) {
       if (post.quotes) {
         for (const q of post.quotes) {
           if (q.quote || q._id) {
-            quotes.push({ ...q, postTitle: post.title })
+            quotes.push({ ...q, postTitle: post.title });
           }
         }
       }
-      if (quotes.length >= limit) break
+      if (quotes.length >= limit) break;
     }
   }
 
-  const displayQuotes = quotes.slice(0, limit)
+  const displayQuotes = quotes.slice(0, limit);
 
   if (!displayQuotes.length) {
     return (
@@ -69,7 +69,7 @@ export function LatestQuotes({ limit = 5 }: LatestQuotesProps) {
           <p className="text-sm text-muted-foreground">No quotes yet.</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -82,17 +82,15 @@ export function LatestQuotes({ limit = 5 }: LatestQuotesProps) {
           {displayQuotes.map((q) => (
             <li key={q._id} className="block">
               <p className="text-sm italic text-muted-foreground border-l-2 border-primary/40 pl-2">
-                {q.quote || 'Quoted text'}
+                {q.quote || "Quoted text"}
               </p>
               {q.user?.username && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  — {q.user.username}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">— {q.user.username}</p>
               )}
             </li>
           ))}
         </ul>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -4,11 +4,11 @@
  */
 
 export type BadgeType =
-  | 'contributor'
-  | 'verified'
-  | 'moderator'
-  | 'topContributor'
-  | 'earlyAdopter';
+  | "contributor"
+  | "verified"
+  | "moderator"
+  | "topContributor"
+  | "earlyAdopter";
 
 export interface ProfileBadgeProps {
   type: BadgeType;
@@ -50,10 +50,12 @@ export interface User {
   username: string;
   email?: string;
   bio?: string;
-  avatar?: string | {
-    url?: string;
-    [key: string]: unknown;
-  };
+  avatar?:
+    | string
+    | {
+        url?: string;
+        [key: string]: unknown;
+      };
   contributorBadge?: boolean;
   _followingId?: string[];
   _followersId?: string[];
@@ -69,10 +71,12 @@ export interface ProfileUser extends User {
   bio?: string;
   _followingId?: string[];
   _followersId?: string[];
-  avatar?: string | {
-    url?: string;
-    [key: string]: unknown;
-  };
+  avatar?:
+    | string
+    | {
+        url?: string;
+        [key: string]: unknown;
+      };
   contributorBadge?: boolean;
   reputation?: Reputation;
 }
@@ -84,15 +88,17 @@ export interface ReputationDisplayProps {
 }
 
 export interface ProfileAvatarProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl' | number;
+  size?: "sm" | "md" | "lg" | "xl" | number;
   className?: string;
 }
 
 export interface UserFollowDisplayProps {
-  avatar?: string | {
-    url?: string;
-    [key: string]: unknown;
-  };
+  avatar?:
+    | string
+    | {
+        url?: string;
+        [key: string]: unknown;
+      };
   username: string;
   numFollowers: number;
   numFollowing: number;
@@ -101,11 +107,11 @@ export interface UserFollowDisplayProps {
 }
 
 export interface FollowInfoProps {
-  filter: 'followers' | 'following';
+  filter: "followers" | "following";
 }
 
 export interface NoFollowersProps {
-  filter: 'followers' | 'following';
+  filter: "followers" | "following";
 }
 
 export interface ReportUserDialogProps {
@@ -158,12 +164,7 @@ export interface ProfileControllerProps {
 /**
  * Profile banner background customization
  */
-export type ProfileBackgroundPattern =
-  | 'none'
-  | 'zigzag'
-  | 'dots'
-  | 'stripes'
-  | 'grid';
+export type ProfileBackgroundPattern = "none" | "zigzag" | "dots" | "stripes" | "grid";
 
 export interface ProfileBackgroundPatternOption {
   value: ProfileBackgroundPattern;
@@ -178,4 +179,3 @@ export interface ProfileBackground {
   /** True after localStorage values have been read on the client. */
   hydrated: boolean;
 }
-

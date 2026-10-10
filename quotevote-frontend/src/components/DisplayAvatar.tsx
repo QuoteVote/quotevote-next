@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { cn } from '@/lib/utils';
-import { parseAvatarToUrl, getDefaultAvatar, buildAvatarUrl } from '@/lib/avatar';
+import { useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { parseAvatarToUrl, getDefaultAvatar, buildAvatarUrl } from "@/lib/avatar";
 
 export interface DisplayAvatarProps {
   /** Raw avatar data from the store/API: qualities object, JSON string, URL, or undefined. */
@@ -22,7 +22,7 @@ export interface DisplayAvatarProps {
  * rendered directly. When no avatar is configured, a deterministic cartoon is
  * generated from the username so the same user always gets the same default.
  */
-export function DisplayAvatar({ avatar, username = '', size = 40, className }: DisplayAvatarProps) {
+export function DisplayAvatar({ avatar, username = "", size = 40, className }: DisplayAvatarProps) {
   const src = useMemo(() => {
     const configured = parseAvatarToUrl(avatar ?? undefined);
     if (configured) return configured;
@@ -33,10 +33,10 @@ export function DisplayAvatar({ avatar, username = '', size = 40, className }: D
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
-      alt={username ? `${username}'s avatar` : 'User avatar'}
+      alt={username ? `${username}'s avatar` : "User avatar"}
       width={size}
       height={size}
-      className={cn('rounded-full object-cover flex-shrink-0', className)}
+      className={cn("rounded-full object-cover flex-shrink-0", className)}
       style={{ width: size, height: size }}
     />
   );

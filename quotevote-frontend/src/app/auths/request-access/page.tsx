@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
-import { Suspense } from 'react'
-import { RequestAccessPageContent } from './PageContent'
-import { InfoSections } from '@/components/RequestAccess/InfoSections'
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { RequestAccessPageContent } from "./PageContent";
+import { InfoSections } from "@/components/RequestAccess/InfoSections";
 
 export const metadata: Metadata = {
-  title: 'Request Access — Quote.Vote',
-}
+  title: "Request Access — Quote.Vote",
+};
 
 export default function RequestAccessPage() {
   return (
@@ -15,5 +15,5 @@ export default function RequestAccessPage() {
       </Suspense>
       <InfoSections />
     </>
-  )
+  );
 }

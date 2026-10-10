@@ -1,30 +1,25 @@
 "use client";
 
-import type { FC } from 'react';
-import { useMemo, memo } from 'react';
-import Link from 'next/link';
-import { useMutation } from '@apollo/client/react';
-import { Check, CheckCheck, Trash2 } from 'lucide-react';
+import type { FC } from "react";
+import { useMemo, memo } from "react";
+import Link from "next/link";
+import { useMutation } from "@apollo/client/react";
+import { Check, CheckCheck, Trash2 } from "lucide-react";
 
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useAppStore } from '@/store';
-import { toast } from 'sonner';
-import { DELETE_MESSAGE } from '@/graphql/mutations';
-import useGuestGuard from '@/hooks/useGuestGuard';
-import type { MessageItemProps } from '@/types/chat';
-import { cn } from '@/lib/utils';
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAppStore } from "@/store";
+import { toast } from "sonner";
+import { DELETE_MESSAGE } from "@/graphql/mutations";
+import useGuestGuard from "@/hooks/useGuestGuard";
+import type { MessageItemProps } from "@/types/chat";
+import { cn } from "@/lib/utils";
 
 const normalizeId = (id: unknown): string | null => {
   if (!id) return null;
-  if (typeof id === 'string') return id;
+  if (typeof id === "string") return id;
   const candidate = id as { toString?: () => string };
-  if (typeof candidate.toString === 'function') {
+  if (typeof candidate.toString === "function") {
     try {
       return candidate.toString();
     } catch {
@@ -35,22 +30,22 @@ const normalizeId = (id: unknown): string | null => {
 };
 
 const formatTime = (date?: string | number | Date): string => {
-  if (!date) return '';
+  if (!date) return "";
   const d = new Date(date);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const minutes = Math.floor(diff / 60000);
 
-  if (minutes < 1) return 'Just now';
+  if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes}m ago`;
   if (d.toDateString() === now.toDateString()) {
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
   return d.toLocaleDateString([], {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
@@ -59,9 +54,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
   const ensureAuth = useGuestGuard();
 
   const currentUserId = currentUser?._id ? normalizeId(currentUser._id) : null;
-  const isOwnMessage = currentUserId
-    ? normalizeId(message.userId) === currentUserId
-    : false;
+  const isOwnMessage = currentUserId ? normalizeId(message.userId) === currentUserId : false;
   const isAdmin = currentUser?.admin === true;
   const canDelete = isOwnMessage || isAdmin;
   const isDefaultDirection = !isOwnMessage;
@@ -84,12 +77,10 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
     if (!ensureAuth()) return;
     try {
       await deleteMessage({ variables: { messageId: message._id } });
-      toast.success('Message deleted successfully');
+      toast.success("Message deleted successfully");
     } catch (err) {
       const errorMessage =
-        err instanceof Error && err.message
-          ? err.message
-          : 'Failed to delete message';
+        err instanceof Error && err.message ? err.message : "Failed to delete message";
 
       toast.error(`Delete Error: ${errorMessage}`);
     }
@@ -98,15 +89,11 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
   if (!currentUser) return null;
 
   const senderName =
-    (message.user && (message.user.name || message.user.username)) ||
-    message.userName ||
-    'Unknown';
+    (message.user && (message.user.name || message.user.username)) || message.userName || "Unknown";
 
   const avatarRaw = message.user?.avatar;
   const profileUsername = message.user?.username ?? (isOwnMessage ? currentUser.username : null);
-  const profileHref = profileUsername
-    ? `/profile/${encodeURIComponent(profileUsername)}`
-    : null;
+  const profileHref = profileUsername ? `/profile/${encodeURIComponent(profileUsername)}` : null;
 
   const timeLabel = formatTime(message.created);
 
@@ -127,13 +114,15 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
     >
       {avatarNode}
     </Link>
-  ) : avatarNode;
+  ) : (
+    avatarNode
+  );
 
   return (
     <div
       className={cn(
-        'mb-[14px] flex w-full px-2',
-        isDefaultDirection ? 'justify-start' : 'justify-end'
+        "mb-[14px] flex w-full px-2",
+        isDefaultDirection ? "justify-start" : "justify-end"
       )}
     >
       {isDefaultDirection && (
@@ -152,15 +141,13 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
         <div className="relative group">
           <div
             className={cn(
-              'relative px-4 py-[10px] text-[0.9375rem] leading-[1.5] transition-shadow duration-200',
+              "relative px-4 py-[10px] text-[0.9375rem] leading-[1.5] transition-shadow duration-200",
               isDefaultDirection
-                ? 'rounded-[20px_20px_20px_6px] border border-gray-200 bg-white text-foreground shadow-[0_2px_8px_rgba(0,0,0,0.10),0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12),0_2px_4px_rgba(0,0,0,0.10)]'
-                : 'rounded-[20px_20px_6px_20px] bg-gradient-to-br from-[#52b274] to-[#4a9e63] text-white shadow-[0_4px_12px_rgba(82,178,116,0.35),0_2px_4px_rgba(82,178,116,0.20)] hover:shadow-[0_6px_16px_rgba(82,178,116,0.40),0_3px_6px_rgba(82,178,116,0.25)]'
+                ? "rounded-[20px_20px_20px_6px] border border-gray-200 bg-white text-foreground shadow-[0_2px_8px_rgba(0,0,0,0.10),0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12),0_2px_4px_rgba(0,0,0,0.10)]"
+                : "rounded-[20px_20px_6px_20px] bg-gradient-to-br from-[#52b274] to-[#4a9e63] text-white shadow-[0_4px_12px_rgba(82,178,116,0.35),0_2px_4px_rgba(82,178,116,0.20)] hover:shadow-[0_6px_16px_rgba(82,178,116,0.40),0_3px_6px_rgba(82,178,116,0.25)]"
             )}
           >
-            <p className="whitespace-pre-wrap break-words">
-              {message.text}
-            </p>
+            <p className="whitespace-pre-wrap break-words">{message.text}</p>
           </div>
 
           {canDelete && (
@@ -177,8 +164,8 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
 
         <div
           className={cn(
-            'mt-1 flex items-center gap-1.5 text-[0.6875rem] font-medium text-muted-foreground',
-            isOwnMessage ? 'justify-end pr-1' : 'justify-start pl-1'
+            "mt-1 flex items-center gap-1.5 text-[0.6875rem] font-medium text-muted-foreground",
+            isOwnMessage ? "justify-end pr-1" : "justify-start pl-1"
           )}
         >
           {isOwnMessage && (
@@ -194,7 +181,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs">
-                  {readState.isRead ? 'Read' : 'Sent'}
+                  {readState.isRead ? "Read" : "Sent"}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

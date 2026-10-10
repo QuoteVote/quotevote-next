@@ -12,19 +12,19 @@
  */
 export interface PaginationOptions {
   /** Default page number (default: 1) */
-  defaultPage?: number
+  defaultPage?: number;
   /** Default page size (default: 20) */
-  defaultPageSize?: number
+  defaultPageSize?: number;
   /** URL parameter name for page (default: 'page') */
-  pageParam?: string
+  pageParam?: string;
   /** URL parameter name for page size (default: 'page_size') */
-  pageSizeParam?: string
+  pageSizeParam?: string;
   /** Callback when page changes */
-  onPageChange?: (page: number) => void
+  onPageChange?: (page: number) => void;
   /** Callback when page size changes */
-  onPageSizeChange?: (pageSize: number) => void
+  onPageSizeChange?: (pageSize: number) => void;
   /** Reset to page 1 when filters change (default: true) */
-  resetOnFilterChange?: boolean
+  resetOnFilterChange?: boolean;
 }
 
 /**
@@ -32,21 +32,21 @@ export interface PaginationOptions {
  */
 export interface PaginationCalculation {
   /** Current page number (normalized) */
-  currentPage: number
+  currentPage: number;
   /** Total number of pages */
-  totalPages: number
+  totalPages: number;
   /** Total count of items */
-  totalCount: number
+  totalCount: number;
   /** Items per page */
-  pageSize: number
+  pageSize: number;
   /** Whether there is a next page */
-  hasNextPage: boolean
+  hasNextPage: boolean;
   /** Whether there is a previous page */
-  hasPreviousPage: boolean
+  hasPreviousPage: boolean;
   /** Start index for current page */
-  startIndex: number
+  startIndex: number;
   /** End index for current page */
-  endIndex: number
+  endIndex: number;
 }
 
 /**
@@ -54,21 +54,21 @@ export interface PaginationCalculation {
  */
 export interface UsePaginationReturn {
   /** Current page number */
-  currentPage: number
+  currentPage: number;
   /** Current page size */
-  pageSize: number
+  pageSize: number;
   /** Handler to change page */
-  handlePageChange: (page: number) => void
+  handlePageChange: (page: number) => void;
   /** Handler to change page size */
-  handlePageSizeChange: (size: number) => void
+  handlePageSizeChange: (size: number) => void;
   /** Reset to first page */
-  resetToFirstPage: () => void
+  resetToFirstPage: () => void;
   /** Calculate pagination metadata */
-  calculatePagination: (totalCount: number) => PaginationCalculation
+  calculatePagination: (totalCount: number) => PaginationCalculation;
   /** Legacy support - alias for handlePageChange */
-  setCurrentPage: (page: number) => void
+  setCurrentPage: (page: number) => void;
   /** Legacy support - alias for handlePageSizeChange */
-  setPageSize: (size: number) => void
+  setPageSize: (size: number) => void;
 }
 
 // ============================================================================
@@ -80,7 +80,7 @@ export interface UsePaginationReturn {
  */
 export interface UsePresenceHeartbeatReturn {
   /** Apollo mutation error if heartbeat fails */
-  error: Error | undefined
+  error: Error | undefined;
 }
 
 // ============================================================================
@@ -92,13 +92,13 @@ export interface UsePresenceHeartbeatReturn {
  */
 export interface PresenceData {
   /** User ID */
-  userId: string
+  userId: string;
   /** Status (e.g., 'online', 'offline', 'away') */
-  status: string
+  status: string;
   /** Status message */
-  statusMessage?: string
+  statusMessage?: string;
   /** Last seen timestamp (ISO string) */
-  lastSeen?: string
+  lastSeen?: string;
 }
 
 /**
@@ -106,7 +106,7 @@ export interface PresenceData {
  */
 export interface PresenceSubscriptionResult {
   /** Presence data from subscription */
-  presence: PresenceData
+  presence: PresenceData;
 }
 
 // ============================================================================
@@ -116,22 +116,22 @@ export interface PresenceSubscriptionResult {
 /**
  * Tailwind breakpoint names
  */
-export type ResponsiveBreakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+export type ResponsiveBreakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 /**
  * Return type for useResponsive hook
  */
 export interface UseResponsiveReturn {
   /** Current breakpoint */
-  breakpoint: ResponsiveBreakpoint
+  breakpoint: ResponsiveBreakpoint;
   /** Whether screen is small (< 640px) */
-  isSmallScreen: boolean
+  isSmallScreen: boolean;
   /** Whether screen is medium (>= 768px) */
-  isMediumScreen: boolean
+  isMediumScreen: boolean;
   /** Whether screen is large (>= 1024px) */
-  isLargeScreen: boolean
+  isLargeScreen: boolean;
   /** Whether screen is extra large (>= 1280px) */
-  isExtraLargeScreen: boolean
+  isExtraLargeScreen: boolean;
 }
 
 // ============================================================================
@@ -143,11 +143,11 @@ export interface UseResponsiveReturn {
  */
 export interface RosterMutationResult {
   /** Success status */
-  success: boolean
+  success: boolean;
   /** Result message */
-  message?: string
+  message?: string;
   /** Additional data */
-  [key: string]: unknown
+  [key: string]: unknown;
 }
 
 /**
@@ -155,17 +155,17 @@ export interface RosterMutationResult {
  */
 export interface UseRosterManagementReturn {
   /** Add a buddy (send friend request) */
-  addBuddy: (buddyId: string) => Promise<RosterMutationResult>
+  addBuddy: (buddyId: string) => Promise<RosterMutationResult>;
   /** Accept a buddy request */
-  acceptBuddy: (rosterId: string) => Promise<RosterMutationResult>
+  acceptBuddy: (rosterId: string) => Promise<RosterMutationResult>;
   /** Decline a buddy request */
-  declineBuddy: (rosterId: string) => Promise<RosterMutationResult>
+  declineBuddy: (rosterId: string) => Promise<RosterMutationResult>;
   /** Block a buddy */
-  blockBuddy: (buddyId: string) => Promise<RosterMutationResult>
+  blockBuddy: (buddyId: string) => Promise<RosterMutationResult>;
   /** Unblock a buddy */
-  unblockBuddy: (buddyId: string) => Promise<RosterMutationResult>
+  unblockBuddy: (buddyId: string) => Promise<RosterMutationResult>;
   /** Remove a buddy */
-  removeBuddy: (buddyId: string) => Promise<RosterMutationResult>
+  removeBuddy: (buddyId: string) => Promise<RosterMutationResult>;
 }
 
 // ============================================================================
@@ -178,10 +178,10 @@ export interface UseRosterManagementReturn {
 export interface TypingMutationVariables {
   typing: {
     /** Message room ID */
-    messageRoomId: string
+    messageRoomId: string;
     /** Whether user is typing */
-    isTyping: boolean
-  }
+    isTyping: boolean;
+  };
 }
 
 /**
@@ -189,9 +189,9 @@ export interface TypingMutationVariables {
  */
 export interface UseTypingIndicatorReturn {
   /** Handler to call when user starts typing */
-  handleTyping: () => void
+  handleTyping: () => void;
   /** Handler to call when user stops typing */
-  stopTyping: () => void
+  stopTyping: () => void;
 }
 
 // ============================================================================
@@ -203,23 +203,23 @@ export interface UseTypingIndicatorReturn {
  */
 export interface MessageSubscriptionData {
   /** Message ID */
-  _id: string
+  _id: string;
   /** Message room ID */
-  messageRoomId: string
+  messageRoomId: string;
   /** User ID who sent the message */
-  userId: string
+  userId: string;
   /** User name */
-  userName: string
+  userName: string;
   /** Message title */
-  title?: string
+  title?: string;
   /** Message text */
-  text: string
+  text: string;
   /** Creation timestamp */
-  created: string
+  created: string;
   /** Message type */
-  type?: string
+  type?: string;
   /** Mutation type */
-  mutation_type?: string
+  mutation_type?: string;
 }
 
 /**
@@ -227,7 +227,7 @@ export interface MessageSubscriptionData {
  */
 export interface MessageSubscriptionResult {
   /** Message data from subscription */
-  message: MessageSubscriptionData
+  message: MessageSubscriptionData;
 }
 
 // ============================================================================
@@ -239,19 +239,19 @@ export interface MessageSubscriptionResult {
  */
 export interface TypingEventData {
   /** Message room ID */
-  messageRoomId: string
+  messageRoomId: string;
   /** User ID who is typing */
-  userId: string
+  userId: string;
   /** User information */
   user?: {
-    _id: string
-    name?: string | null
-    username?: string | null
-  } | null
+    _id: string;
+    name?: string | null;
+    username?: string | null;
+  } | null;
   /** Whether user is typing */
-  isTyping: boolean
+  isTyping: boolean;
   /** Timestamp of typing event */
-  timestamp: string
+  timestamp: string;
 }
 
 /**
@@ -259,7 +259,7 @@ export interface TypingEventData {
  */
 export interface TypingSubscriptionResult {
   /** Typing event data from subscription */
-  typing: TypingEventData | null
+  typing: TypingEventData | null;
 }
 
 // ============================================================================
@@ -271,29 +271,29 @@ export interface TypingSubscriptionResult {
  */
 export interface NotificationSubscriptionData {
   /** Notification ID */
-  _id: string
+  _id: string;
   /** User ID who receives the notification */
-  userId: string
+  userId: string;
   /** User ID who triggered the notification */
-  userIdBy: string
+  userIdBy: string;
   /** User information who triggered the notification */
   userBy?: {
-    name?: string | null
-    avatar?: string | null
-  } | null
+    name?: string | null;
+    avatar?: string | null;
+  } | null;
   /** Notification label */
-  label?: string
+  label?: string;
   /** Notification status */
-  status?: string
+  status?: string;
   /** Creation timestamp */
-  created: string
+  created: string;
   /** Notification type */
-  notificationType: string
+  notificationType: string;
   /** Related post (if applicable) */
   post?: {
-    _id: string
-    url?: string
-  } | null
+    _id: string;
+    url?: string;
+  } | null;
 }
 
 /**
@@ -301,7 +301,7 @@ export interface NotificationSubscriptionData {
  */
 export interface NotificationSubscriptionResult {
   /** Notification data from subscription */
-  notification: NotificationSubscriptionData
+  notification: NotificationSubscriptionData;
 }
 
 // ============================================================================
@@ -313,26 +313,26 @@ export interface NotificationSubscriptionResult {
  */
 export interface RosterEntryData {
   /** Roster entry ID */
-  _id: string
+  _id: string;
   /** User ID */
-  userId: string
+  userId: string;
   /** Buddy ID */
-  buddyId: string
+  buddyId: string;
   /** Roster status */
-  status: string
+  status: string;
   /** Who initiated the relationship */
-  initiatedBy: string
+  initiatedBy: string;
   /** Creation timestamp */
-  created: string
+  created: string;
   /** Last update timestamp */
-  updated: string
+  updated: string;
   /** Buddy information */
   buddy?: {
-    _id: string
-    name?: string | null
-    username?: string | null
-    avatar?: string | null
-  } | null
+    _id: string;
+    name?: string | null;
+    username?: string | null;
+    avatar?: string | null;
+  } | null;
 }
 
 /**
@@ -340,5 +340,5 @@ export interface RosterEntryData {
  */
 export interface RosterSubscriptionResult {
   /** Roster entry data from subscription */
-  roster: RosterEntryData
+  roster: RosterEntryData;
 }

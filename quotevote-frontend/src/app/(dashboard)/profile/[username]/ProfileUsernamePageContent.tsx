@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { ProfileController } from '@/components/Profile/ProfileController';
+import { ProfileController } from "@/components/Profile/ProfileController";
 
 interface Props {
   username: string;

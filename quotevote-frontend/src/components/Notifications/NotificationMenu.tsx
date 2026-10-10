@@ -1,34 +1,36 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useSubscription } from '@apollo/client/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import RichTooltip from '@/components/Chat/RichToolTip';
-import { Notification } from './Notification';
-import { MobileDrawer } from './MobileDrawer';
-import { GET_NOTIFICATIONS } from '@/graphql/queries';
-import { NEW_NOTIFICATION_SUBSCRIPTION } from '@/graphql/subscriptions';
-import { useAppStore } from '@/store';
-import { useResponsive } from '@/hooks/useResponsive';
-import type { Notification as NotificationType } from '@/types/notification';
+import { useState } from "react";
+import { useQuery, useSubscription } from "@apollo/client/react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import RichTooltip from "@/components/Chat/RichToolTip";
+import { Notification } from "./Notification";
+import { MobileDrawer } from "./MobileDrawer";
+import { GET_NOTIFICATIONS } from "@/graphql/queries";
+import { NEW_NOTIFICATION_SUBSCRIPTION } from "@/graphql/subscriptions";
+import { useAppStore } from "@/store";
+import { useResponsive } from "@/hooks/useResponsive";
+import type { Notification as NotificationType } from "@/types/notification";
 
 interface NotificationMenuProps {
-  fontSize?: 'small' | 'large';
+  fontSize?: "small" | "large";
 }
 
-export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) {
+export function NotificationMenu({ fontSize = "small" }: NotificationMenuProps) {
   const { isMobile } = useResponsive();
   const [open, setOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const userId = useAppStore((state) => (state.user.data._id || state.user.data.id) as string | undefined);
+  const userId = useAppStore(
+    (state) => (state.user.data._id || state.user.data.id) as string | undefined
+  );
 
   const { loading, data, refetch, error } = useQuery(GET_NOTIFICATIONS, {
     skip: !userId,
   });
 
   useSubscription(NEW_NOTIFICATION_SUBSCRIPTION, {
-    variables: { userId: userId || '' },
+    variables: { userId: userId || "" },
     skip: !userId,
     onData: async () => {
       await refetch();
@@ -36,7 +38,9 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
   });
 
   const notifications: NotificationType[] =
-    loading || error || !data ? [] : (data as { notifications?: NotificationType[] }).notifications || [];
+    loading || error || !data
+      ? []
+      : (data as { notifications?: NotificationType[] }).notifications || [];
 
   const handleToggle = (): void => {
     setOpen(!open);
@@ -46,8 +50,8 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
     setOpen(false);
   };
 
-  const iconSize = fontSize === 'large' ? 49 : 32;
-  const iconHeight = fontSize === 'large' ? 46 : 30;
+  const iconSize = fontSize === "large" ? 49 : 32;
+  const iconHeight = fontSize === "large" ? 46 : 30;
 
   // Desktop popover content
   const popoverContent = (
@@ -143,12 +147,7 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
           )}
         </Button>
       </div>
-      <MobileDrawer
-        open={open}
-        onClose={handleClose}
-        title="Notifications"
-        anchor="right"
-      >
+      <MobileDrawer open={open} onClose={handleClose} title="Notifications" anchor="right">
         <Notification
           loading={loading}
           notifications={notifications}
@@ -162,4 +161,3 @@ export function NotificationMenu({ fontSize = 'small' }: NotificationMenuProps) 
 
   return <div className="flex items-center">{isMobile ? mobileContent : popoverContent}</div>;
 }
-

@@ -5,16 +5,16 @@
  * the Next.js edge middleware can read the token without accessing localStorage.
  */
 
-import type { LoginResponse } from '@/types/login';
-import { env } from '@/config/env';
-import { getLoginToken, postLogin } from '@/lib/auth/restLogin';
+import type { LoginResponse } from "@/types/login";
+import { env } from "@/config/env";
+import { getLoginToken, postLogin } from "@/lib/auth/restLogin";
 
-const TOKEN_KEY = 'token';
-const COOKIE_NAME = 'qv-token';
+const TOKEN_KEY = "token";
+const COOKIE_NAME = "qv-token";
 
 /** Read the auth token (client-side only). */
 export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);
 }
 
@@ -23,7 +23,7 @@ export function getToken(): string | null {
  * The cookie is readable by Next.js middleware (edge runtime).
  */
 export function setToken(token: string): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(TOKEN_KEY, token);
   // SameSite=Lax lets the cookie be sent on normal navigations; Secure is omitted
   // in dev so HTTP localhost works fine.
@@ -32,7 +32,7 @@ export function setToken(token: string): void {
 
 /** Remove the auth token from localStorage and clear the cookie. */
 export function removeToken(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.removeItem(TOKEN_KEY);
   document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
 }
@@ -44,113 +44,110 @@ export function removeToken(): void {
  * @param password - User's password
  * @returns Promise with login response including decoded user data
  */
-export async function loginUser(
-    username: string,
-    password: string
-): Promise<LoginResponse> {
-    try {
-        const { response, data } = await postLogin(env.serverUrl, username, password);
+export async function loginUser(username: string, password: string): Promise<LoginResponse> {
+  try {
+    const { response, data } = await postLogin(env.serverUrl, username, password);
 
-        if (!response.ok) {
-            return {
-                success: false,
-                error: data?.message || 'Invalid username or password.',
-            };
-        }
-
-        const token = getLoginToken(data);
-        const { user } = data;
-
-        if (!token) {
-            return { success: false, error: 'No token received from server.' };
-        }
-
-        // Persist token to localStorage + qv-token cookie for middleware
-        setToken(token);
-
-        return { success: true, data: { user: user as Record<string, unknown>, token } };
-    } catch (error) {
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Connection failed. Please try again.',
-        };
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data?.message || "Invalid username or password.",
+      };
     }
+
+    const token = getLoginToken(data);
+    const { user } = data;
+
+    if (!token) {
+      return { success: false, error: "No token received from server." };
+    }
+
+    // Persist token to localStorage + qv-token cookie for middleware
+    setToken(token);
+
+    return { success: true, data: { user: user as Record<string, unknown>, token } };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Connection failed. Please try again.",
+    };
+  }
 }
 
 /**
  * Sign up user
- * 
+ *
  * @param userData - User signup data
  * @returns Promise with signup response
- * 
+ *
  * @todo Replace with actual GraphQL mutation when auth is migrated
  */
 export async function signupUser(userData: {
-    username: string;
-    email: string;
-    password: string;
+  username: string;
+  email: string;
+  password: string;
 }): Promise<LoginResponse> {
-    try {
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        if (!userData.username || !userData.email || !userData.password) {
-            return {
-                success: false,
-                error: 'All fields are required',
-            };
-        }
-
-        return {
-            success: true,
-            data: {
-                user: {
-                    username: userData.username,
-                    email: userData.email,
-                } as Record<string, unknown>,
-                token: 'placeholder-token',
-            },
-        };
-    } catch (error) {
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Signup failed',
-        };
+    if (!userData.username || !userData.email || !userData.password) {
+      return {
+        success: false,
+        error: "All fields are required",
+      };
     }
+
+    return {
+      success: true,
+      data: {
+        user: {
+          username: userData.username,
+          email: userData.email,
+        } as Record<string, unknown>,
+        token: "placeholder-token",
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Signup failed",
+    };
+  }
 }
 
 /**
  * Reset password
- * 
+ *
  * @param email - User's email
  * @returns Promise with reset response
- * 
+ *
  * @todo Replace with actual GraphQL mutation when auth is migrated
  */
 export async function resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
-    try {
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        if (!email) {
-            return {
-                success: false,
-                error: 'Email is required',
-            };
-        }
-
-        return { success: true };
-    } catch (error) {
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Password reset failed',
-        };
+    if (!email) {
+      return {
+        success: false,
+        error: "Email is required",
+      };
     }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Password reset failed",
+    };
+  }
 }
 
 /**
  * Logout user — clears token from localStorage and cookie.
  */
 export function logoutUser(): void {
-    removeToken();
+  removeToken();
 }

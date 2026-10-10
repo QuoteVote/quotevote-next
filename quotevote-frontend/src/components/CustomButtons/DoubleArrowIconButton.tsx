@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { ChevronsRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import type { DoubleArrowIconButtonProps } from '@/types/components';
+import { ChevronsRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { DoubleArrowIconButtonProps } from "@/types/components";
 
 /**
  * DoubleArrowIconButton Component
- * 
+ *
  * Icon button with double arrow icon, styled with primary green color.
  */
 export function DoubleArrowIconButton({ onClick }: DoubleArrowIconButtonProps) {
@@ -21,4 +21,3 @@ export function DoubleArrowIconButton({ onClick }: DoubleArrowIconButtonProps) {
     </Button>
   );
 }
-

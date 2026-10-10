@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import type { AlertListProps } from '@/types/components'
-import { cn } from '@/lib/utils'
-import { X } from 'lucide-react'
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import type { AlertListProps } from "@/types/components";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
 /**
  * AlertSkeletonLoader Component
- * 
+ *
  * Displays skeleton loaders for alerts while data is loading.
  * Uses Tailwind CSS for styling.
  */
@@ -24,16 +24,16 @@ function AlertSkeletonLoader({ limit }: { limit: number }) {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 /**
  * AlertList Component
- * 
+ *
  * Renders a list of Alert components in sequence.
  * Supports loading states, empty states, and dismiss functionality.
  * Uses shadcn/ui Alert components and Tailwind CSS for styling.
- * 
+ *
  * @param alerts - Array of alert items to display
  * @param loading - Whether the component is in a loading state
  * @param skeletonLimit - Number of skeleton loaders to show when loading
@@ -44,32 +44,28 @@ export function AlertList({
   alerts,
   loading = false,
   skeletonLimit = 3,
-  emptyMessage = 'No alerts to display',
+  emptyMessage = "No alerts to display",
   className,
 }: AlertListProps) {
   // Show skeleton loader when loading
   if (loading) {
-    return <AlertSkeletonLoader limit={skeletonLimit} />
+    return <AlertSkeletonLoader limit={skeletonLimit} />;
   }
 
   // Show empty state when no alerts
   if (!alerts || alerts.length === 0) {
     return (
-      <div className={cn('w-full text-center py-8 text-muted-foreground', className)}>
+      <div className={cn("w-full text-center py-8 text-muted-foreground", className)}>
         <p>{emptyMessage}</p>
       </div>
-    )
+    );
   }
 
   // Render list of alerts
   return (
-    <div className={cn('w-full space-y-4', className)}>
+    <div className={cn("w-full space-y-4", className)}>
       {alerts.map((alert) => (
-        <Alert
-          key={alert.id}
-          variant={alert.variant || 'default'}
-          className="relative"
-        >
+        <Alert key={alert.id} variant={alert.variant || "default"} className="relative">
           {alert.onDismiss && (
             <button
               type="button"
@@ -82,12 +78,9 @@ export function AlertList({
             </button>
           )}
           {alert.title && <AlertTitle>{alert.title}</AlertTitle>}
-          {alert.description && (
-            <AlertDescription>{alert.description}</AlertDescription>
-          )}
+          {alert.description && <AlertDescription>{alert.description}</AlertDescription>}
         </Alert>
       ))}
     </div>
-  )
+  );
 }
-

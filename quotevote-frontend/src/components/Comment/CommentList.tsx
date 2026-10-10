@@ -1,76 +1,76 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from 'react'
-import moment from 'moment'
-import { MessageCircle, ArrowUpDown } from 'lucide-react'
+import { useState, useEffect, useMemo } from "react";
+import moment from "moment";
+import { MessageCircle, ArrowUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
-import Comment from './Comment'
-import { CommentData } from '@/types/comment'
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import Comment from "./Comment";
+import { CommentData } from "@/types/comment";
 
-type SortMode = 'newest' | 'oldest' | 'reactions'
+type SortMode = "newest" | "oldest" | "reactions";
 
 const SORT_LABELS: Record<SortMode, string> = {
-  newest: 'Newest',
-  oldest: 'Oldest',
-  reactions: 'Most Reactions',
-}
+  newest: "Newest",
+  oldest: "Oldest",
+  reactions: "Most Reactions",
+};
 
-const STORAGE_KEY = 'qv-comment-sort'
+const STORAGE_KEY = "qv-comment-sort";
 
 function getStoredSort(): SortMode {
-  if (typeof window === 'undefined') return 'newest'
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === 'newest' || stored === 'oldest' || stored === 'reactions') return stored
-  return 'newest'
+  if (typeof window === "undefined") return "newest";
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored === "newest" || stored === "oldest" || stored === "reactions") return stored;
+  return "newest";
 }
 
 interface CommentListProps {
-  comments?: CommentData[]
-  loading?: boolean
-  postUrl?: string
+  comments?: CommentData[];
+  loading?: boolean;
+  postUrl?: string;
 }
 
 export default function CommentList({ comments = [], loading, postUrl }: CommentListProps) {
-  const [sortMode, setSortMode] = useState<SortMode>(getStoredSort)
+  const [sortMode, setSortMode] = useState<SortMode>(getStoredSort);
 
   const handleSortChange = (mode: SortMode) => {
-    setSortMode(mode)
-    localStorage.setItem(STORAGE_KEY, mode)
-  }
+    setSortMode(mode);
+    localStorage.setItem(STORAGE_KEY, mode);
+  };
 
   useEffect(() => {
-    const hash = window.location.hash
+    const hash = window.location.hash;
     if (!loading && comments.length && hash) {
-      const element = document.getElementById(hash.replace('#', ''))
+      const element = document.getElementById(hash.replace("#", ""));
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' })
+        element.scrollIntoView({ behavior: "smooth" });
       }
     }
-  }, [loading, comments])
+  }, [loading, comments]);
 
   const sortedComments = useMemo(() => {
-    const list = comments.slice()
+    const list = comments.slice();
     switch (sortMode) {
-      case 'oldest':
-        return list.sort((a, b) => moment(a.created).diff(moment(b.created)))
-      case 'reactions': {
+      case "oldest":
+        return list.sort((a, b) => moment(a.created).diff(moment(b.created)));
+      case "reactions": {
         return list.sort((a, b) => {
-          const aReactions = Array.isArray(a.reaction) ? a.reaction.length : 0
-          const bReactions = Array.isArray(b.reaction) ? b.reaction.length : 0
-          return bReactions - aReactions
-        })
+          const aReactions = Array.isArray(a.reaction) ? a.reaction.length : 0;
+          const bReactions = Array.isArray(b.reaction) ? b.reaction.length : 0;
+          return bReactions - aReactions;
+        });
       }
-      case 'newest':
+      case "newest":
       default:
-        return list.sort((a, b) => moment(b.created).diff(moment(a.created)))
+        return list.sort((a, b) => moment(b.created).diff(moment(a.created)));
     }
-  }, [comments, sortMode])
+  }, [comments, sortMode]);
 
   if (loading) {
     return (
@@ -89,7 +89,7 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
           </div>
         ))}
       </div>
-    )
+    );
   }
 
   if (!comments.length) {
@@ -99,11 +99,9 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
           <MessageCircle className="size-6 text-muted-foreground/40" />
         </div>
         <p className="text-sm font-medium text-foreground mb-1">No comments yet</p>
-        <p className="text-xs text-muted-foreground/70">
-          Be the first to share your thoughts!
-        </p>
+        <p className="text-xs text-muted-foreground/70">Be the first to share your thoughts!</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -111,11 +109,15 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
       {/* Sort control */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-muted-foreground">
-          {comments.length} comment{comments.length !== 1 ? 's' : ''}
+          {comments.length} comment{comments.length !== 1 ? "s" : ""}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-7 rounded-full text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs h-7 rounded-full text-muted-foreground"
+            >
               <ArrowUpDown className="size-3" />
               {SORT_LABELS[sortMode]}
             </Button>
@@ -125,7 +127,7 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
               <DropdownMenuItem
                 key={mode}
                 onClick={() => handleSortChange(mode)}
-                className={sortMode === mode ? 'bg-primary/5 text-primary font-medium' : ''}
+                className={sortMode === mode ? "bg-primary/5 text-primary font-medium" : ""}
               >
                 {SORT_LABELS[mode]}
               </DropdownMenuItem>
@@ -137,19 +139,15 @@ export default function CommentList({ comments = [], loading, postUrl }: Comment
       {/* Comment list */}
       <div role="list" aria-label="Comments">
         {sortedComments.map((comment) => (
-          <div
-            id={comment._id}
-            key={comment._id}
-            role="listitem"
-          >
+          <div id={comment._id} key={comment._id} role="listitem">
             <Comment
               comment={comment}
               postUrl={postUrl}
-              selected={typeof window !== 'undefined' && window.location.hash === `#${comment._id}`}
+              selected={typeof window !== "undefined" && window.location.hash === `#${comment._id}`}
             />
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }

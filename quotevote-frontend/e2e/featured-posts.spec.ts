@@ -118,9 +118,7 @@ test.describe("RC1-004 Directory posts navigate to post detail", () => {
     await mockDirectoryPostsGraphQL(page);
   });
 
-  test("clicking each directory card opens the corresponding post page", async ({
-    page,
-  }) => {
+  test("clicking each directory card opens the corresponding post page", async ({ page }) => {
     await page.goto("/");
 
     const cards = page.getByTestId("post-card");
@@ -141,7 +139,7 @@ test.describe("RC1-004 Directory posts navigate to post detail", () => {
       await expect(page).toHaveURL((url) => url.pathname === post.url);
 
       await page.goBack();
-      await expect(page).toHaveURL((url) => url.pathname === '/');
+      await expect(page).toHaveURL((url) => url.pathname === "/");
       await expect(cards.first()).toBeVisible();
     }
   });

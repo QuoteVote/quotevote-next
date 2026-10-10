@@ -1,30 +1,30 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useState, type ReactElement } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Calendar, Clock, Hash, ListFilter, Search as SearchIcon } from 'lucide-react'
-import { useQuery } from '@apollo/client/react'
-import { useDebounce } from '@/hooks/useDebounce'
-import { GROUPS_QUERY } from '@/graphql/queries'
-import { cn } from '@/lib/utils'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import DateRangeFilter from '@/components/SearchContainer/DateRangeFilter'
-import type { Group } from '@/types/components'
+import { useCallback, useEffect, useState, type ReactElement } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Calendar, Clock, Hash, ListFilter, Search as SearchIcon } from "lucide-react";
+import { useQuery } from "@apollo/client/react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { GROUPS_QUERY } from "@/graphql/queries";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import DateRangeFilter from "@/components/SearchContainer/DateRangeFilter";
+import type { Group } from "@/types/components";
 
-type SortOrder = 'desc' | 'asc'
+type SortOrder = "desc" | "asc";
 
 interface GroupsQueryData {
-  groups: Group[]
+  groups: Group[];
 }
 
 function chipClass(active: boolean): string {
   return cn(
-    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shrink-0 transition-colors',
+    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shrink-0 transition-colors",
     active
-      ? 'border-[#52b274]/40 bg-[#52b274]/10 text-[#52b274]'
-      : 'border-border bg-background text-foreground hover:bg-muted/60'
-  )
+      ? "border-[#52b274]/40 bg-[#52b274]/10 text-[#52b274]"
+      : "border-border bg-background text-foreground hover:bg-muted/60"
+  );
 }
 
 /**
@@ -32,61 +32,61 @@ function chipClass(active: boolean): string {
  * Chips wrap instead of scrolling sideways (no horizontal overflow).
  */
 export function DirectoryToolbar(): ReactElement {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const q = searchParams.get('q') || ''
-  const from = searchParams.get('from') || ''
-  const to = searchParams.get('to') || ''
-  const sortOrder = (searchParams.get('sort') || 'desc') as SortOrder
-  const interactions = searchParams.get('interactions') === 'true'
-  const groupId = searchParams.get('group') || ''
+  const q = searchParams.get("q") || "";
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
+  const sortOrder = (searchParams.get("sort") || "desc") as SortOrder;
+  const interactions = searchParams.get("interactions") === "true";
+  const groupId = searchParams.get("group") || "";
 
-  const [searchInput, setSearchInput] = useState(q)
-  const debouncedSearch = useDebounce(searchInput, 300)
+  const [searchInput, setSearchInput] = useState(q);
+  const debouncedSearch = useDebounce(searchInput, 300);
 
   const { data: groupsData } = useQuery<GroupsQueryData>(GROUPS_QUERY, {
     variables: { limit: 100 },
-    errorPolicy: 'all',
-  })
-  const groups = (groupsData?.groups ?? []).filter((group) => group.privacy !== 'private')
-  const selectedGroup = groups.find((group) => group._id === groupId)
+    errorPolicy: "all",
+  });
+  const groups = (groupsData?.groups ?? []).filter((group) => group.privacy !== "private");
+  const selectedGroup = groups.find((group) => group._id === groupId);
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParams.toString());
       Object.entries(updates).forEach(([key, val]) => {
-        if (val !== null && val !== '') params.set(key, val)
-        else params.delete(key)
-      })
-      params.delete('page')
-      const query = params.toString()
-      router.replace(query ? `?${query}` : '/', { scroll: false })
+        if (val !== null && val !== "") params.set(key, val);
+        else params.delete(key);
+      });
+      params.delete("page");
+      const query = params.toString();
+      router.replace(query ? `?${query}` : "/", { scroll: false });
     },
     [router, searchParams]
-  )
+  );
 
   useEffect(() => {
-    if (debouncedSearch === q) return
-    updateParams({ q: debouncedSearch.trim() || null })
-  }, [debouncedSearch, q, updateParams])
+    if (debouncedSearch === q) return;
+    updateParams({ q: debouncedSearch.trim() || null });
+  }, [debouncedSearch, q, updateParams]);
 
-  const isLatest = sortOrder === 'desc' && !interactions
-  const hasDateFilter = !!(from || to)
-  const today = new Date().toISOString().split('T')[0]
-  const isToday = from === today && to === today
-  const dateLabel = isToday ? 'Today' : 'Date'
+  const isLatest = sortOrder === "desc" && !interactions;
+  const hasDateFilter = !!(from || to);
+  const today = new Date().toISOString().split("T")[0];
+  const isToday = from === today && to === today;
+  const dateLabel = isToday ? "Today" : "Date";
 
   const handleLatest = () => {
-    updateParams({ sort: 'desc', interactions: null })
-  }
+    updateParams({ sort: "desc", interactions: null });
+  };
 
   const handleTogglePopular = () => {
     updateParams({
-      interactions: interactions ? null : 'true',
-      sort: interactions ? 'desc' : null,
-    })
-  }
+      interactions: interactions ? null : "true",
+      sort: interactions ? "desc" : null,
+    });
+  };
 
   return (
     <div
@@ -96,8 +96,8 @@ export function DirectoryToolbar(): ReactElement {
       <form
         role="search"
         onSubmit={(e) => {
-          e.preventDefault()
-          updateParams({ q: searchInput.trim() || null })
+          e.preventDefault();
+          updateParams({ q: searchInput.trim() || null });
         }}
       >
         <label htmlFor="directory-search" className="sr-only">
@@ -165,16 +165,19 @@ export function DirectoryToolbar(): ReactElement {
               className={chipClass(!!groupId)}
             >
               <Hash className="size-3.5" aria-hidden />
-              {selectedGroup ? `# ${selectedGroup.title}` : 'Tag'}
+              {selectedGroup ? `# ${selectedGroup.title}` : "Tag"}
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-64 p-2 max-h-60 overflow-y-auto overflow-x-hidden">
+          <PopoverContent
+            align="start"
+            className="w-64 p-2 max-h-60 overflow-y-auto overflow-x-hidden"
+          >
             <button
               type="button"
               onClick={() => updateParams({ group: null })}
               className={cn(
-                'w-full text-left rounded-md px-2 py-1.5 text-sm hover:bg-muted',
-                !groupId && 'text-[#52b274] font-medium'
+                "w-full text-left rounded-md px-2 py-1.5 text-sm hover:bg-muted",
+                !groupId && "text-[#52b274] font-medium"
               )}
             >
               All tags
@@ -185,8 +188,8 @@ export function DirectoryToolbar(): ReactElement {
                 type="button"
                 onClick={() => updateParams({ group: group._id })}
                 className={cn(
-                  'w-full text-left rounded-md px-2 py-1.5 text-sm hover:bg-muted truncate',
-                  groupId === group._id && 'text-[#52b274] font-medium'
+                  "w-full text-left rounded-md px-2 py-1.5 text-sm hover:bg-muted truncate",
+                  groupId === group._id && "text-[#52b274] font-medium"
                 )}
               >
                 #{group.title}
@@ -219,5 +222,5 @@ export function DirectoryToolbar(): ReactElement {
         </Popover>
       </div>
     </div>
-  )
+  );
 }

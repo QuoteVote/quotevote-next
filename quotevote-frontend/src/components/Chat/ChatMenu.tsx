@@ -1,19 +1,19 @@
 "use client";
 
-import type { FC } from 'react';
-import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@apollo/client/react';
-import { toast } from 'sonner';
+import type { FC } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@apollo/client/react";
+import { toast } from "sonner";
 
-import { useAppStore } from '@/store';
-import { GET_CHAT_ROOMS } from '@/graphql/queries';
-import type { ChatRoom } from '@/types/chat';
+import { useAppStore } from "@/store";
+import { GET_CHAT_ROOMS } from "@/graphql/queries";
+import type { ChatRoom } from "@/types/chat";
 
 interface ChatMenuProps {
-  fontSize?: 'small' | 'large' | string | number;
+  fontSize?: "small" | "large" | string | number;
 }
 
-const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
+const ChatMenu: FC<ChatMenuProps> = ({ fontSize = "medium" }) => {
   const open = useAppStore((state) => state.chat.open);
   const setChatOpen = useAppStore((state) => state.setChatOpen);
   const selectedRoom = useAppStore((state) => state.chat.selectedRoom);
@@ -25,12 +25,12 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
 
   const toggleOpen = () => setChatOpen(!open);
 
-  const width = fontSize === 'large' ? 49 : 32;
-  const height = fontSize === 'large' ? 46 : 30;
+  const width = fontSize === "large" ? 49 : 32;
+  const height = fontSize === "large" ? 46 : 30;
 
   // ── Unread count ──────────────────────────────────────────────────────────
   const { data: roomsData } = useQuery<{ messageRooms: ChatRoom[] }>(GET_CHAT_ROOMS, {
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: "cache-and-network",
     pollInterval: 8000,
     skip: !isLoggedIn,
   });
@@ -59,8 +59,7 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
       return;
     }
 
-    const selectedRoomId =
-      typeof selectedRoom === 'string' ? selectedRoom : null;
+    const selectedRoomId = typeof selectedRoom === "string" ? selectedRoom : null;
 
     for (const room of roomsData.messageRooms) {
       if (!room._id) continue;
@@ -69,12 +68,12 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
 
       // New unread message arrived in a room that isn't currently being viewed
       if (curr > prev && !(open && room._id === selectedRoomId)) {
-        const senderLabel = room.title ?? 'New message';
+        const senderLabel = room.title ?? "New message";
         toast(`💬 ${senderLabel}`, {
-          description: 'You have a new direct message',
+          description: "You have a new direct message",
           duration: 5000,
           action: {
-            label: 'Open',
+            label: "Open",
             onClick: () => {
               setChatOpen(true);
               if (room._id) setSelectedChatRoom(room._id);
@@ -103,13 +102,13 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
         src="/assets/ChatActive.svg"
         alt="Chat"
         style={{ width, height }}
-        className={isHovered || open ? 'opacity-100' : 'opacity-90'}
+        className={isHovered || open ? "opacity-100" : "opacity-90"}
       />
 
       {/* Unread-messages badge */}
       {totalUnread > 0 && (
         <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#52b274] px-[3px] text-[9px] font-bold leading-none text-white shadow-sm ring-2 ring-background">
-          {totalUnread > 99 ? '99+' : totalUnread}
+          {totalUnread > 99 ? "99+" : totalUnread}
         </span>
       )}
     </button>

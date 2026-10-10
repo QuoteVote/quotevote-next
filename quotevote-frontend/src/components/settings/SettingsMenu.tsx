@@ -1,42 +1,32 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Settings } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
-import { cn } from '@/lib/utils'
-import SettingsContent from './SettingsContent'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
-import type { SettingsMenuProps } from '@/types/settings'
+import { useState } from "react";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import SettingsContent from "./SettingsContent";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import type { SettingsMenuProps } from "@/types/settings";
 
-export default function SettingsMenu({ fontSize = 'medium' }: SettingsMenuProps) {
-  const [open, setOpen] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-  const isMobile = useMediaQuery('(max-width: 768px)')
+export default function SettingsMenu({ fontSize = "medium" }: SettingsMenuProps) {
+  const [open, setOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const handleToggle = () => {
-    setOpen(!open)
-  }
+    setOpen(!open);
+  };
 
   const iconSizeMap = {
-    small: 'h-4 w-4',
-    medium: 'h-5 w-5',
-    large: 'h-6 w-6',
-    inherit: 'h-5 w-5',
-  }
+    small: "h-4 w-4",
+    medium: "h-5 w-5",
+    large: "h-6 w-6",
+    inherit: "h-5 w-5",
+  };
 
-  const iconSize = iconSizeMap[fontSize]
+  const iconSize = iconSizeMap[fontSize];
 
   // Mobile Sheet UI
   if (isMobile) {
@@ -46,10 +36,7 @@ export default function SettingsMenu({ fontSize = 'medium' }: SettingsMenuProps)
           <Button
             variant="ghost"
             size="icon"
-            className={cn(
-              'relative transition-all duration-200',
-              isHovered && 'bg-accent'
-            )}
+            className={cn("relative transition-all duration-200", isHovered && "bg-accent")}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             aria-label="Settings"
@@ -57,8 +44,8 @@ export default function SettingsMenu({ fontSize = 'medium' }: SettingsMenuProps)
             <Settings
               className={cn(
                 iconSize,
-                'transition-transform duration-200',
-                isHovered && 'rotate-45 scale-110'
+                "transition-transform duration-200",
+                isHovered && "rotate-45 scale-110"
               )}
             />
           </Button>
@@ -68,16 +55,14 @@ export default function SettingsMenu({ fontSize = 'medium' }: SettingsMenuProps)
           className="w-full max-w-[400px] bg-gradient-to-br from-[#1BB5D8] to-[#4066EC] border-none p-0"
         >
           <SheetHeader className="px-6 pt-6 pb-4">
-            <SheetTitle className="text-white font-semibold text-xl">
-              Settings
-            </SheetTitle>
+            <SheetTitle className="text-white font-semibold text-xl">Settings</SheetTitle>
           </SheetHeader>
           <div className="px-2">
             <SettingsContent setOpen={setOpen} />
           </div>
         </SheetContent>
       </Sheet>
-    )
+    );
   }
 
   // Desktop Popover UI
@@ -87,10 +72,7 @@ export default function SettingsMenu({ fontSize = 'medium' }: SettingsMenuProps)
         <Button
           variant="ghost"
           size="icon"
-          className={cn(
-            'relative transition-all duration-200',
-            isHovered && 'bg-accent'
-          )}
+          className={cn("relative transition-all duration-200", isHovered && "bg-accent")}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onClick={handleToggle}
@@ -99,8 +81,8 @@ export default function SettingsMenu({ fontSize = 'medium' }: SettingsMenuProps)
           <Settings
             className={cn(
               iconSize,
-              'transition-transform duration-200',
-              isHovered && 'rotate-45 scale-110'
+              "transition-transform duration-200",
+              isHovered && "rotate-45 scale-110"
             )}
           />
         </Button>
@@ -118,5 +100,5 @@ export default function SettingsMenu({ fontSize = 'medium' }: SettingsMenuProps)
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

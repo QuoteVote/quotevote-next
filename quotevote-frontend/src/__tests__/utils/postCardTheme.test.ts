@@ -1,7 +1,4 @@
-import {
-  STANDARD_POST_CARD_THEME,
-  isPostedActivityType,
-} from "@/lib/constants/postCardTheme";
+import { STANDARD_POST_CARD_THEME, isPostedActivityType } from "@/lib/constants/postCardTheme";
 
 describe("postCardTheme", () => {
   it("exposes the shared blue chrome used by feed and profile POSTED cards", () => {

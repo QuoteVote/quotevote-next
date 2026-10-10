@@ -3,13 +3,13 @@
  * Read-only routes are browsable without auth; participation is gated client-side.
  */
 
-const GUEST_READABLE_PREFIXES = ['/post'] as const;
+const GUEST_READABLE_PREFIXES = ["/post"] as const;
 
 const AUTH_REQUIRED_PREFIXES = [
-  '/settings',
-  '/notifications',
-  '/manage-invites',
-  '/control-panel',
+  "/settings",
+  "/notifications",
+  "/manage-invites",
+  "/control-panel",
 ] as const;
 
 /** Public profile pages: /profile/:username (not /profile alone). */
@@ -25,6 +25,6 @@ export function isGuestReadableRoute(pathname: string): boolean {
 }
 
 export function isAuthRequiredRoute(pathname: string): boolean {
-  if (pathname === '/profile') return true;
+  if (pathname === "/profile") return true;
   return AUTH_REQUIRED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }

@@ -1,20 +1,15 @@
-'use client';
+"use client";
 
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface MobileDrawerProps {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  anchor?: 'left' | 'right' | 'top' | 'bottom';
+  anchor?: "left" | "right" | "top" | "bottom";
   showHeader?: boolean;
 }
 
@@ -23,7 +18,7 @@ export function MobileDrawer({
   onClose,
   title,
   children,
-  anchor = 'right',
+  anchor = "right",
   showHeader = true,
 }: MobileDrawerProps) {
   return (
@@ -36,13 +31,7 @@ export function MobileDrawer({
         {showHeader && (
           <SheetHeader className="px-4 py-3 border-b border-[var(--color-gray-light)]">
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="p-2"
-                aria-label="Back"
-              >
+              <Button variant="ghost" size="sm" onClick={onClose} className="p-2" aria-label="Back">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <SheetTitle className="text-lg font-semibold text-[var(--color-text-primary)]">
@@ -56,4 +45,3 @@ export function MobileDrawer({
     </Sheet>
   );
 }
-

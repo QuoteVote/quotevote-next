@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, X, Loader2 } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Search, X, Loader2 } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { cn } from "@/lib/utils";
 
 export default function NavSearch() {
   const router = useRouter();
@@ -12,10 +12,10 @@ export default function NavSearch() {
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isExplorePage = pathname === '/';
+  const isExplorePage = pathname === "/";
 
   // Mirror the home/explore page: read q from URL when on home, else start empty
-  const urlQ = isExplorePage ? (searchParams.get('q') || '') : '';
+  const urlQ = isExplorePage ? searchParams.get("q") || "" : "";
 
   const [inputValue, setInputValue] = useState(urlQ);
   const [focused, setFocused] = useState(false);
@@ -30,7 +30,7 @@ export default function NavSearch() {
   // When the URL q param changes externally (e.g. body search updated it), sync input
   useEffect(() => {
     if (isExplorePage && !focused) {
-      setInputValue(searchParams.get('q') || '');
+      setInputValue(searchParams.get("q") || "");
     }
   }, [searchParams, isExplorePage, focused]);
 
@@ -42,9 +42,9 @@ export default function NavSearch() {
     if (isExplorePage) {
       const params = new URLSearchParams(searchParams.toString());
       if (debouncedQuery) {
-        params.set('q', debouncedQuery);
+        params.set("q", debouncedQuery);
       } else {
-        params.delete('q');
+        params.delete("q");
       }
       router.replace(`/?${params.toString()}`);
     } else if (debouncedQuery) {
@@ -54,10 +54,10 @@ export default function NavSearch() {
   }, [debouncedQuery]);
 
   const clearSearch = () => {
-    setInputValue('');
+    setInputValue("");
     if (isExplorePage) {
       const params = new URLSearchParams(searchParams.toString());
-      params.delete('q');
+      params.delete("q");
       router.replace(`/?${params.toString()}`);
     }
     inputRef.current?.focus();
@@ -66,16 +66,16 @@ export default function NavSearch() {
   return (
     <div
       className={cn(
-        'flex items-center gap-2 h-[38px] w-full rounded-full px-3.5 transition-all duration-200 border',
+        "flex items-center gap-2 h-[38px] w-full rounded-full px-3.5 transition-all duration-200 border",
         focused
-          ? 'bg-white dark:bg-card border-[#52b274] shadow-[0_0_0_3px_rgba(82,178,116,0.15)]'
-          : 'bg-[#f0f2f5] dark:bg-muted border-transparent hover:bg-[#e4e6eb] dark:hover:bg-muted/70'
+          ? "bg-white dark:bg-card border-[#52b274] shadow-[0_0_0_3px_rgba(82,178,116,0.15)]"
+          : "bg-[#f0f2f5] dark:bg-muted border-transparent hover:bg-[#e4e6eb] dark:hover:bg-muted/70"
       )}
     >
       <Search
         className={cn(
-          'size-[15px] flex-shrink-0 transition-colors',
-          focused ? 'text-[#52b274]' : 'text-gray-500'
+          "size-[15px] flex-shrink-0 transition-colors",
+          focused ? "text-[#52b274]" : "text-gray-500"
         )}
       />
       <input

@@ -23,13 +23,13 @@ export interface Notification {
   label: string;
   status: string;
   created: string | number | Date;
-  notificationType: 'FOLLOW' | 'UPVOTED' | 'DOWNVOTED' | 'COMMENTED' | 'QUOTED';
+  notificationType: "FOLLOW" | "UPVOTED" | "DOWNVOTED" | "COMMENTED" | "QUOTED";
   post?: NotificationPost;
 }
 
 export interface NotificationPayload {
   message: string;
-  type?: 'success' | 'error' | 'info' | 'warning';
+  type?: "success" | "error" | "info" | "warning";
   duration?: number;
 }
 
@@ -39,4 +39,3 @@ export interface NotificationHandler {
   notifyInfo: (message: string, options?: { duration?: number }) => void;
   notifyWarning: (message: string, options?: { duration?: number }) => void;
 }
-

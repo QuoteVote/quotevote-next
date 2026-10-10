@@ -1,5 +1,5 @@
-import type { Metadata } from 'next';
-import { ProfileUsernamePage } from './ProfileUsernamePageContent';
+import type { Metadata } from "next";
+import { ProfileUsernamePage } from "./ProfileUsernamePageContent";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function ProfileByUsernamePage({ params }: Props) {
   const { username } = await params;

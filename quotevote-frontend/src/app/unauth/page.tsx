@@ -1,5 +1,5 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function UnauthPage() {
   return (
@@ -12,5 +12,5 @@ export default function UnauthPage() {
         </Button>
       </div>
     </div>
-  )
+  );
 }

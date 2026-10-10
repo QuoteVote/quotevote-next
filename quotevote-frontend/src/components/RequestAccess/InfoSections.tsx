@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
 /**
  * InfoSections Component
- * 
+ *
  * Informational sections about the platform mission and values.
  * Migrated from Material UI to shadcn/ui components.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { ChevronUp } from 'lucide-react';
-import Image from 'next/image';
+import { useEffect, useRef, useState } from "react";
+import { ChevronUp } from "lucide-react";
+import Image from "next/image";
 
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
-import { useMobileDetection } from '@/hooks/useResponsive';
+import { useMobileDetection } from "@/hooks/useResponsive";
 
-const DONATE_URL = 'mailto:admin@quote.vote';
+const DONATE_URL = "mailto:admin@quote.vote";
 
 export function InfoSections() {
   // Section references for scrolling and animations
@@ -40,27 +40,27 @@ export function InfoSections() {
   // Animation for reveal effect
   const getAnimationStyle = (isVisible: boolean) => ({
     opacity: isVisible ? 1 : 0,
-    transform: isVisible ? 'translateY(0)' : 'translateY(50px)',
-    transition: 'opacity 0.8s ease-out, transform 0.8s ease-out',
+    transform: isVisible ? "translateY(0)" : "translateY(50px)",
+    transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '#mission') {
-      missionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (typeof window !== "undefined" && window.location.hash === "#mission") {
+      missionRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
 
   useEffect(() => {
     // Skip during SSR
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Show back-to-top after scrolling
     const onScrollForTop = () => setShowBackToTop(window.scrollY > 300);
-    window.addEventListener('scroll', onScrollForTop);
+    window.addEventListener("scroll", onScrollForTop);
 
     // Fallback if IntersectionObserver not supported
-    if (!('IntersectionObserver' in window)) {
-      return () => window.removeEventListener('scroll', onScrollForTop);
+    if (!("IntersectionObserver" in window)) {
+      return () => window.removeEventListener("scroll", onScrollForTop);
     }
 
     // Observe each section for reveal animation
@@ -75,7 +75,7 @@ export function InfoSections() {
 
     const ioOptions = {
       root: null, // viewport
-      rootMargin: '0px 0px -1% 0px', // trigger slightly before element fully enters viewport
+      rootMargin: "0px 0px -1% 0px", // trigger slightly before element fully enters viewport
       threshold: 0.03, // ~3% visible to trigger
     };
 
@@ -102,14 +102,14 @@ export function InfoSections() {
     // Cleanup
     return () => {
       observer.disconnect();
-      window.removeEventListener('scroll', onScrollForTop);
+      window.removeEventListener("scroll", onScrollForTop);
     };
   }, []);
 
   // Back-to-top behavior
   const scrollToTop = () => {
-    if (typeof window === 'undefined') return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -128,11 +128,7 @@ export function InfoSections() {
         aria-label="Mission and Information"
         className="min-h-screen"
       >
-        <div
-          id="mission"
-          ref={missionRef}
-          className="max-w-[1400px] mx-auto px-4 py-8 md:py-16"
-        >
+        <div id="mission" ref={missionRef} className="max-w-[1400px] mx-auto px-4 py-8 md:py-16">
           {/* Mission */}
           <div
             ref={missionSectionRef}
@@ -148,27 +144,25 @@ export function InfoSections() {
 
               <div className="md:col-span-8">
                 <blockquote className="italic text-base md:text-lg leading-relaxed my-2 md:my-4 py-4 md:py-5 px-4 md:px-5 border-l-4 border-[#52b274] bg-[#e8f5ed] rounded-r-[10px] text-[#2b5d3d] font-medium">
-                  &quot;Quote.Vote aspires to be a commons; a catalyst for
-                  consensus, not a contest for influence.&quot;
+                  &quot;Quote.Vote aspires to be a commons; a catalyst for consensus, not a contest
+                  for influence.&quot;
                 </blockquote>
 
                 <p className="text-sm md:text-base mb-3">
-                  Quote.Vote is a platform for genuine, in-depth discussions. It
-                  exists to protect and nurture civic discourse by creating a
-                  digital space where quoting and voting can flourish—without
-                  manipulation, algorithms, or advertising.
+                  Quote.Vote is a platform for genuine, in-depth discussions. It exists to protect
+                  and nurture civic discourse by creating a digital space where quoting and voting
+                  can flourish—without manipulation, algorithms, or advertising.
                 </p>
                 <p className="text-sm md:text-base mb-3">
-                  In today&apos;s social media environment, quick posts, outrage
-                  cycles, and engagement metrics dominate our attention. This
-                  place offers a structural alternative, one that values writing
-                  as a tool for reflection and conversation as a form of care.
+                  In today&apos;s social media environment, quick posts, outrage cycles, and
+                  engagement metrics dominate our attention. This place offers a structural
+                  alternative, one that values writing as a tool for reflection and conversation as
+                  a form of care.
                 </p>
                 <p className="text-sm md:text-base mb-3">
-                  This is not a startup, but rather a public utility for
-                  collective thought. It is designed to slow users down, not
-                  speed them up. It invites people to read carefully, reflect
-                  together, and vote deliberately.
+                  This is not a startup, but rather a public utility for collective thought. It is
+                  designed to slow users down, not speed them up. It invites people to read
+                  carefully, reflect together, and vote deliberately.
                 </p>
               </div>
             </div>
@@ -191,17 +185,16 @@ export function InfoSections() {
 
               <div className="md:col-span-8">
                 <blockquote className="italic text-base md:text-lg leading-relaxed my-2 md:my-4 py-4 md:py-5 px-4 md:px-5 border-l-4 border-[#52b274] bg-[#e8f5ed] rounded-r-[10px] text-[#2b5d3d] font-medium">
-                  &quot;Every aspect of the platform is intentional. Every
-                  constraint is a choice rooted in values.&quot;
+                  &quot;Every aspect of the platform is intentional. Every constraint is a choice
+                  rooted in values.&quot;
                 </blockquote>
 
                 <p className="text-lg md:text-xl font-medium text-[#52b274] mb-3">
                   No videos. No images. No audio.
                 </p>
                 <p className="text-sm md:text-base mb-3">
-                  Quotes are blocks of text that open public chatrooms called
-                  Quote Rooms—structured conversations anchored in clarity, and
-                  precise feedback.
+                  Quotes are blocks of text that open public chatrooms called Quote Rooms—structured
+                  conversations anchored in clarity, and precise feedback.
                 </p>
               </div>
             </div>
@@ -224,10 +217,9 @@ export function InfoSections() {
 
               <div className="md:col-span-8">
                 <p className="text-sm md:text-base mb-3">
-                  At any time, a quote can be put to a vote that an author can
-                  activate after submitting. Visitors choose to approve or
-                  disagree with ideas. No likes. A quote vote can not be undone
-                  after the toggle is clicked.
+                  At any time, a quote can be put to a vote that an author can activate after
+                  submitting. Visitors choose to approve or disagree with ideas. No likes. A quote
+                  vote can not be undone after the toggle is clicked.
                 </p>
               </div>
             </div>
@@ -250,14 +242,13 @@ export function InfoSections() {
 
               <div className="md:col-span-8">
                 <p className="text-sm md:text-base mb-3">
-                  Posting and quoting are gated through a vouching system. Each
-                  contributor takes responsibility for who they invite. The
-                  growth rate is controlled to protect community culture and
-                  avoid the pitfalls of viral scale.
+                  Posting and quoting are gated through a vouching system. Each contributor takes
+                  responsibility for who they invite. The growth rate is controlled to protect
+                  community culture and avoid the pitfalls of viral scale.
                 </p>
                 <blockquote className="italic text-base md:text-lg leading-relaxed my-2 md:my-4 py-4 md:py-5 px-4 md:px-5 border-l-4 border-[#52b274] bg-[#e8f5ed] rounded-r-[10px] text-[#2b5d3d] font-medium">
-                  &quot;Quoting and voting are available to all, but the power
-                  to publish is earned through trust and intent.&quot;
+                  &quot;Quoting and voting are available to all, but the power to publish is earned
+                  through trust and intent.&quot;
                 </blockquote>
               </div>
             </div>
@@ -280,21 +271,17 @@ export function InfoSections() {
 
               <div className="md:col-span-8">
                 <p className="text-sm md:text-base mb-3">
-                  Moderation isn&apos;t algorithmic or top-down. It&apos;s shared.
-                  Each use will be a crucial part of the moderation system, and
-                  when invites are shared with others, the referred user&apos;s
-                  behavior will impact reputation weighting. A user&apos;s invite
-                  tree grows to define the type of user they are following code
-                  of conducts and terms of service; downstream behavior reflects
-                  upstream.
+                  Moderation isn&apos;t algorithmic or top-down. It&apos;s shared. Each use will be
+                  a crucial part of the moderation system, and when invites are shared with others,
+                  the referred user&apos;s behavior will impact reputation weighting. A user&apos;s
+                  invite tree grows to define the type of user they are following code of conducts
+                  and terms of service; downstream behavior reflects upstream.
                 </p>
                 <p className="text-sm md:text-base mb-3">
-                  Misconduct is a community responsibility. Every user is a
-                  moderator. Officially appointed moderators are compensated by
-                  the non-for profit entity that exchanges their time for
-                  monetary reward. All community members are facilitators tasked
-                  with protecting clarity about what is tolerated and what is
-                  not.
+                  Misconduct is a community responsibility. Every user is a moderator. Officially
+                  appointed moderators are compensated by the non-for profit entity that exchanges
+                  their time for monetary reward. All community members are facilitators tasked with
+                  protecting clarity about what is tolerated and what is not.
                 </p>
               </div>
             </div>
@@ -328,7 +315,7 @@ export function InfoSections() {
                   onClick={() => {
                     window.location.href = DONATE_URL;
                   }}
-                  size={isMobileDevice ? 'default' : 'lg'}
+                  size={isMobileDevice ? "default" : "lg"}
                 >
                   Please Donate
                 </Button>
@@ -361,7 +348,7 @@ export function InfoSections() {
           className="fixed bottom-5 md:bottom-10 right-5 md:right-10 z-[1000]"
           style={{
             opacity: showBackToTop ? 1 : 0,
-            transition: 'opacity 0.3s ease',
+            transition: "opacity 0.3s ease",
           }}
         >
           <Button
@@ -376,4 +363,3 @@ export function InfoSections() {
     </>
   );
 }
-

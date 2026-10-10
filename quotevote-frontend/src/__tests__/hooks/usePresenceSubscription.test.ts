@@ -1,168 +1,168 @@
-﻿import { renderHook } from '@testing-library/react'
-import { useSubscription } from '@apollo/client/react'
-import { usePresenceSubscription } from '@/hooks/usePresenceSubscription'
-import { useAppStore } from '@/store'
+﻿import { renderHook } from "@testing-library/react";
+import { useSubscription } from "@apollo/client/react";
+import { usePresenceSubscription } from "@/hooks/usePresenceSubscription";
+import { useAppStore } from "@/store";
 
 // Mock Apollo Client
-jest.mock('@apollo/client/react', () => ({
-    ...jest.requireActual('@apollo/client/react'),
-    useSubscription: jest.fn(),
-}))
+jest.mock("@apollo/client/react", () => ({
+  ...jest.requireActual("@apollo/client/react"),
+  useSubscription: jest.fn(),
+}));
 
 // Mock Zustand store
-jest.mock('@/store', () => ({
-    useAppStore: jest.fn(),
-}))
+jest.mock("@/store", () => ({
+  useAppStore: jest.fn(),
+}));
 
-describe('usePresenceSubscription', () => {
-    let mockUpdatePresence: jest.Mock
-    let mockUser: { data: { id?: string; username?: string } }
+describe("usePresenceSubscription", () => {
+  let mockUpdatePresence: jest.Mock;
+  let mockUser: { data: { id?: string; username?: string } };
 
-    beforeEach(() => {
-        jest.clearAllMocks()
-        mockUpdatePresence = jest.fn()
-        mockUser = { data: { id: '1', username: 'testuser' } }
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUpdatePresence = jest.fn();
+    mockUser = { data: { id: "1", username: "testuser" } };
 
-        const mockStore = useAppStore as unknown as jest.Mock
-        mockStore.mockImplementation((selector: (state: unknown) => unknown) => {
-            const state = {
-                user: mockUser,
-                updatePresence: mockUpdatePresence,
-            }
-            return selector(state)
-        })
-    })
+    const mockStore = useAppStore as unknown as jest.Mock;
+    mockStore.mockImplementation((selector: (state: unknown) => unknown) => {
+      const state = {
+        user: mockUser,
+        updatePresence: mockUpdatePresence,
+      };
+      return selector(state);
+    });
+  });
 
-    it('should subscribe to presence updates when user is logged in', () => {
-        const mockSubscription = useSubscription as unknown as jest.Mock
-        mockSubscription.mockReturnValue({
-            data: null,
-            error: null,
-        })
+  it("should subscribe to presence updates when user is logged in", () => {
+    const mockSubscription = useSubscription as unknown as jest.Mock;
+    mockSubscription.mockReturnValue({
+      data: null,
+      error: null,
+    });
 
-        renderHook(() => usePresenceSubscription())
+    renderHook(() => usePresenceSubscription());
 
-        // Updated to match new behavior: subscribes to all users (userId: null)
-        expect(useSubscription).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.objectContaining({
-                variables: { userId: null },
-                skip: false,
-            })
-        )
-    })
+    // Updated to match new behavior: subscribes to all users (userId: null)
+    expect(useSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        variables: { userId: null },
+        skip: false,
+      })
+    );
+  });
 
-    it('should skip subscription when user is not logged in', () => {
-        mockUser = { data: {} }
-        const mockSubscription = useSubscription as unknown as jest.Mock
-        mockSubscription.mockReturnValue({
-            data: null,
-            error: null,
-        })
+  it("should skip subscription when user is not logged in", () => {
+    mockUser = { data: {} };
+    const mockSubscription = useSubscription as unknown as jest.Mock;
+    mockSubscription.mockReturnValue({
+      data: null,
+      error: null,
+    });
 
-        renderHook(() => usePresenceSubscription())
+    renderHook(() => usePresenceSubscription());
 
-        expect(useSubscription).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.objectContaining({
-                skip: true,
-            })
-        )
-    })
+    expect(useSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        skip: true,
+      })
+    );
+  });
 
-    it('should update store when presence data is received', () => {
-        // Updated to match actual subscription structure (status instead of isOnline)
-        const presenceData = {
-            userId: '2',
-            status: 'online',
-            lastSeen: '2024-01-01T00:00:00Z',
-            statusMessage: 'Hello',
-        }
+  it("should update store when presence data is received", () => {
+    // Updated to match actual subscription structure (status instead of isOnline)
+    const presenceData = {
+      userId: "2",
+      status: "online",
+      lastSeen: "2024-01-01T00:00:00Z",
+      statusMessage: "Hello",
+    };
 
-        const mockSubscription = useSubscription as unknown as jest.Mock
-        mockSubscription.mockReturnValue({
-            data: { presence: presenceData },
-            error: null,
-        })
+    const mockSubscription = useSubscription as unknown as jest.Mock;
+    mockSubscription.mockReturnValue({
+      data: { presence: presenceData },
+      error: null,
+    });
 
-        renderHook(() => usePresenceSubscription())
+    renderHook(() => usePresenceSubscription());
 
-        expect(mockUpdatePresence).toHaveBeenCalledWith('2', {
-            status: 'online',
-            statusMessage: 'Hello',
-            lastSeen: new Date(presenceData.lastSeen).getTime(),
-        })
-    })
+    expect(mockUpdatePresence).toHaveBeenCalledWith("2", {
+      status: "online",
+      statusMessage: "Hello",
+      lastSeen: new Date(presenceData.lastSeen).getTime(),
+    });
+  });
 
-    it('should not update store when no presence data', () => {
-        const mockSubscription = useSubscription as unknown as jest.Mock
-        mockSubscription.mockReturnValue({
-            data: null,
-            error: null,
-        })
+  it("should not update store when no presence data", () => {
+    const mockSubscription = useSubscription as unknown as jest.Mock;
+    mockSubscription.mockReturnValue({
+      data: null,
+      error: null,
+    });
 
-        renderHook(() => usePresenceSubscription())
+    renderHook(() => usePresenceSubscription());
 
-        expect(mockUpdatePresence).not.toHaveBeenCalled()
-    })
+    expect(mockUpdatePresence).not.toHaveBeenCalled();
+  });
 
-    it('should not log error on subscription error', () => {
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
-        const testError = new Error('Subscription error')
+  it("should not log error on subscription error", () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    const testError = new Error("Subscription error");
 
-        const mockSubscription = useSubscription as unknown as jest.Mock
-        mockSubscription.mockReturnValue({
-            data: null,
-            error: testError,
-        })
+    const mockSubscription = useSubscription as unknown as jest.Mock;
+    mockSubscription.mockReturnValue({
+      data: null,
+      error: testError,
+    });
 
-        renderHook(() => usePresenceSubscription())
+    renderHook(() => usePresenceSubscription());
 
-        expect(consoleErrorSpy).not.toHaveBeenCalled()
-        consoleErrorSpy.mockRestore()
-    })
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
 
-    it('should update store when presence data changes', () => {
-        // Updated to match actual subscription structure (status instead of isOnline)
-        const presenceData1 = {
-            userId: '2',
-            status: 'online',
-            lastSeen: '2024-01-01T00:00:00Z',
-        }
+  it("should update store when presence data changes", () => {
+    // Updated to match actual subscription structure (status instead of isOnline)
+    const presenceData1 = {
+      userId: "2",
+      status: "online",
+      lastSeen: "2024-01-01T00:00:00Z",
+    };
 
-        const presenceData2 = {
-            userId: '2',
-            status: 'offline',
-            lastSeen: '2024-01-01T01:00:00Z',
-        }
+    const presenceData2 = {
+      userId: "2",
+      status: "offline",
+      lastSeen: "2024-01-01T01:00:00Z",
+    };
 
-        const mockSubscription = useSubscription as unknown as jest.Mock
-        mockSubscription.mockReturnValue({
-            data: { presence: presenceData1 },
-            error: null,
-        })
+    const mockSubscription = useSubscription as unknown as jest.Mock;
+    mockSubscription.mockReturnValue({
+      data: { presence: presenceData1 },
+      error: null,
+    });
 
-        const { rerender } = renderHook(() => usePresenceSubscription())
+    const { rerender } = renderHook(() => usePresenceSubscription());
 
-        expect(mockUpdatePresence).toHaveBeenCalledWith('2', {
-            status: 'online',
-            statusMessage: '',
-            lastSeen: new Date(presenceData1.lastSeen).getTime(),
-        })
+    expect(mockUpdatePresence).toHaveBeenCalledWith("2", {
+      status: "online",
+      statusMessage: "",
+      lastSeen: new Date(presenceData1.lastSeen).getTime(),
+    });
 
-        // Update subscription data
-        mockSubscription.mockReturnValue({
-            data: { presence: presenceData2 },
-            error: null,
-        })
+    // Update subscription data
+    mockSubscription.mockReturnValue({
+      data: { presence: presenceData2 },
+      error: null,
+    });
 
-        rerender()
+    rerender();
 
-        expect(mockUpdatePresence).toHaveBeenCalledWith('2', {
-            status: 'offline',
-            statusMessage: '',
-            lastSeen: new Date(presenceData2.lastSeen).getTime(),
-        })
-        expect(mockUpdatePresence).toHaveBeenCalledTimes(2)
-    })
-})
+    expect(mockUpdatePresence).toHaveBeenCalledWith("2", {
+      status: "offline",
+      statusMessage: "",
+      lastSeen: new Date(presenceData2.lastSeen).getTime(),
+    });
+    expect(mockUpdatePresence).toHaveBeenCalledTimes(2);
+  });
+});

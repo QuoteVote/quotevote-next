@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import type { PaginatedListProps } from '@/types/components';
-import { usePagination } from '@/hooks/usePagination';
-import { Pagination } from './Pagination';
-import { StickyPaginationWrapper } from './StickyPaginationWrapper';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import type { PaginatedListProps } from "@/types/components";
+import { usePagination } from "@/hooks/usePagination";
+import { Pagination } from "./Pagination";
+import { StickyPaginationWrapper } from "./StickyPaginationWrapper";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /**
  * PaginatedList Component
- * 
+ *
  * Higher-order component for paginated lists.
  * Handles pagination state, loading, and error states.
  * Replaces Material UI components with Tailwind CSS and shadcn/ui.
@@ -20,26 +20,26 @@ export function PaginatedList<T = unknown>({
   loading,
   error,
   totalCount,
-  
+
   // Pagination props
   defaultPageSize = 20,
-  pageParam = 'page',
-  pageSizeParam = 'page_size',
+  pageParam = "page",
+  pageSizeParam = "page_size",
   showPageInfo = true,
   showFirstLast = true,
   maxVisiblePages = 5,
-  
+
   // Render props
   renderItem,
   renderEmpty,
   renderError,
   renderLoading,
-  
+
   // Callbacks
   onPageChange,
   onPageSizeChange,
   onRefresh,
-  
+
   // Styling
   className,
   contentClassName,
@@ -78,13 +78,9 @@ export function PaginatedList<T = unknown>({
   ) : null;
 
   return (
-    <StickyPaginationWrapper
-      className={className}
-      pagination={paginationComponent}
-      {...otherProps}
-    >
+    <StickyPaginationWrapper className={className} pagination={paginationComponent} {...otherProps}>
       {/* Content */}
-      <div className={cn('relative', contentClassName)}>
+      <div className={cn("relative", contentClassName)}>
         {/* Handle loading state */}
         {loading && (!data || data.length === 0) ? (
           renderLoading ? (
@@ -102,11 +98,9 @@ export function PaginatedList<T = unknown>({
             renderError(error, onRefresh)
           ) : (
             <div className="flex flex-col items-center justify-center p-16 text-center min-h-[200px] text-[var(--color-destructive)]">
-              <h3 className="text-lg font-semibold mb-2">
-                Something went wrong
-              </h3>
+              <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
               <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-                {error.message || 'An error occurred while loading the data.'}
+                {error.message || "An error occurred while loading the data."}
               </p>
               {onRefresh && (
                 <Button
@@ -147,4 +141,3 @@ export function PaginatedList<T = unknown>({
     </StickyPaginationWrapper>
   );
 }
-

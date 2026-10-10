@@ -1,23 +1,18 @@
-'use client'
+"use client";
 
-import { useState, type ReactElement } from 'react'
-import Link from 'next/link'
-import { Github, Menu } from 'lucide-react'
-import { Globe } from '@/components/Icons'
-import { Button } from '@/components/ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+import { useState, type ReactElement } from "react";
+import Link from "next/link";
+import { Github, Menu } from "lucide-react";
+import { Globe } from "@/components/Icons";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 /**
  * Compact guest header for the public post directory (#454).
  * Logo, About, Request Invite, and a menu for remaining links.
  */
 export function DirectoryHeader(): ReactElement {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <>
@@ -25,7 +20,7 @@ export function DirectoryHeader(): ReactElement {
         className="md:sticky md:top-0 md:z-50 w-full max-w-[100vw] min-w-0 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
         role="navigation"
         aria-label="Main navigation"
-        style={{ borderImage: 'linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1' }}
+        style={{ borderImage: "linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1" }}
       >
         <div className="flex h-14 items-center justify-between gap-2 px-3 sm:px-4 min-w-0">
           <Link
@@ -36,7 +31,7 @@ export function DirectoryHeader(): ReactElement {
             <Globe size={28} className="size-7" />
             <span
               className="font-extrabold text-lg tracking-wide hidden sm:block select-none"
-              style={{ color: '#0A2342' }}
+              style={{ color: "#0A2342" }}
             >
               Quote.Vote
             </span>
@@ -46,7 +41,7 @@ export function DirectoryHeader(): ReactElement {
             <Link
               href="/about"
               className="px-2 sm:px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a]"
-              style={{ color: '#475569' }}
+              style={{ color: "#475569" }}
             >
               About
             </Link>
@@ -55,8 +50,8 @@ export function DirectoryHeader(): ReactElement {
               href="/auths/request-access"
               className="px-3 sm:px-4 py-1.5 text-sm font-semibold text-white rounded-lg transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2AE6B2] focus-visible:ring-offset-2"
               style={{
-                background: 'linear-gradient(135deg, #2AE6B2 0%, #27C4E1 100%)',
-                boxShadow: '0 2px 12px rgba(42,230,178,0.25)',
+                background: "linear-gradient(135deg, #2AE6B2 0%, #27C4E1 100%)",
+                boxShadow: "0 2px 12px rgba(42,230,178,0.25)",
               }}
               aria-label="Request an invite to join Quote.Vote"
             >
@@ -113,5 +108,5 @@ export function DirectoryHeader(): ReactElement {
         </SheetContent>
       </Sheet>
     </>
-  )
+  );
 }

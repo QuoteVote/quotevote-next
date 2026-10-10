@@ -1,12 +1,12 @@
-import type { Metadata } from 'next'
-import { PublicNavbar } from '@/components/PublicNavbar/PublicNavbar'
-import { GuestFooter } from '@/components/GuestFooter/GuestFooter'
-import { PlanPageContent } from './PlanPageContent'
+import type { Metadata } from "next";
+import { PublicNavbar } from "@/components/PublicNavbar/PublicNavbar";
+import { GuestFooter } from "@/components/GuestFooter/GuestFooter";
+import { PlanPageContent } from "./PlanPageContent";
 
 export const metadata: Metadata = {
-  title: 'Plans — Quote.Vote',
-  description: 'Choose a plan that fits your needs.',
-}
+  title: "Plans — Quote.Vote",
+  description: "Choose a plan that fits your needs.",
+};
 
 export default function PlanPage() {
   return (
@@ -17,5 +17,5 @@ export default function PlanPage() {
       </main>
       <GuestFooter isRequestAccess={false} />
     </div>
-  )
+  );
 }

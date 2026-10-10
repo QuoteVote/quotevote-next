@@ -1,52 +1,52 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { Loader2, User, Lock } from 'lucide-react'
-import { Globe } from '@/components/Icons'
-import Link from 'next/link'
-import { loginUser } from '@/lib/auth'
-import { useAppStore } from '@/store/useAppStore'
-import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Loader2, User, Lock } from "lucide-react";
+import { Globe } from "@/components/Icons";
+import Link from "next/link";
+import { loginUser } from "@/lib/auth";
+import { useAppStore } from "@/store/useAppStore";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const BG_IMAGES = [
-  'viviana-rishe-UC8fvOyG5pU-unsplash.jpg',
-  'steph-smith-3jYcQf9oiJ8-unsplash.jpg',
-  'sergio-rodriguez-rrlEOXRmMAA-unsplash.jpg',
-  'sergio-otoya-gCNh426vB30-unsplash.jpg',
-  'rondell-chaz-mabunga-EHLKkMDxe3M-unsplash.jpg',
-  'rommel-paras-wrHnE3kMplg-unsplash.jpg',
-  'peter-thomas-efLcMHXtrg0-unsplash.jpg',
-  'julia-caesar-jeXkw2HR1SU-unsplash.jpg',
-  'ehmir-bautista-JjDqyWuWZyU-unsplash.jpg',
-  'adam-navarro-qXcl3z7_AOc-unsplash.jpg',
-  'actionvance-guy5aS3GvgA-unsplash.jpg',
-]
+  "viviana-rishe-UC8fvOyG5pU-unsplash.jpg",
+  "steph-smith-3jYcQf9oiJ8-unsplash.jpg",
+  "sergio-rodriguez-rrlEOXRmMAA-unsplash.jpg",
+  "sergio-otoya-gCNh426vB30-unsplash.jpg",
+  "rondell-chaz-mabunga-EHLKkMDxe3M-unsplash.jpg",
+  "rommel-paras-wrHnE3kMplg-unsplash.jpg",
+  "peter-thomas-efLcMHXtrg0-unsplash.jpg",
+  "julia-caesar-jeXkw2HR1SU-unsplash.jpg",
+  "ehmir-bautista-JjDqyWuWZyU-unsplash.jpg",
+  "adam-navarro-qXcl3z7_AOc-unsplash.jpg",
+  "actionvance-guy5aS3GvgA-unsplash.jpg",
+];
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Username or email is required'),
-  password: z.string().min(1, 'Password is required'),
-})
-type LoginFormData = z.infer<typeof loginSchema>
+  email: z.string().min(1, "Username or email is required"),
+  password: z.string().min(1, "Password is required"),
+});
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPageContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
-  const setUserData = useAppStore((s) => s.setUserData)
-  const [submitting, setSubmitting] = useState(false)
-  const [tosAccepted, setTosAccepted] = useState(false)
-  const [cocAccepted, setCocAccepted] = useState(false)
-  const [bgImage, setBgImage] = useState<string>(BG_IMAGES[0])
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/";
+  const setUserData = useAppStore((s) => s.setUserData);
+  const [submitting, setSubmitting] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
+  const [cocAccepted, setCocAccepted] = useState(false);
+  const [bgImage, setBgImage] = useState<string>(BG_IMAGES[0]);
 
   useEffect(() => {
-    setBgImage(BG_IMAGES[Math.floor(Math.random() * BG_IMAGES.length)])
-  }, [])
+    setBgImage(BG_IMAGES[Math.floor(Math.random() * BG_IMAGES.length)]);
+  }, []);
 
   const {
     register,
@@ -54,77 +54,81 @@ export default function LoginPageContent() {
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-  })
+  });
 
-  const isDisabled = submitting || !tosAccepted || !cocAccepted
+  const isDisabled = submitting || !tosAccepted || !cocAccepted;
 
   const onSubmit = async (values: LoginFormData) => {
-    setSubmitting(true)
+    setSubmitting(true);
     try {
-      const result = await loginUser(values.email, values.password)
+      const result = await loginUser(values.email, values.password);
       if (result.success && result.data) {
-        setUserData(result.data.user as Record<string, unknown>)
-        router.push(callbackUrl.startsWith('/') ? callbackUrl : '/')
+        setUserData(result.data.user as Record<string, unknown>);
+        router.push(callbackUrl.startsWith("/") ? callbackUrl : "/");
       } else {
-        toast.error(result.error || 'Login failed')
+        toast.error(result.error || "Login failed");
       }
     } catch {
-      toast.error('Connection failed. Please try again.')
+      toast.error("Connection failed. Please try again.");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <div
       style={{
-        minHeight: '100vh',
-        width: '100%',
+        minHeight: "100vh",
+        width: "100%",
         backgroundImage: `url('/assets/bg/${bgImage}')`,
-        backgroundPosition: 'left',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        overflowX: 'hidden',
+        backgroundPosition: "left",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        overflowX: "hidden",
       }}
     >
       {/* Transparent navbar */}
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           left: 0,
           right: 0,
           zIndex: 10,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 16px',
-          minHeight: '50px',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "10px 16px",
+          minHeight: "50px",
         }}
       >
-        <Link href="/" style={{ display: 'flex', alignItems: 'center' }} aria-label="Quote.Vote home">
+        <Link
+          href="/"
+          style={{ display: "flex", alignItems: "center" }}
+          aria-label="Quote.Vote home"
+        >
           <Globe size={25} />
         </Link>
 
         <Link
           href="/auths/request-access"
           style={{
-            color: '#ffffff',
-            background: '#52b274',
-            border: 'none',
+            color: "#ffffff",
+            background: "#52b274",
+            border: "none",
             fontWeight: 500,
-            fontSize: '13px',
-            borderRadius: '5px',
-            padding: '10px 15px',
-            textDecoration: 'none',
-            minWidth: '110px',
-            height: '38px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            fontSize: "13px",
+            borderRadius: "5px",
+            padding: "10px 15px",
+            textDecoration: "none",
+            minWidth: "110px",
+            height: "38px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           Get Access
@@ -135,63 +139,73 @@ export default function LoginPageContent() {
       <div
         style={{
           flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          paddingTop: '40px',
-          paddingBottom: '40px',
-          paddingLeft: '10px',
-          paddingRight: '10px',
-          marginTop: '80px',
-          position: 'relative',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          paddingTop: "40px",
+          paddingBottom: "40px",
+          paddingLeft: "10px",
+          paddingRight: "10px",
+          marginTop: "80px",
+          position: "relative",
           zIndex: 3,
         }}
       >
         <div
           style={{
-            width: '350px',
-            maxWidth: '100%',
-            background: '#ffffff',
-            borderRadius: '6px',
-            boxShadow: '0 1px 4px 0 rgba(0,0,0,0.14)',
-            marginBottom: '30px',
-            marginTop: '30px',
+            width: "350px",
+            maxWidth: "100%",
+            background: "#ffffff",
+            borderRadius: "6px",
+            boxShadow: "0 1px 4px 0 rgba(0,0,0,0.14)",
+            marginBottom: "30px",
+            marginTop: "30px",
           }}
         >
           {/* Card body — font-size 0.875rem matches MUI Card base */}
-          <div style={{ padding: '0.9375rem 20px', fontSize: '0.875rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-
+          <div style={{ padding: "0.9375rem 20px", fontSize: "0.875rem" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px",
+              }}
+            >
               {/* Title */}
               <h1
                 style={{
-                  fontFamily: 'Montserrat, Inter, sans-serif',
+                  fontFamily: "Montserrat, Inter, sans-serif",
                   fontWeight: 600,
-                  fontSize: '20px',
-                  lineHeight: '24px',
+                  fontSize: "20px",
+                  lineHeight: "24px",
                   margin: 0,
-                  textAlign: 'center',
+                  textAlign: "center",
                 }}
               >
                 Login
               </h1>
 
               {/* Form */}
-              <form onSubmit={handleSubmit(onSubmit)} data-testid="login-form" style={{ width: '100%' }}>
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                data-testid="login-form"
+                style={{ width: "100%" }}
+              >
                 {/* Email / Username */}
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: "relative" }}>
                     <User
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         left: 10,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
+                        top: "50%",
+                        transform: "translateY(-50%)",
                         width: 16,
                         height: 16,
-                        color: '#495057',
-                        pointerEvents: 'none',
+                        color: "#495057",
+                        pointerEvents: "none",
                       }}
                     />
                     <Input
@@ -200,12 +214,12 @@ export default function LoginPageContent() {
                       placeholder="Email/Username"
                       data-testid="login-identifier-input"
                       className="pl-9 md:text-base"
-                      style={{ borderColor: errors.email ? '#F55145' : undefined }}
-                      {...register('email')}
+                      style={{ borderColor: errors.email ? "#F55145" : undefined }}
+                      {...register("email")}
                     />
                   </div>
                   {errors.email && (
-                    <p style={{ color: '#F55145', fontSize: '0.75rem', margin: '4px 0 0' }}>
+                    <p style={{ color: "#F55145", fontSize: "0.75rem", margin: "4px 0 0" }}>
                       {errors.email.message}
                     </p>
                   )}
@@ -213,17 +227,17 @@ export default function LoginPageContent() {
 
                 {/* Password */}
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: "relative" }}>
                     <Lock
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         left: 10,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
+                        top: "50%",
+                        transform: "translateY(-50%)",
                         width: 16,
                         height: 16,
-                        color: '#495057',
-                        pointerEvents: 'none',
+                        color: "#495057",
+                        pointerEvents: "none",
                       }}
                     />
                     <Input
@@ -232,19 +246,19 @@ export default function LoginPageContent() {
                       placeholder="Password"
                       data-testid="login-password-input"
                       className="pl-9 md:text-base"
-                      style={{ borderColor: errors.password ? '#F55145' : undefined }}
-                      {...register('password')}
+                      style={{ borderColor: errors.password ? "#F55145" : undefined }}
+                      {...register("password")}
                     />
                   </div>
                   {errors.password && (
-                    <p style={{ color: '#F55145', fontSize: '0.75rem', margin: '4px 0 0' }}>
+                    <p style={{ color: "#F55145", fontSize: "0.75rem", margin: "4px 0 0" }}>
                       {errors.password.message}
                     </p>
                   )}
                 </div>
 
                 {/* ToS */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
                   <Checkbox
                     id="tos"
                     data-testid="login-tos-checkbox"
@@ -252,13 +266,16 @@ export default function LoginPageContent() {
                     onCheckedChange={(v) => setTosAccepted(v === true)}
                     style={{ marginTop: 2 }}
                   />
-                  <label htmlFor="tos" style={{ fontSize: '0.875rem', cursor: 'pointer', lineHeight: 1.4 }}>
-                    I agree to the{' '}
+                  <label
+                    htmlFor="tos"
+                    style={{ fontSize: "0.875rem", cursor: "pointer", lineHeight: 1.4 }}
+                  >
+                    I agree to the{" "}
                     <Link
                       href="https://github.com/QuoteVote/quotevote-monorepo/blob/main/quote_vote_terms_of_service.md"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: '#00bcd4', textDecoration: 'underline' }}
+                      style={{ color: "#00bcd4", textDecoration: "underline" }}
                     >
                       Terms of Service
                     </Link>
@@ -266,7 +283,9 @@ export default function LoginPageContent() {
                 </div>
 
                 {/* CoC */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16 }}>
+                <div
+                  style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 16 }}
+                >
                   <Checkbox
                     id="coc"
                     data-testid="login-coc-checkbox"
@@ -274,13 +293,16 @@ export default function LoginPageContent() {
                     onCheckedChange={(v) => setCocAccepted(v === true)}
                     style={{ marginTop: 2 }}
                   />
-                  <label htmlFor="coc" style={{ fontSize: '0.875rem', cursor: 'pointer', lineHeight: 1.4 }}>
-                    I agree to the{' '}
+                  <label
+                    htmlFor="coc"
+                    style={{ fontSize: "0.875rem", cursor: "pointer", lineHeight: 1.4 }}
+                  >
+                    I agree to the{" "}
                     <Link
                       href="https://github.com/QuoteVote/quotevote-monorepo/blob/main/quote_vote_code_of_conduct.md"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: '#00bcd4', textDecoration: 'underline' }}
+                      style={{ color: "#00bcd4", textDecoration: "underline" }}
                     >
                       Code of Conduct
                     </Link>
@@ -293,62 +315,63 @@ export default function LoginPageContent() {
                   data-testid="login-submit-button"
                   disabled={isDisabled}
                   style={{
-                    width: '100%',
-                    backgroundColor: isDisabled ? 'rgba(0,0,0,0.12)' : '#E91E63',
-                    color: isDisabled ? 'rgba(0,0,0,0.26)' : '#ffffff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    padding: '10px 22px',
-                    fontSize: '1rem',
+                    width: "100%",
+                    backgroundColor: isDisabled ? "rgba(0,0,0,0.12)" : "#E91E63",
+                    color: isDisabled ? "rgba(0,0,0,0.26)" : "#ffffff",
+                    border: "none",
+                    borderRadius: "4px",
+                    padding: "10px 22px",
+                    fontSize: "1rem",
                     fontWeight: 400,
                     lineHeight: 1.5,
-                    letterSpacing: '0.00938em',
-                    textTransform: 'none' as const,
+                    letterSpacing: "0.00938em",
+                    textTransform: "none" as const,
                     boxShadow: isDisabled
-                      ? 'none'
-                      : '0 2px 2px 0 rgba(233,30,99,0.14), 0 3px 1px -2px rgba(233,30,99,0.2), 0 1px 5px 0 rgba(233,30,99,0.12)',
-                    cursor: isDisabled ? 'default' : 'pointer',
-                    pointerEvents: isDisabled ? 'none' : 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                      ? "none"
+                      : "0 2px 2px 0 rgba(233,30,99,0.14), 0 3px 1px -2px rgba(233,30,99,0.2), 0 1px 5px 0 rgba(233,30,99,0.12)",
+                    cursor: isDisabled ? "default" : "pointer",
+                    pointerEvents: isDisabled ? "none" : "auto",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     gap: 8,
-                    fontFamily: 'inherit',
+                    fontFamily: "inherit",
                     transition:
-                      'background-color 250ms cubic-bezier(0.4,0,0.2,1), box-shadow 250ms cubic-bezier(0.4,0,0.2,1)',
+                      "background-color 250ms cubic-bezier(0.4,0,0.2,1), box-shadow 250ms cubic-bezier(0.4,0,0.2,1)",
                   }}
                 >
-                  {submitting && <Loader2 className="animate-spin" style={{ width: 20, height: 20 }} />}
+                  {submitting && (
+                    <Loader2 className="animate-spin" style={{ width: 20, height: 20 }} />
+                  )}
                   Log in
                 </button>
               </form>
 
               {/* Forgot password */}
-              <div style={{ width: '100%', textAlign: 'right' }}>
+              <div style={{ width: "100%", textAlign: "right" }}>
                 <Link
                   href="/auths/forgot-password"
-                  style={{ color: '#00bcd4', fontSize: '1rem', textDecoration: 'none' }}
+                  style={{ color: "#00bcd4", fontSize: "1rem", textDecoration: "none" }}
                 >
                   Forgot password?
                 </Link>
               </div>
 
               {/* No account */}
-              <div style={{ textAlign: 'center', fontSize: '1rem' }}>
+              <div style={{ textAlign: "center", fontSize: "1rem" }}>
                 No account?
                 <span style={{ marginRight: 5 }} />
                 <Link
                   href="/auths/request-access"
-                  style={{ color: '#00bcd4', textDecoration: 'none' }}
+                  style={{ color: "#00bcd4", textDecoration: "none" }}
                 >
                   Request Access
                 </Link>
               </div>
-
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

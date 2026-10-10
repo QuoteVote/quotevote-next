@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@apollo/client/react';
-import { MessageCircle, Flag, MoreHorizontal, Pencil } from 'lucide-react';
-import { useAppStore } from '@/store';
-import { toast } from 'sonner';
-import type { ProfileUser } from '@/types/profile';
-import type { StagedChatRoom } from '@/types/chat';
-import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
-import { REPORT_BOT } from '@/graphql/mutations';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import { FollowButton } from '../CustomButtons/FollowButton';
-import { Button } from '@/components/ui/button';
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@apollo/client/react";
+import { MessageCircle, Flag, MoreHorizontal, Pencil } from "lucide-react";
+import { useAppStore } from "@/store";
+import { toast } from "sonner";
+import type { ProfileUser } from "@/types/profile";
+import type { StagedChatRoom } from "@/types/chat";
+import { GET_CHAT_ROOM, GET_ROSTER } from "@/graphql/queries";
+import { REPORT_BOT } from "@/graphql/mutations";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { FollowButton } from "../CustomButtons/FollowButton";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -20,40 +20,40 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
-import { ProfileBadge, ProfileBadgeContainer } from './ProfileBadge';
-import { ProfileBio } from './ProfileBio';
-import { cn } from '@/lib/utils';
-import useGuestGuard from '@/hooks/useGuestGuard';
-import { useProfileBackground } from '@/hooks/useProfileBackground';
+} from "@/components/ui/dropdown-menu";
+import { ProfileBadge, ProfileBadgeContainer } from "./ProfileBadge";
+import { ProfileBio } from "./ProfileBio";
+import { cn } from "@/lib/utils";
+import useGuestGuard from "@/hooks/useGuestGuard";
+import { useProfileBackground } from "@/hooks/useProfileBackground";
 import {
   getProfileBackgroundStyle,
   DEFAULT_PROFILE_BG_COLOR,
   DEFAULT_PROFILE_BG_PATTERN,
-} from '@/lib/utils/profileBackground';
+} from "@/lib/utils/profileBackground";
 
 interface ProfileHeaderProps {
   profileUser: ProfileUser;
 }
 
 function getStatusLabel(status: string): string {
-  if (status === 'dnd') return 'Do Not Disturb';
-  if (status === 'invisible') return 'Invisible';
-  if (!status) return 'Online';
+  if (status === "dnd") return "Do Not Disturb";
+  if (status === "invisible") return "Invisible";
+  if (!status) return "Online";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function getStatusDotClass(status: string): string {
-  if (status === 'online') return 'bg-[#52b274]';
-  if (status === 'away') return 'bg-amber-400';
-  if (status === 'dnd') return 'bg-red-500';
-  return 'bg-zinc-400';
+  if (status === "online") return "bg-[#52b274]";
+  if (status === "away") return "bg-amber-400";
+  if (status === "dnd") return "bg-red-500";
+  return "bg-zinc-400";
 }
 
 export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
@@ -63,10 +63,11 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const loggedInUsername = loggedInUser?.username;
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
   const setChatOpen = useAppStore((state) => state.setChatOpen);
-  const userStatus = useAppStore((state) => state.chat.userStatus || 'online');
-  const userStatusMessage = useAppStore((state) => state.chat.userStatusMessage || '');
+  const userStatus = useAppStore((state) => state.chat.userStatus || "online");
+  const userStatusMessage = useAppStore((state) => state.chat.userStatusMessage || "");
   const { color: profileBgColor, pattern: profileBgPattern } = useProfileBackground();
-  const loggedInUserIdString = typeof loggedInUserId === 'string' ? loggedInUserId : String(loggedInUserId || '');
+  const loggedInUserIdString =
+    typeof loggedInUserId === "string" ? loggedInUserId : String(loggedInUserId || "");
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const ensureAuth = useGuestGuard();
 
@@ -83,9 +84,15 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   // ponytail: robust check for current user matching either id or username (RC1-010)
   const sameUser =
     Boolean(loggedInUserIdString && _id && String(_id) === loggedInUserIdString) ||
-    Boolean(loggedInUsername && username && loggedInUsername.toLowerCase() === username.toLowerCase());
+    Boolean(
+      loggedInUsername && username && loggedInUsername.toLowerCase() === username.toLowerCase()
+    );
 
-  const followersArray = Array.isArray(_followersId) ? _followersId : typeof _followersId === 'string' ? [_followersId] : [];
+  const followersArray = Array.isArray(_followersId)
+    ? _followersId
+    : typeof _followersId === "string"
+      ? [_followersId]
+      : [];
   const isFollowing = followersArray.includes(loggedInUserIdString);
 
   const { data, loading: chatLoading } = useQuery<{
@@ -102,13 +109,19 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
     variables: {
       otherUserId: _id,
     },
-    fetchPolicy: 'network-only',
+    fetchPolicy: "network-only",
     skip: !loggedInUserIdString || sameUser,
   });
 
   // Check blocking status — getRoster returns flat array of roster entries
   const { data: rosterData } = useQuery<{
-    getRoster: Array<{ _id: string; userId: string; buddyId: string; status: string; initiatedBy: string }>;
+    getRoster: Array<{
+      _id: string;
+      userId: string;
+      buddyId: string;
+      status: string;
+      initiatedBy: string;
+    }>;
   }>(GET_ROSTER, {
     skip: !loggedInUserIdString || sameUser,
   });
@@ -123,16 +136,22 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
 
     // Check if current user blocked the profile user
     const currentUserBlockedProfile = entries.some(
-      (r) => r.status === 'blocked' && r.userId?.toString() === currentUserId && r.buddyId?.toString() === profileUserId
+      (r) =>
+        r.status === "blocked" &&
+        r.userId?.toString() === currentUserId &&
+        r.buddyId?.toString() === profileUserId
     );
 
     // Check if profile user blocked the current user
     const profileUserBlockedCurrent = entries.some(
-      (r) => r.status === 'blocked' && r.userId?.toString() === profileUserId && r.buddyId?.toString() === currentUserId
+      (r) =>
+        r.status === "blocked" &&
+        r.userId?.toString() === profileUserId &&
+        r.buddyId?.toString() === currentUserId
     );
 
-    if (currentUserBlockedProfile) return 'blocker';
-    if (profileUserBlockedCurrent) return 'blocked';
+    if (currentUserBlockedProfile) return "blocker";
+    if (profileUserBlockedCurrent) return "blocked";
     return null;
   }, [rosterData, _id, loggedInUserId, sameUser]);
 
@@ -144,10 +163,10 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
     if (!ensureAuth()) return;
 
     if (isBlocked) {
-      const isBlocker = blockingStatus === 'blocker';
+      const isBlocker = blockingStatus === "blocker";
       const message = isBlocker
-        ? 'You have blocked this user. You cannot send messages to them.'
-        : 'You have been blocked by this user. You cannot send messages.';
+        ? "You have blocked this user. You cannot send messages to them."
+        : "You have been blocked by this user. You cannot send messages.";
 
       toast(message);
       return;
@@ -161,9 +180,9 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
       // opens the compose view directly (same flow as the chat buddy list).
       const staged: StagedChatRoom = {
         _id: null,
-        title: name || username || 'Chat',
-        avatar: typeof avatar === 'string' ? avatar : null,
-        messageType: 'USER',
+        title: name || username || "Chat",
+        avatar: typeof avatar === "string" ? avatar : null,
+        messageType: "USER",
         users: [loggedInUserIdString, _id],
         username: username || undefined,
       };
@@ -182,13 +201,12 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           reporterId: loggedInUserIdString,
         },
       });
-      toast.success('User reported successfully. Thank you for helping keep our platform safe.');
+      toast.success("User reported successfully. Thank you for helping keep our platform safe.");
       setReportDialogOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to report user');
+      toast.error(error instanceof Error ? error.message : "Failed to report user");
     }
   };
-
 
   const followersCount = _followersId?.length || 0;
   const followingCount = _followingId?.length || 0;
@@ -203,10 +221,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           style={
             sameUser
               ? getProfileBackgroundStyle(profileBgColor, profileBgPattern)
-              : getProfileBackgroundStyle(
-                  DEFAULT_PROFILE_BG_COLOR,
-                  DEFAULT_PROFILE_BG_PATTERN
-                )
+              : getProfileBackgroundStyle(DEFAULT_PROFILE_BG_COLOR, DEFAULT_PROFILE_BG_PATTERN)
           }
           data-testid="profile-cover"
         />
@@ -230,25 +245,14 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           {/* Action buttons */}
           <div className="flex items-center gap-2 pt-14">
             {sameUser ? (
-              <Button
-                variant="outline"
-                onClick={() => router.push('/settings')}
-              >
+              <Button variant="outline" onClick={() => router.push("/settings")}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit Profile
               </Button>
             ) : (
               <>
-                <FollowButton
-                  isFollowing={isFollowing}
-                  profileUserId={_id}
-                  username={username}
-                />
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handleMessageUser}
-                >
+                <FollowButton isFollowing={isFollowing} profileUserId={_id} username={username} />
+                <Button variant="outline" size="default" onClick={handleMessageUser}>
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Message
                 </Button>
@@ -288,7 +292,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           {sameUser && (
             <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs">
               <span
-                className={cn('h-2 w-2 rounded-full', getStatusDotClass(userStatus))}
+                className={cn("h-2 w-2 rounded-full", getStatusDotClass(userStatus))}
                 aria-hidden="true"
               />
               <span
@@ -307,14 +311,14 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
             onClick={() => router.push(`/profile/${username}/followers`)}
             className="cursor-pointer hover:underline text-sm text-foreground hover:scale-105 transition-transform"
           >
-            <span className="font-extrabold text-base">{followersCount}</span>{' '}
+            <span className="font-extrabold text-base">{followersCount}</span>{" "}
             <span className="text-muted-foreground">Followers</span>
           </button>
           <button
             onClick={() => router.push(`/profile/${username}/following`)}
             className="cursor-pointer hover:underline text-sm text-foreground hover:scale-105 transition-transform"
           >
-            <span className="font-extrabold text-base">{followingCount}</span>{' '}
+            <span className="font-extrabold text-base">{followingCount}</span>{" "}
             <span className="text-muted-foreground">Following</span>
           </button>
         </div>
@@ -326,24 +330,16 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           <DialogHeader>
             <DialogTitle>Report Suspected Bot</DialogTitle>
             <DialogDescription>
-              Are you sure you want to report @{username} as a suspected bot?
-              This action helps keep the platform safe. False reports may affect
-              your reputation.
+              Are you sure you want to report @{username} as a suspected bot? This action helps keep
+              the platform safe. False reports may affect your reputation.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setReportDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setReportDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReportBot}
-              disabled={reportLoading}
-            >
-              {reportLoading ? 'Reporting...' : 'Report Bot'}
+            <Button variant="destructive" onClick={handleReportBot} disabled={reportLoading}>
+              {reportLoading ? "Reporting..." : "Report Bot"}
             </Button>
           </DialogFooter>
         </DialogContent>

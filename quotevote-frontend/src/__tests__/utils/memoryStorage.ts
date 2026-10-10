@@ -5,55 +5,55 @@
  * and restore the original stub afterwards.
  */
 
-let original: Storage | undefined
+let original: Storage | undefined;
 
 function createMemoryStorage(): Storage {
-  let store: Record<string, string> = {}
+  let store: Record<string, string> = {};
   return {
     getItem: (key: string) => (key in store ? store[key] : null),
     setItem: (key: string, value: string) => {
-      store[key] = String(value)
+      store[key] = String(value);
     },
     removeItem: (key: string) => {
-      delete store[key]
+      delete store[key];
     },
     clear: () => {
-      store = {}
+      store = {};
     },
     key: (index: number) => Object.keys(store)[index] ?? null,
     get length() {
-      return Object.keys(store).length
+      return Object.keys(store).length;
     },
-  } as Storage
+  } as Storage;
 }
 
 export function installMemoryStorage(): void {
   if (original === undefined) {
-    original = window.localStorage
+    original = window.localStorage;
   }
-  const mem = createMemoryStorage()
-  Object.defineProperty(window, 'localStorage', {
+  const mem = createMemoryStorage();
+  Object.defineProperty(window, "localStorage", {
     value: mem,
     writable: true,
     configurable: true,
-  })
-  Object.defineProperty(global, 'localStorage', {
+  });
+  Object.defineProperty(global, "localStorage", {
     value: mem,
     writable: true,
     configurable: true,
-  })
+  });
 }
 
 export function restoreStorage(): void {
-  if (original === undefined) return
-  Object.defineProperty(window, 'localStorage', {
+  if (original === undefined) return;
+  Object.defineProperty(window, "localStorage", {
     value: original,
     writable: true,
     configurable: true,
-  })
-  Object.defineProperty(global, 'localStorage', {
+  });
+  Object.defineProperty(global, "localStorage", {
     value: original,
     writable: true,
     configurable: true,
-  })
+  });
 }

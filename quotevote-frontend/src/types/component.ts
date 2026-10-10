@@ -9,7 +9,6 @@ export interface LoadingSpinnerProps {
    * @default '15px'
    */
   marginTop?: string;
-  
 }
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -31,14 +30,14 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
    * Size variant: 'sm', 'md', 'lg', 'xl', or a custom number in pixels
    * @default 'md'
    */
-  size?: 'sm' | 'md' | 'lg' | 'xl' | number;
+  size?: "sm" | "md" | "lg" | "xl" | number;
   /**
    * Optional click handler
    */
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-export type AlertVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
+export type AlertVariant = "default" | "destructive" | "success" | "warning" | "info";
 
 export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -216,7 +215,7 @@ export interface PaginatedListProps<T = unknown> {
    * Total count of items (required for pagination)
    */
   totalCount: number;
-  
+
   // Pagination props
   /**
    * Default page size
@@ -248,7 +247,7 @@ export interface PaginatedListProps<T = unknown> {
    * @default 5
    */
   maxVisiblePages?: number;
-  
+
   // Render props
   /**
    * Function to render each item
@@ -266,7 +265,7 @@ export interface PaginatedListProps<T = unknown> {
    * Custom loading state renderer
    */
   renderLoading?: () => React.ReactNode;
-  
+
   // Callbacks
   /**
    * Callback when page changes
@@ -280,7 +279,7 @@ export interface PaginatedListProps<T = unknown> {
    * Callback to refresh/retry data fetch
    */
   onRefresh?: () => void;
-  
+
   // Styling
   /**
    * Additional CSS classes for root container
@@ -294,7 +293,7 @@ export interface PaginatedListProps<T = unknown> {
    * Additional CSS classes for pagination
    */
   paginationClassName?: string;
-  
+
   // Other props
   /**
    * Child content (alternative to renderItem)

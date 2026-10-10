@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * RequestInviteDialog Component
@@ -7,12 +7,12 @@
  * Viewing is public; participation requires an account.
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { useApolloClient, useMutation } from '@apollo/client/react';
-import { usePathname, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import { useApolloClient, useMutation } from "@apollo/client/react";
+import { usePathname, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 import {
   Dialog,
@@ -20,27 +20,27 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
-import { GET_CHECK_DUPLICATE_EMAIL } from '@/graphql/queries';
-import { requestAccessEmailSchema } from '@/lib/validation/requestAccessSchema';
-import { loginUser } from '@/lib/auth';
-import { useAppStore } from '@/store/useAppStore';
-import type { RequestInviteDialogProps } from '@/types/components';
+import { REQUEST_USER_ACCESS_MUTATION } from "@/graphql/mutations";
+import { GET_CHECK_DUPLICATE_EMAIL } from "@/graphql/queries";
+import { requestAccessEmailSchema } from "@/lib/validation/requestAccessSchema";
+import { loginUser } from "@/lib/auth";
+import { useAppStore } from "@/store/useAppStore";
+import type { RequestInviteDialogProps } from "@/types/components";
 
-type PanelView = 'invite' | 'login';
+type PanelView = "invite" | "login";
 
-export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestInviteDialogProps) {
+export function RequestInviteDialog({ open, onClose, view = "invite" }: RequestInviteDialogProps) {
   const [panel, setPanel] = useState<PanelView>(view);
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
@@ -48,9 +48,7 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
   const setUserData = useAppStore((s) => s.setUserData);
 
   const client = useApolloClient();
-  const [requestUserAccess, { loading }] = useMutation(
-    REQUEST_USER_ACCESS_MUTATION
-  );
+  const [requestUserAccess, { loading }] = useMutation(REQUEST_USER_ACCESS_MUTATION);
 
   useEffect(() => {
     if (open) {
@@ -59,14 +57,12 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
   }, [open, view]);
 
   const handleInviteSubmit = async () => {
-    setError('');
+    setError("");
 
     const validationResult = requestAccessEmailSchema.safeParse({ email });
 
     if (!validationResult.success) {
-      setError(
-        validationResult.error.issues[0]?.message || 'Please enter a valid email address'
-      );
+      setError(validationResult.error.issues[0]?.message || "Please enter a valid email address");
       return;
     }
 
@@ -74,17 +70,18 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
       const checkDuplicate = await client.query({
         query: GET_CHECK_DUPLICATE_EMAIL,
         variables: { email },
-        fetchPolicy: 'network-only',
+        fetchPolicy: "network-only",
       });
 
       if (
         checkDuplicate &&
-        Array.isArray((checkDuplicate.data as { checkDuplicateEmail?: unknown[] })?.checkDuplicateEmail) &&
-        ((checkDuplicate.data as { checkDuplicateEmail?: unknown[] })?.checkDuplicateEmail?.length || 0) > 0
+        Array.isArray(
+          (checkDuplicate.data as { checkDuplicateEmail?: unknown[] })?.checkDuplicateEmail
+        ) &&
+        ((checkDuplicate.data as { checkDuplicateEmail?: unknown[] })?.checkDuplicateEmail
+          ?.length || 0) > 0
       ) {
-        setError(
-          'This email address has already been used to request an invite.'
-        );
+        setError("This email address has already been used to request an invite.");
         return;
       }
 
@@ -93,23 +90,23 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
       });
 
       setSubmitted(true);
-      toast.success('Request submitted successfully!');
+      toast.success("Request submitted successfully!");
 
       timeoutRef.current = setTimeout(() => {
         handleClose();
       }, 3000);
     } catch (err) {
       const submitError = err as Error;
-      setError('An unexpected error occurred. Please try again later.');
-      toast.error('Failed to submit request');
+      setError("An unexpected error occurred. Please try again later.");
+      toast.error("Failed to submit request");
       console.error(submitError);
     }
   };
 
   const handleLoginSubmit = async () => {
-    setError('');
+    setError("");
     if (!loginUsername.trim() || !loginPassword) {
-      setError('Username and password are required.');
+      setError("Username and password are required.");
       return;
     }
 
@@ -118,13 +115,13 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
       const result = await loginUser(loginUsername.trim(), loginPassword);
       if (result.success && result.data) {
         setUserData(result.data.user as Record<string, unknown>);
-        toast.success('Welcome back!');
+        toast.success("Welcome back!");
         handleClose();
         return;
       }
-      setError(result.error || 'Login failed. Please try again.');
+      setError(result.error || "Login failed. Please try again.");
     } catch {
-      setError('Connection failed. Please try again.');
+      setError("Connection failed. Please try again.");
     } finally {
       setLoginLoading(false);
     }
@@ -135,12 +132,12 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    setEmail('');
-    setError('');
+    setEmail("");
+    setError("");
     setSubmitted(false);
-    setLoginUsername('');
-    setLoginPassword('');
-    setPanel('invite');
+    setLoginUsername("");
+    setLoginPassword("");
+    setPanel("invite");
     onClose();
   };
 
@@ -152,7 +149,7 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
     };
   }, []);
 
-  const currentPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+  const currentPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : "");
   const loginPageUrl = `/auths/login?callbackUrl=${encodeURIComponent(currentPath)}`;
 
   return (
@@ -166,45 +163,50 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
               </DialogTitle>
             </DialogHeader>
             <DialogDescription className="text-center text-muted-foreground text-sm leading-relaxed">
-              When an account becomes available, an invite will be sent to the
-              email provided.
+              When an account becomes available, an invite will be sent to the email provided.
             </DialogDescription>
           </div>
         ) : (
           <div className="flex flex-col space-y-4">
             <DialogHeader>
               <DialogTitle className="text-center text-base font-medium text-foreground leading-relaxed">
-                You need an account to contribute. Viewing is public, but
-                posting, voting, and quoting require an invite.
+                You need an account to contribute. Viewing is public, but posting, voting, and
+                quoting require an invite.
               </DialogTitle>
             </DialogHeader>
 
             <div className="flex rounded-lg border border-border p-1 gap-1">
               <button
                 type="button"
-                onClick={() => { setPanel('invite'); setError(''); }}
+                onClick={() => {
+                  setPanel("invite");
+                  setError("");
+                }}
                 className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
-                  panel === 'invite'
-                    ? 'bg-[#52b274] text-white'
-                    : 'text-muted-foreground hover:text-foreground'
+                  panel === "invite"
+                    ? "bg-[#52b274] text-white"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Request invite
               </button>
               <button
                 type="button"
-                onClick={() => { setPanel('login'); setError(''); }}
+                onClick={() => {
+                  setPanel("login");
+                  setError("");
+                }}
                 className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
-                  panel === 'login'
-                    ? 'bg-[#52b274] text-white'
-                    : 'text-muted-foreground hover:text-foreground'
+                  panel === "login"
+                    ? "bg-[#52b274] text-white"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Log in
               </button>
             </div>
 
-            {panel === 'invite' ? (
+            {panel === "invite" ? (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="invite-email" className="sr-only">
@@ -216,7 +218,7 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
                     placeholder="Enter your email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleInviteSubmit()}
+                    onKeyDown={(e) => e.key === "Enter" && handleInviteSubmit()}
                   />
                 </div>
 
@@ -234,7 +236,7 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
                   disabled={loading}
                   className="w-full bg-[#52b274] text-white hover:bg-[#4a9e63]"
                 >
-                  {loading ? 'Submitting...' : 'Request Invite'}
+                  {loading ? "Submitting..." : "Request Invite"}
                 </Button>
               </>
             ) : (
@@ -257,7 +259,7 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
                       autoComplete="current-password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleLoginSubmit()}
+                      onKeyDown={(e) => e.key === "Enter" && handleLoginSubmit()}
                     />
                   </div>
                 </div>
@@ -273,13 +275,16 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
                       Signing in...
                     </>
                   ) : (
-                    'Sign in'
+                    "Sign in"
                   )}
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">
-                  Need a password reset or magic link?{' '}
-                  <Link href="/auths/forgot-password" className="text-[#52b274] font-medium hover:underline">
+                  Need a password reset or magic link?{" "}
+                  <Link
+                    href="/auths/forgot-password"
+                    className="text-[#52b274] font-medium hover:underline"
+                  >
                     Forgot password
                   </Link>
                 </p>
@@ -292,17 +297,20 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
               </div>
             )}
 
-            {panel === 'invite' && (
+            {panel === "invite" && (
               <p className="text-center text-sm text-gray-600">
-                Already have an account?{' '}
+                Already have an account?{" "}
                 <button
                   type="button"
-                  onClick={() => { setPanel('login'); setError(''); }}
+                  onClick={() => {
+                    setPanel("login");
+                    setError("");
+                  }}
                   className="text-[#52b274] font-medium hover:underline bg-transparent border-0 cursor-pointer p-0"
                 >
                   Log in
-                </button>
-                {' '}or{' '}
+                </button>{" "}
+                or{" "}
                 <Link href={loginPageUrl} className="text-[#52b274] font-medium hover:underline">
                   open full login page
                 </Link>

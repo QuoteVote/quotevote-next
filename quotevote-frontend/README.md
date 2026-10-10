@@ -92,12 +92,12 @@ This project uses TypeScript path aliases for clean imports. Always use these al
 
 ```typescript
 // ✅ GOOD - Using path aliases
-import { Button } from '@/components/ui/button'
-import { useAppStore } from '@/store'
-import type { UserState } from '@/types/store'
+import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/store";
+import type { UserState } from "@/types/store";
 
 // ❌ BAD - Using relative paths
-import { Button } from '../../../components/ui/button'
+import { Button } from "../../../components/ui/button";
 ```
 
 ## 🧪 Testing
@@ -197,13 +197,13 @@ describe('MyComponent', () => {
 
 The **Create Quote** dialog is implemented in `src/components/SubmitPost/` (`SubmitPostForm.tsx`).
 
-| Area | Details |
-|------|---------|
-| **Required fields** | Title, quote body, tag (shown in UI; saved as `groupId` via GraphQL) |
-| **Optional fields** | Citation URL, attribution (“Who said this?”) — under **Add details (optional)** |
-| **Validation** | React Hook Form + Zod (`src/lib/validation/submitPostSchema.ts`); POST stays disabled until valid |
-| **Drafts** | Auto-saved to `sessionStorage` per user (`quotevote:submit-post-draft:{userId}`); cleared on successful post |
-| **Limits** | Title 200 chars (`src/lib/constants/submitPost.ts`); attribution 120 chars (`src/lib/constants/attribution.ts`) |
+| Area                | Details                                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Required fields** | Title, quote body, tag (shown in UI; saved as `groupId` via GraphQL)                                            |
+| **Optional fields** | Citation URL, attribution (“Who said this?”) — under **Add details (optional)**                                 |
+| **Validation**      | React Hook Form + Zod (`src/lib/validation/submitPostSchema.ts`); POST stays disabled until valid               |
+| **Drafts**          | Auto-saved to `sessionStorage` per user (`quotevote:submit-post-draft:{userId}`); cleared on successful post    |
+| **Limits**          | Title 200 chars (`src/lib/constants/submitPost.ts`); attribution 120 chars (`src/lib/constants/attribution.ts`) |
 
 **E2E helpers** (`e2e/helpers/post-composer.ts`): `openPostComposer()`, `selectPostTag()` (test IDs: `post-tag-select`, `post-tag-error`).
 
@@ -262,6 +262,7 @@ The UI design is a work in progress and serves as a source of inspiration for th
 - **[UI Design Specifications (Zeplin)](https://zpl.io/VDlzXPg)**
 
 **Note**: The Figma design is not fully completed. Use it as a reference and inspiration for:
+
 - Color schemes and theming direction
 - Component styling approaches and layout ideas
 - Spacing and typography concepts
@@ -272,11 +273,13 @@ Feel free to adapt and improve upon the designs as needed during implementation.
 ### Server vs Client Components
 
 **Server Components (Default)**:
+
 - Use for components that don't need interactivity
 - Can directly access server-side data
 - Cannot use hooks, event handlers, or browser APIs
 
 **Client Components**:
+
 - Must be marked with `'use client'` directive at the top
 - Use for components with interactivity, hooks, or browser APIs
 
@@ -304,23 +307,23 @@ export function MyComponent({ prop1, prop2 }: MyComponentProps) {
 
 ## 🔧 Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | Start development server |
-| `pnpm build` | Build for production |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Run ESLint |
-| `pnpm lint:fix` | Fix ESLint issues |
-| `pnpm type-check` | Check TypeScript types |
-| `pnpm format` | Format code with Prettier |
-| `pnpm format:check` | Check code formatting |
-| `pnpm test` | Run unit tests (Jest) |
-| `pnpm test:watch` | Run unit tests in watch mode |
-| `pnpm test:coverage` | Run unit tests with coverage |
-| `pnpm test:ci` | Run unit tests in CI mode |
-| `pnpm test:e2e` | Run E2E tests (Playwright) |
-| `pnpm test:e2e:headed` | Run E2E tests in a visible browser |
-| `pnpm test:e2e:ui` | Open Playwright UI for debugging E2E |
+| Script                 | Description                          |
+| ---------------------- | ------------------------------------ |
+| `pnpm dev`             | Start development server             |
+| `pnpm build`           | Build for production                 |
+| `pnpm start`           | Start production server              |
+| `pnpm lint`            | Run ESLint                           |
+| `pnpm lint:fix`        | Fix ESLint issues                    |
+| `pnpm type-check`      | Check TypeScript types               |
+| `pnpm format`          | Format code with Prettier            |
+| `pnpm format:check`    | Check code formatting                |
+| `pnpm test`            | Run unit tests (Jest)                |
+| `pnpm test:watch`      | Run unit tests in watch mode         |
+| `pnpm test:coverage`   | Run unit tests with coverage         |
+| `pnpm test:ci`         | Run unit tests in CI mode            |
+| `pnpm test:e2e`        | Run E2E tests (Playwright)           |
+| `pnpm test:e2e:headed` | Run E2E tests in a visible browser   |
+| `pnpm test:e2e:ui`     | Open Playwright UI for debugging E2E |
 
 ## 📚 Key Conventions
 
@@ -389,6 +392,7 @@ This project is a complete migration from the legacy React 17/Vite codebase. The
 - **[Legacy Frontend Repository](https://github.com/QuoteVote/quotevote-monorepo/tree/main/client)** - Original React 17/Vite codebase
 
 When migrating components or features:
+
 - Reference the legacy codebase for business logic and functionality
 - Adapt the code to Next.js 16 App Router patterns
 - Convert to TypeScript with proper type definitions

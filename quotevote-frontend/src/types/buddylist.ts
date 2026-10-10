@@ -1,75 +1,75 @@
-import { ChatRoom } from './chat';
+import { ChatRoom } from "./chat";
 
-export type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
+export type PresenceStatus = "online" | "away" | "dnd" | "offline" | "invisible";
 
 export interface Presence {
-    status: PresenceStatus | string;
-    statusMessage?: string;
-    lastSeen?: number;
+  status: PresenceStatus | string;
+  statusMessage?: string;
+  lastSeen?: number;
 }
 
 export interface BuddyUser {
-    _id: string;
-    name?: string;
-    username?: string;
-    avatar?: string | Record<string, unknown> | null;
+  _id: string;
+  name?: string;
+  username?: string;
+  avatar?: string | Record<string, unknown> | null;
 }
 
 export interface Buddy {
-    id: string;
-    buddyId: string;
-    status: string;
-    user?: BuddyUser;
-    buddy?: BuddyUser;
-    presence?: Presence;
+  id: string;
+  buddyId: string;
+  status: string;
+  user?: BuddyUser;
+  buddy?: BuddyUser;
+  presence?: Presence;
 }
 
 export interface BuddyItem {
-    _id?: string;
-    room?: ChatRoom | null;
-    user?: BuddyUser | null;
-    Text?: string;
-    messageType?: 'USER' | 'POST';
-    type?: 'USER' | 'POST';
-    avatar?: string | Record<string, unknown> | { url: string } | null;
-    unreadMessages?: number;
-    presence?: Presence;
-    statusMessage?: string;
+  _id?: string;
+  room?: ChatRoom | null;
+  user?: BuddyUser | null;
+  Text?: string;
+  messageType?: "USER" | "POST";
+  type?: "USER" | "POST";
+  avatar?: string | Record<string, unknown> | { url: string } | null;
+  unreadMessages?: number;
+  presence?: Presence;
+  statusMessage?: string;
 }
 
 export interface BuddyListProps {
-    search?: string;
+  search?: string;
 }
 
 export interface BuddyListWithPresenceProps {
-    search?: string;
+  search?: string;
 }
 
 export interface BuddyItemListProps {
-    buddyList: BuddyItem[];
-    className?: string;
+  buddyList: BuddyItem[];
+  className?: string;
 }
 
 export interface GetChatRoomsData {
-    messageRooms: ChatRoom[];
+  messageRooms: ChatRoom[];
 }
 
 export interface GetBuddyListData {
-    getBuddyList: Array<{
-        user: BuddyUser;
-        presence?: Presence;
-    }>;
+  getBuddyList: Array<{
+    user: BuddyUser;
+    presence?: Presence;
+  }>;
 }
 
 export interface RosterEntry {
-    _id: string;
-    userId: string;
-    buddyId: string;
-    status: string;
-    initiatedBy: string;
-    buddy?: BuddyUser;
+  _id: string;
+  userId: string;
+  buddyId: string;
+  status: string;
+  initiatedBy: string;
+  buddy?: BuddyUser;
 }
 
 export interface GetRosterData {
-    getRoster: RosterEntry[];
+  getRoster: RosterEntry[];
 }

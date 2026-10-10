@@ -1,50 +1,50 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useMutation, useApolloClient } from '@apollo/client/react';
-import moment from 'moment';
-import { X, UserPlus, ArrowUp, ArrowDown, MessageSquare, Quote } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { DELETE_NOTIFICATION } from '@/graphql/mutations';
-import { GET_NOTIFICATIONS } from '@/graphql/queries';
-import { useAppStore } from '@/store';
-import useGuestGuard from '@/hooks/useGuestGuard';
-import { toAppPostUrl } from '@/lib/utils/sanitizeUrl';
-import type { Notification } from '@/types/notification';
-import { cn } from '@/lib/utils';
+import { useRouter } from "next/navigation";
+import { useMutation, useApolloClient } from "@apollo/client/react";
+import moment from "moment";
+import { X, UserPlus, ArrowUp, ArrowDown, MessageSquare, Quote } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DELETE_NOTIFICATION } from "@/graphql/mutations";
+import { GET_NOTIFICATIONS } from "@/graphql/queries";
+import { useAppStore } from "@/store";
+import useGuestGuard from "@/hooks/useGuestGuard";
+import { toAppPostUrl } from "@/lib/utils/sanitizeUrl";
+import type { Notification } from "@/types/notification";
+import { cn } from "@/lib/utils";
 
 interface NotificationListsProps {
   notifications: Notification[];
   pageView?: boolean;
 }
 
-const getNotificationIcon = (notificationType: Notification['notificationType']) => {
+const getNotificationIcon = (notificationType: Notification["notificationType"]) => {
   switch (notificationType) {
-    case 'FOLLOW':
+    case "FOLLOW":
       return (
         <span className="flex items-center justify-center size-7 rounded-full bg-blue-100 dark:bg-blue-900/40 shadow-sm ring-1 ring-blue-200/50 dark:ring-blue-800/50">
           <UserPlus className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
         </span>
       );
-    case 'UPVOTED':
+    case "UPVOTED":
       return (
         <span className="flex items-center justify-center size-7 rounded-full bg-green-100 dark:bg-green-900/40 shadow-sm ring-1 ring-green-200/50 dark:ring-green-800/50">
           <ArrowUp className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
         </span>
       );
-    case 'DOWNVOTED':
+    case "DOWNVOTED":
       return (
         <span className="flex items-center justify-center size-7 rounded-full bg-red-100 dark:bg-red-900/40 shadow-sm ring-1 ring-red-200/50 dark:ring-red-800/50">
           <ArrowDown className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
         </span>
       );
-    case 'COMMENTED':
+    case "COMMENTED":
       return (
         <span className="flex items-center justify-center size-7 rounded-full bg-purple-100 dark:bg-purple-900/40 shadow-sm ring-1 ring-purple-200/50 dark:ring-purple-800/50">
           <MessageSquare className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
         </span>
       );
-    case 'QUOTED':
+    case "QUOTED":
       return (
         <span className="flex items-center justify-center size-7 rounded-full bg-amber-100 dark:bg-amber-900/40 shadow-sm ring-1 ring-amber-200/50 dark:ring-amber-800/50">
           <Quote className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
@@ -55,20 +55,20 @@ const getNotificationIcon = (notificationType: Notification['notificationType'])
   }
 };
 
-const getNotificationActionText = (notificationType: Notification['notificationType']): string => {
+const getNotificationActionText = (notificationType: Notification["notificationType"]): string => {
   switch (notificationType) {
-    case 'FOLLOW':
-      return 'started following you';
-    case 'UPVOTED':
-      return 'upvoted your post';
-    case 'DOWNVOTED':
-      return 'downvoted your post';
-    case 'COMMENTED':
-      return 'commented on your post';
-    case 'QUOTED':
-      return 'quoted your post';
+    case "FOLLOW":
+      return "started following you";
+    case "UPVOTED":
+      return "upvoted your post";
+    case "DOWNVOTED":
+      return "downvoted your post";
+    case "COMMENTED":
+      return "commented on your post";
+    case "QUOTED":
+      return "quoted your post";
     default:
-      return '';
+      return "";
   }
 };
 
@@ -79,10 +79,10 @@ const stringLimit = (str: string, limit: number): string => {
 
 const formatTimeAgo = (created: string | number | Date): string => {
   return moment(created).calendar(null, {
-    sameDay: '[Today at] h:mm A',
-    lastDay: '[Yesterday at] h:mm A',
-    lastWeek: '[Last] dddd [at] h:mm A',
-    sameElse: 'MMM D, YYYY [at] h:mm A',
+    sameDay: "[Today at] h:mm A",
+    lastDay: "[Yesterday at] h:mm A",
+    lastWeek: "[Last] dddd [at] h:mm A",
+    sameElse: "MMM D, YYYY [at] h:mm A",
   });
 };
 
@@ -119,13 +119,13 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
   };
 
   const handleNotificationClick = (
-    notificationType: Notification['notificationType'],
-    userBy: Notification['userBy'],
-    post?: Notification['post']
+    notificationType: Notification["notificationType"],
+    userBy: Notification["userBy"],
+    post?: Notification["post"]
   ): void => {
     if (!ensureAuth()) return;
 
-    if (notificationType === 'FOLLOW') {
+    if (notificationType === "FOLLOW") {
       router.push(`/profile/${userBy.username}`);
     } else if (post) {
       setSelectedPost(post._id);
@@ -145,9 +145,9 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
   return (
     <div
       className={cn(
-        'relative overflow-auto',
-        pageView ? 'w-full' : 'w-full max-w-sm',
-        notifications.length < 5 ? 'min-h-0' : 'max-h-[75vh]'
+        "relative overflow-auto",
+        pageView ? "w-full" : "w-full max-w-sm",
+        notifications.length < 5 ? "min-h-0" : "max-h-[75vh]"
       )}
     >
       <div className="space-y-2">
@@ -170,7 +170,7 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
                 )
               }
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   handleNotificationClick(
                     notification.notificationType,
@@ -181,18 +181,14 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
               }}
             >
               <div className="flex items-start gap-3">
-                {icon && (
-                  <div className="flex-shrink-0 mt-0.5">
-                    {icon}
-                  </div>
-                )}
+                {icon && <div className="flex-shrink-0 mt-0.5">{icon}</div>}
 
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground">
-                    <span className="font-semibold">{displayName}</span>{' '}
+                    <span className="font-semibold">{displayName}</span>{" "}
                     <span className="text-muted-foreground">{actionText}</span>
                   </p>
-                  {notification.notificationType !== 'FOLLOW' && notification.label && (
+                  {notification.notificationType !== "FOLLOW" && notification.label && (
                     <p className="text-sm text-muted-foreground mt-1 truncate">
                       &ldquo;{stringLimit(notification.label, pageView ? 1000 : 50)}&rdquo;
                     </p>

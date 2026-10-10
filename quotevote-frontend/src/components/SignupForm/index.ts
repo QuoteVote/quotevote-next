@@ -2,4 +2,4 @@
  * SignupForm component exports
  */
 
-export { SignupForm } from './SignupForm';
+export { SignupForm } from "./SignupForm";

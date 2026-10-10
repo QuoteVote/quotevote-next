@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import { useResponsive } from '@/hooks/useResponsive'
-import { RequestInviteCarouselButton } from '../RequestInviteCarouselButton'
-import type { CarouselContentProps } from '@/types/carousel'
+import Image from "next/image";
+import { useResponsive } from "@/hooks/useResponsive";
+import { RequestInviteCarouselButton } from "../RequestInviteCarouselButton";
+import type { CarouselContentProps } from "@/types/carousel";
 
 export function PersonalCarouselSecondContent({ classes }: CarouselContentProps) {
-  const { width, isMobile } = useResponsive()
-  const imageWidth = isMobile ? 200 : width === 'xs' || width === 'sm' ? '400.43px' : '435.43px'
+  const { width, isMobile } = useResponsive();
+  const imageWidth = isMobile ? 200 : width === "xs" || width === "sm" ? "400.43px" : "435.43px";
 
   return (
     <div className="flex flex-row justify-center items-center pl-[60px] pr-[60px] md:pr-[60px] pr-0">
@@ -15,12 +15,12 @@ export function PersonalCarouselSecondContent({ classes }: CarouselContentProps)
         <Image
           alt="Personal"
           src="/assets/PersonalContent2.svg"
-          width={typeof imageWidth === 'string' ? parseInt(imageWidth) : imageWidth}
+          width={typeof imageWidth === "string" ? parseInt(imageWidth) : imageWidth}
           height={isMobile ? 200 : 350}
           className="object-contain"
           style={{
             width: imageWidth,
-            height: isMobile ? 'auto' : '350.51px',
+            height: isMobile ? "auto" : "350.51px",
           }}
         />
       </div>
@@ -32,6 +32,5 @@ export function PersonalCarouselSecondContent({ classes }: CarouselContentProps)
       </div>
       <RequestInviteCarouselButton classes={classes} />
     </div>
-  )
+  );
 }
-

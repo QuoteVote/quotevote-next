@@ -1,1 +1,1 @@
-export const ATTRIBUTION_MAX_LENGTH = 120
+export const ATTRIBUTION_MAX_LENGTH = 120;

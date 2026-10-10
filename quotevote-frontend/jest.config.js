@@ -1,59 +1,56 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const nextJest = require('next/jest')
+const nextJest = require("next/jest");
 
 const createJestConfig = nextJest({
-  dir: './',
-})
+  dir: "./",
+});
 
 const customJestConfig = {
-  testEnvironment: 'jsdom',
+  testEnvironment: "jsdom",
 
   // Setup files after environment is created
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
 
-  testMatch: [
-    '**/__tests__/**/*.test.[jt]s?(x)',
-    '**/?(*.)+(spec|test).[jt]s?(x)',
-  ],
+  testMatch: ["**/__tests__/**/*.test.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
 
-  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/src/types/', '/e2e/'],
+  testPathIgnorePatterns: ["/node_modules/", "/.next/", "/src/types/", "/e2e/"],
 
   collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/**/*.stories.{js,jsx,ts,tsx}',
-    '!src/**/__tests__/**',
-    '!src/**/__mocks__/**',
+    "src/**/*.{js,jsx,ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/**/*.stories.{js,jsx,ts,tsx}",
+    "!src/**/__tests__/**",
+    "!src/**/__mocks__/**",
   ],
 
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov", "html"],
 
   transform: {
-    '^.+\\.(ts|tsx)$': [
-      'ts-jest',
+    "^.+\\.(ts|tsx)$": [
+      "ts-jest",
       {
         tsconfig: {
-          jsx: 'react-jsx',
+          jsx: "react-jsx",
         },
       },
     ],
   },
 
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
 
   clearMocks: true,
   restoreMocks: true,
   // Reduce workers to prevent SIGSEGV errors
-  maxWorkers: '50%',
+  maxWorkers: "50%",
   // Increase timeout for slower tests
   testTimeout: 10000,
   // Worker configuration to prevent crashes
-  workerIdleMemoryLimit: '512MB',
-}
+  workerIdleMemoryLimit: "512MB",
+};
 
-module.exports = createJestConfig(customJestConfig)
+module.exports = createJestConfig(customJestConfig);

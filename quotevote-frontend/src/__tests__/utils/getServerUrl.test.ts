@@ -49,9 +49,9 @@ describe("getServerUrl", () => {
     expect(getGraphqlWsServerUrl()).toBe("ws://localhost:4000/graphql");
   });
 
-  it("enables subscriptions on localhost", () => {
+  it("disables subscriptions on localhost", () => {
     process.env.NEXT_PUBLIC_SERVER_URL = "http://localhost:4000";
-    expect(areGraphqlSubscriptionsEnabled()).toBe(true);
+    expect(areGraphqlSubscriptionsEnabled()).toBe(false);
   });
 
   it("enables subscriptions on hosted APIs", () => {

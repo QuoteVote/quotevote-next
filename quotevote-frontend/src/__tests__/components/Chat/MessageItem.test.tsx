@@ -1,6 +1,6 @@
 /**
  * MessageItem Component Tests
- * 
+ *
  * Tests for the MessageItem component including:
  * - Message rendering (own vs other user messages)
  * - Read state indicators
@@ -8,100 +8,111 @@
  * - Avatar and timestamp display
  */
 
-import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
-import MessageItem from '@/components/Chat/MessageItem'
-import { useAppStore } from '@/store'
-import type { ChatMessage } from '@/types/chat'
-import { toast } from 'sonner'
+import { render, screen, fireEvent, waitFor } from "@/__tests__/utils/test-utils";
+import MessageItem from "@/components/Chat/MessageItem";
+import { useAppStore } from "@/store";
+import type { ChatMessage } from "@/types/chat";
+import { toast } from "sonner";
 
-jest.mock('sonner', () => ({
+jest.mock("sonner", () => ({
   toast: Object.assign(jest.fn(), {
     success: jest.fn(),
     error: jest.fn(),
     info: jest.fn(),
   }),
-}))
+}));
 
 // Mock Zustand store
-jest.mock('@/store', () => ({
+jest.mock("@/store", () => ({
   useAppStore: jest.fn(),
-}))
+}));
 
 // Mock useMutation from Apollo Client
-const mockMutate = jest.fn().mockResolvedValue({ data: { deleteMessage: { _id: 'msg1' } } })
-const mockUseMutation = jest.fn(() => [mockMutate, { loading: false, error: null }])
-jest.mock('@apollo/client/react', () => ({
-  ...jest.requireActual('@apollo/client/react'),
+const mockMutate = jest.fn().mockResolvedValue({ data: { deleteMessage: { _id: "msg1" } } });
+const mockUseMutation = jest.fn(() => [mockMutate, { loading: false, error: null }]);
+jest.mock("@apollo/client/react", () => ({
+  ...jest.requireActual("@apollo/client/react"),
   useMutation: () => mockUseMutation(),
-}))
+}));
 
 // Mock Avatar component
-jest.mock('@/components/Avatar', () => ({
+jest.mock("@/components/Avatar", () => ({
   __esModule: true,
   default: ({ src, alt, size }: { src?: string; alt: string; size: number }) => (
     <div data-testid="avatar" data-src={src} data-alt={alt} data-size={size}>
       Avatar
     </div>
   ),
-}))
+}));
 
 // Mock DisplayAvatar component (used by MessageItem)
-jest.mock('@/components/DisplayAvatar', () => ({
+jest.mock("@/components/DisplayAvatar", () => ({
   __esModule: true,
-  DisplayAvatar: ({ username, size }: { avatar?: unknown; username: string; size: number; className?: string }) => (
+  DisplayAvatar: ({
+    username,
+    size,
+  }: {
+    avatar?: unknown;
+    username: string;
+    size: number;
+    className?: string;
+  }) => (
     <div data-testid="avatar" data-username={username} data-size={size}>
       DisplayAvatar
     </div>
   ),
-}))
+}));
 
-jest.mock('@/hooks/useGuestGuard', () => ({
+jest.mock("@/hooks/useGuestGuard", () => ({
   __esModule: true,
   default: () => () => true,
-}))
+}));
 
-const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 
 const mockCurrentUser = {
-  _id: 'user1',
-  name: 'Current User',
-  username: 'currentuser',
-}
+  _id: "user1",
+  name: "Current User",
+  username: "currentuser",
+};
 
-
-const mockOwnMessage: ChatMessage & { user?: { _id?: string; name?: string; username?: string; avatar?: string } } = {
-  _id: 'msg1',
-  messageRoomId: 'room1',
-  userId: 'user1',
-  userName: 'Current User',
-  text: 'My message',
+const mockOwnMessage: ChatMessage & {
+  user?: { _id?: string; name?: string; username?: string; avatar?: string };
+} = {
+  _id: "msg1",
+  messageRoomId: "room1",
+  userId: "user1",
+  userName: "Current User",
+  text: "My message",
   created: new Date().toISOString(),
-  type: 'USER',
+  type: "USER",
   user: {
-    _id: 'user1',
-    name: 'Current User',
-    username: 'currentuser',
-    avatar: 'https://example.com/avatar1.jpg',
+    _id: "user1",
+    name: "Current User",
+    username: "currentuser",
+    avatar: "https://example.com/avatar1.jpg",
   },
-  readBy: ['user2'],
-}
+  readBy: ["user2"],
+};
 
-const mockOtherMessage: ChatMessage & { user?: { _id?: string; name?: string; username?: string; avatar?: string } } = {
-  _id: 'msg2',
-  messageRoomId: 'room1',
-  userId: 'user2',
-  userName: 'Other User',
-  text: 'Other message',
+const mockOtherMessage: ChatMessage & {
+  user?: { _id?: string; name?: string; username?: string; avatar?: string };
+} = {
+  _id: "msg2",
+  messageRoomId: "room1",
+  userId: "user2",
+  userName: "Other User",
+  text: "Other message",
   created: new Date().toISOString(),
-  type: 'USER',
+  type: "USER",
   user: {
-    _id: 'user2',
-    name: 'Other User',
-    username: 'otheruser',
-    avatar: 'https://example.com/avatar2.jpg',
+    _id: "user2",
+    name: "Other User",
+    username: "otheruser",
+    avatar: "https://example.com/avatar2.jpg",
   },
   readBy: [],
-}
+};
 
 // Mock mutation object for reference (not used directly but kept for documentation)
 // const mockDeleteMutation = {
@@ -118,12 +129,12 @@ const mockOtherMessage: ChatMessage & { user?: { _id?: string; name?: string; us
 //   },
 // }
 
-describe('MessageItem', () => {
+describe("MessageItem", () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    mockMutate.mockClear()
-    mockMutate.mockResolvedValue({ data: { deleteMessage: { _id: 'msg1' } } })
-    mockUseMutation.mockReturnValue([mockMutate, { loading: false, error: null }])
+    jest.clearAllMocks();
+    mockMutate.mockClear();
+    mockMutate.mockResolvedValue({ data: { deleteMessage: { _id: "msg1" } } });
+    mockUseMutation.mockReturnValue([mockMutate, { loading: false, error: null }]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
@@ -132,206 +143,206 @@ describe('MessageItem', () => {
           data: mockCurrentUser,
         },
         setSnackbar: jest.fn(),
-      }
-      return selector(state)
-    })
-  })
+      };
+      return selector(state);
+    });
+  });
 
-  it('renders own message with correct styling', () => {
-    render(<MessageItem message={mockOwnMessage} />)
+  it("renders own message with correct styling", () => {
+    render(<MessageItem message={mockOwnMessage} />);
 
-    expect(screen.getByText('My message')).toBeInTheDocument()
+    expect(screen.getByText("My message")).toBeInTheDocument();
     // Own messages should be right-aligned
-    const messageContainer = screen.getByText('My message').closest('div')
+    const messageContainer = screen.getByText("My message").closest("div");
     // The justify-end class is on the direct parent div
-    expect(messageContainer?.closest('.justify-end')).toBeInTheDocument()
-  })
+    expect(messageContainer?.closest(".justify-end")).toBeInTheDocument();
+  });
 
-  it('renders other user message with correct styling', () => {
-    render(<MessageItem message={mockOtherMessage} />)
+  it("renders other user message with correct styling", () => {
+    render(<MessageItem message={mockOtherMessage} />);
 
-    expect(screen.getByText('Other message')).toBeInTheDocument()
+    expect(screen.getByText("Other message")).toBeInTheDocument();
     // Other messages should be left-aligned
-    const messageContainer = screen.getByText('Other message').closest('div')
+    const messageContainer = screen.getByText("Other message").closest("div");
     // The justify-start class is on the direct parent div
-    expect(messageContainer?.closest('.justify-start')).toBeInTheDocument()
-  })
+    expect(messageContainer?.closest(".justify-start")).toBeInTheDocument();
+  });
 
-  it('displays sender name for other user messages', () => {
-    render(<MessageItem message={mockOtherMessage} />)
+  it("displays sender name for other user messages", () => {
+    render(<MessageItem message={mockOtherMessage} />);
 
-    expect(screen.getByText('Other User')).toBeInTheDocument()
-  })
+    expect(screen.getByText("Other User")).toBeInTheDocument();
+  });
 
-  it('does not display sender name for own messages', () => {
-    render(<MessageItem message={mockOwnMessage} />)
+  it("does not display sender name for own messages", () => {
+    render(<MessageItem message={mockOwnMessage} />);
 
-    expect(screen.queryByText('Current User')).not.toBeInTheDocument()
-  })
+    expect(screen.queryByText("Current User")).not.toBeInTheDocument();
+  });
 
-  it('displays avatar for other user messages on the left', () => {
-    render(<MessageItem message={mockOtherMessage} />)
+  it("displays avatar for other user messages on the left", () => {
+    render(<MessageItem message={mockOtherMessage} />);
 
-    const avatars = screen.getAllByTestId('avatar')
-    expect(avatars.length).toBeGreaterThan(0)
-  })
+    const avatars = screen.getAllByTestId("avatar");
+    expect(avatars.length).toBeGreaterThan(0);
+  });
 
-  it('displays avatar for own messages on the right', () => {
-    render(<MessageItem message={mockOwnMessage} />)
+  it("displays avatar for own messages on the right", () => {
+    render(<MessageItem message={mockOwnMessage} />);
 
-    const avatars = screen.getAllByTestId('avatar')
-    expect(avatars.length).toBeGreaterThan(0)
-  })
+    const avatars = screen.getAllByTestId("avatar");
+    expect(avatars.length).toBeGreaterThan(0);
+  });
 
-  it('renders profile link on other user avatar', () => {
-    render(<MessageItem message={mockOtherMessage} />)
+  it("renders profile link on other user avatar", () => {
+    render(<MessageItem message={mockOtherMessage} />);
 
-    const profileLink = screen.getByRole('link', { name: 'Open otheruser profile' })
-    expect(profileLink).toHaveAttribute('href', '/profile/otheruser')
-  })
+    const profileLink = screen.getByRole("link", { name: "Open otheruser profile" });
+    expect(profileLink).toHaveAttribute("href", "/profile/otheruser");
+  });
 
-  it('renders profile link on own avatar', () => {
-    render(<MessageItem message={mockOwnMessage} />)
+  it("renders profile link on own avatar", () => {
+    render(<MessageItem message={mockOwnMessage} />);
 
-    const profileLink = screen.getByRole('link', { name: 'Open currentuser profile' })
-    expect(profileLink).toHaveAttribute('href', '/profile/currentuser')
-  })
+    const profileLink = screen.getByRole("link", { name: "Open currentuser profile" });
+    expect(profileLink).toHaveAttribute("href", "/profile/currentuser");
+  });
 
-  it('displays read indicator for own messages when read', () => {
-    render(<MessageItem message={mockOwnMessage} />)
+  it("displays read indicator for own messages when read", () => {
+    render(<MessageItem message={mockOwnMessage} />);
 
     // Check for double check icon (read indicator) - CheckCheck icon
     // SVGs don't have img role by default, so we look for the CheckCheck icon by class or testid
-    const checkIcon = document.querySelector('.lucide-check-check')
-    expect(checkIcon).toBeInTheDocument()
-  })
+    const checkIcon = document.querySelector(".lucide-check-check");
+    expect(checkIcon).toBeInTheDocument();
+  });
 
-  it('displays unread indicator for own messages when not read', () => {
+  it("displays unread indicator for own messages when not read", () => {
     const unreadMessage = {
       ...mockOwnMessage,
       readBy: [],
-    }
+    };
 
-    render(<MessageItem message={unreadMessage} />)
+    render(<MessageItem message={unreadMessage} />);
 
     // Should show single check (unread)
-    expect(screen.getByText('My message')).toBeInTheDocument()
-  })
+    expect(screen.getByText("My message")).toBeInTheDocument();
+  });
 
-  it('displays timestamp', () => {
-    render(<MessageItem message={mockOwnMessage} />)
+  it("displays timestamp", () => {
+    render(<MessageItem message={mockOwnMessage} />);
 
     // Timestamp should be displayed (format may vary)
-    expect(screen.getByText(/Just now|m ago|ago/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/Just now|m ago|ago/i)).toBeInTheDocument();
+  });
 
-  it('shows delete button on hover for own messages', () => {
-    render(<MessageItem message={mockOwnMessage} />)
+  it("shows delete button on hover for own messages", () => {
+    render(<MessageItem message={mockOwnMessage} />);
 
-    const messageContainer = screen.getByText('My message').closest('.group')
+    const messageContainer = screen.getByText("My message").closest(".group");
     if (messageContainer) {
-      fireEvent.mouseEnter(messageContainer)
+      fireEvent.mouseEnter(messageContainer);
     }
 
     // Delete button should be available (may need to check for aria-label)
-    const deleteButton = screen.queryByLabelText('Delete message')
+    const deleteButton = screen.queryByLabelText("Delete message");
     // Button exists but may be hidden until hover
-    expect(deleteButton).toBeInTheDocument()
-  })
+    expect(deleteButton).toBeInTheDocument();
+  });
 
-  it('deletes message when delete button is clicked', async () => {
-    const setSnackbar = jest.fn()
+  it("deletes message when delete button is clicked", async () => {
+    const setSnackbar = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
         setSnackbar,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
     // Reset mock for this test
-    mockMutate.mockResolvedValueOnce({ data: { deleteMessage: { _id: 'msg1' } } })
+    mockMutate.mockResolvedValueOnce({ data: { deleteMessage: { _id: "msg1" } } });
 
-    render(<MessageItem message={mockOwnMessage} />)
+    render(<MessageItem message={mockOwnMessage} />);
 
-    const deleteButton = screen.getByLabelText('Delete message')
-    fireEvent.click(deleteButton)
+    const deleteButton = screen.getByLabelText("Delete message");
+    fireEvent.click(deleteButton);
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Message deleted successfully')
-    })
-  })
+      expect(toast.success).toHaveBeenCalledWith("Message deleted successfully");
+    });
+  });
 
-  it('handles delete errors gracefully', async () => {
-    const setSnackbar = jest.fn()
+  it("handles delete errors gracefully", async () => {
+    const setSnackbar = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: mockCurrentUser },
         setSnackbar,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
     // Mock mutation to throw error
-    mockMutate.mockRejectedValueOnce(new Error('Failed to delete message'))
+    mockMutate.mockRejectedValueOnce(new Error("Failed to delete message"));
 
-    render(<MessageItem message={mockOwnMessage} />)
+    render(<MessageItem message={mockOwnMessage} />);
 
-    const deleteButton = screen.getByLabelText('Delete message')
-    fireEvent.click(deleteButton)
+    const deleteButton = screen.getByLabelText("Delete message");
+    fireEvent.click(deleteButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Delete Error'))
-    })
-  })
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Delete Error"));
+    });
+  });
 
-  it('does not show delete button for other user messages', () => {
-    render(<MessageItem message={mockOtherMessage} />)
+  it("does not show delete button for other user messages", () => {
+    render(<MessageItem message={mockOtherMessage} />);
 
-    const deleteButton = screen.queryByLabelText('Delete message')
-    expect(deleteButton).not.toBeInTheDocument()
-  })
+    const deleteButton = screen.queryByLabelText("Delete message");
+    expect(deleteButton).not.toBeInTheDocument();
+  });
 
-  it('handles missing user data gracefully', () => {
+  it("handles missing user data gracefully", () => {
     const messageWithoutUser = {
       ...mockOtherMessage,
       user: undefined,
-    }
+    };
 
-    render(<MessageItem message={messageWithoutUser} />)
+    render(<MessageItem message={messageWithoutUser} />);
 
-    expect(screen.getByText('Other message')).toBeInTheDocument()
-    expect(screen.getByText('Other User')).toBeInTheDocument() // Uses userName
-  })
+    expect(screen.getByText("Other message")).toBeInTheDocument();
+    expect(screen.getByText("Other User")).toBeInTheDocument(); // Uses userName
+  });
 
-  it('handles missing avatar gracefully', () => {
+  it("handles missing avatar gracefully", () => {
     const messageWithoutAvatar = {
       ...mockOtherMessage,
       user: {
         ...mockOtherMessage.user!,
         avatar: undefined,
       },
-    }
+    };
 
-    render(<MessageItem message={messageWithoutAvatar} />)
+    render(<MessageItem message={messageWithoutAvatar} />);
 
-    expect(screen.getByText('Other message')).toBeInTheDocument()
-  })
+    expect(screen.getByText("Other message")).toBeInTheDocument();
+  });
 
-  it('returns null when no current user', () => {
+  it("returns null when no current user", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: null },
         setSnackbar: jest.fn(),
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    const { container } = render(<MessageItem message={mockOwnMessage} />)
+    const { container } = render(<MessageItem message={mockOwnMessage} />);
 
-    expect(container.firstChild).toBeNull()
-  })
-})
+    expect(container.firstChild).toBeNull();
+  });
+});

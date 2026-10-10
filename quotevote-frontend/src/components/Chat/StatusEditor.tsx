@@ -1,8 +1,8 @@
 "use client";
 
-import type { FC } from 'react';
-import { useEffect, useState } from 'react';
-import { useMutation } from '@apollo/client/react';
+import type { FC } from "react";
+import { useEffect, useState } from "react";
+import { useMutation } from "@apollo/client/react";
 
 import {
   Dialog,
@@ -10,15 +10,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useAppStore } from '@/store';
-import { toast } from 'sonner';
-import { UPDATE_PRESENCE } from '@/graphql/mutations';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useAppStore } from "@/store";
+import { toast } from "sonner";
+import { UPDATE_PRESENCE } from "@/graphql/mutations";
+import { cn } from "@/lib/utils";
 
-type PresenceStatus = 'online' | 'away' | 'dnd' | 'invisible';
+type PresenceStatus = "online" | "away" | "dnd" | "invisible";
 
 interface StatusEditorProps {
   open: boolean;
@@ -37,11 +37,11 @@ const statusOptions: Array<{
   label: string;
   icon: string;
 }> = [
-    { value: 'online', label: 'Online', icon: '🟢' },
-    { value: 'away', label: 'Away', icon: '🟡' },
-    { value: 'dnd', label: 'Do Not Disturb', icon: '🔴' },
-    { value: 'invisible', label: 'Invisible', icon: '⚫' },
-  ];
+  { value: "online", label: "Online", icon: "🟢" },
+  { value: "away", label: "Away", icon: "🟡" },
+  { value: "dnd", label: "Do Not Disturb", icon: "🔴" },
+  { value: "invisible", label: "Invisible", icon: "⚫" },
+];
 
 const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
   const chatState = useAppStore((state) => state.chat);
@@ -49,28 +49,25 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
 
   // Initialize state from chatState - reset when dialog opens using key prop
   const [status, setStatus] = useState<PresenceStatus>(
-    () => (chatState.userStatus as PresenceStatus) || 'online'
+    () => (chatState.userStatus as PresenceStatus) || "online"
   );
-  const [statusMessage, setStatusMessage] = useState(
-    () => chatState.userStatusMessage || ''
-  );
+  const [statusMessage, setStatusMessage] = useState(() => chatState.userStatusMessage || "");
 
   // Update state when dialog opens - using setTimeout to defer state update
   useEffect(() => {
     if (open) {
       const timeoutId = setTimeout(() => {
-        setStatus((chatState.userStatus as PresenceStatus) || 'online');
-        setStatusMessage(chatState.userStatusMessage || '');
+        setStatus((chatState.userStatus as PresenceStatus) || "online");
+        setStatusMessage(chatState.userStatusMessage || "");
       }, 0);
       return () => clearTimeout(timeoutId);
     }
     return undefined;
   }, [open, chatState.userStatus, chatState.userStatusMessage]);
 
-  const [updatePresence, { loading }] = useMutation<
-    unknown,
-    UpdatePresenceVariables
-  >(UPDATE_PRESENCE);
+  const [updatePresence, { loading }] = useMutation<unknown, UpdatePresenceVariables>(
+    UPDATE_PRESENCE
+  );
 
   const handleSave = async () => {
     try {
@@ -83,8 +80,8 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
       setUserStatus(status, statusMessage);
       onClose();
     } catch (error) {
-      console.error('Failed to update status:', error);
-      toast.error('Failed to update status. Please try again.');
+      console.error("Failed to update status:", error);
+      toast.error("Failed to update status. Please try again.");
     }
   };
 
@@ -104,22 +101,17 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
 
         <div className="space-y-3">
           <div className="space-y-1">
-            <label
-              htmlFor="status-select"
-              className="block text-sm font-medium text-foreground"
-            >
+            <label htmlFor="status-select" className="block text-sm font-medium text-foreground">
               Status
             </label>
             <div className="relative">
               <select
                 id="status-select"
                 value={status}
-                onChange={(e) =>
-                  setStatus(e.target.value as PresenceStatus)
-                }
+                onChange={(e) => setStatus(e.target.value as PresenceStatus)}
                 className={cn(
-                  'h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none',
-                  'focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40'
+                  "h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none",
+                  "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
                 )}
               >
                 {statusOptions.map((option) => (
@@ -132,18 +124,13 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
           </div>
 
           <div className="space-y-1">
-            <label
-              htmlFor="status-message"
-              className="block text-sm font-medium text-foreground"
-            >
+            <label htmlFor="status-message" className="block text-sm font-medium text-foreground">
               Status Message
             </label>
             <Textarea
               id="status-message"
               value={statusMessage}
-              onChange={(e) =>
-                setStatusMessage(e.target.value.slice(0, 200))
-              }
+              onChange={(e) => setStatusMessage(e.target.value.slice(0, 200))}
               placeholder="What are you up to?"
               className="min-h-[80px] resize-none"
             />
@@ -154,12 +141,7 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onClose}
-            disabled={loading}
-          >
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button
@@ -168,7 +150,7 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
             disabled={loading}
             className="bg-gradient-to-r from-emerald-500 to-emerald-600 font-semibold text-white shadow-md hover:from-emerald-500 hover:to-emerald-500 disabled:from-muted disabled:to-muted disabled:text-muted-foreground disabled:shadow-none"
           >
-            {loading ? 'Saving...' : 'Save'}
+            {loading ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -177,4 +159,3 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
 };
 
 export default StatusEditor;
-

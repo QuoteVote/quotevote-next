@@ -1,23 +1,21 @@
 "use client";
 
-import type { FC } from 'react';
-import { useEffect, useState } from 'react';
-import { useSubscription } from '@apollo/client/react';
+import type { FC } from "react";
+import { useEffect, useState } from "react";
+import { useSubscription } from "@apollo/client/react";
 
-import { TYPING_SUBSCRIPTION } from '@/graphql/subscriptions';
-import { useAppStore } from '@/store';
-import type { TypingIndicatorProps, TypingUser } from '@/types/chat';
+import { TYPING_SUBSCRIPTION } from "@/graphql/subscriptions";
+import { useAppStore } from "@/store";
+import type { TypingIndicatorProps, TypingUser } from "@/types/chat";
 
-import type { TypingSubscriptionResult } from '@/types/hooks'
+import type { TypingSubscriptionResult } from "@/types/hooks";
 
 interface TypingSubscriptionVariables {
   messageRoomId: string;
 }
 
 const TypingIndicator: FC<TypingIndicatorProps> = ({ messageRoomId }) => {
-  const currentUser = useAppStore((state) => state.user.data) as
-    | { _id?: string }
-    | undefined;
+  const currentUser = useAppStore((state) => state.user.data) as { _id?: string } | undefined;
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
 
   const { data: subscriptionData, error } = useSubscription<
@@ -25,7 +23,7 @@ const TypingIndicator: FC<TypingIndicatorProps> = ({ messageRoomId }) => {
     TypingSubscriptionVariables
   >(TYPING_SUBSCRIPTION, {
     skip: !messageRoomId,
-    variables: messageRoomId ? { messageRoomId } : { messageRoomId: '' },
+    variables: messageRoomId ? { messageRoomId } : { messageRoomId: "" },
   });
 
   // Handle subscription data updates (Apollo Client v4 API)
@@ -47,9 +45,7 @@ const TypingIndicator: FC<TypingIndicatorProps> = ({ messageRoomId }) => {
         // Update existing user or add new one
         const existingUser = prev.find((u) => u.userId === userId);
         if (existingUser) {
-          return prev.map((u) =>
-            u.userId === userId ? { ...u, timestamp, user } : u
-          );
+          return prev.map((u) => (u.userId === userId ? { ...u, timestamp, user } : u));
         }
         return [...prev, { userId, user, timestamp }];
       }
@@ -62,8 +58,8 @@ const TypingIndicator: FC<TypingIndicatorProps> = ({ messageRoomId }) => {
 
   // Handle subscription errors
   useEffect(() => {
-    if (error && process.env.NODE_ENV === 'development') {
-      console.error('[Typing Subscription] Subscription error:', error);
+    if (error && process.env.NODE_ENV === "development") {
+      console.error("[Typing Subscription] Subscription error:", error);
     }
   }, [error]);
 
@@ -90,10 +86,10 @@ const TypingIndicator: FC<TypingIndicatorProps> = ({ messageRoomId }) => {
   const getTypingMessage = (): string => {
     if (typingUsers.length === 1) {
       const user = typingUsers[0].user;
-      const name = user?.name || user?.username || 'Someone';
+      const name = user?.name || user?.username || "Someone";
       return `${name} is typing…`;
     }
-    if (typingUsers.length === 2) return '2 people are typing…';
+    if (typingUsers.length === 2) return "2 people are typing…";
     return `${typingUsers.length} people are typing…`;
   };
 
@@ -103,15 +99,15 @@ const TypingIndicator: FC<TypingIndicatorProps> = ({ messageRoomId }) => {
       <span className="ml-2 inline-flex items-center gap-1" aria-hidden="true">
         <span
           className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
-          style={{ animationDelay: '0s' }}
+          style={{ animationDelay: "0s" }}
         />
         <span
           className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
-          style={{ animationDelay: '0.2s' }}
+          style={{ animationDelay: "0.2s" }}
         />
         <span
           className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
-          style={{ animationDelay: '0.4s' }}
+          style={{ animationDelay: "0.4s" }}
         />
       </span>
     </div>

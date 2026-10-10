@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client'
+import { gql } from "@apollo/client";
 
 /**
  * Heartbeat mutation to keep presence alive
@@ -10,7 +10,7 @@ export const HEARTBEAT = gql`
       timestamp
     }
   }
-`
+`;
 
 /**
  * Update current user's presence (status + message)
@@ -26,7 +26,7 @@ export const UPDATE_PRESENCE = gql`
       lastSeen
     }
   }
-`
+`;
 
 /**
  * Add buddy mutation (send friend request)
@@ -40,7 +40,7 @@ export const ADD_BUDDY = gql`
       created
     }
   }
-`
+`;
 
 /**
  * Accept buddy request mutation
@@ -53,7 +53,7 @@ export const ACCEPT_BUDDY = gql`
       updated
     }
   }
-`
+`;
 
 /**
  * Decline buddy request mutation
@@ -64,7 +64,7 @@ export const DECLINE_BUDDY = gql`
       _id
     }
   }
-`
+`;
 
 /**
  * Block buddy mutation
@@ -77,7 +77,7 @@ export const BLOCK_BUDDY = gql`
       updated
     }
   }
-`
+`;
 
 /**
  * Unblock buddy mutation
@@ -90,7 +90,7 @@ export const UNBLOCK_BUDDY = gql`
       updated
     }
   }
-`
+`;
 
 /**
  * Remove buddy mutation
@@ -101,7 +101,7 @@ export const REMOVE_BUDDY = gql`
       _id
     }
   }
-`
+`;
 
 /**
  * Update typing indicator mutation
@@ -112,7 +112,7 @@ export const UPDATE_TYPING = gql`
       success
     }
   }
-`
+`;
 
 /**
  * Send password reset email mutation
@@ -121,7 +121,7 @@ export const SEND_PASSWORD_RESET_EMAIL = gql`
   mutation SendPasswordResetEmail($email: String!) {
     sendPasswordResetEmail(email: $email)
   }
-`
+`;
 
 /**
  * Send investor email mutation
@@ -130,20 +130,16 @@ export const SEND_INVESTOR_EMAIL = gql`
   mutation sendInvestorMail($email: String!) {
     sendInvestorMail(email: $email)
   }
-`
+`;
 
 /**
  * Update user password mutation
  */
 export const UPDATE_USER_PASSWORD = gql`
-  mutation UpdateUserPassword(
-    $username: String!
-    $password: String!
-    $token: String!
-  ) {
+  mutation UpdateUserPassword($username: String!, $password: String!, $token: String!) {
     updateUserPassword(username: $username, password: $password, token: $token)
   }
-`
+`;
 
 /**
  * Create group mutation
@@ -158,7 +154,7 @@ export const CREATE_GROUP = gql`
       created
     }
   }
-`
+`;
 
 /**
  * Submit post mutation
@@ -172,7 +168,7 @@ export const SUBMIT_POST = gql`
       attribution
     }
   }
-`
+`;
 
 /**
  * Delete comment mutation
@@ -183,7 +179,7 @@ export const DELETE_COMMENT = gql`
       _id
     }
   }
-`
+`;
 
 /**
  * Add comment mutation
@@ -202,7 +198,7 @@ export const ADD_COMMENT = gql`
       }
     }
   }
-`
+`;
 
 /**
  * Add action reaction mutation
@@ -216,7 +212,7 @@ export const ADD_ACTION_REACTION = gql`
       emoji
     }
   }
-`
+`;
 
 /**
  * Update action reaction mutation
@@ -230,7 +226,7 @@ export const UPDATE_ACTION_REACTION = gql`
       emoji
     }
   }
-`
+`;
 
 /**
  * Approve post mutation
@@ -243,7 +239,7 @@ export const APPROVE_POST = gql`
       rejectedBy
     }
   }
-`
+`;
 
 /**
  * Reject post mutation
@@ -256,7 +252,7 @@ export const REJECT_POST = gql`
       rejectedBy
     }
   }
-`
+`;
 
 /**
  * Delete post mutation
@@ -267,7 +263,7 @@ export const DELETE_POST = gql`
       _id
     }
   }
-`
+`;
 
 /**
  * Update post bookmark mutation
@@ -279,7 +275,7 @@ export const UPDATE_POST_BOOKMARK = gql`
       bookmarkedBy
     }
   }
-`
+`;
 
 /**
  * Toggle voting on a post mutation
@@ -291,7 +287,7 @@ export const TOGGLE_VOTING = gql`
       enable_voting
     }
   }
-`
+`;
 
 /**
  * Update featured slot mutation
@@ -303,7 +299,7 @@ export const UPDATE_FEATURED_SLOT = gql`
       featuredSlot
     }
   }
-`
+`;
 
 /**
  * Report post mutation
@@ -315,7 +311,7 @@ export const REPORT_POST = gql`
       reportedBy
     }
   }
-`
+`;
 
 /**
  * Add vote mutation
@@ -327,7 +323,7 @@ export const VOTE = gql`
       type
     }
   }
-`
+`;
 
 /**
  * Delete vote mutation
@@ -338,7 +334,7 @@ export const DELETE_VOTE = gql`
       _id
     }
   }
-`
+`;
 
 /**
  * Add quote mutation
@@ -349,7 +345,7 @@ export const ADD_QUOTE = gql`
       _id
     }
   }
-`
+`;
 
 /**
  * Delete quote mutation
@@ -360,7 +356,7 @@ export const DELETE_QUOTE = gql`
       _id
     }
   }
-`
+`;
 
 /**
  * Send user invite mutation
@@ -371,7 +367,7 @@ export const SEND_USER_INVITE = gql`
   mutation sendUserInvite($email: String!) {
     sendUserInvite(email: $email)
   }
-`
+`;
 
 /**
  * Report user mutation
@@ -382,7 +378,7 @@ export const REPORT_USER = gql`
   mutation reportUser($reportUserInput: ReportUserInput!) {
     reportUser(reportUserInput: $reportUserInput)
   }
-`
+`;
 
 /**
  * Report bot mutation
@@ -391,7 +387,7 @@ export const REPORT_BOT = gql`
   mutation reportBot($userId: String!, $reporterId: String!) {
     reportBot(userId: $userId, reporterId: $reporterId)
   }
-`
+`;
 export const SEND_MESSAGE = gql`
   mutation chat($message: MessageInput!) {
     createMessage(message: $message) {
@@ -412,8 +408,7 @@ export const SEND_MESSAGE = gql`
       }
     }
   }
-`
-
+`;
 
 export const DELETE_MESSAGE = gql`
   mutation deleteMessage($messageId: String!) {
@@ -421,7 +416,7 @@ export const DELETE_MESSAGE = gql`
       _id
     }
   }
-`
+`;
 
 export const READ_MESSAGES = gql`
   mutation updateMessageReadBy($messageRoomId: String!) {
@@ -430,7 +425,7 @@ export const READ_MESSAGES = gql`
       readBy
     }
   }
-`
+`;
 
 /**
  * Add message reaction mutation
@@ -444,7 +439,7 @@ export const ADD_MESSAGE_REACTION = gql`
       emoji
     }
   }
-`
+`;
 
 /**
  * Update message reaction mutation
@@ -457,7 +452,7 @@ export const UPDATE_MESSAGE_REACTION = gql`
       emoji
     }
   }
-`
+`;
 
 /**
  * Create post message room mutation
@@ -474,7 +469,7 @@ export const CREATE_POST_MESSAGE_ROOM = gql`
       avatar
     }
   }
-`
+`;
 
 /**
  * Follow user mutation
@@ -487,7 +482,7 @@ export const FOLLOW_USER = gql`
       name
     }
   }
-`
+`;
 
 /**
  * Delete notification mutation
@@ -499,7 +494,7 @@ export const DELETE_NOTIFICATION = gql`
       status
     }
   }
-`
+`;
 
 /**
  * Request user access mutation
@@ -512,7 +507,7 @@ export const REQUEST_USER_ACCESS_MUTATION = gql`
       email
     }
   }
-`
+`;
 
 /**
  * Update user invite status mutation (admin only)
@@ -521,7 +516,7 @@ export const UPDATE_USER_INVITE_STATUS = gql`
   mutation sendUserInviteApproval($userId: String!, $inviteStatus: String!) {
     sendUserInviteApproval(userId: $userId, inviteStatus: $inviteStatus)
   }
-`
+`;
 
 /**
  * Disable user account mutation (admin only)
@@ -534,7 +529,7 @@ export const DISABLE_USER = gql`
       accountStatus
     }
   }
-`
+`;
 
 /**
  * Enable user account mutation (admin only)
@@ -547,7 +542,7 @@ export const ENABLE_USER = gql`
       accountStatus
     }
   }
-`
+`;
 
 /**
  * Update user profile mutation
@@ -570,7 +565,7 @@ export const UPDATE_USER = gql`
       contributorBadge
     }
   }
-`
+`;
 
 /**
  * Update user avatar mutation
@@ -586,4 +581,4 @@ export const UPDATE_USER_AVATAR = gql`
       avatar
     }
   }
-`
+`;

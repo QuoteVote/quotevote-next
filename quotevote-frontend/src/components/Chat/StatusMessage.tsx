@@ -1,8 +1,8 @@
 "use client";
 
-import type { FC } from 'react';
+import type { FC } from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface StatusMessageProps {
   message?: string | null;
@@ -14,10 +14,7 @@ const StatusMessage: FC<StatusMessageProps> = ({ message, className }) => {
 
   return (
     <span
-      className={cn(
-        'text-[0.75rem] italic text-muted-foreground truncate',
-        className
-      )}
+      className={cn("text-[0.75rem] italic text-muted-foreground truncate", className)}
       title={message}
     >
       {message}
@@ -26,4 +23,3 @@ const StatusMessage: FC<StatusMessageProps> = ({ message, className }) => {
 };
 
 export default StatusMessage;
-

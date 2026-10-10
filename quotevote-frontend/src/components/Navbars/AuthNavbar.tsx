@@ -1,6 +1,6 @@
-import Link from 'next/link'
-import { Globe } from '@/components/Icons'
-import { Button } from '@/components/ui/button'
+import Link from "next/link";
+import { Globe } from "@/components/Icons";
+import { Button } from "@/components/ui/button";
 
 /**
  * AuthNavbar Component
@@ -21,5 +21,5 @@ export function AuthNavbar() {
         </Button>
       </div>
     </header>
-  )
+  );
 }

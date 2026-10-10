@@ -2,408 +2,411 @@
  * Tests for LoginForm Component
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { LoginForm } from '@/app/components/Login/LoginForm';
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { LoginForm } from "@/app/components/Login/LoginForm";
 
-describe('LoginForm Component', () => {
-    const mockOnSubmit = jest.fn();
+describe("LoginForm Component", () => {
+  const mockOnSubmit = jest.fn();
 
-    beforeEach(() => {
-        jest.clearAllMocks();
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("renders all form fields", () => {
+    render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+
+    expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+  });
+
+  it("renders Terms of Service checkbox and link", () => {
+    render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+
+    expect(screen.getByText(/terms of service/i)).toBeInTheDocument();
+    const tosLink = screen.getByRole("link", { name: /terms of service/i });
+    expect(tosLink).toHaveAttribute(
+      "href",
+      expect.stringContaining("quote_vote_terms_of_service.md")
+    );
+    expect(tosLink).toHaveAttribute("target", "_blank");
+  });
+
+  it("renders Code of Conduct checkbox and link", () => {
+    render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+
+    expect(screen.getByText(/code of conduct/i)).toBeInTheDocument();
+    const cocLink = screen.getByRole("link", { name: /code of conduct/i });
+    expect(cocLink).toHaveAttribute(
+      "href",
+      expect.stringContaining("quote_vote_code_of_conduct.md")
+    );
+    expect(cocLink).toHaveAttribute("target", "_blank");
+  });
+
+  it("submit button is disabled when checkboxes are not accepted", async () => {
+    const user = userEvent.setup();
+    render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+
+    const usernameInput = screen.getByLabelText(/email or username/i);
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    const submitButton = screen.getByRole("button", { name: /sign in/i });
+
+    await user.type(usernameInput, "testuser");
+    await user.type(passwordInput, "password123");
+
+    // Button should be disabled when checkboxes are not checked
+    expect(submitButton).toBeDisabled();
+  });
+
+  it("submits form with valid data when all requirements are met", async () => {
+    const user = userEvent.setup();
+    render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+
+    const usernameInput = screen.getByLabelText(/email or username/i);
+    const passwordInput = screen.getByLabelText(/^password$/i);
+
+    await user.type(usernameInput, "testuser");
+    await user.type(passwordInput, "password123");
+
+    // Find and click checkboxes by their ID
+    const tosCheckbox = document.querySelector("#tos") as HTMLElement;
+    const cocCheckbox = document.querySelector("#coc") as HTMLElement;
+
+    await user.click(tosCheckbox);
+    await user.click(cocCheckbox);
+
+    const submitButton = screen.getByRole("button", { name: /sign in/i });
+
+    // Wait for button to be enabled
+    await waitFor(() => {
+      expect(submitButton).not.toBeDisabled();
     });
 
-    it('renders all form fields', () => {
-        render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+    await user.click(submitButton);
 
-        expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    // Verify form was submitted
+    await waitFor(
+      () => {
+        expect(mockOnSubmit).toHaveBeenCalled();
+      },
+      { timeout: 3000 }
+    );
+
+    // Verify the form data
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    const formData = mockOnSubmit.mock.calls[0][0];
+    expect(formData.username).toBe("testuser");
+    expect(formData.password).toBe("password123");
+    expect(formData.tos).toBe(true);
+    expect(formData.coc).toBe(true);
+  });
+
+  it("displays login error when provided as string", () => {
+    const errorMessage = "Invalid credentials";
+    render(<LoginForm onSubmit={mockOnSubmit} loading={false} loginError={errorMessage} />);
+
+    expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
+  });
+
+  it("displays login error from error object", () => {
+    const errorMessage = "Invalid credentials";
+    const loginError = { data: { message: errorMessage } };
+    render(<LoginForm onSubmit={mockOnSubmit} loading={false} loginError={loginError} />);
+
+    expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
+  });
+
+  it("disables all inputs when loading", () => {
+    render(<LoginForm onSubmit={mockOnSubmit} loading={true} />);
+
+    const usernameInput = screen.getByLabelText(/email or username/i);
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    const submitButton = screen.getByRole("button", { name: /signing in/i });
+
+    expect(usernameInput).toBeDisabled();
+    expect(passwordInput).toBeDisabled();
+    expect(submitButton).toBeDisabled();
+  });
+
+  it('shows "Signing in..." text when loading', () => {
+    render(<LoginForm onSubmit={mockOnSubmit} loading={true} />);
+
+    expect(screen.getByRole("button", { name: /signing in/i })).toBeInTheDocument();
+  });
+
+  it('shows "Sign in" text when not loading', () => {
+    render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+
+    expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
+  });
+
+  describe("Form Validation", () => {
+    it("shows validation error for username shorter than 4 characters", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(usernameInput, "abc");
+      await user.type(passwordInput, "validpass");
+
+      // Check checkboxes to enable submit button
+      const tosCheckbox = document.querySelector("#tos") as HTMLElement;
+      const cocCheckbox = document.querySelector("#coc") as HTMLElement;
+      await user.click(tosCheckbox);
+      await user.click(cocCheckbox);
+
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(/username should be more than 4 characters/i)[0]
+        ).toBeInTheDocument();
+      });
     });
 
-    it('renders Terms of Service checkbox and link', () => {
-        render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+    it("shows validation error for username longer than 30 characters", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByText(/terms of service/i)).toBeInTheDocument();
-        const tosLink = screen.getByRole('link', { name: /terms of service/i });
-        expect(tosLink).toHaveAttribute('href', expect.stringContaining('quote_vote_terms_of_service.md'));
-        expect(tosLink).toHaveAttribute('target', '_blank');
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(usernameInput, "a".repeat(31));
+      await user.type(passwordInput, "validpass");
+
+      // Check checkboxes to enable submit button
+      const tosCheckbox = document.querySelector("#tos") as HTMLElement;
+      const cocCheckbox = document.querySelector("#coc") as HTMLElement;
+      await user.click(tosCheckbox);
+      await user.click(cocCheckbox);
+
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(/username should be less than thirty characters/i)[0]
+        ).toBeInTheDocument();
+      });
     });
 
-    it('renders Code of Conduct checkbox and link', () => {
-        render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+    it("shows validation error for password shorter than 2 characters", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByText(/code of conduct/i)).toBeInTheDocument();
-        const cocLink = screen.getByRole('link', { name: /code of conduct/i });
-        expect(cocLink).toHaveAttribute('href', expect.stringContaining('quote_vote_code_of_conduct.md'));
-        expect(cocLink).toHaveAttribute('target', '_blank');
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(usernameInput, "validuser");
+      await user.type(passwordInput, "a");
+
+      // Check checkboxes to enable submit button
+      const tosCheckbox = document.querySelector("#tos") as HTMLElement;
+      const cocCheckbox = document.querySelector("#coc") as HTMLElement;
+      await user.click(tosCheckbox);
+      await user.click(cocCheckbox);
+
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(/password should be more than 2 characters/i)[0]
+        ).toBeInTheDocument();
+      });
     });
 
-    it('submit button is disabled when checkboxes are not accepted', async () => {
-        const user = userEvent.setup();
-        render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+    it("shows validation error for password longer than 20 characters", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        const usernameInput = screen.getByLabelText(/email or username/i);
-        const passwordInput = screen.getByLabelText(/^password$/i);
-        const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(usernameInput, "validuser");
+      await user.type(passwordInput, "a".repeat(21));
 
-        await user.type(usernameInput, 'testuser');
-        await user.type(passwordInput, 'password123');
+      // Check checkboxes to enable submit button
+      const tosCheckbox = document.querySelector("#tos") as HTMLElement;
+      const cocCheckbox = document.querySelector("#coc") as HTMLElement;
+      await user.click(tosCheckbox);
+      await user.click(cocCheckbox);
 
-        // Button should be disabled when checkboxes are not checked
-        expect(submitButton).toBeDisabled();
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(/password should be less than twenty characters/i)[0]
+        ).toBeInTheDocument();
+      });
     });
 
-    it('submits form with valid data when all requirements are met', async () => {
-        const user = userEvent.setup();
-        render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+    it("does not submit form when validation errors exist", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        const usernameInput = screen.getByLabelText(/email or username/i);
-        const passwordInput = screen.getByLabelText(/^password$/i);
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      await user.type(usernameInput, "ab"); // Too short
 
-        await user.type(usernameInput, 'testuser');
-        await user.type(passwordInput, 'password123');
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      await user.click(submitButton);
 
-        // Find and click checkboxes by their ID
-        const tosCheckbox = document.querySelector('#tos') as HTMLElement;
-        const cocCheckbox = document.querySelector('#coc') as HTMLElement;
+      await waitFor(() => {
+        expect(mockOnSubmit).not.toHaveBeenCalled();
+      });
+    });
+  });
 
-        await user.click(tosCheckbox);
-        await user.click(cocCheckbox);
+  describe("Accessibility", () => {
+    it("has proper labels for all inputs", () => {
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        const submitButton = screen.getByRole('button', { name: /sign in/i });
-
-        // Wait for button to be enabled
-        await waitFor(() => {
-            expect(submitButton).not.toBeDisabled();
-        });
-
-        await user.click(submitButton);
-
-        // Verify form was submitted
-        await waitFor(() => {
-            expect(mockOnSubmit).toHaveBeenCalled();
-        }, { timeout: 3000 });
-
-        // Verify the form data
-        expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-        const formData = mockOnSubmit.mock.calls[0][0];
-        expect(formData.username).toBe('testuser');
-        expect(formData.password).toBe('password123');
-        expect(formData.tos).toBe(true);
-        expect(formData.coc).toBe(true);
+      expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
     });
 
-    it('displays login error when provided as string', () => {
-        const errorMessage = 'Invalid credentials';
-        render(<LoginForm onSubmit={mockOnSubmit} loading={false} loginError={errorMessage} />);
+    it("sets aria-invalid on inputs when there are errors", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(usernameInput, "ab");
+      await user.type(passwordInput, "validpass");
+
+      // Check checkboxes to enable submit button
+      const tosCheckbox = document.querySelector("#tos") as HTMLElement;
+      const cocCheckbox = document.querySelector("#coc") as HTMLElement;
+      await user.click(tosCheckbox);
+      await user.click(cocCheckbox);
+
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(usernameInput).toHaveAttribute("aria-invalid", "true");
+      });
     });
 
-    it('displays login error from error object', () => {
-        const errorMessage = 'Invalid credentials';
-        const loginError = { data: { message: errorMessage } };
-        render(<LoginForm onSubmit={mockOnSubmit} loading={false} loginError={loginError} />);
+    it("associates error messages with input fields", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      await user.type(usernameInput, "ab");
+      await user.type(passwordInput, "validpass");
+
+      // Check checkboxes to enable submit button
+      const tosCheckbox = document.querySelector("#tos") as HTMLElement;
+      const cocCheckbox = document.querySelector("#coc") as HTMLElement;
+      await user.click(tosCheckbox);
+      await user.click(cocCheckbox);
+
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        const errorMessages = screen.getAllByText(/username should be more than 4 characters/i);
+        expect(errorMessages.length).toBeGreaterThan(0);
+        // Error message should be visible (either in alert or inline)
+        const visibleError = errorMessages.find((msg) => {
+          const element = msg as HTMLElement;
+          return (
+            element.offsetParent !== null ||
+            element.closest('[role="alert"]') !== null ||
+            element.closest(".text-red-600") !== null
+          );
+        });
+        expect(visibleError).toBeDefined();
+      });
     });
 
-    it('disables all inputs when loading', () => {
-        render(<LoginForm onSubmit={mockOnSubmit} loading={true} />);
+    it("has accessible checkbox labels", () => {
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        const usernameInput = screen.getByLabelText(/email or username/i);
-        const passwordInput = screen.getByLabelText(/^password$/i);
-        const submitButton = screen.getByRole('button', { name: /signing in/i });
+      const tosCheckbox = document.querySelector("#tos");
+      const tosLabel = screen.getByText(/terms of service/i);
+      expect(tosCheckbox).toBeInTheDocument();
+      expect(tosLabel).toBeInTheDocument();
 
-        expect(usernameInput).toBeDisabled();
-        expect(passwordInput).toBeDisabled();
-        expect(submitButton).toBeDisabled();
+      const cocCheckbox = document.querySelector("#coc");
+      const cocLabel = screen.getByText(/code of conduct/i);
+      expect(cocCheckbox).toBeInTheDocument();
+      expect(cocLabel).toBeInTheDocument();
     });
 
-    it('shows "Signing in..." text when loading', () => {
-        render(<LoginForm onSubmit={mockOnSubmit} loading={true} />);
+    it("has proper focus management", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByRole('button', { name: /signing in/i })).toBeInTheDocument();
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      await user.tab();
+      expect(usernameInput).toHaveFocus();
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("handles empty form submission attempt", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).not.toHaveBeenCalled();
+      });
     });
 
-    it('shows "Sign in" text when not loading', () => {
-        render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+    it("handles only one checkbox checked", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
 
-        expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
+      const usernameInput = screen.getByLabelText(/email or username/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+
+      await user.type(usernameInput, "testuser");
+      await user.type(passwordInput, "password123");
+
+      const tosCheckbox = document.querySelector("#tos") as HTMLElement;
+      await user.click(tosCheckbox);
+
+      const submitButton = screen.getByRole("button", { name: /sign in/i });
+      expect(submitButton).toBeDisabled();
     });
 
-    describe('Form Validation', () => {
-        it('shows validation error for username shorter than 4 characters', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
+    it("handles loginError with message property", () => {
+      const loginError = { message: "Custom error message" };
+      render(<LoginForm onSubmit={mockOnSubmit} loading={false} loginError={loginError} />);
 
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            const passwordInput = screen.getByLabelText(/^password$/i);
-            await user.type(usernameInput, 'abc');
-            await user.type(passwordInput, 'validpass');
-
-            // Check checkboxes to enable submit button
-            const tosCheckbox = document.querySelector('#tos') as HTMLElement;
-            const cocCheckbox = document.querySelector('#coc') as HTMLElement;
-            await user.click(tosCheckbox);
-            await user.click(cocCheckbox);
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            await waitFor(() => {
-                expect(submitButton).not.toBeDisabled();
-            });
-
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(
-                    screen.getAllByText(/username should be more than 4 characters/i)[0]
-                ).toBeInTheDocument();
-            });
-        });
-
-        it('shows validation error for username longer than 30 characters', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            const passwordInput = screen.getByLabelText(/^password$/i);
-            await user.type(usernameInput, 'a'.repeat(31));
-            await user.type(passwordInput, 'validpass');
-
-            // Check checkboxes to enable submit button
-            const tosCheckbox = document.querySelector('#tos') as HTMLElement;
-            const cocCheckbox = document.querySelector('#coc') as HTMLElement;
-            await user.click(tosCheckbox);
-            await user.click(cocCheckbox);
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            await waitFor(() => {
-                expect(submitButton).not.toBeDisabled();
-            });
-
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(
-                    screen.getAllByText(/username should be less than thirty characters/i)[0]
-                ).toBeInTheDocument();
-            });
-        });
-
-        it('shows validation error for password shorter than 2 characters', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            const passwordInput = screen.getByLabelText(/^password$/i);
-            await user.type(usernameInput, 'validuser');
-            await user.type(passwordInput, 'a');
-
-            // Check checkboxes to enable submit button
-            const tosCheckbox = document.querySelector('#tos') as HTMLElement;
-            const cocCheckbox = document.querySelector('#coc') as HTMLElement;
-            await user.click(tosCheckbox);
-            await user.click(cocCheckbox);
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            await waitFor(() => {
-                expect(submitButton).not.toBeDisabled();
-            });
-
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(
-                    screen.getAllByText(/password should be more than 2 characters/i)[0]
-                ).toBeInTheDocument();
-            });
-        });
-
-        it('shows validation error for password longer than 20 characters', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            const passwordInput = screen.getByLabelText(/^password$/i);
-            await user.type(usernameInput, 'validuser');
-            await user.type(passwordInput, 'a'.repeat(21));
-
-            // Check checkboxes to enable submit button
-            const tosCheckbox = document.querySelector('#tos') as HTMLElement;
-            const cocCheckbox = document.querySelector('#coc') as HTMLElement;
-            await user.click(tosCheckbox);
-            await user.click(cocCheckbox);
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            await waitFor(() => {
-                expect(submitButton).not.toBeDisabled();
-            });
-
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(
-                    screen.getAllByText(/password should be less than twenty characters/i)[0]
-                ).toBeInTheDocument();
-            });
-        });
-
-        it('does not submit form when validation errors exist', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            await user.type(usernameInput, 'ab'); // Too short
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(mockOnSubmit).not.toHaveBeenCalled();
-            });
-        });
+      expect(screen.getAllByText(/login failed/i).length).toBeGreaterThan(0);
     });
-
-    describe('Accessibility', () => {
-        it('has proper labels for all inputs', () => {
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
-            expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
-        });
-
-        it('sets aria-invalid on inputs when there are errors', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            const passwordInput = screen.getByLabelText(/^password$/i);
-            await user.type(usernameInput, 'ab');
-            await user.type(passwordInput, 'validpass');
-
-            // Check checkboxes to enable submit button
-            const tosCheckbox = document.querySelector('#tos') as HTMLElement;
-            const cocCheckbox = document.querySelector('#coc') as HTMLElement;
-            await user.click(tosCheckbox);
-            await user.click(cocCheckbox);
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            await waitFor(() => {
-                expect(submitButton).not.toBeDisabled();
-            });
-
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(usernameInput).toHaveAttribute('aria-invalid', 'true');
-            });
-        });
-
-        it('associates error messages with input fields', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            const passwordInput = screen.getByLabelText(/^password$/i);
-            await user.type(usernameInput, 'ab');
-            await user.type(passwordInput, 'validpass');
-
-            // Check checkboxes to enable submit button
-            const tosCheckbox = document.querySelector('#tos') as HTMLElement;
-            const cocCheckbox = document.querySelector('#coc') as HTMLElement;
-            await user.click(tosCheckbox);
-            await user.click(cocCheckbox);
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            await waitFor(() => {
-                expect(submitButton).not.toBeDisabled();
-            });
-
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                const errorMessages = screen.getAllByText(
-                    /username should be more than 4 characters/i
-                );
-                expect(errorMessages.length).toBeGreaterThan(0);
-                // Error message should be visible (either in alert or inline)
-                const visibleError = errorMessages.find(msg => {
-                    const element = msg as HTMLElement;
-                    return element.offsetParent !== null || 
-                           element.closest('[role="alert"]') !== null ||
-                           element.closest('.text-red-600') !== null;
-                });
-                expect(visibleError).toBeDefined();
-            });
-        });
-
-        it('has accessible checkbox labels', () => {
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const tosCheckbox = document.querySelector('#tos');
-            const tosLabel = screen.getByText(/terms of service/i);
-            expect(tosCheckbox).toBeInTheDocument();
-            expect(tosLabel).toBeInTheDocument();
-
-            const cocCheckbox = document.querySelector('#coc');
-            const cocLabel = screen.getByText(/code of conduct/i);
-            expect(cocCheckbox).toBeInTheDocument();
-            expect(cocLabel).toBeInTheDocument();
-        });
-
-        it('has proper focus management', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            await user.tab();
-            expect(usernameInput).toHaveFocus();
-        });
-    });
-
-    describe('Edge Cases', () => {
-        it('handles empty form submission attempt', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(mockOnSubmit).not.toHaveBeenCalled();
-            });
-        });
-
-        it('handles only one checkbox checked', async () => {
-            const user = userEvent.setup();
-            render(<LoginForm onSubmit={mockOnSubmit} loading={false} />);
-
-            const usernameInput = screen.getByLabelText(/email or username/i);
-            const passwordInput = screen.getByLabelText(/^password$/i);
-
-            await user.type(usernameInput, 'testuser');
-            await user.type(passwordInput, 'password123');
-
-            const tosCheckbox = document.querySelector('#tos') as HTMLElement;
-            await user.click(tosCheckbox);
-
-            const submitButton = screen.getByRole('button', { name: /sign in/i });
-            expect(submitButton).toBeDisabled();
-        });
-
-        it('handles loginError with message property', () => {
-            const loginError = { message: 'Custom error message' };
-            render(
-                <LoginForm
-                    onSubmit={mockOnSubmit}
-                    loading={false}
-                    loginError={loginError}
-                />
-            );
-
-            expect(screen.getAllByText(/login failed/i).length).toBeGreaterThan(0);
-        });
-    });
+  });
 });

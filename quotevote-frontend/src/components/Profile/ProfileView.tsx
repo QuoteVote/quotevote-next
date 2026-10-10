@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import Link from 'next/link';
-import type { ProfileViewProps } from '@/types/profile';
-import { ProfileHeader } from './ProfileHeader';
-import { ReputationDisplay } from './ReputationDisplay';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Card, CardContent } from '@/components/ui/card';
-import { PaginatedActivityList } from '@/components/Activity/PaginatedActivityList';
-import { cn } from '@/lib/utils';
+import { useState, useCallback } from "react";
+import Link from "next/link";
+import type { ProfileViewProps } from "@/types/profile";
+import { ProfileHeader } from "./ProfileHeader";
+import { ReputationDisplay } from "./ReputationDisplay";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { Card, CardContent } from "@/components/ui/card";
+import { PaginatedActivityList } from "@/components/Activity/PaginatedActivityList";
+import { cn } from "@/lib/utils";
 
-export type ProfileActivityType = 'POSTED' | 'VOTED' | 'COMMENTED' | 'QUOTED';
+export type ProfileActivityType = "POSTED" | "VOTED" | "COMMENTED" | "QUOTED";
 
 export const ACTIVITY_FILTERS: Array<{
   id: ProfileActivityType;
   label: string;
 }> = [
-  { id: 'POSTED', label: 'Posts' },
-  { id: 'VOTED', label: 'Voted' },
-  { id: 'COMMENTED', label: 'Commented' },
-  { id: 'QUOTED', label: 'Quoted' },
+  { id: "POSTED", label: "Posts" },
+  { id: "VOTED", label: "Voted" },
+  { id: "COMMENTED", label: "Commented" },
+  { id: "QUOTED", label: "Quoted" },
 ];
 
 // Activity filter styling mapping with accessible contrast (RC1-009)
@@ -28,39 +28,30 @@ export const ACTIVITY_FILTER_STYLES: Record<
   { activeBorder: string; activeText: string; color: string }
 > = {
   POSTED: {
-    activeBorder: 'border-primary',
-    activeText: 'text-foreground',
-    color: '#52b274',
+    activeBorder: "border-primary",
+    activeText: "text-foreground",
+    color: "#52b274",
   },
   VOTED: {
-    activeBorder: 'border-[#52b274]',
-    activeText: 'text-[#52b274]',
-    color: '#52b274',
+    activeBorder: "border-[#52b274]",
+    activeText: "text-[#52b274]",
+    color: "#52b274",
   },
   COMMENTED: {
-    activeBorder: 'border-[#ca8a04]',
-    activeText: 'text-[#ca8a04]',
-    color: '#FDD835',
+    activeBorder: "border-[#ca8a04]",
+    activeText: "text-[#ca8a04]",
+    color: "#FDD835",
   },
   QUOTED: {
-    activeBorder: 'border-[#c026d3]',
-    activeText: 'text-[#c026d3]',
-    color: '#E36DFA',
+    activeBorder: "border-[#c026d3]",
+    activeText: "text-[#c026d3]",
+    color: "#E36DFA",
   },
 };
 
-export const ALL_ACTIVITY_TYPES: ProfileActivityType[] = [
-  'POSTED',
-  'VOTED',
-  'COMMENTED',
-  'QUOTED',
-];
+export const ALL_ACTIVITY_TYPES: ProfileActivityType[] = ["POSTED", "VOTED", "COMMENTED", "QUOTED"];
 
-export function ProfileView({
-  profileUser,
-  loading,
-  errorMessage,
-}: ProfileViewProps) {
+export function ProfileView({ profileUser, loading, errorMessage }: ProfileViewProps) {
   const [selectedFilters, setSelectedFilters] = useState<ProfileActivityType[]>([]);
 
   const handleSelectAll = useCallback(() => {
@@ -130,13 +121,13 @@ export function ProfileView({
             <button
               type="button"
               aria-pressed={isAllActive}
-              data-state={isAllActive ? 'active' : 'inactive'}
+              data-state={isAllActive ? "active" : "inactive"}
               onClick={handleSelectAll}
               className={cn(
-                'flex-1 h-full min-w-[50px] inline-flex items-center justify-center whitespace-nowrap px-1 sm:px-3 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border-b-2',
+                "flex-1 h-full min-w-[50px] inline-flex items-center justify-center whitespace-nowrap px-1 sm:px-3 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border-b-2",
                 isAllActive
-                  ? 'border-primary text-foreground font-semibold'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  ? "border-primary text-foreground font-semibold"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
               All
@@ -152,13 +143,13 @@ export function ProfileView({
                   key={id}
                   type="button"
                   aria-pressed={isActive}
-                  data-state={isActive ? 'active' : 'inactive'}
+                  data-state={isActive ? "active" : "inactive"}
                   onClick={() => handleToggleFilter(id)}
                   className={cn(
-                    'flex-1 h-full min-w-[60px] inline-flex items-center justify-center whitespace-nowrap px-1 sm:px-3 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border-b-2',
+                    "flex-1 h-full min-w-[60px] inline-flex items-center justify-center whitespace-nowrap px-1 sm:px-3 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border-b-2",
                     isActive
                       ? `${filterStyle.activeBorder} ${filterStyle.activeText} font-semibold`
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {label}
@@ -169,7 +160,8 @@ export function ProfileView({
           {!isAllActive && selectedFilters.length > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground border-t border-border/50">
               <span>
-                Showing {selectedFilters.length} filter{selectedFilters.length === 1 ? '' : 's'} (combined)
+                Showing {selectedFilters.length} filter{selectedFilters.length === 1 ? "" : "s"}{" "}
+                (combined)
               </span>
               <button
                 type="button"

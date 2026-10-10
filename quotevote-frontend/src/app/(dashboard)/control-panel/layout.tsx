@@ -1,24 +1,22 @@
 /**
  * Control Panel Layout
- * 
+ *
  * Nested layout for the admin control panel.
  * Migrated from Admin.jsx to Next.js App Router.
- * 
+ *
  * This layout provides admin-specific structure while inheriting
  * the dashboard layout's MainNavBar and RequestInviteDialog.
- * 
+ *
  * Note: This is a Server Component since it doesn't use any hooks or client-side features.
  * It inherits client-side features from the parent dashboard layout.
  */
 
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 interface ControlPanelLayoutProps {
   children: ReactNode;
 }
 
-export default function ControlPanelLayout({
-  children,
-}: ControlPanelLayoutProps): ReactNode {
+export default function ControlPanelLayout({ children }: ControlPanelLayoutProps): ReactNode {
   return <>{children}</>;
 }

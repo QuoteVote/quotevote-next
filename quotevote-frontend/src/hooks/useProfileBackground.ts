@@ -1,23 +1,20 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   DEFAULT_PROFILE_BG_COLOR,
   DEFAULT_PROFILE_BG_PATTERN,
   normalizeProfileBgColor,
   normalizeProfileBgPattern,
-} from '@/lib/utils/profileBackground';
-import type {
-  ProfileBackground,
-  ProfileBackgroundPattern,
-} from '@/types/profile';
+} from "@/lib/utils/profileBackground";
+import type { ProfileBackground, ProfileBackgroundPattern } from "@/types/profile";
 
-const COLOR_KEY = 'profileBgColor';
-const PATTERN_KEY = 'profileBgPattern';
-const SYNC_EVENT = 'profile-background-change';
+const COLOR_KEY = "profileBgColor";
+const PATTERN_KEY = "profileBgPattern";
+const SYNC_EVENT = "profile-background-change";
 
 function readColor(): string {
-  if (typeof window === 'undefined') return DEFAULT_PROFILE_BG_COLOR;
+  if (typeof window === "undefined") return DEFAULT_PROFILE_BG_COLOR;
   try {
     return normalizeProfileBgColor(localStorage.getItem(COLOR_KEY));
   } catch (_error) {
@@ -26,7 +23,7 @@ function readColor(): string {
 }
 
 function readPattern(): ProfileBackgroundPattern {
-  if (typeof window === 'undefined') return DEFAULT_PROFILE_BG_PATTERN;
+  if (typeof window === "undefined") return DEFAULT_PROFILE_BG_PATTERN;
   try {
     return normalizeProfileBgPattern(localStorage.getItem(PATTERN_KEY));
   } catch (_error) {
@@ -46,8 +43,7 @@ function readPattern(): ProfileBackgroundPattern {
  */
 export function useProfileBackground(): ProfileBackground {
   const [color, setColorState] = useState<string>(readColor);
-  const [pattern, setPatternState] =
-    useState<ProfileBackgroundPattern>(readPattern);
+  const [pattern, setPatternState] = useState<ProfileBackgroundPattern>(readPattern);
 
   useEffect(() => {
     const sync = () => {
@@ -55,10 +51,10 @@ export function useProfileBackground(): ProfileBackground {
       setPatternState(readPattern());
     };
     window.addEventListener(SYNC_EVENT, sync);
-    window.addEventListener('storage', sync);
+    window.addEventListener("storage", sync);
     return () => {
       window.removeEventListener(SYNC_EVENT, sync);
-      window.removeEventListener('storage', sync);
+      window.removeEventListener("storage", sync);
     };
   }, []);
 

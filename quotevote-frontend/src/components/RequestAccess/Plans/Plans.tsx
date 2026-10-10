@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
 /**
  * Plans Component
- * 
+ *
  * Component for selecting plan type (Personal, Business, Investors).
  * Migrated from Material UI to shadcn/ui components.
  */
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { isMobile } from 'react-device-detect';
-import Image from 'next/image';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { isMobile } from "react-device-detect";
+import Image from "next/image";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
-import { useAppStore } from '@/store';
-import type { PlansProps } from '@/types/components';
+import { useAppStore } from "@/store";
+import type { PlansProps } from "@/types/components";
 
 export function Plans({}: PlansProps) {
   const router = useRouter();
@@ -24,35 +24,35 @@ export function Plans({}: PlansProps) {
 
   useEffect(() => {
     // Check if user is logged in and redirect if so
-    if (userData && '_id' in userData && userData._id) {
-      router.push('/search');
+    if (userData && "_id" in userData && userData._id) {
+      router.push("/search");
     }
   }, [userData, router]);
 
-  const handlePlanSelection = (type: 'personal' | 'business' | 'investors') => {
+  const handlePlanSelection = (type: "personal" | "business" | "investors") => {
     setSelectedPlan(type);
-    router.push('/auth/plans');
+    router.push("/auth/plans");
   };
 
   const buttonList = (
     <div className="flex flex-col space-y-4 items-center justify-evenly">
       <Button
         variant="outline"
-        onClick={() => handlePlanSelection('personal')}
+        onClick={() => handlePlanSelection("personal")}
         className="w-full max-w-xs"
       >
         Personal
       </Button>
       <Button
         variant="outline"
-        onClick={() => handlePlanSelection('business')}
+        onClick={() => handlePlanSelection("business")}
         className="w-full max-w-xs"
       >
         Business
       </Button>
       <Button
         variant="outline"
-        onClick={() => handlePlanSelection('investors')}
+        onClick={() => handlePlanSelection("investors")}
         className="w-full max-w-xs"
       >
         Investors
@@ -64,9 +64,7 @@ export function Plans({}: PlansProps) {
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-6xl">
         <div className="flex flex-col items-center justify-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-8 md:mb-12">
-            Select To Learn More
-          </h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-8 md:mb-12">Select To Learn More</h1>
 
           {/* Mobile view */}
           {isMobile && buttonList}
@@ -84,7 +82,7 @@ export function Plans({}: PlansProps) {
                 />
                 <Button
                   variant="outline"
-                  onClick={() => handlePlanSelection('personal')}
+                  onClick={() => handlePlanSelection("personal")}
                   className="w-full max-w-xs"
                 >
                   Personal
@@ -100,7 +98,7 @@ export function Plans({}: PlansProps) {
                 />
                 <Button
                   variant="outline"
-                  onClick={() => handlePlanSelection('business')}
+                  onClick={() => handlePlanSelection("business")}
                   className="w-full max-w-xs"
                 >
                   Business
@@ -116,7 +114,7 @@ export function Plans({}: PlansProps) {
                 />
                 <Button
                   variant="outline"
-                  onClick={() => handlePlanSelection('investors')}
+                  onClick={() => handlePlanSelection("investors")}
                   className="w-full max-w-xs"
                 >
                   Investors
@@ -129,4 +127,3 @@ export function Plans({}: PlansProps) {
     </div>
   );
 }
-

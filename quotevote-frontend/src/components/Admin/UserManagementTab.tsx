@@ -1,37 +1,39 @@
-'use client'
+"use client";
 
-import { useQuery, useMutation } from '@apollo/client/react'
-import { AlertCircle, Users, Award } from 'lucide-react'
-import { toast } from 'sonner'
+import { useQuery, useMutation } from "@apollo/client/react";
+import { AlertCircle, Users, Award } from "lucide-react";
+import { toast } from "sonner";
 
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Switch } from '@/components/ui/switch'
-import { GET_USERS } from '@/graphql/queries'
-import { UPDATE_USER } from '@/graphql/mutations'
-import { replaceGqlError } from '@/lib/utils/replaceGqlError'
-import type { AdminUser, GetUsersResponse } from '@/types/admin'
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { GET_USERS } from "@/graphql/queries";
+import { UPDATE_USER } from "@/graphql/mutations";
+import { replaceGqlError } from "@/lib/utils/replaceGqlError";
+import type { AdminUser, GetUsersResponse } from "@/types/admin";
 
 export default function UserManagementTab() {
   const { data, loading, error, refetch } = useQuery<GetUsersResponse>(GET_USERS, {
     variables: { limit: 100, offset: 0 },
-    errorPolicy: 'all',
-    fetchPolicy: 'cache-and-network',
-  })
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+  });
 
-  const [updateUser] = useMutation(UPDATE_USER)
+  const [updateUser] = useMutation(UPDATE_USER);
 
   const handleToggle = async (user: AdminUser) => {
     try {
-      await updateUser({ variables: { user: { _id: user._id, contributorBadge: !user.contributorBadge } } })
+      await updateUser({
+        variables: { user: { _id: user._id, contributorBadge: !user.contributorBadge } },
+      });
       toast.success(
-        `Contributor badge ${user.contributorBadge ? 'removed from' : 'added to'} @${user.username}`
-      )
-      refetch()
+        `Contributor badge ${user.contributorBadge ? "removed from" : "added to"} @${user.username}`
+      );
+      refetch();
     } catch (err) {
-      toast.error(replaceGqlError(err instanceof Error ? err.message : 'Failed to update user'))
+      toast.error(replaceGqlError(err instanceof Error ? err.message : "Failed to update user"));
     }
-  }
+  };
 
   if (error) {
     return (
@@ -41,10 +43,12 @@ export default function UserManagementTab() {
           <p className="text-sm font-semibold">Error loading users</p>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          {error.message?.includes('Authentication') ? 'Please log in to manage users.' : error.message}
+          {error.message?.includes("Authentication")
+            ? "Please log in to manage users."
+            : error.message}
         </p>
       </div>
-    )
+    );
   }
 
   if (loading || !data) {
@@ -54,11 +58,11 @@ export default function UserManagementTab() {
           <Skeleton key={i} className="h-16 rounded-xl" />
         ))}
       </div>
-    )
+    );
   }
 
-  const users = data.users || []
-  const contributorCount = users.filter((u) => u.contributorBadge).length
+  const users = data.users || [];
+  const contributorCount = users.filter((u) => u.contributorBadge).length;
 
   return (
     <div className="space-y-5">
@@ -105,9 +109,15 @@ export default function UserManagementTab() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/60 bg-muted/30">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
-                  <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contributor Badge</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Contributor Badge
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
@@ -116,12 +126,14 @@ export default function UserManagementTab() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <div className="size-7 rounded-full bg-[#52b274]/10 flex items-center justify-center text-xs font-bold text-[#52b274]">
-                          {(user.username || 'U').charAt(0).toUpperCase()}
+                          {(user.username || "U").charAt(0).toUpperCase()}
                         </div>
                         <span className="text-sm font-semibold">@{user.username}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-sm text-muted-foreground">{user.name || '—'}</td>
+                    <td className="px-5 py-3.5 text-sm text-muted-foreground">
+                      {user.name || "—"}
+                    </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-center gap-3">
                         <Switch
@@ -149,11 +161,11 @@ export default function UserManagementTab() {
               <div key={user._id} className="p-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="size-8 rounded-full bg-[#52b274]/10 flex items-center justify-center text-xs font-bold text-[#52b274] shrink-0">
-                    {(user.username || 'U').charAt(0).toUpperCase()}
+                    {(user.username || "U").charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">@{user.username}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user.name || '—'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.name || "—"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -170,5 +182,5 @@ export default function UserManagementTab() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -3,7 +3,7 @@
  * All types are defined here following Migration Rules
  */
 
-import type { Post } from './post'
+import type { Post } from "./post";
 
 /**
  * Props for UserPosts component
@@ -12,7 +12,7 @@ export interface UserPostsProps {
   /**
    * User ID to fetch posts for
    */
-  userId: string
+  userId: string;
 }
 
 /**
@@ -22,11 +22,11 @@ export interface PostCardProps {
   /**
    * Post data to display
    */
-  post: Post
+  post: Post;
   /**
    * Index of the post in the list
    */
-  index?: number
+  index?: number;
 }
 
 /**
@@ -34,29 +34,28 @@ export interface PostCardProps {
  */
 export interface PostsQueryResponse {
   posts: {
-    entities: Post[]
+    entities: Post[];
     pagination: {
-      total_count: number
-      limit: number
-      offset: number
-    }
-  }
+      total_count: number;
+      limit: number;
+      offset: number;
+    };
+  };
 }
 
 /**
  * GraphQL variables for posts query
  */
 export interface PostsQueryVariables {
-  limit: number
-  offset: number
-  searchKey: string
-  startDateRange?: string | null
-  endDateRange?: string | null
-  friendsOnly?: boolean | null
-  interactions?: boolean | null
-  userId?: string | null
-  sortOrder?: string | null
-  groupId?: string | null
-  approved?: boolean | null
+  limit: number;
+  offset: number;
+  searchKey: string;
+  startDateRange?: string | null;
+  endDateRange?: string | null;
+  friendsOnly?: boolean | null;
+  interactions?: boolean | null;
+  userId?: string | null;
+  sortOrder?: string | null;
+  groupId?: string | null;
+  approved?: boolean | null;
 }
-

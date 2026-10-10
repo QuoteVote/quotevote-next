@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
 /**
  * PaymentMethod Component
- * 
+ *
  * Payment form component for credit card input and cost selection.
  * Migrated from Material UI to shadcn/ui components.
  */
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-import { paymentMethodSchema } from '@/lib/validation/requestAccessSchema';
-import type { PaymentMethodProps } from '@/types/components';
-import { CreditCardInput } from '../CreditCardInput';
+import { paymentMethodSchema } from "@/lib/validation/requestAccessSchema";
+import type { PaymentMethodProps } from "@/types/components";
+import { CreditCardInput } from "../CreditCardInput";
 
 export function PaymentMethod({
   isContinued,
@@ -66,18 +66,9 @@ export function PaymentMethod({
           </h3>
         </CardHeader>
 
-        <input
-          type="hidden"
-          {...register('cardNumber', { required: !isPersonal })}
-        />
-        <input
-          type="hidden"
-          {...register('expiry', { required: !isPersonal })}
-        />
-        <input
-          type="hidden"
-          {...register('cvv', { required: !isPersonal })}
-        />
+        <input type="hidden" {...register("cardNumber", { required: !isPersonal })} />
+        <input type="hidden" {...register("expiry", { required: !isPersonal })} />
+        <input type="hidden" {...register("cvv", { required: !isPersonal })} />
 
         <CardContent className="space-y-4">
           <p className="font-roboto text-base leading-[1.56] text-[#424556]">
@@ -89,38 +80,38 @@ export function PaymentMethod({
               autoFocus: !isPersonal,
               value: cardDetails.cardNumber,
               onChange: (e) => {
-                setValue('cardNumber', e.target.value);
+                setValue("cardNumber", e.target.value);
                 setCardDetails({
                   ...cardDetails,
                   cardNumber: e.target.value,
                 });
               },
-              onError: () => setValue('cardNumber', ''),
+              onError: () => setValue("cardNumber", ""),
             }}
             cardExpiryInputProps={{
               value: cardDetails.expiry,
               onChange: (e) => {
-                setValue('expiry', e.target.value);
+                setValue("expiry", e.target.value);
                 setCardDetails({
                   ...cardDetails,
                   expiry: e.target.value,
                 });
               },
-              onError: () => setValue('expiry', ''),
+              onError: () => setValue("expiry", ""),
             }}
             cardCVCInputProps={{
               value: cardDetails.cvv,
               onChange: (e) => {
-                setValue('cvv', e.target.value);
+                setValue("cvv", e.target.value);
                 setCardDetails({
                   ...cardDetails,
                   cvv: e.target.value,
                 });
               },
-              onError: () => setValue('cvv', ''),
+              onError: () => setValue("cvv", ""),
             }}
             customTextLabels={{
-              cardNumberPlaceholder: 'Credit Card Number',
+              cardNumberPlaceholder: "Credit Card Number",
             }}
           />
 
@@ -132,13 +123,11 @@ export function PaymentMethod({
                   id="cost"
                   type="number"
                   value={cardDetails.cost}
-                  onChange={(e) =>
-                    setCardDetails({ ...cardDetails, cost: e.target.value })
-                  }
+                  onChange={(e) => setCardDetails({ ...cardDetails, cost: e.target.value })}
                 />
               </div>
             )}
-            <div className={isPersonal ? 'col-span-1' : 'col-span-2'}>
+            <div className={isPersonal ? "col-span-1" : "col-span-2"}>
               <p className="font-roboto text-lg leading-[1.56] text-center font-bold">
                 Total: ${cardDetails.cost}
               </p>
@@ -147,11 +136,7 @@ export function PaymentMethod({
 
           <div className="flex items-center justify-between">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt="stripe"
-              src="/assets/stripe.png"
-              className="w-[90px] h-[19px] opacity-40"
-            />
+            <img alt="stripe" src="/assets/stripe.png" className="w-[90px] h-[19px] opacity-40" />
             <Button
               type="submit"
               disabled={loading}
@@ -160,15 +145,13 @@ export function PaymentMethod({
               {loading && (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               )}
-              <span className={loading ? 'opacity-0' : ''}>Request Invite</span>
+              <span className={loading ? "opacity-0" : ""}>Request Invite</span>
             </Button>
           </div>
 
           {errorMessage && (
             <div className="mt-2.5">
-              <span className="font-roboto text-red-600">
-                Error: {errorMessage}
-              </span>
+              <span className="font-roboto text-red-600">Error: {errorMessage}</span>
             </div>
           )}
         </CardContent>
@@ -176,4 +159,3 @@ export function PaymentMethod({
     </form>
   );
 }
-

@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { Copy, CheckCircle2, XCircle } from 'lucide-react'
-import { useState } from 'react'
+import { useRouter } from "next/navigation";
+import { Copy, CheckCircle2, XCircle } from "lucide-react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,10 +10,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import type { SubmitPostAlertProps } from '@/types/components'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { SubmitPostAlertProps } from "@/types/components";
 // Note: Using process.env directly for client-side access
 
 export function SubmitPostAlert({
@@ -23,31 +23,32 @@ export function SubmitPostAlert({
   setShowAlert,
   setOpen,
 }: SubmitPostAlertProps) {
-  const router = useRouter()
-  const [copied, setCopied] = useState(false)
+  const router = useRouter();
+  const [copied, setCopied] = useState(false);
   // Use NEXT_PUBLIC_SERVER_URL for client-side access
-  const DOMAIN = process.env.NEXT_PUBLIC_SERVER_URL || process.env.NEXT_PUBLIC_DOMAIN || 'localhost:3000'
-  const fullLink = shareableLink ? `${DOMAIN}${shareableLink.replace(/\?/g, '')}` : ''
+  const DOMAIN =
+    process.env.NEXT_PUBLIC_SERVER_URL || process.env.NEXT_PUBLIC_DOMAIN || "localhost:3000";
+  const fullLink = shareableLink ? `${DOMAIN}${shareableLink.replace(/\?/g, "")}` : "";
 
   const handleCopy = async () => {
     if (fullLink) {
       try {
-        await navigator.clipboard.writeText(fullLink)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        await navigator.clipboard.writeText(fullLink);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch (err) {
-        console.error('Failed to copy:', err)
+        console.error("Failed to copy:", err);
       }
     }
-  }
+  };
 
   const goToPost = async () => {
     if (shareableLink) {
-      await router.push(shareableLink.replace(/\?/g, ''))
-      setShowAlert(false)
-      setOpen(false)
+      await router.push(shareableLink.replace(/\?/g, ""));
+      setShowAlert(false);
+      setOpen(false);
     }
-  }
+  };
 
   if (error) {
     return (
@@ -58,20 +59,21 @@ export function SubmitPostAlert({
               <XCircle className="h-5 w-5 text-destructive" />
               Error
             </DialogTitle>
-            <DialogDescription>
-              An error occurred while creating your post.
-            </DialogDescription>
+            <DialogDescription>An error occurred while creating your post.</DialogDescription>
           </DialogHeader>
           <Alert variant="destructive">
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>
               {error instanceof Error
                 ? error.message
-                : typeof error === 'object' && error !== null && 'message' in error
+                : typeof error === "object" && error !== null && "message" in error
                   ? String(error.message)
-                  : (error && typeof error === 'object' && 'toString' in error && typeof error.toString === 'function')
+                  : error &&
+                      typeof error === "object" &&
+                      "toString" in error &&
+                      typeof error.toString === "function"
                     ? error.toString()
-                    : 'An unknown error occurred'}
+                    : "An unknown error occurred"}
             </AlertDescription>
           </Alert>
           <DialogFooter>
@@ -81,7 +83,7 @@ export function SubmitPostAlert({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   return (
@@ -92,16 +94,12 @@ export function SubmitPostAlert({
             <CheckCircle2 className="h-5 w-5 text-green-600" />
             Post Created Successfully!
           </DialogTitle>
-          <DialogDescription>
-            Share your post with friends and family.
-          </DialogDescription>
+          <DialogDescription>Share your post with friends and family.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <Alert variant="success">
             <AlertTitle>Success</AlertTitle>
-            <AlertDescription>
-              Your post has been created successfully.
-            </AlertDescription>
+            <AlertDescription>Your post has been created successfully.</AlertDescription>
           </Alert>
           {fullLink && (
             <div className="flex items-center gap-2 rounded-md border p-3">
@@ -132,6 +130,5 @@ export function SubmitPostAlert({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

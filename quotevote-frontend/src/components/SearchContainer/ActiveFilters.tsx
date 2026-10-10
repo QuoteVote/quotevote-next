@@ -1,23 +1,23 @@
-'use client'
+"use client";
 
-import { X } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ActiveFilter {
-  key: string
-  label: string
-  value: string
-  onRemove: () => void
+  key: string;
+  label: string;
+  value: string;
+  onRemove: () => void;
 }
 
 interface ActiveFiltersProps {
-  filters: ActiveFilter[]
+  filters: ActiveFilter[];
 }
 
 export default function ActiveFilters({ filters }: ActiveFiltersProps) {
-  const active = filters.filter((f) => f.value)
+  const active = filters.filter((f) => f.value);
 
-  if (active.length === 0) return null
+  if (active.length === 0) return null;
 
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -40,5 +40,5 @@ export default function ActiveFilters({ filters }: ActiveFiltersProps) {
         </Badge>
       ))}
     </div>
-  )
+  );
 }

@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from 'react'
-import Link from 'next/link'
+import { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   MessageSquare,
   ThumbsUp,
@@ -12,44 +12,42 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-} from 'lucide-react'
+} from "lucide-react";
 
-import { ContentListProps, ContentCardProps } from '@/types/contentList'
+import { ContentListProps, ContentCardProps } from "@/types/contentList";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { Badge } from '@/components/ui/badge'
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { Badge } from "@/components/ui/badge";
 
-
-
-const ITEMS_PER_PAGE = 5
+const ITEMS_PER_PAGE = 5;
 
 // Extracted ContentCard component for better state management and reusability
 
 function ContentCard({ item }: ContentCardProps) {
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopy = (url: string, id: string) => {
-    navigator.clipboard.writeText(url)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
-  }
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
-  const PREVIEW_CHAR_LIMIT = 150
+  const PREVIEW_CHAR_LIMIT = 150;
   const displayContent =
     item.content.length > PREVIEW_CHAR_LIMIT
       ? `${item.content.slice(0, PREVIEW_CHAR_LIMIT)}...`
-      : item.content
+      : item.content;
 
   return (
     <Card className="transition-all hover:shadow-md" role="article">
@@ -57,7 +55,10 @@ function ContentCard({ item }: ContentCardProps) {
         <div className="flex justify-between items-start gap-4">
           <div className="space-y-1">
             <CardTitle className="text-xl font-bold leading-none">
-              <Link href={item.url || '#'} className="hover:underline hover:text-primary transition-colors">
+              <Link
+                href={item.url || "#"}
+                className="hover:underline hover:text-primary transition-colors"
+              >
                 {item.title}
               </Link>
             </CardTitle>
@@ -94,7 +95,11 @@ function ContentCard({ item }: ContentCardProps) {
             <MessageSquare className="w-4 h-4" />
             <span className="hidden sm:inline">Comments</span>
           </Button>
-          <Button variant="ghost" size="sm" className="gap-2 text-pink-500 hover:text-pink-600 hover:bg-pink-50 dark:hover:bg-pink-950/20">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-pink-500 hover:text-pink-600 hover:bg-pink-50 dark:hover:bg-pink-950/20"
+          >
             <Heart className="w-4 h-4" />
             <span className="hidden sm:inline">Save</span>
           </Button>
@@ -117,7 +122,7 @@ function ContentCard({ item }: ContentCardProps) {
             )}
           </Button>
           <Button asChild variant="outline" size="sm" className="gap-2">
-            <Link href={item.url || '#'} target="_blank" rel="noopener noreferrer">
+            <Link href={item.url || "#"} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-4 h-4" />
               Open
             </Link>
@@ -125,67 +130,66 @@ function ContentCard({ item }: ContentCardProps) {
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 export default function ContentList({
   data = [],
   isLoading = false,
-  error = null
+  error = null,
 }: ContentListProps) {
-  const [filterText, setFilterText] = useState('')
-  const [sortBy, setSortBy] = useState('newest')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [filterText, setFilterText] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filter and Sort Logic
   const filteredAndSortedData = useMemo(() => {
-    let result = [...data]
+    let result = [...data];
 
     // Filter
     if (filterText.trim()) {
-      const lowerFilter = filterText.toLowerCase()
-      result = result.filter(item =>
-        item.title.toLowerCase().includes(lowerFilter) ||
-        item.content.toLowerCase().includes(lowerFilter)
-      )
+      const lowerFilter = filterText.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.title.toLowerCase().includes(lowerFilter) ||
+          item.content.toLowerCase().includes(lowerFilter)
+      );
     }
 
     // Sort
     result.sort((a, b) => {
-      if (sortBy === 'popular') {
-        return (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes)
+      if (sortBy === "popular") {
+        return b.upvotes - b.downvotes - (a.upvotes - a.downvotes);
       }
-      if (sortBy === 'oldest') {
+      if (sortBy === "oldest") {
         if (a.createdAt && b.createdAt) {
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         }
-        return 0
+        return 0;
       }
       // Default: Newest
       if (a.createdAt && b.createdAt) {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
-      return 0
-    })
+      return 0;
+    });
 
-    return result
-  }, [data, filterText, sortBy])
+    return result;
+  }, [data, filterText, sortBy]);
 
   // Pagination Logic
-  const totalPages = Math.ceil(filteredAndSortedData.length / ITEMS_PER_PAGE)
+  const totalPages = Math.ceil(filteredAndSortedData.length / ITEMS_PER_PAGE);
   const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE
-    return filteredAndSortedData.slice(start, start + ITEMS_PER_PAGE)
-  }, [filteredAndSortedData, currentPage])
-
-
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedData.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredAndSortedData, currentPage]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <LoadingSpinner size={40} />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -194,7 +198,7 @@ export default function ContentList({
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
-    )
+    );
   }
 
   return (
@@ -207,8 +211,8 @@ export default function ContentList({
             placeholder="Search content..."
             value={filterText}
             onChange={(e) => {
-              setFilterText(e.target.value)
-              setCurrentPage(1)
+              setFilterText(e.target.value);
+              setCurrentPage(1);
             }}
             className="pl-9"
           />
@@ -216,10 +220,13 @@ export default function ContentList({
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-sm text-muted-foreground whitespace-nowrap">Sort by:</span>
-          <Select value={sortBy} onValueChange={(val) => {
-            setSortBy(val)
-            setCurrentPage(1)
-          }}>
+          <Select
+            value={sortBy}
+            onValueChange={(val) => {
+              setSortBy(val);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -235,9 +242,7 @@ export default function ContentList({
       {/* Content List */}
       <div className="space-y-4">
         {paginatedData.length > 0 ? (
-          paginatedData.map((item) => (
-            <ContentCard key={item.id} item={item} />
-          ))
+          paginatedData.map((item) => <ContentCard key={item.id} item={item} />)
         ) : (
           <div className="text-center py-12 border-2 border-dashed rounded-lg bg-muted/10">
             <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -245,11 +250,15 @@ export default function ContentList({
             </div>
             <h3 className="text-lg font-semibold">No content found</h3>
             <p className="text-muted-foreground text-sm max-w-sm mx-auto mt-2">
-              We couldn&apos;t find any content matching your search filters. Try adjusting your search query.
+              We couldn&apos;t find any content matching your search filters. Try adjusting your
+              search query.
             </p>
             <Button
               variant="link"
-              onClick={() => { setFilterText(''); setSortBy('newest'); }}
+              onClick={() => {
+                setFilterText("");
+                setSortBy("newest");
+              }}
               className="mt-4"
             >
               Clear all filters
@@ -264,7 +273,7 @@ export default function ContentList({
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
             aria-label="Previous page"
           >
@@ -276,7 +285,7 @@ export default function ContentList({
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
             aria-label="Next page"
           >
@@ -285,5 +294,5 @@ export default function ContentList({
         </div>
       )}
     </div>
-  )
+  );
 }

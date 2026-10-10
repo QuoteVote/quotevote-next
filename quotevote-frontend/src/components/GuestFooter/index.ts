@@ -5,5 +5,4 @@
  * Displays brand message, copyright, and action links.
  */
 
-export { GuestFooter } from './GuestFooter';
-
+export { GuestFooter } from "./GuestFooter";

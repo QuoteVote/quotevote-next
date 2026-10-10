@@ -1,6 +1,6 @@
 /**
  * StickyPaginationWrapper Component Tests
- * 
+ *
  * Tests that verify:
  * - Component renders correctly with children
  * - Pagination is rendered when provided
@@ -8,11 +8,11 @@
  * - Component structure is correct
  */
 
-import { render, screen } from '../utils/test-utils'
-import { StickyPaginationWrapper } from '@/components/common/StickyPaginationWrapper'
-import { Pagination } from '@/components/common/Pagination'
+import { render, screen } from "../utils/test-utils";
+import { StickyPaginationWrapper } from "@/components/common/StickyPaginationWrapper";
+import { Pagination } from "@/components/common/Pagination";
 
-describe('StickyPaginationWrapper Component', () => {
+describe("StickyPaginationWrapper Component", () => {
   const mockPagination = (
     <Pagination
       currentPage={1}
@@ -21,177 +21,176 @@ describe('StickyPaginationWrapper Component', () => {
       pageSize={10}
       onPageChange={jest.fn()}
     />
-  )
+  );
 
-  describe('Rendering', () => {
-    it('renders without crashing with children', () => {
+  describe("Rendering", () => {
+    it("renders without crashing with children", () => {
       const { container } = render(
         <StickyPaginationWrapper>
           <div>Test content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      expect(container).toBeInTheDocument()
-      expect(screen.getByText('Test content')).toBeInTheDocument()
-    })
+      expect(container).toBeInTheDocument();
+      expect(screen.getByText("Test content")).toBeInTheDocument();
+    });
 
-    it('renders children correctly', () => {
+    it("renders children correctly", () => {
       render(
         <StickyPaginationWrapper>
           <div data-testid="child">Child content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      expect(screen.getByTestId('child')).toBeInTheDocument()
-      expect(screen.getByText('Child content')).toBeInTheDocument()
-    })
+      expect(screen.getByTestId("child")).toBeInTheDocument();
+      expect(screen.getByText("Child content")).toBeInTheDocument();
+    });
 
-    it('renders pagination when provided', () => {
+    it("renders pagination when provided", () => {
       render(
         <StickyPaginationWrapper pagination={mockPagination}>
           <div>Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      const nextButtons = screen.getAllByLabelText('Next page')
-      expect(nextButtons.length).toBeGreaterThan(0)
-    })
+      const nextButtons = screen.getAllByLabelText("Next page");
+      expect(nextButtons.length).toBeGreaterThan(0);
+    });
 
-    it('does not render pagination when not provided', () => {
+    it("does not render pagination when not provided", () => {
       render(
         <StickyPaginationWrapper>
           <div>Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      expect(screen.queryByLabelText('Next page')).not.toBeInTheDocument()
-    })
+      expect(screen.queryByLabelText("Next page")).not.toBeInTheDocument();
+    });
 
-    it('renders with custom className', () => {
+    it("renders with custom className", () => {
       const { container } = render(
         <StickyPaginationWrapper className="custom-class">
           <div>Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      const wrapper = container.firstChild as HTMLElement
-      expect(wrapper).toHaveClass('custom-class')
-    })
-  })
+      const wrapper = container.firstChild as HTMLElement;
+      expect(wrapper).toHaveClass("custom-class");
+    });
+  });
 
-  describe('Styling', () => {
-    it('applies correct root container classes', () => {
+  describe("Styling", () => {
+    it("applies correct root container classes", () => {
       const { container } = render(
         <StickyPaginationWrapper>
           <div>Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      const wrapper = container.firstChild as HTMLElement
-      expect(wrapper).toHaveClass('flex', 'flex-col')
-    })
+      const wrapper = container.firstChild as HTMLElement;
+      expect(wrapper).toHaveClass("flex", "flex-col");
+    });
 
-    it('applies correct content area classes', () => {
+    it("applies correct content area classes", () => {
       const { container } = render(
         <StickyPaginationWrapper>
           <div>Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      const content = container.querySelector('.flex-1') as HTMLElement
-      expect(content).toBeInTheDocument()
-      expect(content).toHaveClass('flex-1')
-    })
+      const content = container.querySelector(".flex-1") as HTMLElement;
+      expect(content).toBeInTheDocument();
+      expect(content).toHaveClass("flex-1");
+    });
 
-    it('renders pagination inline below content (not fixed)', () => {
+    it("renders pagination inline below content (not fixed)", () => {
       render(
         <StickyPaginationWrapper pagination={mockPagination}>
           <div>Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      const nextButtons = screen.getAllByLabelText('Next page')
-      expect(nextButtons.length).toBeGreaterThan(0)
+      const nextButtons = screen.getAllByLabelText("Next page");
+      expect(nextButtons.length).toBeGreaterThan(0);
       // Pagination should not be fixed positioned
-      const fixedContainer = nextButtons[0]!.closest('.fixed')
-      expect(fixedContainer).toBeNull()
-    })
-  })
+      const fixedContainer = nextButtons[0]!.closest(".fixed");
+      expect(fixedContainer).toBeNull();
+    });
+  });
 
-  describe('Component Structure', () => {
-    it('has correct DOM structure with children only', () => {
+  describe("Component Structure", () => {
+    it("has correct DOM structure with children only", () => {
       const { container } = render(
         <StickyPaginationWrapper>
           <div data-testid="content">Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      const wrapper = container.firstChild as HTMLElement
-      const content = wrapper.querySelector('[data-testid="content"]')
+      const wrapper = container.firstChild as HTMLElement;
+      const content = wrapper.querySelector('[data-testid="content"]');
 
-      expect(wrapper).toBeInTheDocument()
-      expect(content).toBeInTheDocument()
-    })
+      expect(wrapper).toBeInTheDocument();
+      expect(content).toBeInTheDocument();
+    });
 
-    it('has correct DOM structure with pagination', () => {
+    it("has correct DOM structure with pagination", () => {
       const { container } = render(
         <StickyPaginationWrapper pagination={mockPagination}>
           <div data-testid="content">Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      const wrapper = container.firstChild as HTMLElement
-      const content = wrapper.querySelector('[data-testid="content"]')
-      const nextButtons = screen.getAllByLabelText('Next page')
+      const wrapper = container.firstChild as HTMLElement;
+      const content = wrapper.querySelector('[data-testid="content"]');
+      const nextButtons = screen.getAllByLabelText("Next page");
 
-      expect(wrapper).toBeInTheDocument()
-      expect(content).toBeInTheDocument()
-      expect(nextButtons.length).toBeGreaterThan(0)
-    })
+      expect(wrapper).toBeInTheDocument();
+      expect(content).toBeInTheDocument();
+      expect(nextButtons.length).toBeGreaterThan(0);
+    });
 
-    it('renders multiple children correctly', () => {
+    it("renders multiple children correctly", () => {
       render(
         <StickyPaginationWrapper>
           <div data-testid="child1">Child 1</div>
           <div data-testid="child2">Child 2</div>
           <div data-testid="child3">Child 3</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      expect(screen.getByTestId('child1')).toBeInTheDocument()
-      expect(screen.getByTestId('child2')).toBeInTheDocument()
-      expect(screen.getByTestId('child3')).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByTestId("child1")).toBeInTheDocument();
+      expect(screen.getByTestId("child2")).toBeInTheDocument();
+      expect(screen.getByTestId("child3")).toBeInTheDocument();
+    });
+  });
 
-  describe('Edge Cases', () => {
-    it('handles empty children', () => {
-      const { container } = render(<StickyPaginationWrapper>{null}</StickyPaginationWrapper>)
+  describe("Edge Cases", () => {
+    it("handles empty children", () => {
+      const { container } = render(<StickyPaginationWrapper>{null}</StickyPaginationWrapper>);
 
-      expect(container).toBeInTheDocument()
-    })
+      expect(container).toBeInTheDocument();
+    });
 
-    it('handles null pagination', () => {
+    it("handles null pagination", () => {
       const { container } = render(
         <StickyPaginationWrapper pagination={null}>
           <div>Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      expect(container).toBeInTheDocument()
-      expect(screen.getByText('Content')).toBeInTheDocument()
-    })
+      expect(container).toBeInTheDocument();
+      expect(screen.getByText("Content")).toBeInTheDocument();
+    });
 
-    it('handles undefined pagination', () => {
+    it("handles undefined pagination", () => {
       const { container } = render(
         <StickyPaginationWrapper pagination={undefined}>
           <div>Content</div>
         </StickyPaginationWrapper>
-      )
+      );
 
-      expect(container).toBeInTheDocument()
-      expect(screen.getByText('Content')).toBeInTheDocument()
-    })
-  })
-})
-
+      expect(container).toBeInTheDocument();
+      expect(screen.getByText("Content")).toBeInTheDocument();
+    });
+  });
+});

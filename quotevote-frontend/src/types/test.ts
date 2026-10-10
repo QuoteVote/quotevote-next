@@ -3,16 +3,16 @@
  * Used for test pages and mock data structures
  */
 
-import type { SettingsUserData } from './settings';
+import type { SettingsUserData } from "./settings";
 
 /**
  * User interface for test pages
  */
 export interface TestUser {
-    id?: string;
-    username?: string;
-    email?: string;
-    [key: string]: unknown;
+  id?: string;
+  username?: string;
+  email?: string;
+  [key: string]: unknown;
 }
 
 /**

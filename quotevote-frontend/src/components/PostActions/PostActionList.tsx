@@ -1,56 +1,56 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { isEmpty } from 'lodash'
-import moment from 'moment'
-import { MessagesSquare } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
-import PostActionCard from './PostActionCard'
-import { scrollActionIntoDiscussion } from '@/lib/utils/discussionSplit'
-import { useAppStore } from '@/store'
-import type { PostActionListProps } from '@/types/postActions'
+import { useEffect } from "react";
+import { isEmpty } from "lodash";
+import moment from "moment";
+import { MessagesSquare } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import PostActionCard from "./PostActionCard";
+import { scrollActionIntoDiscussion } from "@/lib/utils/discussionSplit";
+import { useAppStore } from "@/store";
+import type { PostActionListProps } from "@/types/postActions";
 
 export default function PostActionList({
   postActions,
   loading = false,
-  postUrl = '',
+  postUrl = "",
   refetchPost,
   postOwnerId,
   selectedActionId = null,
   onSelectAction,
 }: PostActionListProps) {
-  const setFocusedComment = useAppStore((state) => state.setFocusedComment)
-  const setSharedComment = useAppStore((state) => state.setSharedComment)
+  const setFocusedComment = useAppStore((state) => state.setFocusedComment);
+  const setSharedComment = useAppStore((state) => state.setSharedComment);
 
   // Extract hash from URL if present
-  const hash = typeof window !== 'undefined' ? window.location.hash : ''
+  const hash = typeof window !== "undefined" ? window.location.hash : "";
 
   useEffect(() => {
     if (!hash && !selectedActionId) {
-      setFocusedComment(null)
-      setSharedComment(null)
+      setFocusedComment(null);
+      setSharedComment(null);
     }
     if (!loading && postActions.length && hash) {
-      const elementId = hash.replace('#', '')
-      setSharedComment(elementId)
-      setFocusedComment(elementId)
+      const elementId = hash.replace("#", "");
+      setSharedComment(elementId);
+      setFocusedComment(elementId);
       if (document.getElementById(elementId)) {
-        scrollActionIntoDiscussion(elementId, 'center')
+        scrollActionIntoDiscussion(elementId, "center");
       }
     }
-  }, [hash, loading, postActions, selectedActionId, setFocusedComment, setSharedComment])
+  }, [hash, loading, postActions, selectedActionId, setFocusedComment, setSharedComment]);
 
   useEffect(() => {
-    if (!selectedActionId) return
-    scrollActionIntoDiscussion(selectedActionId, 'nearest')
-  }, [selectedActionId])
+    if (!selectedActionId) return;
+    scrollActionIntoDiscussion(selectedActionId, "nearest");
+  }, [selectedActionId]);
 
   // Sort actions by creation date
   const sortedActions = [...postActions].sort((a, b) => {
-    const dateA = moment(a.created)
-    const dateB = moment(b.created)
-    return dateA.diff(dateB)
-  })
+    const dateA = moment(a.created);
+    const dateB = moment(b.created);
+    return dateA.diff(dateB);
+  });
 
   return (
     <div className="w-full">
@@ -69,7 +69,9 @@ export default function PostActionList({
               <PostActionCard
                 postAction={action}
                 postUrl={postUrl}
-                selected={selectedActionId ? action._id === selectedActionId : `#${action._id}` === hash}
+                selected={
+                  selectedActionId ? action._id === selectedActionId : `#${action._id}` === hash
+                }
                 refetchPost={refetchPost}
                 postOwnerId={postOwnerId}
                 onSelectAction={onSelectAction}
@@ -83,12 +85,13 @@ export default function PostActionList({
             <MessagesSquare className="size-10 text-muted-foreground/20" />
             <div>
               <p className="text-sm font-medium text-muted-foreground/50">No activity yet</p>
-              <p className="text-xs text-muted-foreground/35 mt-0.5">Be the first to vote, comment, or quote</p>
+              <p className="text-xs text-muted-foreground/35 mt-0.5">
+                Be the first to vote, comment, or quote
+              </p>
             </div>
           </div>
         )
       )}
     </div>
-  )
+  );
 }
-

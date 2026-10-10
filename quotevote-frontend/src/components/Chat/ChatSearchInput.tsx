@@ -1,11 +1,11 @@
 "use client";
 
-import type { FC, FormEvent, ChangeEvent } from 'react';
-import { useEffect, useRef, useState } from 'react';
-import { Search, X, UserPlus } from 'lucide-react';
+import type { FC, FormEvent, ChangeEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Search, X, UserPlus } from "lucide-react";
 
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface ChatSearchInputProps {
   setSearch: (value: string) => void;
@@ -18,7 +18,7 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
   addBuddyMode = false,
   onAddBuddyModeChange,
 }) => {
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const previousAddBuddyMode = useRef(addBuddyMode);
 
@@ -29,8 +29,8 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
   };
 
   const handleClear = () => {
-    setSearchValue('');
-    setSearch('');
+    setSearchValue("");
+    setSearch("");
     if (addBuddyMode && onAddBuddyModeChange) {
       onAddBuddyModeChange(false);
     }
@@ -54,8 +54,8 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
     } else {
       // When exiting add mode, clear search
       // This is handled in the callback, not in an effect
-      setSearchValue('');
-      setSearch('');
+      setSearchValue("");
+      setSearch("");
     }
   };
 
@@ -69,27 +69,24 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
       // Only clear if we're not in the middle of toggling (which is handled in toggleAddMode)
       // This handles the case where addBuddyMode is changed externally
       const timeoutId = setTimeout(() => {
-        setSearchValue('');
-        setSearch('');
+        setSearchValue("");
+        setSearch("");
       }, 0);
       return () => clearTimeout(timeoutId);
     }
     return undefined;
   }, [addBuddyMode, searchValue, setSearch, onAddBuddyModeChange]);
 
-  const ariaLabel = addBuddyMode
-    ? 'search users to add'
-    : 'search conversations';
+  const ariaLabel = addBuddyMode ? "search users to add" : "search conversations";
 
   return (
     <div className="w-full">
       <form
         onSubmit={handleSubmit}
         className={cn(
-          'flex items-center rounded-xl border bg-muted/50 px-2 py-1.5 text-sm shadow-sm transition-all',
-          'focus-within:border-[#52b274] focus-within:bg-background focus-within:ring-2 focus-within:ring-[#52b274]/20',
-          addBuddyMode &&
-          'border-[#52b274] bg-background ring-2 ring-[#52b274]/15'
+          "flex items-center rounded-xl border bg-muted/50 px-2 py-1.5 text-sm shadow-sm transition-all",
+          "focus-within:border-[#52b274] focus-within:bg-background focus-within:ring-2 focus-within:ring-[#52b274]/20",
+          addBuddyMode && "border-[#52b274] bg-background ring-2 ring-[#52b274]/15"
         )}
       >
         {addBuddyMode && (
@@ -116,19 +113,15 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
 
         <Search
           className={cn(
-            'mr-1 h-4 w-4 flex-shrink-0 text-muted-foreground',
-            addBuddyMode && 'text-[#52b274]'
+            "mr-1 h-4 w-4 flex-shrink-0 text-muted-foreground",
+            addBuddyMode && "text-[#52b274]"
           )}
         />
 
         <Input
           ref={inputRef}
           className="h-7 flex-1 border-0 bg-transparent px-1 py-0 text-base md:text-sm focus-visible:ring-0"
-          placeholder={
-            addBuddyMode
-              ? 'Search users to add as buddy...'
-              : 'Search conversations...'
-          }
+          placeholder={addBuddyMode ? "Search users to add as buddy..." : "Search conversations..."}
           value={searchValue}
           onChange={handleInput}
           aria-label={ariaLabel}

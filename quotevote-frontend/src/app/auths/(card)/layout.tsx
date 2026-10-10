@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { AuthNavbar } from '@/components/Navbars/AuthNavbar'
+import type { ReactNode } from "react";
+import { AuthNavbar } from "@/components/Navbars/AuthNavbar";
 
 export default function CardAuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -9,5 +9,5 @@ export default function CardAuthLayout({ children }: { children: ReactNode }) {
         <div className="bg-card rounded-xl shadow-sm w-full max-w-md p-8">{children}</div>
       </main>
     </>
-  )
+  );
 }

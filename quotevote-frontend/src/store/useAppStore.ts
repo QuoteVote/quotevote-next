@@ -1,12 +1,12 @@
 /**
  * Main Zustand store for global application state
- * 
+ *
  * This store replaces the Redux store and provides a simpler,
  * more React-friendly state management solution for Next.js App Router.
  */
 
-import { create } from 'zustand';
-import { devtools, persist, createJSONStorage } from 'zustand/middleware';
+import { create } from "zustand";
+import { devtools, persist, createJSONStorage } from "zustand/middleware";
 import type {
   AppState,
   UserState,
@@ -14,9 +14,9 @@ import type {
   ChatState,
   FilterState,
   PendingQuote,
-} from '@/types/store';
-import type { StagedChatRoom } from '@/types/chat';
-import type { LinkedPassage } from '@/types/discussionSplit';
+} from "@/types/store";
+import type { StagedChatRoom } from "@/types/chat";
+import type { LinkedPassage } from "@/types/discussionSplit";
 
 // Initial state values
 const initialUserState: UserState = {
@@ -28,22 +28,22 @@ const initialUserState: UserState = {
 const initialUIState: UIState = {
   filter: {
     visibility: false,
-    value: '',
+    value: "",
   },
   date: {
     visibility: false,
-    value: '',
+    value: "",
   },
   search: {
     visibility: false,
-    value: '',
+    value: "",
   },
   selectedPost: {
     id: null,
   },
-  selectedPage: 'home',
+  selectedPage: "home",
   hiddenPosts: [],
-  selectedPlan: 'personal',
+  selectedPlan: "personal",
   focusedComment: null,
   sharedComment: null,
   mobileDiscussionOpen: false,
@@ -58,8 +58,8 @@ const initialChatState: ChatState = {
   buddyList: [],
   presenceMap: {},
   typingUsers: {},
-  userStatus: 'online',
-  userStatusMessage: '',
+  userStatus: "online",
+  userStatusMessage: "",
   pendingBuddyRequests: [],
   blockedUsers: [],
   statusEditorOpen: false,
@@ -68,22 +68,22 @@ const initialChatState: ChatState = {
 const initialFilterState: FilterState = {
   filter: {
     visibility: false,
-    value: ['POSTED'],
+    value: ["POSTED"],
   },
   date: {
     visibility: false,
-    value: '',
+    value: "",
   },
   search: {
     visibility: false,
-    value: '',
+    value: "",
   },
 };
 
 // Store interface with actions
 interface AppStore extends AppState {
   // User actions
-  setUserData: (data: UserState['data']) => void;
+  setUserData: (data: UserState["data"]) => void;
   clearUserData: () => void;
   setUserLoading: (loading: boolean) => void;
   setLoginError: (error: string | null) => void;
@@ -107,7 +107,7 @@ interface AppStore extends AppState {
   setSelectedChatRoom: (roomId: string | StagedChatRoom | null) => void;
   setChatOpen: (open: boolean) => void;
   setBuddyList: (buddyList: unknown[]) => void;
-  updatePresence: (userId: string, presence: ChatState['presenceMap'][string]) => void;
+  updatePresence: (userId: string, presence: ChatState["presenceMap"][string]) => void;
   removePresence: (userId: string) => void;
   updateTyping: (messageRoomId: string, userId: string, isTyping: boolean) => void;
   clearTyping: (messageRoomId: string) => void;
@@ -134,351 +134,350 @@ export const useAppStore = create<AppStore>()(
   devtools(
     persist(
       (set) => ({
-  // Initial state
-  user: initialUserState,
-  ui: initialUIState,
-  chat: initialChatState,
-  filter: initialFilterState,
+        // Initial state
+        user: initialUserState,
+        ui: initialUIState,
+        chat: initialChatState,
+        filter: initialFilterState,
 
-  // User actions
-  setUserData: (data) =>
-    set((state) => ({
-      user: { ...state.user, data },
-    })),
+        // User actions
+        setUserData: (data) =>
+          set((state) => ({
+            user: { ...state.user, data },
+          })),
 
-  // A staged quote belongs to the signed-in user, so it goes with the session.
-  clearUserData: () =>
-    set((state) => ({
-      user: { ...state.user, data: {} },
-      ui: { ...state.ui, pendingQuote: null },
-    })),
+        // A staged quote belongs to the signed-in user, so it goes with the session.
+        clearUserData: () =>
+          set((state) => ({
+            user: { ...state.user, data: {} },
+            ui: { ...state.ui, pendingQuote: null },
+          })),
 
-  setUserLoading: (loading) =>
-    set((state) => ({
-      user: { ...state.user, loading },
-    })),
+        setUserLoading: (loading) =>
+          set((state) => ({
+            user: { ...state.user, loading },
+          })),
 
-  setLoginError: (error) =>
-    set((state) => ({
-      user: { ...state.user, loginError: error },
-    })),
+        setLoginError: (error) =>
+          set((state) => ({
+            user: { ...state.user, loginError: error },
+          })),
 
-  logout: () =>
-    set((state) => ({
-      user: {
-        ...initialUserState,
-        loading: false,
-      },
-      ui: { ...state.ui, pendingQuote: null },
-    })),
+        logout: () =>
+          set((state) => ({
+            user: {
+              ...initialUserState,
+              loading: false,
+            },
+            ui: { ...state.ui, pendingQuote: null },
+          })),
 
-  updateAvatar: (avatar) =>
-    set((state) => ({
-      user: {
-        ...state.user,
-        data: { ...state.user.data, avatar },
-      },
-    })),
+        updateAvatar: (avatar) =>
+          set((state) => ({
+            user: {
+              ...state.user,
+              data: { ...state.user.data, avatar },
+            },
+          })),
 
-  updateFollowing: (followingId) =>
-    set((state) => ({
-      user: {
-        ...state.user,
-        data: { ...state.user.data, _followingId: followingId },
-      },
-    })),
+        updateFollowing: (followingId) =>
+          set((state) => ({
+            user: {
+              ...state.user,
+              data: { ...state.user.data, _followingId: followingId },
+            },
+          })),
 
-  // UI actions
-  setSelectedPost: (postId) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        selectedPost: { id: postId },
-      },
-    })),
+        // UI actions
+        setSelectedPost: (postId) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              selectedPost: { id: postId },
+            },
+          })),
 
-  setSelectedPage: (page) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        selectedPage: page,
-      },
-    })),
+        setSelectedPage: (page) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              selectedPage: page,
+            },
+          })),
 
-  addHiddenPost: (postId) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        hiddenPosts: [...state.ui.hiddenPosts, postId],
-      },
-    })),
+        addHiddenPost: (postId) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              hiddenPosts: [...state.ui.hiddenPosts, postId],
+            },
+          })),
 
-  setSelectedPlan: (plan) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        selectedPlan: plan,
-      },
-    })),
+        setSelectedPlan: (plan) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              selectedPlan: plan,
+            },
+          })),
 
-  setFocusedComment: (commentId) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        focusedComment: commentId,
-      },
-    })),
+        setFocusedComment: (commentId) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              focusedComment: commentId,
+            },
+          })),
 
-  setSharedComment: (commentId) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        sharedComment: commentId,
-      },
-    })),
+        setSharedComment: (commentId) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              sharedComment: commentId,
+            },
+          })),
 
-  setMobileDiscussionOpen: (open) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        mobileDiscussionOpen: open,
-      },
-    })),
+        setMobileDiscussionOpen: (open) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              mobileDiscussionOpen: open,
+            },
+          })),
 
-  setLinkedPassage: (passage) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        linkedPassage: passage,
-      },
-    })),
+        setLinkedPassage: (passage) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              linkedPassage: passage,
+            },
+          })),
 
-  setPendingQuote: (quote) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        pendingQuote: quote,
-      },
-    })),
+        setPendingQuote: (quote) =>
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              pendingQuote: quote,
+            },
+          })),
 
-  // Chat actions
-  setChatSubmitting: (submitting) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        submitting,
-      },
-    })),
+        // Chat actions
+        setChatSubmitting: (submitting) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              submitting,
+            },
+          })),
 
-  setSelectedChatRoom: (roomId: string | StagedChatRoom | null) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        selectedRoom: roomId,
-      },
-    })),
+        setSelectedChatRoom: (roomId: string | StagedChatRoom | null) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              selectedRoom: roomId,
+            },
+          })),
 
-  setChatOpen: (open) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        open,
-      },
-    })),
+        setChatOpen: (open) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              open,
+            },
+          })),
 
-  setBuddyList: (buddyList) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        buddyList,
-      },
-    })),
+        setBuddyList: (buddyList) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              buddyList,
+            },
+          })),
 
-  updatePresence: (userId, presence) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        presenceMap: {
-          ...state.chat.presenceMap,
-          [userId]: presence,
-        },
-      },
-    })),
+        updatePresence: (userId, presence) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              presenceMap: {
+                ...state.chat.presenceMap,
+                [userId]: presence,
+              },
+            },
+          })),
 
-  removePresence: (userId) =>
-    set((state) => {
-      const { [userId]: _, ...rest } = state.chat.presenceMap;
-      return {
-        chat: {
-          ...state.chat,
-          presenceMap: rest,
-        },
-      };
-    }),
+        removePresence: (userId) =>
+          set((state) => {
+            const { [userId]: _, ...rest } = state.chat.presenceMap;
+            return {
+              chat: {
+                ...state.chat,
+                presenceMap: rest,
+              },
+            };
+          }),
 
-  updateTyping: (messageRoomId, userId, isTyping) =>
-    set((state) => {
-      const currentTyping = state.chat.typingUsers[messageRoomId] || [];
-      const updatedTyping = isTyping
-        ? currentTyping.includes(userId)
-          ? currentTyping
-          : [...currentTyping, userId]
-        : currentTyping.filter((id) => id !== userId);
+        updateTyping: (messageRoomId, userId, isTyping) =>
+          set((state) => {
+            const currentTyping = state.chat.typingUsers[messageRoomId] || [];
+            const updatedTyping = isTyping
+              ? currentTyping.includes(userId)
+                ? currentTyping
+                : [...currentTyping, userId]
+              : currentTyping.filter((id) => id !== userId);
 
-      return {
-        chat: {
-          ...state.chat,
-          typingUsers: {
-            ...state.chat.typingUsers,
-            [messageRoomId]: updatedTyping,
-          },
-        },
-      };
-    }),
+            return {
+              chat: {
+                ...state.chat,
+                typingUsers: {
+                  ...state.chat.typingUsers,
+                  [messageRoomId]: updatedTyping,
+                },
+              },
+            };
+          }),
 
-  clearTyping: (messageRoomId) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        typingUsers: {
-          ...state.chat.typingUsers,
-          [messageRoomId]: [],
-        },
-      },
-    })),
+        clearTyping: (messageRoomId) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              typingUsers: {
+                ...state.chat.typingUsers,
+                [messageRoomId]: [],
+              },
+            },
+          })),
 
-  setUserStatus: (status, statusMessage = '') =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        userStatus: status,
-        userStatusMessage: statusMessage,
-      },
-    })),
+        setUserStatus: (status, statusMessage = "") =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              userStatus: status,
+              userStatusMessage: statusMessage,
+            },
+          })),
 
-  addPendingRequest: (request) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        pendingBuddyRequests: [...state.chat.pendingBuddyRequests, request],
-      },
-    })),
+        addPendingRequest: (request) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              pendingBuddyRequests: [...state.chat.pendingBuddyRequests, request],
+            },
+          })),
 
-  removePendingRequest: (rosterId) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        pendingBuddyRequests: state.chat.pendingBuddyRequests.filter(
-          (req) => (req as { id: string }).id !== rosterId
-        ),
-      },
-    })),
+        removePendingRequest: (rosterId) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              pendingBuddyRequests: state.chat.pendingBuddyRequests.filter(
+                (req) => (req as { id: string }).id !== rosterId
+              ),
+            },
+          })),
 
-  addBlockedUser: (userId) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        blockedUsers: [...state.chat.blockedUsers, userId],
-      },
-    })),
+        addBlockedUser: (userId) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              blockedUsers: [...state.chat.blockedUsers, userId],
+            },
+          })),
 
-  removeBlockedUser: (userId) =>
-    set((state) => ({
-      chat: {
-        ...state.chat,
-        blockedUsers: state.chat.blockedUsers.filter((id) => id !== userId),
-      },
-    })),
+        removeBlockedUser: (userId) =>
+          set((state) => ({
+            chat: {
+              ...state.chat,
+              blockedUsers: state.chat.blockedUsers.filter((id) => id !== userId),
+            },
+          })),
 
-  // Filter actions
-  setFilterVisibility: (visibility) =>
-    set((state) => ({
-      filter: {
-        ...state.filter,
-        filter: {
-          ...state.filter.filter,
-          visibility,
-        },
-      },
-    })),
+        // Filter actions
+        setFilterVisibility: (visibility) =>
+          set((state) => ({
+            filter: {
+              ...state.filter,
+              filter: {
+                ...state.filter.filter,
+                visibility,
+              },
+            },
+          })),
 
-  setFilterValue: (value) =>
-    set((state) => ({
-      filter: {
-        ...state.filter,
-        filter: {
-          ...state.filter.filter,
-          value,
-        },
-      },
-    })),
+        setFilterValue: (value) =>
+          set((state) => ({
+            filter: {
+              ...state.filter,
+              filter: {
+                ...state.filter.filter,
+                value,
+              },
+            },
+          })),
 
-  setDateVisibility: (visibility) =>
-    set((state) => ({
-      filter: {
-        ...state.filter,
-        date: {
-          ...state.filter.date,
-          visibility,
-        },
-      },
-    })),
+        setDateVisibility: (visibility) =>
+          set((state) => ({
+            filter: {
+              ...state.filter,
+              date: {
+                ...state.filter.date,
+                visibility,
+              },
+            },
+          })),
 
-  setDateValue: (value) =>
-    set((state) => ({
-      filter: {
-        ...state.filter,
-        date: {
-          ...state.filter.date,
-          value,
-        },
-      },
-    })),
+        setDateValue: (value) =>
+          set((state) => ({
+            filter: {
+              ...state.filter,
+              date: {
+                ...state.filter.date,
+                value,
+              },
+            },
+          })),
 
-  setSearchVisibility: (visibility) =>
-    set((state) => ({
-      filter: {
-        ...state.filter,
-        search: {
-          ...state.filter.search,
-          visibility,
-        },
-      },
-    })),
+        setSearchVisibility: (visibility) =>
+          set((state) => ({
+            filter: {
+              ...state.filter,
+              search: {
+                ...state.filter.search,
+                visibility,
+              },
+            },
+          })),
 
-  setSearchValue: (value) =>
-    set((state) => ({
-      filter: {
-        ...state.filter,
-        search: {
-          ...state.filter.search,
-          value,
-        },
-      },
-    })),
+        setSearchValue: (value) =>
+          set((state) => ({
+            filter: {
+              ...state.filter,
+              search: {
+                ...state.filter.search,
+                value,
+              },
+            },
+          })),
 
-  // Reset action
-  resetStore: () =>
-    set({
-      user: initialUserState,
-      ui: initialUIState,
-      chat: initialChatState,
-      filter: initialFilterState,
-    }),
+        // Reset action
+        resetStore: () =>
+          set({
+            user: initialUserState,
+            ui: initialUIState,
+            chat: initialChatState,
+            filter: initialFilterState,
+          }),
       }),
       {
-        name: 'qv-store',
+        name: "qv-store",
         storage: createJSONStorage(() =>
-          typeof window !== 'undefined' ? localStorage : ({} as Storage)
+          typeof window !== "undefined" ? localStorage : ({} as Storage)
         ),
         // Only persist the user slice — UI, chat, and filter are ephemeral
         partialize: (state) => ({ user: state.user }),
       }
     ),
     {
-      name: 'QuoteVoteStore',
-      enabled: process.env.NODE_ENV === 'development',
+      name: "QuoteVoteStore",
+      enabled: process.env.NODE_ENV === "development",
     }
   )
 );
-

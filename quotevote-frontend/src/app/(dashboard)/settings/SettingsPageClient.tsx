@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import { useState, useCallback, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { useMutation, useQuery } from '@apollo/client/react'
-import { Camera, Loader2, Moon, Sun, LogOut, Sparkles } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
+import { useState, useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useMutation, useQuery } from "@apollo/client/react";
+import { Camera, Loader2, Moon, Sun, LogOut, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -17,160 +17,157 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { DisplayAvatar } from '@/components/DisplayAvatar'
-import { UPDATE_USER } from '@/graphql/mutations'
-import { GET_USER, GET_USER_BIO } from '@/graphql/queries'
-import { replaceGqlError } from '@/lib/utils/replaceGqlError'
-import { useAppStore } from '@/store/useAppStore'
-import { removeToken } from '@/lib/auth'
-import { useTheme } from '@/context/ThemeContext'
-import { useProfileBackground } from '@/hooks/useProfileBackground'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { UPDATE_USER } from "@/graphql/mutations";
+import { GET_USER, GET_USER_BIO } from "@/graphql/queries";
+import { replaceGqlError } from "@/lib/utils/replaceGqlError";
+import { useAppStore } from "@/store/useAppStore";
+import { removeToken } from "@/lib/auth";
+import { useTheme } from "@/context/ThemeContext";
+import { useProfileBackground } from "@/hooks/useProfileBackground";
 import {
   getProfileBackgroundStyle,
   PROFILE_BG_COLORS,
   PROFILE_BG_PATTERNS,
-} from '@/lib/utils/profileBackground'
-import { cn } from '@/lib/utils'
-import {
-  PROFILE_BIO_HTML_PATTERN,
-  PROFILE_BIO_MAX_LENGTH,
-} from '@/lib/constants/profile'
-import type { SettingsUserData } from '@/types/settings'
-import type { UpdateUserResponse } from '@/types/test'
+} from "@/lib/utils/profileBackground";
+import { cn } from "@/lib/utils";
+import { PROFILE_BIO_HTML_PATTERN, PROFILE_BIO_MAX_LENGTH } from "@/lib/constants/profile";
+import type { SettingsUserData } from "@/types/settings";
+import type { UpdateUserResponse } from "@/types/test";
 
 const settingsSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(50, 'Name must be under 50 characters'),
+  name: z.string().min(1, "Name is required").max(50, "Name must be under 50 characters"),
   username: z
     .string()
-    .min(4, 'Username must be at least 4 characters')
-    .max(50, 'Username must be under 50 characters'),
-  email: z.string().email('Please enter a valid email'),
+    .min(4, "Username must be at least 4 characters")
+    .max(50, "Username must be under 50 characters"),
+  email: z.string().email("Please enter a valid email"),
   password: z.string().refine((val) => !val || val.length >= 8, {
-    message: 'Password must be at least 8 characters',
+    message: "Password must be at least 8 characters",
   }),
   bio: z
     .string()
     .max(PROFILE_BIO_MAX_LENGTH, `About must be ${PROFILE_BIO_MAX_LENGTH} characters or fewer`)
     .refine((val) => !PROFILE_BIO_HTML_PATTERN.test(val), {
-      message: 'About must be plain text without HTML',
+      message: "About must be plain text without HTML",
     }),
-})
+});
 
-type SettingsFormValues = z.infer<typeof settingsSchema>
+type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export default function SettingsPageClient() {
-  const router = useRouter()
-  const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined
-  const setUserData = useAppStore((state) => state.setUserData)
-  const { setTheme, isDarkMode, neoBrutalism, toggleNeoBrutalism } = useTheme()
+  const router = useRouter();
+  const userData = useAppStore((state) => state.user.data) as SettingsUserData | undefined;
+  const setUserData = useAppStore((state) => state.setUserData);
+  const { setTheme, isDarkMode, neoBrutalism, toggleNeoBrutalism } = useTheme();
   const {
     color: profileBgColor,
     pattern: profileBgPattern,
     setColor: setProfileBgColor,
     setPattern: setProfileBgPattern,
     hydrated: profileBgHydrated,
-  } = useProfileBackground()
+  } = useProfileBackground();
 
-  const username = userData?.username ?? ''
-  const email = userData?.email ?? ''
-  const name = userData?.name ?? ''
-  const userId = userData?.id ?? userData?._id ?? ''
+  const username = userData?.username ?? "";
+  const email = userData?.email ?? "";
+  const name = userData?.name ?? "";
+  const userId = userData?.id ?? userData?._id ?? "";
 
-  const [localDarkMode, setLocalDarkMode] = useState(isDarkMode)
-  const [originalDarkMode, setOriginalDarkMode] = useState(isDarkMode)
-  const [localBrutalism, setLocalBrutalism] = useState(neoBrutalism)
-  const [originalBgColor, setOriginalBgColor] = useState(profileBgColor)
-  const [originalBgPattern, setOriginalBgPattern] = useState(profileBgPattern)
-  const [bgBaselineReady, setBgBaselineReady] = useState(false)
+  const [localDarkMode, setLocalDarkMode] = useState(isDarkMode);
+  const [originalDarkMode, setOriginalDarkMode] = useState(isDarkMode);
+  const [localBrutalism, setLocalBrutalism] = useState(neoBrutalism);
+  const [originalBgColor, setOriginalBgColor] = useState(profileBgColor);
+  const [originalBgPattern, setOriginalBgPattern] = useState(profileBgPattern);
+  const [bgBaselineReady, setBgBaselineReady] = useState(false);
 
-  const [updateUser, { loading }] = useMutation<UpdateUserResponse>(UPDATE_USER)
+  const [updateUser, { loading }] = useMutation<UpdateUserResponse>(UPDATE_USER);
   const { data: bioData, error: bioError } = useQuery<{
-    user?: { _id: string; bio?: string | null } | null
+    user?: { _id: string; bio?: string | null } | null;
   }>(GET_USER_BIO, {
     variables: { username },
     skip: !username,
-    errorPolicy: 'all',
-  })
-  const bioSupported = Boolean(username) && !bioError
-  const fetchedBio = bioData?.user?.bio ?? userData?.bio ?? ''
+    errorPolicy: "all",
+  });
+  const bioSupported = Boolean(username) && !bioError;
+  const fetchedBio = bioData?.user?.bio ?? userData?.bio ?? "";
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: { name, username, email, password: '', bio: fetchedBio },
-  })
+    defaultValues: { name, username, email, password: "", bio: fetchedBio },
+  });
 
   useEffect(() => {
-    if (!bioSupported) return
-    const currentBio = form.getValues('bio')
-    if (currentBio === fetchedBio) return
-    if (form.formState.dirtyFields.bio) return
-    form.setValue('bio', fetchedBio, { shouldDirty: false })
-  }, [bioSupported, fetchedBio, form])
+    if (!bioSupported) return;
+    const currentBio = form.getValues("bio");
+    if (currentBio === fetchedBio) return;
+    if (form.formState.dirtyFields.bio) return;
+    form.setValue("bio", fetchedBio, { shouldDirty: false });
+  }, [bioSupported, fetchedBio, form]);
 
   useEffect(() => {
-    setLocalDarkMode(isDarkMode)
-  }, [isDarkMode])
+    setLocalDarkMode(isDarkMode);
+  }, [isDarkMode]);
 
   useEffect(() => {
-    if (!profileBgHydrated || bgBaselineReady) return
-    setOriginalBgColor(profileBgColor)
-    setOriginalBgPattern(profileBgPattern)
-    setBgBaselineReady(true)
-  }, [profileBgHydrated, profileBgColor, profileBgPattern, bgBaselineReady])
+    if (!profileBgHydrated || bgBaselineReady) return;
+    setOriginalBgColor(profileBgColor);
+    setOriginalBgPattern(profileBgPattern);
+    setBgBaselineReady(true);
+  }, [profileBgHydrated, profileBgColor, profileBgPattern, bgBaselineReady]);
 
   const handleThemeToggle = useCallback(
     (checked: boolean) => {
-      setTheme(checked ? 'dark' : 'light')
-      setLocalDarkMode(checked)
+      setTheme(checked ? "dark" : "light");
+      setLocalDarkMode(checked);
     },
     [setTheme]
-  )
+  );
 
   const handleBrutalismToggle = useCallback(() => {
-    const next = toggleNeoBrutalism()
-    setLocalBrutalism(next)
-  }, [toggleNeoBrutalism])
+    const next = toggleNeoBrutalism();
+    setLocalBrutalism(next);
+  }, [toggleNeoBrutalism]);
 
-  const themeDirty = localDarkMode !== originalDarkMode
+  const themeDirty = localDarkMode !== originalDarkMode;
   const bgDirty =
     bgBaselineReady &&
     (profileBgColor.toLowerCase() !== originalBgColor.toLowerCase() ||
-      profileBgPattern !== originalBgPattern)
-  const isFormDirty = form.formState.isDirty || themeDirty || bgDirty
+      profileBgPattern !== originalBgPattern);
+  const isFormDirty = form.formState.isDirty || themeDirty || bgDirty;
 
   const handleSignOut = useCallback(() => {
-    removeToken()
-    router.push('/auths/login')
-  }, [router])
+    removeToken();
+    router.push("/auths/login");
+  }, [router]);
 
   const onSubmit = async (values: SettingsFormValues) => {
-    const { password, bio, ...otherValues } = values
+    const { password, bio, ...otherValues } = values;
 
     // Background is localStorage-only; if that's the only change, just accept baseline.
     if (!form.formState.isDirty && !themeDirty && bgDirty) {
-      setOriginalBgColor(profileBgColor)
-      setOriginalBgPattern(profileBgPattern)
-      toast.success('Settings saved successfully')
-      return
+      setOriginalBgColor(profileBgColor);
+      setOriginalBgPattern(profileBgPattern);
+      toast.success("Settings saved successfully");
+      return;
     }
 
     const userInput: Record<string, unknown> = {
       _id: userId,
       ...otherValues,
-      themePreference: localDarkMode ? 'dark' : 'light',
-    }
+      themePreference: localDarkMode ? "dark" : "light",
+    };
     if (password) {
-      userInput.password = password
+      userInput.password = password;
     }
     if (bioSupported) {
-      userInput.bio = bio ?? ''
+      userInput.bio = bio ?? "";
     }
 
     try {
@@ -186,32 +183,32 @@ export default function SettingsPageClient() {
             : []),
         ],
         awaitRefetchQueries: true,
-      })
-      const updated = result.data?.updateUser
+      });
+      const updated = result.data?.updateUser;
       if (updated) {
         setUserData({
           ...userData,
           ...updated,
           avatar: userData?.avatar as string | undefined,
-          themePreference: localDarkMode ? 'dark' : 'light',
-        })
-        setOriginalDarkMode(localDarkMode)
-        setOriginalBgColor(profileBgColor)
-        setOriginalBgPattern(profileBgPattern)
-        toast.success('Settings saved successfully')
+          themePreference: localDarkMode ? "dark" : "light",
+        });
+        setOriginalDarkMode(localDarkMode);
+        setOriginalBgColor(profileBgColor);
+        setOriginalBgPattern(profileBgPattern);
+        toast.success("Settings saved successfully");
         form.reset({
           name: updated.name ?? otherValues.name,
           username: updated.username ?? otherValues.username,
           email: updated.email ?? otherValues.email,
-          password: '',
-          bio: bioSupported ? (bio ?? '') : '',
-        })
+          password: "",
+          bio: bioSupported ? (bio ?? "") : "",
+        });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save settings'
-      toast.error(replaceGqlError(message))
+      const message = err instanceof Error ? err.message : "Failed to save settings";
+      toast.error(replaceGqlError(message));
     }
-  }
+  };
 
   return (
     <div className="py-6 space-y-4">
@@ -315,7 +312,7 @@ export default function SettingsPageClient() {
                         />
                       </FormControl>
                       <p className="text-xs text-muted-foreground">
-                        {(field.value?.length ?? 0)}/{PROFILE_BIO_MAX_LENGTH}
+                        {field.value?.length ?? 0}/{PROFILE_BIO_MAX_LENGTH}
                       </p>
                       <FormMessage />
                     </FormItem>
@@ -329,7 +326,7 @@ export default function SettingsPageClient() {
                 <div className="space-y-0.5">
                   <Label htmlFor="dark-mode">Dark Mode</Label>
                   <p className="text-sm text-muted-foreground">
-                    {localDarkMode ? 'Dark mode is active' : 'Light mode is active'}
+                    {localDarkMode ? "Dark mode is active" : "Light mode is active"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -352,8 +349,8 @@ export default function SettingsPageClient() {
                   <Label htmlFor="neo-brutalism">Neo-Brutalism</Label>
                   <p className="text-sm text-muted-foreground">
                     {localBrutalism
-                      ? 'Bold borders, hard shadows, chunky type'
-                      : 'Switch to a raw, high-contrast brutalist look'}
+                      ? "Bold borders, hard shadows, chunky type"
+                      : "Switch to a raw, high-contrast brutalist look"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -388,7 +385,7 @@ export default function SettingsPageClient() {
                   <p className="text-xs font-medium text-muted-foreground">Color</p>
                   <div className="flex flex-wrap items-center gap-2">
                     {PROFILE_BG_COLORS.map((c) => {
-                      const selected = profileBgColor.toLowerCase() === c.toLowerCase()
+                      const selected = profileBgColor.toLowerCase() === c.toLowerCase();
                       return (
                         <button
                           key={c}
@@ -397,14 +394,14 @@ export default function SettingsPageClient() {
                           aria-label={`Background color ${c}`}
                           aria-pressed={selected}
                           className={cn(
-                            'h-7 w-7 rounded-full border transition-transform hover:scale-110',
+                            "h-7 w-7 rounded-full border transition-transform hover:scale-110",
                             selected
-                              ? 'ring-2 ring-offset-2 ring-primary border-transparent'
-                              : 'border-border'
+                              ? "ring-2 ring-offset-2 ring-primary border-transparent"
+                              : "border-border"
                           )}
                           style={{ backgroundColor: c }}
                         />
-                      )
+                      );
                     })}
                     <label className="ml-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
                       <span>Custom</span>
@@ -429,10 +426,10 @@ export default function SettingsPageClient() {
                         onClick={() => setProfileBgPattern(p.value)}
                         aria-pressed={profileBgPattern === p.value}
                         className={cn(
-                          'rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
+                          "rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
                           profileBgPattern === p.value
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border text-foreground/80 hover:bg-muted'
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-foreground/80 hover:bg-muted"
                         )}
                       >
                         {p.label}
@@ -463,7 +460,7 @@ export default function SettingsPageClient() {
                         Saving...
                       </>
                     ) : (
-                      'Save Changes'
+                      "Save Changes"
                     )}
                   </Button>
                 </div>
@@ -473,5 +470,5 @@ export default function SettingsPageClient() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

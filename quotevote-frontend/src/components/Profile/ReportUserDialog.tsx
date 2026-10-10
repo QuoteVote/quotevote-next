@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useMutation } from '@apollo/client/react';
-import { Loader2 } from 'lucide-react';
-import type { ReportUserDialogProps } from '@/types/profile';
-import { REPORT_USER } from '@/graphql/mutations';
+import { useState } from "react";
+import { useMutation } from "@apollo/client/react";
+import { Loader2 } from "lucide-react";
+import type { ReportUserDialogProps } from "@/types/profile";
+import { REPORT_USER } from "@/graphql/mutations";
 import {
   Dialog,
   DialogContent,
@@ -12,44 +12,40 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/app/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from "@/app/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const reportReasons = [
-  { value: 'spam', label: 'Spam' },
-  { value: 'harassment', label: 'Harassment' },
-  { value: 'inappropriate_content', label: 'Inappropriate Content' },
-  { value: 'fake_account', label: 'Fake Account' },
-  { value: 'other', label: 'Other' },
+  { value: "spam", label: "Spam" },
+  { value: "harassment", label: "Harassment" },
+  { value: "inappropriate_content", label: "Inappropriate Content" },
+  { value: "fake_account", label: "Fake Account" },
+  { value: "other", label: "Other" },
 ];
 
 const severityLevels = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'critical', label: 'Critical' },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "critical", label: "Critical" },
 ];
 
-export function ReportUserDialog({
-  open,
-  onClose,
-  reportedUser,
-}: ReportUserDialogProps) {
-  const [reason, setReason] = useState('');
-  const [description, setDescription] = useState('');
-  const [severity, setSeverity] = useState('medium');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+export function ReportUserDialog({ open, onClose, reportedUser }: ReportUserDialogProps) {
+  const [reason, setReason] = useState("");
+  const [description, setDescription] = useState("");
+  const [severity, setSeverity] = useState("medium");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   // `reportUser` resolves to a JSON scalar, so the payload is untyped on the
   // wire — narrow it here and treat a missing body as a failure.
@@ -57,33 +53,33 @@ export function ReportUserDialog({
     reportUser: { code?: string; message?: string } | null;
   }>(REPORT_USER, {
     onCompleted: (data) => {
-      if (data.reportUser?.code === 'SUCCESS') {
-        setSuccess('User report submitted successfully!');
+      if (data.reportUser?.code === "SUCCESS") {
+        setSuccess("User report submitted successfully!");
         setTimeout(() => {
           onClose();
-          setSuccess('');
+          setSuccess("");
         }, 2000);
       } else {
-        setError(data.reportUser?.message || 'Failed to submit report');
+        setError(data.reportUser?.message || "Failed to submit report");
       }
     },
     onError: (err: Error) => {
-      setError(err.message || 'Failed to submit report');
+      setError(err.message || "Failed to submit report");
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     if (!reason) {
-      setError('Please select a reason for the report');
+      setError("Please select a reason for the report");
       return;
     }
 
     if (!description.trim()) {
-      setError('Please provide a description of the issue');
+      setError("Please provide a description of the issue");
       return;
     }
 
@@ -104,11 +100,11 @@ export function ReportUserDialog({
   };
 
   const handleClose = () => {
-    setReason('');
-    setDescription('');
-    setSeverity('medium');
-    setError('');
-    setSuccess('');
+    setReason("");
+    setDescription("");
+    setSeverity("medium");
+    setError("");
+    setSuccess("");
     onClose();
   };
 
@@ -118,13 +114,10 @@ export function ReportUserDialog({
         <DialogHeader>
           <DialogTitle>Report User</DialogTitle>
           <DialogDescription>
-            Reporting user:{' '}
-            <strong>
-              {reportedUser?.username || reportedUser?.name}
-            </strong>
+            Reporting user: <strong>{reportedUser?.username || reportedUser?.name}</strong>
             <br />
-            Please provide details about why you&apos;re reporting this user. False
-            reports may affect your own reputation.
+            Please provide details about why you&apos;re reporting this user. False reports may
+            affect your own reputation.
           </DialogDescription>
         </DialogHeader>
 
@@ -137,20 +130,14 @@ export function ReportUserDialog({
 
           {success && (
             <Alert className="mb-4 border-green-500 bg-green-50">
-              <AlertDescription className="text-green-800">
-                {success}
-              </AlertDescription>
+              <AlertDescription className="text-green-800">{success}</AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reason">Reason for Report *</Label>
-              <Select
-                value={reason}
-                onValueChange={setReason}
-                disabled={loading}
-              >
+              <Select value={reason} onValueChange={setReason} disabled={loading}>
                 <SelectTrigger id="reason">
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
@@ -166,11 +153,7 @@ export function ReportUserDialog({
 
             <div className="space-y-2">
               <Label htmlFor="severity">Severity Level</Label>
-              <Select
-                value={severity}
-                onValueChange={setSeverity}
-                disabled={loading}
-              >
+              <Select value={severity} onValueChange={setSeverity} disabled={loading}>
                 <SelectTrigger id="severity">
                   <SelectValue />
                 </SelectTrigger>
@@ -198,19 +181,14 @@ export function ReportUserDialog({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              <strong>Important:</strong> False or malicious reports may
-              negatively impact your reputation score. Please only report users
-              for legitimate violations of community guidelines.
+              <strong>Important:</strong> False or malicious reports may negatively impact your
+              reputation score. Please only report users for legitimate violations of community
+              guidelines.
             </p>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={loading}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button
@@ -219,7 +197,7 @@ export function ReportUserDialog({
               disabled={loading || !reason || !description.trim()}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Submitting...' : 'Submit Report'}
+              {loading ? "Submitting..." : "Submit Report"}
             </Button>
           </DialogFooter>
         </form>
@@ -227,4 +205,3 @@ export function ReportUserDialog({
     </Dialog>
   );
 }
-

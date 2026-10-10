@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * ActivitySkeleton Component
- * 
+ *
  * Loading skeleton for Activity components.
  * Uses shadcn/ui Card and Skeleton components with Tailwind CSS.
  */
@@ -31,12 +31,12 @@ export function ActivitySkeleton() {
         <Skeleton className="h-5 w-5" />
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 /**
  * ActivitySkeletonLoader Component
- * 
+ *
  * Displays multiple skeleton loaders for activities while data is loading.
  */
 export function ActivitySkeletonLoader({ cols = 1 }: { cols?: number }) {
@@ -46,6 +46,5 @@ export function ActivitySkeletonLoader({ cols = 1 }: { cols?: number }) {
         <ActivitySkeleton key={`activity-skeleton-${index}`} />
       ))}
     </div>
-  )
+  );
 }
-

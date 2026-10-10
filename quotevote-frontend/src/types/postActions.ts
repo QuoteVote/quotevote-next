@@ -3,78 +3,81 @@
  * Types for PostActionCard and PostActionList components
  */
 
-import type { Reaction } from './comment'
+import type { Reaction } from "./comment";
 
 /**
  * User information for post actions
  */
 export interface PostActionUser {
-  _id: string
-  username: string
-  avatar?: string | {
-    [key: string]: unknown
-  } | null
-  name?: string | null
+  _id: string;
+  username: string;
+  avatar?:
+    | string
+    | {
+        [key: string]: unknown;
+      }
+    | null;
+  name?: string | null;
 }
 
 /**
  * Base post action structure
  */
 export interface BasePostAction {
-  _id: string
-  created: string | Date
-  user: PostActionUser
-  content?: string | null
-  __typename: 'Vote' | 'Comment' | 'Quote' | 'Message'
-  [key: string]: unknown
+  _id: string;
+  created: string | Date;
+  user: PostActionUser;
+  content?: string | null;
+  __typename: "Vote" | "Comment" | "Quote" | "Message";
+  [key: string]: unknown;
 }
 
 /**
  * Vote action
  */
 export interface VoteAction extends BasePostAction {
-  __typename: 'Vote'
-  type?: 'up' | 'down' | 'upvote' | 'downvote' | null
-  tags?: string[] | null
-  content?: string | null
-  startWordIndex?: number | null
-  endWordIndex?: number | null
+  __typename: "Vote";
+  type?: "up" | "down" | "upvote" | "downvote" | null;
+  tags?: string[] | null;
+  content?: string | null;
+  startWordIndex?: number | null;
+  endWordIndex?: number | null;
 }
 
 /**
  * Comment action
  */
 export interface CommentAction extends BasePostAction {
-  __typename: 'Comment'
-  content: string
-  commentQuote?: string | null
-  startWordIndex?: number | null
-  endWordIndex?: number | null
+  __typename: "Comment";
+  content: string;
+  commentQuote?: string | null;
+  startWordIndex?: number | null;
+  endWordIndex?: number | null;
 }
 
 /**
  * Quote action
  */
 export interface QuoteAction extends BasePostAction {
-  __typename: 'Quote'
-  quote?: string | null
-  startWordIndex?: number | null
-  endWordIndex?: number | null
+  __typename: "Quote";
+  quote?: string | null;
+  startWordIndex?: number | null;
+  endWordIndex?: number | null;
 }
 
 /**
  * Message action (PostChat message)
  */
 export interface MessageAction extends BasePostAction {
-  __typename: 'Message'
-  text: string
-  userId: string
+  __typename: "Message";
+  text: string;
+  userId: string;
 }
 
 /**
  * Union type for all post actions
  */
-export type PostAction = VoteAction | CommentAction | QuoteAction | MessageAction
+export type PostAction = VoteAction | CommentAction | QuoteAction | MessageAction;
 
 /**
  * PostActionCard component props
@@ -83,27 +86,27 @@ export interface PostActionCardProps {
   /**
    * The post action to display (vote, comment, quote, or message)
    */
-  postAction: PostAction
+  postAction: PostAction;
   /**
    * URL path to the post (for generating share links)
    */
-  postUrl?: string
+  postUrl?: string;
   /**
    * Whether this action is currently selected/focused
    */
-  selected?: boolean
+  selected?: boolean;
   /**
    * Callback to refetch the post data after mutations
    */
-  refetchPost?: () => void
+  refetchPost?: () => void;
   /**
    * The author id of the parent post — used to flag actions made by the original poster (OP)
    */
-  postOwnerId?: string
+  postOwnerId?: string;
   /**
    * Called when the card is activated (linked comment / quote navigation).
    */
-  onSelectAction?: (action: PostAction) => void
+  onSelectAction?: (action: PostAction) => void;
 }
 
 /**
@@ -113,38 +116,38 @@ export interface PostActionListProps {
   /**
    * Array of post actions to display
    */
-  postActions: PostAction[]
+  postActions: PostAction[];
   /**
    * Whether the actions are currently loading
    */
-  loading?: boolean
+  loading?: boolean;
   /**
    * URL path to the post (for generating share links)
    */
-  postUrl?: string
+  postUrl?: string;
   /**
    * Callback to refetch the post data after mutations
    */
-  refetchPost?: () => void
+  refetchPost?: () => void;
   /**
    * The author id of the parent post — used to flag actions made by the original poster (OP)
    */
-  postOwnerId?: string
+  postOwnerId?: string;
   /**
    * Currently selected discussion action id (drives linked highlight + active card).
    */
-  selectedActionId?: string | null
+  selectedActionId?: string | null;
   /**
    * Called when a discussion action card is activated.
    */
-  onSelectAction?: (action: PostAction) => void
+  onSelectAction?: (action: PostAction) => void;
 }
 
 /**
  * GraphQL query response for action reactions
  */
 export interface ActionReactionsData {
-  actionReactions: Reaction[]
+  actionReactions: Reaction[];
 }
 
 /**
@@ -152,8 +155,8 @@ export interface ActionReactionsData {
  */
 export interface DeleteVoteData {
   deleteVote: {
-    _id: string
-  }
+    _id: string;
+  };
 }
 
 /**
@@ -161,8 +164,8 @@ export interface DeleteVoteData {
  */
 export interface DeleteCommentData {
   deleteComment: {
-    _id: string
-  }
+    _id: string;
+  };
 }
 
 /**
@@ -170,7 +173,6 @@ export interface DeleteCommentData {
  */
 export interface DeleteQuoteData {
   deleteQuote: {
-    _id: string
-  }
+    _id: string;
+  };
 }
-

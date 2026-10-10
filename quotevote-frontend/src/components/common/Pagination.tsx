@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import type { PaginationProps } from '@/types/components';
-import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/useMediaQuery';
+import { useMemo } from "react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import type { PaginationProps } from "@/types/components";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 export function Pagination({
   currentPage,
@@ -43,7 +43,7 @@ export function Pagination({
   const go = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage || disabled) return;
     onPageChange(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const startItem = (currentPage - 1) * pageSize + 1;
@@ -52,8 +52,8 @@ export function Pagination({
   if (totalPages <= 1) return null;
 
   const btnBase =
-    'flex items-center justify-center rounded-lg border border-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium';
-  const btnMd = cn(btnBase, 'size-8 sm:size-9 shrink-0');
+    "flex items-center justify-center rounded-lg border border-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium";
+  const btnMd = cn(btnBase, "size-8 sm:size-9 shrink-0");
 
   return (
     <nav
@@ -88,7 +88,7 @@ export function Pagination({
           onClick={() => go(currentPage - 1)}
           disabled={currentPage === 1 || disabled}
           aria-label="Previous page"
-          className={cn(btnMd, !showStartEllipsis && 'mr-1.5 sm:mr-2')}
+          className={cn(btnMd, !showStartEllipsis && "mr-1.5 sm:mr-2")}
         >
           <ChevronLeft className="size-4" />
         </button>
@@ -113,12 +113,12 @@ export function Pagination({
             onClick={() => go(page)}
             disabled={disabled}
             aria-label={`Page ${page}`}
-            aria-current={page === currentPage ? 'page' : undefined}
+            aria-current={page === currentPage ? "page" : undefined}
             className={cn(
               btnMd,
               page === currentPage
-                ? 'bg-[#52b274] border-[#52b274] text-white hover:bg-[#3d9659] hover:border-[#3d9659]'
-                : 'hover:bg-muted'
+                ? "bg-[#52b274] border-[#52b274] text-white hover:bg-[#3d9659] hover:border-[#3d9659]"
+                : "hover:bg-muted"
             )}
           >
             {page}
@@ -148,7 +148,7 @@ export function Pagination({
           onClick={() => go(currentPage + 1)}
           disabled={currentPage === totalPages || disabled}
           aria-label="Next page"
-          className={cn(btnMd, !showEndEllipsis && 'ml-1.5 sm:ml-2')}
+          className={cn(btnMd, !showEndEllipsis && "ml-1.5 sm:ml-2")}
         >
           <ChevronRight className="size-4" />
         </button>
@@ -178,11 +178,11 @@ export function PaginationCompact({
   totalPages,
   onPageChange,
   disabled = false,
-}: Pick<PaginationProps, 'currentPage' | 'totalPages' | 'onPageChange' | 'disabled'>) {
+}: Pick<PaginationProps, "currentPage" | "totalPages" | "onPageChange" | "disabled">) {
   const go = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage || disabled) return;
     onPageChange(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (totalPages <= 1) return null;

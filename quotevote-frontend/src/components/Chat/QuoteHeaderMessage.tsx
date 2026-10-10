@@ -1,11 +1,11 @@
 "use client";
 
-import type { FC } from 'react';
-import { Quote } from 'lucide-react';
+import type { FC } from "react";
+import { Quote } from "lucide-react";
 
-import Avatar from '@/components/Avatar';
-import { Card, CardContent } from '@/components/ui/card';
-import type { ChatParticipant } from '@/types/chat';
+import Avatar from "@/components/Avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import type { ChatParticipant } from "@/types/chat";
 
 interface QuotePostDetails {
   _id?: string;
@@ -20,16 +20,12 @@ interface QuoteHeaderMessageProps {
   postCreator: ChatParticipant | null | undefined;
 }
 
-const QuoteHeaderMessage: FC<QuoteHeaderMessageProps> = ({
-  postDetails,
-  postCreator,
-}) => {
+const QuoteHeaderMessage: FC<QuoteHeaderMessageProps> = ({ postDetails, postCreator }) => {
   if (!postDetails) return null;
 
   const { title, text } = postDetails;
 
-  const authorName =
-    postCreator?.name || postCreator?.username || 'Unknown User';
+  const authorName = postCreator?.name || postCreator?.username || "Unknown User";
 
   return (
     <div className="px-4 pb-2 pt-3">
@@ -46,9 +42,7 @@ const QuoteHeaderMessage: FC<QuoteHeaderMessageProps> = ({
               />
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-semibold text-foreground">
-                {authorName}
-              </div>
+              <div className="truncate text-sm font-semibold text-foreground">{authorName}</div>
               <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <Quote className="h-3.5 w-3.5 text-emerald-500" />
                 <span>Original Quote</span>
@@ -57,9 +51,7 @@ const QuoteHeaderMessage: FC<QuoteHeaderMessageProps> = ({
           </div>
 
           {title && (
-            <div className="text-sm font-semibold leading-snug text-foreground">
-              {title}
-            </div>
+            <div className="text-sm font-semibold leading-snug text-foreground">{title}</div>
           )}
 
           {text && (
@@ -79,4 +71,3 @@ const QuoteHeaderMessage: FC<QuoteHeaderMessageProps> = ({
 };
 
 export default QuoteHeaderMessage;
-

@@ -1,22 +1,11 @@
-'use client';
+"use client";
 
-import {
-  Users,
-  Shield,
-  TrendingUp,
-  RefreshCw,
-  Info,
-} from 'lucide-react';
-import type { ReputationDisplayProps } from '@/types/profile';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { Users, Shield, TrendingUp, RefreshCw, Info } from "lucide-react";
+import type { ReputationDisplayProps } from "@/types/profile";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export function ReputationDisplay({
   reputation,
@@ -34,17 +23,17 @@ export function ReputationDisplay({
   }
 
   const getScoreColor = (score: number): string => {
-    if (score >= 800) return '#4caf50'; // Green
-    if (score >= 600) return '#ff9800'; // Orange
-    if (score >= 400) return '#ff5722'; // Red-Orange
-    return '#f44336'; // Red
+    if (score >= 800) return "#4caf50"; // Green
+    if (score >= 600) return "#ff9800"; // Orange
+    if (score >= 400) return "#ff5722"; // Red-Orange
+    return "#f44336"; // Red
   };
 
   const getScoreLabel = (score: number): string => {
-    if (score >= 800) return 'Excellent';
-    if (score >= 600) return 'Good';
-    if (score >= 400) return 'Fair';
-    return 'Poor';
+    if (score >= 800) return "Excellent";
+    if (score >= 600) return "Good";
+    if (score >= 400) return "Fair";
+    return "Poor";
   };
 
   /**
@@ -52,7 +41,7 @@ export function ReputationDisplay({
    * parsing for Date instances and digit-only epoch strings from older payloads.
    */
   const formatDate = (dateValue: string | Date | null | undefined): string => {
-    if (dateValue == null || dateValue === '') return 'Not available';
+    if (dateValue == null || dateValue === "") return "Not available";
 
     const date =
       dateValue instanceof Date
@@ -61,7 +50,7 @@ export function ReputationDisplay({
           ? new Date(Number(dateValue))
           : new Date(dateValue);
 
-    if (Number.isNaN(date.getTime())) return 'Not available';
+    if (Number.isNaN(date.getTime())) return "Not available";
     return date.toLocaleDateString();
   };
 
@@ -72,9 +61,7 @@ export function ReputationDisplay({
   return (
     <div className="space-y-4">
       {/* Main Reputation Card */}
-      <Card
-        className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
-      >
+      <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
         <CardContent className="pt-6">
           <div className="flex justify-between items-start">
             <div className="flex-1">
@@ -93,7 +80,7 @@ export function ReputationDisplay({
                   className="h-2 rounded-full transition-all"
                   style={{
                     width: `${progressPercentage}%`,
-                    backgroundColor: '#4caf50',
+                    backgroundColor: "#4caf50",
                   }}
                 />
               </div>
@@ -111,9 +98,7 @@ export function ReputationDisplay({
                     disabled={loading}
                     className="text-white hover:bg-white/20"
                   >
-                    <RefreshCw
-                      className={cn('h-5 w-5', loading && 'animate-spin')}
-                    />
+                    <RefreshCw className={cn("h-5 w-5", loading && "animate-spin")} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -132,9 +117,7 @@ export function ReputationDisplay({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="text-center">
               <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-xl font-bold text-primary">
-                {reputation.inviteNetworkScore}
-              </p>
+              <p className="text-xl font-bold text-primary">{reputation.inviteNetworkScore}</p>
               <p className="text-sm text-muted-foreground">Invite Network</p>
               <TooltipProvider>
                 <Tooltip>
@@ -149,9 +132,7 @@ export function ReputationDisplay({
             </div>
             <div className="text-center">
               <Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-xl font-bold text-primary">
-                {reputation.conductScore}
-              </p>
+              <p className="text-xl font-bold text-primary">{reputation.conductScore}</p>
               <p className="text-sm text-muted-foreground">Conduct</p>
               <TooltipProvider>
                 <Tooltip>
@@ -166,9 +147,7 @@ export function ReputationDisplay({
             </div>
             <div className="text-center">
               <TrendingUp className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-xl font-bold text-primary">
-                {reputation.activityScore}
-              </p>
+              <p className="text-xl font-bold text-primary">{reputation.activityScore}</p>
               <p className="text-sm text-muted-foreground">Activity</p>
               <TooltipProvider>
                 <Tooltip>
@@ -203,21 +182,15 @@ export function ReputationDisplay({
               <p className="text-sm text-muted-foreground">Invites Accepted</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalPosts}
-              </p>
+              <p className="text-xl font-bold text-primary">{reputation.metrics.totalPosts}</p>
               <p className="text-sm text-muted-foreground">Posts Created</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalComments}
-              </p>
+              <p className="text-xl font-bold text-primary">{reputation.metrics.totalComments}</p>
               <p className="text-sm text-muted-foreground">Comments Made</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalUpvotes}
-              </p>
+              <p className="text-xl font-bold text-primary">{reputation.metrics.totalUpvotes}</p>
               <p className="text-sm text-muted-foreground">Upvotes Given</p>
             </div>
             <div className="text-center">
@@ -244,4 +217,3 @@ export function ReputationDisplay({
     </div>
   );
 }
-

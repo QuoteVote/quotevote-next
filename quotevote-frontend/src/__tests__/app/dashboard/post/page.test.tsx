@@ -1,19 +1,19 @@
-import { render, screen } from '@testing-library/react';
-import PostsPage from '@/app/(dashboard)/post/page';
+import { render, screen } from "@testing-library/react";
+import PostsPage from "@/app/(dashboard)/post/page";
 
 // Mock the components used in PostsPage
-jest.mock('@/components/SubHeader', () => ({
+jest.mock("@/components/SubHeader", () => ({
   SubHeader: ({ headerName }: { headerName: string }) => (
     <header data-testid="subheader">{headerName}</header>
   ),
 }));
 
-jest.mock('@/components/Post/PostSkeleton', () => ({
+jest.mock("@/components/Post/PostSkeleton", () => ({
   __esModule: true,
   default: () => <div data-testid="post-skeleton">Loading post...</div>,
 }));
 
-jest.mock('@/components/Post/PaginatedPostsList', () => ({
+jest.mock("@/components/Post/PaginatedPostsList", () => ({
   __esModule: true,
   default: ({
     defaultPageSize,
@@ -38,30 +38,30 @@ jest.mock('@/components/Post/PaginatedPostsList', () => ({
   ),
 }));
 
-describe('PostsPage', () => {
-  it('should render the page with SubHeader', () => {
+describe("PostsPage", () => {
+  it("should render the page with SubHeader", () => {
     render(<PostsPage />);
-    
-    const subheader = screen.getByTestId('subheader');
+
+    const subheader = screen.getByTestId("subheader");
     expect(subheader).toBeInTheDocument();
-    expect(subheader).toHaveTextContent('Posts');
+    expect(subheader).toHaveTextContent("Posts");
   });
 
-  it('should render PaginatedPostsList with correct props', () => {
+  it("should render PaginatedPostsList with correct props", () => {
     render(<PostsPage />);
-    
-    const postsList = screen.getByTestId('paginated-posts-list');
+
+    const postsList = screen.getByTestId("paginated-posts-list");
     expect(postsList).toBeInTheDocument();
-    expect(postsList).toHaveAttribute('data-page-size', '20');
-    expect(postsList).toHaveAttribute('data-show-page-info', 'true');
-    expect(postsList).toHaveAttribute('data-show-first-last', 'true');
-    expect(postsList).toHaveAttribute('data-max-visible-pages', '5');
+    expect(postsList).toHaveAttribute("data-page-size", "20");
+    expect(postsList).toHaveAttribute("data-show-page-info", "true");
+    expect(postsList).toHaveAttribute("data-show-first-last", "true");
+    expect(postsList).toHaveAttribute("data-max-visible-pages", "5");
   });
 
-  it('should have proper structure with space-y-4 class', () => {
+  it("should have proper structure with space-y-4 class", () => {
     const { container } = render(<PostsPage />);
-    
-    const mainDiv = container.querySelector('.space-y-4');
+
+    const mainDiv = container.querySelector(".space-y-4");
     expect(mainDiv).toBeInTheDocument();
   });
 });

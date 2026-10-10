@@ -1,43 +1,66 @@
 const AVATAAARS_QUALITY_KEYS = new Set([
-  'topType',
-  'accessoriesType',
-  'hairColor',
-  'facialHairType',
-  'facialHairColor',
-  'clotheType',
-  'clotheColor',
-  'graphicType',
-  'eyeType',
-  'eyebrowType',
-  'mouthType',
-  'skinColor',
-  'hatColor',
+  "topType",
+  "accessoriesType",
+  "hairColor",
+  "facialHairType",
+  "facialHairColor",
+  "clotheType",
+  "clotheColor",
+  "graphicType",
+  "eyeType",
+  "eyebrowType",
+  "mouthType",
+  "skinColor",
+  "hatColor",
 ]);
 
 // Curated option sets used to generate deterministic default avatars.
 // Kept compact deliberately — the full editor option list stays in the editor page.
 const DEFAULT_OPTIONS: Record<string, readonly string[]> = {
   topType: [
-    'ShortHairShortFlat', 'ShortHairShortRound', 'ShortHairShortWaved',
-    'LongHairStraight', 'LongHairCurly', 'LongHairBun',
-    'ShortHairDreads01', 'Hat', 'LongHairFro',
+    "ShortHairShortFlat",
+    "ShortHairShortRound",
+    "ShortHairShortWaved",
+    "LongHairStraight",
+    "LongHairCurly",
+    "LongHairBun",
+    "ShortHairDreads01",
+    "Hat",
+    "LongHairFro",
   ],
-  accessoriesType: ['Blank', 'Blank', 'Blank', 'Prescription01', 'Round', 'Sunglasses'],
-  hairColor: ['Auburn', 'Black', 'Blonde', 'Brown', 'BrownDark', 'PastelPink', 'Red', 'SilverGray'],
-  facialHairType: ['Blank', 'Blank', 'Blank', 'BeardMedium', 'BeardLight', 'MoustacheMagnum'],
-  facialHairColor: ['Auburn', 'Black', 'Blonde', 'Brown', 'BrownDark'],
-  clotheType: ['BlazerShirt', 'BlazerSweater', 'Hoodie', 'ShirtCrewNeck', 'ShirtVNeck', 'CollarSweater'],
-  clotheColor: ['Black', 'Blue01', 'Blue02', 'Blue03', 'Gray01', 'PastelBlue', 'PastelGreen', 'Red', 'White'],
-  eyeType: ['Default', 'Happy', 'Side', 'Surprised', 'Wink'],
-  eyebrowType: ['Default', 'DefaultNatural', 'RaisedExcited', 'RaisedExcitedNatural'],
-  mouthType: ['Default', 'Smile', 'Serious', 'Twinkle'],
-  skinColor: ['Light', 'Brown', 'DarkBrown', 'Yellow', 'Pale', 'Tanned'],
+  accessoriesType: ["Blank", "Blank", "Blank", "Prescription01", "Round", "Sunglasses"],
+  hairColor: ["Auburn", "Black", "Blonde", "Brown", "BrownDark", "PastelPink", "Red", "SilverGray"],
+  facialHairType: ["Blank", "Blank", "Blank", "BeardMedium", "BeardLight", "MoustacheMagnum"],
+  facialHairColor: ["Auburn", "Black", "Blonde", "Brown", "BrownDark"],
+  clotheType: [
+    "BlazerShirt",
+    "BlazerSweater",
+    "Hoodie",
+    "ShirtCrewNeck",
+    "ShirtVNeck",
+    "CollarSweater",
+  ],
+  clotheColor: [
+    "Black",
+    "Blue01",
+    "Blue02",
+    "Blue03",
+    "Gray01",
+    "PastelBlue",
+    "PastelGreen",
+    "Red",
+    "White",
+  ],
+  eyeType: ["Default", "Happy", "Side", "Surprised", "Wink"],
+  eyebrowType: ["Default", "DefaultNatural", "RaisedExcited", "RaisedExcitedNatural"],
+  mouthType: ["Default", "Smile", "Serious", "Twinkle"],
+  skinColor: ["Light", "Brown", "DarkBrown", "Yellow", "Pale", "Tanned"],
 };
 
 export type AvatarQualities = Record<string, string>;
 
 export function buildAvatarUrl(qualities: AvatarQualities): string {
-  const params = new URLSearchParams({ avatarStyle: 'Circle' });
+  const params = new URLSearchParams({ avatarStyle: "Circle" });
   Object.entries(qualities).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
@@ -75,10 +98,10 @@ export function parseAvatarToUrl(
 ): string | undefined {
   if (!avatar) return undefined;
 
-  if (typeof avatar === 'string') {
+  if (typeof avatar === "string") {
     try {
       const parsed: unknown = JSON.parse(avatar);
-      if (typeof parsed === 'object' && parsed !== null) {
+      if (typeof parsed === "object" && parsed !== null) {
         return parseAvatarToUrl(parsed as Record<string, unknown>);
       }
     } catch {
@@ -87,14 +110,14 @@ export function parseAvatarToUrl(
     return avatar;
   }
 
-  if (typeof avatar === 'object') {
-    if ('url' in avatar && typeof avatar.url === 'string') {
+  if (typeof avatar === "object") {
+    if ("url" in avatar && typeof avatar.url === "string") {
       return avatar.url;
     }
 
     const qualities: AvatarQualities = {};
     for (const [key, value] of Object.entries(avatar)) {
-      if (AVATAAARS_QUALITY_KEYS.has(key) && typeof value === 'string') {
+      if (AVATAAARS_QUALITY_KEYS.has(key) && typeof value === "string") {
         qualities[key] = value;
       }
     }

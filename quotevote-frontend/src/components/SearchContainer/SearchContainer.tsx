@@ -1,40 +1,40 @@
-'use client'
+"use client";
 
-import { useState, useCallback, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Search as SearchIcon, SearchX } from 'lucide-react'
-import { useQuery } from '@apollo/client/react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
-import { useDebounce } from '@/hooks/useDebounce'
-import PostCard from '@/components/Post/PostCard'
-import PostSkeleton from '@/components/Post/PostSkeleton'
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Search as SearchIcon, SearchX } from "lucide-react";
+import { useQuery } from "@apollo/client/react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/useDebounce";
+import PostCard from "@/components/Post/PostCard";
+import PostSkeleton from "@/components/Post/PostSkeleton";
 import {
   GET_TOP_POSTS,
   GET_FEATURED_POSTS,
   GET_FRIENDS_POSTS,
   SEARCH_USERNAMES,
-} from '@/graphql/queries'
-import { useAppStore } from '@/store'
-import UsernameResults from './UsernameResults'
-import SearchGuestSections from './SearchGuestSections'
-import { MOCK_POSTS } from '@/lib/mock-data'
-import type { Post, PostsListData } from '@/types/post'
-import type { UsernameSearchUser } from '@/types/components'
-import { parseSearchQuery } from '@/utils/parseSearchQuery'
+} from "@/graphql/queries";
+import { useAppStore } from "@/store";
+import UsernameResults from "./UsernameResults";
+import SearchGuestSections from "./SearchGuestSections";
+import { MOCK_POSTS } from "@/lib/mock-data";
+import type { Post, PostsListData } from "@/types/post";
+import type { UsernameSearchUser } from "@/types/components";
+import { parseSearchQuery } from "@/utils/parseSearchQuery";
 
 interface FeaturedPostsData {
   featuredPosts: {
-    entities: Post[]
+    entities: Post[];
     pagination: {
-      total_count: number
-      limit: number
-      offset: number
-    }
-  }
+      total_count: number;
+      limit: number;
+      offset: number;
+    };
+  };
 }
 
-const LIMIT = 20
+const LIMIT = 20;
 
 /**
  * PostsTab — renders a list of posts from a query result
@@ -44,9 +44,9 @@ function PostsTab({
   loading,
   searchKey,
 }: {
-  posts: Post[]
-  loading: boolean
-  searchKey?: string
+  posts: Post[];
+  loading: boolean;
+  searchKey?: string;
 }) {
   if (loading) {
     return (
@@ -55,7 +55,7 @@ function PostsTab({
         <PostSkeleton />
         <PostSkeleton />
       </div>
-    )
+    );
   }
 
   if (!posts.length) {
@@ -84,24 +84,24 @@ function PostsTab({
             />
           ))}
         </div>
-      )
+      );
     }
     // Search with no results
-    const parsed = searchKey ? parseSearchQuery(searchKey) : null
-    let subMessage = 'Try a different search term'
+    const parsed = searchKey ? parseSearchQuery(searchKey) : null;
+    let subMessage = "Try a different search term";
     if (parsed) {
-      const parts: string[] = []
+      const parts: string[] = [];
       if (parsed.usernames.length > 0) {
-        parts.push(`from @${parsed.usernames.join(', @')}`)
+        parts.push(`from @${parsed.usernames.join(", @")}`);
       }
       if (parsed.hashtags.length > 0) {
-        parts.push(`tagged with #${parsed.hashtags.join(', #')}`)
+        parts.push(`tagged with #${parsed.hashtags.join(", #")}`);
       }
       if (parsed.textQuery) {
-        parts.push(`matching "${parsed.textQuery}"`)
+        parts.push(`matching "${parsed.textQuery}"`);
       }
       if (parts.length > 0) {
-        subMessage = `Could not find any posts ${parts.join(' ')}.`
+        subMessage = `Could not find any posts ${parts.join(" ")}.`;
       }
     }
 
@@ -109,11 +109,9 @@ function PostsTab({
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <SearchX className="h-12 w-12 text-muted-foreground/50 mb-4" />
         <p className="text-base font-semibold text-foreground">No posts found</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          {subMessage}
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">{subMessage}</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -140,7 +138,7 @@ function PostsTab({
         />
       ))}
     </div>
-  )
+  );
 }
 
 /**
@@ -151,13 +149,13 @@ function TrendingTab({ from, to }: { from: string; to: string }) {
     variables: {
       limit: LIMIT,
       offset: 0,
-      searchKey: '',
+      searchKey: "",
       startDateRange: from || undefined,
       endDateRange: to || undefined,
     },
-  })
-  const posts: Post[] = data?.posts?.entities ?? []
-  return <PostsTab posts={posts} loading={loading} />
+  });
+  const posts: Post[] = data?.posts?.entities ?? [];
+  return <PostsTab posts={posts} loading={loading} />;
 }
 
 /**
@@ -168,13 +166,13 @@ function FeaturedTab({ from, to }: { from: string; to: string }) {
     variables: {
       limit: LIMIT,
       offset: 0,
-      searchKey: '',
+      searchKey: "",
       startDateRange: from || undefined,
       endDateRange: to || undefined,
     },
-  })
-  const posts: Post[] = data?.featuredPosts?.entities ?? []
-  return <PostsTab posts={posts} loading={loading} />
+  });
+  const posts: Post[] = data?.featuredPosts?.entities ?? [];
+  return <PostsTab posts={posts} loading={loading} />;
 }
 
 /**
@@ -185,28 +183,20 @@ function FriendsTab({ from, to }: { from: string; to: string }) {
     variables: {
       limit: LIMIT,
       offset: 0,
-      searchKey: '',
+      searchKey: "",
       startDateRange: from || undefined,
       endDateRange: to || undefined,
       friendsOnly: true,
     },
-  })
-  const posts: Post[] = data?.posts?.entities ?? []
-  return <PostsTab posts={posts} loading={loading} />
+  });
+  const posts: Post[] = data?.posts?.entities ?? [];
+  return <PostsTab posts={posts} loading={loading} />;
 }
 
 /**
  * SearchTab — loads posts matching a search query
  */
-function SearchTab({
-  searchKey,
-  from,
-  to,
-}: {
-  searchKey: string
-  from: string
-  to: string
-}) {
+function SearchTab({ searchKey, from, to }: { searchKey: string; from: string; to: string }) {
   const { loading, data } = useQuery<PostsListData>(GET_TOP_POSTS, {
     variables: {
       limit: LIMIT,
@@ -216,9 +206,9 @@ function SearchTab({
       endDateRange: to || undefined,
     },
     skip: !searchKey,
-  })
-  const posts: Post[] = data?.posts?.entities ?? []
-  return <PostsTab posts={posts} loading={loading && !!searchKey} searchKey={searchKey} />
+  });
+  const posts: Post[] = data?.posts?.entities ?? [];
+  return <PostsTab posts={posts} loading={loading && !!searchKey} searchKey={searchKey} />;
 }
 
 /**
@@ -228,64 +218,65 @@ function SearchTab({
  * Tabs: Trending | Featured | Friends | Search (only when ?q= is set)
  */
 export default function SearchContainer() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const user = useAppStore((state) => state.user.data)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const user = useAppStore((state) => state.user.data);
 
-  const q = searchParams.get('q') || ''
-  const tab = searchParams.get('tab') || 'trending'
-  const from = searchParams.get('from') || ''
-  const to = searchParams.get('to') || ''
+  const q = searchParams.get("q") || "";
+  const tab = searchParams.get("tab") || "trending";
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
 
-  const [inputValue, setInputValue] = useState(q)
-  const debouncedQuery = useDebounce(inputValue, 400)
+  const [inputValue, setInputValue] = useState(q);
+  const debouncedQuery = useDebounce(inputValue, 400);
 
   // Sync debounced query to URL
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams.toString());
     if (debouncedQuery) {
-      params.set('q', debouncedQuery)
-      if (params.get('tab') !== 'search') {
-        params.set('tab', 'search')
+      params.set("q", debouncedQuery);
+      if (params.get("tab") !== "search") {
+        params.set("tab", "search");
       }
     } else {
-      params.delete('q')
-      if (params.get('tab') === 'search') {
-        params.set('tab', 'trending')
+      params.delete("q");
+      if (params.get("tab") === "search") {
+        params.set("tab", "trending");
       }
     }
-    router.replace(`?${params.toString()}`)
+    router.replace(`?${params.toString()}`);
     // Only run when debouncedQuery changes; avoid re-running on searchParams changes to prevent loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery])
+  }, [debouncedQuery]);
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInputValue(e.target.value)
-    },
-    []
-  )
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  }, []);
 
   const handleTabChange = useCallback(
     (value: string) => {
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('tab', value)
-      router.replace(`?${params.toString()}`)
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", value);
+      router.replace(`?${params.toString()}`);
     },
     [router, searchParams]
-  )
+  );
 
   // User search for username results dropdown
-  const { loading: usersLoading, data: usersData, error: usersError } = useQuery<{
-    searchUser: UsernameSearchUser[]
+  const {
+    loading: usersLoading,
+    data: usersData,
+    error: usersError,
+  } = useQuery<{
+    searchUser: UsernameSearchUser[];
   }>(SEARCH_USERNAMES, {
     variables: { query: debouncedQuery },
     skip: !debouncedQuery,
-  })
+  });
 
   // Determine active tab — if no query, don't show 'search' tab as active
-  const activeTab = q ? tab : tab === 'search' ? 'trending' : tab
-  const isLoggedIn = !!(user?._id || user?.id)
+  const activeTab = q ? tab : tab === "search" ? "trending" : tab;
+  const isLoggedIn = !!(user?._id || user?.id);
 
   return (
     <div className="space-y-6">
@@ -371,5 +362,5 @@ export default function SearchContainer() {
 
       <SearchGuestSections />
     </div>
-  )
+  );
 }

@@ -55,5 +55,6 @@ export const getGraphqlWsServerUrl = (): string => {
  * Local HTTP endpoints are converted to ws:// by getGraphqlWsServerUrl.
  */
 export const areGraphqlSubscriptionsEnabled = (): boolean => {
-  return Boolean(getBaseServerUrl());
+  const baseUrl = getBaseServerUrl();
+  return !baseUrl.includes("localhost") && !baseUrl.includes("127.0.0.1");
 };

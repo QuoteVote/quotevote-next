@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useRef } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@apollo/client/react';
+import React, { useEffect, useState, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@apollo/client/react";
 import {
   Github,
   Twitter,
@@ -27,16 +27,16 @@ import {
   ChevronLeft,
   Star,
   MessageCircle,
-} from 'lucide-react';
-import { Globe as GlobeIcon } from '@/components/Icons';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import { SEARCH, GET_FEATURED_POSTS } from '@/graphql/queries';
-import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
-import { useDebounce } from '@/hooks/useDebounce';
-import { toAppPostUrl } from '@/lib/utils/sanitizeUrl';
-import type { Post } from '@/types/post';
+} from "lucide-react";
+import { Globe as GlobeIcon } from "@/components/Icons";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { SEARCH, GET_FEATURED_POSTS } from "@/graphql/queries";
+import { REQUEST_USER_ACCESS_MUTATION } from "@/graphql/mutations";
+import { useDebounce } from "@/hooks/useDebounce";
+import { toAppPostUrl } from "@/lib/utils/sanitizeUrl";
+import type { Post } from "@/types/post";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -59,32 +59,32 @@ interface CreatorResult {
 // ── Static data ─────────────────────────────────────────────────────────────
 
 const quickLinks = [
-  { href: '/auths/request-access', label: 'Request Invite', external: false },
-  { href: '/auths/login', label: 'Login', external: false },
-  { href: 'https://opencollective.com/quotevote/donate', label: 'Donate', external: true },
-  { href: 'mailto:admin@quote.vote', label: 'Volunteer', external: true },
+  { href: "/auths/request-access", label: "Request Invite", external: false },
+  { href: "/auths/login", label: "Login", external: false },
+  { href: "https://opencollective.com/quotevote/donate", label: "Donate", external: true },
+  { href: "mailto:admin@quote.vote", label: "Volunteer", external: true },
 ] as const;
 
 const resourceLinks = [
-  { href: '/terms', label: 'Terms of Service' },
-  { href: '/code-of-conduct', label: 'Code of Conduct' },
-  { href: '/contributing', label: 'Contributing' },
+  { href: "/terms", label: "Terms of Service" },
+  { href: "/code-of-conduct", label: "Code of Conduct" },
+  { href: "/contributing", label: "Contributing" },
 ] as const;
 
 const socialLinks = [
-  { href: 'https://github.com/QuoteVote/quotevote-monorepo', Icon: Github, label: 'GitHub' },
-  { href: 'https://twitter.com/quotevote', Icon: Twitter, label: 'Twitter' },
-  { href: 'https://linkedin.com/company/quotevote', Icon: Linkedin, label: 'LinkedIn' },
+  { href: "https://github.com/QuoteVote/quotevote-monorepo", Icon: Github, label: "GitHub" },
+  { href: "https://twitter.com/quotevote", Icon: Twitter, label: "Twitter" },
+  { href: "https://linkedin.com/company/quotevote", Icon: Linkedin, label: "LinkedIn" },
 ] as const;
 
 const baseStats = [
-  { value: '100%', label: 'Open Source', icon: Globe },
-  { value: '0', label: 'Ads or trackers', icon: ShieldOff },
-  { value: '∞', label: 'Community-driven', icon: Users },
+  { value: "100%", label: "Open Source", icon: Globe },
+  { value: "0", label: "Ads or trackers", icon: ShieldOff },
+  { value: "∞", label: "Community-driven", icon: Users },
 ] as const;
 
 function scrollToSection(id: string): void {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
 /** Hook: returns [ref, isInView] — fires once when element enters viewport */
@@ -95,8 +95,13 @@ function useInView<T extends HTMLElement = HTMLDivElement>(threshold = 0.15) {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry?.isIntersecting) { setInView(true); obs.disconnect(); } },
-      { threshold },
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setInView(true);
+          obs.disconnect();
+        }
+      },
+      { threshold }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -105,7 +110,15 @@ function useInView<T extends HTMLElement = HTMLDivElement>(threshold = 0.15) {
 }
 
 /** Scroll-reveal wrapper — fades/slides children in when scrolled into view */
-function ScrollReveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+function ScrollReveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   const [ref, inView] = useInView(0.12);
   return (
     <div
@@ -113,7 +126,7 @@ function ScrollReveal({ children, className = '', delay = 0 }: { children: React
       className={className}
       style={{
         opacity: inView ? 1 : 0,
-        transform: inView ? 'translateY(0)' : 'translateY(24px)',
+        transform: inView ? "translateY(0)" : "translateY(24px)",
         transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms`,
       }}
     >
@@ -161,24 +174,25 @@ interface LandingPageContentProps {
  * Client component for the Quote.Vote landing page.
  */
 export function LandingPageContent({
-  totalRaised = '$500+',
+  totalRaised = "$500+",
   progressPct = 50,
 }: LandingPageContentProps) {
   const router = useRouter();
 
-  const stats = [
-    { value: totalRaised, label: 'Raised in donations', icon: Heart },
-    ...baseStats,
-  ];
+  const stats = [{ value: totalRaised, label: "Raised in donations", icon: Heart }, ...baseStats];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#eef4f9' }} data-testid="landing-page">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: "#eef4f9" }}
+      data-testid="landing-page"
+    >
       {/* ── Navbar ────────────────────────────────────────────── */}
       <nav
         className="sticky top-0 z-50 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
         role="navigation"
         aria-label="Main navigation"
-        style={{ borderImage: 'linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1' }}
+        style={{ borderImage: "linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1" }}
       >
         <div className="w-full px-4 h-16 flex items-center justify-between gap-4">
           <Link
@@ -189,7 +203,7 @@ export function LandingPageContent({
             <GlobeIcon size={28} className="size-7" />
             <span
               className="font-extrabold text-lg tracking-wide hidden sm:block select-none"
-              style={{ color: '#0A2342' }}
+              style={{ color: "#0A2342" }}
             >
               Quote.Vote
             </span>
@@ -199,16 +213,16 @@ export function LandingPageContent({
             <Link
               href="/"
               className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] hidden sm:block"
-              style={{ color: '#475569' }}
+              style={{ color: "#475569" }}
               aria-label="Go to home page"
             >
               Home
             </Link>
 
             <button
-              onClick={() => scrollToSection('about-section')}
+              onClick={() => scrollToSection("about-section")}
               className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] hidden sm:block"
-              style={{ color: '#475569' }}
+              style={{ color: "#475569" }}
               aria-label="Scroll to About section"
             >
               About
@@ -219,7 +233,7 @@ export function LandingPageContent({
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-2 text-sm font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] hidden md:block"
-              style={{ color: '#475569' }}
+              style={{ color: "#475569" }}
               aria-label="Donate to Quote.Vote (opens in new tab)"
             >
               Donate
@@ -230,19 +244,25 @@ export function LandingPageContent({
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg transition-all hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2AE6B2]"
-              style={{ color: '#0A2342', display: 'inline-flex', alignItems: 'center' }}
+              style={{ color: "#0A2342", display: "inline-flex", alignItems: "center" }}
               aria-label="GitHub repository (opens in new tab)"
-              onMouseEnter={e => (e.currentTarget.style.color = '#2AE6B2')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#0A2342')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#2AE6B2")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#0A2342")}
             >
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
               </svg>
             </a>
 
             <div
               className="w-px h-5 mx-1 hidden sm:block"
-              style={{ background: '#e2e8f0' }}
+              style={{ background: "#e2e8f0" }}
               aria-hidden
             />
 
@@ -250,9 +270,9 @@ export function LandingPageContent({
               href="/auths/login"
               className="px-4 py-2 text-sm font-semibold rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:ring-offset-2"
               style={{
-                color: '#2ecc71',
-                border: '1.5px solid #bbf7d0',
-                background: '#f0fdf4',
+                color: "#2ecc71",
+                border: "1.5px solid #bbf7d0",
+                background: "#f0fdf4",
               }}
               aria-label="Login to your account"
             >
@@ -263,8 +283,8 @@ export function LandingPageContent({
               href="/auths/request-access"
               className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:ring-offset-2"
               style={{
-                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                boxShadow: '0 2px 12px rgba(22,163,74,0.25)',
+                background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                boxShadow: "0 2px 12px rgba(22,163,74,0.25)",
               }}
               aria-label="Request an invite to join Quote.Vote"
             >
@@ -279,7 +299,7 @@ export function LandingPageContent({
       <section
         className="relative flex-shrink-0 overflow-hidden"
         aria-labelledby="hero-heading"
-        style={{ background: '#eef4f9' }}
+        style={{ background: "#eef4f9" }}
       >
         {/* Background atmosphere */}
         <div className="absolute inset-0 pointer-events-none select-none" aria-hidden>
@@ -287,31 +307,30 @@ export function LandingPageContent({
             className="absolute inset-0"
             style={{
               background:
-                'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(22,163,74,0.08) 0%, transparent 65%)',
+                "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(22,163,74,0.08) 0%, transparent 65%)",
             }}
           />
         </div>
 
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-20 pb-14 sm:pt-20 sm:pb-20 text-center">
-          <p className="text-sm mb-4" style={{ color: '#64748b' }}>
+          <p className="text-sm mb-4" style={{ color: "#64748b" }}>
             No algorithms. No ads. Just conversations.
           </p>
 
           <h1
             id="hero-heading"
             className="text-[2.75rem] sm:text-6xl lg:text-7xl font-extrabold mb-6 leading-[1.08] tracking-tight"
-            style={{ color: '#0f172a' }}
+            style={{ color: "#0f172a" }}
           >
-            Share Ideas.{' '}
-            <span style={{ color: '#2ecc71' }}>
-              Vote
-            </span>{' '}
-            on What Matters.
+            Share Ideas. <span style={{ color: "#2ecc71" }}>Vote</span> on What Matters.
           </h1>
 
-          <p className="text-base sm:text-lg leading-relaxed mb-6 max-w-lg mx-auto" style={{ color: '#64748b' }}>
-            An open-source, text-first platform for thoughtful dialogue. Quote,
-            vote, and engage in real conversations.
+          <p
+            className="text-base sm:text-lg leading-relaxed mb-6 max-w-lg mx-auto"
+            style={{ color: "#64748b" }}
+          >
+            An open-source, text-first platform for thoughtful dialogue. Quote, vote, and engage in
+            real conversations.
           </p>
 
           <HeroSearch router={router} />
@@ -322,9 +341,9 @@ export function LandingPageContent({
               size="lg"
               className="rounded-xl px-8 font-semibold text-white text-sm w-full sm:w-auto"
               style={{
-                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                boxShadow: '0 4px 24px rgba(22,163,74,0.25), inset 0 1px 0 rgba(255,255,255,0.15)',
-                border: 'none',
+                background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                boxShadow: "0 4px 24px rgba(22,163,74,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
+                border: "none",
               }}
             >
               <Link href="/auths/request-access" aria-label="Request an invite to join Quote.Vote">
@@ -339,9 +358,9 @@ export function LandingPageContent({
               variant="outline"
               className="rounded-xl px-8 font-semibold text-sm w-full sm:w-auto"
               style={{
-                background: '#f0fdf4',
-                borderColor: '#bbf7d0',
-                color: '#2ecc71',
+                background: "#f0fdf4",
+                borderColor: "#bbf7d0",
+                color: "#2ecc71",
               }}
             >
               <Link href="/auths/login" aria-label="Login to your account">
@@ -351,20 +370,17 @@ export function LandingPageContent({
           </div>
 
           <div className="flex items-center justify-center mt-6 gap-0">
-            {(['Open Source', 'Ad-Free', 'Community-Driven', 'No Tracking'] as const).map(
+            {(["Open Source", "Ad-Free", "Community-Driven", "No Tracking"] as const).map(
               (label, i, arr) => (
                 <React.Fragment key={label}>
-                  <span
-                    className="text-xs font-medium px-3 sm:px-4"
-                    style={{ color: '#94a3b8' }}
-                  >
+                  <span className="text-xs font-medium px-3 sm:px-4" style={{ color: "#94a3b8" }}>
                     {label}
                   </span>
                   {i < arr.length - 1 && (
                     <Separator
                       orientation="vertical"
                       className="h-3"
-                      style={{ background: '#e2e8f0' }}
+                      style={{ background: "#e2e8f0" }}
                     />
                   )}
                 </React.Fragment>
@@ -376,989 +392,35 @@ export function LandingPageContent({
 
       {/* ── Page Sections ──────────────────────────────────────── */}
       <>
-
-      {/* ── Stats Strip ───────────────────────────────────────── */}
-      <div
-        className="border-y"
-        style={{
-          background: '#eef4f9',
-          borderColor: '#e2e8f0',
-        }}
-      >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {stats.map(({ value, label, icon: Icon }, i) => (
-              <div
-                key={label}
-                className="flex flex-col items-center sm:items-start gap-1"
-                style={{
-                  borderLeft: i > 0 ? '1px solid #e2e8f0' : undefined,
-                  paddingLeft: i > 0 ? '1.5rem' : undefined,
-                }}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Icon size={14} style={{ color: '#2ecc71' }} aria-hidden />
-                </div>
-                <span
-                  className="text-2xl sm:text-3xl font-extrabold tracking-tight"
-                  style={{ color: '#0f172a' }}
-                >
-                  <AnimatedCounter value={value} />
-                </span>
-                <span className="text-xs font-medium" style={{ color: '#64748b' }}>
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Featured Posts ────────────────────────────────────── */}
-      <FeaturedPostsSection />
-
-      {/* ── Mission / About ───────────────────────────────────── */}
-      <section
-        id="about-section"
-        className="relative overflow-hidden py-14 sm:py-20"
-        style={{ background: '#eef4f9' }}
-        aria-labelledby="about-heading"
-      >
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-10 items-start">
-            {/* Left — headline */}
-            <div>
-              <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
-              >
-                Our Mission
-              </p>
-              <h2
-                id="about-heading"
-                className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight mb-6"
-                style={{ color: '#0f172a' }}
-              >
-                Welcome to{' '}
-                <span
-                  style={{ color: '#2ecc71' }}
-                >
-                  Quote.Vote
-                </span>
-              </h2>
-              <p
-                className="text-lg leading-relaxed mb-6"
-                style={{ color: '#475569' }}
-              >
-                A non-profit platform where every voice counts. Donate your time or
-                money and be part of the change you&apos;d like to see in the world.
-              </p>
-
-              {/* Blockquote */}
-              <blockquote
-                className="relative pl-6"
-                style={{ borderLeft: '3px solid #16a34a' }}
-              >
-                <p
-                  className="text-xl sm:text-2xl font-semibold italic leading-snug"
-                  style={{ color: '#0f172a' }}
-                >
-                  &ldquo;Thoughtful, respectful discourse leads to stronger communities and richer dialogue.&rdquo;
-                </p>
-              </blockquote>
-
-              <div className="flex flex-wrap gap-3 mt-6">
-                <Link
-                  href="/auths/request-access"
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 hover:-translate-y-0.5"
-                  style={{
-                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                    boxShadow: '0 4px 20px rgba(22,163,74,0.28)',
-                  }}
-                  aria-label="Request an invite to join Quote.Vote"
-                >
-                  Get Started
-                  <ArrowRight size={16} aria-hidden />
-                </Link>
-                <a
-                  href="https://opencollective.com/quotevote/donate"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5"
-                  style={{
-                    color: '#2ecc71',
-                    border: '1.5px solid #bbf7d0',
-                    background: '#f0fdf4',
-                  }}
-                  aria-label="Donate to support Quote.Vote (opens in new tab)"
-                >
-                  Donate
-                </a>
-              </div>
-            </div>
-
-            {/* Right — pillars */}
-            <div className="flex flex-col gap-4">
-              {[
-                {
-                  emoji: '🗣️',
-                  title: 'Freedom of Expression',
-                  body: 'We understand the delicate balance between fostering free expression and curbing harmful behavior.',
-                  num: '01',
-                },
-                {
-                  emoji: '⚖️',
-                  title: 'Thoughtful Moderation',
-                  body: 'Our policies maximize the benefits of free speech while minimizing potential harm for everyone.',
-                  num: '02',
-                },
-                {
-                  emoji: '🤝',
-                  title: 'Stronger Communities',
-                  body: 'Thoughtful, respectful discourse leads to stronger communities and richer dialogue for all.',
-                  num: '03',
-                },
-              ].map(({ emoji, title, body, num }) => (
-                <div
-                  key={title}
-                  className="flex gap-5 p-6 rounded-2xl transition-all hover:-translate-y-0.5"
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <div className="flex-shrink-0 mt-1">
-                    <span
-                      className="text-xs font-bold tracking-widest"
-                      style={{ color: '#2ecc71' }}
-                    >
-                      {num}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl" role="img" aria-label={title}>
-                        {emoji}
-                      </span>
-                      <h3 className="font-bold text-base" style={{ color: '#0f172a' }}>{title}</h3>
-                    </div>
-                    <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
-                      {body}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Features — Bento Grid ─────────────────────────────── */}
-      <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
-        aria-labelledby="features-heading"
-      >
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10">
-            <p
-              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-              style={{ color: '#2ecc71' }}
-            >
-              Platform Features
-            </p>
-            <h2
-              id="features-heading"
-              className="text-4xl sm:text-5xl font-extrabold tracking-tight"
-              style={{ color: '#0f172a' }}
-            >
-              Built for{' '}
-              <span
-                style={{ color: '#2ecc71' }}
-              >
-                Meaningful
-              </span>{' '}
-              Conversations
-            </h2>
-          </div>
-
-          {/* Bento grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {/* Feature 01 — large */}
-            <ScrollReveal className="lg:col-span-2" delay={0}>
-            <div
-              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-              }}
-            >
-              <div>
-                <div className="flex items-start justify-between mb-4">
-                  <span
-                    className="text-5xl font-extrabold leading-none tracking-tight"
-                    style={{ color: '#e2e8f0' }}
-                  >
-                    01
-                  </span>
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center"
-                    style={{ background: '#f0fdf4' }}
-                  >
-                    <MessageSquareQuote size={22} style={{ color: '#2ecc71' }} aria-hidden />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Targeted Feedback</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
-                  Quote specific text for precise, contextual responses that keep conversations
-                  focused and productive. No more talking past each other.
-                </p>
-              </div>
-              <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
-                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
-                  Precision quoting on any passage
-                </span>
-              </div>
-            </div>
-            </ScrollReveal>
-
-            {/* Feature 02 */}
-            <ScrollReveal delay={100}>
-            <div
-              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-              }}
-            >
-              <div>
-                <div className="flex items-start justify-between mb-4">
-                  <span
-                    className="text-5xl font-extrabold leading-none tracking-tight"
-                    style={{ color: '#e2e8f0' }}
-                  >
-                    02
-                  </span>
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center"
-                    style={{ background: '#f0fdf4' }}
-                  >
-                    <Zap size={22} style={{ color: '#2ecc71' }} aria-hidden />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Live Chat Threads</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
-                  Every post spawns its own real-time discussion space for immediate, live
-                  engagement.
-                </p>
-              </div>
-              <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
-                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
-                  Real-time public threads
-                </span>
-              </div>
-            </div>
-            </ScrollReveal>
-
-            {/* Feature 03 */}
-            <ScrollReveal delay={200}>
-            <div
-              className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-              }}
-            >
-              <div>
-                <div className="flex items-start justify-between mb-4">
-                  <span
-                    className="text-5xl font-extrabold leading-none tracking-tight"
-                    style={{ color: '#e2e8f0' }}
-                  >
-                    03
-                  </span>
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center"
-                    style={{ background: '#f0fdf4' }}
-                  >
-                    <ThumbsUp size={22} style={{ color: '#2ecc71' }} aria-hidden />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Voting Mechanics</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
-                  Support thoughtful discourse through democratic, transparent voting on any
-                  quoted passage.
-                </p>
-              </div>
-              <div className="mt-6 flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: '#2ecc71' }} />
-                <span className="text-xs font-medium" style={{ color: '#2ecc71' }}>
-                  Transparent democratic voting
-                </span>
-              </div>
-            </div>
-            </ScrollReveal>
-
-            {/* Feature 04 — wide */}
-            <ScrollReveal className="lg:col-span-2" delay={300}>
-            <div
-              className="rounded-3xl p-8 flex flex-col sm:flex-row items-start gap-8 hover:-translate-y-1 transition-all h-full"
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-              }}
-            >
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <span
-                    className="text-5xl font-extrabold leading-none tracking-tight"
-                    style={{ color: '#e2e8f0' }}
-                  >
-                    04
-                  </span>
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center"
-                    style={{ background: '#f0fdf4' }}
-                  >
-                    <ShieldOff size={22} style={{ color: '#2ecc71' }} aria-hidden />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>Ad-Free &amp; Algorithm-Free</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
-                  Pure, unmanipulated conversations — no ads, no hidden agendas, no engagement
-                  traps. What you see is what the community actually cares about.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 sm:flex-col sm:justify-end sm:self-end">
-                {['No ads', 'No tracking', 'No algorithms', 'Open source'].map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{
-                      background: '#f0fdf4',
-                      color: '#2ecc71',
-                      border: '1px solid #bbf7d0',
-                    }}
-                  >
-                    <CheckCircle2 size={11} aria-hidden /> {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Product Showcase — Voting UI ──────────────────────── */}
-      <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
-        aria-labelledby="showcase-heading"
-      >
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-10 items-center">
-            {/* Text side */}
-            <div>
-              <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
-              >
-                See it in action
-              </p>
-              <h2
-                id="showcase-heading"
-                className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
-                style={{ color: '#0f172a' }}
-              >
-                What people{' '}
-                <span
-                  style={{ color: '#2ecc71' }}
-                >
-                  are saying
-                </span>
-              </h2>
-              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
-                For a project as small as your household, or around the world, Quote.Vote
-                can host the next conversation in your life — and knock it out of the park.
-              </p>
-              <ul className="space-y-2">
-                {[
-                  'Quote any passage for targeted discussion',
-                  'Vote up the ideas that matter most',
-                  'Follow conversations in real time',
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3">
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: '#f0fdf4' }}
-                    >
-                      <CheckCircle2 size={12} style={{ color: '#2ecc71' }} aria-hidden />
-                    </div>
-                    <span className="text-sm" style={{ color: '#475569' }}>
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Images side */}
-            <div className="grid grid-cols-2 gap-4">
-              <div
-                className="rounded-2xl overflow-hidden"
-                style={{
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)',
-                }}
-              >
-                <Image
-                  src="/assets/votingPopUp.svg"
-                  alt="Voting popup preview showing quote selection"
-                  width={600}
-                  height={400}
-                  className="w-full h-auto"
-                />
-              </div>
-              <div
-                className="rounded-2xl overflow-hidden mt-6"
-                style={{
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)',
-                }}
-              >
-                <Image
-                  src="/assets/voting-popup-2.png"
-                  alt="Second voting popup view with vote options"
-                  width={600}
-                  height={400}
-                  className="w-full h-auto"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Product Showcase — At Any Time ────────────────────── */}
-      <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
-        aria-labelledby="anytime-heading"
-      >
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="mb-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-              <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
-              >
-                Any time, anywhere
-              </p>
-              <h2
-                id="anytime-heading"
-                className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight"
-                style={{ color: '#0f172a' }}
-              >
-                Put your{' '}
-                <span
-                  style={{ color: '#2ecc71' }}
-                >
-                  Quote
-                </span>{' '}
-                to Vote
-              </h2>
-            </div>
-            <Link
-              href="/auths/request-access"
-              className="inline-flex items-center gap-2 text-sm font-semibold shrink-0"
-              style={{ color: '#2ecc71' }}
-              aria-label="Request an invite to join"
-            >
-              Start sharing <ChevronRight size={16} aria-hidden />
-            </Link>
-          </div>
-
-          <div
-            className="rounded-3xl overflow-hidden"
-            style={{
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)',
-            }}
-          >
-            <Image
-              src="/assets/atAnyTime.svg"
-              alt="Interface showing how to submit a quote for voting at any time"
-              width={1200}
-              height={600}
-              className="w-full h-auto"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Product Showcase — Track Conversations ────────────── */}
-      <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
-        aria-labelledby="track-heading"
-      >
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-10 items-center">
-            {/* Image side — left */}
-            <div
-              className="rounded-3xl overflow-hidden order-last lg:order-first"
-              style={{
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)',
-              }}
-            >
-              <Image
-                src="/assets/TrackConversation.svg"
-                alt="Dashboard showing conversation tracking and engagement metrics"
-                width={1200}
-                height={600}
-                className="w-full h-auto"
-              />
-            </div>
-
-            {/* Text side — right */}
-            <div>
-              <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
-              >
-                Stay informed
-              </p>
-              <h2
-                id="track-heading"
-                className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
-                style={{ color: '#0f172a' }}
-              >
-                Track every{' '}
-                <span
-                  style={{ color: '#2ecc71' }}
-                >
-                  Conversation
-                </span>
-              </h2>
-              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
-                Never lose track of a discussion. See where conversations are heading,
-                follow the threads that matter, and engage when it counts.
-              </p>
-              <ul className="space-y-2">
-                {[
-                  'See engagement and vote counts at a glance',
-                  'Filter by keyword, date, or people you follow',
-                  'Discover trending topics without algorithmic bias',
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3">
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: '#f0fdf4' }}
-                    >
-                      <CheckCircle2 size={12} style={{ color: '#2ecc71' }} aria-hidden />
-                    </div>
-                    <span className="text-sm" style={{ color: '#475569' }}>
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── How It Works — 3 steps ────────────────────────────── */}
-      <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
-        aria-labelledby="how-heading"
-      >
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
-          <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ color: '#2ecc71' }}
-          >
-            Simple by design
-          </p>
-          <h2
-            id="how-heading"
-            className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4"
-            style={{ color: '#0f172a' }}
-          >
-            How it works
-          </h2>
-          <p className="text-base mb-10 max-w-lg mx-auto" style={{ color: '#475569' }}>
-            Three steps to joining a community built on thoughtful discourse.
-          </p>
-
-          <div className="grid sm:grid-cols-3 gap-6 relative">
-            {/* Connector line */}
-            <div
-              className="absolute top-10 left-1/4 right-1/4 h-px hidden sm:block"
-              style={{ background: 'linear-gradient(90deg, transparent, #bbf7d0, transparent)' }}
-              aria-hidden
-            />
-
-            {[
-              {
-                step: '01',
-                icon: FileText,
-                title: 'Post Your Idea',
-                body: 'Share a thought, plan, or topic you want feedback on. Text-first, no noise.',
-              },
-              {
-                step: '02',
-                icon: MessageSquareQuote,
-                title: 'Quote & Respond',
-                body: 'Others quote your specific words for targeted, precise feedback.',
-              },
-              {
-                step: '03',
-                icon: ThumbsUp,
-                title: 'Vote on What Matters',
-                body: 'The community votes on ideas democratically, transparently, without gaming.',
-              },
-            ].map(({ step, icon: Icon, title, body }) => (
-              <div
-                key={step}
-                className="flex flex-col items-center text-center px-5 py-6 rounded-3xl transition-all hover:-translate-y-1"
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-                }}
-              >
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                  style={{
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                  }}
-                >
-                  <Icon size={26} style={{ color: '#2ecc71' }} aria-hidden />
-                </div>
-                <span
-                  className="text-xs font-bold tracking-[0.2em] uppercase mb-2"
-                  style={{ color: '#2ecc71' }}
-                >
-                  Step {step}
-                </span>
-                <h3 className="text-lg font-bold mb-3" style={{ color: '#0f172a' }}>{title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
-                  {body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Full-width CTA Banner ─────────────────────────────── */}
-      <section
-        className="relative overflow-hidden py-14 sm:py-20"
-        style={{ background: '#eef4f9' }}
-        aria-label="Call to action"
-      >
-        {/* Decorative large quote */}
-        <span
-          className="absolute select-none pointer-events-none font-serif"
+        {/* ── Stats Strip ───────────────────────────────────────── */}
+        <div
+          className="border-y"
           style={{
-            fontSize: 'clamp(16rem, 35vw, 32rem)',
-            right: '-4rem',
-            top: '-6rem',
-            color: 'rgba(22,163,74,0.06)',
-            fontFamily: 'Georgia, "Times New Roman", serif',
-            lineHeight: 1,
+            background: "#eef4f9",
+            borderColor: "#e2e8f0",
           }}
-          aria-hidden
         >
-          &rdquo;
-        </span>
-
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <p
-            className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ color: '#2ecc71' }}
-          >
-            Ready to join?
-          </p>
-          <h2
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6"
-            style={{ color: '#0f172a' }}
-          >
-            The future of{' '}
-            <span
-              style={{ color: '#2ecc71' }}
-            >
-              thoughtful discourse
-            </span>{' '}
-            is here.
-          </h2>
-          <p
-            className="text-lg leading-relaxed mb-6 max-w-2xl mx-auto"
-            style={{ color: '#475569' }}
-          >
-            Join a growing community of thinkers, builders, and changemakers who believe
-            great conversations can change the world.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/auths/request-access"
-              className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-white text-base transition-all hover:opacity-90 hover:-translate-y-0.5 w-full sm:w-auto"
-              style={{
-                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                boxShadow: '0 6px 30px rgba(22,163,74,0.25)',
-              }}
-              aria-label="Request an invite to join Quote.Vote"
-            >
-              Request Invite
-              <ArrowRight size={18} aria-hidden />
-            </Link>
-            <Link
-              href="/#about-section"
-              className="inline-flex items-center gap-2 text-base font-semibold transition-all hover:opacity-80"
-              style={{ color: '#2ecc71' }}
-            >
-              Read our mission
-              <ChevronRight size={18} aria-hidden />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Discover & Share — two-column ─────────────────────── */}
-      <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
-        aria-labelledby="discover-heading"
-      >
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10">
-            <p
-              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-              style={{ color: '#2ecc71' }}
-            >
-              For everyone
-            </p>
-            <h2
-              id="discover-heading"
-              className="text-4xl sm:text-5xl font-extrabold tracking-tight"
-              style={{ color: '#0f172a' }}
-            >
-              Find your place in the conversation
-            </h2>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-6">
-            {/* Discover card */}
-            <div
-              className="rounded-3xl p-7"
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-              }}
-            >
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
-                style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
-              >
-                <Search size={24} style={{ color: '#2ecc71' }} aria-hidden />
-              </div>
-              <h3 className="text-2xl font-bold mb-4" style={{ color: '#0f172a' }}>
-                Discover{' '}
-                <span
-                  style={{ color: '#2ecc71' }}
-                >
-                  without bias
-                </span>
-              </h3>
-              <p
-                className="text-base leading-relaxed mb-6"
-                style={{ color: '#475569' }}
-              >
-                All conversations are searchable without ads, discovered through exploration,
-                not algorithms. Filter by keyword, sort by interactions, or explore by date.
-              </p>
-              <ul className="space-y-2">
-                {['No algorithmic curation', 'Historical event search', 'Follow-based filtering'].map(
-                  (item) => (
-                    <li key={item} className="flex items-center gap-2.5">
-                      <ChevronRight size={14} style={{ color: '#2ecc71' }} aria-hidden />
-                      <span className="text-sm" style={{ color: '#475569' }}>
-                        {item}
-                      </span>
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-
-            {/* Share card */}
-            <div
-              className="rounded-3xl p-7"
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-              }}
-            >
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
-                style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
-              >
-                <TrendingUp size={24} style={{ color: '#2ecc71' }} aria-hidden />
-              </div>
-              <h3 className="text-2xl font-bold mb-4" style={{ color: '#0f172a' }}>
-                Share{' '}
-                <span
-                  style={{ color: '#2ecc71' }}
-                >
-                  your ideas
-                </span>
-              </h3>
-              <p
-                className="text-base leading-relaxed mb-6"
-                style={{ color: '#475569' }}
-              >
-                Post to your social circle and beyond. Engage in meaningful, respectful
-                discussions that solve problems, challenge perspectives, or spark new ideas.
-              </p>
-              <ul className="space-y-2">
-                {['Public and private circles', 'Quote-based responses', 'Democratic voting on ideas'].map(
-                  (item) => (
-                    <li key={item} className="flex items-center gap-2.5">
-                      <ChevronRight size={14} style={{ color: '#2ecc71' }} aria-hidden />
-                      <span className="text-sm" style={{ color: '#475569' }}>
-                        {item}
-                      </span>
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Donate ────────────────────────────────────────────── */}
-      <section
-        className="py-14 sm:py-20 relative overflow-hidden"
-        style={{ background: '#eef4f9' }}
-        aria-labelledby="donate-heading"
-      >
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-10 items-center">
-            {/* Left */}
-            <div>
-              <p
-                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-                style={{ color: '#2ecc71' }}
-              >
-                Support the mission
-              </p>
-              <h2
-                id="donate-heading"
-                className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
-                style={{ color: '#0f172a' }}
-              >
-                Donate{' '}
-                <span
-                  style={{ color: '#2ecc71' }}
-                >
-                  what you can
-                </span>
-              </h2>
-
-              {/* Progress bar */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>{totalRaised} raised</span>
-                  <span className="text-xs" style={{ color: '#94a3b8' }}>
-                    community funded
-                  </span>
-                </div>
-                <div
-                  className="h-2 rounded-full overflow-hidden"
-                  style={{ background: '#e2e8f0' }}
-                >
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${progressPct}%`,
-                      background: 'linear-gradient(90deg, #16a34a 0%, #86efac 100%)',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <p className="text-base leading-relaxed mb-5" style={{ color: '#475569' }}>
-                Join us in creating a truly open and equal community where civil conversation is
-                the main objective. If you fork our project, kindly consider contributing back.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link
-                  href="/auths/request-access"
-                  className="inline-flex items-center justify-between px-6 py-4 rounded-2xl font-bold text-white text-sm transition-all hover:-translate-y-0.5 gap-4"
-                  style={{
-                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                    boxShadow: '0 4px 24px rgba(22,163,74,0.25)',
-                  }}
-                  aria-label="Request an invite to join Quote.Vote"
-                >
-                  Request Invite
-                  <ArrowRight size={16} aria-hidden />
-                </Link>
-                <a
-                  href="https://opencollective.com/quotevote/donate"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-6 py-4 rounded-2xl font-bold text-sm transition-all hover:-translate-y-0.5"
-                  style={{
-                    background: '#f0fdf4',
-                    color: '#2ecc71',
-                    border: '1.5px solid #bbf7d0',
-                  }}
-                  aria-label="Donate to Quote.Vote today (opens in new tab)"
-                >
-                  Donate Today
-                </a>
-              </div>
-            </div>
-
-            {/* Right — impact cards */}
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { icon: Heart, value: totalRaised, label: 'Total Raised', color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
-                { icon: Users, value: '∞', label: 'Community Members', color: '#2ecc71', bg: '#f0fdf4', border: '#bbf7d0' },
-                { icon: Globe, value: '100%', label: 'Open Source', color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' },
-                { icon: ShieldOff, value: '0', label: 'Ads or Trackers', color: '#2ecc71', bg: '#f0fdf4', border: '#bbf7d0' },
-              ].map(({ icon: Icon, value, label, color, bg, border }) => (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              {stats.map(({ value, label, icon: Icon }, i) => (
                 <div
                   key={label}
-                  className="rounded-2xl p-5 flex flex-col items-center text-center"
+                  className="flex flex-col items-center sm:items-start gap-1"
                   style={{
-                    background: bg,
-                    border: `1px solid ${border}`,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                    borderLeft: i > 0 ? "1px solid #e2e8f0" : undefined,
+                    paddingLeft: i > 0 ? "1.5rem" : undefined,
                   }}
                 >
-                  <Icon size={22} style={{ color }} className="mb-3" aria-hidden />
-                  <span className="text-3xl font-extrabold leading-none mb-1" style={{ color: '#0f172a' }}>
-                    {value}
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon size={14} style={{ color: "#2ecc71" }} aria-hidden />
+                  </div>
+                  <span
+                    className="text-2xl sm:text-3xl font-extrabold tracking-tight"
+                    style={{ color: "#0f172a" }}
+                  >
+                    <AnimatedCounter value={value} />
                   </span>
-                  <span className="text-xs font-medium" style={{ color: '#64748b' }}>
+                  <span className="text-xs font-medium" style={{ color: "#64748b" }}>
                     {label}
                   </span>
                 </div>
@@ -1366,163 +428,1108 @@ export function LandingPageContent({
             </div>
           </div>
         </div>
-      </section>
 
-      {/* ── Be in Touch ───────────────────────────────────────── */}
-      <BeInTouchSection />
+        {/* ── Featured Posts ────────────────────────────────────── */}
+        <FeaturedPostsSection />
 
+        {/* ── Mission / About ───────────────────────────────────── */}
+        <section
+          id="about-section"
+          className="relative overflow-hidden py-14 sm:py-20"
+          style={{ background: "#eef4f9" }}
+          aria-labelledby="about-heading"
+        >
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="grid lg:grid-cols-2 gap-10 items-start">
+              {/* Left — headline */}
+              <div>
+                <p
+                  className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                  style={{ color: "#2ecc71" }}
+                >
+                  Our Mission
+                </p>
+                <h2
+                  id="about-heading"
+                  className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight mb-6"
+                  style={{ color: "#0f172a" }}
+                >
+                  Welcome to <span style={{ color: "#2ecc71" }}>Quote.Vote</span>
+                </h2>
+                <p className="text-lg leading-relaxed mb-6" style={{ color: "#475569" }}>
+                  A non-profit platform where every voice counts. Donate your time or money and be
+                  part of the change you&apos;d like to see in the world.
+                </p>
 
-      {/* ── Footer ────────────────────────────────────────────── */}
-      <footer
-        role="contentinfo"
-        className="text-white"
-        style={{ background: '#0f172a' }}
-      >
-        {/* Top border accent */}
-        <div
-          className="h-px w-full"
-          style={{
-            background: 'linear-gradient(90deg, transparent, rgba(22,163,74,0.40), transparent)',
-          }}
-          aria-hidden
-        />
+                {/* Blockquote */}
+                <blockquote className="relative pl-6" style={{ borderLeft: "3px solid #16a34a" }}>
+                  <p
+                    className="text-xl sm:text-2xl font-semibold italic leading-snug"
+                    style={{ color: "#0f172a" }}
+                  >
+                    &ldquo;Thoughtful, respectful discourse leads to stronger communities and richer
+                    dialogue.&rdquo;
+                  </p>
+                </blockquote>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-8">
-          {/* Logo row */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
-            <Link
-              href="/"
-              className="flex items-center gap-3"
-              aria-label="Quote.Vote home"
-            >
-              <Image
-                src="/assets/QuoteVoteLogo.png"
-                alt="Quote.Vote Logo"
-                width={32}
-                height={32}
-                className="object-contain"
-              />
-              <span className="font-extrabold text-base tracking-wide" style={{ color: '#2ecc71' }}>
-                QUOTE.VOTE
-              </span>
-            </Link>
-            <p className="text-sm max-w-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              Empowering thoughtful discourse through democratic, ad-free conversations.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-            {/* About */}
-            <div className="col-span-2 md:col-span-1">
-              <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
-                style={{ color: 'rgba(74,222,128,0.70)' }}
-              >
-                Company
-              </h3>
-              <a
-                href="mailto:admin@quote.vote"
-                className="flex items-center gap-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
-                style={{ color: 'rgba(255,255,255,0.55)' }}
-                aria-label="Contact us via email at admin@quote.vote"
-              >
-                <Mail size={14} aria-hidden />
-                admin@quote.vote
-              </a>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
-                style={{ color: 'rgba(74,222,128,0.70)' }}
-              >
-                Quick Links
-              </h3>
-              <ul className="space-y-2" role="list">
-                {quickLinks.map(({ href, label, external }) => (
-                  <li key={label}>
-                    <a
-                      href={href}
-                      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                      className="text-sm hover:translate-x-0.5 transition-all inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
-                      style={{ color: 'rgba(255,255,255,0.55)' }}
-                      aria-label={external ? `${label} (opens in new tab)` : label}
-                    >
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Resources */}
-            <div>
-              <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
-                style={{ color: 'rgba(74,222,128,0.70)' }}
-              >
-                Resources
-              </h3>
-              <ul className="space-y-2" role="list">
-                {resourceLinks.map(({ href, label }) => (
-                  <li key={label}>
-                    <a
-                      href={href}
-                      className="text-sm hover:translate-x-0.5 transition-all inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
-                      style={{ color: 'rgba(255,255,255,0.55)' }}
-                    >
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Connect */}
-            <div>
-              <h3
-                className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
-                style={{ color: 'rgba(74,222,128,0.70)' }}
-              >
-                Connect
-              </h3>
-              <div className="flex gap-3">
-                {socialLinks.map(({ href, Icon, label }) => (
+                <div className="flex flex-wrap gap-3 mt-6">
+                  <Link
+                    href="/auths/request-access"
+                    className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 hover:-translate-y-0.5"
+                    style={{
+                      background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      boxShadow: "0 4px 20px rgba(22,163,74,0.28)",
+                    }}
+                    aria-label="Request an invite to join Quote.Vote"
+                  >
+                    Get Started
+                    <ArrowRight size={16} aria-hidden />
+                  </Link>
                   <a
-                    key={label}
-                    href={href}
+                    href="https://opencollective.com/quotevote/donate"
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`Visit our ${label} (opens in new tab)`}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a]"
+                    className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5"
                     style={{
-                      background: 'rgba(255,255,255,0.06)',
-                      border: '1px solid rgba(255,255,255,0.10)',
-                      color: 'rgba(255,255,255,0.60)',
+                      color: "#2ecc71",
+                      border: "1.5px solid #bbf7d0",
+                      background: "#f0fdf4",
+                    }}
+                    aria-label="Donate to support Quote.Vote (opens in new tab)"
+                  >
+                    Donate
+                  </a>
+                </div>
+              </div>
+
+              {/* Right — pillars */}
+              <div className="flex flex-col gap-4">
+                {[
+                  {
+                    emoji: "🗣️",
+                    title: "Freedom of Expression",
+                    body: "We understand the delicate balance between fostering free expression and curbing harmful behavior.",
+                    num: "01",
+                  },
+                  {
+                    emoji: "⚖️",
+                    title: "Thoughtful Moderation",
+                    body: "Our policies maximize the benefits of free speech while minimizing potential harm for everyone.",
+                    num: "02",
+                  },
+                  {
+                    emoji: "🤝",
+                    title: "Stronger Communities",
+                    body: "Thoughtful, respectful discourse leads to stronger communities and richer dialogue for all.",
+                    num: "03",
+                  },
+                ].map(({ emoji, title, body, num }) => (
+                  <div
+                    key={title}
+                    className="flex gap-5 p-6 rounded-2xl transition-all hover:-translate-y-0.5"
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
                     }}
                   >
-                    <Icon size={18} aria-hidden />
-                  </a>
+                    <div className="flex-shrink-0 mt-1">
+                      <span
+                        className="text-xs font-bold tracking-widest"
+                        style={{ color: "#2ecc71" }}
+                      >
+                        {num}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl" role="img" aria-label={title}>
+                          {emoji}
+                        </span>
+                        <h3 className="font-bold text-base" style={{ color: "#0f172a" }}>
+                          {title}
+                        </h3>
+                      </div>
+                      <p className="text-sm leading-relaxed" style={{ color: "#475569" }}>
+                        {body}
+                      </p>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
+        </section>
 
-          {/* Bottom row */}
-          <div
-            className="border-t pt-6 flex flex-col sm:flex-row items-center justify-between gap-3"
-            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
-          >
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>
-              © {new Date().getFullYear()} Quote.Vote. All rights reserved.
-            </p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }} aria-label="Made with love on Earth">
-              Made with <span role="img" aria-label="love">❤️</span> on Earth
-            </p>
+        {/* ── Features — Bento Grid ─────────────────────────────── */}
+        <section
+          className="py-14 sm:py-20 relative overflow-hidden"
+          style={{ background: "#eef4f9" }}
+          aria-labelledby="features-heading"
+        >
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-10">
+              <p
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                style={{ color: "#2ecc71" }}
+              >
+                Platform Features
+              </p>
+              <h2
+                id="features-heading"
+                className="text-4xl sm:text-5xl font-extrabold tracking-tight"
+                style={{ color: "#0f172a" }}
+              >
+                Built for <span style={{ color: "#2ecc71" }}>Meaningful</span> Conversations
+              </h2>
+            </div>
+
+            {/* Bento grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {/* Feature 01 — large */}
+              <ScrollReveal className="lg:col-span-2" delay={0}>
+                <div
+                  className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <div>
+                    <div className="flex items-start justify-between mb-4">
+                      <span
+                        className="text-5xl font-extrabold leading-none tracking-tight"
+                        style={{ color: "#e2e8f0" }}
+                      >
+                        01
+                      </span>
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ background: "#f0fdf4" }}
+                      >
+                        <MessageSquareQuote size={22} style={{ color: "#2ecc71" }} aria-hidden />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>
+                      Targeted Feedback
+                    </h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "#475569" }}>
+                      Quote specific text for precise, contextual responses that keep conversations
+                      focused and productive. No more talking past each other.
+                    </p>
+                  </div>
+                  <div className="mt-6 flex items-center gap-2">
+                    <CheckCircle2 size={14} style={{ color: "#2ecc71" }} />
+                    <span className="text-xs font-medium" style={{ color: "#2ecc71" }}>
+                      Precision quoting on any passage
+                    </span>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              {/* Feature 02 */}
+              <ScrollReveal delay={100}>
+                <div
+                  className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <div>
+                    <div className="flex items-start justify-between mb-4">
+                      <span
+                        className="text-5xl font-extrabold leading-none tracking-tight"
+                        style={{ color: "#e2e8f0" }}
+                      >
+                        02
+                      </span>
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ background: "#f0fdf4" }}
+                      >
+                        <Zap size={22} style={{ color: "#2ecc71" }} aria-hidden />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>
+                      Live Chat Threads
+                    </h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "#475569" }}>
+                      Every post spawns its own real-time discussion space for immediate, live
+                      engagement.
+                    </p>
+                  </div>
+                  <div className="mt-6 flex items-center gap-2">
+                    <CheckCircle2 size={14} style={{ color: "#2ecc71" }} />
+                    <span className="text-xs font-medium" style={{ color: "#2ecc71" }}>
+                      Real-time public threads
+                    </span>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              {/* Feature 03 */}
+              <ScrollReveal delay={200}>
+                <div
+                  className="rounded-3xl p-6 flex flex-col justify-between min-h-[220px] hover:-translate-y-1 transition-all h-full"
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <div>
+                    <div className="flex items-start justify-between mb-4">
+                      <span
+                        className="text-5xl font-extrabold leading-none tracking-tight"
+                        style={{ color: "#e2e8f0" }}
+                      >
+                        03
+                      </span>
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ background: "#f0fdf4" }}
+                      >
+                        <ThumbsUp size={22} style={{ color: "#2ecc71" }} aria-hidden />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>
+                      Voting Mechanics
+                    </h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "#475569" }}>
+                      Support thoughtful discourse through democratic, transparent voting on any
+                      quoted passage.
+                    </p>
+                  </div>
+                  <div className="mt-6 flex items-center gap-2">
+                    <CheckCircle2 size={14} style={{ color: "#2ecc71" }} />
+                    <span className="text-xs font-medium" style={{ color: "#2ecc71" }}>
+                      Transparent democratic voting
+                    </span>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              {/* Feature 04 — wide */}
+              <ScrollReveal className="lg:col-span-2" delay={300}>
+                <div
+                  className="rounded-3xl p-8 flex flex-col sm:flex-row items-start gap-8 hover:-translate-y-1 transition-all h-full"
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-4">
+                      <span
+                        className="text-5xl font-extrabold leading-none tracking-tight"
+                        style={{ color: "#e2e8f0" }}
+                      >
+                        04
+                      </span>
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ background: "#f0fdf4" }}
+                      >
+                        <ShieldOff size={22} style={{ color: "#2ecc71" }} aria-hidden />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>
+                      Ad-Free &amp; Algorithm-Free
+                    </h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "#475569" }}>
+                      Pure, unmanipulated conversations — no ads, no hidden agendas, no engagement
+                      traps. What you see is what the community actually cares about.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:flex-col sm:justify-end sm:self-end">
+                    {["No ads", "No tracking", "No algorithms", "Open source"].map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          background: "#f0fdf4",
+                          color: "#2ecc71",
+                          border: "1px solid #bbf7d0",
+                        }}
+                      >
+                        <CheckCircle2 size={11} aria-hidden /> {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
           </div>
-        </div>
-      </footer>
+        </section>
+
+        {/* ── Product Showcase — Voting UI ──────────────────────── */}
+        <section
+          className="py-14 sm:py-20 relative overflow-hidden"
+          style={{ background: "#eef4f9" }}
+          aria-labelledby="showcase-heading"
+        >
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="grid lg:grid-cols-2 gap-10 items-center">
+              {/* Text side */}
+              <div>
+                <p
+                  className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                  style={{ color: "#2ecc71" }}
+                >
+                  See it in action
+                </p>
+                <h2
+                  id="showcase-heading"
+                  className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
+                  style={{ color: "#0f172a" }}
+                >
+                  What people <span style={{ color: "#2ecc71" }}>are saying</span>
+                </h2>
+                <p className="text-base leading-relaxed mb-5" style={{ color: "#475569" }}>
+                  For a project as small as your household, or around the world, Quote.Vote can host
+                  the next conversation in your life — and knock it out of the park.
+                </p>
+                <ul className="space-y-2">
+                  {[
+                    "Quote any passage for targeted discussion",
+                    "Vote up the ideas that matter most",
+                    "Follow conversations in real time",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-3">
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: "#f0fdf4" }}
+                      >
+                        <CheckCircle2 size={12} style={{ color: "#2ecc71" }} aria-hidden />
+                      </div>
+                      <span className="text-sm" style={{ color: "#475569" }}>
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Images side */}
+              <div className="grid grid-cols-2 gap-4">
+                <div
+                  className="rounded-2xl overflow-hidden"
+                  style={{
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <Image
+                    src="/assets/votingPopUp.svg"
+                    alt="Voting popup preview showing quote selection"
+                    width={600}
+                    height={400}
+                    className="w-full h-auto"
+                  />
+                </div>
+                <div
+                  className="rounded-2xl overflow-hidden mt-6"
+                  style={{
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <Image
+                    src="/assets/voting-popup-2.png"
+                    alt="Second voting popup view with vote options"
+                    width={600}
+                    height={400}
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Product Showcase — At Any Time ────────────────────── */}
+        <section
+          className="py-14 sm:py-20 relative overflow-hidden"
+          style={{ background: "#eef4f9" }}
+          aria-labelledby="anytime-heading"
+        >
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="mb-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <p
+                  className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                  style={{ color: "#2ecc71" }}
+                >
+                  Any time, anywhere
+                </p>
+                <h2
+                  id="anytime-heading"
+                  className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight"
+                  style={{ color: "#0f172a" }}
+                >
+                  Put your <span style={{ color: "#2ecc71" }}>Quote</span> to Vote
+                </h2>
+              </div>
+              <Link
+                href="/auths/request-access"
+                className="inline-flex items-center gap-2 text-sm font-semibold shrink-0"
+                style={{ color: "#2ecc71" }}
+                aria-label="Request an invite to join"
+              >
+                Start sharing <ChevronRight size={16} aria-hidden />
+              </Link>
+            </div>
+
+            <div
+              className="rounded-3xl overflow-hidden"
+              style={{
+                border: "1px solid #e2e8f0",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)",
+              }}
+            >
+              <Image
+                src="/assets/atAnyTime.svg"
+                alt="Interface showing how to submit a quote for voting at any time"
+                width={1200}
+                height={600}
+                className="w-full h-auto"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ── Product Showcase — Track Conversations ────────────── */}
+        <section
+          className="py-14 sm:py-20 relative overflow-hidden"
+          style={{ background: "#eef4f9" }}
+          aria-labelledby="track-heading"
+        >
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="grid lg:grid-cols-2 gap-10 items-center">
+              {/* Image side — left */}
+              <div
+                className="rounded-3xl overflow-hidden order-last lg:order-first"
+                style={{
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)",
+                }}
+              >
+                <Image
+                  src="/assets/TrackConversation.svg"
+                  alt="Dashboard showing conversation tracking and engagement metrics"
+                  width={1200}
+                  height={600}
+                  className="w-full h-auto"
+                />
+              </div>
+
+              {/* Text side — right */}
+              <div>
+                <p
+                  className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                  style={{ color: "#2ecc71" }}
+                >
+                  Stay informed
+                </p>
+                <h2
+                  id="track-heading"
+                  className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
+                  style={{ color: "#0f172a" }}
+                >
+                  Track every <span style={{ color: "#2ecc71" }}>Conversation</span>
+                </h2>
+                <p className="text-base leading-relaxed mb-5" style={{ color: "#475569" }}>
+                  Never lose track of a discussion. See where conversations are heading, follow the
+                  threads that matter, and engage when it counts.
+                </p>
+                <ul className="space-y-2">
+                  {[
+                    "See engagement and vote counts at a glance",
+                    "Filter by keyword, date, or people you follow",
+                    "Discover trending topics without algorithmic bias",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-3">
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: "#f0fdf4" }}
+                      >
+                        <CheckCircle2 size={12} style={{ color: "#2ecc71" }} aria-hidden />
+                      </div>
+                      <span className="text-sm" style={{ color: "#475569" }}>
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── How It Works — 3 steps ────────────────────────────── */}
+        <section
+          className="py-14 sm:py-20 relative overflow-hidden"
+          style={{ background: "#eef4f9" }}
+          aria-labelledby="how-heading"
+        >
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
+            <p
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+              style={{ color: "#2ecc71" }}
+            >
+              Simple by design
+            </p>
+            <h2
+              id="how-heading"
+              className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4"
+              style={{ color: "#0f172a" }}
+            >
+              How it works
+            </h2>
+            <p className="text-base mb-10 max-w-lg mx-auto" style={{ color: "#475569" }}>
+              Three steps to joining a community built on thoughtful discourse.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-6 relative">
+              {/* Connector line */}
+              <div
+                className="absolute top-10 left-1/4 right-1/4 h-px hidden sm:block"
+                style={{ background: "linear-gradient(90deg, transparent, #bbf7d0, transparent)" }}
+                aria-hidden
+              />
+
+              {[
+                {
+                  step: "01",
+                  icon: FileText,
+                  title: "Post Your Idea",
+                  body: "Share a thought, plan, or topic you want feedback on. Text-first, no noise.",
+                },
+                {
+                  step: "02",
+                  icon: MessageSquareQuote,
+                  title: "Quote & Respond",
+                  body: "Others quote your specific words for targeted, precise feedback.",
+                },
+                {
+                  step: "03",
+                  icon: ThumbsUp,
+                  title: "Vote on What Matters",
+                  body: "The community votes on ideas democratically, transparently, without gaming.",
+                },
+              ].map(({ step, icon: Icon, title, body }) => (
+                <div
+                  key={step}
+                  className="flex flex-col items-center text-center px-5 py-6 rounded-3xl transition-all hover:-translate-y-1"
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                    style={{
+                      background: "#f0fdf4",
+                      border: "1px solid #bbf7d0",
+                    }}
+                  >
+                    <Icon size={26} style={{ color: "#2ecc71" }} aria-hidden />
+                  </div>
+                  <span
+                    className="text-xs font-bold tracking-[0.2em] uppercase mb-2"
+                    style={{ color: "#2ecc71" }}
+                  >
+                    Step {step}
+                  </span>
+                  <h3 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>
+                    {title}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "#475569" }}>
+                    {body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Full-width CTA Banner ─────────────────────────────── */}
+        <section
+          className="relative overflow-hidden py-14 sm:py-20"
+          style={{ background: "#eef4f9" }}
+          aria-label="Call to action"
+        >
+          {/* Decorative large quote */}
+          <span
+            className="absolute select-none pointer-events-none font-serif"
+            style={{
+              fontSize: "clamp(16rem, 35vw, 32rem)",
+              right: "-4rem",
+              top: "-6rem",
+              color: "rgba(22,163,74,0.06)",
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              lineHeight: 1,
+            }}
+            aria-hidden
+          >
+            &rdquo;
+          </span>
+
+          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <p
+              className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+              style={{ color: "#2ecc71" }}
+            >
+              Ready to join?
+            </p>
+            <h2
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6"
+              style={{ color: "#0f172a" }}
+            >
+              The future of <span style={{ color: "#2ecc71" }}>thoughtful discourse</span> is here.
+            </h2>
+            <p
+              className="text-lg leading-relaxed mb-6 max-w-2xl mx-auto"
+              style={{ color: "#475569" }}
+            >
+              Join a growing community of thinkers, builders, and changemakers who believe great
+              conversations can change the world.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/auths/request-access"
+                className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-white text-base transition-all hover:opacity-90 hover:-translate-y-0.5 w-full sm:w-auto"
+                style={{
+                  background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                  boxShadow: "0 6px 30px rgba(22,163,74,0.25)",
+                }}
+                aria-label="Request an invite to join Quote.Vote"
+              >
+                Request Invite
+                <ArrowRight size={18} aria-hidden />
+              </Link>
+              <Link
+                href="/#about-section"
+                className="inline-flex items-center gap-2 text-base font-semibold transition-all hover:opacity-80"
+                style={{ color: "#2ecc71" }}
+              >
+                Read our mission
+                <ChevronRight size={18} aria-hidden />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Discover & Share — two-column ─────────────────────── */}
+        <section
+          className="py-14 sm:py-20 relative overflow-hidden"
+          style={{ background: "#eef4f9" }}
+          aria-labelledby="discover-heading"
+        >
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-10">
+              <p
+                className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                style={{ color: "#2ecc71" }}
+              >
+                For everyone
+              </p>
+              <h2
+                id="discover-heading"
+                className="text-4xl sm:text-5xl font-extrabold tracking-tight"
+                style={{ color: "#0f172a" }}
+              >
+                Find your place in the conversation
+              </h2>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+              {/* Discover card */}
+              <div
+                className="rounded-3xl p-7"
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+                }}
+              >
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}
+                >
+                  <Search size={24} style={{ color: "#2ecc71" }} aria-hidden />
+                </div>
+                <h3 className="text-2xl font-bold mb-4" style={{ color: "#0f172a" }}>
+                  Discover <span style={{ color: "#2ecc71" }}>without bias</span>
+                </h3>
+                <p className="text-base leading-relaxed mb-6" style={{ color: "#475569" }}>
+                  All conversations are searchable without ads, discovered through exploration, not
+                  algorithms. Filter by keyword, sort by interactions, or explore by date.
+                </p>
+                <ul className="space-y-2">
+                  {[
+                    "No algorithmic curation",
+                    "Historical event search",
+                    "Follow-based filtering",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2.5">
+                      <ChevronRight size={14} style={{ color: "#2ecc71" }} aria-hidden />
+                      <span className="text-sm" style={{ color: "#475569" }}>
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Share card */}
+              <div
+                className="rounded-3xl p-7"
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+                }}
+              >
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}
+                >
+                  <TrendingUp size={24} style={{ color: "#2ecc71" }} aria-hidden />
+                </div>
+                <h3 className="text-2xl font-bold mb-4" style={{ color: "#0f172a" }}>
+                  Share <span style={{ color: "#2ecc71" }}>your ideas</span>
+                </h3>
+                <p className="text-base leading-relaxed mb-6" style={{ color: "#475569" }}>
+                  Post to your social circle and beyond. Engage in meaningful, respectful
+                  discussions that solve problems, challenge perspectives, or spark new ideas.
+                </p>
+                <ul className="space-y-2">
+                  {[
+                    "Public and private circles",
+                    "Quote-based responses",
+                    "Democratic voting on ideas",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2.5">
+                      <ChevronRight size={14} style={{ color: "#2ecc71" }} aria-hidden />
+                      <span className="text-sm" style={{ color: "#475569" }}>
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Donate ────────────────────────────────────────────── */}
+        <section
+          className="py-14 sm:py-20 relative overflow-hidden"
+          style={{ background: "#eef4f9" }}
+          aria-labelledby="donate-heading"
+        >
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="grid lg:grid-cols-2 gap-10 items-center">
+              {/* Left */}
+              <div>
+                <p
+                  className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
+                  style={{ color: "#2ecc71" }}
+                >
+                  Support the mission
+                </p>
+                <h2
+                  id="donate-heading"
+                  className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-6"
+                  style={{ color: "#0f172a" }}
+                >
+                  Donate <span style={{ color: "#2ecc71" }}>what you can</span>
+                </h2>
+
+                {/* Progress bar */}
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>
+                      {totalRaised} raised
+                    </span>
+                    <span className="text-xs" style={{ color: "#94a3b8" }}>
+                      community funded
+                    </span>
+                  </div>
+                  <div
+                    className="h-2 rounded-full overflow-hidden"
+                    style={{ background: "#e2e8f0" }}
+                  >
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${progressPct}%`,
+                        background: "linear-gradient(90deg, #16a34a 0%, #86efac 100%)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <p className="text-base leading-relaxed mb-5" style={{ color: "#475569" }}>
+                  Join us in creating a truly open and equal community where civil conversation is
+                  the main objective. If you fork our project, kindly consider contributing back.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link
+                    href="/auths/request-access"
+                    className="inline-flex items-center justify-between px-6 py-4 rounded-2xl font-bold text-white text-sm transition-all hover:-translate-y-0.5 gap-4"
+                    style={{
+                      background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      boxShadow: "0 4px 24px rgba(22,163,74,0.25)",
+                    }}
+                    aria-label="Request an invite to join Quote.Vote"
+                  >
+                    Request Invite
+                    <ArrowRight size={16} aria-hidden />
+                  </Link>
+                  <a
+                    href="https://opencollective.com/quotevote/donate"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-6 py-4 rounded-2xl font-bold text-sm transition-all hover:-translate-y-0.5"
+                    style={{
+                      background: "#f0fdf4",
+                      color: "#2ecc71",
+                      border: "1.5px solid #bbf7d0",
+                    }}
+                    aria-label="Donate to Quote.Vote today (opens in new tab)"
+                  >
+                    Donate Today
+                  </a>
+                </div>
+              </div>
+
+              {/* Right — impact cards */}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  {
+                    icon: Heart,
+                    value: totalRaised,
+                    label: "Total Raised",
+                    color: "#ef4444",
+                    bg: "#fef2f2",
+                    border: "#fecaca",
+                  },
+                  {
+                    icon: Users,
+                    value: "∞",
+                    label: "Community Members",
+                    color: "#2ecc71",
+                    bg: "#f0fdf4",
+                    border: "#bbf7d0",
+                  },
+                  {
+                    icon: Globe,
+                    value: "100%",
+                    label: "Open Source",
+                    color: "#0891b2",
+                    bg: "#ecfeff",
+                    border: "#a5f3fc",
+                  },
+                  {
+                    icon: ShieldOff,
+                    value: "0",
+                    label: "Ads or Trackers",
+                    color: "#2ecc71",
+                    bg: "#f0fdf4",
+                    border: "#bbf7d0",
+                  },
+                ].map(({ icon: Icon, value, label, color, bg, border }) => (
+                  <div
+                    key={label}
+                    className="rounded-2xl p-5 flex flex-col items-center text-center"
+                    style={{
+                      background: bg,
+                      border: `1px solid ${border}`,
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                    }}
+                  >
+                    <Icon size={22} style={{ color }} className="mb-3" aria-hidden />
+                    <span
+                      className="text-3xl font-extrabold leading-none mb-1"
+                      style={{ color: "#0f172a" }}
+                    >
+                      {value}
+                    </span>
+                    <span className="text-xs font-medium" style={{ color: "#64748b" }}>
+                      {label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Be in Touch ───────────────────────────────────────── */}
+        <BeInTouchSection />
+
+        {/* ── Footer ────────────────────────────────────────────── */}
+        <footer role="contentinfo" className="text-white" style={{ background: "#0f172a" }}>
+          {/* Top border accent */}
+          <div
+            className="h-px w-full"
+            style={{
+              background: "linear-gradient(90deg, transparent, rgba(22,163,74,0.40), transparent)",
+            }}
+            aria-hidden
+          />
+
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-8">
+            {/* Logo row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
+              <Link href="/" className="flex items-center gap-3" aria-label="Quote.Vote home">
+                <Image
+                  src="/assets/QuoteVoteLogo.png"
+                  alt="Quote.Vote Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+                <span
+                  className="font-extrabold text-base tracking-wide"
+                  style={{ color: "#2ecc71" }}
+                >
+                  QUOTE.VOTE
+                </span>
+              </Link>
+              <p className="text-sm max-w-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+                Empowering thoughtful discourse through democratic, ad-free conversations.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+              {/* About */}
+              <div className="col-span-2 md:col-span-1">
+                <h3
+                  className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
+                  style={{ color: "rgba(74,222,128,0.70)" }}
+                >
+                  Company
+                </h3>
+                <a
+                  href="mailto:admin@quote.vote"
+                  className="flex items-center gap-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
+                  style={{ color: "rgba(255,255,255,0.55)" }}
+                  aria-label="Contact us via email at admin@quote.vote"
+                >
+                  <Mail size={14} aria-hidden />
+                  admin@quote.vote
+                </a>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h3
+                  className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
+                  style={{ color: "rgba(74,222,128,0.70)" }}
+                >
+                  Quick Links
+                </h3>
+                <ul className="space-y-2" role="list">
+                  {quickLinks.map(({ href, label, external }) => (
+                    <li key={label}>
+                      <a
+                        href={href}
+                        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        className="text-sm hover:translate-x-0.5 transition-all inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
+                        style={{ color: "rgba(255,255,255,0.55)" }}
+                        aria-label={external ? `${label} (opens in new tab)` : label}
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Resources */}
+              <div>
+                <h3
+                  className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
+                  style={{ color: "rgba(74,222,128,0.70)" }}
+                >
+                  Resources
+                </h3>
+                <ul className="space-y-2" role="list">
+                  {resourceLinks.map(({ href, label }) => (
+                    <li key={label}>
+                      <a
+                        href={href}
+                        className="text-sm hover:translate-x-0.5 transition-all inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] rounded"
+                        style={{ color: "rgba(255,255,255,0.55)" }}
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Connect */}
+              <div>
+                <h3
+                  className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
+                  style={{ color: "rgba(74,222,128,0.70)" }}
+                >
+                  Connect
+                </h3>
+                <div className="flex gap-3">
+                  {socialLinks.map(({ href, Icon, label }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Visit our ${label} (opens in new tab)`}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a]"
+                      style={{
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.10)",
+                        color: "rgba(255,255,255,0.60)",
+                      }}
+                    >
+                      <Icon size={18} aria-hidden />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom row */}
+            <div
+              className="border-t pt-6 flex flex-col sm:flex-row items-center justify-between gap-3"
+              style={{ borderColor: "rgba(255,255,255,0.08)" }}
+            >
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>
+                © {new Date().getFullYear()} Quote.Vote. All rights reserved.
+              </p>
+              <p
+                className="text-xs"
+                style={{ color: "rgba(255,255,255,0.30)" }}
+                aria-label="Made with love on Earth"
+              >
+                Made with{" "}
+                <span role="img" aria-label="love">
+                  ❤️
+                </span>{" "}
+                on Earth
+              </p>
+            </div>
+          </div>
+        </footer>
       </>
     </div>
   );
@@ -1535,7 +1542,7 @@ interface HeroSearchProps {
 }
 
 function HeroSearch({ router }: HeroSearchProps) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1560,8 +1567,8 @@ function HeroSearch({ router }: HeroSearchProps) {
         setIsOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -1572,7 +1579,7 @@ function HeroSearch({ router }: HeroSearchProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') setIsOpen(false);
+    if (e.key === "Escape") setIsOpen(false);
   };
 
   const handlePostClick = (item: ContentResult) => {
@@ -1596,9 +1603,9 @@ function HeroSearch({ router }: HeroSearchProps) {
         <div
           className="flex items-center rounded-2xl overflow-hidden shadow-xl"
           style={{
-            background: '#ffffff',
-            border: '1.5px solid #e2e8f0',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
+            background: "#ffffff",
+            border: "1.5px solid #e2e8f0",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
           }}
         >
           <label htmlFor="hero-search" className="sr-only">
@@ -1607,7 +1614,7 @@ function HeroSearch({ router }: HeroSearchProps) {
           <Search
             size={20}
             className="ml-5 flex-shrink-0"
-            style={{ color: '#94a3b8' }}
+            style={{ color: "#94a3b8" }}
             aria-hidden
           />
           <input
@@ -1622,7 +1629,7 @@ function HeroSearch({ router }: HeroSearchProps) {
             onKeyDown={handleKeyDown}
             placeholder="Search topics, quotes, conversations…"
             className="flex-1 bg-transparent border-none outline-none text-base px-4 py-4"
-            style={{ color: '#0f172a' }}
+            style={{ color: "#0f172a" }}
             role="combobox"
             aria-label="Search topics, quotes, conversations"
             aria-expanded={showDropdown}
@@ -1633,7 +1640,7 @@ function HeroSearch({ router }: HeroSearchProps) {
           <button
             type="submit"
             className="m-2 px-3 sm:px-6 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] flex-shrink-0 flex items-center gap-1.5"
-            style={{ background: 'var(--color-primary)' }}
+            style={{ background: "var(--color-primary)" }}
             aria-label="Submit search"
           >
             <Search size={16} aria-hidden />
@@ -1645,7 +1652,7 @@ function HeroSearch({ router }: HeroSearchProps) {
       {showDropdown && (
         <div
           className="absolute top-full left-0 right-0 mt-2 rounded-2xl shadow-2xl overflow-hidden z-50 text-left"
-          style={{ background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(12px)' }}
+          style={{ background: "rgba(255,255,255,0.98)", backdropFilter: "blur(12px)" }}
           id="hero-search-listbox"
           role="listbox"
           aria-label="Search results"
@@ -1666,7 +1673,7 @@ function HeroSearch({ router }: HeroSearchProps) {
 
           {error && !loading && (
             <div className="p-5 text-center" data-testid="search-error">
-              <p className="text-sm" style={{ color: 'var(--color-danger)' }}>
+              <p className="text-sm" style={{ color: "var(--color-danger)" }}>
                 Search unavailable. Please try again.
               </p>
             </div>
@@ -1697,10 +1704,10 @@ function HeroSearch({ router }: HeroSearchProps) {
                     >
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(22,163,74,0.10)' }}
+                        style={{ background: "rgba(22,163,74,0.10)" }}
                         aria-hidden
                       >
-                        <FileText size={16} style={{ color: 'var(--color-primary)' }} />
+                        <FileText size={16} style={{ color: "var(--color-primary)" }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
@@ -1727,7 +1734,7 @@ function HeroSearch({ router }: HeroSearchProps) {
                     >
                       <DisplayAvatar
                         avatar={creator.avatar}
-                        username={creator.name || creator.username || ''}
+                        username={creator.name || creator.username || ""}
                         size={32}
                       />
                       <p className="text-sm font-medium text-gray-900 truncate">{creator.name}</p>
@@ -1744,7 +1751,7 @@ function HeroSearch({ router }: HeroSearchProps) {
                     router.push(`/?q=${encodeURIComponent(debouncedQuery)}`);
                   }}
                   className="text-sm font-medium transition-colors hover:underline"
-                  style={{ color: 'var(--color-primary)' }}
+                  style={{ color: "var(--color-primary)" }}
                 >
                   See all results for &ldquo;{debouncedQuery}&rdquo;
                 </button>
@@ -1767,7 +1774,7 @@ interface FeaturedPostsData {
 }
 
 // Capture once at module load — stable across renders, avoids impure-render lint
-const MODULE_NOW = typeof window !== 'undefined' ? Date.now() : 0;
+const MODULE_NOW = typeof window !== "undefined" ? Date.now() : 0;
 
 function FeaturedPostsSection() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1776,8 +1783,8 @@ function FeaturedPostsSection() {
 
   const { data, loading } = useQuery<FeaturedPostsData>(GET_FEATURED_POSTS, {
     variables: { limit: 10, offset: 0 },
-    fetchPolicy: 'cache-first',
-    errorPolicy: 'all',
+    fetchPolicy: "cache-first",
+    errorPolicy: "all",
   });
 
   const posts = data?.featuredPosts?.entities || [];
@@ -1788,9 +1795,9 @@ function FeaturedPostsSection() {
     const cards = container.children;
     if (cards[index]) {
       (cards[index] as HTMLElement).scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center',
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
       });
     }
     setActiveIndex(index);
@@ -1818,8 +1825,8 @@ function FeaturedPostsSection() {
       setActiveIndex(Math.min(index, posts.length - 1));
     };
 
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
   }, [posts.length]);
 
   if (loading || posts.length === 0) return null;
@@ -1827,7 +1834,7 @@ function FeaturedPostsSection() {
   return (
     <section
       className="py-14 sm:py-20 relative overflow-hidden"
-      style={{ background: '#eef4f9' }}
+      style={{ background: "#eef4f9" }}
       aria-labelledby="featured-heading"
     >
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -1835,100 +1842,103 @@ function FeaturedPostsSection() {
         <div className="text-center mb-8">
           <p
             className="text-xs font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ color: '#2ecc71' }}
+            style={{ color: "#2ecc71" }}
           >
             Community Highlights
           </p>
           <h2
             id="featured-heading"
             className="text-4xl sm:text-5xl font-extrabold tracking-tight"
-            style={{ color: '#0f172a' }}
+            style={{ color: "#0f172a" }}
           >
-            Featured{' '}
-            <span
-              style={{ color: '#2ecc71' }}
-            >
-              Posts
-            </span>
+            Featured <span style={{ color: "#2ecc71" }}>Posts</span>
           </h2>
-          <p className="text-base mt-4 max-w-lg mx-auto" style={{ color: '#475569' }}>
+          <p className="text-base mt-4 max-w-lg mx-auto" style={{ color: "#475569" }}>
             See what the community is talking about right now.
           </p>
         </div>
 
         <div className="relative">
-            {/* Navigation arrows */}
-            {posts.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  disabled={activeIndex === 0}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
-                  style={{
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                  }}
-                  aria-label="Previous featured post"
-                >
-                  <ChevronLeft size={20} style={{ color: '#2ecc71' }} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={activeIndex === posts.length - 1}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
-                  style={{
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                  }}
-                  aria-label="Next featured post"
-                >
-                  <ChevronRight size={20} style={{ color: '#2ecc71' }} />
-                </button>
-              </>
-            )}
+          {/* Navigation arrows */}
+          {posts.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={activeIndex === 0}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
+                style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                }}
+                aria-label="Previous featured post"
+              >
+                <ChevronLeft size={20} style={{ color: "#2ecc71" }} />
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={activeIndex === posts.length - 1}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-20 hover:scale-110 hidden md:flex"
+                style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                }}
+                aria-label="Next featured post"
+              >
+                <ChevronRight size={20} style={{ color: "#2ecc71" }} />
+              </button>
+            </>
+          )}
 
-            {/* Scrollable card row */}
+          {/* Scrollable card row */}
+          <div
+            ref={scrollRef}
+            className="flex gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 px-1"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            role="list"
+            aria-label="Featured posts carousel"
+          >
+            {posts.map((post) => (
+              <FeaturedPostCard
+                key={post._id}
+                post={post}
+                timeAgo={now ? formatTimeAgo(post.created, now) : ""}
+              />
+            ))}
+          </div>
+
+          {/* Dot indicators */}
+          {posts.length > 1 && (
             <div
-              ref={scrollRef}
-              className="flex gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 px-1"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              role="list"
-              aria-label="Featured posts carousel"
+              className="flex items-center justify-center gap-2 mt-6"
+              role="tablist"
+              aria-label="Featured post navigation"
             >
-              {posts.map((post) => (
-                <FeaturedPostCard key={post._id} post={post} timeAgo={now ? formatTimeAgo(post.created, now) : ''} />
+              {posts.map((post, i) => (
+                <button
+                  key={post._id}
+                  type="button"
+                  onClick={() => scrollToIndex(i)}
+                  className="w-2 h-2 rounded-full transition-all"
+                  style={{
+                    background: i === activeIndex ? "#2ecc71" : "#e2e8f0",
+                    transform: i === activeIndex ? "scale(1.4)" : "scale(1)",
+                  }}
+                  role="tab"
+                  aria-selected={i === activeIndex}
+                  aria-label={`Go to featured post ${i + 1}`}
+                />
               ))}
             </div>
-
-            {/* Dot indicators */}
-            {posts.length > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-6" role="tablist" aria-label="Featured post navigation">
-                {posts.map((post, i) => (
-                  <button
-                    key={post._id}
-                    type="button"
-                    onClick={() => scrollToIndex(i)}
-                    className="w-2 h-2 rounded-full transition-all"
-                    style={{
-                      background: i === activeIndex ? '#2ecc71' : '#e2e8f0',
-                      transform: i === activeIndex ? 'scale(1.4)' : 'scale(1)',
-                    }}
-                    role="tab"
-                    aria-selected={i === activeIndex}
-                    aria-label={`Go to featured post ${i + 1}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          )}
+        </div>
 
         <div className="text-center mt-6">
           <Link
             href="/auths/login"
             className="inline-flex items-center gap-2 text-sm font-semibold transition-all hover:opacity-80"
-            style={{ color: '#2ecc71' }}
+            style={{ color: "#2ecc71" }}
           >
             Join to see more and participate
             <ChevronRight size={16} aria-hidden />
@@ -1940,41 +1950,38 @@ function FeaturedPostsSection() {
 }
 
 function formatTimeAgo(created: string | undefined, now: number): string {
-  if (!created) return '';
+  if (!created) return "";
   const diff = now - new Date(created).getTime();
   const days = Math.floor(diff / 86400000);
-  if (days < 1) return 'Today';
-  if (days === 1) return '1d ago';
+  if (days < 1) return "Today";
+  if (days === 1) return "1d ago";
   if (days < 30) return `${days}d ago`;
   const months = Math.floor(days / 30);
-  return months === 1 ? '1mo ago' : `${months}mo ago`;
+  return months === 1 ? "1mo ago" : `${months}mo ago`;
 }
 
 function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
-  const creatorName = post.creator?.name || post.creator?.username || 'Anonymous';
-  const username = post.creator?.username || 'anonymous';
+  const creatorName = post.creator?.name || post.creator?.username || "Anonymous";
+  const username = post.creator?.username || "anonymous";
   const upvotes = post.upvotes ?? 0;
   const downvotes = post.downvotes ?? 0;
   const commentCount = post.comments?.length || 0;
   const quoteCount = post.quotes?.length || 0;
   const href = post.url ? toAppPostUrl(post.url) : undefined;
-  const ariaLabel = post.title
-    ? `Read featured post: ${post.title}`
-    : 'Read featured post';
+  const ariaLabel = post.title ? `Read featured post: ${post.title}` : "Read featured post";
 
   const PREVIEW_CHAR_LIMIT = 150;
   const displayText = post.text
     ? post.text.length > PREVIEW_CHAR_LIMIT
-      ? post.text.slice(0, PREVIEW_CHAR_LIMIT) + '...'
+      ? post.text.slice(0, PREVIEW_CHAR_LIMIT) + "..."
       : post.text
-    : '';
+    : "";
 
-  const cardClassName =
-    'rounded-2xl p-6 h-full flex flex-col transition-all hover:-translate-y-1';
+  const cardClassName = "rounded-2xl p-6 h-full flex flex-col transition-all hover:-translate-y-1";
   const cardStyle: React.CSSProperties = {
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
   };
 
   const cardContent = (
@@ -1984,29 +1991,29 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
           style={{
-            background: '#f0fdf4',
-            color: '#2ecc71',
+            background: "#f0fdf4",
+            color: "#2ecc71",
           }}
         >
-          {creatorName[0]?.toUpperCase() || '?'}
+          {creatorName[0]?.toUpperCase() || "?"}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>
+          <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>
             {creatorName}
           </p>
-          <p className="text-xs truncate" style={{ color: '#94a3b8' }}>
+          <p className="text-xs truncate" style={{ color: "#94a3b8" }}>
             @{username} · {timeAgo}
           </p>
         </div>
         <div
           className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
           style={{
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
+            background: "#f0fdf4",
+            border: "1px solid #bbf7d0",
           }}
         >
-          <Star size={12} style={{ color: '#2ecc71' }} aria-hidden />
-          <span className="text-[10px] font-bold" style={{ color: '#2ecc71' }}>
+          <Star size={12} style={{ color: "#2ecc71" }} aria-hidden />
+          <span className="text-[10px] font-bold" style={{ color: "#2ecc71" }}>
             Featured
           </span>
         </div>
@@ -2016,7 +2023,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
       {post.title && (
         <h3
           className="text-base font-bold mb-2 leading-snug line-clamp-2"
-          style={{ color: '#0f172a' }}
+          style={{ color: "#0f172a" }}
         >
           {post.title}
         </h3>
@@ -2026,7 +2033,7 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
       {displayText && (
         <p
           className="text-sm leading-relaxed mb-4 flex-1 line-clamp-3"
-          style={{ color: '#475569' }}
+          style={{ color: "#475569" }}
         >
           {displayText}
         </p>
@@ -2035,29 +2042,29 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
       {/* Engagement stats */}
       <div
         className="flex items-center gap-4 pt-4 mt-auto"
-        style={{ borderTop: '1px solid #e2e8f0' }}
+        style={{ borderTop: "1px solid #e2e8f0" }}
       >
         <div className="flex items-center gap-1.5">
-          <ThumbsUp size={14} style={{ color: '#2ecc71' }} aria-hidden />
-          <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
+          <ThumbsUp size={14} style={{ color: "#2ecc71" }} aria-hidden />
+          <span className="text-xs tabular-nums" style={{ color: "#64748b" }}>
             {upvotes}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <ThumbsDown size={14} style={{ color: '#ef4444' }} aria-hidden />
-          <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
+          <ThumbsDown size={14} style={{ color: "#ef4444" }} aria-hidden />
+          <span className="text-xs tabular-nums" style={{ color: "#64748b" }}>
             {downvotes}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <MessageCircle size={14} style={{ color: '#27C4E1' }} aria-hidden />
-          <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
+          <MessageCircle size={14} style={{ color: "#27C4E1" }} aria-hidden />
+          <span className="text-xs tabular-nums" style={{ color: "#64748b" }}>
             {commentCount}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <MessageSquareQuote size={14} style={{ color: '#c8a03c' }} aria-hidden />
-          <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
+          <MessageSquareQuote size={14} style={{ color: "#c8a03c" }} aria-hidden />
+          <span className="text-xs tabular-nums" style={{ color: "#64748b" }}>
             {quoteCount}
           </span>
         </div>
@@ -2098,22 +2105,22 @@ const EMAIL_REGEX =
   /^(("[\w-+\s]+")|(([\w-+]+(?:\.[\w-+]+)*)|("[\w-+\s]+")([\w-+]+(?:\.[\w-+]+)*)))(@((?:[\w-+]+\.)*\w[\w-+]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][\d]\.|1[\d]{2}\.|[\d]{1,2}\.))((25[0-5]|2[0-4][\d]|1[\d]{2}|[\d]{1,2})\.){2}(25[0-5]|2[0-4][\d]|1[\d]{2}|[\d]{1,2})\]?$)/i;
 
 function BeInTouchSection() {
-  const [email, setEmail] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [requestUserAccess] = useMutation(REQUEST_USER_ACCESS_MUTATION);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setErrorMessage('');
-    setSuccessMessage('');
+    setErrorMessage("");
+    setSuccessMessage("");
 
     const trimmed = email.trim();
 
     if (!EMAIL_REGEX.test(trimmed)) {
-      setErrorMessage('Please enter a valid email address.');
+      setErrorMessage("Please enter a valid email address.");
       return;
     }
 
@@ -2121,13 +2128,13 @@ function BeInTouchSection() {
     try {
       await requestUserAccess({ variables: { requestUserAccessInput: { email: trimmed } } });
       setSuccessMessage("Thank you for requesting access! We'll be in touch soon.");
-      setEmail('');
+      setEmail("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : '';
-      if (message.includes('Email already exists')) {
-        setErrorMessage('This email is already registered.');
+      const message = error instanceof Error ? error.message : "";
+      if (message.includes("Email already exists")) {
+        setErrorMessage("This email is already registered.");
       } else {
-        setErrorMessage('Failed to submit request. Please try again.');
+        setErrorMessage("Failed to submit request. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -2136,51 +2143,51 @@ function BeInTouchSection() {
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
-    if (errorMessage) setErrorMessage('');
+    if (errorMessage) setErrorMessage("");
   };
 
   return (
     <section
       className="py-14 sm:py-20 relative overflow-hidden"
-      style={{ background: '#eef4f9' }}
+      style={{ background: "#eef4f9" }}
       aria-labelledby="touch-heading"
     >
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6">
         <div
           className="rounded-3xl p-8 sm:p-10 text-center"
           style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
           }}
         >
           {/* Icon */}
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
             style={{
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
+              background: "#f0fdf4",
+              border: "1px solid #bbf7d0",
             }}
           >
-            <Mail size={26} style={{ color: '#2ecc71' }} aria-hidden />
+            <Mail size={26} style={{ color: "#2ecc71" }} aria-hidden />
           </div>
 
           <h2
             id="touch-heading"
             className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4"
-            style={{ color: '#0f172a' }}
+            style={{ color: "#0f172a" }}
           >
-            Please Be{' '}
-            <span style={{ color: '#2ecc71' }}>in Touch!</span>
+            Please Be <span style={{ color: "#2ecc71" }}>in Touch!</span>
           </h2>
           <p
             className="text-base leading-relaxed max-w-lg mx-auto mb-6"
-            style={{ color: '#475569' }}
+            style={{ color: "#475569" }}
           >
-            Our team is made up of volunteer contributors from around the world.
-            We will send updates as we make progress.{' '}
-            <span className="font-semibold" style={{ color: '#0f172a' }}>
-              Your contributions, as simple as a contact or as great as a donation, everything is much appreciated.
+            Our team is made up of volunteer contributors from around the world. We will send
+            updates as we make progress.{" "}
+            <span className="font-semibold" style={{ color: "#0f172a" }}>
+              Your contributions, as simple as a contact or as great as a donation, everything is
+              much appreciated.
             </span>
           </p>
 
@@ -2193,8 +2200,8 @@ function BeInTouchSection() {
             <div
               className="flex items-center rounded-2xl overflow-hidden"
               style={{
-                background: '#f8fafc',
-                border: '1.5px solid #bbf7d0',
+                background: "#f8fafc",
+                border: "1.5px solid #bbf7d0",
               }}
             >
               <label htmlFor="touch-email" className="sr-only">
@@ -2209,7 +2216,7 @@ function BeInTouchSection() {
                 className="flex-1 border-none outline-none text-base px-5 py-4 bg-transparent text-gray-900 placeholder:text-gray-400"
                 aria-invalid={!!errorMessage}
                 aria-describedby={
-                  errorMessage ? 'touch-error' : successMessage ? 'touch-success' : undefined
+                  errorMessage ? "touch-error" : successMessage ? "touch-success" : undefined
                 }
                 required
               />
@@ -2218,11 +2225,11 @@ function BeInTouchSection() {
                 disabled={isSubmitting}
                 className="m-2 px-6 py-2.5 rounded-xl font-semibold text-base text-white transition-all hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-2 flex-shrink-0"
                 style={{
-                  background: 'linear-gradient(135deg, #52b274 0%, #3a9058 100%)',
-                  boxShadow: '0 2px 12px rgba(82,178,116,0.30)',
+                  background: "linear-gradient(135deg, #52b274 0%, #3a9058 100%)",
+                  boxShadow: "0 2px 12px rgba(82,178,116,0.30)",
                 }}
               >
-                {isSubmitting ? 'Submitting...' : 'Contact'}
+                {isSubmitting ? "Submitting..." : "Contact"}
               </button>
             </div>
 
@@ -2231,7 +2238,7 @@ function BeInTouchSection() {
                 id="touch-error"
                 role="alert"
                 className="mt-3 text-sm text-center"
-                style={{ color: 'var(--color-danger)' }}
+                style={{ color: "var(--color-danger)" }}
               >
                 {errorMessage}
               </p>
@@ -2241,13 +2248,12 @@ function BeInTouchSection() {
                 id="touch-success"
                 role="status"
                 className="mt-3 text-sm text-center"
-                style={{ color: 'var(--color-success)' }}
+                style={{ color: "var(--color-success)" }}
               >
                 {successMessage}
               </p>
             )}
           </form>
-
         </div>
       </div>
     </section>

@@ -1,9 +1,9 @@
-import fs from 'fs';
-import path from 'path';
-import type { FullConfig } from '@playwright/test';
-import type { AuthSession } from './api';
+import fs from "fs";
+import path from "path";
+import type { FullConfig } from "@playwright/test";
+import type { AuthSession } from "./api";
 
-export const AUTHOR_STORAGE_PATH = path.join(__dirname, '../.auth/authorUser.json');
+export const AUTHOR_STORAGE_PATH = path.join(__dirname, "../.auth/authorUser.json");
 
 interface PlaywrightStorageState {
   cookies: Array<{
@@ -14,7 +14,7 @@ interface PlaywrightStorageState {
     expires: number;
     httpOnly: boolean;
     secure: boolean;
-    sameSite: 'Strict' | 'Lax' | 'None';
+    sameSite: "Strict" | "Lax" | "None";
   }>;
   origins: Array<{
     origin: string;
@@ -28,23 +28,23 @@ function buildStorageState(baseURL: string, session: AuthSession): PlaywrightSto
   return {
     cookies: [
       {
-        name: 'qv-token',
+        name: "qv-token",
         value: session.token,
         domain: url.hostname,
-        path: '/',
+        path: "/",
         expires: -1,
         httpOnly: false,
-        secure: url.protocol === 'https:',
-        sameSite: 'Lax',
+        secure: url.protocol === "https:",
+        sameSite: "Lax",
       },
     ],
     origins: [
       {
         origin: url.origin,
         localStorage: [
-          { name: 'token', value: session.token },
+          { name: "token", value: session.token },
           {
-            name: 'qv-store',
+            name: "qv-store",
             value: JSON.stringify({
               state: {
                 user: {
@@ -62,15 +62,12 @@ function buildStorageState(baseURL: string, session: AuthSession): PlaywrightSto
   };
 }
 
-export async function saveAuthorStorageState(
-  baseURL: string,
-  session: AuthSession
-): Promise<void> {
+export async function saveAuthorStorageState(baseURL: string, session: AuthSession): Promise<void> {
   fs.mkdirSync(path.dirname(AUTHOR_STORAGE_PATH), { recursive: true });
   fs.writeFileSync(
     AUTHOR_STORAGE_PATH,
     JSON.stringify(buildStorageState(baseURL, session), null, 2),
-    'utf8'
+    "utf8"
   );
 }
 

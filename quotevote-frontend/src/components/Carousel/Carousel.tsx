@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useCarousel } from '@/hooks/useCarousel'
-import { cn } from '@/lib/utils'
-import type { CarouselProps } from '@/types/carousel'
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useCarousel } from "@/hooks/useCarousel";
+import { cn } from "@/lib/utils";
+import type { CarouselProps } from "@/types/carousel";
 
 export function Carousel({
   children,
@@ -22,109 +22,101 @@ export function Carousel({
   enableSwipe = true,
   rtl = false,
 }: CarouselProps) {
-  const childrenArray = Array.isArray(children) ? children : [children]
-  const maxSteps = childrenArray.length
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [touchStart, setTouchStart] = useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = useState<number | null>(null)
-  const [isHovering, setIsHovering] = useState(false)
+  const childrenArray = Array.isArray(children) ? children : [children];
+  const maxSteps = childrenArray.length;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isHovering, setIsHovering] = useState(false);
 
-  const {
-    activeStep,
-    handleNext,
-    handleBack,
-    goToStep,
-    canGoNext,
-    canGoBack,
-    pause,
-    resume,
-  } = useCarousel({
-    initialStep: activeStepProp,
-    maxSteps,
-    controlledIndex: index,
-    onStepChange: (step) => {
-      setActiveStepProp?.(step)
-      onChange?.(step)
-    },
-    autoplay: autoplay && !isHovering,
-    autoplayInterval,
-  })
+  const { activeStep, handleNext, handleBack, goToStep, canGoNext, canGoBack, pause, resume } =
+    useCarousel({
+      initialStep: activeStepProp,
+      maxSteps,
+      controlledIndex: index,
+      onStepChange: (step) => {
+        setActiveStepProp?.(step);
+        onChange?.(step);
+      },
+      autoplay: autoplay && !isHovering,
+      autoplayInterval,
+    });
 
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' && !rtl) {
-        e.preventDefault()
-        handleBack()
-      } else if (e.key === 'ArrowRight' && !rtl) {
-        e.preventDefault()
-        handleNext()
-      } else if (e.key === 'ArrowLeft' && rtl) {
-        e.preventDefault()
-        handleNext()
-      } else if (e.key === 'ArrowRight' && rtl) {
-        e.preventDefault()
-        handleBack()
+      if (e.key === "ArrowLeft" && !rtl) {
+        e.preventDefault();
+        handleBack();
+      } else if (e.key === "ArrowRight" && !rtl) {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === "ArrowLeft" && rtl) {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === "ArrowRight" && rtl) {
+        e.preventDefault();
+        handleBack();
       }
-    }
+    };
 
-    const container = containerRef.current
+    const container = containerRef.current;
     if (container) {
-      container.addEventListener('keydown', handleKeyDown)
-      container.setAttribute('tabIndex', '0')
+      container.addEventListener("keydown", handleKeyDown);
+      container.setAttribute("tabIndex", "0");
     }
 
     return () => {
       if (container) {
-        container.removeEventListener('keydown', handleKeyDown)
+        container.removeEventListener("keydown", handleKeyDown);
       }
-    }
-  }, [handleNext, handleBack, rtl])
+    };
+  }, [handleNext, handleBack, rtl]);
 
   // Touch/swipe handlers
-  const minSwipeDistance = 50
+  const minSwipeDistance = 50;
 
   const onTouchStart = (e: React.TouchEvent) => {
-    if (!enableSwipe) return
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
-  }
+    if (!enableSwipe) return;
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    if (!enableSwipe) return
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
+    if (!enableSwipe) return;
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
 
   const onTouchEnd = () => {
-    if (!enableSwipe || touchStart === null || touchEnd === null) return
+    if (!enableSwipe || touchStart === null || touchEnd === null) return;
 
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe && canGoNext) {
-      handleNext()
+      handleNext();
     }
     if (isRightSwipe && canGoBack) {
-      handleBack()
+      handleBack();
     }
-  }
+  };
 
   const handleMouseEnter = () => {
     if (pauseOnHover) {
-      setIsHovering(true)
-      pause()
+      setIsHovering(true);
+      pause();
     }
-  }
+  };
 
   const handleMouseLeave = () => {
     if (pauseOnHover) {
-      setIsHovering(false)
-      resume()
+      setIsHovering(false);
+      resume();
     }
-  }
+  };
 
-  const navButtonsVisibility = navButtonsAlwaysVisible ? 'visible' : 'hidden'
+  const navButtonsVisibility = navButtonsAlwaysVisible ? "visible" : "hidden";
 
   return (
     <div
@@ -145,9 +137,9 @@ export function Carousel({
         onClick={handleBack}
         disabled={!canGoBack}
         className={cn(
-          'absolute left-2.5 top-1/2 -translate-y-1/2 z-10 bg-transparent hover:bg-white/10',
-          'hidden sm:flex',
-          navButtonsVisibility === 'hidden' && 'hidden'
+          "absolute left-2.5 top-1/2 -translate-y-1/2 z-10 bg-transparent hover:bg-white/10",
+          "hidden sm:flex",
+          navButtonsVisibility === "hidden" && "hidden"
         )}
         aria-label="Previous slide"
       >
@@ -160,9 +152,9 @@ export function Carousel({
         onClick={handleNext}
         disabled={!canGoNext}
         className={cn(
-          'absolute right-2.5 top-1/2 -translate-y-1/2 z-10 bg-transparent hover:bg-white/10',
-          'hidden sm:flex',
-          navButtonsVisibility === 'hidden' && 'hidden'
+          "absolute right-2.5 top-1/2 -translate-y-1/2 z-10 bg-transparent hover:bg-white/10",
+          "hidden sm:flex",
+          navButtonsVisibility === "hidden" && "hidden"
         )}
         aria-label="Next slide"
       >
@@ -179,17 +171,17 @@ export function Carousel({
           }}
         >
           {childrenArray.map((child, index) => {
-            const isHidden = index !== activeStep
+            const isHidden = index !== activeStep;
             return (
               <div
                 key={index}
                 className="w-full flex-shrink-0 flex items-center justify-center overflow-hidden"
                 style={{ width: `${100 / maxSteps}%` }}
-                {...(isHidden ? { 'aria-hidden': 'true' } : {})}
+                {...(isHidden ? { "aria-hidden": "true" } : {})}
               >
                 {child}
               </div>
-            )
+            );
           })}
         </div>
       </div>
@@ -202,17 +194,16 @@ export function Carousel({
             type="button"
             onClick={() => goToStep(index)}
             className={cn(
-              'h-2 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
+              "h-2 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
               index === activeStep
-                ? cn('w-6 bg-primary', activeIndicatorProps?.className)
-                : cn('w-2 bg-gray-400 hover:bg-gray-500', indicatorProps?.className)
+                ? cn("w-6 bg-primary", activeIndicatorProps?.className)
+                : cn("w-2 bg-gray-400 hover:bg-gray-500", indicatorProps?.className)
             )}
             aria-label={`Go to slide ${index + 1}`}
-            aria-current={index === activeStep ? 'true' : 'false'}
+            aria-current={index === activeStep ? "true" : "false"}
           />
         ))}
       </div>
     </div>
-  )
+  );
 }
-

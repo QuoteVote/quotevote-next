@@ -43,11 +43,7 @@ test.describe("Magic-link eyebrow disabled (E2E-AUTH-006)", () => {
 
 const GRAPHQL_URL = "http://localhost:4000/graphql";
 
-async function mockGraphQLOperation(
-  page: Page,
-  operationName: string,
-  responseData: object
-) {
+async function mockGraphQLOperation(page: Page, operationName: string, responseData: object) {
   await page.route(GRAPHQL_URL, async (route) => {
     let body: { operationName?: string } = {};
     try {
@@ -148,7 +144,9 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
   // Override global storage state so we start as a logged-out visitor
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test("creates a new account, logs in, and routes to authenticated dashboard", async ({ page }) => {
+  test("creates a new account, logs in, and routes to authenticated dashboard", async ({
+    page,
+  }) => {
     // 1. Listen for page errors from the start of the test
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -190,19 +188,19 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
     await page.waitForURL("**/auths/login", { timeout: 15000 });
 
     // 7. Complete login using newly created credentials
-    await page.getByPlaceholder('Email/Username').fill(uniqueEmail);
-    await page.getByPlaceholder('Password').fill(validPassword);
+    await page.getByPlaceholder("Email/Username").fill(uniqueEmail);
+    await page.getByPlaceholder("Password").fill(validPassword);
 
-    await page.click('#tos');
-    await page.click('#coc');
+    await page.click("#tos");
+    await page.click("#coc");
 
-    const loginButton = page.getByRole('button', { name: 'Log in' });
+    const loginButton = page.getByRole("button", { name: "Log in" });
     await expect(loginButton).toBeEnabled();
 
     await loginButton.click({ force: true });
 
     // 8. Verify navigation to the authenticated experience /
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 15000 });
+    await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: 15000 });
 
     // 9. Confirm the new user is authenticated
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
@@ -213,7 +211,7 @@ test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
 
     // 10. Confirm session persists after page reload
     await page.reload();
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 15000 });
+    await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: 15000 });
     await expect(authNav).toBeVisible();
     await expect(profileMenu).toBeVisible();
 
@@ -259,7 +257,9 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     }
   });
 
-  test("logs in with valid username and password, routes to dashboard, and preserves session after reload", async ({ page }) => {
+  test("logs in with valid username and password, routes to dashboard, and preserves session after reload", async ({
+    page,
+  }) => {
     test.skip(!AUTHOR_PASSWORD, "E2E_AUTHOR_PASSWORD is required for live backend auth");
 
     const errorToastLocator = page.locator('[data-sonner-toast][data-type="error"]');
@@ -303,7 +303,7 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     await submitButton.click();
 
     // 7. Confirm user becomes authenticated and routes to the authenticated dashboard
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30000 });
+    await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: 30000 });
 
     // 8. Confirm authenticated navigation and profile controls appear
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
@@ -314,7 +314,7 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
 
     // 9. Confirm session persists after page reload
     await page.reload();
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30000 });
+    await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: 30000 });
     await expect(authNav).toBeVisible();
     await expect(profileMenu).toBeVisible();
 
@@ -346,7 +346,7 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
 
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30000 });
+    await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: 30000 });
 
     const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
     await expect(authNav).toBeVisible();
@@ -355,5 +355,3 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
     expect(pageErrors).toHaveLength(0);
   });
 });
-
-

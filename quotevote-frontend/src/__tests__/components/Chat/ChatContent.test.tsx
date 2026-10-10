@@ -1,6 +1,6 @@
 /**
  * ChatContent Component Tests
- * 
+ *
  * Tests for the ChatContent component including:
  * - Tab switching (chats, groups, buddies)
  * - Room selection and display
@@ -9,38 +9,48 @@
  * - Status editor
  */
 
-import { render, screen, fireEvent } from '@/__tests__/utils/test-utils'
-import ChatContent from '@/components/Chat/ChatContent'
-import { useAppStore } from '@/store'
+import { render, screen, fireEvent } from "@/__tests__/utils/test-utils";
+import ChatContent from "@/components/Chat/ChatContent";
+import { useAppStore } from "@/store";
 
 // Mock useQuery from Apollo Client
-const mockUseQuery = jest.fn()
-jest.mock('@apollo/client/react', () => ({
-  ...jest.requireActual('@apollo/client/react'),
+const mockUseQuery = jest.fn();
+jest.mock("@apollo/client/react", () => ({
+  ...jest.requireActual("@apollo/client/react"),
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
-}))
+}));
 
 // Mock Zustand store
-jest.mock('@/store', () => ({
+jest.mock("@/store", () => ({
   useAppStore: jest.fn(),
-}))
+}));
 
 // Mock usePresenceHeartbeat
-jest.mock('@/hooks/usePresenceHeartbeat', () => ({
+jest.mock("@/hooks/usePresenceHeartbeat", () => ({
   usePresenceHeartbeat: jest.fn(),
-}))
+}));
 
 // Mock Button component
-jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, 'aria-label': ariaLabel, ...props }: { children: React.ReactNode; onClick?: () => void; 'aria-label'?: string; [key: string]: unknown }) => (
+jest.mock("@/components/ui/button", () => ({
+  Button: ({
+    children,
+    onClick,
+    "aria-label": ariaLabel,
+    ...props
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    "aria-label"?: string;
+    [key: string]: unknown;
+  }) => (
     <button onClick={onClick} aria-label={ariaLabel} {...props}>
       {children}
     </button>
   ),
-}))
+}));
 
 // Mock child components
-jest.mock('@/components/Chat/ChatSearchInput', () => ({
+jest.mock("@/components/Chat/ChatSearchInput", () => ({
   __esModule: true,
   default: ({ setSearch }: { setSearch: (value: string) => void }) => (
     <input
@@ -49,267 +59,266 @@ jest.mock('@/components/Chat/ChatSearchInput', () => ({
       placeholder="Search..."
     />
   ),
-}))
+}));
 
-jest.mock('@/components/Chat/ChatTabs', () => ({
+jest.mock("@/components/Chat/ChatTabs", () => ({
   __esModule: true,
-  default: ({ 
-    value, 
-    onChange 
-  }: { 
-    value: string; 
-    onChange: (event: unknown, newValue: string) => void 
+  default: ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (event: unknown, newValue: string) => void;
   }) => (
     <div data-testid="chat-tabs">
-      <button onClick={(e) => onChange(e, 'chats')} data-active={value === 'chats'}>
+      <button onClick={(e) => onChange(e, "chats")} data-active={value === "chats"}>
         Chats
       </button>
-      <button onClick={(e) => onChange(e, 'groups')} data-active={value === 'groups'}>
+      <button onClick={(e) => onChange(e, "groups")} data-active={value === "groups"}>
         Groups
       </button>
-      <button onClick={(e) => onChange(e, 'buddies')} data-active={value === 'buddies'}>
+      <button onClick={(e) => onChange(e, "buddies")} data-active={value === "buddies"}>
         Buddies
       </button>
     </div>
   ),
-}))
+}));
 
-jest.mock('@/components/Chat/ChatList', () => ({
+jest.mock("@/components/Chat/ChatList", () => ({
   __esModule: true,
   default: ({ search, filterType }: { search: string; filterType: string }) => (
     <div data-testid="chat-list" data-search={search} data-filter={filterType}>
       Chat List ({filterType})
     </div>
   ),
-}))
+}));
 
-jest.mock('@/components/Chat/MessageBox', () => ({
+jest.mock("@/components/Chat/MessageBox", () => ({
   __esModule: true,
   default: () => <div data-testid="message-box">Message Box</div>,
-}))
+}));
 
-jest.mock('@/components/BuddyList/BuddyListWithPresence', () => ({
+jest.mock("@/components/BuddyList/BuddyListWithPresence", () => ({
   __esModule: true,
   default: ({ search }: { search: string }) => (
     <div data-testid="buddy-list-with-presence" data-search={search}>
       Buddy List
     </div>
   ),
-}))
+}));
 
-jest.mock('@/components/Chat/UserSearchResults', () => ({
+jest.mock("@/components/Chat/UserSearchResults", () => ({
   __esModule: true,
   default: ({ searchQuery }: { searchQuery: string }) => (
     <div data-testid="user-search-results" data-query={searchQuery}>
       User Search Results
     </div>
   ),
-}))
+}));
 
-jest.mock('@/components/Chat/StatusEditor', () => ({
+jest.mock("@/components/Chat/StatusEditor", () => ({
   __esModule: true,
-  default: ({ open, onClose }: { open: boolean; onClose: () => void }) => (
+  default: ({ open, onClose }: { open: boolean; onClose: () => void }) =>
     open ? (
       <div data-testid="status-editor">
         <button onClick={onClose}>Close</button>
       </div>
-    ) : null
-  ),
-}))
+    ) : null,
+}));
 
-const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>
-const mockSetChatOpen = jest.fn()
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
+const mockSetChatOpen = jest.fn();
 
-describe('ChatContent', () => {
+describe("ChatContent", () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.clearAllMocks();
 
     // Mock useQuery to return empty rooms by default
     mockUseQuery.mockReturnValue({
       data: { messageRooms: [] },
       loading: false,
       error: undefined,
-    })
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: {
           data: {
-            _id: 'user1',
-            name: 'Test User',
-            username: 'testuser',
+            _id: "user1",
+            name: "Test User",
+            username: "testuser",
           },
         },
         chat: {
           selectedRoom: null,
           buddyList: [],
           presenceMap: {},
-          userStatus: 'online',
-          userStatusMessage: '',
+          userStatus: "online",
+          userStatusMessage: "",
         },
         setChatOpen: mockSetChatOpen,
-      }
-      return selector(state as ReturnType<typeof useAppStore>)
-    })
-  })
+      };
+      return selector(state as ReturnType<typeof useAppStore>);
+    });
+  });
 
-  it('renders chat tabs and search input', () => {
-    render(<ChatContent />)
+  it("renders chat tabs and search input", () => {
+    render(<ChatContent />);
 
-    expect(screen.getByTestId('chat-tabs')).toBeInTheDocument()
-    expect(screen.getByTestId('chat-search-input')).toBeInTheDocument()
-  })
+    expect(screen.getByTestId("chat-tabs")).toBeInTheDocument();
+    expect(screen.getByTestId("chat-search-input")).toBeInTheDocument();
+  });
 
-  it('displays chat list when chats tab is active', () => {
-    render(<ChatContent />)
+  it("displays chat list when chats tab is active", () => {
+    render(<ChatContent />);
 
-    expect(screen.getByTestId('chat-list')).toBeInTheDocument()
-    expect(screen.getByTestId('chat-list')).toHaveAttribute('data-filter', 'chats')
-  })
+    expect(screen.getByTestId("chat-list")).toBeInTheDocument();
+    expect(screen.getByTestId("chat-list")).toHaveAttribute("data-filter", "chats");
+  });
 
-  it('switches to groups tab when groups button is clicked', () => {
-    render(<ChatContent />)
+  it("switches to groups tab when groups button is clicked", () => {
+    render(<ChatContent />);
 
-    const groupsButton = screen.getByText('Groups')
-    fireEvent.click(groupsButton)
+    const groupsButton = screen.getByText("Groups");
+    fireEvent.click(groupsButton);
 
-    expect(screen.getByTestId('chat-list')).toHaveAttribute('data-filter', 'groups')
-  })
+    expect(screen.getByTestId("chat-list")).toHaveAttribute("data-filter", "groups");
+  });
 
-  it('switches to buddies tab when buddies button is clicked', () => {
-    render(<ChatContent />)
+  it("switches to buddies tab when buddies button is clicked", () => {
+    render(<ChatContent />);
 
-    const buddiesButton = screen.getByText('Buddies')
-    fireEvent.click(buddiesButton)
+    const buddiesButton = screen.getByText("Buddies");
+    fireEvent.click(buddiesButton);
 
-    expect(screen.getByTestId('buddy-list-with-presence')).toBeInTheDocument()
-  })
+    expect(screen.getByTestId("buddy-list-with-presence")).toBeInTheDocument();
+  });
 
-  it('displays message box when room is selected', () => {
+  it("displays message box when room is selected", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         chat: {
-          selectedRoom: 'room1',
+          selectedRoom: "room1",
           buddyList: [],
           presenceMap: {},
-          userStatus: 'online',
-          userStatusMessage: '',
+          userStatus: "online",
+          userStatusMessage: "",
         },
-      }
-      return selector(state as ReturnType<typeof useAppStore>)
-    })
+      };
+      return selector(state as ReturnType<typeof useAppStore>);
+    });
 
-    render(<ChatContent />)
+    render(<ChatContent />);
 
-    expect(screen.getByTestId('message-box')).toBeInTheDocument()
-    expect(screen.queryByTestId('chat-list')).not.toBeInTheDocument()
-  })
+    expect(screen.getByTestId("message-box")).toBeInTheDocument();
+    expect(screen.queryByTestId("chat-list")).not.toBeInTheDocument();
+  });
 
-  it('filters chat list by search query', () => {
-    render(<ChatContent />)
+  it("filters chat list by search query", () => {
+    render(<ChatContent />);
 
-    const searchInput = screen.getByTestId('chat-search-input')
-    fireEvent.change(searchInput, { target: { value: 'test search' } })
+    const searchInput = screen.getByTestId("chat-search-input");
+    fireEvent.change(searchInput, { target: { value: "test search" } });
 
-    expect(screen.getByTestId('chat-list')).toHaveAttribute('data-search', 'test search')
-  })
+    expect(screen.getByTestId("chat-list")).toHaveAttribute("data-search", "test search");
+  });
 
-  it('shows add buddy mode when add buddy button is clicked', () => {
-    render(<ChatContent />)
+  it("shows add buddy mode when add buddy button is clicked", () => {
+    render(<ChatContent />);
 
     // Switch to buddies tab first
-    const buddiesButton = screen.getByText('Buddies')
-    fireEvent.click(buddiesButton)
+    const buddiesButton = screen.getByText("Buddies");
+    fireEvent.click(buddiesButton);
 
     // Find and click add buddy button
-    const addBuddyButton = screen.getByText('Add New Buddy')
-    fireEvent.click(addBuddyButton)
+    const addBuddyButton = screen.getByText("Add New Buddy");
+    fireEvent.click(addBuddyButton);
 
-    expect(screen.getByTestId('user-search-results')).toBeInTheDocument()
-    expect(screen.queryByTestId('buddy-list-with-presence')).not.toBeInTheDocument()
-  })
+    expect(screen.getByTestId("user-search-results")).toBeInTheDocument();
+    expect(screen.queryByTestId("buddy-list-with-presence")).not.toBeInTheDocument();
+  });
 
-  it('opens status editor when status is clicked', () => {
-    render(<ChatContent />)
+  it("opens status editor when status is clicked", () => {
+    render(<ChatContent />);
 
     // Find status settings button - it might be rendered as a button with aria-label
-    const statusButton = screen.queryByLabelText('Set status') || screen.getByRole('button', { name: /set status/i })
-    fireEvent.click(statusButton)
+    const statusButton =
+      screen.queryByLabelText("Set status") || screen.getByRole("button", { name: /set status/i });
+    fireEvent.click(statusButton);
 
     // Status editor should open
-    expect(screen.getByTestId('status-editor')).toBeInTheDocument()
-  })
+    expect(screen.getByTestId("status-editor")).toBeInTheDocument();
+  });
 
-  it('displays user status with correct styling', () => {
+  it("displays user status with correct styling", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: {
           data: {
-            _id: 'user1',
-            name: 'Test User',
-            username: 'testuser',
+            _id: "user1",
+            name: "Test User",
+            username: "testuser",
           },
         },
         chat: {
           selectedRoom: null,
           buddyList: [],
           presenceMap: {},
-          userStatus: 'away',
-          userStatusMessage: 'Away message',
+          userStatus: "away",
+          userStatusMessage: "Away message",
         },
-      }
-      return selector(state as ReturnType<typeof useAppStore>)
-    })
+      };
+      return selector(state as ReturnType<typeof useAppStore>);
+    });
 
-    render(<ChatContent />)
+    render(<ChatContent />);
 
     // Status should be displayed (UserStatusDisplay shows the status message or label)
     // The status message is displayed in the UserStatusDisplay component
-    expect(screen.getByText('Away message')).toBeInTheDocument()
-  })
+    expect(screen.getByText("Away message")).toBeInTheDocument();
+  });
 
-  it('renders close chat button and calls setChatOpen(false) when clicked', () => {
-    render(<ChatContent />)
+  it("renders close chat button and calls setChatOpen(false) when clicked", () => {
+    render(<ChatContent />);
 
-    const closeButton = screen.getByRole('button', { name: /close chat/i })
-    expect(closeButton).toBeInTheDocument()
+    const closeButton = screen.getByRole("button", { name: /close chat/i });
+    expect(closeButton).toBeInTheDocument();
 
-    fireEvent.click(closeButton)
+    fireEvent.click(closeButton);
 
-    expect(mockSetChatOpen).toHaveBeenCalledWith(false)
-  })
+    expect(mockSetChatOpen).toHaveBeenCalledWith(false);
+  });
 
-  it('handles empty buddy list', () => {
+  it("handles empty buddy list", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: {
           data: {
-            _id: 'user1',
-            name: 'Test User',
-            username: 'testuser',
+            _id: "user1",
+            name: "Test User",
+            username: "testuser",
           },
         },
         chat: {
           selectedRoom: null,
           buddyList: [],
           presenceMap: {},
-          userStatus: 'online',
-          userStatusMessage: '',
+          userStatus: "online",
+          userStatusMessage: "",
         },
-      }
-      return selector(state as ReturnType<typeof useAppStore>)
-    })
+      };
+      return selector(state as ReturnType<typeof useAppStore>);
+    });
 
-    render(<ChatContent />)
+    render(<ChatContent />);
 
-    const buddiesButton = screen.getByText('Buddies')
-    fireEvent.click(buddiesButton)
+    const buddiesButton = screen.getByText("Buddies");
+    fireEvent.click(buddiesButton);
 
-    expect(screen.getByTestId('buddy-list-with-presence')).toBeInTheDocument()
-  })
-})
-
+    expect(screen.getByTestId("buddy-list-with-presence")).toBeInTheDocument();
+  });
+});

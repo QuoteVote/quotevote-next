@@ -1,108 +1,97 @@
 /**
  * ProfileBadge Component Tests
- * 
+ *
  * Tests for the ProfileBadge component including:
  * - Rendering different badge types
  * - Tooltip functionality
  * - Badge container component
  */
 
-import { render } from '../../utils/test-utils';
-import { ProfileBadge, ProfileBadgeContainer } from '../../../components/Profile/ProfileBadge';
+import { render } from "../../utils/test-utils";
+import { ProfileBadge, ProfileBadgeContainer } from "../../../components/Profile/ProfileBadge";
 
-describe('ProfileBadge', () => {
-  describe('Badge Types', () => {
-    it('renders contributor badge', () => {
+describe("ProfileBadge", () => {
+  describe("Badge Types", () => {
+    it("renders contributor badge", () => {
       const { container } = render(<ProfileBadge type="contributor" />);
       expect(container).toBeInTheDocument();
     });
 
-    it('renders verified badge', () => {
+    it("renders verified badge", () => {
       const { container } = render(<ProfileBadge type="verified" />);
       expect(container).toBeInTheDocument();
     });
 
-    it('renders moderator badge', () => {
+    it("renders moderator badge", () => {
       const { container } = render(<ProfileBadge type="moderator" />);
       expect(container).toBeInTheDocument();
     });
 
-    it('renders topContributor badge', () => {
+    it("renders topContributor badge", () => {
       const { container } = render(<ProfileBadge type="topContributor" />);
       expect(container).toBeInTheDocument();
     });
 
-    it('renders earlyAdopter badge', () => {
+    it("renders earlyAdopter badge", () => {
       const { container } = render(<ProfileBadge type="earlyAdopter" />);
       expect(container).toBeInTheDocument();
     });
   });
 
-  describe('Custom Badge Props', () => {
-    it('renders with custom icon', () => {
+  describe("Custom Badge Props", () => {
+    it("renders with custom icon", () => {
       const { container } = render(
-        <ProfileBadge
-          type="contributor"
-          customIcon="/custom-badge.png"
-        />
+        <ProfileBadge type="contributor" customIcon="/custom-badge.png" />
       );
       expect(container).toBeInTheDocument();
     });
 
-    it('renders with custom label', () => {
-      const { container } = render(
-        <ProfileBadge
-          type="contributor"
-          customLabel="Custom Badge"
-        />
-      );
+    it("renders with custom label", () => {
+      const { container } = render(<ProfileBadge type="contributor" customLabel="Custom Badge" />);
       expect(container).toBeInTheDocument();
     });
 
-    it('renders with custom description', () => {
+    it("renders with custom description", () => {
       const { container } = render(
-        <ProfileBadge
-          type="contributor"
-          customDescription="Custom description"
-        />
+        <ProfileBadge type="contributor" customDescription="Custom description" />
       );
       expect(container).toBeInTheDocument();
     });
   });
 
-  describe('Accessibility', () => {
-    it('has proper ARIA label', () => {
+  describe("Accessibility", () => {
+    it("has proper ARIA label", () => {
       const { container } = render(<ProfileBadge type="contributor" />);
       const badge = container.querySelector('[role="img"]');
-      expect(badge).toHaveAttribute('aria-label');
+      expect(badge).toHaveAttribute("aria-label");
     });
 
-    it('is keyboard accessible', () => {
+    it("is keyboard accessible", () => {
       const { container } = render(<ProfileBadge type="contributor" />);
       const badge = container.querySelector('[tabindex="0"]');
       expect(badge).toBeInTheDocument();
     });
 
-    it('handles Enter key without error', () => {
+    it("handles Enter key without error", () => {
       const { container } = render(<ProfileBadge type="contributor" />);
       const badge = container.querySelector('[tabindex="0"]') as HTMLElement;
       expect(() => {
-        badge.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        badge.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
       }).not.toThrow();
     });
 
-    it('handles Space key without error', () => {
+    it("handles Space key without error", () => {
       const { container } = render(<ProfileBadge type="contributor" />);
       const badge = container.querySelector('[tabindex="0"]') as HTMLElement;
       expect(() => {
-        badge.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        badge.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
       }).not.toThrow();
     });
   });
 });
 
-describe('ProfileBadgeContainer', () => {
-  it('renders children badges', () => {
+describe("ProfileBadgeContainer", () => {
+  it("renders children badges", () => {
     const { container } = render(
       <ProfileBadgeContainer>
         <ProfileBadge type="contributor" />
@@ -114,14 +103,13 @@ describe('ProfileBadgeContainer', () => {
     expect(badges.length).toBeGreaterThanOrEqual(0);
   });
 
-  it('has proper ARIA label', () => {
+  it("has proper ARIA label", () => {
     const { container } = render(
       <ProfileBadgeContainer>
         <ProfileBadge type="contributor" />
       </ProfileBadgeContainer>
     );
     const containerElement = container.querySelector('[role="list"]');
-    expect(containerElement).toHaveAttribute('aria-label', 'User badges');
+    expect(containerElement).toHaveAttribute("aria-label", "User badges");
   });
 });
-

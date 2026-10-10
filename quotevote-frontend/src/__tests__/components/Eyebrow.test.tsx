@@ -128,7 +128,7 @@ describe("Eyebrow Component", () => {
     await user.type(emailInput, "testuser@email.com");
 
     await user.click(continueButton);
-    
+
     const feedbackMessages = await screen.findAllByText(
       "Your invite request is still waiting for approval."
     );

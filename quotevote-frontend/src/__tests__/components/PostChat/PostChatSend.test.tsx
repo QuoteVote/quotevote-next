@@ -1,6 +1,6 @@
 /**
  * PostChatSend Component Tests
- * 
+ *
  * Tests for the PostChatSend component including:
  * - Message input handling
  * - Send actions and mutations
@@ -8,104 +8,106 @@
  * - Error handling
  */
 
-import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
-import PostChatSend from '@/components/PostChat/PostChatSend'
-import { useAppStore } from '@/store'
-import useGuestGuard from '@/hooks/useGuestGuard'
+import { render, screen, fireEvent, waitFor } from "@/__tests__/utils/test-utils";
+import PostChatSend from "@/components/PostChat/PostChatSend";
+import { useAppStore } from "@/store";
+import useGuestGuard from "@/hooks/useGuestGuard";
 
 // Mock useQuery and useMutation from Apollo Client
-const mockUseQuery = jest.fn()
-const mockMutate = jest.fn()
-let mutationCallbacks: { onCompleted?: (data: unknown) => void; onError?: (error: Error) => void } = {}
-let shouldSuppressErrorReThrow = false
+const mockUseQuery = jest.fn();
+const mockMutate = jest.fn();
+let mutationCallbacks: { onCompleted?: (data: unknown) => void; onError?: (error: Error) => void } =
+  {};
+let shouldSuppressErrorReThrow = false;
 const mockUseMutation = jest.fn((_mutation, options) => {
   // Store callbacks for later use
   mutationCallbacks = {
     onCompleted: options?.onCompleted,
     onError: options?.onError,
-  }
-  
+  };
+
   // Make mutate function call callbacks when invoked
   const mutateFn = async (mutateOptions?: { variables?: unknown }) => {
     try {
-      const result = await mockMutate(mutateOptions)
+      const result = await mockMutate(mutateOptions);
       // Call onCompleted asynchronously to simulate Apollo behavior
       if (mutationCallbacks.onCompleted && result?.data) {
         // Use setTimeout to call in next tick
         setTimeout(() => {
-          mutationCallbacks.onCompleted?.(result.data)
-        }, 0)
+          mutationCallbacks.onCompleted?.(result.data);
+        }, 0);
       }
-      return result
+      return result;
     } catch (error) {
       // Call onError immediately to ensure it's called before the error propagates
       if (mutationCallbacks.onError && error instanceof Error) {
         // Call synchronously first, then also schedule async call
         try {
-          mutationCallbacks.onError(error)
+          mutationCallbacks.onError(error);
         } catch {
           // Ignore errors in callback
         }
         // Also schedule async call to match Apollo behavior
         setTimeout(() => {
-          mutationCallbacks.onError?.(error)
-        }, 0)
+          mutationCallbacks.onError?.(error);
+        }, 0);
       }
       // Only re-throw if not suppressed (for error handling tests)
       if (!shouldSuppressErrorReThrow) {
-        throw error
+        throw error;
       }
       // When suppressed, return a resolved promise to prevent unhandled rejection
       // The error is already handled by onError callback
-      return Promise.resolve({ data: null })
+      return Promise.resolve({ data: null });
     }
-  }
-  
-  return [mutateFn, { loading: false, error: null }]
-})
-jest.mock('@apollo/client/react', () => ({
-  ...jest.requireActual('@apollo/client/react'),
+  };
+
+  return [mutateFn, { loading: false, error: null }];
+});
+jest.mock("@apollo/client/react", () => ({
+  ...jest.requireActual("@apollo/client/react"),
   useQuery: (query: unknown, options?: unknown) => mockUseQuery(query, options),
   useMutation: (mutation: unknown, options?: unknown) => mockUseMutation(mutation, options),
-}))
+}));
 
 // Mock Zustand store
-jest.mock('@/store', () => ({
+jest.mock("@/store", () => ({
   useAppStore: jest.fn(),
-}))
+}));
 
 // Mock useGuestGuard
-jest.mock('@/hooks/useGuestGuard', () => ({
+jest.mock("@/hooks/useGuestGuard", () => ({
   __esModule: true,
   default: jest.fn(() => () => true),
-}))
+}));
 
-const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>
-const mockUseGuestGuard = useGuestGuard as jest.MockedFunction<typeof useGuestGuard>
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
+const mockUseGuestGuard = useGuestGuard as jest.MockedFunction<typeof useGuestGuard>;
 
 const mockCurrentUser = {
-  _id: 'user1',
-  name: 'Test User',
-  username: 'testuser',
-  avatar: 'https://example.com/avatar.jpg',
-}
+  _id: "user1",
+  name: "Test User",
+  username: "testuser",
+  avatar: "https://example.com/avatar.jpg",
+};
 
-
-describe('PostChatSend', () => {
+describe("PostChatSend", () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    mockMutate.mockClear()
-    mutationCallbacks = {}
-    shouldSuppressErrorReThrow = false
-    mockMutate.mockResolvedValue({ data: { createMessage: { _id: 'msg1', messageRoomId: 'room1' } } })
-    mockUseGuestGuard.mockReturnValue(() => true)
+    jest.clearAllMocks();
+    mockMutate.mockClear();
+    mutationCallbacks = {};
+    shouldSuppressErrorReThrow = false;
+    mockMutate.mockResolvedValue({
+      data: { createMessage: { _id: "msg1", messageRoomId: "room1" } },
+    });
+    mockUseGuestGuard.mockReturnValue(() => true);
 
     // Mock useQuery to return empty messages by default
     mockUseQuery.mockReturnValue({
       data: { messages: [] },
       loading: false,
       error: undefined,
-    })
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
@@ -117,37 +119,37 @@ describe('PostChatSend', () => {
         ui: { pendingQuote: null },
         setChatSubmitting: jest.fn(),
         setPendingQuote: jest.fn(),
-      }
-      return selector(state)
-    })
-  })
+      };
+      return selector(state);
+    });
+  });
 
-  it('renders message input and send button', () => {
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+  it("renders message input and send button", () => {
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    expect(screen.getByPlaceholderText('Add to discussion...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Add to discussion...")).toBeInTheDocument();
     // iOS Safari zooms focused inputs under 16px; text-base keeps mobile at 16px
-    expect(screen.getByPlaceholderText('Add to discussion...')).toHaveClass('text-base')
-    expect(screen.getByLabelText('Send message')).toBeInTheDocument()
-  })
+    expect(screen.getByPlaceholderText("Add to discussion...")).toHaveClass("text-base");
+    expect(screen.getByLabelText("Send message")).toBeInTheDocument();
+  });
 
-  it('renders send button with correct aria-label', () => {
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+  it("renders send button with correct aria-label", () => {
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    expect(screen.getByLabelText('Send message')).toBeInTheDocument()
-  })
+    expect(screen.getByLabelText("Send message")).toBeInTheDocument();
+  });
 
-  it('updates input value when typing', () => {
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+  it("updates input value when typing", () => {
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    const input = screen.getByPlaceholderText('Add to discussion...')
-    fireEvent.change(input, { target: { value: 'Hello world' } })
+    const input = screen.getByPlaceholderText("Add to discussion...");
+    fireEvent.change(input, { target: { value: "Hello world" } });
 
-    expect(input).toHaveValue('Hello world')
-  })
+    expect(input).toHaveValue("Hello world");
+  });
 
-  it('sends message when send button is clicked', async () => {
-    const setChatSubmitting = jest.fn()
+  it("sends message when send button is clicked", async () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -155,31 +157,31 @@ describe('PostChatSend', () => {
         chat: { submitting: false },
         ui: { pendingQuote: null },
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    const input = screen.getByPlaceholderText('Add to discussion...')
-    const sendButton = screen.getByLabelText('Send message')
+    const input = screen.getByPlaceholderText("Add to discussion...");
+    const sendButton = screen.getByLabelText("Send message");
 
-    fireEvent.change(input, { target: { value: 'Test message' } })
-    fireEvent.click(sendButton)
+    fireEvent.change(input, { target: { value: "Test message" } });
+    fireEvent.click(sendButton);
 
     await waitFor(() => {
-      expect(setChatSubmitting).toHaveBeenCalledWith(true)
-    })
+      expect(setChatSubmitting).toHaveBeenCalledWith(true);
+    });
 
     await waitFor(() => {
-      expect(setChatSubmitting).toHaveBeenCalledWith(false)
-    })
+      expect(setChatSubmitting).toHaveBeenCalledWith(false);
+    });
 
-    expect(input).toHaveValue('')
-  })
+    expect(input).toHaveValue("");
+  });
 
-  it('sends message when Enter key is pressed', async () => {
-    const setChatSubmitting = jest.fn()
+  it("sends message when Enter key is pressed", async () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -187,23 +189,23 @@ describe('PostChatSend', () => {
         chat: { submitting: false },
         ui: { pendingQuote: null },
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    const input = screen.getByPlaceholderText('Add to discussion...')
-    fireEvent.change(input, { target: { value: 'Test message' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
+    const input = screen.getByPlaceholderText("Add to discussion...");
+    fireEvent.change(input, { target: { value: "Test message" } });
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: false });
 
     await waitFor(() => {
-      expect(setChatSubmitting).toHaveBeenCalled()
-    })
-  })
+      expect(setChatSubmitting).toHaveBeenCalled();
+    });
+  });
 
-  it('does not send message when Shift+Enter is pressed', () => {
-    const setChatSubmitting = jest.fn()
+  it("does not send message when Shift+Enter is pressed", () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -211,21 +213,21 @@ describe('PostChatSend', () => {
         chat: { submitting: false },
         ui: { pendingQuote: null },
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    const input = screen.getByPlaceholderText('Add to discussion...')
-    fireEvent.change(input, { target: { value: 'Test message' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true })
+    const input = screen.getByPlaceholderText("Add to discussion...");
+    fireEvent.change(input, { target: { value: "Test message" } });
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
 
-    expect(setChatSubmitting).not.toHaveBeenCalled()
-  })
+    expect(setChatSubmitting).not.toHaveBeenCalled();
+  });
 
-  it('does not send empty messages', () => {
-    const setChatSubmitting = jest.fn()
+  it("does not send empty messages", () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -233,21 +235,21 @@ describe('PostChatSend', () => {
         chat: { submitting: false },
         ui: { pendingQuote: null },
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    const input = screen.getByPlaceholderText('Add to discussion...')
-    fireEvent.change(input, { target: { value: '   ' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
+    const input = screen.getByPlaceholderText("Add to discussion...");
+    fireEvent.change(input, { target: { value: "   " } });
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: false });
 
-    expect(setChatSubmitting).not.toHaveBeenCalled()
-  })
+    expect(setChatSubmitting).not.toHaveBeenCalled();
+  });
 
-  it('handles mutation errors gracefully', async () => {
-    const setChatSubmitting = jest.fn()
+  it("handles mutation errors gracefully", async () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -255,42 +257,45 @@ describe('PostChatSend', () => {
         chat: { submitting: false },
         ui: { pendingQuote: null },
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
     // Suppress console.error for this test since the component logs errors
-    const originalError = console.error
-    console.error = jest.fn()
+    const originalError = console.error;
+    console.error = jest.fn();
 
     try {
       // Enable error suppression for this test
-      shouldSuppressErrorReThrow = true
-      
+      shouldSuppressErrorReThrow = true;
+
       // Reset mock implementation and set it to reject when called
-      mockMutate.mockReset()
-      mockMutate.mockImplementationOnce(() => Promise.reject(new Error('Failed to send message')))
+      mockMutate.mockReset();
+      mockMutate.mockImplementationOnce(() => Promise.reject(new Error("Failed to send message")));
 
-      render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+      render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-      const input = screen.getByPlaceholderText('Add to discussion...')
-      const sendButton = screen.getByLabelText('Send message')
+      const input = screen.getByPlaceholderText("Add to discussion...");
+      const sendButton = screen.getByLabelText("Send message");
 
-      fireEvent.change(input, { target: { value: 'Test message' } })
-      fireEvent.click(sendButton)
-      
+      fireEvent.change(input, { target: { value: "Test message" } });
+      fireEvent.click(sendButton);
+
       // Wait for the error to be handled - onError callback should call setChatSubmitting(false)
-      await waitFor(() => {
-        expect(setChatSubmitting).toHaveBeenCalledWith(false)
-      }, { timeout: 3000 })
+      await waitFor(
+        () => {
+          expect(setChatSubmitting).toHaveBeenCalledWith(false);
+        },
+        { timeout: 3000 }
+      );
     } finally {
-      console.error = originalError
-      shouldSuppressErrorReThrow = false
+      console.error = originalError;
+      shouldSuppressErrorReThrow = false;
     }
-  })
+  });
 
-  it('creates new room when messageRoomId is null', async () => {
-    const setChatSubmitting = jest.fn()
+  it("creates new room when messageRoomId is null", async () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -298,35 +303,35 @@ describe('PostChatSend', () => {
         chat: { submitting: false },
         ui: { pendingQuote: null },
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
     // Mock mutation to return new room
     mockMutate.mockResolvedValueOnce({
       data: {
         createMessage: {
-          _id: 'msg1',
-          messageRoomId: 'new-room1',
+          _id: "msg1",
+          messageRoomId: "new-room1",
         },
       },
-    })
+    });
 
-    render(<PostChatSend messageRoomId={null} title="Test Post" postId="post1" />)
+    render(<PostChatSend messageRoomId={null} title="Test Post" postId="post1" />);
 
-    const input = screen.getByPlaceholderText('Add to discussion...')
-    const sendButton = screen.getByLabelText('Send message')
+    const input = screen.getByPlaceholderText("Add to discussion...");
+    const sendButton = screen.getByLabelText("Send message");
 
-    fireEvent.change(input, { target: { value: 'Test message' } })
-    fireEvent.click(sendButton)
+    fireEvent.change(input, { target: { value: "Test message" } });
+    fireEvent.click(sendButton);
 
     await waitFor(() => {
-      expect(setChatSubmitting).toHaveBeenCalledWith(true)
-    })
-  })
+      expect(setChatSubmitting).toHaveBeenCalledWith(true);
+    });
+  });
 
-  it('updates cache optimistically when sending message', async () => {
-    const setChatSubmitting = jest.fn()
+  it("updates cache optimistically when sending message", async () => {
+    const setChatSubmitting = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -334,26 +339,26 @@ describe('PostChatSend', () => {
         chat: { submitting: false },
         ui: { pendingQuote: null },
         setChatSubmitting,
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    const input = screen.getByPlaceholderText('Add to discussion...')
-    const sendButton = screen.getByLabelText('Send message')
+    const input = screen.getByPlaceholderText("Add to discussion...");
+    const sendButton = screen.getByLabelText("Send message");
 
-    fireEvent.change(input, { target: { value: 'Test message' } })
-    fireEvent.click(sendButton)
+    fireEvent.change(input, { target: { value: "Test message" } });
+    fireEvent.click(sendButton);
 
     await waitFor(() => {
-      expect(setChatSubmitting).toHaveBeenCalledWith(false)
-    })
-  })
+      expect(setChatSubmitting).toHaveBeenCalledWith(false);
+    });
+  });
 
-  it('shows a sign-in action instead of a disabled composer when signed out', () => {
-    const ensureAuth = jest.fn(() => false)
-    mockUseGuestGuard.mockReturnValue(ensureAuth)
+  it("shows a sign-in action instead of a disabled composer when signed out", () => {
+    const ensureAuth = jest.fn(() => false);
+    mockUseGuestGuard.mockReturnValue(ensureAuth);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
@@ -362,17 +367,16 @@ describe('PostChatSend', () => {
         chat: { submitting: false },
         ui: { pendingQuote: null },
         setChatSubmitting: jest.fn(),
-      }
-      return selector(state)
-    })
+      };
+      return selector(state);
+    });
 
-    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />);
 
-    const cta = screen.getByTestId('discussion-signin-cta')
-    expect(cta).toHaveTextContent('Sign in to join the discussion')
-    expect(cta).not.toBeDisabled()
-    fireEvent.click(cta)
-    expect(ensureAuth).toHaveBeenCalled()
-  })
-})
-
+    const cta = screen.getByTestId("discussion-signin-cta");
+    expect(cta).toHaveTextContent("Sign in to join the discussion");
+    expect(cta).not.toBeDisabled();
+    fireEvent.click(cta);
+    expect(ensureAuth).toHaveBeenCalled();
+  });
+});

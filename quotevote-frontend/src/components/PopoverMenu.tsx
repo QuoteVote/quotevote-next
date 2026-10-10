@@ -1,24 +1,24 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Menu } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import type { PopoverMenuProps } from "@/types/components"
+import Link from "next/link";
+import { Menu } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type { PopoverMenuProps } from "@/types/components";
 
 /**
  * PopoverMenu Component
- * 
+ *
  * A mobile-only navigation menu that displays application routes in a popover.
  * Replaces the MUI PopoverMenu with shadcn/ui Popover primitives.
  * Includes an AppBar-like header structure with menu button and page title.
- * 
+ *
  * @example
  * ```tsx
  * const [open, setOpen] = useState(false)
  * const routes = [{ path: 'search', name: 'Search', layout: '/' }]
- * 
+ *
  * <PopoverMenu
  *   appRoutes={routes}
  *   open={open}
@@ -59,8 +59,8 @@ export function PopoverMenu({
             >
               <nav className="flex flex-col" role="menu" aria-label="Navigation menu">
                 {appRoutes.map((appRoute) => {
-                  const href = `${appRoute.layout}${appRoute.path}`
-                  const isSelected = appRoute.name === page
+                  const href = `${appRoute.layout}${appRoute.path}`;
+                  const isSelected = appRoute.name === page;
 
                   return (
                     <Link
@@ -84,7 +84,7 @@ export function PopoverMenu({
                       )}
                       <span>{appRoute.name}</span>
                     </Link>
-                  )
+                  );
                 })}
               </nav>
             </PopoverContent>
@@ -93,6 +93,5 @@ export function PopoverMenu({
         </div>
       </header>
     </div>
-  )
+  );
 }
-

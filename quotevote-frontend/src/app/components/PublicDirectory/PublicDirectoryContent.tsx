@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { type ReactElement } from 'react'
-import { useSearchParams } from 'next/navigation'
-import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
-import { DirectoryHeader } from './DirectoryHeader'
-import { DirectoryToolbar } from './DirectoryToolbar'
+import { type ReactElement } from "react";
+import { useSearchParams } from "next/navigation";
+import PaginatedPostsList from "@/components/Post/PaginatedPostsList";
+import { DirectoryHeader } from "./DirectoryHeader";
+import { DirectoryToolbar } from "./DirectoryToolbar";
 
 /**
  * Public post directory shown at `/` (#454).
@@ -14,15 +14,15 @@ import { DirectoryToolbar } from './DirectoryToolbar'
  * Desktop: page scroll is unchanged; the toolbar is not pinned.
  */
 export function PublicDirectoryContent(): ReactElement {
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
 
-  const q = searchParams.get('q') || ''
-  const from = searchParams.get('from') || ''
-  const to = searchParams.get('to') || ''
-  const sortParam = searchParams.get('sort')
-  const sortOrder = sortParam === 'asc' ? 'asc' : 'desc'
-  const interactions = searchParams.get('interactions') === 'true'
-  const groupId = searchParams.get('group') || undefined
+  const q = searchParams.get("q") || "";
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
+  const sortParam = searchParams.get("sort");
+  const sortOrder = sortParam === "asc" ? "asc" : "desc";
+  const interactions = searchParams.get("interactions") === "true";
+  const groupId = searchParams.get("group") || undefined;
 
   return (
     <div
@@ -52,5 +52,5 @@ export function PublicDirectoryContent(): ReactElement {
         </div>
       </main>
     </div>
-  )
+  );
 }

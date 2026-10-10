@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect } from 'react';
-import Link from 'next/link';
-import { useQuery } from '@apollo/client/react';
-import { MessageCircle, Users2 } from 'lucide-react';
+import { useEffect } from "react";
+import Link from "next/link";
+import { useQuery } from "@apollo/client/react";
+import { MessageCircle, Users2 } from "lucide-react";
 
-import { GET_CHAT_ROOMS } from '@/graphql/queries';
-import { toAppPostUrl } from '@/lib/utils/sanitizeUrl';
-import { useAppStore } from '@/store';
-import { LoadingSpinner } from '../LoadingSpinner';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import { parseAvatarToUrl } from '@/lib/avatar';
-import type { ChatRoom } from '@/types/chat';
+import { GET_CHAT_ROOMS } from "@/graphql/queries";
+import { toAppPostUrl } from "@/lib/utils/sanitizeUrl";
+import { useAppStore } from "@/store";
+import { LoadingSpinner } from "../LoadingSpinner";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { parseAvatarToUrl } from "@/lib/avatar";
+import type { ChatRoom } from "@/types/chat";
 
-type ChatListFilter = 'chats' | 'groups';
+type ChatListFilter = "chats" | "groups";
 
 interface GetChatRoomsData {
   messageRooms: ChatRoom[];
@@ -24,12 +24,12 @@ interface ChatListProps {
   filterType: ChatListFilter;
 }
 
-const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
+const ChatList: React.FC<ChatListProps> = ({ search = "", filterType }) => {
   const selectedRoomId = useAppStore((state) => state.chat.selectedRoom);
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
 
   const { loading, data, refetch } = useQuery<GetChatRoomsData>(GET_CHAT_ROOMS, {
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: "cache-and-network",
     pollInterval: 10000,
   });
 
@@ -43,30 +43,25 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
 
   // Filter by type
   const filteredRooms = rooms.filter((room) => {
-    if (filterType === 'chats') {
+    if (filterType === "chats") {
       // Direct messages - USER type with 2 users
-      return room.messageType === 'USER' && room.users?.length === 2;
-    } else if (filterType === 'groups') {
+      return room.messageType === "USER" && room.users?.length === 2;
+    } else if (filterType === "groups") {
       // Group chats - POST type or more than 2 users
-      return room.messageType === 'POST' || (room.users?.length ?? 0) > 2;
+      return room.messageType === "POST" || (room.users?.length ?? 0) > 2;
     }
     return true;
   });
 
-
   // Filter by search (match room title, post title, or post text)
   const searchFiltered = search
     ? filteredRooms.filter((room) => {
-      const query = search.toLowerCase();
-      const title = (room.title || '').toLowerCase();
-      const postTitle = (room.postDetails?.title || '').toLowerCase();
-      const postText = (room.postDetails?.text || '').toLowerCase();
-      return (
-        title.includes(query) ||
-        postTitle.includes(query) ||
-        postText.includes(query)
-      );
-    })
+        const query = search.toLowerCase();
+        const title = (room.title || "").toLowerCase();
+        const postTitle = (room.postDetails?.title || "").toLowerCase();
+        const postText = (room.postDetails?.text || "").toLowerCase();
+        return title.includes(query) || postTitle.includes(query) || postText.includes(query);
+      })
     : filteredRooms;
 
   // Sort by last message time (most recent first), fallback to lastActivity, then created
@@ -88,19 +83,19 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
     setSelectedChatRoom(room._id);
   };
 
-  const resolveAvatar = (raw: ChatRoom['avatar']): string | null =>
+  const resolveAvatar = (raw: ChatRoom["avatar"]): string | null =>
     parseAvatarToUrl(raw as string | Record<string, unknown> | undefined) || null;
 
   const getRoomDisplayInfo = (room: ChatRoom) => {
-    if (room.messageType === 'USER' && room.users?.length === 2) {
+    if (room.messageType === "USER" && room.users?.length === 2) {
       return {
-        name: room.title || 'Direct Message',
+        name: room.title || "Direct Message",
         avatar: resolveAvatar(room.avatar),
         subtitle: `${room.users?.length || 0} participants`,
       };
-    } else if (room.messageType === 'POST') {
-      const postTitle = room.postDetails?.title || room.title || 'Quote Discussion';
-      const postText = room.postDetails?.text || '';
+    } else if (room.messageType === "POST") {
+      const postTitle = room.postDetails?.title || room.title || "Quote Discussion";
+      const postText = room.postDetails?.text || "";
       const preview = postText.length > 50 ? `${postText.substring(0, 50)}...` : postText;
       return {
         name: postTitle,
@@ -110,7 +105,7 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
       };
     } else {
       return {
-        name: room.title || 'Discussion',
+        name: room.title || "Discussion",
         avatar: resolveAvatar(room.avatar),
         subtitle: `${room.users?.length || 0} members`,
         isGroup: true,
@@ -132,10 +127,10 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
         </h3>
         <p className="max-w-sm text-sm">
           {search
-            ? 'Try a different search term.'
-            : filterType === 'chats'
-              ? 'Add a buddy and start a conversation!'
-              : 'Create a group or post to start chatting.'}
+            ? "Try a different search term."
+            : filterType === "chats"
+              ? "Add a buddy and start a conversation!"
+              : "Create a group or post to start chatting."}
         </p>
       </div>
     );
@@ -146,13 +141,13 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
       <ul className="flex flex-col gap-2 px-2">
         {sortedRooms.map((room) => {
           const displayInfo = getRoomDisplayInfo(room);
-          const isSelected = typeof selectedRoomId === 'string' && selectedRoomId === room._id;
+          const isSelected = typeof selectedRoomId === "string" && selectedRoomId === room._id;
           const postHref =
-            room.messageType === 'POST' && room.postDetails?.url
+            room.messageType === "POST" && room.postDetails?.url
               ? toAppPostUrl(room.postDetails.url)
               : null;
 
-          const isDm = room.messageType === 'USER' && (room.users?.length ?? 0) === 2;
+          const isDm = room.messageType === "USER" && (room.users?.length ?? 0) === 2;
 
           return (
             <li key={room._id} data-testid={search ? "chat-search-result" : undefined}>
@@ -161,15 +156,15 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
                 onClick={() => handleRoomClick(room)}
                 data-testid="discussion-thread"
                 className={
-                  'flex w-full items-center gap-3 rounded-2xl border border-transparent bg-background px-3 py-3 text-left shadow-sm transition-all hover:border-[#52b274]/30 hover:bg-[#52b274]/5 hover:translate-x-[2px] dark:hover:border-[#52b274]/40 dark:hover:bg-[#52b274]/10 ' +
+                  "flex w-full items-center gap-3 rounded-2xl border border-transparent bg-background px-3 py-3 text-left shadow-sm transition-all hover:border-[#52b274]/30 hover:bg-[#52b274]/5 hover:translate-x-[2px] dark:hover:border-[#52b274]/40 dark:hover:bg-[#52b274]/10 " +
                   (isSelected
-                    ? 'border-[#52b274] bg-[#52b274]/8 shadow-md dark:bg-[#52b274]/10'
-                    : '')
+                    ? "border-[#52b274] bg-[#52b274]/8 shadow-md dark:bg-[#52b274]/10"
+                    : "")
                 }
               >
                 <DisplayAvatar
                   avatar={displayInfo.avatar}
-                  username={displayInfo.name || ''}
+                  username={displayInfo.name || ""}
                   size={48}
                   className="ring-2 ring-white dark:ring-background shadow-sm"
                 />
@@ -196,10 +191,10 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
                     )}
                     <span
                       className={
-                        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ' +
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide " +
                         (isDm
-                          ? 'bg-[#52b274]/10 text-[#4a9e63] dark:bg-[#52b274]/20 dark:text-[#52b274]'
-                          : 'bg-sky-500/10 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300')
+                          ? "bg-[#52b274]/10 text-[#4a9e63] dark:bg-[#52b274]/20 dark:text-[#52b274]"
+                          : "bg-sky-500/10 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300")
                       }
                     >
                       {isDm ? (
@@ -207,7 +202,7 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
                       ) : (
                         <Users2 className="h-3 w-3" />
                       )}
-                      {isDm ? 'DM' : 'Group'}
+                      {isDm ? "DM" : "Group"}
                     </span>
                   </div>
                   <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
@@ -217,7 +212,7 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType }) => {
 
                 {(room.unreadMessages ?? 0) > 0 && (
                   <div className="ml-2 flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-[#52b274] px-1.5 text-[11px] font-bold text-white shadow-md">
-                    {(room.unreadMessages ?? 0) > 99 ? '99+' : room.unreadMessages}
+                    {(room.unreadMessages ?? 0) > 99 ? "99+" : room.unreadMessages}
                   </div>
                 )}
               </button>

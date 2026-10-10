@@ -1,8 +1,8 @@
 /**
  * Type declarations for react-scrollable-feed
  */
-declare module 'react-scrollable-feed' {
-  import type { ReactNode } from 'react';
+declare module "react-scrollable-feed" {
+  import type { ReactNode } from "react";
 
   interface ScrollableFeedProps {
     children: ReactNode;
@@ -12,4 +12,3 @@ declare module 'react-scrollable-feed' {
 
   export default function ScrollableFeed(props: ScrollableFeedProps): JSX.Element;
 }
-

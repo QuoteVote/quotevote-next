@@ -1,95 +1,94 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react";
 
 export interface CarouselProps {
   /** Array of carousel slide content */
-  children: ReactNode[]
+  children: ReactNode[];
   /** Whether navigation buttons are always visible */
-  navButtonsAlwaysVisible?: boolean
+  navButtonsAlwaysVisible?: boolean;
   /** Whether autoplay is enabled */
-  autoplay?: boolean
+  autoplay?: boolean;
   /** Initial active step index */
-  activeStepProp?: number
+  activeStepProp?: number;
   /** Callback when step changes */
-  setActiveStepProp?: (step: number) => void
+  setActiveStepProp?: (step: number) => void;
   /** Custom props for active indicator dot */
   activeIndicatorProps?: {
-    className?: string
-  }
+    className?: string;
+  };
   /** Custom props for inactive indicator dots */
   indicatorProps?: {
-    className?: string
-  }
+    className?: string;
+  };
   /** Controlled index (for external control) */
-  index?: number
+  index?: number;
   /** Callback when carousel index changes */
-  onChange?: (index: number) => void
+  onChange?: (index: number) => void;
   /** Whether to pause autoplay on hover */
-  pauseOnHover?: boolean
+  pauseOnHover?: boolean;
   /** Autoplay interval in milliseconds */
-  autoplayInterval?: number
+  autoplayInterval?: number;
   /** Whether to enable swipe gestures */
-  enableSwipe?: boolean
+  enableSwipe?: boolean;
   /** RTL direction support */
-  rtl?: boolean
+  rtl?: boolean;
 }
 
 export interface UseCarouselOptions {
   /** Initial active step */
-  initialStep?: number
+  initialStep?: number;
   /** Total number of steps */
-  maxSteps: number
+  maxSteps: number;
   /** Controlled index (external control) */
-  controlledIndex?: number
+  controlledIndex?: number;
   /** Callback when step changes */
-  onStepChange?: (step: number) => void
+  onStepChange?: (step: number) => void;
   /** Whether autoplay is enabled */
-  autoplay?: boolean
+  autoplay?: boolean;
   /** Autoplay interval in milliseconds */
-  autoplayInterval?: number
+  autoplayInterval?: number;
 }
 
 export interface UseCarouselReturn {
   /** Current active step */
-  activeStep: number
+  activeStep: number;
   /** Go to next step */
-  handleNext: () => void
+  handleNext: () => void;
   /** Go to previous step */
-  handleBack: () => void
+  handleBack: () => void;
   /** Go to specific step */
-  goToStep: (step: number) => void
+  goToStep: (step: number) => void;
   /** Whether can go to next */
-  canGoNext: boolean
+  canGoNext: boolean;
   /** Whether can go back */
-  canGoBack: boolean
+  canGoBack: boolean;
   /** Pause autoplay */
-  pause: () => void
+  pause: () => void;
   /** Resume autoplay */
-  resume: () => void
+  resume: () => void;
   /** Whether autoplay is paused */
-  isPaused: boolean
+  isPaused: boolean;
 }
 
 export interface CarouselContentProps {
-  width?: string
+  width?: string;
   classes?: {
-    [key: string]: string | undefined
-  }
-  setContentIndex?: (index: number) => void
+    [key: string]: string | undefined;
+  };
+  setContentIndex?: (index: number) => void;
 }
 
 export interface PlanCarouselProps {
   classes?: {
-    activeIndicator?: string
-    inactiveIndicator?: string
-    opinionsText?: string
-    bottomText?: string
-    greenText?: string
-    greenTitleText?: string
-    requestInvite?: string
-    sendEmail?: string
-    sendEmailButton?: string
-    [key: string]: string | undefined
-  }
-  setCarouselCurrentIndex?: (index: number) => void
+    activeIndicator?: string;
+    inactiveIndicator?: string;
+    opinionsText?: string;
+    bottomText?: string;
+    greenText?: string;
+    greenTitleText?: string;
+    requestInvite?: string;
+    sendEmail?: string;
+    sendEmailButton?: string;
+    [key: string]: string | undefined;
+  };
+  setCarouselCurrentIndex?: (index: number) => void;
 }
-

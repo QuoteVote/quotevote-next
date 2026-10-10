@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import type { GetAccessButtonProps } from '@/types/components';
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import type { GetAccessButtonProps } from "@/types/components";
 
 /**
  * GetAccessButton Component
- * 
+ *
  * Button that navigates to the request access page.
  */
 export function GetAccessButton({}: GetAccessButtonProps) {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push('/auth/request-access');
+    router.push("/auth/request-access");
   };
 
   return (
@@ -26,4 +26,3 @@ export function GetAccessButton({}: GetAccessButtonProps) {
     </Button>
   );
 }
-

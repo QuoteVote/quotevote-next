@@ -1,6 +1,6 @@
 /**
  * ProfileController Component Tests
- * 
+ *
  * Tests for the ProfileController component including:
  * - GraphQL query integration
  * - Loading state handling
@@ -8,15 +8,15 @@
  * - Store integration
  */
 
-import { render, screen, waitFor } from '../../utils/test-utils';
-import { ProfileController } from '../../../components/Profile/ProfileController';
-import { GET_USER, GET_USER_BIO } from '@/graphql/queries';
-import { useAppStore } from '@/store';
+import { render, screen, waitFor } from "../../utils/test-utils";
+import { ProfileController } from "../../../components/Profile/ProfileController";
+import { GET_USER, GET_USER_BIO } from "@/graphql/queries";
+import { useAppStore } from "@/store";
 // @ts-expect-error - MockedProvider may not have types in this version
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider } from "@apollo/client/testing";
 
 // Mock child components
-jest.mock('../../../components/Profile/ProfileView', () => ({
+jest.mock("../../../components/Profile/ProfileView", () => ({
   ProfileView: ({
     profileUser,
     loading,
@@ -27,35 +27,41 @@ jest.mock('../../../components/Profile/ProfileView', () => ({
     errorMessage?: string;
   }) => (
     <div data-testid="profile-view">
-      {loading ? 'Loading...' : errorMessage ? 'Profile Error' : profileUser ? 'Profile Loaded' : 'No Profile'}
+      {loading
+        ? "Loading..."
+        : errorMessage
+          ? "Profile Error"
+          : profileUser
+            ? "Profile Loaded"
+            : "No Profile"}
     </div>
   ),
 }));
 
 // Mock Next.js router
 const mockReplace = jest.fn();
-jest.mock('next/navigation', () => ({
-  useParams: () => ({ username: 'testuser' }),
+jest.mock("next/navigation", () => ({
+  useParams: () => ({ username: "testuser" }),
   useRouter: () => ({ replace: mockReplace, push: jest.fn() }),
 }));
 
 const mockUserData = {
   request: {
     query: GET_USER,
-    variables: { username: 'testuser' },
+    variables: { username: "testuser" },
   },
   result: {
     data: {
       user: {
-        _id: 'user1',
-        username: 'testuser',
-        name: 'Test User',
-        avatar: 'https://example.com/avatar.jpg',
+        _id: "user1",
+        username: "testuser",
+        name: "Test User",
+        avatar: "https://example.com/avatar.jpg",
         contributorBadge: true,
-        _followingId: ['user2'],
-        _followersId: ['user3'],
+        _followingId: ["user2"],
+        _followersId: ["user3"],
         reputation: {
-          _id: 'rep1',
+          _id: "rep1",
           overallScore: 750,
           inviteNetworkScore: 200,
           conductScore: 250,
@@ -72,7 +78,7 @@ const mockUserData = {
             totalPosts: 20,
             totalComments: 30,
           },
-          lastCalculated: '2024-01-01T00:00:00Z',
+          lastCalculated: "2024-01-01T00:00:00Z",
         },
       },
     },
@@ -82,13 +88,13 @@ const mockUserData = {
 const mockUserBio = {
   request: {
     query: GET_USER_BIO,
-    variables: { username: 'testuser' },
+    variables: { username: "testuser" },
   },
   result: {
     data: {
       user: {
-        _id: 'user1',
-        bio: 'Thoughtful dialogue.',
+        _id: "user1",
+        bio: "Thoughtful dialogue.",
       },
     },
   },
@@ -97,14 +103,14 @@ const mockUserBio = {
 const mockUserBioUnavailable = {
   request: {
     query: GET_USER_BIO,
-    variables: { username: 'testuser' },
+    variables: { username: "testuser" },
   },
   result: {
     errors: [{ message: 'Cannot query field "bio" on type "User".' }],
   },
 };
 
-describe('ProfileController', () => {
+describe("ProfileController", () => {
   beforeEach(() => {
     mockReplace.mockClear();
     useAppStore.setState({
@@ -112,68 +118,77 @@ describe('ProfileController', () => {
         loading: false,
         loginError: null,
         data: {
-          username: 'currentuser',
+          username: "currentuser",
         },
       },
     });
   });
 
-  describe('Data Fetching', () => {
-    it('renders loading state initially', async () => {
+  describe("Data Fetching", () => {
+    it("renders loading state initially", async () => {
       render(
         <MockedProvider mocks={[]} addTypename={false}>
           <ProfileController />
         </MockedProvider>
       );
-      await waitFor(() => {
-        const profileView = screen.queryByTestId('profile-view');
-        const loadingText = screen.queryByText('Loading...');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileView || loadingText || errorUI).toBeTruthy();
-      }, { timeout: 2000 });
+      await waitFor(
+        () => {
+          const profileView = screen.queryByTestId("profile-view");
+          const loadingText = screen.queryByText("Loading...");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileView || loadingText || errorUI).toBeTruthy();
+        },
+        { timeout: 2000 }
+      );
     });
 
-    it('fetches and displays user data', async () => {
+    it("fetches and displays user data", async () => {
       render(
         <MockedProvider mocks={[mockUserData, mockUserBio]} addTypename={false}>
           <ProfileController />
         </MockedProvider>
       );
 
-      await waitFor(() => {
-        const profileLoaded = screen.queryByText('Profile Loaded');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileLoaded || errorUI).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const profileLoaded = screen.queryByText("Profile Loaded");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileLoaded || errorUI).toBeTruthy();
+        },
+        { timeout: 3000 }
+      );
     });
 
-    it('uses username from params when available', async () => {
+    it("uses username from params when available", async () => {
       render(
         <MockedProvider mocks={[mockUserData, mockUserBio]} addTypename={false}>
           <ProfileController />
         </MockedProvider>
       );
 
-      await waitFor(() => {
-        const profileLoaded = screen.queryByText('Profile Loaded');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileLoaded || errorUI).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const profileLoaded = screen.queryByText("Profile Loaded");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileLoaded || errorUI).toBeTruthy();
+        },
+        { timeout: 3000 }
+      );
     });
 
-    it('uses logged in user username when no params', async () => {
+    it("uses logged in user username when no params", async () => {
       const loggedInUserData = {
         ...mockUserData,
         request: {
           query: GET_USER,
-          variables: { username: 'currentuser' },
+          variables: { username: "currentuser" },
         },
       };
       const loggedInUserBio = {
         ...mockUserBio,
         request: {
           query: GET_USER_BIO,
-          variables: { username: 'currentuser' },
+          variables: { username: "currentuser" },
         },
       };
 
@@ -183,16 +198,19 @@ describe('ProfileController', () => {
         </MockedProvider>
       );
 
-      await waitFor(() => {
-        const profileLoaded = screen.queryByText('Profile Loaded');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileLoaded || errorUI).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const profileLoaded = screen.queryByText("Profile Loaded");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileLoaded || errorUI).toBeTruthy();
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
-  describe('Store Integration', () => {
-    it('updates selected page on mount', async () => {
+  describe("Store Integration", () => {
+    it("updates selected page on mount", async () => {
       const setSelectedPage = jest.fn();
       useAppStore.setState({
         setSelectedPage,
@@ -206,22 +224,25 @@ describe('ProfileController', () => {
 
       // Note: This test verifies the component calls setSelectedPage
       // The actual store update is tested in store tests
-      await waitFor(() => {
-        const profileView = screen.queryByTestId('profile-view');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileView || errorUI).toBeTruthy();
-      }, { timeout: 2000 });
+      await waitFor(
+        () => {
+          const profileView = screen.queryByTestId("profile-view");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileView || errorUI).toBeTruthy();
+        },
+        { timeout: 2000 }
+      );
     });
   });
 
-  describe('Error Handling', () => {
-    it('handles GraphQL network errors gracefully', async () => {
+  describe("Error Handling", () => {
+    it("handles GraphQL network errors gracefully", async () => {
       const networkError = {
         request: {
           query: GET_USER,
-          variables: { username: 'testuser' },
+          variables: { username: "testuser" },
         },
-        error: new Error('Network error: Failed to fetch'),
+        error: new Error("Network error: Failed to fetch"),
       };
 
       render(
@@ -231,21 +252,24 @@ describe('ProfileController', () => {
       );
 
       // ErrorBoundary may catch errors, so check for either profile view or error UI
-      await waitFor(() => {
-        const profileView = screen.queryByTestId('profile-view');
-        const loadingText = screen.queryByText('Loading...');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileView || loadingText || errorUI).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const profileView = screen.queryByTestId("profile-view");
+          const loadingText = screen.queryByText("Loading...");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileView || loadingText || errorUI).toBeTruthy();
+        },
+        { timeout: 3000 }
+      );
     });
 
-    it('handles GraphQL query errors gracefully', async () => {
+    it("handles GraphQL query errors gracefully", async () => {
       const queryError = {
         request: {
           query: GET_USER,
-          variables: { username: 'testuser' },
+          variables: { username: "testuser" },
         },
-        error: new Error('GraphQL error: User not found'),
+        error: new Error("GraphQL error: User not found"),
       };
 
       render(
@@ -255,26 +279,29 @@ describe('ProfileController', () => {
       );
 
       // ErrorBoundary may catch errors, so check for either profile view or error UI
-      await waitFor(() => {
-        const profileView = screen.queryByTestId('profile-view');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileView || errorUI).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const profileView = screen.queryByTestId("profile-view");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileView || errorUI).toBeTruthy();
+        },
+        { timeout: 3000 }
+      );
     });
 
-    it('skips query when no username available', async () => {
+    it("skips query when no username available", async () => {
       useAppStore.setState({
         user: {
           loading: false,
           loginError: null,
           data: {
-            username: '',
+            username: "",
           },
         },
       });
 
       // Mock useParams to return empty object
-      jest.doMock('next/navigation', () => ({
+      jest.doMock("next/navigation", () => ({
         useParams: () => ({}),
       }));
 
@@ -285,19 +312,22 @@ describe('ProfileController', () => {
       );
 
       // Component should still render (may show loading or error)
-      await waitFor(() => {
-        const profileView = screen.queryByTestId('profile-view');
-        const loadingText = screen.queryByText('Loading...');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileView || loadingText || errorUI).toBeTruthy();
-      }, { timeout: 2000 });
+      await waitFor(
+        () => {
+          const profileView = screen.queryByTestId("profile-view");
+          const loadingText = screen.queryByText("Loading...");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileView || loadingText || errorUI).toBeTruthy();
+        },
+        { timeout: 2000 }
+      );
     });
   });
 
-  describe('Edge Cases', () => {
-    it('handles undefined username in params', async () => {
+  describe("Edge Cases", () => {
+    it("handles undefined username in params", async () => {
       // Mock useParams to return undefined username
-      jest.doMock('next/navigation', () => ({
+      jest.doMock("next/navigation", () => ({
         useParams: () => ({ username: undefined }),
       }));
 
@@ -308,19 +338,22 @@ describe('ProfileController', () => {
       );
 
       // Component should still render (may use logged in user's username)
-      await waitFor(() => {
-        const profileView = screen.queryByTestId('profile-view');
-        const loadingText = screen.queryByText('Loading...');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileView || loadingText || errorUI).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const profileView = screen.queryByTestId("profile-view");
+          const loadingText = screen.queryByText("Loading...");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileView || loadingText || errorUI).toBeTruthy();
+        },
+        { timeout: 3000 }
+      );
     });
 
-    it('handles empty user data response', async () => {
+    it("handles empty user data response", async () => {
       const emptyUserData = {
         request: {
           query: GET_USER,
-          variables: { username: 'testuser' },
+          variables: { username: "testuser" },
         },
         result: {
           data: {
@@ -331,7 +364,7 @@ describe('ProfileController', () => {
       const emptyUserBio = {
         request: {
           query: GET_USER_BIO,
-          variables: { username: 'testuser' },
+          variables: { username: "testuser" },
         },
         result: {
           data: {
@@ -347,35 +380,41 @@ describe('ProfileController', () => {
       );
 
       // ProfileView should render with null user (shows "Invalid user" message)
-      await waitFor(() => {
-        const profileView = screen.queryByTestId('profile-view');
-        const loadingText = screen.queryByText('Loading...');
-        const errorUI = screen.queryByText(/Something went wrong/i);
-        expect(profileView || loadingText || errorUI).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const profileView = screen.queryByTestId("profile-view");
+          const loadingText = screen.queryByText("Loading...");
+          const errorUI = screen.queryByText(/Something went wrong/i);
+          expect(profileView || loadingText || errorUI).toBeTruthy();
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
-  describe('Profile navigation (#440)', () => {
-    it('still loads the profile when GET_USER_BIO is unavailable on the hosted API', async () => {
+  describe("Profile navigation (#440)", () => {
+    it("still loads the profile when GET_USER_BIO is unavailable on the hosted API", async () => {
       render(<ProfileController />, { mocks: [mockUserData, mockUserBioUnavailable] });
 
-      await waitFor(() => {
-        expect(screen.getByText('Profile Loaded')).toBeInTheDocument();
-      }, { timeout: 3000 });
-      expect(screen.queryByText('Profile Error')).not.toBeInTheDocument();
+      await waitFor(
+        () => {
+          expect(screen.getByText("Profile Loaded")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+      expect(screen.queryByText("Profile Error")).not.toBeInTheDocument();
     });
 
-    it('still loads the profile when GET_USER_BIO returns no about text', async () => {
+    it("still loads the profile when GET_USER_BIO returns no about text", async () => {
       const emptyBio = {
         request: {
           query: GET_USER_BIO,
-          variables: { username: 'testuser' },
+          variables: { username: "testuser" },
         },
         result: {
           data: {
             user: {
-              _id: 'user1',
+              _id: "user1",
               bio: null,
             },
           },
@@ -384,16 +423,19 @@ describe('ProfileController', () => {
 
       render(<ProfileController />, { mocks: [mockUserData, emptyBio] });
 
-      await waitFor(() => {
-        expect(screen.getByText('Profile Loaded')).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText("Profile Loaded")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
 
-    it('surfaces a profile error instead of crashing when GET_USER fails', async () => {
+    it("surfaces a profile error instead of crashing when GET_USER fails", async () => {
       const queryError = {
         request: {
           query: GET_USER,
-          variables: { username: 'testuser' },
+          variables: { username: "testuser" },
         },
         result: {
           errors: [{ message: 'Cannot query field "bio" on type "User".' }],
@@ -402,10 +444,12 @@ describe('ProfileController', () => {
 
       render(<ProfileController />, { mocks: [queryError, mockUserBioUnavailable] });
 
-      await waitFor(() => {
-        expect(screen.getByText('Profile Error')).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText("Profile Error")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
   });
 });
-

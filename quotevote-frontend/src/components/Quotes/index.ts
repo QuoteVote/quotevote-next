@@ -1,2 +1,1 @@
-export { LatestQuotes } from './LatestQuotes'
-
+export { LatestQuotes } from "./LatestQuotes";

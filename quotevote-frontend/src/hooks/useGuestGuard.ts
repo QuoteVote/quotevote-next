@@ -1,7 +1,7 @@
-import { useCallback } from 'react'
-import { hasActiveSession } from '@/lib/utils/auth'
-import { useAuthModal } from '@/context/AuthModalContext'
-import { useAppStore } from '@/store/useAppStore'
+import { useCallback } from "react";
+import { hasActiveSession } from "@/lib/utils/auth";
+import { useAuthModal } from "@/context/AuthModalContext";
+import { useAppStore } from "@/store/useAppStore";
 
 /**
  * Guard guest interactions by showing the auth modal instead of redirecting.
@@ -12,15 +12,15 @@ import { useAppStore } from '@/store/useAppStore'
  * the access token is briefly missing/expired.
  */
 export default function useGuestGuard() {
-  const { openAuthModal } = useAuthModal()
+  const { openAuthModal } = useAuthModal();
   // Re-subscribe so the guard updates when login/logout changes store state.
-  useAppStore((state) => state.user.data._id || state.user.data.id)
+  useAppStore((state) => state.user.data._id || state.user.data.id);
 
   return useCallback(() => {
     if (hasActiveSession()) {
-      return true
+      return true;
     }
-    openAuthModal({ view: 'login' })
-    return false
-  }, [openAuthModal])
+    openAuthModal({ view: "login" });
+    return false;
+  }, [openAuthModal]);
 }

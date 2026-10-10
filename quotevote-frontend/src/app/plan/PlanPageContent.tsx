@@ -1,30 +1,28 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { useMutation } from '@apollo/client/react'
-import { toast } from 'sonner'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { PersonalPlanCarousel } from '@/components/Carousel/PersonalPlan/PersonalPlanCarousel'
-import { BusinessPlanCarousel } from '@/components/Carousel/BusinessPlan/BusinessPlanCarousel'
-import { InvestorPlanCarousel } from '@/components/Carousel/InvestorsPlan/InvestorPlanCarousel'
-import { SEND_INVESTOR_EMAIL } from '@/graphql/mutations'
-import { replaceGqlError } from '@/lib/utils/replaceGqlError'
+import { useRouter } from "next/navigation";
+import { useMutation } from "@apollo/client/react";
+import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { PersonalPlanCarousel } from "@/components/Carousel/PersonalPlan/PersonalPlanCarousel";
+import { BusinessPlanCarousel } from "@/components/Carousel/BusinessPlan/BusinessPlanCarousel";
+import { InvestorPlanCarousel } from "@/components/Carousel/InvestorsPlan/InvestorPlanCarousel";
+import { SEND_INVESTOR_EMAIL } from "@/graphql/mutations";
+import { replaceGqlError } from "@/lib/utils/replaceGqlError";
 
 export function PlanPageContent() {
-  const router = useRouter()
-  const [sendInvestorEmail] = useMutation(SEND_INVESTOR_EMAIL)
+  const router = useRouter();
+  const [sendInvestorEmail] = useMutation(SEND_INVESTOR_EMAIL);
 
   const handleContactUs = async () => {
     try {
-      await sendInvestorEmail({ variables: { email: '' } })
-      router.push('/auths/investor-thanks')
+      await sendInvestorEmail({ variables: { email: "" } });
+      router.push("/auths/investor-thanks");
     } catch (error) {
-      toast.error(
-        replaceGqlError(error instanceof Error ? error.message : 'Failed to send email')
-      )
+      toast.error(replaceGqlError(error instanceof Error ? error.message : "Failed to send email"));
     }
-  }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-16">
@@ -54,5 +52,5 @@ export function PlanPageContent() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

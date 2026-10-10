@@ -1,18 +1,18 @@
 "use client";
 
-import type { FC } from 'react';
-import { useState } from 'react';
-import { Loader2, Check, UserCheck } from 'lucide-react';
-import { useQuery } from '@apollo/client/react';
+import type { FC } from "react";
+import { useState } from "react";
+import { Loader2, Check, UserCheck } from "lucide-react";
+import { useQuery } from "@apollo/client/react";
 
-import Avatar from '@/components/Avatar';
-import { Button } from '@/components/ui/button';
-import { SEARCH_USERNAMES, GET_ROSTER } from '@/graphql/queries';
-import { useRosterManagement } from '@/hooks/useRosterManagement';
-import { useAppStore } from '@/store';
-import { toast } from 'sonner';
-import type { BuddySearchResult } from '@/types/chat';
-import type { GetRosterData } from '@/types/buddylist';
+import Avatar from "@/components/Avatar";
+import { Button } from "@/components/ui/button";
+import { SEARCH_USERNAMES, GET_ROSTER } from "@/graphql/queries";
+import { useRosterManagement } from "@/hooks/useRosterManagement";
+import { useAppStore } from "@/store";
+import { toast } from "sonner";
+import type { BuddySearchResult } from "@/types/chat";
+import type { GetRosterData } from "@/types/buddylist";
 
 interface UserSearchResultsProps {
   searchQuery: string;
@@ -27,30 +27,25 @@ interface SearchUserVariables {
 }
 
 type BuddyRelation =
-  | { type: 'buddy' }
-  | { type: 'pending_sent' }
-  | { type: 'pending_received'; rosterId: string };
+  | { type: "buddy" }
+  | { type: "pending_sent" }
+  | { type: "pending_received"; rosterId: string };
 
 const MIN_QUERY_LENGTH = 2;
 
 const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
-  const currentUser = useAppStore((state) => state.user.data) as
-    | { _id?: string }
-    | undefined;
+  const currentUser = useAppStore((state) => state.user.data) as { _id?: string } | undefined;
   const { addBuddy, acceptBuddy } = useRosterManagement();
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
   const [acceptingRosterId, setAcceptingRosterId] = useState<string | null>(null);
 
-  const { data, loading } = useQuery<SearchUserResponse, SearchUserVariables>(
-    SEARCH_USERNAMES,
-    {
-      variables: { query: searchQuery },
-      skip: !searchQuery || searchQuery.length < MIN_QUERY_LENGTH,
-    }
-  );
+  const { data, loading } = useQuery<SearchUserResponse, SearchUserVariables>(SEARCH_USERNAMES, {
+    variables: { query: searchQuery },
+    skip: !searchQuery || searchQuery.length < MIN_QUERY_LENGTH,
+  });
 
   const { data: rosterData } = useQuery<GetRosterData>(GET_ROSTER, {
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: "cache-and-network",
     skip: !currentUser?._id,
   });
 
@@ -64,12 +59,12 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
         (r.userId === userId && r.buddyId === currentUserId)
     );
     if (!entry) return null;
-    if (entry.status === 'accepted') return { type: 'buddy' };
-    if (entry.status === 'pending') {
+    if (entry.status === "accepted") return { type: "buddy" };
+    if (entry.status === "pending") {
       if (entry.buddyId === currentUserId) {
-        return { type: 'pending_received', rosterId: entry._id };
+        return { type: "pending_received", rosterId: entry._id };
       }
-      return { type: 'pending_sent' };
+      return { type: "pending_sent" };
     }
     return null;
   };
@@ -79,10 +74,9 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
     try {
       setAddingUserId(userId);
       await addBuddy(userId);
-      toast.success('Buddy request sent!');
+      toast.success("Buddy request sent!");
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to send buddy request';
+      const message = error instanceof Error ? error.message : "Failed to send buddy request";
       toast.error(message);
     } finally {
       setAddingUserId(null);
@@ -93,11 +87,9 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
     try {
       setAcceptingRosterId(rosterId);
       await acceptBuddy(rosterId);
-      toast.success('Buddy request accepted!');
+      toast.success("Buddy request accepted!");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to accept request'
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to accept request");
     } finally {
       setAcceptingRosterId(null);
     }
@@ -128,12 +120,8 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
   if (filteredUsers.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-        <p className="mb-1 text-base font-semibold text-foreground">
-          No users found
-        </p>
-        <p className="opacity-80">
-          No users found matching &quot;{searchQuery}&quot;
-        </p>
+        <p className="mb-1 text-base font-semibold text-foreground">No users found</p>
+        <p className="opacity-80">No users found matching &quot;{searchQuery}&quot;</p>
       </div>
     );
   }
@@ -159,43 +147,38 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
               <div className="truncate text-sm font-semibold text-foreground">
                 {user.name || user.username}
               </div>
-              <div className="truncate text-xs text-muted-foreground">
-                @{user.username}
-              </div>
+              <div className="truncate text-xs text-muted-foreground">@{user.username}</div>
             </div>
 
-            {relation?.type === 'buddy' && (
+            {relation?.type === "buddy" && (
               <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-[#52b274]">
                 <UserCheck className="h-3.5 w-3.5" />
                 Buddy
               </span>
             )}
 
-            {relation?.type === 'pending_sent' && (
+            {relation?.type === "pending_sent" && (
               <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                 Requested
               </span>
             )}
 
-            {relation?.type === 'pending_received' && (
+            {relation?.type === "pending_received" && (
               <Button
                 size="sm"
                 onClick={() =>
                   handleAcceptBuddy(
-                    (relation as { type: 'pending_received'; rosterId: string })
-                      .rosterId
+                    (relation as { type: "pending_received"; rosterId: string }).rosterId
                   )
                 }
                 disabled={
                   acceptingRosterId ===
-                  (relation as { type: 'pending_received'; rosterId: string })
-                    .rosterId
+                  (relation as { type: "pending_received"; rosterId: string }).rosterId
                 }
                 className="ml-auto bg-[#52b274] text-white hover:bg-[#4a9e63]"
               >
                 {acceptingRosterId ===
-                (relation as { type: 'pending_received'; rosterId: string })
-                  .rosterId ? (
+                (relation as { type: "pending_received"; rosterId: string }).rosterId ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
                   <>
@@ -216,7 +199,7 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
                 {addingUserId === user._id ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  'Add Buddy'
+                  "Add Buddy"
                 )}
               </Button>
             )}

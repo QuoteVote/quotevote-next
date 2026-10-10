@@ -1,18 +1,13 @@
 "use client";
 
-import type { PresenceStatus, PresenceIconProps } from '@/types/chat';
+import type { PresenceStatus, PresenceIconProps } from "@/types/chat";
 
 const statusClasses: Record<PresenceStatus, string> = {
-  online:
-    'bg-[#52b274] shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]',
-  away:
-    'bg-amber-400 shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]',
-  dnd:
-    'bg-red-500 shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]',
-  offline:
-    'bg-zinc-500 shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]',
-  invisible:
-    'bg-zinc-500 shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]',
+  online: "bg-[#52b274] shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]",
+  away: "bg-amber-400 shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]",
+  dnd: "bg-red-500 shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]",
+  offline: "bg-zinc-500 shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]",
+  invisible: "bg-zinc-500 shadow-[0_0_0_2px_rgba(255,255,255,1),inset_0_0_0_1px_rgba(0,0,0,0.1)]",
 };
 
 const PresenceIcon = ({ status, className }: PresenceIconProps) => {
@@ -20,11 +15,10 @@ const PresenceIcon = ({ status, className }: PresenceIconProps) => {
 
   return (
     <span
-      className={`inline-block h-3 w-3 rounded-full ${classes} ${className ?? ''}`.trim()}
+      className={`inline-block h-3 w-3 rounded-full ${classes} ${className ?? ""}`.trim()}
       aria-hidden="true"
     />
   );
 };
 
 export default PresenceIcon;
-

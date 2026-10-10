@@ -13,100 +13,107 @@ import {
   VOTE,
   ADD_COMMENT,
   SUBMIT_POST,
-} from '@/graphql/mutations'
+} from "@/graphql/mutations";
 
-function getOperationDef(doc: { definitions: ReadonlyArray<{ kind: string; operation?: string; name?: { value: string }; variableDefinitions?: ReadonlyArray<{ variable: { name: { value: string } } }> }> }) {
-  return doc.definitions.find((d) => d.kind === 'OperationDefinition')
+function getOperationDef(doc: {
+  definitions: ReadonlyArray<{
+    kind: string;
+    operation?: string;
+    name?: { value: string };
+    variableDefinitions?: ReadonlyArray<{ variable: { name: { value: string } } }>;
+  }>;
+}) {
+  return doc.definitions.find((d) => d.kind === "OperationDefinition");
 }
 
 function getVarNames(doc: ReturnType<typeof getOperationDef>) {
-  return doc?.variableDefinitions?.map((v) => v.variable.name.value) ?? []
+  return doc?.variableDefinitions?.map((v) => v.variable.name.value) ?? [];
 }
 
-describe('GraphQL Mutations', () => {
-  describe('SEND_PASSWORD_RESET_EMAIL', () => {
-    it('is a valid DocumentNode', () => {
-      expect(SEND_PASSWORD_RESET_EMAIL).toBeDefined()
-      expect(SEND_PASSWORD_RESET_EMAIL.kind).toBe('Document')
-    })
+describe("GraphQL Mutations", () => {
+  describe("SEND_PASSWORD_RESET_EMAIL", () => {
+    it("is a valid DocumentNode", () => {
+      expect(SEND_PASSWORD_RESET_EMAIL).toBeDefined();
+      expect(SEND_PASSWORD_RESET_EMAIL.kind).toBe("Document");
+    });
 
-    it('has email variable', () => {
-      const vars = getVarNames(getOperationDef(SEND_PASSWORD_RESET_EMAIL))
-      expect(vars).toContain('email')
-    })
-  })
+    it("has email variable", () => {
+      const vars = getVarNames(getOperationDef(SEND_PASSWORD_RESET_EMAIL));
+      expect(vars).toContain("email");
+    });
+  });
 
-  describe('UPDATE_USER_PASSWORD', () => {
-    it('is a valid DocumentNode', () => {
-      expect(UPDATE_USER_PASSWORD).toBeDefined()
-      expect(UPDATE_USER_PASSWORD.kind).toBe('Document')
-    })
+  describe("UPDATE_USER_PASSWORD", () => {
+    it("is a valid DocumentNode", () => {
+      expect(UPDATE_USER_PASSWORD).toBeDefined();
+      expect(UPDATE_USER_PASSWORD.kind).toBe("Document");
+    });
 
-    it('has username, password, and token variables', () => {
-      const vars = getVarNames(getOperationDef(UPDATE_USER_PASSWORD))
-      expect(vars).toContain('username')
-      expect(vars).toContain('password')
-      expect(vars).toContain('token')
-    })
-  })
+    it("has username, password, and token variables", () => {
+      const vars = getVarNames(getOperationDef(UPDATE_USER_PASSWORD));
+      expect(vars).toContain("username");
+      expect(vars).toContain("password");
+      expect(vars).toContain("token");
+    });
+  });
 
-  describe('REQUEST_USER_ACCESS_MUTATION', () => {
-    it('is a valid DocumentNode', () => {
-      expect(REQUEST_USER_ACCESS_MUTATION).toBeDefined()
-      expect(REQUEST_USER_ACCESS_MUTATION.kind).toBe('Document')
-    })
+  describe("REQUEST_USER_ACCESS_MUTATION", () => {
+    it("is a valid DocumentNode", () => {
+      expect(REQUEST_USER_ACCESS_MUTATION).toBeDefined();
+      expect(REQUEST_USER_ACCESS_MUTATION.kind).toBe("Document");
+    });
 
-    it('has requestUserAccessInput variable', () => {
-      const vars = getVarNames(getOperationDef(REQUEST_USER_ACCESS_MUTATION))
-      expect(vars).toContain('requestUserAccessInput')
-    })
-  })
+    it("has requestUserAccessInput variable", () => {
+      const vars = getVarNames(getOperationDef(REQUEST_USER_ACCESS_MUTATION));
+      expect(vars).toContain("requestUserAccessInput");
+    });
+  });
 
-  describe('SEND_INVESTOR_EMAIL', () => {
-    it('is a valid DocumentNode', () => {
-      expect(SEND_INVESTOR_EMAIL).toBeDefined()
-      expect(SEND_INVESTOR_EMAIL.kind).toBe('Document')
-    })
+  describe("SEND_INVESTOR_EMAIL", () => {
+    it("is a valid DocumentNode", () => {
+      expect(SEND_INVESTOR_EMAIL).toBeDefined();
+      expect(SEND_INVESTOR_EMAIL.kind).toBe("Document");
+    });
 
-    it('has email variable', () => {
-      const vars = getVarNames(getOperationDef(SEND_INVESTOR_EMAIL))
-      expect(vars).toContain('email')
-    })
-  })
+    it("has email variable", () => {
+      const vars = getVarNames(getOperationDef(SEND_INVESTOR_EMAIL));
+      expect(vars).toContain("email");
+    });
+  });
 
-  describe('VOTE', () => {
-    it('is a valid DocumentNode', () => {
-      expect(VOTE).toBeDefined()
-      expect(VOTE.kind).toBe('Document')
-    })
+  describe("VOTE", () => {
+    it("is a valid DocumentNode", () => {
+      expect(VOTE).toBeDefined();
+      expect(VOTE.kind).toBe("Document");
+    });
 
-    it('has vote variable', () => {
-      const vars = getVarNames(getOperationDef(VOTE))
-      expect(vars).toContain('vote')
-    })
-  })
+    it("has vote variable", () => {
+      const vars = getVarNames(getOperationDef(VOTE));
+      expect(vars).toContain("vote");
+    });
+  });
 
-  describe('ADD_COMMENT', () => {
-    it('is a valid DocumentNode', () => {
-      expect(ADD_COMMENT).toBeDefined()
-      expect(ADD_COMMENT.kind).toBe('Document')
-    })
+  describe("ADD_COMMENT", () => {
+    it("is a valid DocumentNode", () => {
+      expect(ADD_COMMENT).toBeDefined();
+      expect(ADD_COMMENT.kind).toBe("Document");
+    });
 
-    it('has comment variable', () => {
-      const vars = getVarNames(getOperationDef(ADD_COMMENT))
-      expect(vars).toContain('comment')
-    })
-  })
+    it("has comment variable", () => {
+      const vars = getVarNames(getOperationDef(ADD_COMMENT));
+      expect(vars).toContain("comment");
+    });
+  });
 
-  describe('SUBMIT_POST', () => {
-    it('is a valid DocumentNode', () => {
-      expect(SUBMIT_POST).toBeDefined()
-      expect(SUBMIT_POST.kind).toBe('Document')
-    })
+  describe("SUBMIT_POST", () => {
+    it("is a valid DocumentNode", () => {
+      expect(SUBMIT_POST).toBeDefined();
+      expect(SUBMIT_POST.kind).toBe("Document");
+    });
 
-    it('has post variable', () => {
-      const vars = getVarNames(getOperationDef(SUBMIT_POST))
-      expect(vars).toContain('post')
-    })
-  })
-})
+    it("has post variable", () => {
+      const vars = getVarNames(getOperationDef(SUBMIT_POST));
+      expect(vars).toContain("post");
+    });
+  });
+});

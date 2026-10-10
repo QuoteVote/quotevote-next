@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { useQuery, useSubscription } from '@apollo/client/react'
-import { Bell } from 'lucide-react'
-import { useAppStore } from '@/store'
-import { Notification } from '@/components/Notifications/Notification'
-import ChatContent from '@/components/Chat/ChatContent'
-import { GET_NOTIFICATIONS } from '@/graphql/queries'
-import { NEW_NOTIFICATION_SUBSCRIPTION } from '@/graphql/subscriptions'
-import type { Notification as NotificationType } from '@/types/notification'
+import { useQuery, useSubscription } from "@apollo/client/react";
+import { Bell } from "lucide-react";
+import { useAppStore } from "@/store";
+import { Notification } from "@/components/Notifications/Notification";
+import ChatContent from "@/components/Chat/ChatContent";
+import { GET_NOTIFICATIONS } from "@/graphql/queries";
+import { NEW_NOTIFICATION_SUBSCRIPTION } from "@/graphql/subscriptions";
+import type { Notification as NotificationType } from "@/types/notification";
 
 /**
  * Fixed left (Notifications) + right (Chat / messages) sidebars shared by the
@@ -19,27 +19,25 @@ import type { Notification as NotificationType } from '@/types/notification'
  * the home feed).
  */
 export function DashboardSidebars() {
-  const user = useAppStore((state) => state.user.data)
-  const isLoggedIn = !!(user?._id || user?.id)
-  const userId = (user?._id || user?.id) as string | undefined
+  const user = useAppStore((state) => state.user.data);
+  const isLoggedIn = !!(user?._id || user?.id);
+  const userId = (user?._id || user?.id) as string | undefined;
 
   const { loading, data, refetch } = useQuery(GET_NOTIFICATIONS, {
     skip: !isLoggedIn || !userId,
-    fetchPolicy: 'cache-and-network',
-  })
+    fetchPolicy: "cache-and-network",
+  });
 
   useSubscription(NEW_NOTIFICATION_SUBSCRIPTION, {
-    variables: { userId: userId || '' },
+    variables: { userId: userId || "" },
     skip: !isLoggedIn || !userId,
     onData: async () => {
-      await refetch()
+      await refetch();
     },
-  })
+  });
 
   const notifications: NotificationType[] =
-    loading || !data
-      ? []
-      : (data as { notifications?: NotificationType[] }).notifications || []
+    loading || !data ? [] : (data as { notifications?: NotificationType[] }).notifications || [];
 
   return (
     <>
@@ -55,7 +53,7 @@ export function DashboardSidebars() {
               <span className="text-sm font-semibold text-foreground/80">Notifications</span>
               {notifications.length > 0 && (
                 <span className="ml-auto flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none shadow">
-                  {notifications.length > 99 ? '99+' : notifications.length}
+                  {notifications.length > 99 ? "99+" : notifications.length}
                 </span>
               )}
             </div>
@@ -81,5 +79,5 @@ export function DashboardSidebars() {
         </aside>
       )}
     </>
-  )
+  );
 }

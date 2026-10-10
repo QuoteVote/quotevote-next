@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState, Suspense } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client/react';
+import { useEffect, useMemo, useState, Suspense } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@apollo/client/react";
 import {
   House,
   Search,
@@ -19,53 +19,53 @@ import {
   Share2,
   Menu,
   Github,
-} from 'lucide-react';
-import { Globe } from '@/components/Icons';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { Globe } from "@/components/Icons";
+import { toast } from "sonner";
 
-import { cn } from '@/lib/utils';
-import { useAppStore } from '@/store';
-import { getApolloClient } from '@/lib/apollo';
-import { removeToken } from '@/lib/auth';
-import { useAuthModal } from '@/context/AuthModalContext';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { routeHasPersistentChatPanel } from '@/lib/utils/chatLayout';
-import { toAbsolutePostUrl } from '@/lib/utils/sanitizeUrl';
-import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
-import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
-import { useRosterManagement } from '@/hooks/useRosterManagement';
-import { useSyncCurrentUserProfile } from '@/hooks/useSyncCurrentUserProfile';
-import ChatContent from '@/components/Chat/ChatContent';
-import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from '@/graphql/queries';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import type { ChatRoom } from '@/types/chat';
-import NavSearch from '@/components/Navbars/NavSearch';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store";
+import { getApolloClient } from "@/lib/apollo";
+import { removeToken } from "@/lib/auth";
+import { useAuthModal } from "@/context/AuthModalContext";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { routeHasPersistentChatPanel } from "@/lib/utils/chatLayout";
+import { toAbsolutePostUrl } from "@/lib/utils/sanitizeUrl";
+import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
+import { usePresenceSubscription } from "@/hooks/usePresenceSubscription";
+import { useRosterManagement } from "@/hooks/useRosterManagement";
+import { useSyncCurrentUserProfile } from "@/hooks/useSyncCurrentUserProfile";
+import ChatContent from "@/components/Chat/ChatContent";
+import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from "@/graphql/queries";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import type { ChatRoom } from "@/types/chat";
+import NavSearch from "@/components/Navbars/NavSearch";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
-import { DashboardSidebars } from '@/components/DashboardSidebars';
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from "@/components/SubmitPost";
+import { DashboardSidebars } from "@/components/DashboardSidebars";
 
 /* ------------------------------------------------------------------ */
 
 const NAV_PAGES = [
-  { path: '/', page: 'home' },
-  { path: '/post', page: 'post' },
-  { path: '/profile', page: 'profile' },
-  { path: '/notifications', page: 'notifications' },
-  { path: '/settings', page: 'settings' },
-  { path: '/control-panel', page: 'control-panel' },
+  { path: "/", page: "home" },
+  { path: "/post", page: "post" },
+  { path: "/profile", page: "profile" },
+  { path: "/notifications", page: "notifications" },
+  { path: "/settings", page: "settings" },
+  { path: "/control-panel", page: "control-panel" },
 ] as const;
 
-const DONATE_URL = 'https://opencollective.com/quotevote/donate';
-const GITHUB_URL = 'https://github.com/QuoteVote/quotevote-next';
+const DONATE_URL = "https://opencollective.com/quotevote/donate";
+const GITHUB_URL = "https://github.com/QuoteVote/quotevote-next";
 
 /* ------------------------------------------------------------------ */
 
@@ -81,21 +81,21 @@ function ChatPanel() {
   const pathname = usePathname();
   const chatOpen = useAppStore((s) => s.chat.open);
   const setChatOpen = useAppStore((s) => s.setChatOpen);
-  const isXlUp = useMediaQuery('(min-width: 1280px)');
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isXlUp = useMediaQuery("(min-width: 1280px)");
+  const isMobile = useMediaQuery("(max-width: 767px)");
 
   if (routeHasPersistentChatPanel(pathname) && isXlUp) return null;
 
   return (
     <Sheet open={chatOpen} onOpenChange={setChatOpen} modal={false}>
       <SheetContent
-        side={isMobile ? 'bottom' : 'right'}
-        overlayClassName={isMobile ? 'bottom-[56px]' : 'bottom-0'}
+        side={isMobile ? "bottom" : "right"}
+        overlayClassName={isMobile ? "bottom-[56px]" : "bottom-0"}
         className={cn(
-          'w-full p-0 gap-0 overflow-hidden',
+          "w-full p-0 gap-0 overflow-hidden",
           isMobile
-            ? 'bottom-[56px] h-[calc(100dvh-6.5rem)] max-h-[85dvh] rounded-t-2xl sm:max-w-none'
-            : 'sm:w-[400px] sm:max-w-[400px] inset-y-0 h-full',
+            ? "bottom-[56px] h-[calc(100dvh-6.5rem)] max-h-[85dvh] rounded-t-2xl sm:max-w-none"
+            : "sm:w-[400px] sm:max-w-[400px] inset-y-0 h-full"
         )}
         data-testid="messages-panel"
         onInteractOutside={(e) => e.preventDefault()}
@@ -128,7 +128,11 @@ function AuthenticatedAccountSheet({
         <SheetHeader>
           <SheetTitle className="text-[#0A2342] font-bold text-lg">Menu</SheetTitle>
         </SheetHeader>
-        <nav className="mt-1 flex flex-col gap-3" aria-label="Account menu" data-testid="authenticated-account-menu">
+        <nav
+          className="mt-1 flex flex-col gap-3"
+          aria-label="Account menu"
+          data-testid="authenticated-account-menu"
+        >
           <Button variant="ghost" asChild className="w-full justify-start">
             <Link href="/settings" onClick={close}>
               <Settings2 className="size-4" />
@@ -191,11 +195,7 @@ function MobileMenuButton({ onClick }: { onClick: () => void }) {
 /*  DashboardShell                                                      */
 /* ------------------------------------------------------------------ */
 
-export function DashboardShell({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.ReactNode {
+export function DashboardShell({ children }: { children: React.ReactNode }): React.ReactNode {
   const pathname = usePathname();
   const router = useRouter();
   const { openAuthModal } = useAuthModal();
@@ -211,24 +211,22 @@ export function DashboardShell({
 
   const loggedIn = !!(user?.id || user?._id);
   const isAdmin = !!user?.admin;
-  const username =
-    (typeof user?.username === 'string' ? user.username : undefined) || '';
-  const avatarSeed =
-    (typeof user?.name === 'string' && user.name) || username || undefined;
+  const username = (typeof user?.username === "string" ? user.username : undefined) || "";
+  const avatarSeed = (typeof user?.name === "string" && user.name) || username || undefined;
 
   const { data: notifData } = useQuery<{ notifications: Array<{ _id: string; status: string }> }>(
     GET_NOTIFICATIONS,
-    { skip: !loggedIn, fetchPolicy: 'cache-and-network', pollInterval: loggedIn ? 60000 : 0 }
+    { skip: !loggedIn, fetchPolicy: "cache-and-network", pollInterval: loggedIn ? 60000 : 0 }
   );
 
   const { data: roomsData } = useQuery<{ messageRooms: ChatRoom[] }>(GET_CHAT_ROOMS, {
     skip: !loggedIn,
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: "cache-and-network",
     pollInterval: loggedIn ? 8000 : 0,
   });
 
   const unreadCount = useMemo(
-    () => notifData?.notifications?.filter((n) => n.status === 'new').length ?? 0,
+    () => notifData?.notifications?.filter((n) => n.status === "new").length ?? 0,
     [notifData]
   );
 
@@ -238,50 +236,50 @@ export function DashboardShell({
   );
 
   const isActive = (path: string) =>
-    path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(path + '/');
+    path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(path + "/");
   const isMobilePostDetail = /^\/post\/[^/]+\/[^/]+\/[^/]+/.test(pathname);
 
   useEffect(() => {
     const match = NAV_PAGES.find((l) =>
-      l.path === '/' ? pathname === '/' : pathname === l.path || pathname.startsWith(l.path + '/')
+      l.path === "/" ? pathname === "/" : pathname === l.path || pathname.startsWith(l.path + "/")
     );
-    setSelectedPage(match?.page || 'home');
+    setSelectedPage(match?.page || "home");
   }, [pathname, setSelectedPage]);
 
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       removeToken();
       const client = getApolloClient();
       client.stop();
       client.resetStore();
       logout();
     }
-    router.push('/auths/login');
+    router.push("/auths/login");
   };
 
   const handleSharePost = async () => {
     const url = toAbsolutePostUrl(pathname);
     if (!url) {
-      toast.error('Unable to share — open a post to copy its link');
+      toast.error("Unable to share — open a post to copy its link");
       return;
     }
     try {
-      if (typeof navigator.share === 'function') {
-        await navigator.share({ url, title: 'Quote.Vote' });
+      if (typeof navigator.share === "function") {
+        await navigator.share({ url, title: "Quote.Vote" });
         return;
       }
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return;
+      if (err instanceof Error && err.name === "AbortError") return;
     }
     try {
       await navigator.clipboard.writeText(url);
-      toast.success('Link copied!');
+      toast.success("Link copied!");
     } catch {
-      toast.error('Failed to copy link');
+      toast.error("Failed to copy link");
     }
   };
 
-  const requireAuthForAction = (action: () => void, view: 'invite' | 'login' = 'login') => {
+  const requireAuthForAction = (action: () => void, view: "invite" | "login" = "login") => {
     if (!loggedIn) {
       openAuthModal({ view });
       return;
@@ -308,9 +306,11 @@ export function DashboardShell({
       <DashboardClient />
 
       {/* DESKTOP NAVBAR */}
-      <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] items-center" data-testid="authenticated-navigation">
+      <header
+        className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-card border-b border-border shadow-[0_1px_4px_rgba(0,0,0,0.08)] items-center"
+        data-testid="authenticated-navigation"
+      >
         <div className="relative flex h-full w-full items-center px-4">
-
           {/* Left: Logo */}
           <div className="flex items-center gap-2 flex-shrink-0 z-10">
             <Link
@@ -328,12 +328,14 @@ export function DashboardShell({
           {/* Center: Search */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="pointer-events-auto w-[440px] xl:w-[560px] 2xl:w-[640px]">
-              <Suspense fallback={
-                <div className="flex items-center gap-2 h-[38px] w-full rounded-full px-3.5 bg-muted">
-                  <Search className="size-[15px] text-muted-foreground" />
-                  <span className="text-[13px] text-muted-foreground">Search…</span>
-                </div>
-              }>
+              <Suspense
+                fallback={
+                  <div className="flex items-center gap-2 h-[38px] w-full rounded-full px-3.5 bg-muted">
+                    <Search className="size-[15px] text-muted-foreground" />
+                    <span className="text-[13px] text-muted-foreground">Search…</span>
+                  </div>
+                }
+              >
                 <NavSearch />
               </Suspense>
             </div>
@@ -357,19 +359,19 @@ export function DashboardShell({
                 type="button"
                 onClick={() => setChatOpen(!chatOpen)}
                 className={cn(
-                  'relative inline-flex items-center justify-center size-9 rounded-full border-0 transition-all duration-150 cursor-pointer',
+                  "relative inline-flex items-center justify-center size-9 rounded-full border-0 transition-all duration-150 cursor-pointer",
                   chatOpen
-                    ? 'bg-[#52b274]/15 text-[#52b274]'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-[#52b274]',
+                    ? "bg-[#52b274]/15 text-[#52b274]"
+                    : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-[#52b274]"
                 )}
                 aria-label="Messages"
                 aria-expanded={chatOpen}
                 data-testid="desktop-messages-button"
               >
-                <MessageSquare className="size-[18px]" fill={chatOpen ? 'currentColor' : 'none'} />
+                <MessageSquare className="size-[18px]" fill={chatOpen ? "currentColor" : "none"} />
                 {unreadChat > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#52b274] px-[3px] text-[9px] font-bold leading-none text-white ring-2 ring-card">
-                    {unreadChat > 9 ? '9+' : unreadChat}
+                    {unreadChat > 9 ? "9+" : unreadChat}
                   </span>
                 )}
               </button>
@@ -390,11 +392,17 @@ export function DashboardShell({
                       size={28}
                       className="size-7 flex-shrink-0"
                     />
-                    <span className="text-[13px] font-semibold text-[#52b274] max-w-[90px] truncate">{username}</span>
+                    <span className="text-[13px] font-semibold text-[#52b274] max-w-[90px] truncate">
+                      {username}
+                    </span>
                     <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={6} className="w-[300px] p-0 overflow-hidden rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={6}
+                  className="w-[300px] p-0 overflow-hidden rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.15)]"
+                >
                   <div className="relative">
                     <div className="h-14 bg-gradient-to-r from-[#52b274] to-[#3a9e5f]" />
                     <div className="px-4 pb-3">
@@ -409,7 +417,10 @@ export function DashboardShell({
                   </div>
                   <DropdownMenuSeparator className="m-0" />
                   <div className="p-1.5">
-                    <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                    <DropdownMenuItem
+                      onClick={() => router.push("/profile")}
+                      className="cursor-pointer rounded-lg gap-3 py-2.5 px-3"
+                    >
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
                         <User className="size-4 text-muted-foreground" />
                       </div>
@@ -418,7 +429,10 @@ export function DashboardShell({
                         <p className="text-[11px] text-muted-foreground">View and edit profile</p>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/settings')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                    <DropdownMenuItem
+                      onClick={() => router.push("/settings")}
+                      className="cursor-pointer rounded-lg gap-3 py-2.5 px-3"
+                    >
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
                         <Settings2 className="size-4 text-muted-foreground" />
                       </div>
@@ -428,7 +442,10 @@ export function DashboardShell({
                       </div>
                     </DropdownMenuItem>
                     {isAdmin && (
-                      <DropdownMenuItem onClick={() => router.push('/control-panel')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
+                      <DropdownMenuItem
+                        onClick={() => router.push("/control-panel")}
+                        className="cursor-pointer rounded-lg gap-3 py-2.5 px-3"
+                      >
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#e8f5ee]">
                           <ShieldCheck className="size-4 text-[#52b274]" />
                         </div>
@@ -439,7 +456,10 @@ export function DashboardShell({
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator className="my-1" />
-                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3 focus:bg-destructive/10">
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="cursor-pointer rounded-lg gap-3 py-2.5 px-3 focus:bg-destructive/10"
+                    >
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-destructive/10">
                         <LogOut className="size-4 text-red-500" />
                       </div>
@@ -456,7 +476,7 @@ export function DashboardShell({
             {!loggedIn && (
               <button
                 type="button"
-                onClick={() => openAuthModal({ view: 'login' })}
+                onClick={() => openAuthModal({ view: "login" })}
                 className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-[#52b274] text-[#52b274] text-[13px] font-semibold hover:bg-[#52b274]/10 transition-all duration-150 cursor-pointer flex-shrink-0"
               >
                 Sign in
@@ -522,8 +542,8 @@ export function DashboardShell({
       {/* MOBILE BOTTOM NAV */}
       <nav
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-[60] md:hidden h-[56px] bg-card border-t border-border flex items-center',
-          mobileDiscussionOpen && 'hidden',
+          "fixed bottom-0 left-0 right-0 z-[60] md:hidden h-[56px] bg-card border-t border-border flex items-center",
+          mobileDiscussionOpen && "hidden"
         )}
         aria-label="Mobile navigation"
         data-testid="authenticated-navigation"
@@ -534,12 +554,12 @@ export function DashboardShell({
           href="/"
           onClick={closeMessages}
           className={cn(
-            'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-            isActive('/') ? 'text-[#52b274]' : 'text-muted-foreground'
+            "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150",
+            isActive("/") ? "text-[#52b274]" : "text-muted-foreground"
           )}
           aria-label="Home"
         >
-          <House className="size-[22px]" fill={isActive('/') ? 'currentColor' : 'none'} />
+          <House className="size-[22px]" fill={isActive("/") ? "currentColor" : "none"} />
           <span className="text-[10px] font-semibold">Home</span>
         </Link>
 
@@ -548,17 +568,17 @@ export function DashboardShell({
           type="button"
           onClick={() => requireAuthForAction(() => setChatOpen(!chatOpen))}
           className={cn(
-            'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
-            chatOpen ? 'text-[#52b274]' : 'text-muted-foreground'
+            "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer",
+            chatOpen ? "text-[#52b274]" : "text-muted-foreground"
           )}
           aria-label="Messages"
           aria-expanded={chatOpen}
         >
           <div className="relative">
-            <MessageSquare className="size-[22px]" fill={chatOpen ? 'currentColor' : 'none'} />
+            <MessageSquare className="size-[22px]" fill={chatOpen ? "currentColor" : "none"} />
             {unreadChat > 0 && (
               <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
-                {unreadChat > 9 ? '9+' : unreadChat}
+                {unreadChat > 9 ? "9+" : unreadChat}
               </span>
             )}
           </div>
@@ -576,10 +596,14 @@ export function DashboardShell({
           className="flex flex-col items-center justify-center flex-1 h-full cursor-pointer border-0 bg-transparent"
           aria-label="Create"
         >
-          <div className={cn(
-            'flex items-center justify-center w-12 h-12 rounded-full -mt-5 shadow-[0_4px_14px_rgba(82,178,116,0.50)] transition-all duration-150',
-            submitDialogOpen ? 'bg-[#4a9e63] scale-95' : 'bg-[#52b274] hover:bg-[#4a9e63] active:scale-90'
-          )}>
+          <div
+            className={cn(
+              "flex items-center justify-center w-12 h-12 rounded-full -mt-5 shadow-[0_4px_14px_rgba(82,178,116,0.50)] transition-all duration-150",
+              submitDialogOpen
+                ? "bg-[#4a9e63] scale-95"
+                : "bg-[#52b274] hover:bg-[#4a9e63] active:scale-90"
+            )}
+          >
             <Plus className="size-6 text-white" strokeWidth={2.5} />
           </div>
         </button>
@@ -587,21 +611,26 @@ export function DashboardShell({
         {/* Notifications */}
         <button
           type="button"
-          onClick={() => requireAuthForAction(() => {
-            closeMessages();
-            router.push('/notifications');
-          })}
+          onClick={() =>
+            requireAuthForAction(() => {
+              closeMessages();
+              router.push("/notifications");
+            })
+          }
           className={cn(
-            'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
-            isActive('/notifications') ? 'text-[#52b274]' : 'text-muted-foreground'
+            "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer",
+            isActive("/notifications") ? "text-[#52b274]" : "text-muted-foreground"
           )}
           aria-label="Notifications"
         >
           <div className="relative">
-            <Bell className="size-[22px]" fill={isActive('/notifications') ? 'currentColor' : 'none'} />
+            <Bell
+              className="size-[22px]"
+              fill={isActive("/notifications") ? "currentColor" : "none"}
+            />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
-                {unreadCount > 9 ? '9+' : unreadCount}
+                {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </div>
@@ -613,8 +642,8 @@ export function DashboardShell({
           <Link
             href="/profile"
             className={cn(
-              'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150',
-              isActive('/profile') ? 'text-[#52b274]' : 'text-muted-foreground'
+              "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150",
+              isActive("/profile") ? "text-[#52b274]" : "text-muted-foreground"
             )}
             aria-label="Profile"
             data-testid="user-profile-menu"
@@ -624,8 +653,8 @@ export function DashboardShell({
               username={avatarSeed}
               size={24}
               className={cn(
-                'size-6 transition-all',
-                isActive('/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-border'
+                "size-6 transition-all",
+                isActive("/profile") ? "ring-2 ring-[#52b274] ring-offset-1" : "ring-1 ring-border"
               )}
             />
             <span className="text-[10px] font-semibold">Profile</span>
@@ -633,10 +662,10 @@ export function DashboardShell({
         ) : (
           <button
             type="button"
-            onClick={() => openAuthModal({ view: 'login' })}
+            onClick={() => openAuthModal({ view: "login" })}
             className={cn(
-              'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
-              'text-muted-foreground'
+              "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer",
+              "text-muted-foreground"
             )}
             aria-label="Sign in"
           >
@@ -650,37 +679,35 @@ export function DashboardShell({
       <main
         id="main-content"
         className={cn(
-          'h-full overscroll-contain pt-[56px] md:pt-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible',
-          mobileDiscussionOpen ? 'pb-0' : 'pb-[60px]',
+          "h-full overscroll-contain pt-[56px] md:pt-[60px] md:pb-0 md:h-auto md:min-h-screen md:overflow-visible",
+          mobileDiscussionOpen ? "pb-0" : "pb-[60px]",
           // Home pins search/filters above the post list on mobile (#487 / #488).
-          pathname === '/' ? 'overflow-hidden' : 'overflow-y-auto',
+          pathname === "/" ? "overflow-hidden" : "overflow-y-auto"
         )}
       >
-        {pathname.startsWith('/profile') || pathname.startsWith('/settings') ? (
+        {pathname.startsWith("/profile") || pathname.startsWith("/settings") ? (
           <div
             className={cn(
-              'lg:pl-[300px] xl:pl-[340px]',
-              loggedIn && 'xl:pr-[360px] 2xl:pr-[420px]'
+              "lg:pl-[300px] xl:pl-[340px]",
+              loggedIn && "xl:pr-[360px] 2xl:pr-[420px]"
             )}
           >
             <DashboardSidebars />
-            <div className="min-w-0 px-4">
-              {children}
-            </div>
+            <div className="min-w-0 px-4">{children}</div>
           </div>
         ) : (
           <div
             className={cn(
-              'mx-auto px-0 md:px-4',
-              pathname === '/' && 'h-full min-h-0 md:h-auto',
-              pathname.startsWith('/post/') && 'md:px-8 lg:px-12 h-full md:h-auto',
+              "mx-auto px-0 md:px-4",
+              pathname === "/" && "h-full min-h-0 md:h-auto",
+              pathname.startsWith("/post/") && "md:px-8 lg:px-12 h-full md:h-auto"
             )}
             style={{
-              maxWidth: pathname.startsWith('/control-panel')
-                ? 'none'
-                : pathname.startsWith('/post/')
-                  ? '1170px'
-                  : '42rem',
+              maxWidth: pathname.startsWith("/control-panel")
+                ? "none"
+                : pathname.startsWith("/post/")
+                  ? "1170px"
+                  : "42rem",
             }}
           >
             {children}

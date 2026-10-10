@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import { useQuery, useMutation } from '@apollo/client/react'
-import moment from 'moment'
-import { Mail, Loader2, AlertCircle } from 'lucide-react'
-import { toast } from 'sonner'
+import { useQuery, useMutation } from "@apollo/client/react";
+import moment from "moment";
+import { Mail, Loader2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,27 +29,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { USER_INVITE_REQUESTS } from '@/graphql/queries'
-import { UPDATE_USER_INVITE_STATUS } from '@/graphql/mutations'
-import { replaceGqlError } from '@/lib/utils/replaceGqlError'
-import type { InviteRequest, UserInviteRequestsResponse } from '@/types/admin'
+} from "@/components/ui/alert-dialog";
+import { USER_INVITE_REQUESTS } from "@/graphql/queries";
+import { UPDATE_USER_INVITE_STATUS } from "@/graphql/mutations";
+import { replaceGqlError } from "@/lib/utils/replaceGqlError";
+import type { InviteRequest, UserInviteRequestsResponse } from "@/types/admin";
 
 function getStatusLabel(status: string) {
   switch (Number(status)) {
-    case 1: return 'Pending'
-    case 2: return 'Declined'
-    case 4: return 'Accepted'
-    default: return 'New'
+    case 1:
+      return "Pending";
+    case 2:
+      return "Declined";
+    case 4:
+      return "Accepted";
+    default:
+      return "New";
   }
 }
 
-function getStatusVariant(status: string): 'outline' | 'default' | 'destructive' {
+function getStatusVariant(status: string): "outline" | "default" | "destructive" {
   switch (Number(status)) {
-    case 1: return 'outline'
-    case 2: return 'destructive'
-    case 4: return 'default'
-    default: return 'outline'
+    case 1:
+      return "outline";
+    case 2:
+      return "destructive";
+    case 4:
+      return "default";
+    default:
+      return "outline";
   }
 }
 
@@ -57,25 +65,25 @@ function InviteActionButton({
   invite,
   onComplete,
 }: {
-  invite: InviteRequest
-  onComplete: () => Promise<void>
+  invite: InviteRequest;
+  onComplete: () => Promise<void>;
 }) {
-  const [updateStatus, { loading }] = useMutation(UPDATE_USER_INVITE_STATUS)
+  const [updateStatus, { loading }] = useMutation(UPDATE_USER_INVITE_STATUS);
 
   const handleAction = async (newStatus: number, message: string) => {
     try {
       await updateStatus({
         variables: { userId: invite._id, inviteStatus: String(newStatus) },
-      })
-      await onComplete()
-      toast.success(message)
+      });
+      await onComplete();
+      toast.success(message);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to update'
-      toast.error(replaceGqlError(msg))
+      const msg = err instanceof Error ? err.message : "Failed to update";
+      toast.error(replaceGqlError(msg));
     }
-  }
+  };
 
-  const statusNum = Number(invite.status)
+  const statusNum = Number(invite.status);
 
   if (statusNum === 1) {
     // Pending — show Accept / Decline
@@ -97,7 +105,7 @@ function InviteActionButton({
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleAction(2, 'Invitation declined')}
+                onClick={() => handleAction(2, "Invitation declined")}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Decline
@@ -105,16 +113,12 @@ function InviteActionButton({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <Button
-          size="sm"
-          onClick={() => handleAction(4, 'Invitation accepted')}
-          disabled={loading}
-        >
+        <Button size="sm" onClick={() => handleAction(4, "Invitation accepted")} disabled={loading}>
           {loading && <Loader2 className="mr-1 size-3 animate-spin" />}
           Accept
         </Button>
       </div>
-    )
+    );
   }
 
   if (statusNum === 4) {
@@ -122,13 +126,13 @@ function InviteActionButton({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => handleAction(4, 'Invitation resent')}
+        onClick={() => handleAction(4, "Invitation resent")}
         disabled={loading}
       >
         {loading && <Loader2 className="mr-1 size-3 animate-spin" />}
         Resend
       </Button>
-    )
+    );
   }
 
   if (statusNum === 2) {
@@ -136,35 +140,33 @@ function InviteActionButton({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => handleAction(1, 'Reset to pending')}
+        onClick={() => handleAction(1, "Reset to pending")}
         disabled={loading}
       >
         {loading && <Loader2 className="mr-1 size-3 animate-spin" />}
         Reset
       </Button>
-    )
+    );
   }
 
-  return null
+  return null;
 }
 
 function InviteTable({
   invites,
   onRefresh,
 }: {
-  invites: InviteRequest[]
-  onRefresh: () => Promise<void>
+  invites: InviteRequest[];
+  onRefresh: () => Promise<void>;
 }) {
   if (invites.length === 0) {
     return (
       <div className="text-center py-12">
         <Mail className="mx-auto size-10 text-muted-foreground mb-3" />
         <p className="font-medium">No invite requests</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Invite requests will appear here
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">Invite requests will appear here</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -187,7 +189,7 @@ function InviteTable({
                 <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                 <TableCell className="font-medium">{invite.email}</TableCell>
                 <TableCell className="text-sm">
-                  {invite.joined ? moment(invite.joined).format('MMM DD, YYYY') : '—'}
+                  {invite.joined ? moment(invite.joined).format("MMM DD, YYYY") : "—"}
                 </TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(invite.status)}>
@@ -214,7 +216,7 @@ function InviteTable({
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              {invite.joined ? moment(invite.joined).format('MMM DD, YYYY') : '—'}
+              {invite.joined ? moment(invite.joined).format("MMM DD, YYYY") : "—"}
             </p>
             <div className="pt-1">
               <InviteActionButton invite={invite} onComplete={onRefresh} />
@@ -223,17 +225,17 @@ function InviteTable({
         ))}
       </div>
     </>
-  )
+  );
 }
 
 export default function ManageInvitesClient() {
   const { data, loading, error, refetch } = useQuery<UserInviteRequestsResponse>(
     USER_INVITE_REQUESTS,
     {
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-and-network',
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
     }
-  )
+  );
 
   if (error && !data) {
     return (
@@ -248,12 +250,12 @@ export default function ManageInvitesClient() {
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
-  const invites = data?.userInviteRequests || []
-  const sentInvites = invites.filter((i) => Number(i.status) === 4)
-  const receivedRequests = invites.filter((i) => Number(i.status) !== 4)
+  const invites = data?.userInviteRequests || [];
+  const sentInvites = invites.filter((i) => Number(i.status) === 4);
+  const receivedRequests = invites.filter((i) => Number(i.status) !== 4);
 
   return (
     <div className="py-6 space-y-6">
@@ -274,9 +276,7 @@ export default function ManageInvitesClient() {
             <TabsTrigger value="received">
               Received Requests ({receivedRequests.length})
             </TabsTrigger>
-            <TabsTrigger value="sent">
-              Sent Invites ({sentInvites.length})
-            </TabsTrigger>
+            <TabsTrigger value="sent">Sent Invites ({sentInvites.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="received" className="mt-4">
@@ -285,7 +285,12 @@ export default function ManageInvitesClient() {
                 <CardTitle className="text-base">Received Requests</CardTitle>
               </CardHeader>
               <CardContent>
-                <InviteTable invites={receivedRequests} onRefresh={async () => { await refetch() }} />
+                <InviteTable
+                  invites={receivedRequests}
+                  onRefresh={async () => {
+                    await refetch();
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -296,12 +301,17 @@ export default function ManageInvitesClient() {
                 <CardTitle className="text-base">Sent Invites</CardTitle>
               </CardHeader>
               <CardContent>
-                <InviteTable invites={sentInvites} onRefresh={async () => { await refetch() }} />
+                <InviteTable
+                  invites={sentInvites}
+                  onRefresh={async () => {
+                    await refetch();
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       )}
     </div>
-  )
+  );
 }

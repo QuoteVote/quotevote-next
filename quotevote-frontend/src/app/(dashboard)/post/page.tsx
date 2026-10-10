@@ -1,16 +1,16 @@
-import { Suspense } from 'react';
-import type { Metadata } from 'next';
-import { SubHeader } from '@/components/SubHeader';
-import PostSkeleton from '@/components/Post/PostSkeleton';
-import PaginatedPostsList from '@/components/Post/PaginatedPostsList';
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import { SubHeader } from "@/components/SubHeader";
+import PostSkeleton from "@/components/Post/PostSkeleton";
+import PaginatedPostsList from "@/components/Post/PaginatedPostsList";
 
 export const metadata: Metadata = {
-  title: 'Posts - Quote.Vote',
-  description: 'Browse and discover posts on Quote.Vote',
+  title: "Posts - Quote.Vote",
+  description: "Browse and discover posts on Quote.Vote",
 };
 
 // Mark as dynamic to prevent static optimization issues
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * Posts Page (Server Component)

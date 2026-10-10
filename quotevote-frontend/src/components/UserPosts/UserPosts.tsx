@@ -1,64 +1,64 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useQuery } from '@apollo/client/react'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { PaginatedList } from '@/components/common/PaginatedList'
-import PostCard from '@/components/Post/PostCard'
-import PostSkeleton from '@/components/Post/PostSkeleton'
-import { Card, CardContent } from '@/components/ui/card'
-import { useAppStore } from '@/store'
-import { createGraphQLVariables, extractPaginationData } from '@/lib/utils/pagination'
-import { usePagination } from '@/hooks/usePagination'
-import type { UserPostsProps } from '@/types/userPosts'
-import type { Post } from '@/types/post'
-import { GET_TOP_POSTS } from '@/graphql/queries'
+import { useEffect } from "react";
+import { useQuery } from "@apollo/client/react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PaginatedList } from "@/components/common/PaginatedList";
+import PostCard from "@/components/Post/PostCard";
+import PostSkeleton from "@/components/Post/PostSkeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAppStore } from "@/store";
+import { createGraphQLVariables, extractPaginationData } from "@/lib/utils/pagination";
+import { usePagination } from "@/hooks/usePagination";
+import type { UserPostsProps } from "@/types/userPosts";
+import type { Post } from "@/types/post";
+import { GET_TOP_POSTS } from "@/graphql/queries";
 
 export function UserPosts({ userId }: UserPostsProps) {
-  const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts)
+  const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts);
 
   const pagination = usePagination({
     defaultPageSize: 15,
-    pageParam: 'page',
-    pageSizeParam: 'page_size',
-  })
+    pageParam: "page",
+    pageSizeParam: "page_size",
+  });
 
   const variables = createGraphQLVariables({
     page: pagination.currentPage,
     pageSize: pagination.pageSize,
-    searchKey: '',
+    searchKey: "",
     userId,
-    sortOrder: 'created',
-  })
+    sortOrder: "created",
+  });
 
   const { loading, error, data, refetch } = useQuery(GET_TOP_POSTS, {
     variables,
-    fetchPolicy: 'cache-and-network',
-    errorPolicy: 'all',
+    fetchPolicy: "cache-and-network",
+    errorPolicy: "all",
     notifyOnNetworkStatusChange: true,
-    nextFetchPolicy: 'cache-and-network',
-  })
+    nextFetchPolicy: "cache-and-network",
+  });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.scrollTo(0, 0)
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
     }
-  }, [])
+  }, []);
 
   const { data: posts, pagination: paginationData } = extractPaginationData<Post>(
     (data || {}) as Record<string, unknown>,
-    'posts'
-  )
+    "posts"
+  );
 
-  const visiblePosts = (posts || []).filter((post) => !hiddenPosts.includes(post._id))
+  const visiblePosts = (posts || []).filter((post) => !hiddenPosts.includes(post._id));
 
   const renderPost = (post: Post, _index?: number) => (
     <PostCard
       key={post._id}
       _id={post._id}
-      text={post.text || ''}
-      title={post.title || ''}
-      url={post.url || ''}
+      text={post.text || ""}
+      title={post.title || ""}
+      url={post.url || ""}
       created={post.created}
       creator={post.creator || undefined}
       bookmarkedBy={post.bookmarkedBy || undefined}
@@ -71,7 +71,7 @@ export function UserPosts({ userId }: UserPostsProps) {
       groupId={post.groupId}
       citationUrl={post.citationUrl || undefined}
     />
-  )
+  );
 
   const renderEmpty = () => (
     <Card>
@@ -84,7 +84,7 @@ export function UserPosts({ userId }: UserPostsProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 
   const renderError = (err: Error | { message?: string }) => (
     <Card>
@@ -92,14 +92,14 @@ export function UserPosts({ userId }: UserPostsProps) {
         <div className="text-center py-8">
           <h3 className="text-lg font-semibold text-destructive mb-2">Error loading posts</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            {err.message || 'An error occurred while loading posts.'}
+            {err.message || "An error occurred while loading posts."}
           </p>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 
-  const renderLoading = () => <PostSkeleton />
+  const renderLoading = () => <PostSkeleton />;
 
   return (
     <ErrorBoundary>
@@ -123,12 +123,10 @@ export function UserPosts({ userId }: UserPostsProps) {
             onRefresh={refetch}
             className="w-full"
           >
-            <div className="flex flex-col gap-4 px-4 py-4">
-              {visiblePosts.map(renderPost)}
-            </div>
+            <div className="flex flex-col gap-4 px-4 py-4">{visiblePosts.map(renderPost)}</div>
           </PaginatedList>
         </div>
       </div>
     </ErrorBoundary>
-  )
+  );
 }

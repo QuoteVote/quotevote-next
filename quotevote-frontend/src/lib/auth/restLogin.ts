@@ -19,7 +19,7 @@ export interface LoginApiResponse {
   };
 }
 
-const LOGIN_PATHS = ['/login', '/auth/login'] as const;
+const LOGIN_PATHS = ["/login", "/auth/login"] as const;
 
 export function getLoginToken(data: LoginApiResponse): string | undefined {
   return data.accessToken ?? data.token;
@@ -30,22 +30,22 @@ export async function postLogin(
   username: string,
   password: string
 ): Promise<{ response: Response; data: LoginApiResponse }> {
-  const baseUrl = serverUrl.replace(/\/$/, '');
+  const baseUrl = serverUrl.replace(/\/$/, "");
   const body = JSON.stringify({ username, password });
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = { "Content-Type": "application/json" };
 
   let lastResponse: Response | null = null;
   let lastData: LoginApiResponse = {};
 
   for (const path of LOGIN_PATHS) {
     const response = await fetch(`${baseUrl}${path}`, {
-      method: 'POST',
+      method: "POST",
       headers,
       body,
     });
 
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.includes('application/json')) {
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
       lastResponse = response;
       continue;
     }
@@ -65,7 +65,7 @@ export async function postLogin(
   }
 
   if (!lastResponse) {
-    throw new Error('Login request failed: no auth endpoint responded with JSON');
+    throw new Error("Login request failed: no auth endpoint responded with JSON");
   }
 
   return { response: lastResponse, data: lastData };

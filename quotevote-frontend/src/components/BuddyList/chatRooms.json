@@ -2,10 +2,7 @@
   "messageRooms": [
     {
       "_id": "5ec105bce858c756c81096dc",
-      "users": [
-        "59b003750e3766041440171f",
-        "59b006a2dba5fb0027f48c76"
-      ],
+      "users": ["59b003750e3766041440171f", "59b006a2dba5fb0027f48c76"],
       "messageType": "USER",
       "created": "2020-05-17T09:37:00.429Z",
       "title": "John Doe",
@@ -13,9 +10,7 @@
     },
     {
       "_id": "5ec10c6bb8cff522789b57a2",
-      "users": [
-        "59b003750e3766041440171f"
-      ],
+      "users": ["59b003750e3766041440171f"],
       "messageType": "POST",
       "created": "2020-05-17T10:05:31.616Z",
       "title": "Newest Post ",

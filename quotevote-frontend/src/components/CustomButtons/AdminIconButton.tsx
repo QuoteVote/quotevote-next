@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAppStore } from '@/store';
-import type { AdminIconButtonProps } from '@/types/components';
+import { useRouter } from "next/navigation";
+import { Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/store";
+import type { AdminIconButtonProps } from "@/types/components";
 
 /**
  * AdminIconButton Component
- * 
+ *
  * Icon button that navigates to the admin control panel.
  * Only renders if the current user is an admin.
  */
@@ -21,7 +21,7 @@ export function AdminIconButton({ fontSize, onNavigate }: AdminIconButtonProps) 
     if (onNavigate) {
       onNavigate();
     }
-    router.push('/control-panel');
+    router.push("/control-panel");
   };
 
   // Only render if user is admin
@@ -29,7 +29,7 @@ export function AdminIconButton({ fontSize, onNavigate }: AdminIconButtonProps) 
     return null;
   }
 
-  const iconSize = fontSize === 'small' ? 20 : fontSize === 'large' ? 28 : 24;
+  const iconSize = fontSize === "small" ? 20 : fontSize === "large" ? 28 : 24;
 
   return (
     <Button
@@ -43,4 +43,3 @@ export function AdminIconButton({ fontSize, onNavigate }: AdminIconButtonProps) 
     </Button>
   );
 }
-

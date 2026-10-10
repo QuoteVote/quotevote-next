@@ -1,16 +1,16 @@
-import type { SubmitPostFormValues } from '@/lib/validation/submitPostSchema'
-import type { SubmitPostDraft, SubmitPostDraftTag } from '@/types/submitPostDraft'
+import type { SubmitPostFormValues } from "@/lib/validation/submitPostSchema";
+import type { SubmitPostDraft, SubmitPostDraftTag } from "@/types/submitPostDraft";
 
-const DRAFT_KEY_PREFIX = 'quotevote:submit-post-draft:'
+const DRAFT_KEY_PREFIX = "quotevote:submit-post-draft:";
 
 export function getSubmitPostDraftKey(userId: string): string {
-  return `${DRAFT_KEY_PREFIX}${userId}`
+  return `${DRAFT_KEY_PREFIX}${userId}`;
 }
 
-function isDraftTagEmpty(tag: SubmitPostDraft['tag']): boolean {
-  if (tag == null) return true
-  if (typeof tag === 'string') return tag.trim().length === 0
-  return tag.title.trim().length === 0
+function isDraftTagEmpty(tag: SubmitPostDraft["tag"]): boolean {
+  if (tag == null) return true;
+  if (typeof tag === "string") return tag.trim().length === 0;
+  return tag.title.trim().length === 0;
 }
 
 export function isSubmitPostDraftEmpty(draft: SubmitPostDraft): boolean {
@@ -20,110 +20,110 @@ export function isSubmitPostDraftEmpty(draft: SubmitPostDraft): boolean {
     !draft.citationUrl.trim() &&
     !draft.attribution.trim() &&
     isDraftTagEmpty(draft.tag)
-  )
+  );
 }
 
 export function readSubmitPostDraft(userId: string): SubmitPostDraft | null {
-  if (typeof window === 'undefined') return null
+  if (typeof window === "undefined") return null;
 
   try {
-    const raw = sessionStorage.getItem(getSubmitPostDraftKey(userId))
-    if (!raw) return null
+    const raw = sessionStorage.getItem(getSubmitPostDraftKey(userId));
+    if (!raw) return null;
 
-    const parsed = JSON.parse(raw) as Partial<SubmitPostDraft>
-    if (typeof parsed !== 'object' || parsed === null) return null
+    const parsed = JSON.parse(raw) as Partial<SubmitPostDraft>;
+    if (typeof parsed !== "object" || parsed === null) return null;
 
     return {
-      title: typeof parsed.title === 'string' ? parsed.title : '',
-      text: typeof parsed.text === 'string' ? parsed.text : '',
-      citationUrl: typeof parsed.citationUrl === 'string' ? parsed.citationUrl : '',
-      attribution: typeof parsed.attribution === 'string' ? parsed.attribution : '',
+      title: typeof parsed.title === "string" ? parsed.title : "",
+      text: typeof parsed.text === "string" ? parsed.text : "",
+      citationUrl: typeof parsed.citationUrl === "string" ? parsed.citationUrl : "",
+      attribution: typeof parsed.attribution === "string" ? parsed.attribution : "",
       tag: normalizeDraftTag(parsed.tag),
-    }
+    };
   } catch {
-    return null
+    return null;
   }
 }
 
-function normalizeDraftTag(value: unknown): SubmitPostDraft['tag'] {
-  if (value == null) return null
-  if (typeof value === 'string') return value
-  if (typeof value === 'object' && value !== null && 'title' in value) {
-    const tag = value as SubmitPostDraftTag
-    if (typeof tag.title !== 'string') return null
+function normalizeDraftTag(value: unknown): SubmitPostDraft["tag"] {
+  if (value == null) return null;
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value !== null && "title" in value) {
+    const tag = value as SubmitPostDraftTag;
+    if (typeof tag.title !== "string") return null;
     return {
-      _id: typeof tag._id === 'string' ? tag._id : undefined,
+      _id: typeof tag._id === "string" ? tag._id : undefined,
       title: tag.title,
-    }
+    };
   }
-  return null
+  return null;
 }
 
 export function writeSubmitPostDraft(userId: string, draft: SubmitPostDraft): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === "undefined") return;
 
   if (isSubmitPostDraftEmpty(draft)) {
-    clearSubmitPostDraft(userId)
-    return
+    clearSubmitPostDraft(userId);
+    return;
   }
 
-  sessionStorage.setItem(getSubmitPostDraftKey(userId), JSON.stringify(draft))
+  sessionStorage.setItem(getSubmitPostDraftKey(userId), JSON.stringify(draft));
 }
 
 export function clearSubmitPostDraft(userId: string): void {
-  if (typeof window === 'undefined') return
-  sessionStorage.removeItem(getSubmitPostDraftKey(userId))
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(getSubmitPostDraftKey(userId));
 }
 
 export function formValuesToDraft(values: SubmitPostFormValues): SubmitPostDraft {
-  const { title, text, citationUrl, attribution, tag } = values
+  const { title, text, citationUrl, attribution, tag } = values;
 
-  let serializedTag: SubmitPostDraft['tag'] = null
+  let serializedTag: SubmitPostDraft["tag"] = null;
   if (tag) {
-    if (typeof tag === 'string') {
-      serializedTag = tag
+    if (typeof tag === "string") {
+      serializedTag = tag;
     } else {
       serializedTag = {
-        _id: '_id' in tag && typeof tag._id === 'string' ? tag._id : undefined,
+        _id: "_id" in tag && typeof tag._id === "string" ? tag._id : undefined,
         title: tag.title,
-      }
+      };
     }
   }
 
   return {
-    title: title ?? '',
-    text: text ?? '',
-    citationUrl: citationUrl ?? '',
-    attribution: attribution ?? '',
+    title: title ?? "",
+    text: text ?? "",
+    citationUrl: citationUrl ?? "",
+    attribution: attribution ?? "",
     tag: serializedTag,
-  }
+  };
 }
 
-type TagOption = { _id?: string; title: string }
+type TagOption = { _id?: string; title: string };
 
 export function resolveDraftTag(
-  draftTag: SubmitPostDraft['tag'],
+  draftTag: SubmitPostDraft["tag"],
   options: TagOption[]
-): SubmitPostFormValues['tag'] {
-  if (draftTag == null) return undefined
+): SubmitPostFormValues["tag"] {
+  if (draftTag == null) return undefined;
 
-  if (typeof draftTag === 'string') {
-    const trimmed = draftTag.trim()
-    if (!trimmed) return undefined
-    const match = options.find((option) => option._id === trimmed || option.title === trimmed)
-    return match ?? { title: trimmed }
+  if (typeof draftTag === "string") {
+    const trimmed = draftTag.trim();
+    if (!trimmed) return undefined;
+    const match = options.find((option) => option._id === trimmed || option.title === trimmed);
+    return match ?? { title: trimmed };
   }
 
-  const trimmedTitle = draftTag.title.trim()
-  if (!trimmedTitle) return undefined
+  const trimmedTitle = draftTag.title.trim();
+  if (!trimmedTitle) return undefined;
 
   if (draftTag._id) {
-    const match = options.find((option) => option._id === draftTag._id)
-    return match ?? { _id: draftTag._id, title: trimmedTitle }
+    const match = options.find((option) => option._id === draftTag._id);
+    return match ?? { _id: draftTag._id, title: trimmedTitle };
   }
 
-  const match = options.find((option) => option.title === trimmedTitle)
-  return match ?? { title: trimmedTitle }
+  const match = options.find((option) => option.title === trimmedTitle);
+  return match ?? { title: trimmedTitle };
 }
 
 export function draftToFormValues(
@@ -136,5 +136,5 @@ export function draftToFormValues(
     citationUrl: draft.citationUrl,
     attribution: draft.attribution,
     tag: resolveDraftTag(draft.tag, options),
-  }
+  };
 }

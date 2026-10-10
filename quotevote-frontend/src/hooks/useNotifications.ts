@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { toast } from 'sonner';
-import type { NotificationHandler } from '@/types/notification';
+import { toast } from "sonner";
+import type { NotificationHandler } from "@/types/notification";
 
 /**
  * Custom hook for displaying toast notifications using sonner
- * 
+ *
  * Provides a simple API for showing success, error, info, and warning toasts
- * 
+ *
  * @example
  * ```tsx
  * const { notifySuccess, notifyError } = useNotifications();
- * 
+ *
  * notifySuccess('Post created successfully!');
  * notifyError('Failed to create post');
  * ```
@@ -48,4 +48,3 @@ export function useNotifications(): NotificationHandler {
     notifyWarning,
   };
 }
-

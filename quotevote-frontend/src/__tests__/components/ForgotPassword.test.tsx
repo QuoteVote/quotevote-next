@@ -2,13 +2,13 @@
  * Tests for ForgotPassword Component
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { ForgotPassword } from '@/components/ForgotPassword/ForgotPassword';
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { ForgotPassword } from "@/components/ForgotPassword/ForgotPassword";
 
 // Mock Next.js router
 const mockPush = jest.fn();
-jest.mock('next/navigation', () => ({
+jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
     replace: jest.fn(),
@@ -17,7 +17,7 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-describe('ForgotPassword Component', () => {
+describe("ForgotPassword Component", () => {
   const mockOnSubmit = jest.fn();
 
   beforeEach(() => {
@@ -25,38 +25,38 @@ describe('ForgotPassword Component', () => {
     mockPush.mockClear();
   });
 
-  describe('Rendering', () => {
-    it('renders all form fields and elements', () => {
+  describe("Rendering", () => {
+    it("renders all form fields and elements", () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      expect(screen.getByRole('heading', { name: /forgot your password/i })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /forgot your password/i })).toBeInTheDocument();
       expect(screen.getByText(/send a reset link/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /send reset link/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /send reset link/i })).toBeInTheDocument();
     });
 
-    it('renders back button with correct aria-label', () => {
+    it("renders back button with correct aria-label", () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const backButton = screen.getAllByRole('link', { name: /back to login/i })[0];
+      const backButton = screen.getAllByRole("link", { name: /back to login/i })[0];
       expect(backButton).toBeInTheDocument();
     });
 
-    it('renders login link', () => {
+    it("renders login link", () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const loginLinks = screen.getAllByRole('link', { name: /login/i });
+      const loginLinks = screen.getAllByRole("link", { name: /login/i });
       expect(loginLinks.length).toBeGreaterThan(0);
-      expect(loginLinks[0]).toHaveAttribute('href', '/auths/login');
+      expect(loginLinks[0]).toHaveAttribute("href", "/auths/login");
     });
   });
 
-  describe('Form Validation', () => {
-    it('shows validation error for empty email', async () => {
+  describe("Form Validation", () => {
+    it("shows validation error for empty email", async () => {
       const user = userEvent.setup();
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       await waitFor(() => {
@@ -64,14 +64,14 @@ describe('ForgotPassword Component', () => {
       });
     });
 
-    it('prevents submission and shows validation error for invalid email format', async () => {
+    it("prevents submission and shows validation error for invalid email format", async () => {
       const user = userEvent.setup();
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
       const emailInput = screen.getByLabelText(/email/i);
-      await user.type(emailInput, 'invalid-email');
+      await user.type(emailInput, "invalid-email");
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       // Verify form was not submitted due to validation
@@ -94,53 +94,47 @@ describe('ForgotPassword Component', () => {
       });
     });
 
-    it('accepts valid email format', async () => {
+    it("accepts valid email format", async () => {
       const user = userEvent.setup();
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
       const emailInput = screen.getByLabelText(/email/i);
-      await user.type(emailInput, 'test@example.com');
+      await user.type(emailInput, "test@example.com");
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockOnSubmit).toHaveBeenCalledWith(
-          { email: 'test@example.com' },
-          expect.anything()
-        );
+        expect(mockOnSubmit).toHaveBeenCalledWith({ email: "test@example.com" }, expect.anything());
       });
     });
   });
 
-  describe('Form Submission', () => {
-    it('submits form with valid email', async () => {
+  describe("Form Submission", () => {
+    it("submits form with valid email", async () => {
       const user = userEvent.setup();
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
       const emailInput = screen.getByLabelText(/email/i);
-      await user.type(emailInput, 'user@example.com');
+      await user.type(emailInput, "user@example.com");
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-        expect(mockOnSubmit).toHaveBeenCalledWith(
-          { email: 'user@example.com' },
-          expect.anything()
-        );
+        expect(mockOnSubmit).toHaveBeenCalledWith({ email: "user@example.com" }, expect.anything());
       });
     });
 
-    it('does not submit form with invalid email', async () => {
+    it("does not submit form with invalid email", async () => {
       const user = userEvent.setup();
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
       const emailInput = screen.getByLabelText(/email/i);
-      await user.type(emailInput, 'invalid');
+      await user.type(emailInput, "invalid");
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       await waitFor(() => {
@@ -149,11 +143,11 @@ describe('ForgotPassword Component', () => {
     });
   });
 
-  describe('Loading States', () => {
-    it('disables submit button when loading', () => {
+  describe("Loading States", () => {
+    it("disables submit button when loading", () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={true} />);
 
-      const submitButton = screen.getByRole('button', { name: /sending/i });
+      const submitButton = screen.getByRole("button", { name: /sending/i });
       expect(submitButton).toBeDisabled();
     });
 
@@ -166,47 +160,35 @@ describe('ForgotPassword Component', () => {
     it('shows "Send" text when not loading', () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      expect(screen.getByRole('button', { name: /send reset link/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /send reset link/i })).toBeInTheDocument();
     });
   });
 
-  describe('Error Handling', () => {
-    it('displays error message when provided', () => {
-      const errorMessage = 'Email not found';
-      render(
-        <ForgotPassword
-          onSubmit={mockOnSubmit}
-          loading={false}
-          error={errorMessage}
-        />
-      );
+  describe("Error Handling", () => {
+    it("displays error message when provided", () => {
+      const errorMessage = "Email not found";
+      render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} error={errorMessage} />);
 
-        expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
     });
 
-    it('clears error when form is resubmitted with valid data', async () => {
+    it("clears error when form is resubmitted with valid data", async () => {
       const user = userEvent.setup();
-      const errorMessage = 'Email not found';
+      const errorMessage = "Email not found";
       const { rerender } = render(
-        <ForgotPassword
-          onSubmit={mockOnSubmit}
-          loading={false}
-          error={errorMessage}
-        />
+        <ForgotPassword onSubmit={mockOnSubmit} loading={false} error={errorMessage} />
       );
 
-        expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(errorMessage)[0]).toBeInTheDocument();
 
       // Clear error and resubmit
-      rerender(
-        <ForgotPassword onSubmit={mockOnSubmit} loading={false} error={null} />
-      );
+      rerender(<ForgotPassword onSubmit={mockOnSubmit} loading={false} error={null} />);
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.clear(emailInput);
-      await user.type(emailInput, 'new@example.com');
+      await user.type(emailInput, "new@example.com");
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       await waitFor(() => {
@@ -215,78 +197,80 @@ describe('ForgotPassword Component', () => {
     });
   });
 
-  describe('Accessibility', () => {
-    it('has proper label for email input', () => {
+  describe("Accessibility", () => {
+    it("has proper label for email input", () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
       const emailInput = screen.getByLabelText(/email/i);
       expect(emailInput).toBeInTheDocument();
-      expect(emailInput).toHaveAttribute('type', 'email');
+      expect(emailInput).toHaveAttribute("type", "email");
     });
 
-    it('sets aria-invalid on email input when there is an error', async () => {
+    it("sets aria-invalid on email input when there is an error", async () => {
       const user = userEvent.setup();
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
       const emailInput = screen.getByLabelText(/email/i);
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
 
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(emailInput).toHaveAttribute('aria-invalid', 'true');
+        expect(emailInput).toHaveAttribute("aria-invalid", "true");
       });
     });
 
-    it('associates error message with input field', async () => {
+    it("associates error message with input field", async () => {
       const user = userEvent.setup();
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       await waitFor(() => {
         const errorMessages = screen.getAllByText(/email is required/i);
         expect(errorMessages.length).toBeGreaterThan(0);
         // Error message should be visible (either in alert or inline)
-        const visibleError = errorMessages.find(msg => {
+        const visibleError = errorMessages.find((msg) => {
           const element = msg as HTMLElement;
-          return element.offsetParent !== null || 
-                 element.closest('[role="alert"]') !== null ||
-                 element.closest('.text-red-600') !== null ||
-                 element.classList.contains('text-destructive');
+          return (
+            element.offsetParent !== null ||
+            element.closest('[role="alert"]') !== null ||
+            element.closest(".text-red-600") !== null ||
+            element.classList.contains("text-destructive")
+          );
         });
         expect(visibleError).toBeDefined();
       });
     });
 
-    it('has accessible back button', () => {
+    it("has accessible back button", () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const backButton = screen.getAllByRole('link', { name: /back to login/i })[0];
+      const backButton = screen.getAllByRole("link", { name: /back to login/i })[0];
       expect(backButton).toBeInTheDocument();
-      expect(backButton).toHaveAttribute('aria-label', 'Back to login');
+      expect(backButton).toHaveAttribute("aria-label", "Back to login");
     });
   });
 
-  describe('Navigation', () => {
-    it('back button points to login page', () => {
+  describe("Navigation", () => {
+    it("back button points to login page", () => {
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
-      const backButton = screen.getAllByRole('link', { name: /back to login/i })[0];
-      expect(backButton).toHaveAttribute('href', '/auths/login');
+      const backButton = screen.getAllByRole("link", { name: /back to login/i })[0];
+      expect(backButton).toHaveAttribute("href", "/auths/login");
     });
   });
 
-  describe('Edge Cases', () => {
-    it('handles onSubmit prop being undefined', async () => {
+  describe("Edge Cases", () => {
+    it("handles onSubmit prop being undefined", async () => {
       const user = userEvent.setup();
       render(<ForgotPassword loading={false} />);
 
       const emailInput = screen.getByLabelText(/email/i);
-      await user.type(emailInput, 'test@example.com');
+      await user.type(emailInput, "test@example.com");
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       // Should not throw an error
@@ -295,22 +279,19 @@ describe('ForgotPassword Component', () => {
       });
     });
 
-    it('handles long email addresses', async () => {
+    it("handles long email addresses", async () => {
       const user = userEvent.setup();
-      const longEmail = 'a'.repeat(100) + '@example.com';
+      const longEmail = "a".repeat(100) + "@example.com";
       render(<ForgotPassword onSubmit={mockOnSubmit} loading={false} />);
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.type(emailInput, longEmail);
 
-      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockOnSubmit).toHaveBeenCalledWith(
-          { email: longEmail },
-          expect.anything()
-        );
+        expect(mockOnSubmit).toHaveBeenCalledWith({ email: longEmail }, expect.anything());
       });
     });
   });

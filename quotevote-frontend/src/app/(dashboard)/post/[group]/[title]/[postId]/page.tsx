@@ -1,114 +1,120 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useParams } from 'next/navigation'
-import { useQuery, useSubscription } from '@apollo/client/react'
-import { WifiOff } from 'lucide-react'
-import PostController from '@/components/Post/PostController'
-import PostActionList from '@/components/PostActions/PostActionList'
-import PostChatSend from '@/components/PostChat/PostChatSend'
-import MobileDiscussionSplit from '@/components/Post/MobileDiscussionSplit'
-import { useHasMounted, useIsMobile, useIsLandscapeMobile } from '@/hooks/useMediaQuery'
-import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
-import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
-import { toLinkedPassage } from '@/lib/utils/discussionSplit'
-import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
-import { useAppStore } from '@/store'
-import type { PostQueryData } from '@/types/post'
-import type { PostAction, VoteAction, CommentAction, QuoteAction, MessageAction } from '@/types/postActions'
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { useQuery, useSubscription } from "@apollo/client/react";
+import { WifiOff } from "lucide-react";
+import PostController from "@/components/Post/PostController";
+import PostActionList from "@/components/PostActions/PostActionList";
+import PostChatSend from "@/components/PostChat/PostChatSend";
+import MobileDiscussionSplit from "@/components/Post/MobileDiscussionSplit";
+import { useHasMounted, useIsMobile, useIsLandscapeMobile } from "@/hooks/useMediaQuery";
+import { GET_POST, GET_ROOM_MESSAGES } from "@/graphql/queries";
+import { toAppPostUrl } from "@/lib/utils/sanitizeUrl";
+import { toLinkedPassage } from "@/lib/utils/discussionSplit";
+import { NEW_MESSAGE_SUBSCRIPTION } from "@/graphql/subscriptions";
+import { useAppStore } from "@/store";
+import type { PostQueryData } from "@/types/post";
+import type {
+  PostAction,
+  VoteAction,
+  CommentAction,
+  QuoteAction,
+  MessageAction,
+} from "@/types/postActions";
 
 interface RoomMessagesData {
   messages: Array<{
-    _id: string
-    messageRoomId: string
-    userId: string
-    userName?: string
-    title?: string
-    text?: string
-    created: string
-    type?: string
+    _id: string;
+    messageRoomId: string;
+    userId: string;
+    userName?: string;
+    title?: string;
+    text?: string;
+    created: string;
+    type?: string;
     user?: {
-      _id?: string
-      name?: string
-      username?: string
-      avatar?: string
-    }
-  }>
+      _id?: string;
+      name?: string;
+      username?: string;
+      avatar?: string;
+    };
+  }>;
 }
 
 interface InteractionSectionProps {
-  postId: string
-  hideHeader?: boolean
-  selectedActionId?: string | null
-  onActionSelect?: (action: PostAction) => void
-  onCountChange?: (count: number) => void
+  postId: string;
+  hideHeader?: boolean;
+  selectedActionId?: string | null;
+  onActionSelect?: (action: PostAction) => void;
+  onCountChange?: (count: number) => void;
 }
 
 export default function PostDetailPage(): React.ReactNode {
-  const params = useParams<{ postId: string }>()
-  const postId = params?.postId
+  const params = useParams<{ postId: string }>();
+  const postId = params?.postId;
 
   if (!postId) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
         <p className="text-muted-foreground">Post not found</p>
       </div>
-    )
+    );
   }
 
-  return <PostLayout postId={postId} />
+  return <PostLayout postId={postId} />;
 }
 
 function PostLayout({ postId }: { postId: string }) {
-  const hasMounted = useHasMounted()
-  const isMobile = useIsMobile()
-  const isLandscape = useIsLandscapeMobile()
-  const isPortraitMobile = isMobile && !isLandscape
+  const hasMounted = useHasMounted();
+  const isMobile = useIsMobile();
+  const isLandscape = useIsLandscapeMobile();
+  const isPortraitMobile = isMobile && !isLandscape;
 
-  const [discussionOpen, setDiscussionOpen] = useState(false)
-  const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
-  const [discussionCount, setDiscussionCount] = useState(0)
+  const [discussionOpen, setDiscussionOpen] = useState(false);
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
+  const [discussionCount, setDiscussionCount] = useState(0);
 
-  const setMobileDiscussionOpen = useAppStore((s) => s.setMobileDiscussionOpen)
-  const setLinkedPassage = useAppStore((s) => s.setLinkedPassage)
-  const setFocusedComment = useAppStore((s) => s.setFocusedComment)
+  const setMobileDiscussionOpen = useAppStore((s) => s.setMobileDiscussionOpen);
+  const setLinkedPassage = useAppStore((s) => s.setLinkedPassage);
+  const setFocusedComment = useAppStore((s) => s.setFocusedComment);
 
   useEffect(() => {
-    setMobileDiscussionOpen(discussionOpen && isPortraitMobile)
-    return () => setMobileDiscussionOpen(false)
-  }, [discussionOpen, isPortraitMobile, setMobileDiscussionOpen])
+    setMobileDiscussionOpen(discussionOpen && isPortraitMobile);
+    return () => setMobileDiscussionOpen(false);
+  }, [discussionOpen, isPortraitMobile, setMobileDiscussionOpen]);
 
   useEffect(() => {
     return () => {
-      setLinkedPassage(null)
-      setFocusedComment(null)
-    }
-  }, [setLinkedPassage, setFocusedComment])
+      setLinkedPassage(null);
+      setFocusedComment(null);
+    };
+  }, [setLinkedPassage, setFocusedComment]);
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      setDiscussionOpen(open)
-      setMobileDiscussionOpen(open && isPortraitMobile)
+      setDiscussionOpen(open);
+      setMobileDiscussionOpen(open && isPortraitMobile);
     },
-    [isPortraitMobile, setMobileDiscussionOpen],
-  )
+    [isPortraitMobile, setMobileDiscussionOpen]
+  );
 
   const handleActionSelect = useCallback(
     (action: PostAction) => {
       if (selectedActionId === action._id) {
-        setSelectedActionId(null)
-        setFocusedComment(null)
-        setLinkedPassage(null)
-        return
+        setSelectedActionId(null);
+        setFocusedComment(null);
+        setLinkedPassage(null);
+        return;
       }
-      setSelectedActionId(action._id)
-      setFocusedComment(action._id)
-      const passage = toLinkedPassage(action)
+      setSelectedActionId(action._id);
+      setFocusedComment(action._id);
+      const passage = toLinkedPassage(action);
       if (passage) {
-        setLinkedPassage(passage)
+        setLinkedPassage(passage);
         if (isPortraitMobile) {
-          setDiscussionOpen(true)
-          setMobileDiscussionOpen(true)
+          setDiscussionOpen(true);
+          setMobileDiscussionOpen(true);
         }
       }
     },
@@ -118,23 +124,23 @@ function PostLayout({ postId }: { postId: string }) {
       setFocusedComment,
       setLinkedPassage,
       setMobileDiscussionOpen,
-    ],
-  )
+    ]
+  );
 
   const handleActivateLinkedComment = useCallback(
     (actionId: string) => {
       if (selectedActionId === actionId && discussionOpen) {
-        setSelectedActionId(null)
-        setFocusedComment(null)
-        setLinkedPassage(null)
-        return
+        setSelectedActionId(null);
+        setFocusedComment(null);
+        setLinkedPassage(null);
+        return;
       }
-      setSelectedActionId(actionId)
-      setFocusedComment(actionId)
-      handleOpenChange(true)
+      setSelectedActionId(actionId);
+      setFocusedComment(actionId);
+      handleOpenChange(true);
     },
-    [discussionOpen, handleOpenChange, selectedActionId, setFocusedComment, setLinkedPassage],
-  )
+    [discussionOpen, handleOpenChange, selectedActionId, setFocusedComment, setLinkedPassage]
+  );
 
   const quotePane = (
     <PostController
@@ -142,7 +148,7 @@ function PostLayout({ postId }: { postId: string }) {
       onOpenDiscussion={() => handleOpenChange(true)}
       onActivateLinkedComment={handleActivateLinkedComment}
     />
-  )
+  );
 
   const discussion = (
     <InteractionSection
@@ -152,12 +158,12 @@ function PostLayout({ postId }: { postId: string }) {
       onActionSelect={handleActionSelect}
       onCountChange={setDiscussionCount}
     />
-  )
+  );
 
   // SSR and hydration share this shell so matchMedia cannot swap the tree.
   // After mount, pick portrait-mobile split vs desktop/landscape columns.
   if (!hasMounted) {
-    return <div className="h-full overflow-hidden relative">{quotePane}</div>
+    return <div className="h-full overflow-hidden relative">{quotePane}</div>;
   }
 
   if (isPortraitMobile) {
@@ -172,20 +178,23 @@ function PostLayout({ postId }: { postId: string }) {
           {discussion}
         </MobileDiscussionSplit>
       </div>
-    )
+    );
   }
 
-  const containerHeight = isLandscape ? 'h-[calc(100vh-80px)]' : 'h-[85vh]'
+  const containerHeight = isLandscape ? "h-[calc(100vh-80px)]" : "h-[85vh]";
   return (
     <div className={`flex ${containerHeight} overflow-hidden`}>
-      <div data-post-detail-pane="content" className="flex-1 overflow-y-auto border-r border-border">
+      <div
+        data-post-detail-pane="content"
+        className="flex-1 overflow-y-auto border-r border-border"
+      >
         {quotePane}
       </div>
       <div data-post-detail-pane="discussion" className="w-[50%] flex flex-col overflow-hidden">
         {discussion}
       </div>
     </div>
-  )
+  );
 }
 
 function InteractionSection({
@@ -195,131 +204,140 @@ function InteractionSection({
   onActionSelect,
   onCountChange,
 }: InteractionSectionProps) {
-  const [wsDisconnected, setWsDisconnected] = useState(false)
+  const [wsDisconnected, setWsDisconnected] = useState(false);
 
-  const { loading: postLoading, data: postData, refetch: refetchPost } = useQuery<PostQueryData>(
-    GET_POST,
-    { variables: { postId }, fetchPolicy: 'cache-first' }
-  )
+  const {
+    loading: postLoading,
+    data: postData,
+    refetch: refetchPost,
+  } = useQuery<PostQueryData>(GET_POST, { variables: { postId }, fetchPolicy: "cache-first" });
 
-  const post = postData?.post
-  const messageRoomId = post?.messageRoom?._id
-  const postTitle = post?.title
-  const postUrl = post?.url ? toAppPostUrl(post.url) : undefined
+  const post = postData?.post;
+  const messageRoomId = post?.messageRoom?._id;
+  const postTitle = post?.title;
+  const postUrl = post?.url ? toAppPostUrl(post.url) : undefined;
 
   const { data: messagesData, refetch: refetchMessages } = useQuery<RoomMessagesData>(
     GET_ROOM_MESSAGES,
     {
       variables: { messageRoomId },
       skip: !messageRoomId,
-      fetchPolicy: 'cache-and-network',
+      fetchPolicy: "cache-and-network",
     }
-  )
+  );
 
   useSubscription(NEW_MESSAGE_SUBSCRIPTION, {
     variables: { messageRoomId },
     skip: !messageRoomId,
     onData: () => {
-      if (wsDisconnected) setWsDisconnected(false)
-      refetchMessages()
+      if (wsDisconnected) setWsDisconnected(false);
+      refetchMessages();
     },
     onError: () => setWsDisconnected(true),
-  })
+  });
 
   useEffect(() => {
-    if (!wsDisconnected || !messageRoomId) return
+    if (!wsDisconnected || !messageRoomId) return;
     const interval = setInterval(() => {
       refetchMessages()
-        .then(() => { setWsDisconnected(false); clearInterval(interval) })
-        .catch(() => {})
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [wsDisconnected, messageRoomId, refetchMessages])
+        .then(() => {
+          setWsDisconnected(false);
+          clearInterval(interval);
+        })
+        .catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [wsDisconnected, messageRoomId, refetchMessages]);
 
   const postActions = useMemo<PostAction[]>(() => {
-    const actions: PostAction[] = []
-    const comments = post?.comments || []
-    const votes = post?.votes || []
-    const quotes = post?.quotes || []
-    const messages = messagesData?.messages || []
+    const actions: PostAction[] = [];
+    const comments = post?.comments || [];
+    const votes = post?.votes || [];
+    const quotes = post?.quotes || [];
+    const messages = messagesData?.messages || [];
 
     for (const c of comments) {
       actions.push({
         ...c,
-        __typename: 'Comment',
-        content: c.content || '',
+        __typename: "Comment",
+        content: c.content || "",
         created: c.created,
         startWordIndex: c.startWordIndex,
         endWordIndex: c.endWordIndex,
         user: {
-          _id: c.user?._id || '',
-          username: c.user?.username || '',
+          _id: c.user?._id || "",
+          username: c.user?.username || "",
           name: c.user?.name ?? null,
           avatar: c.user?.avatar ?? null,
         },
         commentQuote:
           c.endWordIndex != null && c.startWordIndex != null && c.endWordIndex > c.startWordIndex
-            ? post?.text?.substring(c.startWordIndex, c.endWordIndex)?.replace(/(\r\n|\n|\r)/gm, '') ?? null
+            ? (post?.text
+                ?.substring(c.startWordIndex, c.endWordIndex)
+                ?.replace(/(\r\n|\n|\r)/gm, "") ?? null)
             : null,
-      } as CommentAction)
+      } as CommentAction);
     }
 
     for (const v of votes) {
       actions.push({
         ...v,
-        __typename: 'Vote',
+        __typename: "Vote",
         created: v.created ?? new Date().toISOString(),
         user: {
-          _id: v.user?._id || '',
-          username: v.user?.username || '',
+          _id: v.user?._id || "",
+          username: v.user?.username || "",
           name: v.user?.name ?? null,
           avatar: v.user?.avatar ?? null,
         },
-      } as VoteAction)
+      } as VoteAction);
     }
 
     for (const q of quotes) {
       actions.push({
         ...q,
-        __typename: 'Quote',
+        __typename: "Quote",
         created: q.created ?? new Date().toISOString(),
         user: {
-          _id: q.user?._id || '',
-          username: q.user?.username || '',
+          _id: q.user?._id || "",
+          username: q.user?.username || "",
           name: q.user?.name ?? null,
           avatar: q.user?.avatar ?? null,
         },
-      } as QuoteAction)
+      } as QuoteAction);
     }
 
     for (const msg of messages) {
       actions.push({
         _id: msg._id,
-        __typename: 'Message',
-        text: msg.text || '',
+        __typename: "Message",
+        text: msg.text || "",
         created: msg.created,
         userId: msg.userId,
-        content: msg.text || '',
+        content: msg.text || "",
         user: {
-          _id: msg.user?._id || '',
-          username: msg.user?.username || msg.userName || '',
+          _id: msg.user?._id || "",
+          username: msg.user?.username || msg.userName || "",
           name: msg.user?.name ?? msg.userName ?? null,
           avatar: msg.user?.avatar ?? null,
         },
-      } as MessageAction)
+      } as MessageAction);
     }
 
-    return actions
-  }, [post, messagesData])
+    return actions;
+  }, [post, messagesData]);
 
   useEffect(() => {
-    onCountChange?.(postActions.length)
-  }, [postActions.length, onCountChange])
+    onCountChange?.(postActions.length);
+  }, [postActions.length, onCountChange]);
 
   return (
     <div className="flex flex-col h-full">
       {!hideHeader && (
-        <div data-discussion-header className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background shrink-0">
+        <div
+          data-discussion-header
+          className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background shrink-0"
+        >
           <span className="text-sm font-semibold text-foreground/75">
             Discussion · {postActions.length}
           </span>
@@ -355,5 +373,5 @@ function InteractionSection({
         </div>
       )}
     </div>
-  )
+  );
 }

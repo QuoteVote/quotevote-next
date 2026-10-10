@@ -1,28 +1,24 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useCallback } from 'react'
-import { useQuery } from '@apollo/client/react'
-import type { DocumentNode } from '@apollo/client'
-import { Loader2 } from 'lucide-react'
-import { PaginatedList } from '@/components/common/PaginatedList'
-import { Button } from '@/components/ui/button'
-import PostCard from './PostCard'
-import PostSkeleton from './PostSkeleton'
-import { GET_TOP_POSTS } from '@/graphql/queries'
-import { createGraphQLVariables, extractPaginationData } from '@/lib/utils/pagination'
-import { usePaginationWithFilters } from '@/hooks/usePagination'
-import { useAppStore } from '@/store'
-import type {
-  Post,
-  PaginatedPostsListData,
-  PaginatedPostsListProps,
-} from '@/types/post'
+import { useEffect, useState, useCallback } from "react";
+import { useQuery } from "@apollo/client/react";
+import type { DocumentNode } from "@apollo/client";
+import { Loader2 } from "lucide-react";
+import { PaginatedList } from "@/components/common/PaginatedList";
+import { Button } from "@/components/ui/button";
+import PostCard from "./PostCard";
+import PostSkeleton from "./PostSkeleton";
+import { GET_TOP_POSTS } from "@/graphql/queries";
+import { createGraphQLVariables, extractPaginationData } from "@/lib/utils/pagination";
+import { usePaginationWithFilters } from "@/hooks/usePagination";
+import { useAppStore } from "@/store";
+import type { Post, PaginatedPostsListData, PaginatedPostsListProps } from "@/types/post";
 
 export default function PaginatedPostsList({
   defaultPageSize = 20,
-  pageParam = 'page',
-  pageSizeParam = 'page_size',
-  searchKey = '',
+  pageParam = "page",
+  pageSizeParam = "page_size",
+  searchKey = "",
   startDateRange,
   endDateRange,
   friendsOnly = false,
@@ -44,14 +40,14 @@ export default function PaginatedPostsList({
   paginationClassName,
   compact = false,
   query,
-  dataKey = 'posts',
+  dataKey = "posts",
 }: PaginatedPostsListProps & { query?: DocumentNode; dataKey?: string }) {
-  const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts) || []
+  const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts) || [];
 
   // Load-more state
-  const [allLoadedPosts, setAllLoadedPosts] = useState<Post[]>([])
-  const [loadMorePage, setLoadMorePage] = useState(1)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [allLoadedPosts, setAllLoadedPosts] = useState<Post[]>([]);
+  const [loadMorePage, setLoadMorePage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Use pagination hook with filter dependencies
   const pagination = usePaginationWithFilters(
@@ -62,11 +58,21 @@ export default function PaginatedPostsList({
       onPageChange,
       onPageSizeChange,
     },
-    [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved]
-  )
+    [
+      searchKey,
+      startDateRange,
+      endDateRange,
+      friendsOnly,
+      interactions,
+      userId,
+      sortOrder,
+      groupId,
+      approved,
+    ]
+  );
 
   // Create GraphQL variables
-  const currentPage = loadMoreMode ? loadMorePage : pagination.currentPage
+  const currentPage = loadMoreMode ? loadMorePage : pagination.currentPage;
   const variables = createGraphQLVariables({
     page: currentPage,
     pageSize: loadMoreMode ? defaultPageSize : pagination.pageSize,
@@ -79,75 +85,93 @@ export default function PaginatedPostsList({
     sortOrder,
     groupId,
     approved,
-  })
+  });
 
   // Fetch data
-  const { loading, error, data, refetch, fetchMore } = useQuery<PaginatedPostsListData>(query || GET_TOP_POSTS, {
-    variables,
-    fetchPolicy: 'cache-and-network',
-    errorPolicy: 'all',
-    notifyOnNetworkStatusChange: true,
-    nextFetchPolicy: 'cache-and-network',
-  })
+  const { loading, error, data, refetch, fetchMore } = useQuery<PaginatedPostsListData>(
+    query || GET_TOP_POSTS,
+    {
+      variables,
+      fetchPolicy: "cache-and-network",
+      errorPolicy: "all",
+      notifyOnNetworkStatusChange: true,
+      nextFetchPolicy: "cache-and-network",
+    }
+  );
 
   // Ensure data is fetched when component mounts with page parameter
   useEffect(() => {
-    if (!loadMoreMode && pagination.currentPage > 1 && (!data || !(data as unknown as Record<string, unknown>)[dataKey])) {
-      refetch()
+    if (
+      !loadMoreMode &&
+      pagination.currentPage > 1 &&
+      (!data || !(data as unknown as Record<string, unknown>)[dataKey])
+    ) {
+      refetch();
     }
-  }, [pagination.currentPage, data, refetch, dataKey, loadMoreMode])
+  }, [pagination.currentPage, data, refetch, dataKey, loadMoreMode]);
 
   // Force refetch when component mounts with a page parameter from URL
   useEffect(() => {
     if (!loadMoreMode && pagination.currentPage > 1) {
-      refetch()
+      refetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run on mount - refetch is stable from useQuery
+  }, []); // Only run on mount - refetch is stable from useQuery
 
   // Extract and process data
   const { data: entities, pagination: paginationData } = extractPaginationData<Post>(
     (data as unknown as Record<string, unknown>) || {},
     dataKey
-  )
+  );
 
   // Reset accumulated posts when filters change in load-more mode
   useEffect(() => {
     if (loadMoreMode) {
-      setAllLoadedPosts([])
-      setLoadMorePage(1)
+      setAllLoadedPosts([]);
+      setLoadMorePage(1);
     }
-  }, [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved, loadMoreMode])
+  }, [
+    searchKey,
+    startDateRange,
+    endDateRange,
+    friendsOnly,
+    interactions,
+    userId,
+    sortOrder,
+    groupId,
+    approved,
+    loadMoreMode,
+  ]);
 
   // Accumulate posts in load-more mode
   useEffect(() => {
     if (loadMoreMode && entities && entities.length > 0) {
       if (loadMorePage === 1) {
-        setAllLoadedPosts(entities)
+        setAllLoadedPosts(entities);
       } else {
         setAllLoadedPosts((prev) => {
-          const existingIds = new Set(prev.map((p) => p._id))
-          const newPosts = entities.filter((p) => !existingIds.has(p._id))
-          return [...prev, ...newPosts]
-        })
+          const existingIds = new Set(prev.map((p) => p._id));
+          const newPosts = entities.filter((p) => !existingIds.has(p._id));
+          return [...prev, ...newPosts];
+        });
       }
-      setIsLoadingMore(false)
+      setIsLoadingMore(false);
     }
-  }, [entities, loadMoreMode, loadMorePage])
+  }, [entities, loadMoreMode, loadMorePage]);
 
   // Notify parent of total count changes
   useEffect(() => {
     if (onTotalCountChange && paginationData?.total !== undefined) {
-      onTotalCountChange(paginationData.total)
+      onTotalCountChange(paginationData.total);
     }
-  }, [paginationData?.total, onTotalCountChange])
+  }, [paginationData?.total, onTotalCountChange]);
 
   // Load more handler
   const handleLoadMore = useCallback(() => {
-    if (isLoadingMore || loading) return
-    setIsLoadingMore(true)
-    const nextPage = loadMorePage + 1
-    setLoadMorePage(nextPage)
+    if (isLoadingMore || loading) return;
+    setIsLoadingMore(true);
+    const nextPage = loadMorePage + 1;
+    setLoadMorePage(nextPage);
 
     const nextVariables = createGraphQLVariables({
       page: nextPage,
@@ -161,17 +185,32 @@ export default function PaginatedPostsList({
       sortOrder,
       groupId,
       approved,
-    })
+    });
 
     fetchMore({
       variables: nextVariables,
     }).catch(() => {
-      setIsLoadingMore(false)
-    })
-  }, [isLoadingMore, loading, loadMorePage, defaultPageSize, searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved, fetchMore])
+      setIsLoadingMore(false);
+    });
+  }, [
+    isLoadingMore,
+    loading,
+    loadMorePage,
+    defaultPageSize,
+    searchKey,
+    startDateRange,
+    endDateRange,
+    friendsOnly,
+    interactions,
+    userId,
+    sortOrder,
+    groupId,
+    approved,
+    fetchMore,
+  ]);
 
   // Determine which posts to display
-  const basePosts = loadMoreMode ? allLoadedPosts : (entities || [])
+  const basePosts = loadMoreMode ? allLoadedPosts : entities || [];
 
   // When "Most Popular" is active, sort by total interaction count using actual returned data
   const sortedPosts = interactions
@@ -182,30 +221,32 @@ export default function PaginatedPostsList({
           (p.comments?.length ?? 0) +
           (p.votes?.length ?? 0) +
           (p.quotes?.length ?? 0) +
-          (p.messageRoom && 'messages' in p.messageRoom
+          (p.messageRoom && "messages" in p.messageRoom
             ? ((p.messageRoom as { messages?: unknown[] }).messages?.length ?? 0)
-            : 0)
-        return countInteractions(b) - countInteractions(a)
+            : 0);
+        return countInteractions(b) - countInteractions(a);
       })
-    : basePosts
+    : basePosts;
 
   // Filter out hidden posts and add rank
   const processedPosts = sortedPosts
     .map((post, index) => ({ ...post, rank: index + 1 }))
-    .filter((post) => !hiddenPosts.includes(post._id))
+    .filter((post) => !hiddenPosts.includes(post._id));
 
-  const hasMore = loadMoreMode && paginationData
-    ? loadMorePage < (paginationData.total > 0 ? Math.ceil(paginationData.total / defaultPageSize) : 1)
-    : false
+  const hasMore =
+    loadMoreMode && paginationData
+      ? loadMorePage <
+        (paginationData.total > 0 ? Math.ceil(paginationData.total / defaultPageSize) : 1)
+      : false;
 
   // Render individual post
   const renderPost = (post: Post & { rank?: number }) => (
     <PostCard
       key={post._id}
       _id={post._id}
-      text={post.text || ''}
-      title={post.title || ''}
-      url={post.url || ''}
+      text={post.text || ""}
+      title={post.title || ""}
+      url={post.url || ""}
       created={post.created}
       creator={post.creator || undefined}
       bookmarkedBy={post.bookmarkedBy || undefined}
@@ -221,7 +262,7 @@ export default function PaginatedPostsList({
       searchKey={searchKey}
       compact={compact}
     />
-  )
+  );
 
   // Render empty state
   const renderEmpty = () => (
@@ -229,10 +270,12 @@ export default function PaginatedPostsList({
       <div className="text-6xl mb-4">📝</div>
       <h3 className="text-gray-600 mb-2">No posts found</h3>
       <p className="text-gray-400">
-        {searchKey ? `No posts match your search for "${searchKey}"` : 'No posts available at the moment'}
+        {searchKey
+          ? `No posts match your search for "${searchKey}"`
+          : "No posts available at the moment"}
       </p>
     </div>
-  )
+  );
 
   // Render error state
   const renderError = (error: Error | { message?: string }, onRetry?: () => void) => (
@@ -240,7 +283,7 @@ export default function PaginatedPostsList({
       <div className="text-6xl mb-4">⚠️</div>
       <h3 className="text-red-600 mb-2">Something went wrong</h3>
       <p className="text-gray-600 mb-4">
-        {error?.message || 'An error occurred while loading posts'}
+        {error?.message || "An error occurred while loading posts"}
       </p>
       {onRetry && (
         <button
@@ -252,31 +295,29 @@ export default function PaginatedPostsList({
         </button>
       )}
     </div>
-  )
+  );
 
   // Render loading state — PostSkeleton already renders 3 cards
-  const renderLoading = () => <PostSkeleton />
+  const renderLoading = () => <PostSkeleton />;
 
   // Load More mode — render without PaginatedList wrapper
   if (loadMoreMode) {
     if (loading && processedPosts.length === 0) {
-      return renderLoading()
+      return renderLoading();
     }
 
     if (error && processedPosts.length === 0) {
-      return renderError(error, onRefresh || refetch)
+      return renderError(error, onRefresh || refetch);
     }
 
     if (!loading && processedPosts.length === 0) {
-      return renderEmpty()
+      return renderEmpty();
     }
 
     return (
       <div className={className}>
         <div className={contentClassName}>
-          <div className="flex flex-col gap-4 px-4 py-4">
-            {processedPosts.map(renderPost)}
-          </div>
+          <div className="flex flex-col gap-4 px-4 py-4">{processedPosts.map(renderPost)}</div>
 
           {/* Load More button + skeleton loaders */}
           {hasMore && (
@@ -295,7 +336,7 @@ export default function PaginatedPostsList({
                     Loading...
                   </>
                 ) : (
-                  'Load More'
+                  "Load More"
                 )}
               </Button>
               {paginationData && (
@@ -307,7 +348,7 @@ export default function PaginatedPostsList({
           )}
         </div>
       </div>
-    )
+    );
   }
 
   // Default: paginated mode
@@ -332,10 +373,7 @@ export default function PaginatedPostsList({
       contentClassName={contentClassName}
       paginationClassName={paginationClassName}
     >
-      <div className="flex flex-col gap-4 px-4 py-4">
-        {processedPosts.map(renderPost)}
-      </div>
+      <div className="flex flex-col gap-4 px-4 py-4">{processedPosts.map(renderPost)}</div>
     </PaginatedList>
-  )
+  );
 }
-

@@ -1,24 +1,24 @@
 "use client";
 
-import { useState } from 'react';
-import { Settings, X } from 'lucide-react';
-import { useQuery } from '@apollo/client/react';
+import { useState } from "react";
+import { Settings, X } from "lucide-react";
+import { useQuery } from "@apollo/client/react";
 
-import ChatSearchInput from './ChatSearchInput';
-import MessageBox from './MessageBox';
-import ChatTabs from './ChatTabs';
-import ChatList from './ChatList';
-import BuddyListWithPresence from '@/components/BuddyList/BuddyListWithPresence';
-import UserSearchResults from './UserSearchResults';
-import StatusEditor from './StatusEditor';
-import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
-import { useAppStore } from '@/store';
-import { Button } from '@/components/ui/button';
-import { GET_CHAT_ROOMS } from '@/graphql/queries';
-import { cn } from '@/lib/utils';
-import type { ChatState } from '@/types/store';
+import ChatSearchInput from "./ChatSearchInput";
+import MessageBox from "./MessageBox";
+import ChatTabs from "./ChatTabs";
+import ChatList from "./ChatList";
+import BuddyListWithPresence from "@/components/BuddyList/BuddyListWithPresence";
+import UserSearchResults from "./UserSearchResults";
+import StatusEditor from "./StatusEditor";
+import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
+import { useAppStore } from "@/store";
+import { Button } from "@/components/ui/button";
+import { GET_CHAT_ROOMS } from "@/graphql/queries";
+import { cn } from "@/lib/utils";
+import type { ChatState } from "@/types/store";
 
-type ChatTabValue = 'chats' | 'groups' | 'buddies';
+type ChatTabValue = "chats" | "groups" | "buddies";
 
 interface ChatRoom {
   _id: string;
@@ -30,7 +30,7 @@ interface GetChatRoomsData {
   messageRooms: ChatRoom[];
 }
 
-type BuddyPresence = ChatState['presenceMap'][string];
+type BuddyPresence = ChatState["presenceMap"][string];
 
 interface BuddyListItem {
   id: string;
@@ -45,31 +45,26 @@ interface BuddyListItem {
 }
 
 function getStatusLabel(status: string): string {
-  if (status === 'dnd') return 'Do Not Disturb';
-  if (!status) return 'Online';
+  if (status === "dnd") return "Do Not Disturb";
+  if (!status) return "Online";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function UserStatusDisplay() {
-  const userStatus = useAppStore((state) => state.chat.userStatus || 'online');
-  const userStatusMessage = useAppStore(
-    (state) => state.chat.userStatusMessage || ''
-  );
+  const userStatus = useAppStore((state) => state.chat.userStatus || "online");
+  const userStatusMessage = useAppStore((state) => state.chat.userStatusMessage || "");
 
   const label = userStatusMessage || getStatusLabel(userStatus);
 
-  let dotClass = 'bg-zinc-400';
-  if (userStatus === 'online') dotClass = 'bg-[#52b274]';
-  else if (userStatus === 'away') dotClass = 'bg-amber-400';
-  else if (userStatus === 'dnd') dotClass = 'bg-red-500';
+  let dotClass = "bg-zinc-400";
+  if (userStatus === "online") dotClass = "bg-[#52b274]";
+  else if (userStatus === "away") dotClass = "bg-amber-400";
+  else if (userStatus === "dnd") dotClass = "bg-red-500";
 
   return (
     <div className="inline-flex max-w-xs items-center gap-2 rounded-lg border border-white/30 bg-white/20 px-2 py-1 text-xs text-white backdrop-blur">
       <span
-        className={cn(
-          'h-2.5 w-2.5 rounded-full shadow shadow-black/30',
-          dotClass
-        )}
+        className={cn("h-2.5 w-2.5 rounded-full shadow shadow-black/30", dotClass)}
         aria-hidden="true"
       />
       <span className="truncate" title={label}>
@@ -82,13 +77,11 @@ function UserStatusDisplay() {
 function ChatContent() {
   const selectedRoomId = useAppStore((state) => state.chat.selectedRoom);
   const setChatOpen = useAppStore((state) => state.setChatOpen);
-  const buddyList = useAppStore(
-    (state) => state.chat.buddyList
-  ) as BuddyListItem[];
+  const buddyList = useAppStore((state) => state.chat.buddyList) as BuddyListItem[];
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [addBuddyMode, setAddBuddyMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<ChatTabValue>('chats');
+  const [activeTab, setActiveTab] = useState<ChatTabValue>("chats");
   const [statusEditorOpen, setStatusEditorOpen] = useState(false);
 
   // Initialize presence heartbeat
@@ -97,53 +90,49 @@ function ChatContent() {
   // Calculate counts for badges
   const onlineCount = Array.isArray(buddyList)
     ? buddyList.filter((b: BuddyListItem) => {
-      const status = b?.presence?.status || 'offline';
-      return (
-        status === 'online' || status === 'away' || status === 'dnd'
-      );
-    }).length
+        const status = b?.presence?.status || "offline";
+        return status === "online" || status === "away" || status === "dnd";
+      }).length
     : 0;
 
   // Get DM and Group counts
   const { data: roomsData } = useQuery<GetChatRoomsData>(GET_CHAT_ROOMS, {
-    fetchPolicy: 'cache-and-network',
-    errorPolicy: 'all',
+    fetchPolicy: "cache-and-network",
+    errorPolicy: "all",
   });
 
   const rooms = roomsData?.messageRooms || [];
   const dmCount = rooms.filter(
-    (r) => r?.messageType === 'USER' && (r.users?.length ?? 0) === 2
+    (r) => r?.messageType === "USER" && (r.users?.length ?? 0) === 2
   ).length;
   const groupCount = rooms.filter(
-    (r) =>
-      r?.messageType === 'POST' ||
-      (r?.messageType === 'USER' && (r.users?.length ?? 0) > 2)
+    (r) => r?.messageType === "POST" || (r?.messageType === "USER" && (r.users?.length ?? 0) > 2)
   ).length;
 
   const handleTabChange = (_: unknown, newValue: ChatTabValue) => {
     setActiveTab(newValue);
     if (addBuddyMode) {
       setAddBuddyMode(false);
-      setSearch('');
+      setSearch("");
     }
   };
 
   const handleAddBuddyModeChange = (mode: boolean) => {
     setAddBuddyMode(mode);
     if (!mode) {
-      setSearch('');
+      setSearch("");
     }
   };
 
   const handleAddBuddyClick = () => {
-    if (activeTab !== 'buddies') {
-      setActiveTab('buddies');
+    if (activeTab !== "buddies") {
+      setActiveTab("buddies");
     }
     setAddBuddyMode(true);
     setTimeout(() => {
-      const input = document.querySelector<
-        HTMLInputElement
-      >('input[aria-label="search users to add"]');
+      const input = document.querySelector<HTMLInputElement>(
+        'input[aria-label="search users to add"]'
+      );
       if (input) input.focus();
     }, 100);
   };
@@ -203,7 +192,7 @@ function ChatContent() {
         </div>
 
         {/* Add Buddy Button (only for buddies tab, hide when in add buddy mode) */}
-        {activeTab === 'buddies' && !addBuddyMode && (
+        {activeTab === "buddies" && !addBuddyMode && (
           <div className="border-b bg-gradient-to-br from-background to-muted px-4 py-3">
             <Button
               className="w-full justify-center bg-gradient-to-r from-[#52b274] to-[#4a9e63] text-white shadow-md hover:from-[#4a9e63] hover:to-[#3d8854]"
@@ -220,24 +209,15 @@ function ChatContent() {
             <UserSearchResults searchQuery={search} />
           ) : (
             <>
-              {activeTab === 'chats' && (
-                <ChatList search={search} filterType="chats" />
-              )}
-              {activeTab === 'groups' && (
-                <ChatList search={search} filterType="groups" />
-              )}
-              {activeTab === 'buddies' && (
-                <BuddyListWithPresence search={search} />
-              )}
+              {activeTab === "chats" && <ChatList search={search} filterType="chats" />}
+              {activeTab === "groups" && <ChatList search={search} filterType="groups" />}
+              {activeTab === "buddies" && <BuddyListWithPresence search={search} />}
             </>
           )}
         </div>
 
         {/* Status Editor Dialog */}
-        <StatusEditor
-          open={statusEditorOpen}
-          onClose={() => setStatusEditorOpen(false)}
-        />
+        <StatusEditor open={statusEditorOpen} onClose={() => setStatusEditorOpen(false)} />
       </div>
     );
   }

@@ -1,64 +1,63 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useQuery, useMutation } from '@apollo/client/react'
-import moment from 'moment'
-import { AlertCircle, Bot, ShieldOff, ShieldCheck } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState } from "react";
+import { useQuery, useMutation } from "@apollo/client/react";
+import moment from "moment";
+import { AlertCircle, Bot, ShieldOff, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { GET_BOT_REPORTED_USERS } from '@/graphql/queries'
-import { DISABLE_USER, ENABLE_USER } from '@/graphql/mutations'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/select";
+import { GET_BOT_REPORTED_USERS } from "@/graphql/queries";
+import { DISABLE_USER, ENABLE_USER } from "@/graphql/mutations";
+import { cn } from "@/lib/utils";
 import type {
   GetBotReportedUsersResponse,
   GetBotReportedUsersVariables,
   SortByOption,
-} from '@/types/admin'
-
+} from "@/types/admin";
 
 export default function BotListTab() {
-  const [sortBy, setSortBy] = useState<SortByOption>('botReports')
+  const [sortBy, setSortBy] = useState<SortByOption>("botReports");
 
   const { data, loading, error, refetch } = useQuery<
     GetBotReportedUsersResponse,
     GetBotReportedUsersVariables
   >(GET_BOT_REPORTED_USERS, {
     variables: { sortBy, limit: 100 },
-    errorPolicy: 'all',
-    fetchPolicy: 'cache-and-network',
-  })
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+  });
 
-  const [disableUser, { loading: disableLoading }] = useMutation(DISABLE_USER)
-  const [enableUser, { loading: enableLoading }] = useMutation(ENABLE_USER)
+  const [disableUser, { loading: disableLoading }] = useMutation(DISABLE_USER);
+  const [enableUser, { loading: enableLoading }] = useMutation(ENABLE_USER);
 
   const handleDisable = async (userId: string) => {
     try {
-      await disableUser({ variables: { userId } })
-      toast.success('User disabled successfully')
-      refetch()
+      await disableUser({ variables: { userId } });
+      toast.success("User disabled successfully");
+      refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to disable user')
+      toast.error(err instanceof Error ? err.message : "Failed to disable user");
     }
-  }
+  };
 
   const handleEnable = async (userId: string) => {
     try {
-      await enableUser({ variables: { userId } })
-      toast.success('User enabled successfully')
-      refetch()
+      await enableUser({ variables: { userId } });
+      toast.success("User enabled successfully");
+      refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to enable user')
+      toast.error(err instanceof Error ? err.message : "Failed to enable user");
     }
-  }
+  };
 
   if (error) {
     return (
@@ -68,14 +67,14 @@ export default function BotListTab() {
           <p className="text-sm font-semibold">Error loading bot reports</p>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          {error.message?.includes('Authentication')
-            ? 'Please log in to view bot reports.'
-            : error.message?.includes('Admin')
-              ? 'Admin access is required to view bot reports.'
+          {error.message?.includes("Authentication")
+            ? "Please log in to view bot reports."
+            : error.message?.includes("Admin")
+              ? "Admin access is required to view bot reports."
               : error.message}
         </p>
       </div>
-    )
+    );
   }
 
   if (loading || !data) {
@@ -85,12 +84,12 @@ export default function BotListTab() {
           <Skeleton key={i} className="h-16 rounded-xl" />
         ))}
       </div>
-    )
+    );
   }
 
-  const reportedUsers = data.getBotReportedUsers || []
-  const disabledCount = reportedUsers.filter((u) => u.accountStatus === 'disabled').length
-  const activeCount = reportedUsers.filter((u) => u.accountStatus === 'active').length
+  const reportedUsers = data.getBotReportedUsers || [];
+  const disabledCount = reportedUsers.filter((u) => u.accountStatus === "disabled").length;
+  const activeCount = reportedUsers.filter((u) => u.accountStatus === "active").length;
 
   return (
     <div className="space-y-5">
@@ -124,7 +123,9 @@ export default function BotListTab() {
           </div>
           <div className="text-center">
             <p className="text-sm font-semibold">No bot reports</p>
-            <p className="text-xs text-muted-foreground mt-1">Bot-flagged accounts will appear here</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Bot-flagged accounts will appear here
+            </p>
           </div>
         </div>
       ) : (
@@ -134,72 +135,105 @@ export default function BotListTab() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/60 bg-muted/30">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</th>
-                  <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reports</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Last Report</th>
-                  <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Action</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Reports
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Last Report
+                  </th>
+                  <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
                 {reportedUsers.map((user) => {
-                  const isDisabled = user.accountStatus === 'disabled'
-                  const isHighRisk = user.botReports >= 5
+                  const isDisabled = user.accountStatus === "disabled";
+                  const isHighRisk = user.botReports >= 5;
                   return (
                     <tr
                       key={user._id}
                       className={cn(
-                        'transition-colors',
-                        isDisabled ? 'opacity-60 bg-muted/10' : 'hover:bg-muted/20'
+                        "transition-colors",
+                        isDisabled ? "opacity-60 bg-muted/10" : "hover:bg-muted/20"
                       )}
                     >
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2.5">
-                          <div className={cn(
-                            'size-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0',
-                            isHighRisk ? 'bg-red-500/15 text-red-500' : 'bg-muted text-muted-foreground'
-                          )}>
-                            {(user.username || 'U').charAt(0).toUpperCase()}
+                          <div
+                            className={cn(
+                              "size-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                              isHighRisk
+                                ? "bg-red-500/15 text-red-500"
+                                : "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {(user.username || "U").charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <p className="text-sm font-semibold">{user.username}</p>
-                            {user.name && <p className="text-xs text-muted-foreground">{user.name}</p>}
+                            {user.name && (
+                              <p className="text-xs text-muted-foreground">{user.name}</p>
+                            )}
                           </div>
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-sm text-muted-foreground">{user.email}</td>
                       <td className="px-5 py-3.5 text-center">
-                        <span className={cn(
-                          'inline-flex items-center justify-center min-w-[2rem] text-xs font-bold px-2 py-0.5 rounded-full',
-                          isHighRisk
-                            ? 'bg-red-500/10 text-red-600 border border-red-200 dark:border-red-800'
-                            : 'bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-800'
-                        )}>
+                        <span
+                          className={cn(
+                            "inline-flex items-center justify-center min-w-[2rem] text-xs font-bold px-2 py-0.5 rounded-full",
+                            isHighRisk
+                              ? "bg-red-500/10 text-red-600 border border-red-200 dark:border-red-800"
+                              : "bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-800"
+                          )}
+                        >
                           {user.botReports}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
                         {user.lastBotReportDate ? (
                           <div>
-                            <p className="text-sm">{moment(user.lastBotReportDate).format('MMM D, YYYY')}</p>
-                            <p className="text-xs text-muted-foreground">{moment(user.lastBotReportDate).fromNow()}</p>
+                            <p className="text-sm">
+                              {moment(user.lastBotReportDate).format("MMM D, YYYY")}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {moment(user.lastBotReportDate).fromNow()}
+                            </p>
                           </div>
                         ) : (
                           <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-center">
-                        <span className={cn(
-                          'inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border',
-                          isDisabled
-                            ? 'bg-muted/50 text-muted-foreground border-border'
-                            : 'bg-red-500/10 text-red-600 border-red-200 dark:border-red-800'
-                        )}>
-                          {isDisabled
-                            ? <><ShieldOff className="size-3" />Disabled</>
-                            : <><Bot className="size-3" />Flagged</>
-                          }
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border",
+                            isDisabled
+                              ? "bg-muted/50 text-muted-foreground border-border"
+                              : "bg-red-500/10 text-red-600 border-red-200 dark:border-red-800"
+                          )}
+                        >
+                          {isDisabled ? (
+                            <>
+                              <ShieldOff className="size-3" />
+                              Disabled
+                            </>
+                          ) : (
+                            <>
+                              <Bot className="size-3" />
+                              Flagged
+                            </>
+                          )}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
@@ -226,7 +260,7 @@ export default function BotListTab() {
                         )}
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -235,32 +269,35 @@ export default function BotListTab() {
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-border/40">
             {reportedUsers.map((user) => {
-              const isDisabled = user.accountStatus === 'disabled'
-              const isHighRisk = user.botReports >= 5
+              const isDisabled = user.accountStatus === "disabled";
+              const isHighRisk = user.botReports >= 5;
               return (
-                <div
-                  key={user._id}
-                  className={cn('p-4 space-y-3', isDisabled && 'opacity-60')}
-                >
+                <div key={user._id} className={cn("p-4 space-y-3", isDisabled && "opacity-60")}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={cn(
-                        'size-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0',
-                        isHighRisk ? 'bg-red-500/15 text-red-500' : 'bg-muted text-muted-foreground'
-                      )}>
-                        {(user.username || 'U').charAt(0).toUpperCase()}
+                      <div
+                        className={cn(
+                          "size-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                          isHighRisk
+                            ? "bg-red-500/15 text-red-500"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {(user.username || "U").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{user.username}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
                     </div>
-                    <span className={cn(
-                      'inline-flex items-center justify-center min-w-[1.75rem] text-xs font-bold px-2 py-0.5 rounded-full shrink-0',
-                      isHighRisk
-                        ? 'bg-red-500/10 text-red-600 border border-red-200 dark:border-red-800'
-                        : 'bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-800'
-                    )}>
+                    <span
+                      className={cn(
+                        "inline-flex items-center justify-center min-w-[1.75rem] text-xs font-bold px-2 py-0.5 rounded-full shrink-0",
+                        isHighRisk
+                          ? "bg-red-500/10 text-red-600 border border-red-200 dark:border-red-800"
+                          : "bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-800"
+                      )}
+                    >
                       {user.botReports}
                     </span>
                   </div>
@@ -289,11 +326,11 @@ export default function BotListTab() {
                     </Button>
                   )}
                 </div>
-              )
+              );
             })}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

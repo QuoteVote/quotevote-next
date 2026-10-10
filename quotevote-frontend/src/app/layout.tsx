@@ -12,16 +12,16 @@ import "./globals.css";
 
 /**
  * Global Providers Setup:
- * 
+ *
  * - ApolloProviderWrapper: Provides Apollo Client context for GraphQL queries/mutations
  *   All client components can use useQuery, useMutation, etc.
- * 
+ *
  * - AuthModalProvider: Provides auth modal context for request invite dialog
  *   Used by auth pages and other components that need to show the invite dialog
- * 
+ *
  * - Zustand Store: No provider needed - the store is available globally via useAppStore hook
  *   Import and use: import { useAppStore } from '@/store'
- * 
+ *
  * Provider order: ErrorBoundary > ApolloProvider > AuthModalProvider > children
  * This ensures error handling wraps all providers and Apollo/AuthModal are available to all children.
  */
@@ -30,8 +30,17 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "Quote.Vote - Text-First Platform for Thoughtful Dialogue",
-  description: "An open-source, text-only social platform for thoughtful dialogue. Every post creates its own chatroom where people can quote, vote, and respond in real time.",
-  keywords: ["quote", "vote", "dialogue", "civic engagement", "open source", "democracy", "discussion"],
+  description:
+    "An open-source, text-only social platform for thoughtful dialogue. Every post creates its own chatroom where people can quote, vote, and respond in real time.",
+  keywords: [
+    "quote",
+    "vote",
+    "dialogue",
+    "civic engagement",
+    "open source",
+    "democracy",
+    "discussion",
+  ],
   authors: [{ name: "Quote.Vote Team" }],
   openGraph: {
     title: "Quote.Vote",
@@ -61,9 +70,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={cn(inter.variable, "font-sans antialiased")}
-      >
+      <body className={cn(inter.variable, "font-sans antialiased")}>
         <ErrorBoundary>
           <ApolloProviderWrapper>
             <ThemeContextProvider>

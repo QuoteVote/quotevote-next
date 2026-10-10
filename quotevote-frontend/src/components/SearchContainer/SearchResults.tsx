@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { Card, CardHeader, CardContent } from '@/components/ui/card'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import type { SearchResultsProps } from '@/types/components'
-import { cn } from '@/lib/utils'
+import Link from "next/link";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import type { SearchResultsProps } from "@/types/components";
+import { cn } from "@/lib/utils";
 
 /**
  * SearchResultsView Component
- * 
+ *
  * Displays search results for content and creators in categorized sections.
  * Shows loading state, error state, and empty state messages.
- * 
+ *
  * @param searchResults - Search results data from GraphQL query
  * @param isLoading - Whether the search is currently loading
  * @param isError - Error object if search failed
@@ -26,12 +26,10 @@ export default function SearchResultsView({
     return (
       <Card className="z-20 p-2" data-testid="search-error">
         <CardContent className="p-4">
-          <p className="text-sm text-destructive">
-            An error has occurred.
-          </p>
+          <p className="text-sm text-destructive">An error has occurred.</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -47,33 +45,30 @@ export default function SearchResultsView({
         <div data-testid="search-results">
           {/* Iterate over search result categories */}
           {Object.keys(searchResults).map((resultCategory, id) => {
-            const category = searchResults[resultCategory as keyof typeof searchResults]
+            const category = searchResults[resultCategory as keyof typeof searchResults];
 
             // Handle array results
             if (!Array.isArray(category)) {
-              return null
+              return null;
             }
 
             // Empty results
             if (category.length === 0) {
-              let typename = ''
+              let typename = "";
               switch (resultCategory) {
-                case 'searchCreator':
-                  typename = 'Username'
-                  break
-                case 'searchContent':
-                  typename = 'Content'
-                  break
+                case "searchCreator":
+                  typename = "Username";
+                  break;
+                case "searchContent":
+                  typename = "Content";
+                  break;
                 default:
-                  typename = ''
-                  break
+                  typename = "";
+                  break;
               }
 
               return (
-                <Card
-                  key={`${resultCategory}${id}`}
-                  className="z-10 flex flex-col bg-gray-50"
-                >
+                <Card key={`${resultCategory}${id}`} className="z-10 flex flex-col bg-gray-50">
                   <CardHeader className="table-cell text-ellipsis w-[100px] whitespace-nowrap bg-transparent text-base py-2 px-4 font-bold text-gray-500 border-b border-gray-200">
                     {typename}
                   </CardHeader>
@@ -81,54 +76,53 @@ export default function SearchResultsView({
                     <p className="text-sm text-gray-600">No Results</p>
                   </CardContent>
                 </Card>
-              )
+              );
             }
 
             // Results with data
-            const isUser = resultCategory === 'searchCreator'
-            const typename = category[0]?.__typename || (isUser ? 'User' : 'Content')
+            const isUser = resultCategory === "searchCreator";
+            const typename = category[0]?.__typename || (isUser ? "User" : "Content");
 
             return (
-              <Card
-                key={`${resultCategory}${id}`}
-                className="z-10 flex flex-col bg-gray-50"
-              >
+              <Card key={`${resultCategory}${id}`} className="z-10 flex flex-col bg-gray-50">
                 <CardHeader className="table-cell text-ellipsis w-[100px] whitespace-nowrap bg-transparent text-base py-2 px-4 font-bold text-gray-500 border-b border-gray-200">
                   {typename}
                 </CardHeader>
                 <CardContent className="w-full table-cell bg-white border-l border-gray-300 border-b-2 border-gray-200 rounded-b-md">
                   {category.map((content) => {
-                    const item = content as { _id: string; title?: string; name?: string; username?: string }
-                    const result = isUser ? item.name : item.title
+                    const item = content as {
+                      _id: string;
+                      title?: string;
+                      name?: string;
+                      username?: string;
+                    };
+                    const result = isUser ? item.name : item.title;
                     const link = isUser
-                      ? `/profile/${item.username || item.name?.replace(/\s/g, '') || ''}`
-                      : `/?q=${encodeURIComponent(item.title || '')}&tab=search`
+                      ? `/profile/${item.username || item.name?.replace(/\s/g, "") || ""}`
+                      : `/?q=${encodeURIComponent(item.title || "")}&tab=search`;
 
                     return (
                       <Link
                         key={item._id}
                         href={link}
                         className={cn(
-                          'block p-5 border-b border-gray-100',
-                          'hover:bg-gray-50 transition-colors',
-                          'last:border-none'
+                          "block p-5 border-b border-gray-100",
+                          "hover:bg-gray-50 transition-colors",
+                          "last:border-none"
                         )}
                       >
                         {result}
                       </Link>
-                    )
+                    );
                   })}
                 </CardContent>
               </Card>
-            )
+            );
           })}
           {/* End of results marker */}
           <div className="my-16 z-10">End of Results</div>
         </div>
       )}
     </div>
-  )
+  );
 }
-
-
-

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from "@testing-library/react";
 
 // Mock Apollo hooks
 const mockRefetch = jest.fn();
@@ -6,7 +6,7 @@ let mockLoading = false;
 let mockData: Record<string, unknown> | null = null;
 let mockError: Error | null = null;
 
-jest.mock('@apollo/client/react', () => ({
+jest.mock("@apollo/client/react", () => ({
   useQuery: () => ({
     loading: mockLoading,
     data: mockData,
@@ -22,79 +22,81 @@ jest.mock('@apollo/client/react', () => ({
 }));
 
 // Mock the store
-const mockUserId = 'user-123';
-jest.mock('@/store', () => ({
+const mockUserId = "user-123";
+jest.mock("@/store", () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
-      user: { data: { id: mockUserId, _id: mockUserId, username: 'testuser' } },
+      user: { data: { id: mockUserId, _id: mockUserId, username: "testuser" } },
       ui: { selectedPost: null },
       setSelectedPost: jest.fn(),
     }),
 }));
 
 // Mock useGuestGuard
-jest.mock('@/hooks/useGuestGuard', () => ({
+jest.mock("@/hooks/useGuestGuard", () => ({
   __esModule: true,
   default: () => () => true,
 }));
 
 // Mock useResponsive
-jest.mock('@/hooks/useResponsive', () => ({
+jest.mock("@/hooks/useResponsive", () => ({
   useResponsive: () => ({ isMobile: false, isTablet: false, isDesktop: true }),
 }));
 
-import { NotificationsPageContent } from '@/app/(dashboard)/notifications/NotificationsPageContent';
+import { NotificationsPageContent } from "@/app/(dashboard)/notifications/NotificationsPageContent";
 
 const mockNotifications = [
   {
-    _id: 'notif-1',
+    _id: "notif-1",
     userId: mockUserId,
-    userIdBy: 'user-456',
+    userIdBy: "user-456",
     userBy: {
-      _id: 'user-456',
-      name: 'John Doe',
-      username: 'johndoe',
+      _id: "user-456",
+      name: "John Doe",
+      username: "johndoe",
       avatar: null,
       contributorBadge: false,
     },
-    label: 'started following you',
-    status: 'unread',
+    label: "started following you",
+    status: "unread",
     created: new Date().toISOString(),
-    notificationType: 'FOLLOW',
+    notificationType: "FOLLOW",
   },
 ];
 
-describe('NotificationsPageContent', () => {
+describe("NotificationsPageContent", () => {
   beforeEach(() => {
     mockLoading = false;
     mockData = null;
     mockError = null;
   });
 
-  it('renders the title', () => {
+  it("renders the title", () => {
     mockLoading = false;
     mockData = { notifications: [] };
     render(<NotificationsPageContent />);
-    expect(screen.getByText('Notifications')).toBeInTheDocument();
+    expect(screen.getByText("Notifications")).toBeInTheDocument();
   });
 
-  it('renders loading skeletons when loading', () => {
+  it("renders loading skeletons when loading", () => {
     mockLoading = true;
     mockData = null;
     const { container } = render(<NotificationsPageContent />);
     // Should show skeleton elements
-    const skeletons = container.querySelectorAll('[class*="animate-pulse"], [data-slot="skeleton"]');
+    const skeletons = container.querySelectorAll(
+      '[class*="animate-pulse"], [data-slot="skeleton"]'
+    );
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it('renders notification items when data is loaded', () => {
+  it("renders notification items when data is loaded", () => {
     mockLoading = false;
     mockData = { notifications: mockNotifications };
     render(<NotificationsPageContent />);
     expect(screen.getByText(/started following you/)).toBeInTheDocument();
   });
 
-  it('renders empty state when no notifications', () => {
+  it("renders empty state when no notifications", () => {
     mockLoading = false;
     mockData = { notifications: [] };
     render(<NotificationsPageContent />);

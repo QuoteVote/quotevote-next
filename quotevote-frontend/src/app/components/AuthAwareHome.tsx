@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { type ReactElement } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { useAppStore } from '@/store'
-import { DashboardShell } from '@/components/DashboardShell'
-import { PublicDirectoryContent } from './PublicDirectory/PublicDirectoryContent'
-import { DirectoryToolbar } from './PublicDirectory/DirectoryToolbar'
-import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
+import { type ReactElement } from "react";
+import { useSearchParams } from "next/navigation";
+import { useAppStore } from "@/store";
+import { DashboardShell } from "@/components/DashboardShell";
+import { PublicDirectoryContent } from "./PublicDirectory/PublicDirectoryContent";
+import { DirectoryToolbar } from "./PublicDirectory/DirectoryToolbar";
+import PaginatedPostsList from "@/components/Post/PaginatedPostsList";
 
 export function AuthAwareHome(): ReactElement {
-  const user = useAppStore((s) => s.user.data)
-  const loggedIn = !!(user?.id || user?._id)
+  const user = useAppStore((s) => s.user.data);
+  const loggedIn = !!(user?.id || user?._id);
 
   if (!loggedIn) {
-    return <PublicDirectoryContent />
+    return <PublicDirectoryContent />;
   }
 
-  return <AuthenticatedFeed />
+  return <AuthenticatedFeed />;
 }
 
 /**
@@ -26,15 +26,15 @@ export function AuthAwareHome(): ReactElement {
  * Desktop: page scroll is unchanged; the toolbar is not pinned.
  */
 function AuthenticatedFeed(): ReactElement {
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
 
-  const q = searchParams.get('q') || ''
-  const from = searchParams.get('from') || ''
-  const to = searchParams.get('to') || ''
-  const sortParam = searchParams.get('sort')
-  const sortOrder = sortParam === 'asc' ? 'asc' : 'desc'
-  const interactions = searchParams.get('interactions') === 'true'
-  const groupId = searchParams.get('group') || undefined
+  const q = searchParams.get("q") || "";
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
+  const sortParam = searchParams.get("sort");
+  const sortOrder = sortParam === "asc" ? "asc" : "desc";
+  const interactions = searchParams.get("interactions") === "true";
+  const groupId = searchParams.get("group") || undefined;
 
   return (
     <DashboardShell>
@@ -65,5 +65,5 @@ function AuthenticatedFeed(): ReactElement {
         </div>
       </div>
     </DashboardShell>
-  )
+  );
 }

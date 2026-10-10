@@ -1,18 +1,24 @@
 "use client";
 
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { useQuery } from '@apollo/client/react';
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useQuery } from "@apollo/client/react";
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import Avatar from '@/components/Avatar';
-import { SEARCH_USERNAMES } from '@/graphql/queries';
-import { useRosterManagement } from '@/hooks/useRosterManagement';
-import { useAppStore } from '@/store';
-import { toast } from 'sonner';
-import type { BuddySearchResult } from '@/types/chat';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Avatar from "@/components/Avatar";
+import { SEARCH_USERNAMES } from "@/graphql/queries";
+import { useRosterManagement } from "@/hooks/useRosterManagement";
+import { useAppStore } from "@/store";
+import { toast } from "sonner";
+import type { BuddySearchResult } from "@/types/chat";
 
 interface AddBuddyDialogProps {
   open: boolean;
@@ -30,7 +36,7 @@ interface SearchUserVariables {
 const MIN_QUERY_LENGTH = 2;
 
 const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const { addBuddy } = useRosterManagement();
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
 
@@ -45,11 +51,11 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
     try {
       setAddingUserId(userId);
       await addBuddy(userId);
-      toast.success('Buddy request sent successfully!');
+      toast.success("Buddy request sent successfully!");
       // Optionally close dialog after successful request
       // onClose();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to send buddy request';
+      const message = error instanceof Error ? error.message : "Failed to send buddy request";
       toast.error(message);
     } finally {
       setAddingUserId(null);
@@ -92,7 +98,7 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
       <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
         {users.map((user) => {
           const presence = presenceMap[user._id];
-          const isOnline = presence?.status === 'online';
+          const isOnline = presence?.status === "online";
 
           return (
             <div
@@ -100,27 +106,20 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
               className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2 text-sm shadow-sm"
             >
               <div className="relative">
-                <Avatar
-                  src={user.avatar}
-                  alt={user.name || user.username}
-                  size={40}
-                />
+                <Avatar src={user.avatar} alt={user.name || user.username} size={40} />
                 {presence && (
                   <span
-                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${isOnline ? 'bg-[#52b274]' : 'bg-muted-foreground'
-                      }`}
-                    aria-label={isOnline ? 'Online' : 'Offline'}
+                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${
+                      isOnline ? "bg-[#52b274]" : "bg-muted-foreground"
+                    }`}
+                    aria-label={isOnline ? "Online" : "Offline"}
                   />
                 )}
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">
-                  {user.name || user.username}
-                </div>
-                <div className="truncate text-xs text-muted-foreground">
-                  @{user.username}
-                </div>
+                <div className="truncate font-medium">{user.name || user.username}</div>
+                <div className="truncate text-xs text-muted-foreground">@{user.username}</div>
               </div>
 
               <Button
@@ -129,7 +128,7 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
                 disabled={addingUserId === user._id}
                 className="ml-auto bg-[#52b274] text-white hover:bg-[#4a9e63]"
               >
-                {addingUserId === user._id ? 'Adding…' : 'Add'}
+                {addingUserId === user._id ? "Adding…" : "Add"}
               </Button>
             </div>
           );
@@ -166,4 +165,3 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
 };
 
 export default AddBuddyDialog;
-

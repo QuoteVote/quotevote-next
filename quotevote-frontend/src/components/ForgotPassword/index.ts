@@ -1,3 +1,2 @@
-export { ForgotPassword } from './ForgotPassword';
-export { EmailSent } from './EmailSent';
-
+export { ForgotPassword } from "./ForgotPassword";
+export { EmailSent } from "./EmailSent";

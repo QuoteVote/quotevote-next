@@ -6,10 +6,7 @@
  * On these routes at xl+ the slide-in chat drawer is suppressed so it does
  * not duplicate the persistent panel.
  */
-const PERSISTENT_CHAT_PANEL_ROUTES = [
-  '/profile',
-  '/settings',
-] as const;
+const PERSISTENT_CHAT_PANEL_ROUTES = ["/profile", "/settings"] as const;
 
 /**
  * Returns true when the given pathname renders the persistent messaging
@@ -17,6 +14,6 @@ const PERSISTENT_CHAT_PANEL_ROUTES = [
  */
 export function routeHasPersistentChatPanel(pathname: string): boolean {
   return PERSISTENT_CHAT_PANEL_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 }

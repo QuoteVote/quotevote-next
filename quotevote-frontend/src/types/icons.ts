@@ -1,10 +1,10 @@
-import type { SVGProps } from 'react';
+import type { SVGProps } from "react";
 
 /**
  * Base props for icon components
  * Compatible with lucide-react icon props
  */
-export interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'xmlns'> {
+export interface IconProps extends Omit<SVGProps<SVGSVGElement>, "xmlns"> {
   /**
    * Size of the icon (width and height)
    * Can be a number (pixels) or string (e.g., "1rem", "24px")
@@ -21,4 +21,3 @@ export interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'xmlns'> {
    */
   className?: string;
 }
-

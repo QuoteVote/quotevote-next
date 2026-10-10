@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useState } from 'react'
-import { useMutation } from '@apollo/client/react'
-import { Send, Loader2, X } from 'lucide-react'
-import { toast } from 'sonner'
+import { useEffect, useRef, useState } from "react";
+import { useMutation } from "@apollo/client/react";
+import { Send, Loader2, X } from "lucide-react";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { useAppStore } from '@/store'
-import { ADD_COMMENT, ADD_QUOTE, SEND_MESSAGE } from '@/graphql/mutations'
-import { GET_POST, GET_ROOM_MESSAGES, GET_TOP_POSTS, GET_USER_ACTIVITY } from '@/graphql/queries'
-import useGuestGuard from '@/hooks/useGuestGuard'
-import { cn } from '@/lib/utils'
-import type { PostChatSendProps, MessagesData, CreateMessageData } from '@/types/postChat'
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useAppStore } from "@/store";
+import { ADD_COMMENT, ADD_QUOTE, SEND_MESSAGE } from "@/graphql/mutations";
+import { GET_POST, GET_ROOM_MESSAGES, GET_TOP_POSTS, GET_USER_ACTIVITY } from "@/graphql/queries";
+import useGuestGuard from "@/hooks/useGuestGuard";
+import { cn } from "@/lib/utils";
+import type { PostChatSendProps, MessagesData, CreateMessageData } from "@/types/postChat";
 
 export default function PostChatSend({
   messageRoomId,
@@ -21,35 +21,35 @@ export default function PostChatSend({
   postUrl,
   postOwnerId,
 }: PostChatSendProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [text, setText] = useState('')
-  const submitting = useAppStore((state) => state.chat.submitting)
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [text, setText] = useState("");
+  const submitting = useAppStore((state) => state.chat.submitting);
 
-  const user = useAppStore((state) => state.user.data)
-  const setChatSubmitting = useAppStore((state) => state.setChatSubmitting)
-  const storedQuote = useAppStore((state) => state.ui.pendingQuote)
-  const setPendingQuote = useAppStore((state) => state.setPendingQuote)
-  const ensureAuth = useGuestGuard()
-  const loggedIn = !!(user?._id || user?.id)
-  const userId = ((user?._id || user?.id) as string | undefined) ?? ''
+  const user = useAppStore((state) => state.user.data);
+  const setChatSubmitting = useAppStore((state) => state.setChatSubmitting);
+  const storedQuote = useAppStore((state) => state.ui.pendingQuote);
+  const setPendingQuote = useAppStore((state) => state.setPendingQuote);
+  const ensureAuth = useGuestGuard();
+  const loggedIn = !!(user?._id || user?.id);
+  const userId = ((user?._id || user?.id) as string | undefined) ?? "";
   // Only show a quote staged from this post.
-  const pendingQuote = storedQuote && storedQuote.postId === postId ? storedQuote : null
+  const pendingQuote = storedQuote && storedQuote.postId === postId ? storedQuote : null;
 
   useEffect(() => {
-    if (!pendingQuote) return
+    if (!pendingQuote) return;
     // Give the mobile Discussion sheet time to open before moving focus.
-    const timer = window.setTimeout(() => textareaRef.current?.focus(), 250)
-    return () => window.clearTimeout(timer)
-  }, [pendingQuote])
+    const timer = window.setTimeout(() => textareaRef.current?.focus(), 250);
+    return () => window.clearTimeout(timer);
+  }, [pendingQuote]);
 
   const postRefetchQueries = postId
     ? [
-        { query: GET_TOP_POSTS, variables: { limit: 5, offset: 0, searchKey: '' } },
+        { query: GET_TOP_POSTS, variables: { limit: 5, offset: 0, searchKey: "" } },
         { query: GET_POST, variables: { postId } },
       ]
-    : []
+    : [];
 
-  const [addComment] = useMutation(ADD_COMMENT, { refetchQueries: postRefetchQueries })
+  const [addComment] = useMutation(ADD_COMMENT, { refetchQueries: postRefetchQueries });
 
   const [addQuote] = useMutation(ADD_QUOTE, {
     refetchQueries: [
@@ -59,22 +59,22 @@ export default function PostChatSend({
         variables: {
           limit: 15,
           offset: 0,
-          searchKey: '',
-          activityEvent: ['POSTED', 'VOTED', 'COMMENTED', 'QUOTED', 'LIKED'],
+          searchKey: "",
+          activityEvent: ["POSTED", "VOTED", "COMMENTED", "QUOTED", "LIKED"],
           user_id: userId,
-          startDateRange: '',
-          endDateRange: '',
+          startDateRange: "",
+          endDateRange: "",
         },
       },
     ],
-  })
+  });
 
   // A staged quote is posted as a Quote, or as a Comment carrying the quote when a note is added
   // (the API requires comment content, so an empty note can't be a comment).
   const submitQuote = async () => {
-    if (!pendingQuote || !postId) return
-    const note = text.trim()
-    setChatSubmitting(true)
+    if (!pendingQuote || !postId) return;
+    const note = text.trim();
+    setChatSubmitting(true);
     try {
       if (note) {
         await addComment({
@@ -89,9 +89,9 @@ export default function PostChatSend({
               quote: pendingQuote.text,
             },
           },
-        })
+        });
       } else {
-        if (!postOwnerId) throw new Error('Missing post author')
+        if (!postOwnerId) throw new Error("Missing post author");
         await addQuote({
           variables: {
             quote: {
@@ -103,27 +103,27 @@ export default function PostChatSend({
               endWordIndex: pendingQuote.endIndex,
             },
           },
-        })
+        });
       }
-      setPendingQuote(null)
-      setText('')
-      toast.success(note ? 'Quote and note added' : 'Quoted successfully')
+      setPendingQuote(null);
+      setText("");
+      toast.success(note ? "Quote and note added" : "Quoted successfully");
     } catch (err) {
-      toast.error(`Error: ${err instanceof Error ? err.message : 'Unknown'}`)
+      toast.error(`Error: ${err instanceof Error ? err.message : "Unknown"}`);
     } finally {
-      setChatSubmitting(false)
+      setChatSubmitting(false);
     }
-  }
+  };
 
-  const type = 'POST'
+  const type = "POST";
 
   const [createMessage] = useMutation<CreateMessageData>(SEND_MESSAGE, {
     onError: (err) => {
-      setChatSubmitting(false)
-      toast.error(`Message failed: ${err.message}`)
+      setChatSubmitting(false);
+      toast.error(`Message failed: ${err.message}`);
     },
     onCompleted: () => {
-      setChatSubmitting(false)
+      setChatSubmitting(false);
     },
     refetchQueries: messageRoomId
       ? [
@@ -133,17 +133,17 @@ export default function PostChatSend({
           },
         ]
       : [],
-  })
+  });
 
   const handleSubmit = async () => {
-    if (!ensureAuth()) return
+    if (!ensureAuth()) return;
     if (pendingQuote) {
-      await submitQuote()
-      return
+      await submitQuote();
+      return;
     }
-    if (!text.trim()) return
+    if (!text.trim()) return;
 
-    setChatSubmitting(true)
+    setChatSubmitting(true);
 
     const message = {
       title,
@@ -151,40 +151,42 @@ export default function PostChatSend({
       messageRoomId: messageRoomId || null,
       componentId: postId || null,
       text: text.trim(),
-    }
+    };
 
-    const dateSubmitted = new Date()
-    const tempId = Array.from({ length: 24 }, () => Math.floor(Math.random() * 16).toString(16)).join('')
+    const dateSubmitted = new Date();
+    const tempId = Array.from({ length: 24 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join("");
 
     await createMessage({
       variables: { message },
       optimisticResponse: {
         createMessage: {
-          __typename: 'Message' as const,
+          __typename: "Message" as const,
           _id: tempId,
-          messageRoomId: messageRoomId || '',
-          userName: (user.name as string) || '',
-          userId: ((user._id || user.id) as string) || '',
-          title: title || '',
+          messageRoomId: messageRoomId || "",
+          userName: (user.name as string) || "",
+          userId: ((user._id || user.id) as string) || "",
+          title: title || "",
           text: text.trim(),
           type,
           created: dateSubmitted.toISOString(),
           user: {
-            __typename: 'User' as const,
-            _id: ((user._id || user.id) as string) || '',
-            name: (user.name as string) || '',
-            username: (user.username as string) || '',
+            __typename: "User" as const,
+            _id: ((user._id || user.id) as string) || "",
+            name: (user.name as string) || "",
+            username: (user.username as string) || "",
             avatar: user.avatar as string | Record<string, unknown> | undefined,
           },
         },
       },
       update: (cache, { data: mutationData }) => {
-        if (!messageRoomId || !mutationData?.createMessage) return
+        if (!messageRoomId || !mutationData?.createMessage) return;
 
         const existingData = cache.readQuery<MessagesData>({
           query: GET_ROOM_MESSAGES,
           variables: { messageRoomId },
-        })
+        });
 
         if (existingData) {
           cache.writeQuery({
@@ -194,20 +196,20 @@ export default function PostChatSend({
               ...existingData,
               messages: [...existingData.messages, mutationData.createMessage],
             },
-          })
+          });
         }
       },
-    })
+    });
 
-    setText('')
-  }
+    setText("");
+  };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault()
-      handleSubmit()
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit();
     }
-  }
+  };
 
   if (!loggedIn) {
     return (
@@ -215,14 +217,14 @@ export default function PostChatSend({
         <button
           type="button"
           onClick={() => {
-            ensureAuth()
+            ensureAuth();
           }}
           data-testid="discussion-signin-cta"
           className={cn(
-            'min-h-[40px] flex-1 rounded-xl border border-border bg-muted/50',
-            'px-3 py-2.5 text-sm text-left text-foreground',
-            'hover:bg-muted hover:border-[#52b274]/40 transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+            "min-h-[40px] flex-1 rounded-xl border border-border bg-muted/50",
+            "px-3 py-2.5 text-sm text-left text-foreground",
+            "hover:bg-muted hover:border-[#52b274]/40 transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
           )}
           aria-label="Sign in to join the discussion"
         >
@@ -232,7 +234,7 @@ export default function PostChatSend({
           variant="ghost"
           size="icon"
           onClick={() => {
-            ensureAuth()
+            ensureAuth();
           }}
           className="h-10 w-10 shrink-0 rounded-full text-[#52b274] hover:bg-[#52b274]/10"
           aria-label="Sign in to join the discussion"
@@ -240,10 +242,10 @@ export default function PostChatSend({
           <Send className="h-4.5 w-4.5" />
         </Button>
       </div>
-    )
+    );
   }
 
-  const canSubmit = Boolean(text.trim() || pendingQuote) && !submitting
+  const canSubmit = Boolean(text.trim() || pendingQuote) && !submitting;
 
   return (
     <div data-post-chat-send="true">
@@ -270,19 +272,19 @@ export default function PostChatSend({
       <div className="flex items-end gap-2">
         <Textarea
           ref={textareaRef}
-          placeholder={pendingQuote ? 'Add an optional note...' : 'Add to discussion...'}
-          aria-label={pendingQuote ? 'Optional note for your quote' : undefined}
+          placeholder={pendingQuote ? "Add an optional note..." : "Add to discussion..."}
+          aria-label={pendingQuote ? "Optional note for your quote" : undefined}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={submitting}
           className={cn(
-            'min-h-[40px] max-h-[120px] flex-1 resize-none rounded-xl',
-            'border border-border bg-muted/50',
-            'px-3 py-2.5 text-base md:text-sm',
-            'placeholder:text-muted-foreground/50',
-            'focus:bg-background focus:ring-2 focus:ring-primary/20',
-            submitting && 'opacity-50 cursor-not-allowed',
+            "min-h-[40px] max-h-[120px] flex-1 resize-none rounded-xl",
+            "border border-border bg-muted/50",
+            "px-3 py-2.5 text-base md:text-sm",
+            "placeholder:text-muted-foreground/50",
+            "focus:bg-background focus:ring-2 focus:ring-primary/20",
+            submitting && "opacity-50 cursor-not-allowed"
           )}
           rows={1}
         />
@@ -292,11 +294,11 @@ export default function PostChatSend({
           onClick={handleSubmit}
           disabled={!canSubmit}
           className={cn(
-            'h-10 w-10 shrink-0 rounded-full',
+            "h-10 w-10 shrink-0 rounded-full",
             canSubmit
-              ? 'bg-[#52b274] text-white hover:bg-[#52b274]/90'
-              : 'text-[#52b274] hover:bg-[#52b274]/10',
-            'disabled:opacity-30',
+              ? "bg-[#52b274] text-white hover:bg-[#52b274]/90"
+              : "text-[#52b274] hover:bg-[#52b274]/10",
+            "disabled:opacity-30"
           )}
           aria-label="Send message"
         >
@@ -308,5 +310,5 @@ export default function PostChatSend({
         </Button>
       </div>
     </div>
-  )
+  );
 }

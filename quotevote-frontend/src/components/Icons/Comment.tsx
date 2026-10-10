@@ -1,33 +1,27 @@
-import type { IconProps } from '@/types/icons';
-import { cn } from '@/lib/utils';
+import type { IconProps } from "@/types/icons";
+import { cn } from "@/lib/utils";
 
 /**
  * Comment icon component
  * Custom SVG icon migrated from Material UI
  */
-export function Comment({
-  size = 24,
-  className,
-  color,
-  fill,
-  ...props
-}: IconProps) {
-  const sizeValue = typeof size === 'number' ? `${size}px` : size;
-  const fillValue = color || fill || 'currentColor';
-  
+export function Comment({ size = 24, className, color, fill, ...props }: IconProps) {
+  const sizeValue = typeof size === "number" ? `${size}px` : size;
+  const fillValue = color || fill || "currentColor";
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width={sizeValue}
       height={sizeValue}
       viewBox="0 0 548 598"
-      fill={typeof fillValue === 'string' ? fillValue : 'currentColor'}
-      className={cn('inline-block', className)}
+      fill={typeof fillValue === "string" ? fillValue : "currentColor"}
+      className={cn("inline-block", className)}
       {...props}
     >
       <g
         transform="translate(0.000000,598.000000) scale(0.100000,-0.100000)"
-        fill={color || '#000000'}
+        fill={color || "#000000"}
         stroke="none"
       >
         <path
@@ -56,4 +50,3 @@ export function Comment({
 }
 
 export default Comment;
-

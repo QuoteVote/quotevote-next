@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Component, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
+import { Component, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   children: ReactNode;
@@ -16,7 +16,7 @@ interface State {
 
 /**
  * Error Boundary component to catch React errors gracefully
- * 
+ *
  * Usage:
  * <ErrorBoundary>
  *   <YourComponent />
@@ -40,8 +40,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (process.env.NODE_ENV === "development") {
+      console.error("ErrorBoundary caught an error:", error, errorInfo);
     }
 
     // Call optional error handler
@@ -77,8 +77,8 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-[var(--color-text-secondary)] mb-6">
                 We encountered an unexpected error. Please try refreshing the page.
               </p>
-              
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+
+              {process.env.NODE_ENV === "development" && this.state.error && (
                 <div className="mb-6 text-left">
                   <details className="bg-[var(--color-background-off-white)] rounded p-4">
                     <summary className="cursor-pointer font-semibold text-sm text-[var(--color-text-primary)] mb-2">
@@ -98,16 +98,10 @@ export class ErrorBoundary extends Component<Props, State> {
               )}
 
               <div className="flex gap-3 justify-center">
-                <Button
-                  onClick={this.handleReset}
-                  variant="default"
-                >
+                <Button onClick={this.handleReset} variant="default">
                   Try Again
                 </Button>
-                <Button
-                  onClick={() => window.location.reload()}
-                  variant="outline"
-                >
+                <Button onClick={() => window.location.reload()} variant="outline">
                   Refresh Page
                 </Button>
               </div>
@@ -123,4 +117,3 @@ export class ErrorBoundary extends Component<Props, State> {
 
 // Export as default for easier importing
 export default ErrorBoundary;
-

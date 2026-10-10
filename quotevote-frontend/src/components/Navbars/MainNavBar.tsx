@@ -1,32 +1,27 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Menu, Github } from 'lucide-react';
-import { Globe } from '@/components/Icons';
-import { getApolloClient } from '@/lib/apollo';
-import { useAppStore } from '@/store';
-import { useResponsive } from '@/hooks/useResponsive';
-import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
-import ChatMenu from '@/components/Chat/ChatMenu';
-import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
-import { AdminIconButton } from '../CustomButtons/AdminIconButton';
-import { SettingsIconButton } from '../CustomButtons/SettingsIconButton';
-import type { MainNavBarProps } from '@/types/components';
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Menu, Github } from "lucide-react";
+import { Globe } from "@/components/Icons";
+import { getApolloClient } from "@/lib/apollo";
+import { useAppStore } from "@/store";
+import { useResponsive } from "@/hooks/useResponsive";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { NotificationMenu } from "@/components/Notifications/NotificationMenu";
+import ChatMenu from "@/components/Chat/ChatMenu";
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from "@/components/SubmitPost";
+import { AdminIconButton } from "../CustomButtons/AdminIconButton";
+import { SettingsIconButton } from "../CustomButtons/SettingsIconButton";
+import type { MainNavBarProps } from "@/types/components";
 
 /**
  * MainNavBar Component
- * 
+ *
  * Main navigation bar for the application.
  * Shows different content based on authentication state.
  * Uses shadcn/ui components and Tailwind CSS for styling.
@@ -41,16 +36,17 @@ export function MainNavBar({}: MainNavBarProps) {
   const user = useAppStore((state) => state.user.data);
   const setSelectedPage = useAppStore((state) => state.setSelectedPage);
   const loggedIn = !!user?._id;
-  const name = (typeof user?.name === 'string' ? user.name : undefined) ||
-               (typeof user?.username === 'string' ? user.username : undefined) || 
-               'User';
+  const name =
+    (typeof user?.name === "string" ? user.name : undefined) ||
+    (typeof user?.username === "string" ? user.username : undefined) ||
+    "User";
 
   const handleQuoteVote = () => {
-    setSelectedPage('home');
+    setSelectedPage("home");
   };
 
   const handleProfileClick = () => {
-    setSelectedPage('profile');
+    setSelectedPage("profile");
   };
 
   const handleMenu = (newSelectedMenu: string) => {
@@ -64,7 +60,10 @@ export function MainNavBar({}: MainNavBarProps) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding" style={{ borderImage: 'linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1' }}>
+      <header
+        className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
+        style={{ borderImage: "linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1" }}
+      >
         <div className="min-h-16 flex items-center justify-between px-6 md:px-12">
           {/* Logo */}
           <Link
@@ -74,7 +73,10 @@ export function MainNavBar({}: MainNavBarProps) {
             aria-label="Quote.Vote home"
           >
             <Globe size={28} className="size-7" />
-            <span className="font-extrabold text-lg tracking-wide hidden sm:block select-none" style={{ color: '#0A2342' }}>
+            <span
+              className="font-extrabold text-lg tracking-wide hidden sm:block select-none"
+              style={{ color: "#0A2342" }}
+            >
               Quote.Vote
             </span>
           </Link>
@@ -116,14 +118,14 @@ export function MainNavBar({}: MainNavBarProps) {
                 </a>
               </Button>
               <Button
-                onClick={() => router.push('/auth/request-access')}
+                onClick={() => router.push("/auth/request-access")}
                 className="bg-gradient-to-r from-[#2AE6B2] to-[#27C4E1] text-white font-semibold px-6 py-2 hover:from-[#27C4E1] hover:to-[#178BE1] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(42,230,178,0.3)] transition-all"
               >
                 Request Invite
               </Button>
               <Button
                 variant="outline"
-                onClick={() => router.push('/login')}
+                onClick={() => router.push("/login")}
                 className="border-2 border-[#2AE6B2] text-[#0A2342] font-semibold px-6 py-2 hover:bg-[rgba(14,17,22,0.06)] hover:-translate-y-0.5 transition-all"
               >
                 Login
@@ -136,7 +138,7 @@ export function MainNavBar({}: MainNavBarProps) {
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => {
-                  handleMenu('create-quote');
+                  handleMenu("create-quote");
                   setSubmitDialogOpen(true);
                 }}
                 className="bg-[#52b274] text-white font-semibold min-w-[150px] hover:bg-[#459963] transition-colors"
@@ -209,7 +211,7 @@ export function MainNavBar({}: MainNavBarProps) {
               <>
                 <Button
                   onClick={() => {
-                    router.push('/auth/request-access');
+                    router.push("/auth/request-access");
                     closeDrawer();
                   }}
                   className="w-full justify-start bg-gradient-to-r from-[#2AE6B2] to-[#27C4E1] text-white font-semibold hover:from-[#27C4E1] hover:to-[#178BE1] hover:shadow-[0_4px_12px_rgba(42,230,178,0.3)] transition-all"
@@ -219,7 +221,7 @@ export function MainNavBar({}: MainNavBarProps) {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    router.push('/login');
+                    router.push("/login");
                     closeDrawer();
                   }}
                   className="w-full justify-start border-2 border-[#2AE6B2] text-[#0A2342] font-semibold hover:bg-[rgba(14,17,22,0.06)] transition-all"
@@ -234,7 +236,12 @@ export function MainNavBar({}: MainNavBarProps) {
                   asChild
                   className="w-full justify-start text-[#0A2342] font-medium hover:bg-[rgba(14,17,22,0.06)] transition-all"
                 >
-                  <a href="mailto:admin@quote.vote" target="_blank" rel="noopener noreferrer" onClick={closeDrawer}>
+                  <a
+                    href="mailto:admin@quote.vote"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={closeDrawer}
+                  >
                     Donate
                   </a>
                 </Button>
@@ -243,7 +250,12 @@ export function MainNavBar({}: MainNavBarProps) {
                   asChild
                   className="w-full justify-start text-[#0A2342] font-medium hover:bg-[rgba(14,17,22,0.06)] transition-all"
                 >
-                  <a href="mailto:admin@quote.vote" target="_blank" rel="noopener noreferrer" onClick={closeDrawer}>
+                  <a
+                    href="mailto:admin@quote.vote"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={closeDrawer}
+                  >
                     Volunteer
                   </a>
                 </Button>
@@ -268,7 +280,7 @@ export function MainNavBar({}: MainNavBarProps) {
               <>
                 <Button
                   onClick={() => {
-                    handleMenu('create-quote');
+                    handleMenu("create-quote");
                     setSubmitDialogOpen(true);
                     closeDrawer();
                   }}
@@ -279,7 +291,11 @@ export function MainNavBar({}: MainNavBarProps) {
 
                 <div className="h-0.5 bg-gradient-to-r from-[#2AE6B2] via-[#27C4E1] to-[#178BE1] my-4" />
 
-                <Link href={`/profile/${user?.username}`} className="w-full no-underline" onClick={closeDrawer}>
+                <Link
+                  href={`/profile/${user?.username}`}
+                  className="w-full no-underline"
+                  onClick={closeDrawer}
+                >
                   <Button
                     variant="ghost"
                     onClick={() => {
@@ -341,4 +357,3 @@ export function MainNavBar({}: MainNavBarProps) {
     </>
   );
 }
-

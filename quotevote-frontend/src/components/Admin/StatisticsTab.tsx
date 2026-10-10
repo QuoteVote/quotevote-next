@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import { useQuery } from '@apollo/client/react'
-import moment from 'moment'
-import { Users, Clock, XCircle, BarChart3, TrendingUp } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
+import { useQuery } from "@apollo/client/react";
+import moment from "moment";
+import { Users, Clock, XCircle, BarChart3, TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-import { GET_USERS } from '@/graphql/queries'
-import type { InviteRequest } from '@/types/admin'
+import { GET_USERS } from "@/graphql/queries";
+import type { InviteRequest } from "@/types/admin";
 
 interface StatisticsTabProps {
-  inviteData: InviteRequest[]
+  inviteData: InviteRequest[];
 }
 
 function StatCard({
@@ -19,18 +19,20 @@ function StatCard({
   gradient,
   iconBg,
 }: {
-  label: string
-  value: number
-  icon: React.ComponentType<{ className?: string }>
-  gradient: string
-  iconBg: string
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  gradient: string;
+  iconBg: string;
 }) {
   return (
     <div className={`relative overflow-hidden rounded-xl border border-border/60 p-5 ${gradient}`}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground mb-1">{label}</p>
-          <p className="text-3xl font-bold text-foreground tabular-nums">{value.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-foreground tabular-nums">
+            {value.toLocaleString()}
+          </p>
         </div>
         <div className={`size-10 rounded-xl flex items-center justify-center ${iconBg} shadow-sm`}>
           <Icon className="size-5 text-white" />
@@ -38,40 +40,40 @@ function StatCard({
       </div>
       <div className="absolute bottom-0 right-0 size-20 rounded-full opacity-5 -mb-6 -mr-6 bg-foreground" />
     </div>
-  )
+  );
 }
 
-const CHART_H = 160 // px — bar area height
+const CHART_H = 160; // px — bar area height
 
 export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
   const { data: usersData, loading: usersLoading } = useQuery<{
-    users: { _id: string }[]
+    users: { _id: string }[];
   }>(GET_USERS, {
     variables: { limit: 1000, offset: 0 },
-    errorPolicy: 'all',
-    fetchPolicy: 'cache-and-network',
-  })
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+  });
 
   const totalActiveUsers =
-    usersData?.users && Array.isArray(usersData.users) ? usersData.users.length : 0
-  const pendingInvitations = inviteData.filter((u) => parseInt(u.status) === 1).length
-  const declinedUsers    = inviteData.filter((u) => parseInt(u.status) === 2).length
-  const acceptedUsers    = inviteData.filter((u) => parseInt(u.status) === 4).length
-  const totalInvitations = inviteData.length
+    usersData?.users && Array.isArray(usersData.users) ? usersData.users.length : 0;
+  const pendingInvitations = inviteData.filter((u) => parseInt(u.status) === 1).length;
+  const declinedUsers = inviteData.filter((u) => parseInt(u.status) === 2).length;
+  const acceptedUsers = inviteData.filter((u) => parseInt(u.status) === 4).length;
+  const totalInvitations = inviteData.length;
 
   // Build monthly buckets
-  const monthly: Record<string, number> = {}
+  const monthly: Record<string, number> = {};
   inviteData.forEach(({ joined }) => {
-    if (!joined) return
-    const key = moment(joined).format('YYYY-MM')
-    monthly[key] = (monthly[key] || 0) + 1
-  })
-  const sortedMonths = Object.keys(monthly).sort().slice(-12)
-  const maxValue = Math.max(...sortedMonths.map((m) => monthly[m]), 1)
-  const totalSignups = sortedMonths.reduce((s, m) => s + monthly[m], 0)
+    if (!joined) return;
+    const key = moment(joined).format("YYYY-MM");
+    monthly[key] = (monthly[key] || 0) + 1;
+  });
+  const sortedMonths = Object.keys(monthly).sort().slice(-12);
+  const maxValue = Math.max(...sortedMonths.map((m) => monthly[m]), 1);
+  const totalSignups = sortedMonths.reduce((s, m) => s + monthly[m], 0);
 
   // Y-axis tick values: max, half, 0
-  const yTicks = [maxValue, Math.round(maxValue / 2), 0]
+  const yTicks = [maxValue, Math.round(maxValue / 2), 0];
 
   if (usersLoading) {
     return (
@@ -83,12 +85,11 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
         </div>
         <Skeleton className="h-[260px] rounded-xl" />
       </div>
-    )
+    );
   }
 
-  const acceptanceRate = totalInvitations > 0
-    ? Math.round((acceptedUsers / totalInvitations) * 100)
-    : 0
+  const acceptanceRate =
+    totalInvitations > 0 ? Math.round((acceptedUsers / totalInvitations) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -149,9 +150,9 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
           <p className="text-sm font-semibold mb-3">Invite Breakdown</p>
           <div className="space-y-2.5">
             {[
-              { label: 'Accepted', count: acceptedUsers,    color: 'bg-[#52b274]' },
-              { label: 'Pending',  count: pendingInvitations, color: 'bg-amber-500' },
-              { label: 'Declined', count: declinedUsers,    color: 'bg-red-500' },
+              { label: "Accepted", count: acceptedUsers, color: "bg-[#52b274]" },
+              { label: "Pending", count: pendingInvitations, color: "bg-amber-500" },
+              { label: "Declined", count: declinedUsers, color: "bg-red-500" },
             ].map(({ label, count, color }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className={`size-2.5 rounded-full shrink-0 ${color}`} />
@@ -179,7 +180,7 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
               <div className="text-right">
                 <p className="text-lg font-bold tabular-nums">{totalSignups.toLocaleString()}</p>
                 <p className="text-[11px] text-muted-foreground leading-none">
-                  last {sortedMonths.length} month{sortedMonths.length !== 1 ? 's' : ''}
+                  last {sortedMonths.length} month{sortedMonths.length !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>
@@ -193,9 +194,9 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
                   key={i}
                   className="absolute right-0 text-[10px] tabular-nums text-muted-foreground/70 leading-none"
                   style={{
-                    top:       i === 0 ? 0        : i === 1 ? '50%' : undefined,
-                    bottom:    i === 2 ? 0        : undefined,
-                    transform: i === 1 ? 'translateY(-50%)' : undefined,
+                    top: i === 0 ? 0 : i === 1 ? "50%" : undefined,
+                    bottom: i === 2 ? 0 : undefined,
+                    transform: i === 1 ? "translateY(-50%)" : undefined,
                   }}
                 >
                   {tick}
@@ -217,8 +218,8 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
                 {/* Bars */}
                 <div className="absolute inset-0 flex items-end gap-1">
                   {sortedMonths.map((month) => {
-                    const count = monthly[month]
-                    const heightPct = Math.max((count / maxValue) * 100, 2)
+                    const count = monthly[month];
+                    const heightPct = Math.max((count / maxValue) * 100, 2);
 
                     return (
                       <div key={month} className="group relative flex-1 h-full flex items-end">
@@ -238,14 +239,18 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
                           className="w-full rounded-t-sm cursor-default"
                           style={{
                             height: `${heightPct}%`,
-                            background: 'linear-gradient(to bottom, #52b274, #52b27455)',
-                            transition: 'filter 0.15s ease',
+                            background: "linear-gradient(to bottom, #52b274, #52b27455)",
+                            transition: "filter 0.15s ease",
                           }}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.filter = 'brightness(1.15)' }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.filter = 'brightness(1)' }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLDivElement).style.filter = "brightness(1.15)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLDivElement).style.filter = "brightness(1)";
+                          }}
                         />
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -255,10 +260,10 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
                 {sortedMonths.map((month) => (
                   <div key={month} className="flex-1 flex flex-col items-center">
                     <span className="text-[10px] font-medium text-muted-foreground leading-tight">
-                      {moment(month, 'YYYY-MM').format('MMM')}
+                      {moment(month, "YYYY-MM").format("MMM")}
                     </span>
                     <span className="text-[9px] text-muted-foreground/40 leading-tight">
-                      {moment(month, 'YYYY-MM').format("'YY")}
+                      {moment(month, "YYYY-MM").format("'YY")}
                     </span>
                   </div>
                 ))}
@@ -268,5 +273,5 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

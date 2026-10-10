@@ -9,37 +9,37 @@
  */
 
 export interface SettingsFormValues {
-  name: string
-  username: string
-  email: string
-  password?: string
-  bio?: string
+  name: string;
+  username: string;
+  email: string;
+  password?: string;
+  bio?: string;
 }
 
 export interface SettingsContentProps {
-  setOpen?: (open: boolean) => void
+  setOpen?: (open: boolean) => void;
 }
 
 export interface SettingsMenuProps {
-  fontSize?: 'small' | 'medium' | 'large' | 'inherit'
+  fontSize?: "small" | "medium" | "large" | "inherit";
 }
 
 export interface UserAvatar {
-  url?: string
-  src?: string
-  [key: string]: unknown
+  url?: string;
+  src?: string;
+  [key: string]: unknown;
 }
 
 export interface SettingsUserData {
-  id?: string
-  _id?: string
-  username?: string
-  email?: string
-  name?: string
-  bio?: string
-  avatar?: UserAvatar | string | Record<string, unknown>
-  admin?: boolean
-  _followingId?: string[]
-  themePreference?: 'light' | 'dark'
-  [key: string]: unknown
+  id?: string;
+  _id?: string;
+  username?: string;
+  email?: string;
+  name?: string;
+  bio?: string;
+  avatar?: UserAvatar | string | Record<string, unknown>;
+  admin?: boolean;
+  _followingId?: string[];
+  themePreference?: "light" | "dark";
+  [key: string]: unknown;
 }

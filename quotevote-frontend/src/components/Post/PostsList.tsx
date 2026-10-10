@@ -1,57 +1,54 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useRef } from 'react'
-import PostCard from './PostCard'
-import PostSkeleton from './PostSkeleton'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { useAppStore } from '@/store'
-import type {
-  LoadPostsListProps,
-  PostListProps,
-} from '@/types/post'
+import { useState, useEffect, useRef } from "react";
+import PostCard from "./PostCard";
+import PostSkeleton from "./PostSkeleton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useAppStore } from "@/store";
+import type { LoadPostsListProps, PostListProps } from "@/types/post";
 
 function LoadPostsList({ data, onLoadMore, loading = false }: LoadPostsListProps) {
-  const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts) || []
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const observerRef = useRef<IntersectionObserver | null>(null)
-  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const hiddenPosts = useAppStore((state) => state.ui.hiddenPosts) || [];
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Calculate derived values before early returns
   const rankedPosts = (data?.posts?.entities || [])
     .map((post, index) => ({ ...post, rank: index + 1 }))
-    .filter((post) => !hiddenPosts.includes(post._id))
+    .filter((post) => !hiddenPosts.includes(post._id));
 
-  const hasMore = (data?.posts?.pagination?.total_count || 0) > rankedPosts.length
+  const hasMore = (data?.posts?.pagination?.total_count || 0) > rankedPosts.length;
 
   // Set up intersection observer for infinite scroll - must be called before any early returns
   useEffect(() => {
-    if (!hasMore || isLoadingMore) return
+    if (!hasMore || isLoadingMore) return;
 
     if (observerRef.current) {
-      observerRef.current.disconnect()
+      observerRef.current.disconnect();
     }
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting && hasMore && !isLoadingMore) {
-          setIsLoadingMore(true)
-          onLoadMore()
-          setTimeout(() => setIsLoadingMore(false), 500)
+          setIsLoadingMore(true);
+          onLoadMore();
+          setTimeout(() => setIsLoadingMore(false), 500);
         }
       },
       { threshold: 0.1 }
-    )
+    );
 
     if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current)
+      observerRef.current.observe(loadMoreRef.current);
     }
 
     return () => {
       if (observerRef.current) {
-        observerRef.current.disconnect()
+        observerRef.current.disconnect();
       }
-    }
-  }, [hasMore, isLoadingMore, onLoadMore])
+    };
+  }, [hasMore, isLoadingMore, onLoadMore]);
 
   // Show loading state when loading and no data yet
   if (loading && (!data || !data.posts || data.posts.entities.length === 0)) {
@@ -59,20 +56,37 @@ function LoadPostsList({ data, onLoadMore, loading = false }: LoadPostsListProps
       <div className="flex flex-col gap-4">
         <PostSkeleton />
       </div>
-    )
+    );
   }
 
   // Only show empty state when not loading and no data
   if (!loading && (!data || !data.posts || data.posts.entities.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-        <div className="size-12 rounded-full bg-muted flex items-center justify-center mb-4 animate-bounce" style={{ animationDuration: '2s' }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <div
+          className="size-12 rounded-full bg-muted flex items-center justify-center mb-4 animate-bounce"
+          style={{ animationDuration: "2s" }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-muted-foreground/50"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
         </div>
         <p className="text-sm font-medium text-foreground mb-1">Nothing here yet</p>
         <p className="text-xs text-muted-foreground">Start exploring or adjust your filters!</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -81,9 +95,9 @@ function LoadPostsList({ data, onLoadMore, loading = false }: LoadPostsListProps
         <PostCard
           key={post._id}
           _id={post._id}
-          text={post.text || ''}
-          title={post.title || ''}
-          url={post.url || ''}
+          text={post.text || ""}
+          title={post.title || ""}
+          url={post.url || ""}
           bookmarkedBy={post.bookmarkedBy || []}
           approvedBy={post.approvedBy || []}
           rejectedBy={post.rejectedBy || []}
@@ -103,25 +117,19 @@ function LoadPostsList({ data, onLoadMore, loading = false }: LoadPostsListProps
         </div>
       )}
     </div>
-  )
+  );
 }
 
-
-export default function PostList({
-  data,
-  loading,
-  fetchMore,
-  variables,
-}: PostListProps) {
+export default function PostList({ data, loading, fetchMore, variables }: PostListProps) {
   if (loading && !data) {
     return (
       <div className="flex flex-col gap-4">
         <PostSkeleton />
       </div>
-    )
+    );
   }
 
-  const newOffset = data?.posts.entities.length || 0
+  const newOffset = data?.posts.entities.length || 0;
 
   return (
     <LoadPostsList
@@ -134,21 +142,17 @@ export default function PostList({
             offset: newOffset,
           },
           updateQuery: (prev, { fetchMoreResult }) => {
-            if (!fetchMoreResult) return prev
+            if (!fetchMoreResult) return prev;
             return {
               ...prev,
               posts: {
                 ...fetchMoreResult.posts,
-                entities: [
-                  ...prev.posts.entities,
-                  ...fetchMoreResult.posts.entities,
-                ],
+                entities: [...prev.posts.entities, ...fetchMoreResult.posts.entities],
               },
-            }
+            };
           },
         })
       }
     />
-  )
+  );
 }
-

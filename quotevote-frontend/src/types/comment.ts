@@ -1,11 +1,13 @@
 export interface CommentUser {
   _id?: string;
   username: string;
-  avatar: {
-    // avatar props might be complex based on the legacy AvatarDisplay usage
-    // but initially treating it as an object that AvatarDisplay accepts
-    [key: string]: unknown;
-  } | string; 
+  avatar:
+    | {
+        // avatar props might be complex based on the legacy AvatarDisplay usage
+        // but initially treating it as an object that AvatarDisplay accepts
+        [key: string]: unknown;
+      }
+    | string;
   name?: string;
 }
 

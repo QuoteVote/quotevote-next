@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useSyncExternalStore } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client/react';
-import { useAppStore } from '@/store';
-import { GET_USER, GET_USER_BIO } from '@/graphql/queries';
-import { ProfileView } from './ProfileView';
-import type { ProfileUser } from '@/types/profile';
+import { useEffect, useSyncExternalStore } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@apollo/client/react";
+import { useAppStore } from "@/store";
+import { GET_USER, GET_USER_BIO } from "@/graphql/queries";
+import { ProfileView } from "./ProfileView";
+import type { ProfileUser } from "@/types/profile";
 
 function subscribePersistHydration(onChange: () => void): () => void {
   return useAppStore.persist.onFinishHydration(onChange);
@@ -28,9 +28,9 @@ export function ProfileController() {
   );
 
   const targetUsername =
-    (typeof paramUsername === 'string' && paramUsername.trim()) ||
-    (typeof loggedInUser?.username === 'string' && loggedInUser.username.trim()) ||
-    '';
+    (typeof paramUsername === "string" && paramUsername.trim()) ||
+    (typeof loggedInUser?.username === "string" && loggedInUser.username.trim()) ||
+    "";
 
   const {
     data: userData,
@@ -41,7 +41,7 @@ export function ProfileController() {
   }>(GET_USER, {
     variables: { username: targetUsername },
     skip: !targetUsername,
-    errorPolicy: 'all',
+    errorPolicy: "all",
   });
 
   // Isolated from GET_USER so a hosted schema without `User.bio` cannot
@@ -52,16 +52,16 @@ export function ProfileController() {
   }>(GET_USER_BIO, {
     variables: { username: targetUsername },
     skip: !targetUsername,
-    errorPolicy: 'all',
+    errorPolicy: "all",
   });
 
   useEffect(() => {
-    setSelectedPage('');
+    setSelectedPage("");
   }, [setSelectedPage]);
 
   useEffect(() => {
     if (!storeHydrated || targetUsername) return;
-    router.replace('/auths/login');
+    router.replace("/auths/login");
   }, [storeHydrated, targetUsername, router]);
 
   // Keep SSR and the first client paint on the loading UI until the persisted
@@ -88,10 +88,5 @@ export function ProfileController() {
       }
     : undefined;
 
-  return (
-    <ProfileView
-      profileUser={profileUser}
-      loading={false}
-    />
-  );
+  return <ProfileView profileUser={profileUser} loading={false} />;
 }

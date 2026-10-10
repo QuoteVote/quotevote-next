@@ -5,15 +5,15 @@
  * Uses MockLink from Apollo (Apollo 4 removed MockedProvider) so tests never hit the network.
  */
 
-import React, { type ReactElement } from 'react';
-import { render, type RenderOptions } from '@testing-library/react';
-import { ApolloClient, InMemoryCache } from '@apollo/client';
-import { ApolloProvider } from '@apollo/client/react';
-import { MockLink, type MockedResponse } from '@apollo/client/testing';
-import { Toaster } from 'sonner';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { AuthModalProvider } from '@/context/AuthModalContext';
-import { useAppStore } from '@/store/useAppStore';
+import React, { type ReactElement } from "react";
+import { render, type RenderOptions } from "@testing-library/react";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloProvider } from "@apollo/client/react";
+import { MockLink, type MockedResponse } from "@apollo/client/testing";
+import { Toaster } from "sonner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthModalProvider } from "@/context/AuthModalContext";
+import { useAppStore } from "@/store/useAppStore";
 
 export type { MockedResponse };
 
@@ -33,8 +33,8 @@ export function createMockApolloClient(mocks: MockedResponse[] = []) {
     link: new MockLink(mocks),
     cache: new InMemoryCache(),
     defaultOptions: {
-      watchQuery: { errorPolicy: 'all' },
-      query: { errorPolicy: 'all' },
+      watchQuery: { errorPolicy: "all" },
+      query: { errorPolicy: "all" },
     },
   });
 }
@@ -49,16 +49,14 @@ function AllTheProviders({ children, mocks = [] }: AllTheProvidersProps) {
   return (
     <ApolloProvider client={client}>
       <AuthModalProvider>
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
-        {typeof Toaster === 'function' && <Toaster />}
+        <ErrorBoundary>{children}</ErrorBoundary>
+        {typeof Toaster === "function" && <Toaster />}
       </AuthModalProvider>
     </ApolloProvider>
   );
 }
 
-interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
+interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   mocks?: MockedResponse[];
 }
 
@@ -73,20 +71,18 @@ function customRender(ui: ReactElement, options: CustomRenderOptions = {}) {
 
   return render(ui, {
     wrapper: ({ children }: { children: React.ReactNode }) => (
-      <AllTheProviders mocks={mocks}>
-        {children}
-      </AllTheProviders>
+      <AllTheProviders mocks={mocks}>{children}</AllTheProviders>
     ),
     ...renderOptions,
   });
 }
 
 // Re-export everything from React Testing Library
-export * from '@testing-library/react';
+export * from "@testing-library/react";
 export { customRender as render };
 
 // Explicitly export commonly used testing utilities
-export { screen, fireEvent, waitFor, act } from '@testing-library/react';
+export { screen, fireEvent, waitFor, act } from "@testing-library/react";
 
 // Export providers and helpers
 export { AllTheProviders, AllTheProviders as TestWrapper };

@@ -1,66 +1,66 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Search } from 'lucide-react'
-import { useQuery } from '@apollo/client/react'
+import { useState } from "react";
+import { Search } from "lucide-react";
+import { useQuery } from "@apollo/client/react";
 
-import { SEARCH } from '@/graphql/queries'
-import { useDebounce } from '@/hooks/useDebounce'
-import { Input } from '@/components/ui/input'
-import { Card, CardHeader } from '@/components/ui/card'
-import SearchResultsView from './SearchResults'
-import type { SidebarSearchViewProps } from '@/types/components'
-import { cn } from '@/lib/utils'
+import { SEARCH } from "@/graphql/queries";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Input } from "@/components/ui/input";
+import { Card, CardHeader } from "@/components/ui/card";
+import SearchResultsView from "./SearchResults";
+import type { SidebarSearchViewProps } from "@/types/components";
+import { cn } from "@/lib/utils";
 
 interface SearchPost {
-  _id: string
-  title: string
-  text?: string
-  url?: string
-  groupId?: string
-  creator?: { _id: string; name?: string; username?: string }
+  _id: string;
+  title: string;
+  text?: string;
+  url?: string;
+  groupId?: string;
+  creator?: { _id: string; name?: string; username?: string };
 }
 
 interface SearchUser {
-  _id: string
-  name: string
-  username?: string
-  avatar?: string
+  _id: string;
+  name: string;
+  username?: string;
+  avatar?: string;
 }
 
 interface SearchQueryData {
-  posts: { entities: SearchPost[] }
-  searchUser: SearchUser[]
+  posts: { entities: SearchPost[] };
+  searchUser: SearchUser[];
 }
 
 /**
  * SidebarSearchView Component
- * 
+ *
  * A search container component that provides a search input with debounced queries
  * and displays search results for content and creators.
- * 
+ *
  * @param Display - Display style for the container (default: 'block')
  */
-export default function SidebarSearchView({ Display = 'block' }: SidebarSearchViewProps) {
-  const [searchText, setSearchText] = useState('')
-  const debouncedSearchText = useDebounce(searchText, 300)
+export default function SidebarSearchView({ Display = "block" }: SidebarSearchViewProps) {
+  const [searchText, setSearchText] = useState("");
+  const debouncedSearchText = useDebounce(searchText, 300);
 
   const { loading, error, data } = useQuery<SearchQueryData>(SEARCH, {
     variables: { text: debouncedSearchText },
     skip: !debouncedSearchText.trim(),
-  })
+  });
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value)
-  }
+    setSearchText(e.target.value);
+  };
 
   return (
     <div
       className={cn(
-        'flex-1',
-        Display === 'flex' ? 'flex' : Display === 'none' ? 'hidden' : 'block',
-        'm-1 mr-4',
-        'h-[90vh]'
+        "flex-1",
+        Display === "flex" ? "flex" : Display === "none" ? "hidden" : "block",
+        "m-1 mr-4",
+        "h-[90vh]"
       )}
     >
       <Card className="z-10 h-fit">
@@ -90,7 +90,7 @@ export default function SidebarSearchView({ Display = 'block' }: SidebarSearchVi
             })),
             searchCreator: (data.searchUser || []).map((u) => ({
               _id: u._id,
-              name: u.name || u.username || '',
+              name: u.name || u.username || "",
               username: u.username,
             })),
           }}
@@ -99,7 +99,5 @@ export default function SidebarSearchView({ Display = 'block' }: SidebarSearchVi
         />
       )}
     </div>
-  )
+  );
 }
-
-

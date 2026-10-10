@@ -1,53 +1,49 @@
-'use client';
+"use client";
 
 /**
  * Password Reset Component
- * 
+ *
  * Matches login page theme with split-screen layout and consistent styling.
  */
 
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Globe } from '@/components/Icons';
-import { Lock, Eye, EyeOff, Frown, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader } from '@/components/common/Loader';
-import type { PasswordResetFormProps, PasswordResetProps } from '@/types/components';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { Globe } from "@/components/Icons";
+import { Lock, Eye, EyeOff, Frown, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader } from "@/components/common/Loader";
+import type { PasswordResetFormProps, PasswordResetProps } from "@/types/components";
+import { cn } from "@/lib/utils";
 
 const passwordSchema = z
   .object({
     password: z
       .string()
-      .min(1, 'Password is required')
-      .min(6, 'Password should be more than six characters')
-      .max(20, 'Password should be less than twenty characters')
+      .min(1, "Password is required")
+      .min(6, "Password should be more than six characters")
+      .max(20, "Password should be less than twenty characters")
       .regex(
         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/,
-        'Password should contain a number, an uppercase, and lowercase letter'
+        "Password should contain a number, an uppercase, and lowercase letter"
       ),
-    confirmPassword: z.string().min(1, 'Confirm password is required'),
+    confirmPassword: z.string().min(1, "Confirm password is required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match.",
-    path: ['confirmPassword'],
+    path: ["confirmPassword"],
   });
 
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
-function PasswordResetForm({
-  onSubmit,
-  loading,
-  error,
-}: PasswordResetFormProps) {
+function PasswordResetForm({ onSubmit, loading, error }: PasswordResetFormProps) {
   const handleFormSubmit = (data: PasswordFormData) => {
     onSubmit(data);
   };
@@ -65,8 +61,8 @@ function PasswordResetForm({
 
   useEffect(() => {
     if (error) {
-      setError('password', {
-        type: 'manual',
+      setError("password", {
+        type: "manual",
         message: error,
       });
     }
@@ -78,8 +74,8 @@ function PasswordResetForm({
     <form onSubmit={handleSubmit(handleFormSubmit)} className="w-full space-y-4">
       {/* Error Alert */}
       {hasError && (
-        <Alert 
-          variant="destructive" 
+        <Alert
+          variant="destructive"
           className="bg-red-50 border-red-200 animate-in fade-in-0 slide-in-from-top-2"
         >
           <AlertCircle className="h-4 w-4 text-red-600" />
@@ -91,32 +87,34 @@ function PasswordResetForm({
 
       {/* Password Field */}
       <div className="space-y-1.5">
-        <Label 
-          htmlFor="password" 
+        <Label
+          htmlFor="password"
           className="text-sm font-semibold text-[var(--color-text-primary)]"
         >
           Password
         </Label>
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-            <Lock className={cn(
-              "h-4 w-4 transition-colors duration-200",
-              errors.password 
-                ? "text-red-500" 
-                : "text-[var(--color-text-light)] group-focus-within:text-[var(--color-primary)]"
-            )} />
+            <Lock
+              className={cn(
+                "h-4 w-4 transition-colors duration-200",
+                errors.password
+                  ? "text-red-500"
+                  : "text-[var(--color-text-light)] group-focus-within:text-[var(--color-primary)]"
+              )}
+            />
           </div>
           <Input
             id="password"
-            type={showPassword ? 'text' : 'password'}
+            type={showPassword ? "text" : "password"}
             placeholder="Enter your new password"
             className={cn(
-              'pl-11 pr-12 h-10 bg-[var(--color-white)] border-[var(--color-gray-light)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-light)]',
-              'focus:bg-[var(--color-white)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20',
-              'transition-all duration-200',
-              errors.password && 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              "pl-11 pr-12 h-10 bg-[var(--color-white)] border-[var(--color-gray-light)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-light)]",
+              "focus:bg-[var(--color-white)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20",
+              "transition-all duration-200",
+              errors.password && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
             )}
-            {...register('password')}
+            {...register("password")}
             aria-invalid={!!errors.password}
             disabled={loading}
           />
@@ -124,14 +122,10 @@ function PasswordResetForm({
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute inset-y-0 right-0 flex items-center pr-4 text-[var(--color-text-light)] hover:text-[var(--color-text-secondary)] transition-colors"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={showPassword ? "Hide password" : "Show password"}
             disabled={loading}
           >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
         {errors.password && (
@@ -144,32 +138,34 @@ function PasswordResetForm({
 
       {/* Confirm Password Field */}
       <div className="space-y-1.5">
-        <Label 
-          htmlFor="confirmPassword" 
+        <Label
+          htmlFor="confirmPassword"
           className="text-sm font-semibold text-[var(--color-text-primary)]"
         >
           Confirm Password
         </Label>
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-            <Lock className={cn(
-              "h-4 w-4 transition-colors duration-200",
-              errors.confirmPassword 
-                ? "text-red-500" 
-                : "text-[var(--color-text-light)] group-focus-within:text-[var(--color-primary)]"
-            )} />
+            <Lock
+              className={cn(
+                "h-4 w-4 transition-colors duration-200",
+                errors.confirmPassword
+                  ? "text-red-500"
+                  : "text-[var(--color-text-light)] group-focus-within:text-[var(--color-primary)]"
+              )}
+            />
           </div>
           <Input
             id="confirmPassword"
-            type={showConfirmPassword ? 'text' : 'password'}
+            type={showConfirmPassword ? "text" : "password"}
             placeholder="Confirm your new password"
             className={cn(
-              'pl-11 pr-12 h-10 bg-[var(--color-white)] border-[var(--color-gray-light)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-light)]',
-              'focus:bg-[var(--color-white)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20',
-              'transition-all duration-200',
-              errors.confirmPassword && 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              "pl-11 pr-12 h-10 bg-[var(--color-white)] border-[var(--color-gray-light)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-light)]",
+              "focus:bg-[var(--color-white)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20",
+              "transition-all duration-200",
+              errors.confirmPassword && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
             )}
-            {...register('confirmPassword')}
+            {...register("confirmPassword")}
             aria-invalid={!!errors.confirmPassword}
             disabled={loading}
           />
@@ -177,14 +173,10 @@ function PasswordResetForm({
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             className="absolute inset-y-0 right-0 flex items-center pr-4 text-[var(--color-text-light)] hover:text-[var(--color-text-secondary)] transition-colors"
-            aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+            aria-label={showConfirmPassword ? "Hide password" : "Show password"}
             disabled={loading}
           >
-            {showConfirmPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
         {errors.confirmPassword && (
@@ -295,7 +287,7 @@ export function PasswordReset({
                       You can now log in with your new password.
                     </p>
                     <Button
-                      onClick={() => router.push('/login')}
+                      onClick={() => router.push("/login")}
                       className={cn(
                         "w-full h-10 text-base font-semibold",
                         "bg-[var(--color-primary)] hover:opacity-90",

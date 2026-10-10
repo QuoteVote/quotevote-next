@@ -7,7 +7,7 @@ import {
   GraphQLVariableParams,
   GraphQLVariables,
   ExtractPaginationDataResult,
-} from "@/types/store"
+} from "@/types/store";
 /**
  * Utility functions for pagination
  */
@@ -19,10 +19,10 @@ import {
  * @returns {Object} Object with limit and offset
  */
 export const pageToOffset = (page: number, pageSize: number): PageToOffsetResult => {
-  const limit = pageSize
-  const offset = (page - 1) * pageSize
-  return { limit, offset }
-}
+  const limit = pageSize;
+  const offset = (page - 1) * pageSize;
+  return { limit, offset };
+};
 
 /**
  * Convert offset-based pagination to page-based pagination
@@ -31,10 +31,10 @@ export const pageToOffset = (page: number, pageSize: number): PageToOffsetResult
  * @returns {Object} Object with page and pageSize
  */
 export const offsetToPage = (offset: number, limit: number): OffsetToPageResult => {
-  const page = Math.floor(offset / limit) + 1
-  const pageSize = limit
-  return { page, pageSize }
-}
+  const page = Math.floor(offset / limit) + 1;
+  const pageSize = limit;
+  return { page, pageSize };
+};
 
 /**
  * Calculate pagination metadata
@@ -43,9 +43,13 @@ export const offsetToPage = (offset: number, limit: number): OffsetToPageResult 
  * @param {number} pageSize - Number of items per page
  * @returns {Object} Pagination metadata
  */
-export const calculatePagination = (totalCount: number, page: number, pageSize: number): PaginationMeta => {
-  const totalPages = Math.ceil(totalCount / pageSize)
-  const normalizedPage = Math.min(Math.max(page, 1), totalPages || 1)
+export const calculatePagination = (
+  totalCount: number,
+  page: number,
+  pageSize: number
+): PaginationMeta => {
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const normalizedPage = Math.min(Math.max(page, 1), totalPages || 1);
 
   return {
     total: totalCount,
@@ -57,8 +61,8 @@ export const calculatePagination = (totalCount: number, page: number, pageSize: 
     hasPreviousPage: normalizedPage > 1,
     startIndex: (normalizedPage - 1) * pageSize,
     endIndex: Math.min(normalizedPage * pageSize, totalCount),
-  }
-}
+  };
+};
 
 /**
  * Generate page numbers for pagination display
@@ -67,26 +71,30 @@ export const calculatePagination = (totalCount: number, page: number, pageSize: 
  * @param {number} maxVisible - Maximum number of visible pages
  * @returns {Array} Array of page numbers to display
  */
-export const generatePageNumbers = (currentPage: number, totalPages: number, maxVisible: number = 5): number[] => {
+export const generatePageNumbers = (
+  currentPage: number,
+  totalPages: number,
+  maxVisible: number = 5
+): number[] => {
   if (totalPages <= maxVisible) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1)
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
-  const half = Math.floor(maxVisible / 2)
-  let start = Math.max(1, currentPage - half)
-  const end = Math.min(totalPages, start + maxVisible - 1)
+  const half = Math.floor(maxVisible / 2);
+  let start = Math.max(1, currentPage - half);
+  const end = Math.min(totalPages, start + maxVisible - 1);
 
   if (end - start + 1 < maxVisible) {
-    start = Math.max(1, end - maxVisible + 1)
+    start = Math.max(1, end - maxVisible + 1);
   }
 
-  const pages = []
+  const pages = [];
   for (let i = start; i <= end; i++) {
-    pages.push(i)
+    pages.push(i);
   }
 
-  return pages
-}
+  return pages;
+};
 
 /**
  * Validate and normalize pagination parameters
@@ -96,17 +104,21 @@ export const generatePageNumbers = (currentPage: number, totalPages: number, max
  * @param {number} params.totalCount - Total count
  * @returns {Object} Normalized pagination parameters
  */
-export const normalizePaginationParams = ({ page, pageSize, totalCount }: NormalizePaginationParamsInput): NormalizePaginationParamsOutput => {
-  const normalizedPage = Math.max(1, Math.floor(Number(page) || 1))
-  const normalizedPageSize = Math.max(1, Math.min(100, Math.floor(Number(pageSize) || 20)))
-  const normalizedTotalCount = Math.max(0, Math.floor(Number(totalCount) || 0))
+export const normalizePaginationParams = ({
+  page,
+  pageSize,
+  totalCount,
+}: NormalizePaginationParamsInput): NormalizePaginationParamsOutput => {
+  const normalizedPage = Math.max(1, Math.floor(Number(page) || 1));
+  const normalizedPageSize = Math.max(1, Math.min(100, Math.floor(Number(pageSize) || 20)));
+  const normalizedTotalCount = Math.max(0, Math.floor(Number(totalCount) || 0));
 
   return {
     page: normalizedPage,
     pageSize: normalizedPageSize,
     totalCount: normalizedTotalCount,
-  }
-}
+  };
+};
 
 /**
  * Create GraphQL variables for paginated queries
@@ -117,7 +129,7 @@ export const createGraphQLVariables = (params: GraphQLVariableParams): GraphQLVa
   const {
     page,
     pageSize,
-    searchKey = '',
+    searchKey = "",
     startDateRange,
     endDateRange,
     friendsOnly = false,
@@ -126,9 +138,9 @@ export const createGraphQLVariables = (params: GraphQLVariableParams): GraphQLVa
     sortOrder,
     groupId,
     approved,
-  } = params
+  } = params;
 
-  const { limit, offset } = pageToOffset(Number(page || 1), Number(pageSize || 20))
+  const { limit, offset } = pageToOffset(Number(page || 1), Number(pageSize || 20));
 
   return {
     limit,
@@ -142,8 +154,8 @@ export const createGraphQLVariables = (params: GraphQLVariableParams): GraphQLVa
     sortOrder,
     groupId,
     approved,
-  }
-}
+  };
+};
 
 /**
  * Extract pagination data from GraphQL response
@@ -151,7 +163,10 @@ export const createGraphQLVariables = (params: GraphQLVariableParams): GraphQLVa
  * @param {string} entityName - Name of the entity (e.g., 'posts', 'activities')
  * @returns {Object} Pagination data
  */
-export const extractPaginationData = <T = unknown>(data: Record<string, unknown>, entityName: string): ExtractPaginationDataResult<T> => {
+export const extractPaginationData = <T = unknown>(
+  data: Record<string, unknown>,
+  entityName: string
+): ExtractPaginationDataResult<T> => {
   if (!data || !data[entityName]) {
     return {
       data: [],
@@ -163,20 +178,20 @@ export const extractPaginationData = <T = unknown>(data: Record<string, unknown>
         currentPage: 1,
         hasNextPage: false,
       },
-    }
+    };
   }
 
   const { entities, pagination } = data[entityName] as {
-    entities?: T[]
-    pagination?: { total_count?: number; limit?: number; offset?: number }
-  }
+    entities?: T[];
+    pagination?: { total_count?: number; limit?: number; offset?: number };
+  };
 
-  const totalCount = pagination?.total_count ?? 0
-  const limit = pagination?.limit ?? 0
-  const offset = pagination?.offset ?? 0
-  const pageSize = limit || 20
-  const page = limit > 0 ? Math.floor(offset / limit) + 1 : 1
-  const totalPages = pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0
+  const totalCount = pagination?.total_count ?? 0;
+  const limit = pagination?.limit ?? 0;
+  const offset = pagination?.offset ?? 0;
+  const pageSize = limit || 20;
+  const page = limit > 0 ? Math.floor(offset / limit) + 1 : 1;
+  const totalPages = pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0;
 
   return {
     data: entities ?? [],
@@ -188,8 +203,8 @@ export const extractPaginationData = <T = unknown>(data: Record<string, unknown>
       currentPage: page,
       hasNextPage: page < totalPages,
     },
-  }
-}
+  };
+};
 
 const paginationUtils = {
   pageToOffset,
@@ -199,5 +214,5 @@ const paginationUtils = {
   normalizePaginationParams,
   createGraphQLVariables,
   extractPaginationData,
-}
-export default paginationUtils
+};
+export default paginationUtils;
