@@ -21,7 +21,7 @@ type UpdatePresenceArgs = {
   };
 };
 
-function toPublicPresence(doc: {
+export function toPublicPresence(doc: {
   id: string;
   userId: string;
   status: Common.PresenceStatus;

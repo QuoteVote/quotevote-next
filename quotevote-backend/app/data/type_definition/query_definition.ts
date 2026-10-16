@@ -92,7 +92,10 @@ type Query {
   getPresence(userId: String!): Presence
 
   " Get buddy list with presence information"
-  getBuddyList: [BuddyWithPresence]
+  getBuddyList: [BuddyWithPresence!]!
+
+  " Pending buddy requests sent to or by the current user"
+  buddyRequests: [BuddyRelationship!]!
 
   " Block state between the current user and another user"
   userBlockStatus(userId: String!): UserBlockStatus!

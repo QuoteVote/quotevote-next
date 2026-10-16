@@ -5,12 +5,13 @@ import {
   GraphQLString,
   type GraphQLFieldConfigMap,
 } from 'graphql';
-import type { GraphQLContext } from '~/types/graphql';
+import type { GraphQLContext, BuddyUserResult } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { DateScalar } from './scalars';
 import { RosterStatusEnum } from './enums';
 import { UserType } from './User';
 import { PresenceType } from './Presence';
+import { BuddyUserType } from './Buddy';
 
 import User from '../models/User';
 import Presence from '../models/Presence';
@@ -56,19 +57,17 @@ export const RosterType: GraphQLObjectType<RosterShape, GraphQLContext> = new Gr
 });
 
 interface BuddyWithPresenceShape {
-  user: Common.User;
-  presence?: Common.Presence;
-  roster: Common.Roster;
+  user: BuddyUserResult;
+  presence?: Common.Presence | null;
 }
 
 export const BuddyWithPresenceType: GraphQLObjectType<BuddyWithPresenceShape, GraphQLContext> =
   new GraphQLObjectType<BuddyWithPresenceShape, GraphQLContext>({
     name: 'BuddyWithPresence',
-    description: 'Buddy user joined with their current presence + roster entry.',
+    description: 'Buddy user joined with their current presence.',
     fields: (): GraphQLFieldConfigMap<BuddyWithPresenceShape, GraphQLContext> => ({
-      user: { type: new GraphQLNonNull(UserType) },
+      user: { type: new GraphQLNonNull(BuddyUserType) },
       presence: { type: PresenceType },
-      roster: { type: new GraphQLNonNull(RosterType) },
     }),
   });
 
