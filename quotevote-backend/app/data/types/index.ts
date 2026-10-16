@@ -62,6 +62,7 @@ import { DeletedVoteType } from './DeletedVote';
 import { DeletedMessageType } from './DeletedMessage';
 import { HeartbeatResponseType, PresenceType, PresenceUpdateType } from './Presence';
 import { BuddyWithPresenceType, DeletedRosterType, RosterType } from './Roster';
+import { UserBlockStatusType } from './UserBlock';
 import { TypingIndicatorType, TypingResponseType } from './TypingIndicator';
 import { domainInputTypes } from '../inputs';
 
@@ -91,6 +92,7 @@ export * from './DeletedVote';
 export * from './DeletedMessage';
 export * from './Presence';
 export * from './Roster';
+export * from './UserBlock';
 export * from './TypingIndicator';
 
 /**
@@ -154,6 +156,7 @@ export const domainTypes: readonly GraphQLNamedType[] = [
   DeletedRosterType,
   TypingIndicatorType,
   TypingResponseType,
+  UserBlockStatusType,
   ...domainInputTypes,
 ];
 
