@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useMemo, KeyboardEvent, ChangeEvent } from 'react';
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useState, KeyboardEvent, ChangeEvent } from 'react';
+import { useMutation } from '@apollo/client/react';
 import { Send, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
-import { GET_CHAT_ROOMS, GET_ROOM_MESSAGES, GET_ROSTER } from '@/graphql/queries';
+import { GET_CHAT_ROOMS, GET_ROOM_MESSAGES } from '@/graphql/queries';
 import { SEND_MESSAGE } from '@/graphql/mutations';
 import useGuestGuard from '@/hooks/useGuestGuard';
+import { useUserBlock } from '@/hooks/useUserBlock';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { cn } from '@/lib/utils';
 import type { MessageSendProps, ChatUser, SelectedRoomState } from '@/types/chat';
@@ -33,61 +34,24 @@ export default function MessageSend({
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
-  // Check if current user is blocked (only for USER type rooms)
-  const { data: rosterData } = useQuery<{ getRoster: Array<{ _id: string; userId: string; buddyId: string; status: string; initiatedBy: string }> }>(GET_ROSTER, {
-    skip: !user || type !== 'USER' || !selectedRoom,
-  });
-
-  // Determine blocking status: who blocked whom
+  // Determine blocking status: who blocked whom (only for USER type rooms)
   const normalizedSelectedRoom =
     typeof selectedRoom === 'string' || !selectedRoom
       ? null
       : selectedRoom.room || selectedRoom;
 
-  const blockingStatus = useMemo(() => {
-    if (
-      type !== 'USER' ||
-      !normalizedSelectedRoom ||
-      !rosterData?.getRoster ||
-      !chatUser?._id
-    )
-      return null;
+  const otherUserId =
+    type === 'USER' && normalizedSelectedRoom && chatUser?._id
+      ? normalizedSelectedRoom.users
+          ?.find(
+            (id: string | { toString(): string }) =>
+              id?.toString() !== chatUser._id?.toString()
+          )
+          ?.toString()
+      : undefined;
 
-    const users = normalizedSelectedRoom.users;
-    const otherUserId = users?.find(
-      (id: string | { toString(): string }) =>
-        id?.toString() !== chatUser._id?.toString()
-    )?.toString();
-
-    if (!otherUserId) return null;
-
-    const currentUserId = chatUser._id.toString();
-    const rosterEntries = rosterData.getRoster;
-
-    // Current user blocked other user if there is a roster entry where
-    // current user initiated a 'blocked' status against the other user
-    const currentUserBlockedOther = rosterEntries.some((r) => {
-      return (
-        r.status === 'blocked' &&
-        r.userId?.toString() === currentUserId &&
-        r.buddyId?.toString() === otherUserId
-      );
-    });
-
-    // Other user blocked current user
-    const otherUserBlockedCurrent = rosterEntries.some((r) => {
-      return (
-        r.status === 'blocked' &&
-        r.userId?.toString() === otherUserId &&
-        r.buddyId?.toString() === currentUserId
-      );
-    });
-
-    if (currentUserBlockedOther) return 'blocker';
-    if (otherUserBlockedCurrent) return 'blocked';
-    return null;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- chatUser._id is covered by user (same reference)
-  }, [type, normalizedSelectedRoom, rosterData, user]);
+  const { blockedByMe, blockedMe } = useUserBlock(otherUserId);
+  const blockingStatus = blockedByMe ? 'blocker' : blockedMe ? 'blocked' : null;
 
   const isBlocked = blockingStatus !== null;
 
