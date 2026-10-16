@@ -39,6 +39,17 @@ describe('findBlockBetween', () => {
     });
   });
 
+  it('matches ids case-insensitively (Prisma returns lowercase hex)', async () => {
+    expect(await findBlockBetween(prismaWith([B]), A, B.toUpperCase())).toEqual({
+      aBlocksB: false,
+      bBlocksA: true,
+    });
+    expect(await findBlockBetween(prismaWith([A]), A.toUpperCase(), B)).toEqual({
+      aBlocksB: true,
+      bBlocksA: false,
+    });
+  });
+
   it('flags directions correctly', async () => {
     expect(await findBlockBetween(prismaWith([]), A, B)).toEqual({
       aBlocksB: false,

@@ -7,9 +7,11 @@ type Prisma = GraphQLContext['prisma'];
 /** Look up block rows in both directions with a single query. */
 export async function findBlockBetween(
   prisma: Prisma,
-  a: string,
-  b: string
+  rawA: string,
+  rawB: string
 ): Promise<{ aBlocksB: boolean; bBlocksA: boolean }> {
+  // Prisma returns lowercase hex, so normalise caller input before comparing.
+  const [a, b] = [rawA.toLowerCase(), rawB.toLowerCase()];
   const rows = await prisma.userBlock.findMany({
     where: {
       OR: [
