@@ -62,7 +62,7 @@ export interface ChatMessage {
 export type ChatMessageHandler = (message: ChatMessage) => void | Promise<void>
 
 /**
- * Handler used when adding a buddy from search or roster UIs
+ * Handler used when adding a buddy from search or buddy UIs
  */
 export type AddBuddyHandler = (userId: string) => Promise<void>
 

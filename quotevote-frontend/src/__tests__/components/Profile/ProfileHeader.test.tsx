@@ -16,7 +16,7 @@ import { useAppStore } from '@/store';
 import type { ProfileUser } from '@/types/profile';
 // @ts-expect-error - MockedProvider may not have types in this version
 import { MockedProvider } from '@apollo/client/testing';
-import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
+import { GET_CHAT_ROOM, GET_USER_BLOCK_STATUS } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
 import { toast } from 'sonner';
 import { installMemoryStorage, restoreStorage } from '../../utils/memoryStorage';
@@ -110,17 +110,11 @@ const createMocks = (otherUserId: string = 'user1') => [
   },
   {
     request: {
-      query: GET_ROSTER,
-      variables: {},
+      query: GET_USER_BLOCK_STATUS,
+      variables: { userId: 'user1' },
     },
     result: {
-      data: {
-        roster: {
-          buddies: [],
-          pendingRequests: [],
-          blockedUsers: [],
-        },
-      },
+      data: { userBlockStatus: { userId: 'user1', blockedByMe: false, blockedMe: false } },
     },
   },
 ];
@@ -323,7 +317,7 @@ describe('ProfileHeader Component', () => {
           </MockedProvider>
         );
       });
-      // Wait for component to render (own profile doesn't need chat/roster queries)
+      // Wait for component to render (own profile doesn't need chat/block queries)
       await waitFor(() => {
         const button = screen.queryByText('Edit Profile');
         const errorUI = screen.queryByText(/Something went wrong/i);
@@ -417,25 +411,19 @@ describe('ProfileHeader Component', () => {
         setChatOpen,
       });
 
-      const mockRoster = {
+      const mockBlockStatus = {
         request: {
-          query: GET_ROSTER,
-          variables: {},
+          query: GET_USER_BLOCK_STATUS,
+          variables: { userId: 'user1' },
         },
         result: {
-          data: {
-            roster: {
-              buddies: [],
-              pendingRequests: [],
-              blockedUsers: [],
-            },
-          },
+          data: { userBlockStatus: { userId: 'user1', blockedByMe: false, blockedMe: false } },
         },
       };
 
       await act(async () => {
         render(
-          <MockedProvider mocks={[mockChatRoom, mockRoster]} addTypename={false}>
+          <MockedProvider mocks={[mockChatRoom, mockBlockStatus]} addTypename={false}>
             <ProfileHeader profileUser={mockProfileUser} />
           </MockedProvider>
         );
@@ -465,23 +453,13 @@ describe('ProfileHeader Component', () => {
     });
 
     it('shows warning when trying to message blocked user', async () => {
-      const mockRoster = {
+      const mockBlockStatus = {
         request: {
-          query: GET_ROSTER,
+          query: GET_USER_BLOCK_STATUS,
+          variables: { userId: 'user1' },
         },
         result: {
-          data: {
-            roster: {
-              buddies: [
-                {
-                  userId: 'currentuser',
-                  buddyId: 'user1',
-                  status: 'blocked',
-                },
-              ],
-              blockedUsers: [],
-            },
-          },
+          data: { userBlockStatus: { userId: 'user1', blockedByMe: true, blockedMe: false } },
         },
       };
 
@@ -499,7 +477,7 @@ describe('ProfileHeader Component', () => {
 
       await act(async () => {
         render(
-          <MockedProvider mocks={[mockChatRoom, mockRoster]} addTypename={false}>
+          <MockedProvider mocks={[mockChatRoom, mockBlockStatus]} addTypename={false}>
             <ProfileHeader profileUser={mockProfileUser} />
           </MockedProvider>
         );

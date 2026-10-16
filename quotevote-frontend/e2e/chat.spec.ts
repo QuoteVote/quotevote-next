@@ -187,16 +187,27 @@ test.describe('E2E-CHAT-008 Chat Search', () => {
             },
           }),
         });
-      } else if (query.includes('getRoster') || query.includes('buddyList')) {
+      } else if (query.includes('buddyRequests')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { buddyRequests: [] } }),
+        });
+      } else if (query.includes('userBlockStatus')) {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
             data: {
-              getRoster: [],
-              buddyList: [],
+              userBlockStatus: { userId: '', blockedByMe: false, blockedMe: false },
             },
           }),
+        });
+      } else if (query.includes('getBuddyList')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { getBuddyList: [] } }),
         });
       } else if (query.includes('featuredPosts')) {
         await route.fulfill({

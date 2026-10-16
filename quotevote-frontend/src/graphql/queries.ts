@@ -46,22 +46,39 @@ export const GET_ROOM_MESSAGES = gql`
   `
 
 /**
- * Get roster query (includes pending requests and blocked users)
+ * Get pending buddy requests (incoming and outgoing)
  */
-export const GET_ROSTER = gql`
-  query GetRoster {
-    getRoster {
+export const GET_BUDDY_REQUESTS = gql`
+  query GetBuddyRequests {
+    buddyRequests {
       _id
-      userId
-      buddyId
       status
-      initiatedBy
-      buddy {
+      createdAt
+      requester {
         _id
         name
         username
         avatar
       }
+      recipient {
+        _id
+        name
+        username
+        avatar
+      }
+    }
+  }
+`
+
+/**
+ * Get block status between the current user and another user
+ */
+export const GET_USER_BLOCK_STATUS = gql`
+  query GetUserBlockStatus($userId: String!) {
+    userBlockStatus(userId: $userId) {
+      userId
+      blockedByMe
+      blockedMe
     }
   }
 `
