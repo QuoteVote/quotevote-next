@@ -42,6 +42,8 @@ import {
   PROFILE_BIO_HTML_PATTERN,
   PROFILE_BIO_MAX_LENGTH,
 } from '@/lib/constants/profile'
+import SolidPodCard from '@/components/settings/SolidPodCard'
+import { parseAvatarToUrl } from '@/lib/avatar'
 import type { SettingsUserData } from '@/types/settings'
 import type { UpdateUserResponse } from '@/types/test'
 
@@ -82,6 +84,12 @@ export default function SettingsPageClient() {
   const email = userData?.email ?? ''
   const name = userData?.name ?? ''
   const userId = userData?.id ?? userData?._id ?? ''
+  // Only a real https avatar link is synced to the Pod; avataaars objects are skipped.
+  const parsedAvatarUrl = parseAvatarToUrl(
+    userData?.avatar as string | Record<string, unknown> | undefined
+  )
+  const solidAvatarUrl =
+    parsedAvatarUrl && /^https:\/\//.test(parsedAvatarUrl) ? parsedAvatarUrl : undefined
 
   const [localDarkMode, setLocalDarkMode] = useState(isDarkMode)
   const [originalDarkMode, setOriginalDarkMode] = useState(isDarkMode)
@@ -472,6 +480,13 @@ export default function SettingsPageClient() {
           </Form>
         </CardContent>
       </Card>
+
+      <SolidPodCard
+        displayName={name}
+        bio={fetchedBio}
+        avatarUrl={solidAvatarUrl}
+        theme={localDarkMode ? 'dark' : 'light'}
+      />
     </div>
   )
 }

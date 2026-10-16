@@ -1,3 +1,4 @@
+import { assertPublicUrl } from './security';
 /**
  * Solid OIDC Issuer Discovery
  * Implements OpenID Connect Discovery for Solid Pods
@@ -40,6 +41,7 @@ export async function discoverIssuer(issuerOrWebId: string): Promise<IssuerMetad
     const wellKnownUrl = `${issuerUrl}/.well-known/openid-configuration`;
 
     try {
+        await assertPublicUrl(wellKnownUrl);
         const response = await fetch(wellKnownUrl, {
             headers: {
                 'Accept': 'application/json',
@@ -60,6 +62,10 @@ export async function discoverIssuer(issuerOrWebId: string): Promise<IssuerMetad
             throw new Error('Invalid issuer metadata: missing required fields');
         }
 
+        // Endpoints come from a user-chosen issuer: never let them point at internal hosts.
+        await assertPublicUrl(metadata.token_endpoint);
+        await assertPublicUrl(metadata.authorization_endpoint);
+
         return metadata;
     } catch (error) {
         if (error instanceof Error) {
@@ -76,6 +82,7 @@ export async function discoverIssuer(issuerOrWebId: string): Promise<IssuerMetad
  */
 async function discoverIssuerFromWebId(webId: string): Promise<string> {
     try {
+        await assertPublicUrl(webId);
         const response = await fetch(webId, {
             headers: {
                 'Accept': 'application/ld+json, application/json, text/turtle',
@@ -152,9 +159,21 @@ function extractIssuerFromJsonLd(data: unknown): string | null {
  * @returns true if valid
  */
 export function validateIssuerUrl(issuer: string): boolean {
+    if (typeof issuer !== 'string' || issuer.length > 2048) {
+        return false;
+    }
     try {
         const url = new URL(issuer);
-        return url.protocol === 'https:' || (url.protocol === 'http:' && url.hostname === 'localhost');
+        // Issuers never carry credentials or fragments.
+        if (url.username || url.password || url.hash) {
+            return false;
+        }
+        if (url.protocol === 'https:') {
+            return true;
+        }
+        // Plain HTTP is only tolerated for loopback development issuers.
+        const isLoopback = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+        return url.protocol === 'http:' && isLoopback && process.env.NODE_ENV !== 'production';
     } catch {
         return false;
     }

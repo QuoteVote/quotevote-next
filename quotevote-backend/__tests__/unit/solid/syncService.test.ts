@@ -1,141 +1,244 @@
-import { pullPortableState, pushPortableState, appendActivityEvent } from '../../../app/solid/sync/syncService';
+import type { PrismaClient } from '@prisma/client';
+import {
+    pullPortableState,
+    pushPortableState,
+    appendActivityEvent,
+} from '../../../app/solid/sync/syncService';
 import { SolidClient } from '../../../app/solid/client/solidClient';
-import { SolidConnection } from '../../../app/data/models/SolidConnection';
 import * as portableSchemas from '../../../app/solid/schemas/portable';
+import {
+    SolidFeatureDisabledError,
+    SolidInvalidInputError,
+    SolidNotConnectedError,
+    SolidPodError,
+} from '../../../app/solid/errors';
 
-// Mock dependencies
 jest.mock('../../../app/solid/client/solidClient');
-jest.mock('../../../app/data/models/SolidConnection');
 
-describe('SyncService', () => {
-    const mockUserId = 'user123';
-    const mockClientId = 'client123';
+describe('SyncService (Prisma)', () => {
+    const userId = '507f1f77bcf86cd799439011';
+    const clientId = 'client123';
+    const uris = {
+        profile: 'https://pod.example/public/quote-vote/profile',
+        preferences: 'https://pod.example/private/quote-vote/preferences',
+        activityLedger: 'https://pod.example/private/quote-vote/activity-ledger',
+    };
+
+    let prisma: {
+        solidConnection: {
+            findUnique: jest.Mock;
+            update: jest.Mock;
+            updateMany: jest.Mock;
+        };
+    };
+    let getJson: jest.Mock;
+    let putJson: jest.Mock;
+
+    const asPrisma = (): PrismaClient => prisma as unknown as PrismaClient;
 
     beforeEach(() => {
         jest.clearAllMocks();
         process.env.SOLID_ACTIVITY_LEDGER_ENABLED = 'true';
+
+        prisma = {
+            solidConnection: {
+                findUnique: jest.fn().mockResolvedValue({
+                    userId,
+                    webId: 'https://pod.example/profile/card#me',
+                    resourceUris: uris,
+                }),
+                update: jest.fn().mockResolvedValue({}),
+                updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+            },
+        };
+
+        getJson = jest.fn();
+        putJson = jest.fn().mockResolvedValue(undefined);
+        (SolidClient as unknown as jest.Mock).mockImplementation(() => ({ getJson, putJson }));
     });
 
+    const notFound = () => new SolidPodError('http', 'Pod request failed with HTTP 404', 404);
+    const timeout = () => new SolidPodError('timeout', 'Pod request timed out');
+
     describe('pullPortableState', () => {
-        it('should pull portable state successfully', async () => {
-            const mockProfile = { displayName: 'John Doe', avatarUrl: null, bio: 'Hello' };
-            const mockPreferences = { theme: 'dark', notifications: {}, accessibility: {} };
-            
-            (SolidConnection.findOne as jest.Mock).mockResolvedValue({
-                userId: mockUserId,
-                webId: 'https://pod.example/webId',
-                resourceUris: {
-                    profile: 'https://pod.example/profile',
-                    preferences: 'https://pod.example/preferences',
-                    activityLedger: 'https://pod.example/ledger'
-                },
-                save: jest.fn().mockResolvedValue(true)
-            });
+        it('returns Pod values without writing anything locally', async () => {
+            const profile = { displayName: 'John Doe', avatarUrl: null, bio: 'Hello' };
+            const preferences = { theme: 'dark', notifications: {}, accessibility: {} };
+            getJson
+                .mockResolvedValueOnce(profile)
+                .mockResolvedValueOnce(preferences)
+                .mockResolvedValueOnce({ events: [] });
 
-            const mockGetJson = jest.fn();
-            (SolidClient as jest.Mock).mockImplementation(() => ({
-                getJson: mockGetJson
-            }));
+            const state = await pullPortableState(userId, clientId, asPrisma());
 
-            mockGetJson.mockResolvedValueOnce(mockProfile);
-            mockGetJson.mockResolvedValueOnce(mockPreferences);
-            mockGetJson.mockResolvedValueOnce({ events: [] });
-
-            const state = await pullPortableState(mockUserId, mockClientId);
-
-            expect(state.profile).toEqual(mockProfile);
-            expect(state.preferences).toEqual(mockPreferences);
-            expect(mockGetJson).toHaveBeenCalledTimes(3);
+            expect(state.profile).toEqual(profile);
+            expect(state.preferences).toEqual(preferences);
+            expect(state.portableSchemaVersion).toBe(portableSchemas.PORTABLE_SCHEMA_VERSION);
+            expect(getJson).toHaveBeenCalledTimes(3);
+            expect(prisma.solidConnection.update).not.toHaveBeenCalled();
+            expect(putJson).not.toHaveBeenCalled();
         });
 
-        it('should use default profile/preferences if fetch fails', async () => {
-            (SolidConnection.findOne as jest.Mock).mockResolvedValue({
-                webId: 'https://pod.example/webId',
-                save: jest.fn().mockResolvedValue(true)
-            });
-            (SolidConnection.prototype.save as jest.Mock) = jest.fn().mockResolvedValue(true);
+        it('falls back to defaults only when the Pod resource does not exist (404)', async () => {
+            getJson.mockRejectedValue(notFound());
 
-            const mockGetJson = jest.fn().mockRejectedValue(new Error('Not found'));
-            (SolidClient as jest.Mock).mockImplementation(() => ({
-                getJson: mockGetJson
-            }));
-
-            const state = await pullPortableState(mockUserId, mockClientId);
+            const state = await pullPortableState(userId, clientId, asPrisma());
 
             expect(state.profile).toEqual(portableSchemas.createDefaultProfile());
             expect(state.preferences).toEqual(portableSchemas.createDefaultPreferences());
         });
+
+        it('propagates transient Pod failures instead of substituting defaults', async () => {
+            getJson.mockRejectedValue(timeout());
+
+            await expect(pullPortableState(userId, clientId, asPrisma())).rejects.toBeInstanceOf(
+                SolidPodError
+            );
+        });
+
+        it('throws SolidNotConnectedError when no connection exists', async () => {
+            prisma.solidConnection.findUnique.mockResolvedValue(null);
+
+            await expect(pullPortableState(userId, clientId, asPrisma())).rejects.toBeInstanceOf(
+                SolidNotConnectedError
+            );
+        });
+
+        it('derives and stores default Pod URIs from the WebID when none are stored', async () => {
+            prisma.solidConnection.findUnique.mockResolvedValue({
+                userId,
+                webId: 'https://pod.example/profile/card#me',
+                resourceUris: null,
+            });
+            getJson.mockRejectedValue(notFound());
+
+            await pullPortableState(userId, clientId, asPrisma());
+
+            expect(prisma.solidConnection.update).toHaveBeenCalledWith({
+                where: { userId },
+                data: {
+                    resourceUris: {
+                        profile: 'https://pod.example/public/quote-vote/profile',
+                        preferences: 'https://pod.example/private/quote-vote/preferences',
+                        activityLedger: 'https://pod.example/private/quote-vote/activity-ledger',
+                    },
+                },
+            });
+        });
     });
 
     describe('pushPortableState', () => {
-        it('should push profile and preferences successfully', async () => {
-            (SolidConnection.findOne as jest.Mock).mockResolvedValue({
-                webId: 'https://pod.example/webId',
-                resourceUris: { profile: 'p', preferences: 'pref' },
-                save: jest.fn().mockResolvedValue(true)
-            });
+        it('merges member-supplied profile fields over Pod values and preserves the rest', async () => {
+            getJson.mockResolvedValueOnce({ displayName: 'Old', avatarUrl: 'https://a.example/x.png', bio: 'keep me' });
 
-            const mockGetJson = jest.fn().mockResolvedValue({});
-            const mockPutJson = jest.fn().mockResolvedValue(undefined);
-            (SolidClient as jest.Mock).mockImplementation(() => ({
-                getJson: mockGetJson,
-                putJson: mockPutJson
-            }));
-
-            const input = {
-                profile: { displayName: 'New Name' },
-                preferences: { theme: 'light' as const }
-            };
-
-            const result = await pushPortableState(mockUserId, mockClientId, input);
+            const result = await pushPortableState(
+                userId,
+                clientId,
+                { profile: { displayName: 'New', bio: undefined } },
+                asPrisma()
+            );
 
             expect(result).toBe(true);
-            expect(mockPutJson).toHaveBeenCalledTimes(2);
-            expect(SolidConnection.findOneAndUpdate).toHaveBeenCalledWith(
-                { userId: mockUserId },
-                expect.objectContaining({ lastSyncAt: expect.any(Date) })
+            expect(putJson).toHaveBeenCalledWith(uris.profile, {
+                displayName: 'New',
+                avatarUrl: 'https://a.example/x.png',
+                bio: 'keep me',
+            });
+            expect(prisma.solidConnection.updateMany).toHaveBeenCalledWith({
+                where: { userId },
+                data: { lastSyncAt: expect.any(Date) },
+            });
+        });
+
+        it('merges nested preferences and keeps untouched Pod preferences', async () => {
+            getJson.mockResolvedValueOnce({
+                theme: 'light',
+                notifications: { email: true, push: false, inApp: true },
+                accessibility: { reduceMotion: true, fontScale: 'normal' },
+            });
+
+            await pushPortableState(
+                userId,
+                clientId,
+                { preferences: { theme: 'dark', notifications: { push: true } } },
+                asPrisma()
             );
+
+            expect(putJson).toHaveBeenCalledWith(uris.preferences, {
+                theme: 'dark',
+                notifications: { email: true, push: true, inApp: true },
+                accessibility: { reduceMotion: true, fontScale: 'normal' },
+            });
+        });
+
+        it('rejects unknown theme values before contacting the Pod', async () => {
+            await expect(
+                pushPortableState(userId, clientId, { preferences: { theme: 'neon' as never } }, asPrisma())
+            ).rejects.toBeInstanceOf(SolidInvalidInputError);
+            expect(putJson).not.toHaveBeenCalled();
+        });
+
+        it('never overwrites Pod data with defaults when the read fails transiently', async () => {
+            getJson.mockRejectedValue(timeout());
+
+            await expect(
+                pushPortableState(userId, clientId, { profile: { displayName: 'X' } }, asPrisma())
+            ).rejects.toBeInstanceOf(SolidPodError);
+            expect(putJson).not.toHaveBeenCalled();
+        });
+
+        it('writes defaults only when the profile does not exist yet (404)', async () => {
+            getJson.mockRejectedValue(notFound());
+
+            await pushPortableState(userId, clientId, { profile: { bio: 'hi' } }, asPrisma());
+
+            expect(putJson).toHaveBeenCalledWith(uris.profile, {
+                ...portableSchemas.createDefaultProfile(),
+                bio: 'hi',
+            });
         });
     });
 
     describe('appendActivityEvent', () => {
-        it('should append event to ledger', async () => {
-            (SolidConnection.findOne as jest.Mock).mockResolvedValue({
-                webId: 'https://pod.example/webId',
-                resourceUris: { 
-                    profile: 'profile',
-                    preferences: 'prefs',
-                    activityLedger: 'ledger' 
-                },
-                save: jest.fn().mockResolvedValue(true)
-            });
+        const event = {
+            type: 'PostCreated' as const,
+            instanceId: 'instance-1',
+            resourceUrl: 'https://quote.vote/post/1',
+            payload: { postId: '1', content: 'hello' },
+        };
 
-            const mockGetJson = jest.fn().mockResolvedValue({ events: [] });
-            const mockPutJson = jest.fn().mockResolvedValue(undefined);
-            (SolidClient as jest.Mock).mockImplementation(() => ({
-                getJson: mockGetJson,
-                putJson: mockPutJson
-            }));
+        it('appends the event to the existing ledger', async () => {
+            getJson.mockResolvedValue({ events: [{ type: 'VoteCast' }] });
 
-            const eventInput = {
-                type: 'PostCreated' as const,
-                instanceId: 'inst1',
-                resourceUrl: 'res1',
-                payload: { postId: '123' }
-            };
-
-            const result = await appendActivityEvent(mockUserId, mockClientId, eventInput);
+            const result = await appendActivityEvent(userId, clientId, event, asPrisma());
 
             expect(result).toBe(true);
-            expect(mockPutJson).toHaveBeenCalledWith('ledger', expect.objectContaining({
-                events: expect.arrayContaining([expect.objectContaining({ type: 'PostCreated' })])
-            }));
+            const written = putJson.mock.calls[0][1] as { events: Array<Record<string, unknown>> };
+            expect(written.events).toHaveLength(2);
+            expect(written.events[1]).toMatchObject({
+                type: 'PostCreated',
+                instanceId: 'instance-1',
+                resourceUrl: 'https://quote.vote/post/1',
+                payload: { postId: '1', content: 'hello' },
+            });
         });
 
-        it('should throw error if ledger is disabled', async () => {
+        it('does not overwrite a ledger it cannot interpret', async () => {
+            getJson.mockResolvedValue({ events: 'corrupt' });
+
+            await expect(appendActivityEvent(userId, clientId, event, asPrisma())).rejects.toThrow(
+                'Activity ledger has an unexpected format'
+            );
+            expect(putJson).not.toHaveBeenCalled();
+        });
+
+        it('throws SolidFeatureDisabledError when the ledger is disabled', async () => {
             process.env.SOLID_ACTIVITY_LEDGER_ENABLED = 'false';
-            await expect(appendActivityEvent(mockUserId, mockClientId, {} as portableSchemas.ActivityEventInput))
-                .rejects.toThrow('Activity ledger is not enabled');
+
+            await expect(appendActivityEvent(userId, clientId, event, asPrisma())).rejects.toBeInstanceOf(
+                SolidFeatureDisabledError
+            );
+            expect(getJson).not.toHaveBeenCalled();
         });
     });
 });

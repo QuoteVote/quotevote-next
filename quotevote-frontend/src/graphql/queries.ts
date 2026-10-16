@@ -894,3 +894,46 @@ export const GET_BOT_REPORTED_USERS = gql`
     }
   }
 `
+
+/**
+ * Solid Pod connection status for the current member
+ */
+export const GET_SOLID_CONNECTION_STATUS = gql`
+  query SolidConnectionStatus {
+    solidConnectionStatus {
+      connected
+      webId
+      issuer
+      lastSyncAt
+    }
+  }
+`
+
+/**
+ * Read the member's portable profile and preferences from their Pod
+ */
+export const SOLID_PULL_PORTABLE_STATE = gql`
+  query SolidPullPortableState {
+    solidPullPortableState {
+      portableSchemaVersion
+      profile {
+        displayName
+        avatarUrl
+        bio
+      }
+      preferences {
+        theme
+        notifications {
+          email
+          push
+          inApp
+        }
+        accessibility {
+          reduceMotion
+          fontScale
+        }
+      }
+      updatedAt
+    }
+  }
+`

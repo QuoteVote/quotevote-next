@@ -587,3 +587,46 @@ export const UPDATE_USER_AVATAR = gql`
     }
   }
 `
+
+/**
+ * Start linking a Solid Pod: returns the provider's authorization URL
+ */
+export const SOLID_START_CONNECT = gql`
+  mutation SolidStartConnect($issuer: String!) {
+    solidStartConnect(issuer: $issuer) {
+      authorizationUrl
+    }
+  }
+`
+
+/**
+ * Complete linking a Solid Pod after the provider redirects back
+ */
+export const SOLID_FINISH_CONNECT = gql`
+  mutation SolidFinishConnect($code: String!, $state: String!, $redirectUri: String!) {
+    solidFinishConnect(code: $code, state: $state, redirectUri: $redirectUri) {
+      success
+      webId
+      issuer
+      message
+    }
+  }
+`
+
+/**
+ * Disconnect the member's Solid Pod
+ */
+export const SOLID_DISCONNECT = gql`
+  mutation SolidDisconnect {
+    solidDisconnect
+  }
+`
+
+/**
+ * Write the member's portable profile and preferences to their Pod
+ */
+export const SOLID_PUSH_PORTABLE_STATE = gql`
+  mutation SolidPushPortableState($input: PortableStateInput!) {
+    solidPushPortableState(input: $input)
+  }
+`

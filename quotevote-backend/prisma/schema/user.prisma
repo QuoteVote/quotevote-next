@@ -63,6 +63,7 @@ model User {
   memberOfTags        String[]        @map("memberOfGroups") @db.ObjectId
   voteLog             VoteLog[]
   collections         Collection[]
+  solidConnection     SolidConnection?
 
   @@index([accountStatus])
   @@index([botReports, lastBotReportDate])

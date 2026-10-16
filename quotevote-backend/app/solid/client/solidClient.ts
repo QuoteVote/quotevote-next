@@ -1,10 +1,15 @@
+import { assertPublicUrl } from '../oidc/security';
+import type { PrismaClient, SolidConnection as SolidConnectionRecord } from '@prisma/client';
 import { refreshAccessToken, type TokenResponse } from '../oidc/authorization';
-import { SolidConnection } from '../../data/models/SolidConnection';
 import { encryptTokens, decryptTokens } from '../storage/encryption';
+import { SolidNotConnectedError, SolidOidcError, SolidPodError } from '../errors';
 
 /**
  * Solid Client for authenticated fetch operations
- * Handles token refresh and authenticated requests to Solid Pods
+ * Handles token refresh and authenticated requests to Solid Pods.
+ *
+ * Tokens are stored encrypted on the SolidConnection row (Prisma). Access
+ * tokens are refreshed when they expire within 5 minutes, and once after a 401.
  */
 
 export interface SolidFetchOptions extends RequestInit {
@@ -14,20 +19,34 @@ export interface SolidFetchOptions extends RequestInit {
 export interface SolidClientConfig {
     userId: string;
     clientId: string;
+    prisma: PrismaClient;
 }
+
+/** Decrypted token payload stored in SolidConnection.encryptedTokens */
+interface StoredTokens {
+    access_token?: string;
+    refresh_token?: string;
+    id_token?: string;
+    [key: string]: unknown;
+}
+
+const REFRESH_MARGIN_MS = 5 * 60 * 1000;
+const DEFAULT_EXPIRES_IN_SECONDS = 3600;
 
 /**
  * Solid Client class for making authenticated requests
  */
 export class SolidClient {
-    private userId: string;
-    private clientId: string;
+    private readonly userId: string;
+    private readonly clientId: string;
+    private readonly prisma: PrismaClient;
     private accessToken: string | null = null;
     private tokenExpiry: Date | null = null;
 
     constructor(config: SolidClientConfig) {
         this.userId = config.userId;
         this.clientId = config.clientId;
+        this.prisma = config.prisma;
     }
 
     /**
@@ -35,51 +54,49 @@ export class SolidClient {
      * @param url - Resource URL
      * @param options - Fetch options
      * @returns Response
+     * @throws {SolidPodError} on timeout / network failure
+     * @throws {SolidOidcError} when the token cannot be refreshed
+     * @throws {SolidNotConnectedError} when the user has no connection
      */
     async fetch(url: string, options: SolidFetchOptions = {}): Promise<Response> {
         const { timeout = 10000, ...fetchOptions } = options;
 
-        // Ensure we have a valid access token
+        await assertPublicUrl(url);
         await this.ensureValidToken();
+        const response = await this.send(url, fetchOptions, timeout);
 
-        if (!this.accessToken) {
-            throw new Error('No valid access token available');
+        if (response.status !== 401) {
+            return response;
         }
 
-        // Add authorization header
-        const headers = new Headers(fetchOptions.headers);
+        // Access token rejected: refresh once and retry.
+        await this.refreshToken();
+        return this.send(url, fetchOptions, timeout);
+    }
+
+    /**
+     * Perform one HTTP request with the current access token.
+     */
+    private async send(url: string, init: RequestInit, timeout: number): Promise<Response> {
+        if (!this.accessToken) {
+            throw new SolidOidcError('invalid_grant', 'No valid access token available');
+        }
+
+        const headers = new Headers(init.headers);
         headers.set('Authorization', `Bearer ${this.accessToken}`);
 
         try {
-            const response = await fetch(url, {
-                ...fetchOptions,
+            return await fetch(url, {
+                ...init,
                 headers,
                 signal: AbortSignal.timeout(timeout),
             });
-
-            // If 401, try to refresh token and retry once
-            if (response.status === 401) {
-                await this.refreshToken();
-
-                if (!this.accessToken) {
-                    throw new Error('Token refresh failed');
-                }
-
-                headers.set('Authorization', `Bearer ${this.accessToken}`);
-
-                return await fetch(url, {
-                    ...fetchOptions,
-                    headers,
-                    signal: AbortSignal.timeout(timeout),
-                });
-            }
-
-            return response;
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Solid fetch failed for ${url}: ${error.message}`);
-            }
-            throw error;
+            const isTimeout = error instanceof Error && error.name === 'TimeoutError';
+            // Do not include the URL or the underlying message: keep errors generic.
+            throw isTimeout
+                ? new SolidPodError('timeout', 'Pod request timed out')
+                : new SolidPodError('network', 'Pod request failed');
         }
     }
 
@@ -87,118 +104,103 @@ export class SolidClient {
      * Ensure we have a valid access token
      */
     private async ensureValidToken(): Promise<void> {
-        // If we have a token and it's not expired, use it
         if (this.accessToken && this.tokenExpiry && this.tokenExpiry > new Date()) {
             return;
         }
 
-        // Load token from database
         await this.loadTokenFromDatabase();
 
-        // If token is expired or about to expire (within 5 minutes), refresh it
-        if (this.tokenExpiry && this.tokenExpiry.getTime() - Date.now() < 5 * 60 * 1000) {
+        // Refresh when expired or about to expire
+        if (this.tokenExpiry && this.tokenExpiry.getTime() - Date.now() < REFRESH_MARGIN_MS) {
             await this.refreshToken();
         }
     }
 
     /**
-     * Load token from database
+     * Load the connection row for this user
+     * @throws {SolidNotConnectedError} when no connection exists
+     */
+    private async loadConnection(): Promise<SolidConnectionRecord> {
+        const connection = await this.prisma.solidConnection.findUnique({
+            where: { userId: this.userId },
+        });
+
+        if (!connection) {
+            throw new SolidNotConnectedError();
+        }
+        return connection;
+    }
+
+    /**
+     * Load access token from database
      */
     private async loadTokenFromDatabase(): Promise<void> {
-        const connection = await SolidConnection.findOne({ userId: this.userId });
+        const connection = await this.loadConnection();
+        const tokens = readStoredTokens(connection.encryptedTokens);
 
-        if (!connection) {
-            throw new Error('No Solid connection found for user');
+        if (typeof tokens.access_token !== 'string' || tokens.access_token === '') {
+            throw new SolidOidcError('invalid_grant', 'Stored credentials are incomplete');
         }
-
-        const tokens = decryptTokens(connection.encryptedTokens) as {
-            access_token: string;
-            refresh_token?: string;
-            expires_in?: number;
-        };
 
         this.accessToken = tokens.access_token;
-        this.tokenExpiry = connection.tokenExpiry || null;
+        this.tokenExpiry = connection.tokenExpiry ?? null;
     }
 
     /**
-     * Refresh access token
+     * Refresh access token and persist the merged token set
      */
     private async refreshToken(): Promise<void> {
-        const connection = await SolidConnection.findOne({ userId: this.userId });
+        const connection = await this.loadConnection();
+        const stored = readStoredTokens(connection.encryptedTokens);
 
-        if (!connection) {
-            throw new Error('No Solid connection found for user');
+        if (!stored.refresh_token) {
+            // Without a refresh token the user has to reconnect.
+            throw new SolidOidcError('invalid_grant', 'No refresh token available');
         }
 
-        const tokens = decryptTokens(connection.encryptedTokens) as {
-            access_token: string;
-            refresh_token?: string;
-        };
+        const newTokens = await refreshAccessToken(
+            stored.refresh_token,
+            connection.issuer,
+            this.clientId
+        );
 
-        if (!tokens.refresh_token) {
-            throw new Error('No refresh token available');
-        }
+        this.accessToken = newTokens.access_token;
+        const expiresIn = newTokens.expires_in || DEFAULT_EXPIRES_IN_SECONDS;
+        this.tokenExpiry = new Date(Date.now() + expiresIn * 1000);
 
-        try {
-            const newTokens = await refreshAccessToken(
-                tokens.refresh_token,
-                connection.issuer,
-                this.clientId
-            );
-
-            // Update tokens in memory
-            this.accessToken = newTokens.access_token;
-
-            // Calculate token expiry
-            const expiresIn = newTokens.expires_in || 3600; // Default 1 hour
-            this.tokenExpiry = new Date(Date.now() + expiresIn * 1000);
-
-            // Update tokens in database
-            await this.saveTokensToDatabase(newTokens);
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Token refresh failed: ${error.message}`);
-            }
-            throw error;
-        }
+        await this.saveTokensToDatabase(stored, newTokens, this.tokenExpiry);
     }
 
     /**
-     * Save tokens to database
+     * Save tokens to database, preserving existing values not returned by the provider
+     * (e.g. refresh_token is kept when the refresh response omits it).
      */
-    private async saveTokensToDatabase(tokens: TokenResponse): Promise<void> {
-        const connection = await SolidConnection.findOne({ userId: this.userId });
-
-        if (!connection) {
-            throw new Error('No Solid connection found for user');
-        }
-
-        // Merge new tokens with existing ones (preserve refresh_token if not provided)
-        const existingTokens = decryptTokens(connection.encryptedTokens) as Record<string, unknown>;
-        const mergedTokens = {
-            ...existingTokens,
+    private async saveTokensToDatabase(
+        existing: StoredTokens,
+        tokens: TokenResponse,
+        tokenExpiry: Date
+    ): Promise<void> {
+        const mergedTokens: StoredTokens = {
+            ...existing,
             access_token: tokens.access_token,
             ...(tokens.refresh_token && { refresh_token: tokens.refresh_token }),
             ...(tokens.id_token && { id_token: tokens.id_token }),
         };
 
-        const encryptedTokens = encryptTokens(mergedTokens);
-
-        // Calculate token expiry
-        const expiresIn = tokens.expires_in || 3600;
-        const tokenExpiry = new Date(Date.now() + expiresIn * 1000);
-
-        connection.encryptedTokens = encryptedTokens;
-        connection.tokenExpiry = tokenExpiry;
-
-        await connection.save();
+        await this.prisma.solidConnection.update({
+            where: { userId: this.userId },
+            data: {
+                encryptedTokens: encryptTokens(mergedTokens),
+                tokenExpiry,
+            },
+        });
     }
 
     /**
      * Get resource as JSON
      * @param url - Resource URL
      * @returns Parsed JSON
+     * @throws {SolidPodError} with `status` set for non-2xx responses
      */
     async getJson<T = unknown>(url: string): Promise<T> {
         const response = await this.fetch(url, {
@@ -208,7 +210,7 @@ export class SolidClient {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
+            throw httpError(response.status);
         }
 
         return await response.json() as T;
@@ -218,6 +220,7 @@ export class SolidClient {
      * Put resource as JSON
      * @param url - Resource URL
      * @param data - Data to write
+     * @throws {SolidPodError} with `status` set for non-2xx responses
      */
     async putJson(url: string, data: unknown): Promise<void> {
         const response = await this.fetch(url, {
@@ -229,17 +232,30 @@ export class SolidClient {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to write resource: ${response.status} ${response.statusText}`);
+            throw httpError(response.status);
         }
     }
+}
+
+function httpError(status: number): SolidPodError {
+    return new SolidPodError('http', `Pod request failed with HTTP ${status}`, status);
+}
+
+function readStoredTokens(encrypted: string): StoredTokens {
+    return decryptTokens(encrypted) as StoredTokens;
 }
 
 /**
  * Create Solid client for a user
  * @param userId - User ID
  * @param clientId - OAuth client ID
+ * @param prisma - Application Prisma client (from GraphQLContext)
  * @returns Solid client instance
  */
-export function createSolidClient(userId: string, clientId: string): SolidClient {
-    return new SolidClient({ userId, clientId });
+export function createSolidClient(
+    userId: string,
+    clientId: string,
+    prisma: PrismaClient
+): SolidClient {
+    return new SolidClient({ userId, clientId, prisma });
 }
