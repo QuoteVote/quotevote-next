@@ -106,11 +106,9 @@ export const buddyResolver = {
       const presenceMap = new Map(presences.map((p) => [p.userId, p]));
       return users.map((u) => {
         const p = presenceMap.get(u.id);
+        // Invisible users look offline to their buddies.
         const presence = p
-          ? {
-              ...toPublicPresence({ ...p, status: p.status }),
-              status: p.status === 'invisible' ? ('offline' as const) : p.status,
-            }
+          ? toPublicPresence({ ...p, status: p.status === 'invisible' ? 'offline' : p.status })
           : null;
         return { user: toBuddyUser(u), presence };
       });
