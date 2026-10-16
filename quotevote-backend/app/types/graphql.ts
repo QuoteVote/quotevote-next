@@ -189,6 +189,7 @@ export interface QueryResolvers {
   // Roster (buddy) queries
   buddyList: ResolverFn<Common.Roster[]>;
   roster: ResolverFn<RosterQueryResult>;
+  userBlockStatus: ResolverFn<UserBlockStatusResult, unknown, { userId: string }>;
 
   // Typing queries
   getTypingUsers: ResolverFn<Common.Typing[], unknown, { messageRoomId: string }>;
@@ -299,8 +300,8 @@ export interface MutationResolvers {
   addBuddy: ResolverFn<Common.Roster, unknown, { roster: Common.RosterInput }>;
   acceptBuddy: ResolverFn<Common.Roster, unknown, { rosterId: string }>;
   declineBuddy: ResolverFn<Common.Roster, unknown, { rosterId: string }>;
-  blockBuddy: ResolverFn<Common.Roster, unknown, { buddyId: string }>;
-  unblockBuddy: ResolverFn<Common.Roster, unknown, { buddyId: string }>;
+  blockUser: ResolverFn<UserBlockStatusResult, unknown, { userId: string }>;
+  unblockUser: ResolverFn<UserBlockStatusResult, unknown, { userId: string }>;
   removeBuddy: ResolverFn<MutationResult, unknown, { buddyId: string }>;
 
   // Presence mutations
@@ -471,6 +472,12 @@ export interface TypingPayload {
 // ============================================================================
 // Mutation Results
 // ============================================================================
+
+export interface UserBlockStatusResult {
+  userId: string;
+  blockedByMe: boolean;
+  blockedMe: boolean;
+}
 
 export interface MutationResult {
   success?: boolean;

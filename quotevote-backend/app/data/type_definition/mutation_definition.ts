@@ -153,11 +153,11 @@ export const Mutation = `type Mutation {
   " Decline buddy request "
   declineBuddy(rosterId: String!): DeletedRoster
   
-  " Block a buddy/user "
-  blockBuddy(buddyId: String!): Roster
-  
-  " Unblock a buddy/user "
-  unblockBuddy(buddyId: String!): Roster
+  " Block a user (idempotent; removes pending buddy requests) "
+  blockUser(userId: String!): UserBlockStatus!
+
+  " Unblock a user (idempotent) "
+  unblockUser(userId: String!): UserBlockStatus!
   
   " Remove a buddy "
   removeBuddy(buddyId: String!): DeletedRoster

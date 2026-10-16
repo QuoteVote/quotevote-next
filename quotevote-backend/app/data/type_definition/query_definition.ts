@@ -94,6 +94,9 @@ type Query {
   " Get buddy list with presence information"
   getBuddyList: [BuddyWithPresence]
 
+  " Block state between the current user and another user"
+  userBlockStatus(userId: String!): UserBlockStatus!
+
   " Get roster entries"
   getRoster: [Roster]
 
