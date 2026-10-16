@@ -8,11 +8,12 @@ import { useQuery } from '@apollo/client/react'
 import MessageSend from './MessageSend'
 import MessageItemList from './MessageItemList'
 import TypingIndicator from './TypingIndicator'
-import { useRosterManagement } from '@/hooks/useRosterManagement'
+import { useBuddyManagement } from '@/hooks/useBuddyManagement'
+import { useUserBlock } from '@/hooks/useUserBlock'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
-import { GET_CHAT_ROOMS, GET_ROSTER } from '@/graphql/queries'
+import { GET_CHAT_ROOMS, GET_BUDDY_LIST } from '@/graphql/queries'
 import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { ChatRoom, StagedChatRoom } from '@/types/chat'
+import type { GetBuddyListData } from '@/types/buddylist'
 
 interface HeaderProps {
   room: ChatRoom | null
@@ -33,25 +35,16 @@ function Header({ room, stagedProfileUsername }: HeaderProps) {
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom)
   const setChatOpen = useAppStore((state) => state.setChatOpen)
 
-  const { blockBuddy, unblockBuddy, removeBuddy } = useRosterManagement()
+  const { removeBuddy } = useBuddyManagement()
   const { refetch: refetchChatRooms } = useQuery<{ messageRooms: ChatRoom[] }>(
     GET_CHAT_ROOMS,
     {
       fetchPolicy: 'cache-and-network',
     },
   )
-  const { data: rosterData } = useQuery<{
-    getRoster: Array<{
-      _id: string
-      userId: string
-      buddyId: string
-      status: string
-      buddy?: { _id?: string; username?: string | null } | null
-    }>
-  }>(
-    GET_ROSTER,
-    { skip: !currentUser },
-  )
+  const { data: buddyListData } = useQuery<GetBuddyListData>(GET_BUDDY_LIST, {
+    skip: !currentUser,
+  })
 
   const title = room?.title ?? 'Chat'
   const messageType = room?.messageType ?? 'USER'
@@ -74,31 +67,20 @@ function Header({ room, stagedProfileUsername }: HeaderProps) {
         .find((id) => id !== currentUserIdForHeader) ?? null
       : null
 
-  const rosterEntries = rosterData?.getRoster ?? []
-  const currentUserIdStr = currentUser?._id?.toString()
-
-  const otherUsernameFromRoster =
+  const otherUsernameFromBuddies =
     otherUserId
-      ? rosterEntries.find((r) => r.buddy?._id?.toString() === otherUserId)?.buddy?.username ?? null
+      ? buddyListData?.getBuddyList.find((b) => b.user._id?.toString() === otherUserId)?.user
+          .username ?? null
       : null
   const profileUsername =
     messageType === 'USER'
-      ? stagedProfileUsername ?? otherUsernameFromRoster ?? null
+      ? stagedProfileUsername ?? otherUsernameFromBuddies ?? null
       : null
   const profileHref = profileUsername
     ? `/profile/${encodeURIComponent(profileUsername)}`
     : null
 
-  const isBlocked = !!(
-    otherUserId &&
-    currentUserIdStr &&
-    rosterEntries.some(
-      (r) => r.status === 'blocked' && (
-        (r.userId === currentUserIdStr && r.buddyId === otherUserId) ||
-        (r.userId === otherUserId && r.buddyId === currentUserIdStr)
-      )
-    )
-  )
+  const { blockedByMe: isBlocked, block, unblock } = useUserBlock(otherUserId)
 
   const handleBack = () => {
     setSelectedChatRoom(null)
@@ -109,11 +91,11 @@ function Header({ room, stagedProfileUsername }: HeaderProps) {
 
     try {
       if (isBlocked) {
-        await unblockBuddy(otherUserId)
+        await unblock()
         await refetchChatRooms()
         toast.success('User unblocked successfully')
       } else {
-        await blockBuddy(otherUserId)
+        await block()
         await refetchChatRooms()
         toast.success('User blocked successfully. Chat history is preserved, but they cannot send new messages.')
       }

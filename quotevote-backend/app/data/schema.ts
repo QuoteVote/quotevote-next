@@ -10,11 +10,13 @@ import { userResolver } from './resolvers/userResolver';
 import { tagResolver } from './resolvers/tagResolver';
 import { chatResolver } from './resolvers/chatResolver';
 import { rosterResolver } from './resolvers/rosterResolver';
+import { buddyResolver } from './resolvers/buddyResolver';
 import { quoteResolver } from './resolvers/quoteResolver';
 import { commentResolver } from './resolvers/commentResolver';
 import { notificationResolver } from './resolvers/notificationResolver';
 import { activityResolver } from './resolvers/activityResolver';
 import { heartbeatResolver } from './resolvers/heartbeatResolver';
+import { userBlockResolver } from './resolvers/userBlockResolver';
 import { typingResolver } from './resolvers/typingResolver';
 import { reactionResolver } from './resolvers/reactionResolver';
 import { subscriptionResolver } from './resolvers/subscriptionResolver';
@@ -39,12 +41,14 @@ export const schema = makeExecutableSchema({
     tagResolver,
     chatResolver,
     rosterResolver,
+    buddyResolver,
     quoteResolver,
     commentResolver,
     notificationResolver,
     activityResolver,
     heartbeatResolver,
     typingResolver,
+    userBlockResolver,
     reactionResolver,
     subscriptionResolver,
   ],

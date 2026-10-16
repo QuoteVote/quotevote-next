@@ -11,7 +11,7 @@
 import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
 import MessageBox from '@/components/Chat/MessageBox'
 import { useAppStore } from '@/store'
-import { GET_CHAT_ROOMS, GET_ROSTER } from '@/graphql/queries'
+import { GET_CHAT_ROOMS, GET_BUDDY_LIST } from '@/graphql/queries'
 import type { ChatRoom } from '@/types/chat'
 
 // Mock Zustand store
@@ -32,13 +32,19 @@ jest.mock('@apollo/client/react', () => ({
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }))
 
-// Mock useRosterManagement
-jest.mock('@/hooks/useRosterManagement', () => ({
-  useRosterManagement: jest.fn(() => ({
-    blockBuddy: jest.fn().mockResolvedValue({}),
-    unblockBuddy: jest.fn().mockResolvedValue({}),
+// Mock useBuddyManagement
+jest.mock('@/hooks/useBuddyManagement', () => ({
+  useBuddyManagement: jest.fn(() => ({
     removeBuddy: jest.fn().mockResolvedValue({}),
   })),
+}))
+
+// Mock useUserBlock
+const mockBlock = jest.fn().mockResolvedValue(undefined)
+const mockUnblock = jest.fn().mockResolvedValue(undefined)
+const mockUseUserBlock = jest.fn()
+jest.mock('@/hooks/useUserBlock', () => ({
+  useUserBlock: (...args: unknown[]) => mockUseUserBlock(...args),
 }))
 
 // Mock child components
@@ -112,26 +118,18 @@ const mockCurrentUser = {
 //   },
 // }
 
-// const mockRosterQuery = {
-//   request: {
-//     query: GET_ROSTER,
-//   },
-//   result: {
-//     data: {
-//       roster: {
-//         buddies: [],
-//         pendingRequests: [],
-//         blockedUsers: [],
-//       },
-//     },
-//   },
-// }
-
 describe('MessageBox', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUseUserBlock.mockReturnValue({
+      blockedByMe: false,
+      blockedMe: false,
+      block: mockBlock,
+      unblock: mockUnblock,
+      loading: false,
+    })
 
-    // Mock useQuery to return rooms and roster data by default
+    // Mock useQuery to return rooms and buddy list data by default
     mockUseQuery.mockImplementation((query) => {
       if (query === GET_CHAT_ROOMS) {
         return {
@@ -141,21 +139,10 @@ describe('MessageBox', () => {
           refetch: jest.fn(),
         }
       }
-      if (query === GET_ROSTER) {
+      if (query === GET_BUDDY_LIST) {
         return {
           data: {
-            getRoster: [
-              {
-                _id: 'roster-1',
-                userId: 'user1',
-                buddyId: 'user2',
-                status: 'accepted',
-                buddy: {
-                  _id: 'user2',
-                  username: 'other-user',
-                },
-              },
-            ],
+            getBuddyList: [{ user: { _id: 'user2', username: 'other-user' }, presence: null }],
           },
           loading: false,
           error: undefined,
@@ -319,6 +306,34 @@ describe('MessageBox', () => {
       expect(screen.getByText('Remove Buddy')).toBeInTheDocument()
       expect(screen.queryByText('Close Chat')).not.toBeInTheDocument()
     })
+  })
+
+  it('calls block for the other user when not blocked', async () => {
+    render(<MessageBox />)
+
+    fireEvent.click(await screen.findByLabelText('Chat settings'))
+    fireEvent.click(await screen.findByText('Block User'))
+
+    await waitFor(() => expect(mockBlock).toHaveBeenCalledTimes(1))
+    expect(mockUnblock).not.toHaveBeenCalled()
+    expect(mockUseUserBlock).toHaveBeenCalledWith('user2')
+  })
+
+  it('shows Unblock User and calls unblock when blocked by me', async () => {
+    mockUseUserBlock.mockReturnValue({
+      blockedByMe: true,
+      blockedMe: false,
+      block: mockBlock,
+      unblock: mockUnblock,
+      loading: false,
+    })
+    render(<MessageBox />)
+
+    fireEvent.click(await screen.findByLabelText('Chat settings'))
+    fireEvent.click(await screen.findByText('Unblock User'))
+
+    await waitFor(() => expect(mockUnblock).toHaveBeenCalledTimes(1))
+    expect(mockBlock).not.toHaveBeenCalled()
   })
 
   it('renders close chat button and calls setChatOpen(false) when clicked', async () => {

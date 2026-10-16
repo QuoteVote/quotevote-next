@@ -187,8 +187,10 @@ export interface QueryResolvers {
   messageReactions: ResolverFn<Common.Reaction[], unknown, { messageId: string }>;
 
   // Roster (buddy) queries
-  buddyList: ResolverFn<Common.Roster[]>;
+  getBuddyList: ResolverFn<BuddyWithPresenceResult[]>;
+  buddyRequests: ResolverFn<BuddyRelationshipResult[]>;
   roster: ResolverFn<RosterQueryResult>;
+  userBlockStatus: ResolverFn<UserBlockStatusResult, unknown, { userId: string }>;
 
   // Typing queries
   getTypingUsers: ResolverFn<Common.Typing[], unknown, { messageRoomId: string }>;
@@ -296,12 +298,12 @@ export interface MutationResolvers {
   createTag: ResolverFn<Common.Tag, unknown, { tag: Common.TagInput }>;
 
   // Roster mutations
-  addBuddy: ResolverFn<Common.Roster, unknown, { roster: Common.RosterInput }>;
-  acceptBuddy: ResolverFn<Common.Roster, unknown, { rosterId: string }>;
-  declineBuddy: ResolverFn<Common.Roster, unknown, { rosterId: string }>;
-  blockBuddy: ResolverFn<Common.Roster, unknown, { buddyId: string }>;
-  unblockBuddy: ResolverFn<Common.Roster, unknown, { buddyId: string }>;
-  removeBuddy: ResolverFn<MutationResult, unknown, { buddyId: string }>;
+  addBuddy: ResolverFn<BuddyRelationshipResult, unknown, { userId: string }>;
+  acceptBuddy: ResolverFn<BuddyRelationshipResult, unknown, { requestId: string }>;
+  declineBuddy: ResolverFn<BuddyMutationResult, unknown, { requestId: string }>;
+  blockUser: ResolverFn<UserBlockStatusResult, unknown, { userId: string }>;
+  unblockUser: ResolverFn<UserBlockStatusResult, unknown, { userId: string }>;
+  removeBuddy: ResolverFn<BuddyMutationResult, unknown, { userId: string }>;
 
   // Presence mutations
   heartbeat: ResolverFn<HeartbeatResult>;
@@ -471,6 +473,38 @@ export interface TypingPayload {
 // ============================================================================
 // Mutation Results
 // ============================================================================
+
+export interface UserBlockStatusResult {
+  userId: string;
+  blockedByMe: boolean;
+  blockedMe: boolean;
+}
+
+export interface BuddyUserResult {
+  _id: string;
+  name: string | null;
+  username: string | null;
+  avatar: unknown;
+}
+
+export interface BuddyRelationshipResult {
+  _id: string;
+  status: 'pending' | 'accepted';
+  requester: BuddyUserResult;
+  recipient: BuddyUserResult;
+  createdAt: Date;
+  acceptedAt: Date | null;
+}
+
+export interface BuddyWithPresenceResult {
+  user: BuddyUserResult;
+  presence: Common.Presence | null;
+}
+
+export interface BuddyMutationResult {
+  _id: string;
+  success: boolean;
+}
 
 export interface MutationResult {
   success?: boolean;
