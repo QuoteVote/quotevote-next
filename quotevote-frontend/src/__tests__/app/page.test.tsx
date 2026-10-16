@@ -78,13 +78,13 @@ describe('Public directory (`/`)', () => {
     expect(screen.getByTestId('directory-toolbar')).toBeInTheDocument()
     expect(screen.getByTestId('directory-search')).toHaveAttribute(
       'placeholder',
-      'Search quotes, topics, sources...'
+      'Search quotes, topics, sources… or use #hashtag'
     )
     // iOS Safari zooms focused inputs under 16px; text-base keeps mobile at 16px
     expect(screen.getByTestId('directory-search')).toHaveClass('text-base')
     expect(screen.getByTestId('filter-latest')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('filter-filters')).toBeInTheDocument()
-    expect(screen.getByTestId('filter-tag')).toBeInTheDocument()
+    expect(screen.queryByTestId('filter-tag')).not.toBeInTheDocument()
     expect(screen.getByTestId('filter-date')).toBeInTheDocument()
   })
 

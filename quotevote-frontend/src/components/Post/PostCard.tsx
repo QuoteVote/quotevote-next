@@ -389,9 +389,17 @@ function PostCardComponent({
             )}
           >
             {groupId && groupData?.group && (
-              <span className="text-[10px] font-semibold text-[#52b274] bg-[rgba(82,178,116,0.1)] border border-[rgba(82,178,116,0.2)] px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <button
+                type="button"
+                aria-label={`Filter by #${groupData.group.title}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  router.push(`/?group=${groupId}`)
+                }}
+                className="text-[10px] font-semibold text-[#52b274] bg-[rgba(82,178,116,0.1)] border border-[rgba(82,178,116,0.2)] px-2 py-0.5 rounded-full uppercase tracking-wide hover:bg-[rgba(82,178,116,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 transition-colors cursor-pointer"
+              >
                 #{groupData.group.title}
-              </span>
+              </button>
             )}
             {citationUrl && (
               <a

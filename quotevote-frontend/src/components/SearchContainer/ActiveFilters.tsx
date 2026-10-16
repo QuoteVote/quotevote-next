@@ -25,14 +25,14 @@ export default function ActiveFilters({ filters }: ActiveFiltersProps) {
         <Badge
           key={filter.key}
           variant="secondary"
-          className="flex items-center gap-1 pl-2 pr-1 py-0.5 text-[11px] font-medium"
+          className="flex items-center gap-1 border-[#52b274]/40 bg-[#52b274]/10 text-[#52b274] pl-2 pr-1 py-0.5 text-[11px] font-medium"
         >
-          <span className="text-muted-foreground">{filter.label}:</span>
+          <span className="opacity-80">{filter.label}:</span>
           <span>{filter.value}</span>
           <button
             type="button"
             onClick={filter.onRemove}
-            className="ml-0.5 rounded-full hover:bg-muted p-0.5"
+            className="ml-0.5 rounded-full hover:bg-[#52b274]/25 p-0.5 cursor-pointer"
             aria-label={`Remove ${filter.label} filter`}
           >
             <X className="size-2.5" />

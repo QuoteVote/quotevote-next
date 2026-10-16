@@ -439,10 +439,15 @@ export default function Post({
         {/* Post metadata: community, source, timestamp */}
         <div data-testid="post-metadata" className="flex items-center gap-2.5 flex-wrap mb-5">
           {communityTitle ? (
-            <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
+            <button
+              type="button"
+              aria-label={`Filter by #${communityTitle}`}
+              onClick={() => router.push(`/?group=${post.groupId}`)}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 transition-colors cursor-pointer"
+            >
               <Hash className="size-3.5 stroke-[2.5]" />
               {communityTitle}
-            </span>
+            </button>
           ) : null}
           {communityTitle && citationDomain ? (
             <span className="text-border select-none" aria-hidden>

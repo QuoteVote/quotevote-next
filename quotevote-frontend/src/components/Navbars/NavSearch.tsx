@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, X, Loader2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
@@ -9,15 +9,9 @@ import { cn } from '@/lib/utils';
 export default function NavSearch() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isExplorePage = pathname === '/';
-
-  // Mirror the home/explore page: read q from URL when on home, else start empty
-  const urlQ = isExplorePage ? (searchParams.get('q') || '') : '';
-
-  const [inputValue, setInputValue] = useState(urlQ);
+  const [inputValue, setInputValue] = useState('');
   const [focused, setFocused] = useState(false);
 
   const debouncedQuery = useDebounce(inputValue, 400);
@@ -27,39 +21,19 @@ export default function NavSearch() {
     [inputValue, debouncedQuery]
   );
 
-  // When the URL q param changes externally (e.g. body search updated it), sync input
+  // Home (`/`) has its own search in the directory toolbar, so the nav search is hidden there.
+  // Other pages: navigate to home with the query.
   useEffect(() => {
-    if (isExplorePage && !focused) {
-      setInputValue(searchParams.get('q') || '');
-    }
-  }, [searchParams, isExplorePage, focused]);
-
-  // On home page: push debounced query to URL params (same as body section)
-  // On other pages: navigate to home with query
-  useEffect(() => {
-    if (!debouncedQuery && !inputValue) return;
-
-    if (isExplorePage) {
-      const params = new URLSearchParams(searchParams.toString());
-      if (debouncedQuery) {
-        params.set('q', debouncedQuery);
-      } else {
-        params.delete('q');
-      }
-      router.replace(`/?${params.toString()}`);
-    } else if (debouncedQuery) {
+    if (debouncedQuery) {
       router.push(`/?q=${encodeURIComponent(debouncedQuery)}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
 
+  if (pathname === '/') return null;
+
   const clearSearch = () => {
     setInputValue('');
-    if (isExplorePage) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete('q');
-      router.replace(`/?${params.toString()}`);
-    }
     inputRef.current?.focus();
   };
 
