@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@apollo/client/react';
@@ -9,7 +9,7 @@ import { useAppStore } from '@/store';
 import { toast } from 'sonner';
 import type { ProfileUser } from '@/types/profile';
 import type { StagedChatRoom } from '@/types/chat';
-import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
+import { GET_CHAT_ROOM } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { FollowButton } from '../CustomButtons/FollowButton';
@@ -33,6 +33,7 @@ import { ProfileBio } from './ProfileBio';
 import { cn } from '@/lib/utils';
 import { FOCUS_RING_CLASS } from '@/lib/constants/formControls';
 import useGuestGuard from '@/hooks/useGuestGuard';
+import { useUserBlock } from '@/hooks/useUserBlock';
 import { useProfileBackground } from '@/hooks/useProfileBackground';
 import {
   getProfileBackgroundStyle,
@@ -108,35 +109,11 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
     skip: !loggedInUserIdString || sameUser,
   });
 
-  // Check blocking status — getRoster returns flat array of roster entries
-  const { data: rosterData } = useQuery<{
-    getRoster: Array<{ _id: string; userId: string; buddyId: string; status: string; initiatedBy: string }>;
-  }>(GET_ROSTER, {
-    skip: !loggedInUserIdString || sameUser,
-  });
-
-  const blockingStatus = useMemo(() => {
-    if (!rosterData?.getRoster || sameUser) return null;
-
-    const profileUserId = _id?.toString();
-    const currentUserId = loggedInUserId?.toString();
-
-    const entries = rosterData.getRoster;
-
-    // Check if current user blocked the profile user
-    const currentUserBlockedProfile = entries.some(
-      (r) => r.status === 'blocked' && r.userId?.toString() === currentUserId && r.buddyId?.toString() === profileUserId
-    );
-
-    // Check if profile user blocked the current user
-    const profileUserBlockedCurrent = entries.some(
-      (r) => r.status === 'blocked' && r.userId?.toString() === profileUserId && r.buddyId?.toString() === currentUserId
-    );
-
-    if (currentUserBlockedProfile) return 'blocker';
-    if (profileUserBlockedCurrent) return 'blocked';
-    return null;
-  }, [rosterData, _id, loggedInUserId, sameUser]);
+  // Check blocking status
+  const { blockedByMe, blockedMe } = useUserBlock(
+    !loggedInUserIdString || sameUser ? undefined : _id?.toString()
+  );
+  const blockingStatus = blockedByMe ? 'blocker' : blockedMe ? 'blocked' : null;
 
   const isBlocked = blockingStatus !== null;
 
