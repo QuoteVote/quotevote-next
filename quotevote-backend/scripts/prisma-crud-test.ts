@@ -52,6 +52,8 @@ function delegateFor(model: string): PrismaDelegate | null {
     notification: prisma.notification,
     activity: prisma.activity,
     roster: prisma.roster,
+    buddyRelationship: prisma.buddyRelationship,
+    userBlock: prisma.userBlock,
     presence: prisma.presence,
     typing: prisma.typing,
     userInvite: prisma.userInvite,
@@ -303,7 +305,11 @@ async function testReaction(userId: string, messageId: string): Promise<string> 
   return id;
 }
 
-async function testNotification(recipientId: string, senderId: string, postId: string): Promise<string> {
+async function testNotification(
+  recipientId: string,
+  senderId: string,
+  postId: string
+): Promise<string> {
   console.log('\n🔔 Notification');
   let id = '';
   await step('CREATE notification', async () => {
@@ -350,6 +356,39 @@ async function testRoster(user1: string, user2: string): Promise<string> {
   });
   await step('UPDATE roster status', async () => {
     await prisma.roster.update({ where: { id }, data: { status: 'accepted' } });
+  });
+  return id;
+}
+
+async function testBuddyRelationship(user1: string, user2: string): Promise<string> {
+  console.log('\n👥 BuddyRelationship');
+  let id = '';
+  await step('CREATE buddyRelationship', async () => {
+    const [x, y] = [user1, user2].sort();
+    const r = await prisma.buddyRelationship.create({
+      data: { requesterId: user1, recipientId: user2, pairKey: `${x}:${y}`, status: 'pending' },
+    });
+    track('buddyRelationship', r.id);
+    id = r.id;
+  });
+  await step('UPDATE buddyRelationship status', async () => {
+    await prisma.buddyRelationship.update({
+      where: { id },
+      data: { status: 'accepted', acceptedAt: new Date() },
+    });
+  });
+  return id;
+}
+
+async function testUserBlock(blocker: string, blocked: string): Promise<string> {
+  console.log('\n🚫 UserBlock');
+  let id = '';
+  await step('CREATE userBlock', async () => {
+    const b = await prisma.userBlock.create({
+      data: { blockerId: blocker, blockedUserId: blocked },
+    });
+    track('userBlock', b.id);
+    id = b.id;
   });
   return id;
 }
@@ -644,7 +683,9 @@ async function cleanup(): Promise<void> {
       // Already gone — ignore
     }
   }
-  console.log(`   ✅ Deleted ${created.length} records across ${new Set(created.map((c) => c.model)).size} models`);
+  console.log(
+    `   ✅ Deleted ${created.length} records across ${new Set(created.map((c) => c.model)).size} models`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -664,7 +705,7 @@ function printReplicaSetHint(): void {
       '                      mongo:7 --replSet rs0 --bind_ip_all\n' +
       '                  docker exec -it mongo-rs mongosh --eval "rs.initiate()"\n' +
       '   Update DATABASE_URL to include ?replicaSet=rs0&directConnection=true\n' +
-      '   See docs/prisma-migration-strategy.md for all options.\n',
+      '   See docs/prisma-migration-strategy.md for all options.\n'
   );
 }
 
@@ -708,6 +749,8 @@ async function main(): Promise<void> {
     // Activity + Social
     await testActivity(primaryId, postId);
     await testRoster(primaryId, secondaryId);
+    await testBuddyRelationship(primaryId, secondaryId);
+    await testUserBlock(primaryId, secondaryId);
     await testPresence(primaryId);
     await testTyping(primaryId, roomId);
 

@@ -52,6 +52,10 @@ model User {
   reputations         UserReputation?
   rosters             Roster[]        @relation("RosterUser")
   buddyRosters        Roster[]        @relation("RosterBuddy")
+  buddyRequestsSent     BuddyRelationship[] @relation("BuddyRequester")
+  buddyRequestsReceived BuddyRelationship[] @relation("BuddyRecipient")
+  blocksMade            UserBlock[]         @relation("UserBlocker")
+  blocksReceived        UserBlock[]         @relation("UserBlocked")
   presence            Presence?
   typingIndicators    Typing[]
   inviteSent          UserInvite[]    @relation("InviteSender")
