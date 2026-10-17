@@ -2,7 +2,7 @@ import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import { userResolver } from '~/data/resolvers/userResolver';
 import type { GraphQLContext } from '~/types/graphql';
-
+import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 const actorId = '507f1f77bcf86cd799439011';
 const otherId = '507f1f77bcf86cd799439012';
 
@@ -18,6 +18,9 @@ function mockContext(overrides: Partial<GraphQLContext['user']> = {}): GraphQLCo
       botReport: {
         findFirst: jest.fn(),
         create: jest.fn(),
+      },
+      userReport: {
+        findMany: jest.fn(),
       },
     } as unknown as GraphQLContext['prisma'],
     user: {
@@ -147,11 +150,7 @@ describe('userResolver', () => {
     it('rejects HTML in bio', async () => {
       const ctx = mockContext();
       await expect(
-        userResolver.Mutation.updateUser(
-          null,
-          { user: { _id: actorId, bio: '<b>nope</b>' } },
-          ctx
-        )
+        userResolver.Mutation.updateUser(null, { user: { _id: actorId, bio: '<b>nope</b>' } }, ctx)
       ).rejects.toThrow(/plain text/);
       expect(ctx.prisma.user.update).not.toHaveBeenCalled();
     });
@@ -209,11 +208,7 @@ describe('userResolver', () => {
       (ctx.prisma.user.update as jest.Mock).mockRejectedValue(prismaError);
 
       await expect(
-        userResolver.Mutation.updateUser(
-          null,
-          { user: { _id: actorId, bio: 'Test' } },
-          ctx
-        )
+        userResolver.Mutation.updateUser(null, { user: { _id: actorId, bio: 'Test' } }, ctx)
       ).rejects.toThrow(/User not found/);
     });
   });
@@ -313,11 +308,7 @@ describe('userResolver', () => {
       const ctx = mockContext();
 
       await expect(
-        userResolver.Mutation.reportBot(
-          null,
-          { userId: '', reporterId: validReporterId },
-          ctx
-        )
+        userResolver.Mutation.reportBot(null, { userId: '', reporterId: validReporterId }, ctx)
       ).rejects.toThrow(
         expect.objectContaining({
           message: 'User ID and Reporter ID are required',
@@ -326,11 +317,7 @@ describe('userResolver', () => {
       );
 
       await expect(
-        userResolver.Mutation.reportBot(
-          null,
-          { userId: validUserId, reporterId: '' },
-          ctx
-        )
+        userResolver.Mutation.reportBot(null, { userId: validUserId, reporterId: '' }, ctx)
       ).rejects.toThrow(
         expect.objectContaining({
           message: 'User ID and Reporter ID are required',
@@ -373,11 +360,7 @@ describe('userResolver', () => {
       const ctx = mockContext();
 
       await expect(
-        userResolver.Mutation.reportBot(
-          null,
-          { userId: validUserId, reporterId: otherId },
-          ctx
-        )
+        userResolver.Mutation.reportBot(null, { userId: validUserId, reporterId: otherId }, ctx)
       ).rejects.toThrow(
         expect.objectContaining({
           message: 'Not authorized to report on behalf of another user',
@@ -390,11 +373,7 @@ describe('userResolver', () => {
       const ctx = mockContext();
 
       await expect(
-        userResolver.Mutation.reportBot(
-          null,
-          { userId: actorId, reporterId: actorId },
-          ctx
-        )
+        userResolver.Mutation.reportBot(null, { userId: actorId, reporterId: actorId }, ctx)
       ).rejects.toThrow(
         expect.objectContaining({
           message: 'Cannot report yourself as a bot',
@@ -521,6 +500,110 @@ describe('userResolver', () => {
         code: 'SUCCESS',
         message: 'Bot report submitted successfully',
       });
+    });
+  });
+
+  describe('Query.getUserReports', () => {
+    const targetId = '507f1f77bcf86cd799439013';
+    const created = new Date('2026-01-01T00:00:00.000Z');
+    const record = {
+      id: 'report-1',
+      reporterId: otherId,
+      reportedUserId: targetId,
+      reason: 'spam',
+      description: 'Spam',
+      status: 'pending',
+      severity: 'medium',
+      adminNotes: 'checked',
+      created,
+      createdAt: created,
+      updatedAt: created,
+      reporter: { id: otherId, username: 'bob', name: 'Bob' },
+      reportedUser: { id: targetId, username: 'carol', name: 'Carol' },
+    };
+
+    it('requires authentication', async () => {
+      await expect(
+        userResolver.Query.getUserReports(
+          null,
+          { userId: targetId },
+          { ...mockContext(), user: null }
+        )
+      ).rejects.toMatchObject({ extensions: { code: 'UNAUTHENTICATED' } });
+    });
+
+    it('rejects a non-admin and never queries reports', async () => {
+      const ctx = mockContext({ admin: false });
+
+      await expect(
+        userResolver.Query.getUserReports(null, { userId: targetId }, ctx)
+      ).rejects.toMatchObject({ extensions: { code: 'FORBIDDEN' } });
+      expect(ctx.prisma.userReport.findMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects a malformed userId', async () => {
+      const ctx = mockContext({ admin: true });
+
+      await expect(
+        userResolver.Query.getUserReports(null, { userId: 'nope' }, ctx)
+      ).rejects.toMatchObject({ extensions: { code: 'BAD_USER_INPUT' } });
+      expect(ctx.prisma.userReport.findMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects an unknown status', async () => {
+      const ctx = mockContext({ admin: true });
+
+      await expect(
+        userResolver.Query.getUserReports(null, { userId: targetId, status: 'bogus' }, ctx)
+      ).rejects.toMatchObject({ extensions: { code: 'BAD_USER_INPUT' } });
+      expect(ctx.prisma.userReport.findMany).not.toHaveBeenCalled();
+    });
+
+    it('queries with a status filter, a cap and public-only user fields', async () => {
+      const ctx = mockContext({ admin: true });
+      (ctx.prisma.userReport.findMany as jest.Mock).mockResolvedValue([]);
+
+      await userResolver.Query.getUserReports(null, { userId: targetId, status: 'pending' }, ctx);
+
+      expect(ctx.prisma.userReport.findMany).toHaveBeenCalledWith({
+        where: { reportedUserId: targetId, status: 'pending' },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        include: {
+          reporter: { select: PUBLIC_USER_SELECT },
+          reportedUser: { select: PUBLIC_USER_SELECT },
+        },
+      });
+    });
+
+    it('maps Prisma fields to the GraphQL shape', async () => {
+      const ctx = mockContext({ admin: true });
+      (ctx.prisma.userReport.findMany as jest.Mock).mockResolvedValue([record]);
+
+      const [report] = await userResolver.Query.getUserReports(null, { userId: targetId }, ctx);
+
+      expect(report).toMatchObject({
+        _id: 'report-1',
+        _reporterId: otherId,
+        _reportedUserId: targetId,
+        reason: 'spam',
+        adminNotes: 'checked',
+        createdAt: created.toISOString(),
+        updatedAt: created.toISOString(),
+      });
+      expect(report.reporter).toMatchObject({ _id: otherId, username: 'bob' });
+    });
+
+    it('never returns null timestamps for legacy records', async () => {
+      const ctx = mockContext({ admin: true });
+      (ctx.prisma.userReport.findMany as jest.Mock).mockResolvedValue([
+        { ...record, createdAt: null, updatedAt: null },
+      ]);
+
+      const [report] = await userResolver.Query.getUserReports(null, { userId: targetId }, ctx);
+
+      expect(report.createdAt).toBe(created.toISOString());
+      expect(report.updatedAt).toBe(created.toISOString());
     });
   });
 });
