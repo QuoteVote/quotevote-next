@@ -46,6 +46,9 @@ const signupSchema = z
         'Must contain uppercase, lowercase, and number'
       ),
     confirmPassword: z.string(),
+    tos: z.boolean().refine((accepted) => accepted, {
+      message: 'You must agree to the Terms of Service',
+    }),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Passwords do not match',
@@ -77,6 +80,7 @@ export default function SignupPageContent() {
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
+    defaultValues: { tos: false },
   })
 
   const onSubmit = async (values: SignupFormData) => {
@@ -202,6 +206,31 @@ export default function SignupPageContent() {
           />
           {errors.confirmPassword && (
             <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+          )}
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-start gap-2">
+            <input
+              id="signup-tos"
+              type="checkbox"
+              {...register('tos')}
+              data-testid="signup-tos-checkbox"
+              aria-label="I agree to the Terms of Service"
+              aria-invalid={Boolean(errors.tos)}
+              aria-describedby={errors.tos ? 'signup-tos-error' : undefined}
+              className="mt-1 h-4 w-4 accent-primary"
+            />
+            <div className="text-sm leading-6">
+              <label htmlFor="signup-tos">I agree to the </label>
+              <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+          {errors.tos && (
+            <p id="signup-tos-error" role="alert" className="text-sm text-destructive">
+              {errors.tos.message}
+            </p>
           )}
         </div>
         <Button type="submit" disabled={submitting} className="w-full" data-testid="signup-submit-button">
