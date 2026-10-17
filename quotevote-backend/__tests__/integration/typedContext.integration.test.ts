@@ -41,6 +41,11 @@ jest.mock('../../app/data/utils/authentication', () => ({
   verifyToken: jest.fn(),
 }));
 
+// This suite tests context plumbing, not auth classification
+jest.mock('../../app/data/utils/requireAuth', () => ({
+  requireAuth: jest.fn(() => false),
+}));
+
 describe('Typed GraphQL Context Integration Tests', () => {
   let app: express.Application;
   let server: ApolloServer<GraphQLContext>;

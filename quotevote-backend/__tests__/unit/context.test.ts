@@ -7,7 +7,7 @@
  * - userId derivation from authenticated user
  * - Request ID generation and extraction
  * - Protected query enforcement via requireAuth
- * - Introspection query bypass
+ * - Introspection via `__` fields treated as public
  * - Dependency injection overrides
  */
 
@@ -233,7 +233,7 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
       });
     });
 
-    it('bypasses requireAuth check for IntrospectionQuery', async () => {
+    it('allows introspection queries without auth via __ fields', async () => {
       const req = mockReq({
         body: {
           operationName: 'IntrospectionQuery',
@@ -244,6 +244,44 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
 
       const context = await createHttpContext({ req, res });
       expect(context).toBeDefined();
+    });
+
+    it('does not bypass auth based on operationName alone', async () => {
+      const req = mockReq({
+        body: {
+          operationName: 'IntrospectionQuery',
+          query: 'query IntrospectionQuery { notifications { id } }',
+        },
+      });
+      const res = mockRes();
+
+      await expect(createHttpContext({ req, res })).rejects.toMatchObject({
+        message: 'Auth token not found in request',
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
+    });
+
+    it('reads the query from the URL for GET requests', async () => {
+      const req = mockReq({
+        query: { query: 'query { notifications { id } }' },
+      });
+      const res = mockRes();
+
+      await expect(createHttpContext({ req, res })).rejects.toMatchObject({
+        message: 'Auth token not found in request',
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
+    });
+
+    it('allows public queries passed via URL without auth', async () => {
+      const req = mockReq({
+        query: { query: 'query { posts { id } }' },
+      });
+      const res = mockRes();
+
+      const context = await createHttpContext({ req, res });
+      expect(context).toBeDefined();
+      expect(context.user).toBeNull();
     });
 
     it('allows protected query when valid authentication is present', async () => {

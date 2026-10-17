@@ -175,19 +175,14 @@ describe('requireAuth', () => {
       expect(requireAuth('   ')).toBe(true);
     });
 
-    it('should handle query with public query name as substring (case-sensitive)', () => {
-      // "posts" (lowercase) is NOT a substring of "addPosts" (capital P), so it requires auth
-      // The matching is case-sensitive
-      const query = 'query { addPosts { id } }';
-      // This does NOT match "posts" (lowercase) as substring, so it returns true (requires auth)
+    it('should return true for "addPost" mutation (not public despite containing "post")', () => {
+      const query = 'mutation { addPost(post: {}) { id } }';
       expect(requireAuth(query)).toBe(true);
     });
 
-    it('should handle query with public query name as exact substring match', () => {
-      // "post" is a substring of "addPost", so it will match and return false (public)
-      const query = 'mutation { addPost(post: {}) { id } }';
-      // This matches "post" as substring, so it returns false (public)
-      expect(requireAuth(query)).toBe(false);
+    it('should return true for "deletePost" mutation with postId argument', () => {
+      const query = 'mutation { deletePost(postId: "a") { id } }';
+      expect(requireAuth(query)).toBe(true);
     });
 
     it('should handle query without public query name as substring', () => {
@@ -236,6 +231,173 @@ describe('requireAuth', () => {
 
     it('should handle query with aliases', () => {
       const query = 'query { allPosts: posts { id } }';
+      expect(requireAuth(query)).toBe(false);
+    });
+
+    it('should return true for aliased protected field', () => {
+      const query = 'query { myPosts: deletePost(postId: "a") { id } }';
+      expect(requireAuth(query)).toBe(true);
+    });
+  });
+
+  describe('Operation-aware authorization (issue #555)', () => {
+    it('should return false for public "post" query', () => {
+      const query = 'query { post(postId: "123") { id } }';
+      expect(requireAuth(query)).toBe(false);
+    });
+
+    it('should return true for protected mutation with postId argument', () => {
+      const query = 'mutation { deletePost(postId: "a") { id } }';
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should return true for protected mutation with post argument', () => {
+      const query = 'mutation { addPost(post: {}) { id } }';
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should not classify based on operation name', () => {
+      const query = 'query post { notifications { id } }';
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should not classify based on fragment name containing public name', () => {
+      const query = `
+        query {
+          notifications {
+            ...postFields
+          }
+        }
+        fragment postFields on Notification {
+          id
+        }
+      `;
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should handle multiple operations and classify each root field', () => {
+      const query = `
+        query GetPosts {
+          posts { id }
+        }
+        query GetNotifications {
+          notifications { id }
+        }
+      `;
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should return true when any root field is protected in multi-operation document', () => {
+      const query = `
+        query GetPosts {
+          posts { id }
+        }
+        mutation DeletePost {
+          deletePost(postId: "a") { id }
+        }
+      `;
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should handle inline fragments without false matches', () => {
+      const query = `
+        query {
+          notifications {
+            ... on Notification {
+              id
+            }
+          }
+        }
+      `;
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should return true for invalid GraphQL syntax', () => {
+      const query = 'query { invalid';
+      expect(requireAuth(query)).toBe(true);
+    });
+  });
+
+  describe('Fragment spread resolution (review follow-up)', () => {
+    it('should return true for protected mutation wrapped in a root-level fragment spread', () => {
+      const query = `
+        mutation {
+          ...F
+        }
+        fragment F on Mutation {
+          deletePost(postId: "a") { id }
+        }
+      `;
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should return true for protected query wrapped in a root-level fragment spread', () => {
+      const query = `
+        query {
+          ...F
+        }
+        fragment F on Query {
+          notifications { id }
+        }
+      `;
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should return false for public query wrapped in a root-level fragment spread', () => {
+      const query = `
+        query {
+          ...F
+        }
+        fragment F on Query {
+          posts { id }
+        }
+      `;
+      expect(requireAuth(query)).toBe(false);
+    });
+
+    it('should resolve nested fragment spreads', () => {
+      const query = `
+        mutation {
+          ...A
+        }
+        fragment A on Mutation {
+          ...B
+        }
+        fragment B on Mutation {
+          deletePost(postId: "a") { id }
+        }
+      `;
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should handle cyclic fragment spreads without infinite loop', () => {
+      const query = `
+        query {
+          ...A
+        }
+        fragment A on Query {
+          ...B
+        }
+        fragment B on Query {
+          ...A
+          notifications { id }
+        }
+      `;
+      expect(requireAuth(query)).toBe(true);
+    });
+
+    it('should return false for introspection via __schema', () => {
+      const query = 'query IntrospectionQuery { __schema { types { name } } }';
+      expect(requireAuth(query)).toBe(false);
+    });
+
+    it('should return false for "searchUser" query (guest search)', () => {
+      const query = 'query { searchUser(queryName: "test") { id } }';
+      expect(requireAuth(query)).toBe(false);
+    });
+
+    it('should return false for "addStripeCustomer" mutation', () => {
+      const query = 'mutation { addStripeCustomer(stripeCustomer: {}) }';
       expect(requireAuth(query)).toBe(false);
     });
   });
