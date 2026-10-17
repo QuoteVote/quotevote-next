@@ -67,6 +67,7 @@ const quickLinks = [
 
 const resourceLinks = [
   { href: '/terms', label: 'Terms of Service' },
+  { href: '/privacy', label: 'Privacy Notice' },
   { href: '/code-of-conduct', label: 'Code of Conduct' },
   { href: '/contributing', label: 'Contributing' },
 ] as const;
