@@ -22,6 +22,38 @@ model Roster {
   @@map("rosters")
 }
 
+model BuddyRelationship {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  requesterId String      @db.ObjectId
+  recipientId String      @db.ObjectId
+  pairKey     String      @unique // "<smallerId>:<largerId>"
+  status      BuddyStatus @default(pending)
+  createdAt   DateTime    @default(now())
+  acceptedAt  DateTime?
+  updatedAt   DateTime    @updatedAt
+
+  requester User @relation("BuddyRequester", fields: [requesterId], references: [id])
+  recipient User @relation("BuddyRecipient", fields: [recipientId], references: [id])
+
+  @@index([requesterId, status])
+  @@index([recipientId, status])
+  @@map("buddyrelationships")
+}
+
+model UserBlock {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  blockerId     String   @db.ObjectId
+  blockedUserId String   @db.ObjectId
+  createdAt     DateTime @default(now())
+
+  blocker     User @relation("UserBlocker", fields: [blockerId], references: [id])
+  blockedUser User @relation("UserBlocked", fields: [blockedUserId], references: [id])
+
+  @@unique([blockerId, blockedUserId])
+  @@index([blockedUserId])
+  @@map("userblocks")
+}
+
 model UserInvite {
   id          String       @id @default(auto()) @map("_id") @db.ObjectId
   email       String

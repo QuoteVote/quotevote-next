@@ -41,6 +41,8 @@ async function main() {
       'Activity',
       'Group',
       'Roster',
+      'BuddyRelationship',
+      'UserBlock',
       'Presence',
       'Typing',
       'UserInvite',
