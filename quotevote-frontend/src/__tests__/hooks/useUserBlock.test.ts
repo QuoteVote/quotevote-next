@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { useUserBlock } from "@/hooks/useUserBlock";
-import { GET_BUDDY_LIST, GET_USER_BLOCK_STATUS } from "@/graphql/queries";
+import { GET_BUDDY_LIST, GET_BUDDY_REQUESTS, GET_USER_BLOCK_STATUS } from "@/graphql/queries";
 
 jest.mock("@apollo/client/react", () => ({
   ...jest.requireActual("@apollo/client/react"),
@@ -72,11 +72,12 @@ describe("useUserBlock", () => {
     expect(mockUnblock).toHaveBeenCalledWith({ variables: { userId: "u2" } });
   });
 
-  it("refetches status and buddy list after mutations", () => {
+  it("refetches status, buddy list and buddy requests after mutations", () => {
     renderHook(() => useUserBlock("u2"));
     const expected = [
       { query: GET_USER_BLOCK_STATUS, variables: { userId: "u2" } },
       { query: GET_BUDDY_LIST },
+      { query: GET_BUDDY_REQUESTS },
     ];
     expect(mutationOptions.BlockUser.refetchQueries).toEqual(expected);
     expect(mutationOptions.UnblockUser.refetchQueries).toEqual(expected);
