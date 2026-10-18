@@ -29,15 +29,27 @@ export const UPDATE_PRESENCE = gql`
 `
 
 /**
- * Add buddy mutation (send friend request)
+ * Add buddy mutation (send buddy request)
  */
 export const ADD_BUDDY = gql`
-  mutation AddBuddy($roster: RosterInput!) {
-    addBuddy(roster: $roster) {
+  mutation AddBuddy($userId: String!) {
+    addBuddy(userId: $userId) {
       _id
-      buddyId
       status
-      created
+      createdAt
+      acceptedAt
+      requester {
+        _id
+        name
+        username
+        avatar
+      }
+      recipient {
+        _id
+        name
+        username
+        avatar
+      }
     }
   }
 `
@@ -46,11 +58,24 @@ export const ADD_BUDDY = gql`
  * Accept buddy request mutation
  */
 export const ACCEPT_BUDDY = gql`
-  mutation AcceptBuddy($rosterId: String!) {
-    acceptBuddy(rosterId: $rosterId) {
+  mutation AcceptBuddy($requestId: String!) {
+    acceptBuddy(requestId: $requestId) {
       _id
       status
-      updated
+      createdAt
+      acceptedAt
+      requester {
+        _id
+        name
+        username
+        avatar
+      }
+      recipient {
+        _id
+        name
+        username
+        avatar
+      }
     }
   }
 `
@@ -59,35 +84,10 @@ export const ACCEPT_BUDDY = gql`
  * Decline buddy request mutation
  */
 export const DECLINE_BUDDY = gql`
-  mutation DeclineBuddy($rosterId: String!) {
-    declineBuddy(rosterId: $rosterId) {
+  mutation DeclineBuddy($requestId: String!) {
+    declineBuddy(requestId: $requestId) {
       _id
-    }
-  }
-`
-
-/**
- * Block buddy mutation
- */
-export const BLOCK_BUDDY = gql`
-  mutation BlockBuddy($buddyId: String!) {
-    blockBuddy(buddyId: $buddyId) {
-      _id
-      status
-      updated
-    }
-  }
-`
-
-/**
- * Unblock buddy mutation
- */
-export const UNBLOCK_BUDDY = gql`
-  mutation UnblockBuddy($buddyId: String!) {
-    unblockBuddy(buddyId: $buddyId) {
-      _id
-      status
-      updated
+      success
     }
   }
 `
@@ -96,9 +96,36 @@ export const UNBLOCK_BUDDY = gql`
  * Remove buddy mutation
  */
 export const REMOVE_BUDDY = gql`
-  mutation RemoveBuddy($buddyId: String!) {
-    removeBuddy(buddyId: $buddyId) {
+  mutation RemoveBuddy($userId: String!) {
+    removeBuddy(userId: $userId) {
       _id
+      success
+    }
+  }
+`
+
+/**
+ * Block user mutation
+ */
+export const BLOCK_USER = gql`
+  mutation BlockUser($userId: String!) {
+    blockUser(userId: $userId) {
+      userId
+      blockedByMe
+      blockedMe
+    }
+  }
+`
+
+/**
+ * Unblock user mutation
+ */
+export const UNBLOCK_USER = gql`
+  mutation UnblockUser($userId: String!) {
+    unblockUser(userId: $userId) {
+      userId
+      blockedByMe
+      blockedMe
     }
   }
 `

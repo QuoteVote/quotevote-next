@@ -33,7 +33,6 @@ import { routeHasPersistentChatPanel } from '@/lib/utils/chatLayout';
 import { toAbsolutePostUrl } from '@/lib/utils/sanitizeUrl';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
-import { useRosterManagement } from '@/hooks/useRosterManagement';
 import { useSyncCurrentUserProfile } from '@/hooks/useSyncCurrentUserProfile';
 import ChatContent from '@/components/Chat/ChatContent';
 import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from '@/graphql/queries';
@@ -73,7 +72,6 @@ const GITHUB_URL = 'https://github.com/QuoteVote/quotevote-next';
 function DashboardClient() {
   usePresenceHeartbeat();
   usePresenceSubscription();
-  useRosterManagement();
   useSyncCurrentUserProfile();
   return null;
 }

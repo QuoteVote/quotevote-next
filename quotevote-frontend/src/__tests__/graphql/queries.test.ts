@@ -7,7 +7,8 @@
 
 import {
   GET_BUDDY_LIST,
-  GET_ROSTER,
+  GET_BUDDY_REQUESTS,
+  GET_USER_BLOCK_STATUS,
   GET_ROOM_MESSAGES,
   VERIFY_PASSWORD_RESET_TOKEN,
   GET_USER,
@@ -36,15 +37,26 @@ describe('GraphQL Queries', () => {
     })
   })
 
-  describe('GET_ROSTER', () => {
-    it('is a valid DocumentNode', () => {
-      expect(GET_ROSTER).toBeDefined()
-      expect(GET_ROSTER.kind).toBe('Document')
+  describe('GET_BUDDY_LIST fields', () => {
+    it('does not select removed roster or email fields', () => {
+      const text = JSON.stringify(GET_BUDDY_LIST.loc?.source.body)
+      expect(text).not.toMatch(/roster|email/)
     })
+  })
 
-    it('is a query operation', () => {
-      const op = getOperationDef(GET_ROSTER)
+  describe('GET_BUDDY_REQUESTS', () => {
+    it('is a query named GetBuddyRequests', () => {
+      const op = getOperationDef(GET_BUDDY_REQUESTS)
       expect(op?.operation).toBe('query')
+      expect(op?.name?.value).toBe('GetBuddyRequests')
+    })
+  })
+
+  describe('GET_USER_BLOCK_STATUS', () => {
+    it('is a query with a userId variable', () => {
+      const op = getOperationDef(GET_USER_BLOCK_STATUS)
+      expect(op?.operation).toBe('query')
+      expect(op?.variableDefinitions?.map((v) => v.variable.name.value)).toEqual(['userId'])
     })
   })
 
