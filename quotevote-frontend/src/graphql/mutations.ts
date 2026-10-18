@@ -28,32 +28,28 @@ export const UPDATE_PRESENCE = gql`
   }
 `
 
-const BUDDY_RELATIONSHIP_FIELDS = `
-  _id
-  status
-  createdAt
-  acceptedAt
-  requester {
-    _id
-    name
-    username
-    avatar
-  }
-  recipient {
-    _id
-    name
-    username
-    avatar
-  }
-`
-
 /**
  * Add buddy mutation (send buddy request)
  */
 export const ADD_BUDDY = gql`
   mutation AddBuddy($userId: String!) {
     addBuddy(userId: $userId) {
-      ${BUDDY_RELATIONSHIP_FIELDS}
+      _id
+      status
+      createdAt
+      acceptedAt
+      requester {
+        _id
+        name
+        username
+        avatar
+      }
+      recipient {
+        _id
+        name
+        username
+        avatar
+      }
     }
   }
 `
@@ -64,7 +60,22 @@ export const ADD_BUDDY = gql`
 export const ACCEPT_BUDDY = gql`
   mutation AcceptBuddy($requestId: String!) {
     acceptBuddy(requestId: $requestId) {
-      ${BUDDY_RELATIONSHIP_FIELDS}
+      _id
+      status
+      createdAt
+      acceptedAt
+      requester {
+        _id
+        name
+        username
+        avatar
+      }
+      recipient {
+        _id
+        name
+        username
+        avatar
+      }
     }
   }
 `
