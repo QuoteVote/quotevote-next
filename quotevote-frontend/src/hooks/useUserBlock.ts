@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@apollo/client/react";
 import { BLOCK_USER, UNBLOCK_USER } from "@/graphql/mutations";
-import { GET_BUDDY_LIST, GET_USER_BLOCK_STATUS } from "@/graphql/queries";
+import { GET_BUDDY_LIST, GET_BUDDY_REQUESTS, GET_USER_BLOCK_STATUS } from "@/graphql/queries";
 import type { UserBlockStatusData, UseUserBlockReturn } from "@/types/hooks";
 
 /**
@@ -18,6 +18,7 @@ export const useUserBlock = (userId?: string | null): UseUserBlockReturn => {
   const refetchQueries = [
     { query: GET_USER_BLOCK_STATUS, variables: { userId: userId ?? "" } },
     { query: GET_BUDDY_LIST },
+    { query: GET_BUDDY_REQUESTS },
   ];
 
   const [blockMutation] = useMutation(BLOCK_USER, { refetchQueries });
