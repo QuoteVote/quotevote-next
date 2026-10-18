@@ -1,3 +1,4 @@
+import { assertPublicUrl } from './security';
 /**
  * Solid OIDC Issuer Discovery
  * Implements OpenID Connect Discovery for Solid Pods
@@ -40,10 +41,12 @@ export async function discoverIssuer(issuerOrWebId: string): Promise<IssuerMetad
     const wellKnownUrl = `${issuerUrl}/.well-known/openid-configuration`;
 
     try {
+        await assertPublicUrl(wellKnownUrl);
         const response = await fetch(wellKnownUrl, {
             headers: {
                 'Accept': 'application/json',
             },
+            redirect: 'error',
             signal: AbortSignal.timeout(10000), // 10 second timeout
         });
 
@@ -59,6 +62,10 @@ export async function discoverIssuer(issuerOrWebId: string): Promise<IssuerMetad
         if (!metadata.issuer || !metadata.authorization_endpoint || !metadata.token_endpoint) {
             throw new Error('Invalid issuer metadata: missing required fields');
         }
+
+        // Endpoints come from a user-chosen issuer: never let them point at internal hosts.
+        await assertPublicUrl(metadata.token_endpoint);
+        await assertPublicUrl(metadata.authorization_endpoint);
 
         return metadata;
     } catch (error) {
@@ -76,10 +83,12 @@ export async function discoverIssuer(issuerOrWebId: string): Promise<IssuerMetad
  */
 async function discoverIssuerFromWebId(webId: string): Promise<string> {
     try {
+        await assertPublicUrl(webId);
         const response = await fetch(webId, {
             headers: {
                 'Accept': 'application/ld+json, application/json, text/turtle',
             },
+            redirect: 'error',
             signal: AbortSignal.timeout(10000),
         });
 
@@ -112,38 +121,41 @@ async function discoverIssuerFromWebId(webId: string): Promise<string> {
 }
 
 /**
- * Extract issuer from JSON-LD WebID document
- * @param data - JSON-LD data
- * @returns Issuer URL or null
+ * Every solid:oidcIssuer value in a JSON-LD WebID document (compact or full IRI keys,
+ * `{ "@id": ... }` values, arrays and `@graph`). No fallback: callers decide what an
+ * empty result means.
+ * @param data - Parsed JSON-LD
+ * @returns Issuer URLs in document order (possibly empty)
  */
-function extractIssuerFromJsonLd(data: unknown): string | null {
+export function extractIssuersFromJsonLd(data: unknown): string[] {
     if (!data || typeof data !== 'object') {
-        return null;
+        return [];
+    }
+    if (Array.isArray(data)) {
+        return data.flatMap((item) => extractIssuersFromJsonLd(item));
     }
 
     const obj = data as Record<string, unknown>;
-
-    // Check for solid:oidcIssuer
-    if (typeof obj['solid:oidcIssuer'] === 'string') {
-        return obj['solid:oidcIssuer'];
-    }
-
-    // Check for http://www.w3.org/ns/solid/terms#oidcIssuer
-    if (typeof obj['http://www.w3.org/ns/solid/terms#oidcIssuer'] === 'string') {
-        return obj['http://www.w3.org/ns/solid/terms#oidcIssuer'];
-    }
-
-    // Check nested objects
-    if (typeof obj['@graph'] === 'object' && Array.isArray(obj['@graph'])) {
-        for (const item of obj['@graph']) {
-            const issuer = extractIssuerFromJsonLd(item);
-            if (issuer) {
-                return issuer;
+    const issuers: string[] = [];
+    for (const key of ['solid:oidcIssuer', 'http://www.w3.org/ns/solid/terms#oidcIssuer']) {
+        const values: unknown[] = Array.isArray(obj[key]) ? (obj[key] as unknown[]) : [obj[key]];
+        for (const value of values) {
+            if (typeof value === 'string') {
+                issuers.push(value);
+            } else if (value && typeof value === 'object' && typeof (value as { '@id'?: unknown })['@id'] === 'string') {
+                issuers.push((value as { '@id': string })['@id']);
             }
         }
     }
 
-    return null;
+    return [...issuers, ...extractIssuersFromJsonLd(obj['@graph'])];
+}
+
+/**
+ * First solid:oidcIssuer in a JSON-LD WebID document, or null.
+ */
+function extractIssuerFromJsonLd(data: unknown): string | null {
+    return extractIssuersFromJsonLd(data)[0] ?? null;
 }
 
 /**
@@ -152,9 +164,21 @@ function extractIssuerFromJsonLd(data: unknown): string | null {
  * @returns true if valid
  */
 export function validateIssuerUrl(issuer: string): boolean {
+    if (typeof issuer !== 'string' || issuer.length > 2048) {
+        return false;
+    }
     try {
         const url = new URL(issuer);
-        return url.protocol === 'https:' || (url.protocol === 'http:' && url.hostname === 'localhost');
+        // Issuers never carry credentials or fragments.
+        if (url.username || url.password || url.hash) {
+            return false;
+        }
+        if (url.protocol === 'https:') {
+            return true;
+        }
+        // Plain HTTP is only tolerated for loopback development issuers.
+        const isLoopback = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+        return url.protocol === 'http:' && isLoopback && process.env.NODE_ENV !== 'production';
     } catch {
         return false;
     }

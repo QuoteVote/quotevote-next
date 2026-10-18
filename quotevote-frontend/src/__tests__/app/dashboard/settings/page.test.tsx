@@ -13,6 +13,13 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 
+// Stub the Solid card; its own behaviour is covered in SolidPodCard.test.tsx
+jest.mock('@/components/settings/SolidPodCard', () => ({
+  __esModule: true,
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  default: () => require('react').createElement('div', { 'data-testid': 'solid-pod-card' }),
+}))
+
 // Mock ThemeContext
 const mockToggleTheme = jest.fn().mockReturnValue('light')
 const mockSetTheme = jest.fn()
@@ -291,5 +298,31 @@ describe('Settings Page', () => {
         expect(screen.getByRole('button', { name: /save changes/i })).not.toBeDisabled()
       })
     })
+  })
+})
+
+describe('Settings Page Solid Pod card', () => {
+  const original = process.env.NEXT_PUBLIC_SOLID_ENABLED
+
+  beforeEach(() => {
+    resetStore()
+    useAppStore.getState().setUserData(mockUser)
+  })
+
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_SOLID_ENABLED
+    else process.env.NEXT_PUBLIC_SOLID_ENABLED = original
+  })
+
+  it('hides the Solid Pod card when NEXT_PUBLIC_SOLID_ENABLED is not "true"', () => {
+    process.env.NEXT_PUBLIC_SOLID_ENABLED = 'false'
+    render(<SettingsPageClient />, { mocks: [getUserMock, getUserBioMock] })
+    expect(screen.queryByTestId('solid-pod-card')).not.toBeInTheDocument()
+  })
+
+  it('shows the Solid Pod card when NEXT_PUBLIC_SOLID_ENABLED is "true"', () => {
+    process.env.NEXT_PUBLIC_SOLID_ENABLED = 'true'
+    render(<SettingsPageClient />, { mocks: [getUserMock, getUserBioMock] })
+    expect(screen.getByTestId('solid-pod-card')).toBeInTheDocument()
   })
 })

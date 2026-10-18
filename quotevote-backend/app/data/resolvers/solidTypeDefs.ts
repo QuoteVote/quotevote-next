@@ -98,6 +98,7 @@ export const solidTypeDefs = `#graphql
   # Queries
   extend type Query {
     solidConnectionStatus: SolidConnectionStatus!
+    solidPullPortableState: PortableState!
   }
 
   # Mutations
@@ -109,7 +110,6 @@ export const solidTypeDefs = `#graphql
       redirectUri: String!
     ): SolidConnectionResult!
     solidDisconnect: Boolean!
-    solidPullPortableState: PortableState!
     solidPushPortableState(input: PortableStateInput!): Boolean!
     solidAppendActivityEvent(input: ActivityEventInput!): Boolean!
   }

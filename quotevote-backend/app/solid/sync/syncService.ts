@@ -1,5 +1,11 @@
+import type { PrismaClient } from '@prisma/client';
 import { SolidClient } from '../client/solidClient';
-import { SolidConnection } from '../../data/models/SolidConnection';
+import {
+    SolidFeatureDisabledError,
+    SolidInvalidInputError,
+    SolidNotConnectedError,
+    SolidPodError,
+} from '../errors';
 import type {
     PortableState,
     PortableStateInput,
@@ -17,29 +23,45 @@ import {
 
 /**
  * Solid Pod Sync Module
- * Handles reading and writing portable data to/from Solid Pods
+ * Handles reading and writing portable data to/from Solid Pods.
+ *
+ * Source-of-truth policy (see app/solid/README.md):
+ * - pull: Pod values are returned to the caller; nothing is applied to the instance automatically.
+ * - push: fields supplied by the member overwrite the same fields in the Pod;
+ *   all other Pod fields are preserved.
+ * - Civic/governance data is never synced and stays instance-authoritative.
+ *
+ * Missing Pod resources (HTTP 404) fall back to defaults. Any other Pod failure
+ * propagates, so a transient error can never cause a push to overwrite Pod data
+ * with defaults.
  */
+
+interface ResourceUris {
+    profile: string;
+    preferences: string;
+    activityLedger?: string;
+}
+
+const THEMES: readonly PortablePreferences['theme'][] = ['system', 'light', 'dark'];
+const FONT_SCALES: readonly PortablePreferences['accessibility']['fontScale'][] = ['normal', 'large'];
 
 /**
  * Get canonical resource URIs for a user's Pod
  */
-async function getResourceUris(userId: string): Promise<{
-    profile: string;
-    preferences: string;
-    activityLedger?: string;
-}> {
-    const connection = await SolidConnection.findOne({ userId });
+async function getResourceUris(userId: string, prisma: PrismaClient): Promise<ResourceUris> {
+    const connection = await prisma.solidConnection.findUnique({ where: { userId } });
 
     if (!connection) {
-        throw new Error('No Solid connection found for user');
+        throw new SolidNotConnectedError();
     }
 
     // If URIs are already stored, return them
-    if (connection.resourceUris?.profile && connection.resourceUris?.preferences) {
-        return connection.resourceUris as {
-            profile: string;
-            preferences: string;
-            activityLedger?: string;
+    const stored = connection.resourceUris;
+    if (stored?.profile && stored?.preferences) {
+        return {
+            profile: stored.profile,
+            preferences: stored.preferences,
+            activityLedger: stored.activityLedger ?? undefined,
         };
     }
 
@@ -47,75 +69,88 @@ async function getResourceUris(userId: string): Promise<{
     const webIdUrl = new URL(connection.webId);
     const baseUrl = `${webIdUrl.protocol}//${webIdUrl.host}`;
 
-    const uris = {
+    const uris: ResourceUris = {
         profile: `${baseUrl}/public/quote-vote/profile`,
         preferences: `${baseUrl}/private/quote-vote/preferences`,
         activityLedger: `${baseUrl}/private/quote-vote/activity-ledger`,
     };
 
-    // Store URIs for future use
-    connection.resourceUris = uris;
-    await connection.save();
+    await prisma.solidConnection.update({
+        where: { userId },
+        data: { resourceUris: uris },
+    });
 
     return uris;
 }
 
 /**
- * Pull portable state from Solid Pod
+ * Read a Pod resource; resolves to undefined only when the resource does not exist (404).
+ */
+async function readOptional<T>(client: SolidClient, url: string): Promise<T | undefined> {
+    try {
+        return await client.getJson<T>(url);
+    } catch (error) {
+        if (error instanceof SolidPodError && error.status === 404) {
+            return undefined;
+        }
+        throw error;
+    }
+}
+
+/** Drop keys whose value is undefined so they never overwrite existing Pod values. */
+function definedOnly<T extends object>(value: T | undefined): Partial<T> {
+    if (!value) {
+        return {};
+    }
+    return Object.fromEntries(
+        Object.entries(value).filter(([, v]) => v !== undefined)
+    ) as Partial<T>;
+}
+
+function validatePushInput(input: PortableStateInput): void {
+    const theme = input.preferences?.theme;
+    if (theme !== undefined && theme !== null && !THEMES.includes(theme)) {
+        throw new SolidInvalidInputError('Invalid theme value');
+    }
+    const fontScale = input.preferences?.accessibility?.fontScale;
+    if (fontScale !== undefined && fontScale !== null && !FONT_SCALES.includes(fontScale)) {
+        throw new SolidInvalidInputError('Invalid fontScale value');
+    }
+}
+
+/**
+ * Pull portable state from Solid Pod (read-only; nothing is written locally)
  * @param userId - User ID
  * @param clientId - OAuth client ID
+ * @param prisma - Prisma client
  * @returns Portable state from Pod
  */
 export async function pullPortableState(
     userId: string,
-    clientId: string
+    clientId: string,
+    prisma: PrismaClient
 ): Promise<PortableState> {
-    const client = new SolidClient({ userId, clientId });
-    const uris = await getResourceUris(userId);
+    const client = new SolidClient({ userId, clientId, prisma });
+    const uris = await getResourceUris(userId, prisma);
 
-    try {
-        // Fetch profile
-        let profile: PortableProfile;
-        try {
-            profile = await client.getJson<PortableProfile>(uris.profile);
-        } catch {
-            // If profile doesn't exist, use default
-            profile = createDefaultProfile();
-        }
+    const profile =
+        (await readOptional<PortableProfile>(client, uris.profile)) ?? createDefaultProfile();
+    const preferences =
+        (await readOptional<PortablePreferences>(client, uris.preferences)) ??
+        createDefaultPreferences();
 
-        // Fetch preferences
-        let preferences: PortablePreferences;
-        try {
-            preferences = await client.getJson<PortablePreferences>(uris.preferences);
-        } catch {
-            // If preferences don't exist, use default
-            preferences = createDefaultPreferences();
-        }
-
-        // Fetch activity ledger if enabled
-        let activityLedger: ActivityLedger | undefined;
-        if (uris.activityLedger && process.env.SOLID_ACTIVITY_LEDGER_ENABLED === 'true') {
-            try {
-                activityLedger = (await client.getJson(uris.activityLedger)) as ActivityLedger;
-            } catch {
-                // Activity ledger is optional
-                activityLedger = undefined;
-            }
-        }
-
-        return {
-            portableSchemaVersion: PORTABLE_SCHEMA_VERSION,
-            profile,
-            preferences,
-            activityLedger,
-            updatedAt: new Date().toISOString(),
-        };
-    } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(`Failed to pull portable state: ${error.message}`);
-        }
-        throw error;
+    let activityLedger: ActivityLedger | undefined;
+    if (uris.activityLedger && process.env.SOLID_ACTIVITY_LEDGER_ENABLED === 'true') {
+        activityLedger = await readOptional<ActivityLedger>(client, uris.activityLedger);
     }
+
+    return {
+        portableSchemaVersion: PORTABLE_SCHEMA_VERSION,
+        profile,
+        preferences,
+        activityLedger,
+        updatedAt: new Date().toISOString(),
+    };
 }
 
 /**
@@ -123,74 +158,59 @@ export async function pullPortableState(
  * @param userId - User ID
  * @param clientId - OAuth client ID
  * @param input - Partial state to push
+ * @param prisma - Prisma client
  * @returns Success status
  */
 export async function pushPortableState(
     userId: string,
     clientId: string,
-    input: PortableStateInput
+    input: PortableStateInput,
+    prisma: PrismaClient
 ): Promise<boolean> {
-    const client = new SolidClient({ userId, clientId });
-    const uris = await getResourceUris(userId);
+    validatePushInput(input);
 
-    try {
-        // Push profile if provided
-        if (input.profile) {
-            // Fetch existing profile to merge
-            let existingProfile: PortableProfile;
-            try {
-                existingProfile = await client.getJson<PortableProfile>(uris.profile);
-            } catch {
-                existingProfile = createDefaultProfile();
-            }
+    const client = new SolidClient({ userId, clientId, prisma });
+    const uris = await getResourceUris(userId, prisma);
 
-            const mergedProfile: PortableProfile = {
-                ...existingProfile,
-                ...input.profile,
-            };
+    if (input.profile) {
+        const existing =
+            (await readOptional<PortableProfile>(client, uris.profile)) ?? createDefaultProfile();
 
-            await client.putJson(uris.profile, mergedProfile);
-        }
+        const mergedProfile: PortableProfile = {
+            ...existing,
+            ...definedOnly(input.profile),
+        };
 
-        // Push preferences if provided
-        if (input.preferences) {
-            // Fetch existing preferences to merge
-            let existingPreferences: PortablePreferences;
-            try {
-                existingPreferences = await client.getJson<PortablePreferences>(uris.preferences);
-            } catch {
-                existingPreferences = createDefaultPreferences();
-            }
-
-            const mergedPreferences: PortablePreferences = {
-                ...existingPreferences,
-                ...input.preferences,
-                notifications: {
-                    ...existingPreferences.notifications,
-                    ...(input.preferences.notifications || {}),
-                },
-                accessibility: {
-                    ...existingPreferences.accessibility,
-                    ...(input.preferences.accessibility || {}),
-                },
-            };
-
-            await client.putJson(uris.preferences, mergedPreferences);
-        }
-
-        // Update lastSyncAt
-        await SolidConnection.findOneAndUpdate(
-            { userId },
-            { lastSyncAt: new Date() }
-        );
-
-        return true;
-    } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(`Failed to push portable state: ${error.message}`);
-        }
-        throw error;
+        await client.putJson(uris.profile, mergedProfile);
     }
+
+    if (input.preferences) {
+        const existing =
+            (await readOptional<PortablePreferences>(client, uris.preferences)) ??
+            createDefaultPreferences();
+
+        const mergedPreferences: PortablePreferences = {
+            ...existing,
+            ...definedOnly(input.preferences),
+            notifications: {
+                ...existing.notifications,
+                ...definedOnly(input.preferences.notifications),
+            },
+            accessibility: {
+                ...existing.accessibility,
+                ...definedOnly(input.preferences.accessibility),
+            },
+        };
+
+        await client.putJson(uris.preferences, mergedPreferences);
+    }
+
+    await prisma.solidConnection.updateMany({
+        where: { userId },
+        data: { lastSyncAt: new Date() },
+    });
+
+    return true;
 }
 
 /**
@@ -198,54 +218,46 @@ export async function pushPortableState(
  * @param userId - User ID
  * @param clientId - OAuth client ID
  * @param event - Activity event to append
+ * @param prisma - Prisma client
  * @returns Success status
  */
 export async function appendActivityEvent(
     userId: string,
     clientId: string,
-    event: ActivityEventInput
+    event: ActivityEventInput,
+    prisma: PrismaClient
 ): Promise<boolean> {
-    // Check if activity ledger is enabled
     if (process.env.SOLID_ACTIVITY_LEDGER_ENABLED !== 'true') {
-        throw new Error('Activity ledger is not enabled');
+        throw new SolidFeatureDisabledError();
     }
 
-    const client = new SolidClient({ userId, clientId });
-    const uris = await getResourceUris(userId);
+    const client = new SolidClient({ userId, clientId, prisma });
+    const uris = await getResourceUris(userId, prisma);
 
     if (!uris.activityLedger) {
         throw new Error('Activity ledger URI not configured');
     }
 
-    try {
-        // Fetch existing ledger
-        let ledger: { events: ActivityEvent[] };
-        try {
-            ledger = await client.getJson<{ events: ActivityEvent[] }>(uris.activityLedger);
-        } catch {
-            ledger = { events: [] };
-        }
+    const ledger =
+        (await readOptional<{ events: ActivityEvent[] }>(client, uris.activityLedger)) ??
+        { events: [] };
 
-        // Create new event
-        const newEvent: ActivityEvent = {
-            type: event.type,
-            instanceId: event.instanceId,
-            resourceUrl: event.resourceUrl,
-            timestamp: new Date().toISOString(),
-            payload: event.payload,
-        } as ActivityEvent;
-
-        // Append event
-        ledger.events.push(newEvent);
-
-        // Write back to Pod
-        await client.putJson(uris.activityLedger, ledger);
-
-        return true;
-    } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(`Failed to append activity event: ${error.message}`);
-        }
-        throw error;
+    // Never overwrite a ledger we cannot interpret.
+    if (!Array.isArray(ledger.events)) {
+        throw new Error('Activity ledger has an unexpected format');
     }
+
+    const newEvent = {
+        type: event.type,
+        instanceId: event.instanceId,
+        resourceUrl: event.resourceUrl,
+        timestamp: new Date().toISOString(),
+        payload: event.payload,
+    } as ActivityEvent;
+
+    ledger.events.push(newEvent);
+
+    await client.putJson(uris.activityLedger, ledger);
+
+    return true;
 }

@@ -140,7 +140,16 @@ export interface PortableState {
  */
 export interface PortableStateInput {
     profile?: Partial<PortableProfile>;
-    preferences?: Partial<PortablePreferences>;
+    preferences?: PartialPortablePreferences;
+}
+
+/**
+ * Deep-partial preferences: members may send any subset of nested keys.
+ */
+export interface PartialPortablePreferences
+    extends Partial<Omit<PortablePreferences, 'notifications' | 'accessibility'>> {
+    notifications?: Partial<NotificationPreferences>;
+    accessibility?: Partial<AccessibilityPreferences>;
 }
 
 /**

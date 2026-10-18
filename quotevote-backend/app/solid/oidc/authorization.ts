@@ -1,9 +1,19 @@
 import crypto from 'crypto';
 import { discoverIssuer } from './discovery';
+import { createDpopProof, type DpopKeyPair } from './dpop';
+import { SolidOidcError } from '../errors';
 
 /**
  * Solid OIDC Authorization Flow
- * Handles OAuth 2.0 / OpenID Connect authorization code flow
+ * Handles OAuth 2.0 / OpenID Connect authorization code flow (with PKCE) and the
+ * token endpoint calls (code exchange and refresh). Token requests carry a DPoP proof.
+ *
+ * Security notes:
+ * - Errors thrown here never include provider response bodies, tokens,
+ *   authorization codes or verifiers. Only the error code and HTTP status are kept.
+ * - The ID token returned here is NOT verified. Verification (issuer JWKS signature,
+ *   issuer, audience, expiry) is done by `verifyIdToken` in security.ts before any claim is used.
+ * - Token endpoint requests never follow redirects (`redirect: 'error'`).
  */
 
 export interface AuthorizationParams {
@@ -34,7 +44,7 @@ export interface TokenResponse {
 /**
  * Generate authorization URL for Solid OIDC flow
  * @param params - Authorization parameters
- * @returns Authorization URL and state
+ * @returns Authorization URL, state and PKCE code verifier (the caller must persist the verifier server-side)
  */
 export async function generateAuthorizationUrl(
     params: AuthorizationParams
@@ -46,7 +56,7 @@ export async function generateAuthorizationUrl(
 
     // Generate PKCE code verifier and challenge
     const codeVerifier = generateRandomString(64);
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
+    const codeChallenge = generateCodeChallenge(codeVerifier);
 
     // Build authorization URL
     const authUrl = new URL(metadata.authorization_endpoint);
@@ -72,17 +82,18 @@ export async function generateAuthorizationUrl(
  * @param redirectUri - Redirect URI used in authorization
  * @param issuer - Issuer URL
  * @param clientId - Client ID
+ * @param dpop - DPoP key pair the tokens will be bound to
  * @returns Token response
+ * @throws {SolidOidcError} with a sanitized message
  */
 export async function exchangeCodeForTokens(
     code: string,
     codeVerifier: string,
     redirectUri: string,
     issuer: string,
-    clientId: string
+    clientId: string,
+    dpop?: DpopKeyPair
 ): Promise<TokenResponse> {
-    const metadata = await discoverIssuer(issuer);
-
     const body = new URLSearchParams({
         grant_type: 'authorization_code',
         code,
@@ -91,38 +102,7 @@ export async function exchangeCodeForTokens(
         code_verifier: codeVerifier,
     });
 
-    try {
-        const response = await fetch(metadata.token_endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json',
-            },
-            body: body.toString(),
-            signal: AbortSignal.timeout(10000),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(
-                `Token exchange failed: ${response.status} ${response.statusText} - ${errorText}`
-            );
-        }
-
-        const tokens = await response.json() as TokenResponse;
-
-        // Validate token response
-        if (!tokens.access_token) {
-            throw new Error('Invalid token response: missing access_token');
-        }
-
-        return tokens;
-    } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(`Failed to exchange code for tokens: ${error.message}`);
-        }
-        throw error;
-    }
+    return requestTokens(issuer, body, dpop);
 }
 
 /**
@@ -130,75 +110,115 @@ export async function exchangeCodeForTokens(
  * @param refreshToken - Refresh token
  * @param issuer - Issuer URL
  * @param clientId - Client ID
+ * @param dpop - DPoP key pair the tokens are bound to (the same key as at connect time)
  * @returns New token response
+ * @throws {SolidOidcError} code `invalid_grant` when the provider rejects the refresh token
  */
 export async function refreshAccessToken(
     refreshToken: string,
     issuer: string,
-    clientId: string
+    clientId: string,
+    dpop?: DpopKeyPair
 ): Promise<TokenResponse> {
-    const metadata = await discoverIssuer(issuer);
-
     const body = new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
         client_id: clientId,
     });
 
-    try {
-        const response = await fetch(metadata.token_endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json',
-            },
-            body: body.toString(),
-            signal: AbortSignal.timeout(10000),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(
-                `Token refresh failed: ${response.status} ${response.statusText} - ${errorText}`
-            );
-        }
-
-        const tokens = await response.json() as TokenResponse;
-
-        if (!tokens.access_token) {
-            throw new Error('Invalid token response: missing access_token');
-        }
-
-        return tokens;
-    } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(`Failed to refresh access token: ${error.message}`);
-        }
-        throw error;
-    }
+    return requestTokens(issuer, body, dpop);
 }
 
 /**
- * Parse ID token claims (basic JWT parsing without verification)
- * Note: In production, you should verify the JWT signature
- * @param idToken - ID token JWT
- * @returns Decoded claims
+ * POST a form to the issuer's token endpoint and validate the response.
+ * If the provider asks for a DPoP nonce (DPoP-Nonce header on 400/401), the request is
+ * repeated once with that nonce.
  */
-export function parseIdToken(idToken: string): Record<string, unknown> {
-    try {
-        const parts = idToken.split('.');
-        if (parts.length !== 3) {
-            throw new Error('Invalid JWT format');
-        }
+async function requestTokens(
+    issuer: string,
+    body: URLSearchParams,
+    dpop?: DpopKeyPair
+): Promise<TokenResponse> {
+    const metadata = await discoverIssuer(issuer).catch(() => {
+        throw new SolidOidcError('provider_error', 'Issuer discovery failed');
+    });
 
-        const payload = parts[1];
-        const decoded = Buffer.from(payload, 'base64url').toString('utf8');
-        return JSON.parse(decoded);
-    } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(`Failed to parse ID token: ${error.message}`);
+    let response = await postTokenRequest(metadata.token_endpoint, body, dpop, undefined);
+    const nonce = response.headers.get('DPoP-Nonce');
+    if (dpop && nonce && (response.status === 400 || response.status === 401)) {
+        response = await postTokenRequest(metadata.token_endpoint, body, dpop, nonce);
+    }
+
+    return parseTokenResponse(response);
+}
+
+async function postTokenRequest(
+    endpoint: string,
+    body: URLSearchParams,
+    dpop: DpopKeyPair | undefined,
+    nonce: string | undefined
+): Promise<Response> {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+    };
+    if (dpop) {
+        headers.DPoP = createDpopProof({
+            privateJwk: dpop.privateJwk,
+            publicJwk: dpop.publicJwk,
+            method: 'POST',
+            url: endpoint,
+            nonce,
+        });
+    }
+
+    try {
+        return await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: body.toString(),
+            redirect: 'error',
+            signal: AbortSignal.timeout(10000),
+        });
+    } catch {
+        throw new SolidOidcError('provider_error', 'Token endpoint request failed');
+    }
+}
+
+async function parseTokenResponse(response: Response): Promise<TokenResponse> {
+    if (!response.ok) {
+        // Only the standard OAuth error code is inspected; the body is never echoed.
+        const providerError = await readOAuthErrorCode(response);
+        if (providerError === 'invalid_grant') {
+            throw new SolidOidcError('invalid_grant', 'Authorization grant was rejected', response.status);
         }
-        throw error;
+        throw new SolidOidcError(
+            'provider_error',
+            `Token endpoint returned HTTP ${response.status}`,
+            response.status
+        );
+    }
+
+    let tokens: TokenResponse;
+    try {
+        tokens = (await response.json()) as TokenResponse;
+    } catch {
+        throw new SolidOidcError('invalid_response', 'Token response was not valid JSON');
+    }
+
+    if (!tokens || typeof tokens.access_token !== 'string' || tokens.access_token === '') {
+        throw new SolidOidcError('invalid_response', 'Invalid token response: missing access_token');
+    }
+
+    return tokens;
+}
+
+async function readOAuthErrorCode(response: Response): Promise<string | undefined> {
+    try {
+        const data = (await response.json()) as { error?: unknown } | null;
+        return typeof data?.error === 'string' ? data.error : undefined;
+    } catch {
+        return undefined;
     }
 }
 
@@ -212,11 +232,10 @@ function generateRandomString(length: number): string {
 }
 
 /**
- * Generate PKCE code challenge from verifier
+ * Generate PKCE code challenge from verifier (S256)
  * @param verifier - Code verifier
- * @returns Code challenge (SHA-256 hash)
+ * @returns Code challenge (base64url SHA-256 digest)
  */
-async function generateCodeChallenge(verifier: string): Promise<string> {
-    const hash = crypto.createHash('sha256').update(verifier).digest();
-    return hash.toString('base64url');
+function generateCodeChallenge(verifier: string): string {
+    return crypto.createHash('sha256').update(verifier).digest('base64url');
 }

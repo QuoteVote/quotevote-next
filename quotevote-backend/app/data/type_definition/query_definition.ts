@@ -6,9 +6,6 @@ type Query {
   " Status of server "
   status: String
 
-  " Get Solid connection status "
-  solidConnectionStatus: SolidConnectionStatus!
-
   " This will give the public news feed "
   activities(offset: Int, limit: Int, searchKey: String, startDateRange: String, endDateRange: String, user_id: String, activityEvent: JSON): Activities
 

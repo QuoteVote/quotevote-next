@@ -27,7 +27,17 @@ const schema = buildSchema(fs.readFileSync(schemaPath, "utf8"));
 
 // Documents that probe local-only fields (e.g. User.bio). Callers use
 // errorPolicy: 'all' so hosted schemas reject them without taking down the page.
-const OPTIONAL_DOCUMENTS = new Set(["GET_USER_BIO"]);
+const OPTIONAL_DOCUMENTS = new Set([
+  "GET_USER_BIO",
+  // Solid Pod operations. The deployed API has none of these yet; they go live with the
+  // new backend. Until then the Solid UI is gated by NEXT_PUBLIC_SOLID_ENABLED.
+  "GET_SOLID_CONNECTION_STATUS",
+  "SOLID_PULL_PORTABLE_STATE",
+  "SOLID_START_CONNECT",
+  "SOLID_FINISH_CONNECT",
+  "SOLID_DISCONNECT",
+  "SOLID_PUSH_PORTABLE_STATE",
+]);
 
 let checked = 0;
 const failures = [];

@@ -1,0 +1,47 @@
+// Solid Pod integration models (#511): SolidConnection, SolidAuthState
+
+type SolidResourceUris {
+  profile        String?
+  preferences    String?
+  activityLedger String?
+}
+
+/// One active Solid Pod connection per Quote.Vote user.
+/// Collection name matches the legacy Mongoose model so existing documents keep working.
+model SolidConnection {
+  id              String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String             @unique @db.ObjectId
+  webId           String
+  issuer          String
+  /// AES-256-GCM encrypted JSON (access/refresh/id tokens)
+  encryptedTokens String
+  scopes          String[]           @default([])
+  idTokenClaims   Json?
+  tokenExpiry     DateTime?
+  resourceUris    SolidResourceUris?
+  lastSyncAt      DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([webId])
+  @@map("solidconnections")
+}
+
+/// Short-lived OIDC authorization state (state + PKCE verifier) bound to the user who started the flow.
+model SolidAuthState {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  state        String   @unique
+  userId       String   @db.ObjectId
+  issuer       String
+  redirectUri  String
+  /// AES-256-GCM encrypted JSON containing the PKCE code verifier
+  encryptedVerifier String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("solidauthstates")
+}

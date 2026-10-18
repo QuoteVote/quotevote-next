@@ -1,23 +1,5 @@
 export const Mutation = `type Mutation {
 
-  " Start Solid connection authorization flow "
-  solidStartConnect(issuer: String!): SolidConnectResult
-
-  " Finish Solid connection authentication "
-  solidFinishConnect(code: String!, state: String!, redirectUri: String!): SolidConnectResult
-
-  " Disconnect from Solid pod "
-  solidDisconnect: Boolean
-
-  " Pull portable state from Solid pod "
-  solidPullPortableState: PortableState
-
-  " Push portable state to Solid pod "
-  solidPushPortableState(input: PortableStateInput!): Boolean
-
-  " Append activity event to Solid pod "
-  solidAppendActivityEvent(input: ActivityEventInput!): Boolean
-
   " Create a new post "
   addPost(post: PostInput!): Post
 

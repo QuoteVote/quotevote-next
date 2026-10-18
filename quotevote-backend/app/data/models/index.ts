@@ -1,7 +1,6 @@
 // Database Models
 // Export all Mongoose/Prisma models here as they are created
 
-export * from './SolidConnection';
 export * from './Presence';
 export { default as Activity } from './Activity';
 export { default as Post } from './Post';
