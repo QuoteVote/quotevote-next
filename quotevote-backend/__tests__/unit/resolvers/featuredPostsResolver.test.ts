@@ -12,6 +12,10 @@ function mockContext(): GraphQLContext {
       user: {
         findMany: jest.fn(),
       },
+      vote: { findMany: jest.fn().mockResolvedValue([]) },
+      comment: { findMany: jest.fn().mockResolvedValue([]) },
+      quote: { findMany: jest.fn().mockResolvedValue([]) },
+      messageRoom: { findMany: jest.fn().mockResolvedValue([]) },
       post: {
         findMany: jest.fn(),
         count: jest.fn(),

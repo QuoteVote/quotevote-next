@@ -1,4 +1,5 @@
 import { chatResolver } from '~/data/resolvers/chatResolver';
+import { MESSAGE_RECORD_SELECT } from '~/data/resolvers/utils/commentsQuotes';
 
 const date = new Date('2026-01-01T00:00:00.000Z');
 
@@ -123,8 +124,9 @@ describe('chatResolver Prisma queries', () => {
     );
 
     expect(context.prisma.message.findMany).toHaveBeenCalledWith({
-      where: { messageRoomId: 'room-1', deleted: false },
+      where: { messageRoomId: 'room-1' },
       orderBy: { created: 'asc' },
+      select: MESSAGE_RECORD_SELECT,
     });
     expect(messages[0]).toMatchObject({
       _id: 'message-1',
@@ -157,8 +159,9 @@ describe('chatResolver Prisma queries', () => {
     });
     expect(postDetails).toEqual({ title: 'Post title', text: 'Post text' });
     expect(context.prisma.message.findMany).toHaveBeenCalledWith({
-      where: { messageRoomId: 'room-1', deleted: false },
+      where: { messageRoomId: 'room-1' },
       orderBy: { created: 'asc' },
+      select: MESSAGE_RECORD_SELECT,
     });
     expect(messages).toEqual([]);
   });
@@ -205,8 +208,9 @@ describe('chatResolver Prisma queries', () => {
       select: { messageType: true, userIds: true },
     });
     expect(context.prisma.message.findMany).toHaveBeenCalledWith({
-      where: { messageRoomId: 'post-room', deleted: false },
+      where: { messageRoomId: 'post-room' },
       orderBy: { created: 'asc' },
+      select: MESSAGE_RECORD_SELECT,
     });
   });
 
@@ -273,8 +277,41 @@ describe('chatResolver Prisma queries', () => {
 
     expect(messages.map((message) => message._id)).toEqual(['visible']);
     expect(context.prisma.message.findMany).toHaveBeenCalledWith({
-      where: { messageRoomId: 'post-room', deleted: false },
+      where: { messageRoomId: 'post-room' },
       orderBy: { created: 'asc' },
+      select: MESSAGE_RECORD_SELECT,
     });
+  });
+
+  it('returns legacy messages that have no deleted flag or timestamps', async () => {
+    const context = createContext();
+    context.prisma.messageRoom.findUnique.mockResolvedValue({ messageType: 'POST', userIds: [] });
+    context.prisma.message.findMany.mockResolvedValue([
+      {
+        id: 'legacy',
+        messageRoomId: 'post-room',
+        userId: 'user-1',
+        userName: null,
+        title: null,
+        text: 'From the legacy API',
+        type: null,
+        mutationType: null,
+        readBy: [],
+        readByDetailed: [],
+        deliveredTo: [],
+        created: date,
+      },
+    ]);
+
+    const messages = await chatResolver.MessageRoom.messages(
+      { _id: 'post-room' } as never,
+      {},
+      context as never
+    );
+
+    expect(messages.map((message) => message._id)).toEqual(['legacy']);
+    const { select } = context.prisma.message.findMany.mock.calls[0][0];
+    expect(select).not.toHaveProperty('createdAt');
+    expect(select).not.toHaveProperty('updatedAt');
   });
 });

@@ -1,5 +1,5 @@
 import { POST_RECORD_SELECT } from '~/data/utils/postPrismaMapper';
-import { attachPostCreators } from './utils/posts';
+import { attachPostRelations } from './utils/posts';
 import type { GraphQLContext, PostQueryArgs } from '~/types/graphql';
 import type * as Common from '~/types/common';
 
@@ -36,7 +36,7 @@ export const featuredPostsResolver = {
         };
       }
 
-      const entities = await attachPostCreators(context.prisma, featuredPosts);
+      const entities = await attachPostRelations(context.prisma, featuredPosts);
 
       return {
         entities,

@@ -2,7 +2,7 @@ import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import { POST_RECORD_SELECT } from '~/data/utils/postPrismaMapper';
 import { parseSearchQuery } from '../utils/parseSearchQuery';
-import { attachPostCreators } from './utils/posts';
+import { attachPostRelations } from './utils/posts';
 import { isObjectId } from './utils/common';
 import type { GraphQLContext, PostQueryArgs } from '~/types/graphql';
 import type * as Common from '~/types/common';
@@ -188,7 +188,7 @@ export const postsResolver = {
           };
         }
 
-        const entities = await attachPostCreators(context.prisma, page);
+        const entities = await attachPostRelations(context.prisma, page);
 
         return {
           entities,
@@ -214,7 +214,7 @@ export const postsResolver = {
         };
       }
 
-      const entities = await attachPostCreators(context.prisma, posts);
+      const entities = await attachPostRelations(context.prisma, posts);
 
       return {
         entities,
@@ -297,7 +297,7 @@ export const postsResolver = {
         where: { id: args.postId },
         select: POST_RECORD_SELECT,
       });
-      const [entity] = await attachPostCreators(context.prisma, [updatedPost]);
+      const [entity] = await attachPostRelations(context.prisma, [updatedPost]);
       return entity;
     },
   },

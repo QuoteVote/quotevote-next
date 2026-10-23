@@ -134,11 +134,9 @@ describe('hydrateActivities', () => {
     expect(entry.post?.creator?.email ?? '').toBe('');
   });
 
-  it('skips columns legacy stores in a shape Prisma cannot read (post votedBy, vote tags)', async () => {
+  it('skips vote tags, which legacy stores as a single string', async () => {
     const prisma = mockPrisma();
     await hydrateActivities(prisma as unknown as Prisma, [activity({ activityType: 'VOTED', voteId })]);
-    const postSelect = prisma.post.findMany.mock.calls[0][0].select;
-    expect(postSelect.votedBy).toBe(false);
     const voteSelect = prisma.vote.findMany.mock.calls.find(
       ([args]: [{ where: { id?: unknown } }]) => args.where.id
     )[0].select;

@@ -1,6 +1,13 @@
 import type { PrismaClient } from '@prisma/client';
 import type * as Common from '~/types/common';
 import { COMMENT_SELECT, QUOTE_SELECT, toComment, toQuote } from './commentsQuotes';
+import {
+  VOTE_SELECT,
+  groupIdsByPost,
+  isLive,
+  unique,
+  whenAny,
+} from '~/data/resolvers/utils/batchLoad';
 import { POST_RECORD_SELECT, toGraphQLPost } from '~/data/utils/postPrismaMapper';
 import {
   PUBLIC_USER_SELECT,
@@ -9,50 +16,6 @@ import {
 } from '~/data/utils/userPrismaMapper';
 
 type HydratePrisma = Pick<PrismaClient, 'user' | 'post' | 'vote' | 'comment' | 'quote'>;
-
-/**
- * Post columns an activity card needs. `votedBy` is left out: legacy stores it as
- * objects, which Prisma can't read as strings, and the card doesn't use it.
- */
-const ACTIVITY_POST_SELECT = { ...POST_RECORD_SELECT, votedBy: false } as const;
-
-/**
- * Vote columns an activity card needs. `tags` is left out: legacy stores it as a
- * single string, which Prisma can't read as a list, and the card doesn't show it.
- */
-const VOTE_SELECT = {
-  id: true,
-  userId: true,
-  postId: true,
-  type: true,
-  startWordIndex: true,
-  endWordIndex: true,
-  deleted: true,
-  created: true,
-} as const;
-
-const unique = (ids: (string | null | undefined)[]): string[] => [
-  ...new Set(ids.filter((id): id is string => Boolean(id))),
-];
-
-/** Skip the query when there is nothing to look up. */
-async function whenAny<T>(ids: string[], load: (ids: string[]) => Promise<T[]>): Promise<T[]> {
-  return ids.length > 0 ? load(ids) : [];
-}
-
-const isLive = (row: { deleted?: boolean | null }): boolean => row.deleted !== true;
-
-const groupIdsByPost = (
-  rows: { id: string; postId: string; deleted?: boolean | null }[]
-): Map<string, { _id: string }[]> => {
-  const byPost = new Map<string, { _id: string }[]>();
-  for (const row of rows.filter(isLive)) {
-    const list = byPost.get(row.postId) ?? [];
-    list.push({ _id: row.id });
-    byPost.set(row.postId, list);
-  }
-  return byPost;
-};
 
 /**
  * Load what an activity card shows (who acted, the post with its author and
@@ -72,11 +35,9 @@ export async function hydrateActivities(
   const commentIds = unique(activities.map((a) => a.commentId));
   const quoteIds = unique(activities.map((a) => a.quoteId));
 
-  // Deleted flags are checked here rather than in the query: legacy documents
-  // may not have the field, and a `deleted: false` filter would skip them.
   const posts = (
     await whenAny(postIds, (ids) =>
-      prisma.post.findMany({ where: { id: { in: ids } }, select: ACTIVITY_POST_SELECT })
+      prisma.post.findMany({ where: { id: { in: ids } }, select: POST_RECORD_SELECT })
     )
   ).filter((p) => p.deleted !== true);
   const livePostIds = posts.map((p) => p.id);

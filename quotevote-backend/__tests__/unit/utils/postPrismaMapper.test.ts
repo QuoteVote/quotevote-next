@@ -4,6 +4,7 @@
 
 import {
   POST_RECORD_SELECT,
+  normalizeVotedBy,
   toGraphQLPost,
   type PrismaPostRecord,
 } from '~/data/utils/postPrismaMapper';
@@ -50,5 +51,32 @@ describe('postPrismaMapper.toGraphQLPost', () => {
   it('sets creator to null when no author is provided', () => {
     const result = toGraphQLPost(basePost());
     expect(result.creator).toBeNull();
+  });
+});
+
+describe('postPrismaMapper.normalizeVotedBy', () => {
+  it('reads legacy { type, userId } objects as user ids, the way the legacy API returns them', () => {
+    expect(
+      normalizeVotedBy([
+        { type: 'up', userId: { $oid: '507f1f77bcf86cd799439012' } },
+        { type: 'down', userId: '507f1f77bcf86cd799439014' },
+      ])
+    ).toEqual(['507f1f77bcf86cd799439012', '507f1f77bcf86cd799439014']);
+  });
+
+  it('keeps plain ids, including ObjectIds read through Json', () => {
+    expect(normalizeVotedBy(['a1', { $oid: 'b2' }])).toEqual(['a1', 'b2']);
+  });
+
+  it('returns an empty list for a missing field or unreadable entries', () => {
+    expect(normalizeVotedBy(null)).toEqual([]);
+    expect(normalizeVotedBy(undefined)).toEqual([]);
+    expect(normalizeVotedBy('not-a-list')).toEqual([]);
+    expect(normalizeVotedBy([null, 7, { type: 'up' }, { userId: null }])).toEqual([]);
+  });
+
+  it('maps legacy votedBy through toGraphQLPost', () => {
+    const result = toGraphQLPost(basePost({ votedBy: [{ type: 'up', userId: 'u9' }] }));
+    expect(result.votedBy).toEqual(['u9']);
   });
 });

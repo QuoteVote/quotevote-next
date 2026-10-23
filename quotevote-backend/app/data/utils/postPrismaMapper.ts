@@ -16,6 +16,7 @@ export interface PrismaPostCreator {
   name?: string | null;
   username?: string | null;
   avatar?: unknown;
+  contributorBadge?: boolean | null;
 }
 
 export interface PrismaPostRecord {
@@ -31,7 +32,8 @@ export interface PrismaPostRecord {
   downvotes?: number;
   reported?: number;
   approved?: number | null;
-  votedBy?: string[];
+  /** Stored as Json: user ids, or legacy `{ type, userId }` objects. */
+  votedBy?: unknown;
   dayPoints?: number;
   pointTimestamp?: Date | string;
   approvedBy?: string[];
@@ -51,6 +53,10 @@ export interface PrismaPostRecord {
 export type GraphQLPost = Common.Post & {
   creator?: Common.User | null;
   votedBy: string[];
+  votes?: Common.Vote[];
+  comments?: { _id: string }[];
+  quotes?: { _id: string }[];
+  messageRoom?: { _id: string; postId: string } | null;
   dayPoints?: number;
   pointTimestamp?: Date | string;
 };
@@ -60,6 +66,7 @@ export const POST_CREATOR_SELECT = {
   name: true,
   username: true,
   avatar: true,
+  contributorBadge: true,
 } as const;
 
 /**
@@ -96,6 +103,31 @@ export const POST_RECORD_SELECT = {
   created: true,
 } as const;
 
+const idString = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && '$oid' in value) {
+    const oid = (value as { $oid: unknown }).$oid;
+    return typeof oid === 'string' ? oid : null;
+  }
+  return null;
+};
+
+/**
+ * Read `votedBy` as a list of user ids, the way the legacy API returns it.
+ * Legacy writes `{ type, userId }` objects; older posts hold plain ids. Json
+ * reads ObjectIds as `{ $oid }`.
+ */
+export function normalizeVotedBy(votedBy: unknown): string[] {
+  if (!Array.isArray(votedBy)) return [];
+  return votedBy
+    .map((entry: unknown) =>
+      entry && typeof entry === 'object' && 'userId' in entry
+        ? idString((entry as { userId: unknown }).userId)
+        : idString(entry)
+    )
+    .filter((id): id is string => Boolean(id));
+}
+
 /**
  * Translate a Prisma Post record into the GraphQL / Common.Post shape.
  */
@@ -120,7 +152,7 @@ export function toGraphQLPost(
     rejectedBy: Array.isArray(post.rejectedBy) ? post.rejectedBy : [],
     reportedBy: Array.isArray(post.reportedBy) ? post.reportedBy : [],
     bookmarkedBy: Array.isArray(post.bookmarkedBy) ? post.bookmarkedBy : [],
-    votedBy: Array.isArray(post.votedBy) ? post.votedBy : [],
+    votedBy: normalizeVotedBy(post.votedBy),
     enable_voting: post.enableVoting ?? false,
     featuredSlot: post.featuredSlot ?? undefined,
     messageRoomId: post.messageRoomId ?? undefined,
@@ -136,6 +168,7 @@ export function toGraphQLPost(
           name: creator.name ?? undefined,
           username: creator.username ?? undefined,
           avatar: (creator.avatar as string | Record<string, unknown> | undefined) ?? undefined,
+          contributorBadge: creator.contributorBadge ?? false,
         } as Common.User)
       : null,
   };

@@ -1,6 +1,8 @@
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 import { getReadableMessageRoom } from './utils/messages';
+import { isLive } from '~/data/resolvers/utils/batchLoad';
+import { MESSAGE_RECORD_SELECT, toMessageEntity } from '~/data/resolvers/utils/commentsQuotes';
 
 function toMessageRoom(room: {
   id: string;
@@ -31,40 +33,6 @@ function toMessageRoom(room: {
     unreadMessages: room.unreadMessages,
     created: room.created,
     updatedAt: room.updatedAt,
-  };
-}
-
-function toMessage(message: {
-  id: string;
-  messageRoomId: string;
-  userId: string;
-  userName: string | null;
-  title: string | null;
-  text: string;
-  type: string | null;
-  mutationType: string | null;
-  deleted: boolean;
-  readBy: string[];
-  readByDetailed: Array<{ userId: string; readAt: Date }>;
-  deliveredTo: Array<{ userId: string; deliveredAt: Date }>;
-  created: Date;
-  updatedAt: Date;
-}): Common.Message {
-  return {
-    _id: message.id,
-    messageRoomId: message.messageRoomId,
-    userId: message.userId,
-    userName: message.userName ?? undefined,
-    title: message.title ?? undefined,
-    text: message.text,
-    type: (message.type as Common.MessageType | undefined) ?? undefined,
-    mutation_type: message.mutationType ?? undefined,
-    deleted: message.deleted,
-    readBy: message.readBy,
-    readByDetailed: message.readByDetailed,
-    deliveredTo: message.deliveredTo,
-    created: message.created,
-    updatedAt: message.updatedAt,
   };
 }
 
@@ -124,11 +92,14 @@ export const chatResolver = {
     ): Promise<Common.Message[]> => {
       const room = await getReadableMessageRoom(context.prisma, args.messageRoomId, context.userId);
       if (!room) return [];
+      // Legacy messages have no createdAt/updatedAt and may lack `deleted`, so read
+      // the safe columns and check the flag in code.
       const messages = await context.prisma.message.findMany({
-        where: { messageRoomId: args.messageRoomId, deleted: false },
+        where: { messageRoomId: args.messageRoomId },
         orderBy: { created: 'asc' },
+        select: MESSAGE_RECORD_SELECT,
       });
-      return messages.filter((message) => !message.deleted).map((message) => toMessage(message));
+      return messages.filter(isLive).map(toMessageEntity);
     },
 
     messageReactions: async (
@@ -162,11 +133,14 @@ export const chatResolver = {
     ): Promise<Common.Message[]> => {
       const room = await getReadableMessageRoom(context.prisma, parent._id, context.userId);
       if (!room) return [];
+      // Legacy messages have no createdAt/updatedAt and may lack `deleted`, so read
+      // the safe columns and check the flag in code.
       const messages = await context.prisma.message.findMany({
-        where: { messageRoomId: parent._id, deleted: false },
+        where: { messageRoomId: parent._id },
         orderBy: { created: 'asc' },
+        select: MESSAGE_RECORD_SELECT,
       });
-      return messages.filter((message) => !message.deleted).map((message) => toMessage(message));
+      return messages.filter(isLive).map(toMessageEntity);
     },
   },
 };

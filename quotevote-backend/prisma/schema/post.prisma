@@ -13,7 +13,9 @@ model Post {
   downvotes      Int      @default(0)
   reported       Int      @default(0)
   approved       Int?
-  votedBy        String[]
+  /// Legacy writes `{ type, userId }` objects, older posts hold user ids. Read with
+  /// `normalizeVotedBy`; Json keeps both shapes readable without rewriting them.
+  votedBy        Json?
   dayPoints      Int      @default(0)
   pointTimestamp DateTime @default(now())
   approvedBy     String[]
