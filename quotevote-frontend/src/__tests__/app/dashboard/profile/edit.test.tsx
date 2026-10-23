@@ -159,6 +159,12 @@ describe("Edit Profile page (#536)", () => {
 
   it("keeps Save disabled until something changes, and validates the username", async () => {
     render(<EditProfilePageClient username="testuser" />, { mocks: [getUserBioMock] });
+    // The bio query resolves asynchronously and the form's `values` prop resets it,
+    // which clears any validation error. Wait for the bio to land first, otherwise
+    // the error can be wiped between the submit and the assertion.
+    await waitFor(() => {
+      expect(screen.getByLabelText("About")).toHaveValue("Thoughtful dialogue.");
+    });
     const save = screen.getByRole("button", { name: /save changes/i });
     expect(save).toBeDisabled();
     fireEvent.change(screen.getByLabelText("Username"), { target: { value: "ab" } });
