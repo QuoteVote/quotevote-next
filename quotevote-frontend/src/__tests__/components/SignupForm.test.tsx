@@ -74,7 +74,7 @@ describe('SignupForm Component', () => {
 
         expect(screen.getByText(/terms of service/i)).toBeInTheDocument();
         const tosLink = screen.getByRole('link', { name: /terms of service/i });
-        expect(tosLink).toHaveAttribute('href', expect.stringContaining('quote_vote_terms_of_service.md'));
+        expect(tosLink).toHaveAttribute('href', '/terms');
         expect(tosLink).toHaveAttribute('target', '_blank');
     });
 
