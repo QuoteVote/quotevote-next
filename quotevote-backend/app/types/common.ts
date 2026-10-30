@@ -503,6 +503,8 @@ export interface PaginatedResult<T> {
 
 export interface PostInput {
   userId: string;
+  /** Legacy / frontend field; maps to Prisma `tagId` (`groupId` in Mongo). */
+  groupId?: string;
   tagId?: string;
   title?: string;
   text?: string;

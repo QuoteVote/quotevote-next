@@ -11,16 +11,31 @@ function mockContext(user: GraphQLContext['user'] = null): GraphQLContext {
   return {
     prisma: {
       user: {
-        findMany: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      tag: {
+        findUnique: jest.fn(),
       },
       vote: { findMany: jest.fn().mockResolvedValue([]) },
       comment: { findMany: jest.fn().mockResolvedValue([]) },
       quote: { findMany: jest.fn().mockResolvedValue([]) },
-      messageRoom: { findMany: jest.fn().mockResolvedValue([]) },
+      activity: {
+        create: jest.fn().mockResolvedValue({ id: 'activity-1' }),
+      },
+      messageRoom: {
+        findMany: jest.fn().mockResolvedValue([]),
+        findFirst: jest.fn().mockResolvedValue(null),
+        findUnique: jest.fn(),
+        create: jest.fn().mockResolvedValue({ id: 'room-1' }),
+        updateMany: jest.fn(),
+        update: jest.fn(),
+      },
       post: {
         findMany: jest.fn(),
         count: jest.fn(),
         findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
         updateMany: jest.fn(),
         findUniqueOrThrow: jest.fn(),
       },
@@ -29,6 +44,44 @@ function mockContext(user: GraphQLContext['user'] = null): GraphQLContext {
     userId: user?._id?.toString() ?? null,
     requestId: 'test-request-id',
   } as GraphQLContext;
+}
+
+function stubReturnedPost(
+  ctx: GraphQLContext,
+  overrides: Record<string, unknown> = {}
+): void {
+  const record = {
+    id: postId,
+    userId,
+    tagId,
+    title: 'Hello World',
+    text: 'Body',
+    url: `/post/tag/hello-world/${postId}`,
+    citationUrl: null,
+    attribution: null,
+    upvotes: 0,
+    downvotes: 0,
+    reported: 0,
+    approved: null,
+    votedBy: [],
+    dayPoints: 0,
+    pointTimestamp: new Date(),
+    approvedBy: [],
+    rejectedBy: [],
+    reportedBy: [],
+    bookmarkedBy: [],
+    enableVoting: false,
+    messageRoomId: null,
+    urlId: null,
+    featuredSlot: null,
+    deleted: false,
+    created: new Date(),
+    ...overrides,
+  };
+  (ctx.prisma.post.findUniqueOrThrow as jest.Mock).mockResolvedValue(record);
+  (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([
+    { id: userId, username: 'alice', name: 'Alice' },
+  ]);
 }
 
 describe('postsResolver', () => {
@@ -482,6 +535,274 @@ describe('postsResolver', () => {
         reportedBy: [validUserId],
         reported: 1,
       });
+    });
+  });
+
+  describe('Mutation.deletePost', () => {
+    it('soft-deletes when the owner requests it', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
+        id: postId,
+        userId,
+        deleted: false,
+      });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+
+      const result = await postsResolver.Mutation.deletePost(null, { postId }, ctx);
+
+      expect(ctx.prisma.post.update).toHaveBeenCalledWith({
+        where: { id: postId },
+        data: { deleted: true },
+        select: { id: true },
+      });
+      expect(result).toEqual({ _id: postId });
+    });
+
+    it('forbids deleting another users post', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
+        id: postId,
+        userId: '60d5ec49ad414d7a8d546499',
+        deleted: false,
+      });
+
+      await expect(postsResolver.Mutation.deletePost(null, { postId }, ctx)).rejects.toThrow(
+        /Not authorized to delete/
+      );
+    });
+  });
+
+  describe('Mutation.toggleVoting', () => {
+    it('flips enableVoting for the owner', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
+        userId,
+        deleted: false,
+        enableVoting: false,
+      });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+      stubReturnedPost(ctx, { enableVoting: true });
+
+      const result = await postsResolver.Mutation.toggleVoting(null, { postId }, ctx);
+
+      expect(ctx.prisma.post.update).toHaveBeenCalledWith({
+        where: { id: postId },
+        data: { enableVoting: true },
+        select: { id: true },
+      });
+      expect(result.enable_voting).toBe(true);
+    });
+
+    it('forbids non-owners from toggling voting', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
+        userId: '60d5ec49ad414d7a8d546499',
+        deleted: false,
+        enableVoting: false,
+      });
+
+      await expect(postsResolver.Mutation.toggleVoting(null, { postId }, ctx)).rejects.toThrow(
+        /Not authorized to toggle voting/
+      );
+    });
+  });
+
+  describe('Mutation.updatePostBookmark', () => {
+    it('adds a bookmark and updates trending', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock)
+        .mockResolvedValueOnce({
+          deleted: false,
+          bookmarkedBy: [],
+          dayPoints: 0,
+        })
+        .mockResolvedValueOnce({
+          pointTimestamp: new Date(),
+          dayPoints: 0,
+        });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+      stubReturnedPost(ctx, { bookmarkedBy: [userId], dayPoints: 1 });
+
+      const result = await postsResolver.Mutation.updatePostBookmark(
+        null,
+        { postId, userId },
+        ctx
+      );
+
+      expect(ctx.prisma.post.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { bookmarkedBy: [userId] },
+        })
+      );
+      expect(result.bookmarkedBy).toEqual([userId]);
+    });
+
+    it('removes a bookmark and decrements dayPoints', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
+        deleted: false,
+        bookmarkedBy: [userId],
+        dayPoints: 2,
+      });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+      stubReturnedPost(ctx, { bookmarkedBy: [], dayPoints: 1 });
+
+      await postsResolver.Mutation.updatePostBookmark(null, { postId, userId }, ctx);
+
+      expect(ctx.prisma.post.update).toHaveBeenCalledWith({
+        where: { id: postId },
+        data: { bookmarkedBy: [], dayPoints: 1 },
+        select: { id: true },
+      });
+    });
+  });
+
+  describe('Mutation.approvePost / rejectPost', () => {
+    it('approves and clears the user from rejectedBy', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
+        deleted: false,
+        approvedBy: [],
+        rejectedBy: [userId],
+      });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+      stubReturnedPost(ctx, { approvedBy: [userId], rejectedBy: [] });
+
+      const result = await postsResolver.Mutation.approvePost(
+        null,
+        { postId, userId, remove: false },
+        ctx
+      );
+
+      expect(ctx.prisma.post.update).toHaveBeenCalledWith({
+        where: { id: postId },
+        data: { approvedBy: [userId], rejectedBy: [] },
+        select: { id: true },
+      });
+      expect(result.approvedBy).toEqual([userId]);
+    });
+
+    it('rejects and clears the user from approvedBy', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
+        deleted: false,
+        approvedBy: [userId],
+        rejectedBy: [],
+      });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+      stubReturnedPost(ctx, { approvedBy: [], rejectedBy: [userId] });
+
+      await postsResolver.Mutation.rejectPost(null, { postId, userId, remove: false }, ctx);
+
+      expect(ctx.prisma.post.update).toHaveBeenCalledWith({
+        where: { id: postId },
+        data: { rejectedBy: [userId], approvedBy: [] },
+        select: { id: true },
+      });
+    });
+  });
+
+  describe('Mutation.updateFeaturedSlot', () => {
+    it('requires admin', async () => {
+      const ctx = mockContext({ _id: userId, admin: false } as NonNullable<GraphQLContext['user']>);
+
+      await expect(
+        postsResolver.Mutation.updateFeaturedSlot(null, { postId, featuredSlot: 1 }, ctx)
+      ).rejects.toThrow(/Admin access required/);
+    });
+
+    it('clears the slot on other posts then assigns it', async () => {
+      const ctx = mockContext({ _id: userId, admin: true } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({ deleted: false });
+      (ctx.prisma.post.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+      stubReturnedPost(ctx, { featuredSlot: 3 });
+
+      const result = await postsResolver.Mutation.updateFeaturedSlot(
+        null,
+        { postId, featuredSlot: 3 },
+        ctx
+      );
+
+      expect(ctx.prisma.post.updateMany).toHaveBeenCalledWith({
+        where: { featuredSlot: 3 },
+        data: { featuredSlot: null },
+      });
+      expect(result.featuredSlot).toBe(3);
+    });
+  });
+
+  describe('Mutation.addPost', () => {
+    it('creates a post with URL, room, and activity', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: tagId,
+        creatorId: userId,
+        title: 'General',
+        url: '/general',
+        adminIds: [],
+        allowedUserIds: [],
+        privacy: 'public',
+        created: new Date(),
+      });
+      (ctx.prisma.post.create as jest.Mock).mockResolvedValue({ id: postId });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+      stubReturnedPost(ctx, { url: `/post/general/hello-world/${postId}` });
+
+      const result = await postsResolver.Mutation.addPost(
+        null,
+        {
+          post: {
+            userId,
+            groupId: tagId,
+            title: 'Hello World',
+            text: 'Body text',
+          },
+        },
+        ctx
+      );
+
+      expect(ctx.prisma.post.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userId,
+            tagId,
+            title: 'Hello World',
+            text: 'Body text',
+          }),
+        })
+      );
+      expect(ctx.prisma.messageRoom.create).toHaveBeenCalled();
+      expect(ctx.prisma.activity.create).toHaveBeenCalled();
+      expect(ctx.prisma.post.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            url: `/post/general/hello-world/${postId}`,
+            messageRoomId: 'room-1',
+          }),
+        })
+      );
+      expect(result._id).toBe(postId);
+      expect(result.url).toBe(`/post/general/hello-world/${postId}`);
+    });
+
+    it('rejects creating a post as another user', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+
+      await expect(
+        postsResolver.Mutation.addPost(
+          null,
+          {
+            post: {
+              userId: '60d5ec49ad414d7a8d546499',
+              groupId: tagId,
+              title: 'Hello',
+              text: 'Body',
+            },
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Not authorized to create a post as another user/);
     });
   });
 });

@@ -1,11 +1,65 @@
 import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
+import { ActivityEventTypeValues } from '~/data/utils/constants';
 import { POST_RECORD_SELECT } from '~/data/utils/postPrismaMapper';
+import { TAG_RECORD_SELECT } from '~/data/utils/tagPrismaMapper';
 import { parseSearchQuery } from '../utils/parseSearchQuery';
 import { escapeRegExp, isObjectId } from './utils/common';
 import type { GraphQLContext, PostDetail, PostQueryArgs } from '~/types/graphql';
-import { attachPostDetail, attachPostRelations } from './utils/posts';
+import { attachPostDetail, attachPostRelations, updateTrending } from './utils/posts';
+import { addUserToPostRoom } from './utils/messages';
+import { logActivity } from './utils/activities';
+import { logger } from '~/data/utils/logger';
 import type * as Common from '~/types/common';
+
+function requireUserId(context: GraphQLContext): string {
+  if (!context.user?._id) {
+    throw new GraphQLError('Authentication required', {
+      extensions: { code: 'UNAUTHENTICATED' },
+    });
+  }
+  return context.user._id.toString();
+}
+
+function requireAdmin(context: GraphQLContext): void {
+  if (context.user?.admin !== true) {
+    throw new GraphQLError('Admin access required', {
+      extensions: { code: 'FORBIDDEN' },
+    });
+  }
+}
+
+function assertActorMatches(actorId: string, userId: string, action: string): void {
+  if (actorId !== userId) {
+    throw new GraphQLError(`Not authorized to ${action} on behalf of another user`, {
+      extensions: { code: 'FORBIDDEN' },
+    });
+  }
+}
+
+function toggleUserOnList(list: string[], userId: string, remove?: boolean | null): string[] {
+  if (remove) {
+    return list.filter((id) => id !== userId);
+  }
+  return list.includes(userId) ? list : [...list, userId];
+}
+
+function buildPostUrl(tagUrl: string | null | undefined, title: string, postId: string): string {
+  const slug = title.replace(/ /g, '-').toLowerCase();
+  return `/post${tagUrl ?? ''}/${slug}/${postId}`;
+}
+
+async function returnPostEntity(
+  prisma: GraphQLContext['prisma'],
+  postId: string
+): Promise<Common.Post> {
+  const updatedPost = await prisma.post.findUniqueOrThrow({
+    where: { id: postId },
+    select: POST_RECORD_SELECT,
+  });
+  const [entity] = await attachPostRelations(prisma, [updatedPost]);
+  return entity;
+}
 
 /**
  * Build a Prisma where/orderBy from PostQueryArgs.
@@ -244,6 +298,353 @@ export const postsResolver = {
     },
   },
   Mutation: {
+    addPost: async (
+      _parent: unknown,
+      args: { post: Common.PostInput },
+      context: GraphQLContext
+    ): Promise<Common.Post> => {
+      const actorId = requireUserId(context);
+      const { post } = args;
+
+      if (!post?.title?.trim() || !post?.text?.trim()) {
+        throw new GraphQLError('Post title and text are required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const tagId = post.tagId ?? post.groupId;
+      if (!tagId || !isObjectId(tagId)) {
+        throw new GraphQLError('Valid groupId or tagId is required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      // Prefer the session user; reject spoofed authors (hardening vs legacy).
+      if (post.userId && isObjectId(post.userId) && post.userId !== actorId) {
+        throw new GraphQLError('Not authorized to create a post as another user', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      const tag = await context.prisma.tag.findUnique({
+        where: { id: tagId },
+        select: TAG_RECORD_SELECT,
+      });
+      if (!tag) {
+        throw new GraphQLError('Tag not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const title = post.title.trim();
+      const text = post.text.trim();
+      const created = await context.prisma.post.create({
+        data: {
+          userId: actorId,
+          tagId,
+          title,
+          text,
+          url: '',
+          citationUrl: post.citationUrl?.trim() || undefined,
+          attribution: post.attribution?.trim() || undefined,
+          created: new Date(),
+          pointTimestamp: new Date(),
+        },
+        select: { id: true },
+      });
+
+      const url = buildPostUrl(tag.url, title, created.id);
+
+      let messageRoomId: string | undefined;
+      try {
+        const room = await addUserToPostRoom(context.prisma, created.id, actorId);
+        messageRoomId = room.id;
+      } catch (err) {
+        logger.warn('addPost: failed to create post message room', {
+          postId: created.id,
+          userId: actorId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      await context.prisma.post.update({
+        where: { id: created.id },
+        data: {
+          url,
+          ...(messageRoomId ? { messageRoomId } : {}),
+        },
+        select: { id: true },
+      });
+
+      await logActivity(
+        context.prisma,
+        ActivityEventTypeValues.POSTED,
+        { userId: actorId, postId: created.id },
+        title
+      );
+
+      return returnPostEntity(context.prisma, created.id);
+    },
+
+    deletePost: async (
+      _parent: unknown,
+      args: { postId: string },
+      context: GraphQLContext
+    ): Promise<{ _id: string }> => {
+      const userId = requireUserId(context);
+      const isAdmin = context.user?.admin === true;
+
+      if (!isObjectId(args.postId)) {
+        return { _id: args.postId };
+      }
+
+      const existing = await context.prisma.post.findUnique({
+        where: { id: args.postId },
+        select: { id: true, userId: true, deleted: true },
+      });
+      if (!existing) {
+        return { _id: args.postId };
+      }
+
+      if (existing.userId !== userId && !isAdmin) {
+        throw new GraphQLError('Not authorized to delete this post', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      if (!existing.deleted) {
+        await context.prisma.post.update({
+          where: { id: args.postId },
+          data: { deleted: true },
+          select: { id: true },
+        });
+      }
+
+      return { _id: args.postId };
+    },
+
+    approvePost: async (
+      _parent: unknown,
+      args: { postId: string; userId: string; remove?: boolean | null },
+      context: GraphQLContext
+    ): Promise<Common.Post> => {
+      const actorId = requireUserId(context);
+
+      if (!args.postId || !args.userId) {
+        throw new GraphQLError('Post ID and User ID are required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      if (!isObjectId(args.postId) || !isObjectId(args.userId)) {
+        throw new GraphQLError('Invalid ID format', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      assertActorMatches(actorId, args.userId, 'approve');
+
+      const post = await context.prisma.post.findUnique({
+        where: { id: args.postId },
+        select: { deleted: true, approvedBy: true, rejectedBy: true },
+      });
+      if (!post || post.deleted) {
+        throw new GraphQLError('Post not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      await context.prisma.post.update({
+        where: { id: args.postId },
+        data: {
+          approvedBy: toggleUserOnList(post.approvedBy ?? [], args.userId, args.remove),
+          rejectedBy: (post.rejectedBy ?? []).filter((id) => id !== args.userId),
+        },
+        select: { id: true },
+      });
+
+      return returnPostEntity(context.prisma, args.postId);
+    },
+
+    rejectPost: async (
+      _parent: unknown,
+      args: { postId: string; userId: string; remove?: boolean | null },
+      context: GraphQLContext
+    ): Promise<Common.Post> => {
+      const actorId = requireUserId(context);
+
+      if (!args.postId || !args.userId) {
+        throw new GraphQLError('Post ID and User ID are required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      if (!isObjectId(args.postId) || !isObjectId(args.userId)) {
+        throw new GraphQLError('Invalid ID format', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      assertActorMatches(actorId, args.userId, 'reject');
+
+      const post = await context.prisma.post.findUnique({
+        where: { id: args.postId },
+        select: { deleted: true, approvedBy: true, rejectedBy: true },
+      });
+      if (!post || post.deleted) {
+        throw new GraphQLError('Post not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      await context.prisma.post.update({
+        where: { id: args.postId },
+        data: {
+          rejectedBy: toggleUserOnList(post.rejectedBy ?? [], args.userId, args.remove),
+          approvedBy: (post.approvedBy ?? []).filter((id) => id !== args.userId),
+        },
+        select: { id: true },
+      });
+
+      return returnPostEntity(context.prisma, args.postId);
+    },
+
+    updatePostBookmark: async (
+      _parent: unknown,
+      args: { postId: string; userId: string },
+      context: GraphQLContext
+    ): Promise<Common.Post> => {
+      const actorId = requireUserId(context);
+
+      if (!args.postId || !args.userId) {
+        throw new GraphQLError('Post ID and User ID are required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      if (!isObjectId(args.postId) || !isObjectId(args.userId)) {
+        throw new GraphQLError('Invalid ID format', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      assertActorMatches(actorId, args.userId, 'bookmark');
+
+      const post = await context.prisma.post.findUnique({
+        where: { id: args.postId },
+        select: { deleted: true, bookmarkedBy: true, dayPoints: true },
+      });
+      if (!post || post.deleted) {
+        throw new GraphQLError('Post not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const bookmarkedBy = post.bookmarkedBy ?? [];
+      const alreadyBookmarked = bookmarkedBy.includes(args.userId);
+
+      if (alreadyBookmarked) {
+        await context.prisma.post.update({
+          where: { id: args.postId },
+          data: {
+            bookmarkedBy: bookmarkedBy.filter((id) => id !== args.userId),
+            dayPoints: Math.max((post.dayPoints ?? 0) - 1, 0),
+          },
+          select: { id: true },
+        });
+      } else {
+        await context.prisma.post.update({
+          where: { id: args.postId },
+          data: { bookmarkedBy: [...bookmarkedBy, args.userId] },
+          select: { id: true },
+        });
+        await updateTrending(context.prisma, args.postId);
+      }
+
+      return returnPostEntity(context.prisma, args.postId);
+    },
+
+    updateFeaturedSlot: async (
+      _parent: unknown,
+      args: { postId: string; featuredSlot?: number | null },
+      context: GraphQLContext
+    ): Promise<Common.Post> => {
+      requireUserId(context);
+      requireAdmin(context);
+
+      if (!args.postId || !isObjectId(args.postId)) {
+        throw new GraphQLError('Invalid postId', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const slot = args.featuredSlot ?? null;
+      if (slot !== null && (slot < 1 || slot > 12 || !Number.isInteger(slot))) {
+        throw new GraphQLError('featuredSlot must be between 1 and 12', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const post = await context.prisma.post.findUnique({
+        where: { id: args.postId },
+        select: { deleted: true },
+      });
+      if (!post || post.deleted) {
+        throw new GraphQLError('Post not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      if (slot !== null) {
+        // Application-enforced exclusivity (Prisma has no unique on featuredSlot).
+        await context.prisma.post.updateMany({
+          where: { featuredSlot: slot },
+          data: { featuredSlot: null },
+        });
+      }
+
+      await context.prisma.post.update({
+        where: { id: args.postId },
+        data: { featuredSlot: slot },
+        select: { id: true },
+      });
+
+      return returnPostEntity(context.prisma, args.postId);
+    },
+
+    toggleVoting: async (
+      _parent: unknown,
+      args: { postId: string },
+      context: GraphQLContext
+    ): Promise<Common.Post> => {
+      const userId = requireUserId(context);
+      const isAdmin = context.user?.admin === true;
+
+      if (!args.postId || !isObjectId(args.postId)) {
+        throw new GraphQLError('Invalid postId', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const post = await context.prisma.post.findUnique({
+        where: { id: args.postId },
+        select: { userId: true, deleted: true, enableVoting: true },
+      });
+      if (!post || post.deleted) {
+        throw new GraphQLError('Post not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      if (post.userId !== userId && !isAdmin) {
+        throw new GraphQLError('Not authorized to toggle voting on this post', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      await context.prisma.post.update({
+        where: { id: args.postId },
+        data: { enableVoting: !post.enableVoting },
+        select: { id: true },
+      });
+
+      return returnPostEntity(context.prisma, args.postId);
+    },
+
     reportPost: async (
       _parent: unknown,
       args: { postId: string; userId: string },
@@ -314,12 +715,7 @@ export const postsResolver = {
         });
       }
 
-      const updatedPost = await context.prisma.post.findUniqueOrThrow({
-        where: { id: args.postId },
-        select: POST_RECORD_SELECT,
-      });
-      const [entity] = await attachPostRelations(context.prisma, [updatedPost]);
-      return entity;
+      return returnPostEntity(context.prisma, args.postId);
     },
   },
 };
