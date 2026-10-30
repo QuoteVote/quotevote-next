@@ -17,6 +17,7 @@ import type {
 } from '@/types/store';
 import type { StagedChatRoom } from '@/types/chat';
 import type { LinkedPassage } from '@/types/discussionSplit';
+import { DEFAULT_PRESENCE_STATUS } from '@/lib/constants/presence';
 
 // Initial state values
 const initialUserState: UserState = {
@@ -59,8 +60,11 @@ const initialChatState: ChatState = {
   buddyList: [],
   presenceMap: {},
   typingUsers: {},
-  userStatus: 'online',
+  // Invisible until the user picks something or the server tells us what they
+  // picked earlier (#468). Never derived from login, activity or presence.
+  userStatus: DEFAULT_PRESENCE_STATUS,
   userStatusMessage: '',
+  userStatusLoaded: false,
   pendingBuddyRequests: [],
   blockedUsers: [],
   statusEditorOpen: false,
@@ -114,6 +118,7 @@ interface AppStore extends AppState {
   updateTyping: (messageRoomId: string, userId: string, isTyping: boolean) => void;
   clearTyping: (messageRoomId: string) => void;
   setUserStatus: (status: string, statusMessage?: string) => void;
+  hydrateUserStatus: (status: string, statusMessage?: string) => void;
   addPendingRequest: (request: unknown) => void;
   removePendingRequest: (rosterId: string) => void;
   addBlockedUser: (userId: string) => void;
@@ -172,6 +177,13 @@ export const useAppStore = create<AppStore>()(
         loading: false,
       },
       ui: { ...state.ui, pendingQuote: null, notificationsOpen: false },
+      // The next account must not inherit this one's status (#468).
+      chat: {
+        ...state.chat,
+        userStatus: DEFAULT_PRESENCE_STATUS,
+        userStatusMessage: '',
+        userStatusLoaded: false,
+      },
     })),
 
   updateAvatar: (avatar) =>
@@ -357,14 +369,32 @@ export const useAppStore = create<AppStore>()(
       },
     })),
 
+  // The user chose this. It always wins over anything read from the server.
   setUserStatus: (status, statusMessage = '') =>
     set((state) => ({
       chat: {
         ...state.chat,
         userStatus: status,
         userStatusMessage: statusMessage,
+        userStatusLoaded: true,
       },
     })),
+
+  // The server told us what the user picked earlier. Applied once, and never
+  // over a status the user has already chosen in this session (#468).
+  hydrateUserStatus: (status, statusMessage = '') =>
+    set((state) =>
+      state.chat.userStatusLoaded
+        ? state
+        : {
+            chat: {
+              ...state.chat,
+              userStatus: status,
+              userStatusMessage: statusMessage,
+              userStatusLoaded: true,
+            },
+          }
+    ),
 
   addPendingRequest: (request) =>
     set((state) => ({

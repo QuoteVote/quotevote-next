@@ -133,15 +133,18 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
 
         // Presence key might be buddy ID
         const presence = presenceMap[buddyUser._id] || entry.presence;
-        const status = presence?.status || 'offline';
+        const rawStatus = presence?.status || 'offline';
 
-        if (status === 'invisible') return;
+        // Invisible is the default status (#468), so it must not drop the buddy
+        // from the list. They show as Offline, with no status message.
+        const isInvisible = rawStatus === 'invisible';
+        const status = isInvisible ? 'offline' : rawStatus;
 
         const buddyWithPresence = {
             user: buddyUser,
-            presence: presence || { status: 'offline' },
+            presence: isInvisible ? { status: 'offline' } : presence || { status: 'offline' },
             Text: buddyUser.name || buddyUser.username || 'Unknown',
-            statusMessage: presence?.statusMessage || '',
+            statusMessage: isInvisible ? '' : presence?.statusMessage || '',
             room: null,
         };
 

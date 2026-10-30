@@ -109,6 +109,20 @@ export interface PresenceSubscriptionResult {
   presence: PresenceData
 }
 
+/**
+ * Result of the `getPresence` query (`GET_USER_PRESENCE`)
+ */
+export interface UserPresenceQueryData {
+  getPresence?: {
+    userId: string
+    /** Raw API status: 'online' | 'away' | 'dnd' | 'invisible' | 'offline' */
+    status: string
+    statusMessage?: string | null
+    /** ISO date string, null when the user has no presence record yet */
+    lastSeen?: string | null
+  } | null
+}
+
 // ============================================================================
 // Responsive Types
 // ============================================================================

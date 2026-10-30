@@ -16,7 +16,12 @@ import { useAppStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { GET_CHAT_ROOMS } from '@/graphql/queries';
 import { cn } from '@/lib/utils';
-import { PRESENCE_DOT_CLASS, PRESENCE_LABEL, toPresenceStatus } from '@/lib/constants/presence';
+import {
+  DEFAULT_PRESENCE_STATUS,
+  OWN_PRESENCE_LABEL,
+  PRESENCE_DOT_CLASS,
+  toPresenceStatus,
+} from '@/lib/constants/presence';
 import type { ChatState } from '@/types/store';
 
 type ChatTabValue = 'chats' | 'groups' | 'buddies';
@@ -46,13 +51,14 @@ interface BuddyListItem {
 }
 
 function UserStatusDisplay() {
-  const userStatus = useAppStore((state) => state.chat.userStatus || 'online');
+  const userStatus = useAppStore((state) => state.chat.userStatus || DEFAULT_PRESENCE_STATUS);
   const userStatusMessage = useAppStore(
     (state) => state.chat.userStatusMessage || ''
   );
 
   const status = toPresenceStatus(userStatus);
-  const label = userStatusMessage || PRESENCE_LABEL[status];
+  // Invisible has no public message, so none is shown even if one is stored (#468).
+  const label = (status !== 'invisible' && userStatusMessage) || OWN_PRESENCE_LABEL[status];
 
   return (
     <div className="inline-flex max-w-xs items-center gap-2 rounded-lg border border-white/30 bg-black/15 px-2 py-1 text-xs text-white">

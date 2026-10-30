@@ -197,6 +197,36 @@ export interface StagedChatRoom {
 export type PresenceStatus = 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
 
 /**
+ * A status a user can choose for themselves. `offline` is never chosen; it only
+ * describes someone who has no declared status. The wire value `online` is
+ * shown to people as "Available" (#468).
+ */
+export type DeclaredPresenceStatus = Exclude<PresenceStatus, 'offline'>;
+
+/**
+ * The statuses other people can see. `invisible` and `offline` show nothing (#468).
+ */
+export type PublicPresenceStatus = Extract<PresenceStatus, 'online' | 'away' | 'dnd'>;
+
+/**
+ * One row of the status picker
+ */
+export interface PresenceStatusOption {
+  value: DeclaredPresenceStatus;
+  label: string;
+  icon: string;
+}
+
+/**
+ * What the public may see of someone's declared availability (#468)
+ */
+export interface PublicPresence {
+  status: PublicPresenceStatus;
+  /** Trimmed, `''` when none was set */
+  statusMessage: string;
+}
+
+/**
  * Presence icon props
  */
 export interface PresenceIconProps {

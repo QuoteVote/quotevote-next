@@ -1,8 +1,17 @@
-import type { PresenceStatus } from "@/types/chat";
+import type {
+  DeclaredPresenceStatus,
+  PresenceStatus,
+  PresenceStatusOption,
+  PublicPresenceStatus,
+} from "@/types/chat";
 
-/** What each presence status is called in the Messages panel. */
+/**
+ * What each presence status is called when someone else looks at it.
+ * `online` is the stored value for "Available" (#468): the label changed, the
+ * value did not, so existing records and the API keep working.
+ */
 export const PRESENCE_LABEL: Record<PresenceStatus, string> = {
-  online: "Online",
+  online: "Available",
   away: "Away",
   dnd: "Do Not Disturb",
   offline: "Offline",
@@ -10,8 +19,34 @@ export const PRESENCE_LABEL: Record<PresenceStatus, string> = {
 };
 
 /**
+ * What each status is called to the person who chose it. Invisible looks
+ * offline to everyone else, but you should still see that you picked it (#468).
+ */
+export const OWN_PRESENCE_LABEL: Record<PresenceStatus, string> = {
+  ...PRESENCE_LABEL,
+  invisible: "Invisible",
+};
+
+/** The status everyone starts with until they pick one (#468). */
+export const DEFAULT_PRESENCE_STATUS: DeclaredPresenceStatus = "invisible";
+
+/** Longest status message the API accepts. */
+export const STATUS_MESSAGE_MAX_LENGTH = 200;
+
+/** The status picker, in display order (#468). */
+export const PRESENCE_STATUS_OPTIONS: PresenceStatusOption[] = [
+  { value: "online", label: "Available", icon: "🟢" },
+  { value: "away", label: "Away", icon: "🟡" },
+  { value: "dnd", label: "Do Not Disturb", icon: "🔴" },
+  { value: "invisible", label: "Invisible", icon: "⚫" },
+];
+
+/** Statuses other people can see. Invisible (and offline) show nothing (#468). */
+export const PUBLIC_PRESENCE_STATUSES: readonly PublicPresenceStatus[] = ["online", "away", "dnd"];
+
+/**
  * Presence dot fill and edge (#531). Away is a clear yellow, not the amber that
- * read as a second orange-green next to Online; each dot has a darker edge so
+ * read as a second orange-green next to Available; each dot has a darker edge so
  * it stays visible on white and on the green header.
  */
 export const PRESENCE_DOT_CLASS: Record<PresenceStatus, string> = {

@@ -75,6 +75,11 @@ export interface ChatState {
   typingUsers: Record<string, string[]>;
   userStatus: string;
   userStatusMessage: string;
+  /**
+   * True once `userStatus` is the user's real declared status: read from the
+   * server or chosen by the user. Until then it is only the default (#468).
+   */
+  userStatusLoaded: boolean;
   pendingBuddyRequests: unknown[];
   blockedUsers: string[];
   statusEditorOpen: boolean;

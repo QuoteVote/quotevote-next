@@ -34,6 +34,8 @@ import { cn } from '@/lib/utils';
 import { FOCUS_RING_CLASS } from '@/lib/constants/formControls';
 import useGuestGuard from '@/hooks/useGuestGuard';
 import { useProfileBackground } from '@/hooks/useProfileBackground';
+import { useProfilePresence } from '@/hooks/useProfilePresence';
+import { PRESENCE_DOT_CLASS, PRESENCE_LABEL } from '@/lib/constants/presence';
 import {
   getProfileBackgroundStyle,
   DEFAULT_PROFILE_BG_COLOR,
@@ -44,20 +46,6 @@ interface ProfileHeaderProps {
   profileUser: ProfileUser;
 }
 
-function getStatusLabel(status: string): string {
-  if (status === 'dnd') return 'Do Not Disturb';
-  if (status === 'invisible') return 'Invisible';
-  if (!status) return 'Online';
-  return status.charAt(0).toUpperCase() + status.slice(1);
-}
-
-function getStatusDotClass(status: string): string {
-  if (status === 'online') return 'bg-[#52b274]';
-  if (status === 'away') return 'bg-amber-400';
-  if (status === 'dnd') return 'bg-red-500';
-  return 'bg-zinc-400';
-}
-
 export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const router = useRouter();
   const loggedInUser = useAppStore((state) => state.user.data);
@@ -65,8 +53,6 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const loggedInUsername = loggedInUser?.username;
   const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
   const setChatOpen = useAppStore((state) => state.setChatOpen);
-  const userStatus = useAppStore((state) => state.chat.userStatus || 'online');
-  const userStatusMessage = useAppStore((state) => state.chat.userStatusMessage || '');
   const { color: profileBgColor, pattern: profileBgPattern } = useProfileBackground();
   const loggedInUserIdString = typeof loggedInUserId === 'string' ? loggedInUserId : String(loggedInUserId || '');
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -86,6 +72,10 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const sameUser =
     Boolean(loggedInUserIdString && _id && String(_id) === loggedInUserIdString) ||
     Boolean(loggedInUsername && username && loggedInUsername.toLowerCase() === username.toLowerCase());
+
+  // What the public may see of this person's availability (#468): `null` for
+  // Invisible, Offline or not loaded, so no dot and no message in that case.
+  const presence = useProfilePresence(_id, sameUser);
 
   const followersArray = Array.isArray(_followersId) ? _followersId : typeof _followersId === 'string' ? [_followersId] : [];
   const isFollowing = followersArray.includes(loggedInUserIdString);
@@ -198,8 +188,11 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   return (
     <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm">
       {/* Cover banner — customizable color + pattern on your own profile;
-          other users default to the brand green zigzag. */}
-      <div className="h-28 relative overflow-hidden z-0">
+          other users default to the brand green zigzag. The status message
+          sits in the banner when there is one (#468). The banner is at least
+          as tall as before and only grows for a long message; the bottom
+          padding keeps the text clear of the avatar that overlaps it. */}
+      <div className="relative z-0 flex min-h-28 items-start justify-center overflow-hidden px-4 pb-12 pt-3">
         <div
           className="absolute inset-0"
           style={
@@ -212,6 +205,15 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           }
           data-testid="profile-cover"
         />
+        {presence?.statusMessage ? (
+          <p
+            className="relative min-w-0 max-w-xl break-words rounded-lg border border-border/60 bg-card/90 px-4 py-2 text-center text-sm text-foreground shadow-sm backdrop-blur-sm"
+            data-testid="profile-status-message"
+          >
+            <span className="sr-only">Status message: </span>
+            {presence.statusMessage}
+          </p>
+        ) : null}
       </div>
 
       {/* Profile info section */}
@@ -219,7 +221,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
         {/* Avatar overlapping banner */}
         {/* The actions wrap under the avatar on phones too narrow to fit both. */}
         <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-3 -mt-10 mb-3">
-          <div className="ring-4 ring-card rounded-full shrink-0">
+          <div className="relative ring-4 ring-card rounded-full shrink-0">
             <DisplayAvatar
               avatar={avatar as string | Record<string, unknown> | undefined}
               /* Seed the default avatar with the same value the chat/message
@@ -228,6 +230,21 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
               username={name || username}
               size={96}
             />
+            {/* Availability dot on the lower-right edge of the avatar (#468).
+                Drawn only for Available, Away and Do Not Disturb. */}
+            {presence ? (
+              <span
+                role="img"
+                aria-label={`Status: ${PRESENCE_LABEL[presence.status]}`}
+                title={PRESENCE_LABEL[presence.status]}
+                data-testid="profile-status-indicator"
+                data-status={presence.status}
+                className={cn(
+                  'absolute bottom-1 right-1 h-5 w-5 rounded-full ring-2 ring-card',
+                  PRESENCE_DOT_CLASS[presence.status]
+                )}
+              />
+            ) : null}
           </div>
 
           {/* Action buttons */}
@@ -288,20 +305,6 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           </div>
           <p className="text-muted-foreground text-sm">@{username}</p>
           <ProfileBio bio={profileUser.bio} />
-          {sameUser && (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs">
-              <span
-                className={cn('h-2 w-2 rounded-full', getStatusDotClass(userStatus))}
-                aria-hidden="true"
-              />
-              <span
-                className="text-foreground/80 truncate max-w-[260px]"
-                title={userStatusMessage || getStatusLabel(userStatus)}
-              >
-                {userStatusMessage || getStatusLabel(userStatus)}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Stats row */}

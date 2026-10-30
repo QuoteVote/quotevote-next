@@ -569,6 +569,30 @@ export const GET_USER_BIO = gql`
 `
 
 /**
+ * A user's declared availability (status + status message) (#468).
+ *
+ * Separate from `GET_USER` for the same reason as `GET_USER_BIO`: the hosted
+ * `User` type has no `presence` field, and a failure here must never blank the
+ * profile. Callers use `errorPolicy: 'all'` and treat a missing result as "no
+ * public status".
+ *
+ * Only `userId`, `status`, `statusMessage` and `lastSeen` are selected on
+ * purpose. The API returns a bare object for someone with no presence record
+ * yet, and asking for `_id` / `lastHeartbeat` would turn that into a non-null
+ * field error.
+ */
+export const GET_USER_PRESENCE = gql`
+  query getUserPresence($userId: String!) {
+    getPresence(userId: $userId) {
+      userId
+      status
+      statusMessage
+      lastSeen
+    }
+  }
+`
+
+/**
  * Get user follow info (followers or following)
  */
 // Backend schema: `getUserFollowInfo(username, filter): JSON` — it returns a
