@@ -436,8 +436,8 @@ describe('BuddyListWithPresence', () => {
       if (query === GET_BUDDY_LIST) {
         return { data: { getBuddyList: mockBuddyListEntries }, loading: false, refetch: jest.fn() }
       }
-      if (query === GET_ROSTER) {
-        return { data: { getRoster: mockPendingRosterEntries }, loading: false, refetch: jest.fn() }
+      if (query === GET_BUDDY_REQUESTS) {
+        return { data: { buddyRequests: mockPendingRequests }, loading: false, refetch: jest.fn() }
       }
       return { data: undefined, loading: false, refetch: jest.fn() }
     })
