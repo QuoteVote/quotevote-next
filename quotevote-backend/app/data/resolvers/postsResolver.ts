@@ -9,6 +9,7 @@ import type { GraphQLContext, PostDetail, PostQueryArgs } from '~/types/graphql'
 import { attachPostDetail, attachPostRelations, updateTrending } from './utils/posts';
 import { addUserToPostRoom } from './utils/messages';
 import { logActivity } from './utils/activities';
+import { validateAddPostContent } from './utils/postInput';
 import { logger } from '~/data/utils/logger';
 import type * as Common from '~/types/common';
 
@@ -326,6 +327,14 @@ export const postsResolver = {
         });
       }
 
+      // Legacy addPost checks: body links, citation URL, attribution length.
+      const title = post.title.trim();
+      const { text, citationUrl, attribution } = validateAddPostContent({
+        text: post.text,
+        citationUrl: post.citationUrl,
+        attribution: post.attribution,
+      });
+
       const tag = await context.prisma.tag.findUnique({
         where: { id: tagId },
         select: TAG_RECORD_SELECT,
@@ -336,8 +345,6 @@ export const postsResolver = {
         });
       }
 
-      const title = post.title.trim();
-      const text = post.text.trim();
       const created = await context.prisma.post.create({
         data: {
           userId: actorId,
@@ -345,8 +352,8 @@ export const postsResolver = {
           title,
           text,
           url: '',
-          citationUrl: post.citationUrl?.trim() || undefined,
-          attribution: post.attribution?.trim() || undefined,
+          citationUrl,
+          attribution,
           created: new Date(),
           pointTimestamp: new Date(),
         },

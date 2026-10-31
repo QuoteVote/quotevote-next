@@ -804,5 +804,106 @@ describe('postsResolver', () => {
         )
       ).rejects.toThrow(/Not authorized to create a post as another user/);
     });
+
+    it('rejects javascript: and data: citations before looking up the tag', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+
+      await expect(
+        postsResolver.Mutation.addPost(
+          null,
+          {
+            post: {
+              userId,
+              groupId: tagId,
+              title: 'Hello',
+              text: 'Body',
+              citationUrl: 'javascript:alert(document.cookie)',
+            },
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Invalid citation URL/);
+
+      await expect(
+        postsResolver.Mutation.addPost(
+          null,
+          {
+            post: {
+              userId,
+              groupId: tagId,
+              title: 'Hello',
+              text: 'Body',
+              citationUrl: 'data:text/html,hi',
+            },
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Invalid citation URL/);
+
+      expect(ctx.prisma.tag.findUnique).not.toHaveBeenCalled();
+      expect(ctx.prisma.post.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects emoji in the citation URL', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+
+      await expect(
+        postsResolver.Mutation.addPost(
+          null,
+          {
+            post: {
+              userId,
+              groupId: tagId,
+              title: 'Hello',
+              text: 'Body',
+              citationUrl: 'https://example.com/🔥',
+            },
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Invalid citation URL/);
+      expect(ctx.prisma.post.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects a link in the body', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+
+      await expect(
+        postsResolver.Mutation.addPost(
+          null,
+          {
+            post: {
+              userId,
+              groupId: tagId,
+              title: 'Hello',
+              text: 'See https://evil.example',
+            },
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Post body cannot contain links/);
+      expect(ctx.prisma.post.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects attribution longer than 120 characters', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+
+      await expect(
+        postsResolver.Mutation.addPost(
+          null,
+          {
+            post: {
+              userId,
+              groupId: tagId,
+              title: 'Hello',
+              text: 'Body',
+              attribution: 'a'.repeat(121),
+            },
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Attribution should be less than 120 characters/);
+      expect(ctx.prisma.post.create).not.toHaveBeenCalled();
+    });
   });
 });
