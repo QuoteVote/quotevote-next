@@ -1,7 +1,10 @@
 import type {
+  BuddyBackfillRow,
   DateRange,
   RosterAuditRow,
+  RosterBackfillPlan,
   RosterSummary,
+  UserBlockBackfillRow,
   UserBlockedIds,
 } from '~/types/rosterMigration';
 
@@ -183,4 +186,97 @@ export function summarizeRoster(
     },
     expectedBackfill: { buddyAccepted, buddyPending, userBlocks: allBlocks.size, skipped },
   };
+}
+
+/**
+ * The Buddy and UserBlock rows the legacy roster data turns into, with ids
+ * lowercased, plus a count of each row left out and why. Pure: no DB access.
+ * Kept separate from summarizeRoster on purpose: its counts must match the
+ * audit's expectedBackfill, and the tests compare the two.
+ */
+export function planRosterBackfill(
+  rows: RosterAuditRow[],
+  existingUserIds: Iterable<string>,
+  usersWithBlockedIds: UserBlockedIds[]
+): RosterBackfillPlan {
+  const exists = new Set<string>();
+  for (const id of existingUserIds) exists.add(id.toLowerCase());
+  const has = (id: string): boolean => exists.has(id.toLowerCase());
+
+  const skipped: Record<string, number> = {};
+  const skip = (reason: string): void => {
+    skipped[reason] = (skipped[reason] ?? 0) + 1;
+  };
+  const byPair = new Map<string, RosterAuditRow[]>(); // accepted and pending rows
+  const blocks = new Map<string, UserBlockBackfillRow>(); // "blocker>blocked" -> row
+  const addBlock = (blockerId: string, blockedUserId: string): void => {
+    blocks.set(`${blockerId}>${blockedUserId}`, { blockerId, blockedUserId });
+  };
+
+  for (const r of rows) {
+    const u = r.userId.toLowerCase();
+    const b = r.buddyId.toLowerCase();
+    if (u === b) {
+      skip('self');
+      continue;
+    }
+    if (!has(u) || !has(b)) {
+      skip('orphan');
+      continue;
+    }
+    if (r.status === 'accepted' || r.status === 'pending') {
+      const pk = sortedKey(u, b);
+      const initiatedBy = r.initiatedBy?.toLowerCase() ?? null;
+      byPair.set(pk, [...(byPair.get(pk) ?? []), { ...r, userId: u, buddyId: b, initiatedBy }]);
+    } else if (r.status === 'blocked') {
+      // Legacy blockBuddy keys the row on (blocker, blocked), so userId is the blocker.
+      addBlock(u, b);
+    } else if (r.status === 'declined') {
+      skip('declined');
+    } else {
+      skip('unknownStatus');
+    }
+  }
+
+  for (const u of usersWithBlockedIds) {
+    const blocker = u.id.toLowerCase();
+    for (const raw of u.blockedUserIds) {
+      const blocked = raw.toLowerCase();
+      if (has(blocker) && has(blocked) && blocker !== blocked) addBlock(blocker, blocked);
+    }
+  }
+
+  const when = (r: RosterAuditRow): Date => r.created ?? r.updated;
+  const buddies: BuddyBackfillRow[] = [];
+  for (const [pairKey, pairRows] of byPair) {
+    const sorted = [...pairRows].sort((x, y) => when(x).getTime() - when(y).getTime());
+    const accepted = sorted.filter((r) => r.status === 'accepted');
+    // accepted pairs are normally two reciprocal rows (acceptBuddy writes both)
+    const expectedRows = accepted.length === 2 && sorted.length === 2 ? 2 : 1;
+    for (let n = 0; n < sorted.length - expectedRows; n += 1) skip('duplicatePair');
+
+    const [x, y] = pairKey.split(':');
+    if (accepted.length === 0 && (blocks.has(`${x}>${y}`) || blocks.has(`${y}>${x}`))) {
+      skip('pendingBlocked');
+      continue;
+    }
+    const first = sorted[0];
+    const requesterId =
+      accepted.length > 0
+        ? (sorted.map((r) => r.initiatedBy).find((i) => i === x || i === y) ?? first.userId)
+        : first.userId;
+    buddies.push({
+      pairKey,
+      requesterId,
+      recipientId: requesterId === x ? y : x,
+      status: accepted.length > 0 ? 'accepted' : 'pending',
+      createdAt: when(first),
+      acceptedAt:
+        accepted.length > 0
+          ? new Date(Math.min(...accepted.map((r) => r.updated.getTime())))
+          : null,
+    });
+  }
+
+  return { buddies, blocks: [...blocks.values()], skipped };
 }

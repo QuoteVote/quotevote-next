@@ -1,4 +1,4 @@
-import { toPairKey, summarizeRoster } from '~/data/utils/rosterMigration';
+import { toPairKey, summarizeRoster, planRosterBackfill } from '~/data/utils/rosterMigration';
 import type { RosterAuditRow } from '~/types/rosterMigration';
 
 const A = 'aaaaaaaaaaaaaaaaaaaaaaaa';
@@ -199,5 +199,151 @@ describe('summarizeRoster', () => {
     );
     const json = JSON.stringify(s);
     for (const id of [A, B, C, D, GONE]) expect(json).not.toContain(id);
+  });
+});
+
+describe('planRosterBackfill', () => {
+  const d3 = new Date('2009-09-09T00:00:00Z');
+
+  it('turns reciprocal accepted rows into one accepted relationship', () => {
+    const plan = planRosterBackfill(
+      [
+        row({ userId: B, buddyId: A, initiatedBy: A, created: d2, updated: d3 }),
+        row({ userId: A, buddyId: B, initiatedBy: A, created: d1, updated: d2 }),
+      ],
+      users,
+      []
+    );
+    expect(plan.buddies).toEqual([
+      {
+        pairKey: `${A}:${B}`,
+        requesterId: A,
+        recipientId: B,
+        status: 'accepted',
+        createdAt: d1,
+        acceptedAt: d2,
+      },
+    ]);
+    expect(plan.blocks).toEqual([]);
+    expect(plan.skipped).toEqual({});
+  });
+
+  it('uses the earliest row as requester when initiatedBy is not in the pair', () => {
+    const plan = planRosterBackfill(
+      [
+        row({ userId: A, buddyId: B, initiatedBy: null, created: d2 }),
+        row({ userId: B, buddyId: A, initiatedBy: C, created: d1 }),
+      ],
+      users,
+      []
+    );
+    expect(plan.buddies[0]).toMatchObject({ requesterId: B, recipientId: A });
+  });
+
+  it('turns a pending row into a pending request from userId to buddyId', () => {
+    const plan = planRosterBackfill(
+      [row({ userId: C, buddyId: A, status: 'pending', created: d2 })],
+      users,
+      []
+    );
+    expect(plan.buddies).toEqual([
+      {
+        pairKey: `${A}:${C}`,
+        requesterId: C,
+        recipientId: A,
+        status: 'pending',
+        createdAt: d2,
+        acceptedAt: null,
+      },
+    ]);
+  });
+
+  it('keeps the earliest request when a pair is pending both ways', () => {
+    const plan = planRosterBackfill(
+      [
+        row({ userId: A, buddyId: B, status: 'pending', created: d2 }),
+        row({ userId: B, buddyId: A, status: 'pending', created: d1 }),
+      ],
+      users,
+      []
+    );
+    expect(plan.buddies).toHaveLength(1);
+    expect(plan.buddies[0]).toMatchObject({ requesterId: B, status: 'pending', createdAt: d1 });
+  });
+
+  it('falls back to updated when created is missing', () => {
+    const plan = planRosterBackfill(
+      [row({ userId: A, buddyId: B, status: 'pending', created: null, updated: d3 })],
+      users,
+      []
+    );
+    expect(plan.buddies[0].createdAt).toEqual(d3);
+  });
+
+  it('collects blocks from blocked rows and blockedUserIds once each', () => {
+    const plan = planRosterBackfill([row({ userId: B, buddyId: D, status: 'blocked' })], users, [
+      { id: B, blockedUserIds: [D.toUpperCase(), B] },
+      { id: C, blockedUserIds: [A, GONE] },
+    ]);
+    expect(plan.blocks).toEqual([
+      { blockerId: B, blockedUserId: D },
+      { blockerId: C, blockedUserId: A },
+    ]);
+  });
+
+  it('keeps an accepted pair when blocked but drops a blocked pending request', () => {
+    const plan = planRosterBackfill(
+      [row({ userId: A, buddyId: B }), row({ userId: A, buddyId: C, status: 'pending' })],
+      users,
+      [
+        { id: B, blockedUserIds: [A] },
+        { id: C, blockedUserIds: [A] },
+      ]
+    );
+    expect(plan.buddies.map((b) => b.pairKey)).toEqual([`${A}:${B}`]);
+    expect(plan.skipped).toEqual({ pendingBlocked: 1 });
+  });
+
+  it('lowercases ids so they match toPairKey', () => {
+    const plan = planRosterBackfill(
+      [row({ userId: B.toUpperCase(), buddyId: A, status: 'pending' })],
+      users,
+      []
+    );
+    expect(plan.buddies[0]).toMatchObject({ pairKey: toPairKey(A, B), requesterId: B });
+  });
+
+  it('gives the same result when run twice', () => {
+    const rows = [
+      row({ userId: A, buddyId: B }),
+      row({ userId: A, buddyId: C, status: 'pending' }),
+    ];
+    const blocked = [{ id: D, blockedUserIds: [A] }];
+    expect(planRosterBackfill(rows, users, blocked)).toEqual(
+      planRosterBackfill(rows, users, blocked)
+    );
+  });
+
+  it('matches the audit expectedBackfill counts', () => {
+    const rows = [
+      row({ userId: A, buddyId: B }),
+      row({ userId: B, buddyId: A }),
+      row({ userId: A, buddyId: C, status: 'pending' }),
+      row({ userId: B, buddyId: C, status: 'pending' }),
+      row({ userId: A, buddyId: D, status: 'declined' }),
+      row({ userId: B, buddyId: D, status: 'blocked' }),
+      row({ userId: C, buddyId: C }),
+      row({ userId: A, buddyId: GONE }),
+      row({ userId: C, buddyId: D, status: 'weird' }),
+    ];
+    const blocked = [{ id: C, blockedUserIds: [A] }];
+    const plan = planRosterBackfill(rows, users, blocked);
+    expect(summarizeRoster(rows, users, blocked).expectedBackfill).toEqual({
+      buddyAccepted: plan.buddies.filter((b) => b.status === 'accepted').length,
+      buddyPending: plan.buddies.filter((b) => b.status === 'pending').length,
+      userBlocks: plan.blocks.length,
+      skipped: plan.skipped,
+    });
+    expect(plan.buddies).toHaveLength(2);
   });
 });
