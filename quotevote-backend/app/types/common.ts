@@ -249,7 +249,7 @@ export interface MessageRoom {
   postId?: string;
   messageType?: MessageType;
   title?: string;
-  avatar?: string;
+  avatar?: string | Record<string, unknown> | null;
   isDirect?: boolean;
   lastMessageTime?: Date | string;
   lastActivity?: Date | string;
@@ -257,6 +257,25 @@ export interface MessageRoom {
   unreadMessages?: number;
   created: Date | string;
   updatedAt?: Date | string;
+}
+
+/** A message with its author, as the chat views show it. */
+export interface MessageWithAuthor extends Message {
+  user: User | null;
+}
+
+/** The post a post room belongs to, as the chat list shows it. */
+export interface MessageRoomPostDetails {
+  _id: string;
+  title: string;
+  text: string;
+  userId: string;
+  url: string;
+}
+
+/** A room with what the chat list shows: title, avatar, unread count and its post. */
+export interface MessageRoomView extends MessageRoom {
+  postDetails: MessageRoomPostDetails | null;
 }
 
 /** @deprecated Use Message instead. Alias for backwards compatibility. */
@@ -276,6 +295,19 @@ export interface Notification {
   postId?: string;
   created: Date | string;
   updatedAt?: Date | string;
+}
+
+/** The post a notification points to; deleted posts are kept so the UI can say so. */
+export interface NotificationPost {
+  _id: string;
+  url: string | null;
+  deleted: boolean;
+}
+
+/** A notification with who sent it and the post it points to. */
+export interface NotificationWithRelations extends Notification {
+  userBy: User | null;
+  post: NotificationPost | null;
 }
 
 // ============================================================================
@@ -304,7 +336,9 @@ export interface ActivityPostCounts {
 /** An activity with the records an activity card shows, loaded in batches per page. */
 export interface HydratedActivity extends Activity {
   user: User | null;
-  post: (Post & ActivityPostCounts & { creator: User | null }) | null;
+  post:
+    | (Post & ActivityPostCounts & { creator: User | null; messageRoom: { _id: string } | null })
+    | null;
   vote: Vote | null;
   comment: Comment | null;
   quote: Quote | null;

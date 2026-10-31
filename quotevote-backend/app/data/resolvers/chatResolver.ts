@@ -2,10 +2,16 @@ import { GraphQLError } from 'graphql';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 import type { MessageSearchResult } from '~/data/types/MessageSearch';
-import { getReadableMessageRoom } from './utils/messages';
+import { attachMessageAuthors, getReadableMessageRoom } from './utils/messages';
 import { isLive } from '~/data/resolvers/utils/batchLoad';
+import {
+  MESSAGE_ROOM_SELECT,
+  byLatestMessage,
+  filterListedRooms,
+  loadRoomViews,
+} from '~/data/resolvers/utils/chatRooms';
 import { MESSAGE_RECORD_SELECT, toMessageEntity } from '~/data/resolvers/utils/commentsQuotes';
-import { escapeRegExp } from '~/data/resolvers/utils/common';
+import { escapeRegExp, isObjectId } from '~/data/resolvers/utils/common';
 
 import {
   MESSAGE_SEARCH_DEFAULT_LIMIT,
@@ -22,38 +28,6 @@ import {
   toPublicUser,
   type PrismaUserRecord,
 } from '~/data/utils/userPrismaMapper';
-
-function toMessageRoom(room: {
-  id: string;
-  userIds: string[];
-  postId: string | null;
-  messageType: Common.MessageType;
-  title: string | null;
-  avatar: unknown;
-  isDirect: boolean;
-  lastMessageTime: Date | null;
-  lastActivity: Date | null;
-  lastSeenMessages: unknown;
-  unreadMessages: number;
-  created: Date;
-  updatedAt: Date;
-}): Common.MessageRoom {
-  return {
-    _id: room.id,
-    users: room.userIds,
-    postId: room.postId ?? undefined,
-    messageType: room.messageType,
-    title: room.title ?? undefined,
-    avatar: room.avatar as string | undefined,
-    isDirect: room.isDirect,
-    lastMessageTime: room.lastMessageTime ?? undefined,
-    lastActivity: room.lastActivity ?? undefined,
-    lastSeenMessages: room.lastSeenMessages as Record<string, string> | undefined,
-    unreadMessages: room.unreadMessages,
-    created: room.created,
-    updatedAt: room.updatedAt,
-  };
-}
 
 function toReaction(reaction: {
   id: string;
@@ -80,35 +54,42 @@ export const chatResolver = {
       _parent: unknown,
       args: { otherUserId: string },
       context: GraphQLContext
-    ): Promise<Common.MessageRoom | null> => {
-      if (!context.userId) return null;
+    ): Promise<Common.MessageRoomView | null> => {
+      if (!context.userId || !isObjectId(args.otherUserId)) return null;
+      // Legacy direct rooms are marked by messageType, not isDirect (false on all of them).
+      // Legacy also created the room here when missing; that belongs with createMessage (#633).
       const room = await context.prisma.messageRoom.findFirst({
         where: {
           userIds: { hasEvery: [context.userId, args.otherUserId] },
-          isDirect: true,
+          messageType: 'USER',
         },
+        select: MESSAGE_ROOM_SELECT,
       });
-      return room ? toMessageRoom(room) : null;
+      if (!room) return null;
+      const [view] = await loadRoomViews(context.prisma, [room], context.userId);
+      return view;
     },
 
     messageRooms: async (
       _parent: unknown,
       _args: unknown,
       context: GraphQLContext
-    ): Promise<Common.MessageRoom[]> => {
+    ): Promise<Common.MessageRoomView[]> => {
       if (!context.userId) return [];
       const rooms = await context.prisma.messageRoom.findMany({
         where: { userIds: { has: context.userId } },
-        orderBy: { lastActivity: 'desc' },
+        select: MESSAGE_ROOM_SELECT,
       });
-      return rooms.map(toMessageRoom);
+      const listed = await filterListedRooms(context.prisma, rooms, context.userId);
+      const views = await loadRoomViews(context.prisma, listed, context.userId);
+      return views.sort(byLatestMessage);
     },
 
     messages: async (
       _parent: unknown,
       args: { messageRoomId: string },
       context: GraphQLContext
-    ): Promise<Common.Message[]> => {
+    ): Promise<Common.MessageWithAuthor[]> => {
       const room = await getReadableMessageRoom(context.prisma, args.messageRoomId, context.userId);
       if (!room) return [];
       // Legacy messages have no createdAt/updatedAt and may lack `deleted`, so read
@@ -118,7 +99,11 @@ export const chatResolver = {
         orderBy: { created: 'asc' },
         select: MESSAGE_RECORD_SELECT,
       });
-      return messages.filter(isLive).map(toMessageEntity);
+      return attachMessageAuthors(
+        context.prisma,
+        messages.filter(isLive).map(toMessageEntity),
+        room.messageType
+      );
     },
 
     messageReactions: async (
@@ -220,22 +205,32 @@ export const chatResolver = {
     },
   },
   MessageRoom: {
-    postDetails: async (parent: Common.MessageRoom, _args: unknown, context: GraphQLContext) => {
+    // The room queries load this in a batch; other parents load it here.
+    postDetails: async (
+      parent: Common.MessageRoom & { postDetails?: Common.MessageRoomPostDetails | null },
+      _args: unknown,
+      context: GraphQLContext
+    ): Promise<Common.MessageRoomPostDetails | null> => {
+      if (parent.postDetails !== undefined) return parent.postDetails;
       if (!parent.postId) return null;
       const post = await context.prisma.post.findUnique({
         where: { id: parent.postId },
+        select: { id: true, title: true, text: true, userId: true, url: true },
       });
       if (!post) return null;
       return {
-        title: post.title,
-        text: post.text,
+        _id: post.id,
+        title: post.title ?? '',
+        text: post.text ?? '',
+        userId: post.userId,
+        url: post.url ?? '',
       };
     },
     messages: async (
       parent: Common.MessageRoom,
       _args: unknown,
       context: GraphQLContext
-    ): Promise<Common.Message[]> => {
+    ): Promise<Common.MessageWithAuthor[]> => {
       const room = await getReadableMessageRoom(context.prisma, parent._id, context.userId);
       if (!room) return [];
       // Legacy messages have no createdAt/updatedAt and may lack `deleted`, so read
@@ -245,7 +240,11 @@ export const chatResolver = {
         orderBy: { created: 'asc' },
         select: MESSAGE_RECORD_SELECT,
       });
-      return messages.filter(isLive).map(toMessageEntity);
+      return attachMessageAuthors(
+        context.prisma,
+        messages.filter(isLive).map(toMessageEntity),
+        room.messageType
+      );
     },
   },
 };

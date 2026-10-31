@@ -1,5 +1,7 @@
 import { chatResolver } from '~/data/resolvers/chatResolver';
+import { MESSAGE_ROOM_SELECT } from '~/data/resolvers/utils/chatRooms';
 import { MESSAGE_RECORD_SELECT } from '~/data/resolvers/utils/commentsQuotes';
+import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 
 const date = new Date('2026-01-01T00:00:00.000Z');
 
@@ -13,7 +15,8 @@ const createContext = () => ({
       update: jest.fn(),
     },
     message: {
-      findMany: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      groupBy: jest.fn().mockResolvedValue([]),
       create: jest.fn(),
     },
     reaction: {
@@ -21,9 +24,13 @@ const createContext = () => ({
     },
     post: {
       findUnique: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    comment: {
+      findMany: jest.fn().mockResolvedValue([]),
     },
     user: {
-      findMany: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
     },
   },
   pubsub: {
@@ -32,51 +39,174 @@ const createContext = () => ({
   user: { _id: 'user-1', username: 'alice', name: 'Alice' },
 });
 
+const me = '60d5ec49ad414d7a8d5464a0';
+const bobId = '60d5ec49ad414d7a8d5464a1';
+const carolId = '60d5ec49ad414d7a8d5464a2';
+const dmId = '60d5ec49ad414d7a8d5464c1';
+const quietDmId = '60d5ec49ad414d7a8d5464c2';
+const postRoomId = '60d5ec49ad414d7a8d5464c3';
+const postId = '60d5ec49ad414d7a8d5464b1';
+const day = (n: number) => new Date(Date.UTC(2026, 0, n));
+const bob = { id: bobId, name: 'Bob', username: 'bob', avatar: 'bob.png' };
+const carol = { id: carolId, name: 'Carol', username: 'carol', avatar: 'carol.png' };
+
+const room = (overrides: Record<string, unknown>) => ({
+  id: dmId,
+  userIds: [] as string[],
+  postId: null,
+  messageType: 'USER',
+  isDirect: false,
+  title: null,
+  avatar: null,
+  lastMessageTime: null,
+  lastActivity: null,
+  created: date,
+  ...overrides,
+});
+
 describe('chatResolver Prisma queries', () => {
   it('finds a direct room containing both users', async () => {
     const context = createContext();
-    context.prisma.messageRoom.findFirst.mockResolvedValue({
-      id: 'room-1',
-      userIds: ['user-1', 'user-2'],
-      postId: null,
-      messageType: 'USER',
-      title: null,
-      avatar: null,
-      isDirect: true,
-      lastMessageTime: null,
-      lastActivity: date,
-      lastSeenMessages: {},
-      unreadMessages: 0,
-      created: date,
-      updatedAt: date,
-    });
+    context.userId = me;
+    context.prisma.messageRoom.findFirst.mockResolvedValue(
+      room({ id: dmId, userIds: [me, bobId] })
+    );
+    context.prisma.user.findMany.mockResolvedValue([bob]);
 
     const result = await chatResolver.Query.messageRoom(
       {},
-      { otherUserId: 'user-2' },
+      { otherUserId: bobId },
       context as never
     );
 
+    // Legacy direct rooms are marked by messageType; isDirect is false on all of them.
     expect(context.prisma.messageRoom.findFirst).toHaveBeenCalledWith({
-      where: {
-        userIds: { hasEvery: ['user-1', 'user-2'] },
-        isDirect: true,
-      },
+      where: { userIds: { hasEvery: [me, bobId] }, messageType: 'USER' },
+      select: MESSAGE_ROOM_SELECT,
     });
-    expect(result?._id).toBe('room-1');
-    expect(result?.users).toEqual(['user-1', 'user-2']);
+    expect(result).toMatchObject({
+      _id: dmId,
+      users: [me, bobId],
+      title: 'Bob',
+      avatar: 'bob.png',
+      unreadMessages: 0,
+      postDetails: null,
+    });
   });
 
-  it('lists rooms in descending activity order', async () => {
+  it('returns null for a guest or an id that is not an ObjectId, without querying', async () => {
     const context = createContext();
-    context.prisma.messageRoom.findMany.mockResolvedValue([]);
+    context.userId = me;
+    await expect(
+      chatResolver.Query.messageRoom({}, { otherUserId: 'not-an-id' }, context as never)
+    ).resolves.toBeNull();
+    context.userId = null as never;
+    await expect(
+      chatResolver.Query.messageRoom({}, { otherUserId: bobId }, context as never)
+    ).resolves.toBeNull();
+    expect(context.prisma.messageRoom.findFirst).not.toHaveBeenCalled();
+  });
 
-    await chatResolver.Query.messageRooms({}, {}, context as never);
+  it('lists rooms with the fields the chat list shows, newest message first', async () => {
+    const context = createContext();
+    context.userId = me;
+    context.prisma.messageRoom.findMany.mockResolvedValue([
+      // Legacy room with no messages: lastMessageTime falls back to lastActivity.
+      room({ id: quietDmId, userIds: [me, carolId], lastActivity: day(1) }),
+      room({ id: dmId, userIds: [me, bobId], lastActivity: day(2) }),
+      room({ id: postRoomId, userIds: [me, bobId], messageType: 'POST', postId }),
+    ]);
+    context.prisma.post.findMany.mockImplementation(({ select }: { select: object }) =>
+      Promise.resolve(
+        'title' in select
+          ? [{ id: postId, title: 'A post', text: 'Body', userId: carolId, url: '/post/a' }]
+          : [{ id: postId, userId: carolId }]
+      )
+    );
+    // The viewer commented on the post, so its room is listed.
+    context.prisma.comment.findMany.mockResolvedValue([{ postId, deleted: false }]);
+    context.prisma.message.findMany.mockResolvedValue([
+      { messageRoomId: dmId, deleted: false },
+      { messageRoomId: dmId },
+      { messageRoomId: dmId, deleted: true },
+    ]);
+    context.prisma.message.groupBy.mockResolvedValue([
+      { messageRoomId: dmId, _max: { created: day(5) } },
+      { messageRoomId: postRoomId, _max: { created: day(4) } },
+    ]);
+    context.prisma.user.findMany.mockResolvedValue([bob, carol]);
+
+    const rooms = await chatResolver.Query.messageRooms({}, {}, context as never);
 
     expect(context.prisma.messageRoom.findMany).toHaveBeenCalledWith({
-      where: { userIds: { has: 'user-1' } },
-      orderBy: { lastActivity: 'desc' },
+      where: { userIds: { has: me } },
+      select: MESSAGE_ROOM_SELECT,
     });
+    expect(MESSAGE_ROOM_SELECT).not.toHaveProperty('createdAt');
+    expect(MESSAGE_ROOM_SELECT).not.toHaveProperty('updatedAt');
+    expect(rooms.map((r) => r._id)).toEqual([dmId, postRoomId, quietDmId]);
+    expect(rooms[0]).toMatchObject({
+      title: 'Bob',
+      avatar: 'bob.png',
+      // Deleted messages aren't counted; legacy messages without the flag are.
+      unreadMessages: 2,
+      lastMessageTime: day(5),
+    });
+    expect(rooms[1]).toMatchObject({
+      title: 'A post',
+      // A post room shows the post author's avatar.
+      avatar: 'carol.png',
+      postDetails: { _id: postId, title: 'A post', text: 'Body', userId: carolId, url: '/post/a' },
+    });
+    expect(rooms[2]).toMatchObject({ title: 'Carol', lastMessageTime: day(1), unreadMessages: 0 });
+    // Unread counts skip the viewer's own messages and ones they've read.
+    expect(context.prisma.message.findMany).toHaveBeenCalledWith({
+      where: {
+        messageRoomId: { in: [quietDmId, dmId, postRoomId] },
+        userId: { not: me },
+        NOT: { readBy: { has: me } },
+      },
+      select: { messageRoomId: true, deleted: true },
+    });
+    expect(context.prisma.user.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves out post rooms the member has no part in', async () => {
+    const context = createContext();
+    context.userId = me;
+    const otherPostRoom = '60d5ec49ad414d7a8d5464c9';
+    const otherPost = '60d5ec49ad414d7a8d5464b9';
+    context.prisma.messageRoom.findMany.mockResolvedValue([
+      room({ id: postRoomId, userIds: [me], messageType: 'POST', postId }),
+      room({ id: otherPostRoom, userIds: [me], messageType: 'POST', postId: otherPost }),
+    ]);
+    context.prisma.post.findMany.mockResolvedValue([
+      { id: postId, userId: carolId },
+      { id: otherPost, userId: carolId },
+    ]);
+    // Their only comment on the first post is deleted, and they sent nothing.
+    context.prisma.comment.findMany.mockResolvedValue([{ postId, deleted: true }]);
+
+    await expect(chatResolver.Query.messageRooms({}, {}, context as never)).resolves.toEqual([]);
+
+    // A room on their own post, or one they sent a message in, is listed.
+    context.prisma.post.findMany.mockResolvedValue([
+      { id: postId, userId: me },
+      { id: otherPost, userId: carolId },
+    ]);
+    context.prisma.message.findMany.mockImplementation(
+      ({ where }: { where: { userId?: unknown } }) =>
+        Promise.resolve(where.userId === me ? [{ messageRoomId: otherPostRoom }] : [])
+    );
+    const listed = await chatResolver.Query.messageRooms({}, {}, context as never);
+    expect(listed.map((r) => r._id).sort()).toEqual([postRoomId, otherPostRoom].sort());
+  });
+
+  it('returns no rooms to a guest', async () => {
+    const context = createContext();
+    context.userId = null as never;
+    await expect(chatResolver.Query.messageRooms({}, {}, context as never)).resolves.toEqual([]);
+    expect(context.prisma.messageRoom.findMany).not.toHaveBeenCalled();
   });
 
   it('maps messages and reactions to the legacy GraphQL shape', async () => {
@@ -146,7 +276,13 @@ describe('chatResolver Prisma queries', () => {
 
   it('loads post details and room messages through Prisma', async () => {
     const context = createContext();
-    context.prisma.post.findUnique.mockResolvedValue({ title: 'Post title', text: 'Post text' });
+    context.prisma.post.findUnique.mockResolvedValue({
+      id: 'post-1',
+      title: 'Post title',
+      text: 'Post text',
+      userId: 'user-2',
+      url: '/post/a',
+    });
     context.prisma.messageRoom.findUnique.mockResolvedValue({
       messageType: 'POST',
       userIds: [],
@@ -159,14 +295,90 @@ describe('chatResolver Prisma queries', () => {
 
     expect(context.prisma.post.findUnique).toHaveBeenCalledWith({
       where: { id: 'post-1' },
+      select: { id: true, title: true, text: true, userId: true, url: true },
     });
-    expect(postDetails).toEqual({ title: 'Post title', text: 'Post text' });
+    expect(postDetails).toEqual({
+      _id: 'post-1',
+      title: 'Post title',
+      text: 'Post text',
+      userId: 'user-2',
+      url: '/post/a',
+    });
     expect(context.prisma.message.findMany).toHaveBeenCalledWith({
       where: { messageRoomId: 'room-1' },
       orderBy: { created: 'asc' },
       select: MESSAGE_RECORD_SELECT,
     });
     expect(messages).toEqual([]);
+  });
+
+  it('uses post details the room list already loaded', async () => {
+    const context = createContext();
+    const postDetails = { _id: 'post-1', title: 'T', text: '', userId: 'user-2', url: '' };
+
+    await expect(
+      chatResolver.MessageRoom.postDetails(
+        { _id: 'room-1', postId: 'post-1', created: date, postDetails },
+        {},
+        context as never
+      )
+    ).resolves.toBe(postDetails);
+    await expect(
+      chatResolver.MessageRoom.postDetails(
+        { _id: 'room-2', created: date, postDetails: null },
+        {},
+        context as never
+      )
+    ).resolves.toBeNull();
+    expect(context.prisma.post.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('adds each author, their name and the room type to messages, in one user query', async () => {
+    const context = createContext();
+    context.prisma.messageRoom.findUnique.mockResolvedValue({
+      messageType: 'USER',
+      userIds: ['user-1', bobId],
+    });
+    const message = (id: string, userId: string) => ({
+      id,
+      messageRoomId: dmId,
+      userId,
+      userName: null,
+      title: null,
+      text: 'Hi',
+      type: null,
+      mutationType: null,
+      deleted: false,
+      readBy: [],
+      readByDetailed: [],
+      deliveredTo: [],
+      created: date,
+    });
+    context.prisma.message.findMany.mockResolvedValue([
+      message('m1', bobId),
+      message('m2', bobId),
+      message('m3', 'gone-user'),
+    ]);
+    context.prisma.user.findMany.mockResolvedValue([bob]);
+
+    const messages = await chatResolver.Query.messages(
+      {},
+      { messageRoomId: dmId },
+      context as never
+    );
+
+    expect(context.prisma.user.findMany).toHaveBeenCalledTimes(1);
+    expect(context.prisma.user.findMany).toHaveBeenCalledWith({
+      where: { id: { in: [bobId, 'gone-user'] } },
+      select: PUBLIC_USER_SELECT,
+    });
+    expect(messages[0]).toMatchObject({
+      userName: 'Bob',
+      type: 'USER',
+      user: { _id: bobId, username: 'bob', email: '' },
+    });
+    // Legacy names a message from a missing account "Unknown User".
+    expect(messages[2]).toMatchObject({ userName: 'Unknown User', type: 'USER', user: null });
   });
 
   it('does not return nested history for a room the current user cannot access', async () => {

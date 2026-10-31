@@ -67,6 +67,12 @@ function mockPrisma() {
       ),
     },
     quote: { findMany: jest.fn().mockResolvedValue([]) },
+    messageRoom: {
+      findMany: jest.fn().mockResolvedValue([
+        { id: '60d5ec49ad414d7a8d5464f1', postId },
+        { id: '60d5ec49ad414d7a8d5464f2', postId },
+      ]),
+    },
   };
 }
 
@@ -104,6 +110,8 @@ describe('hydrateActivities', () => {
       votes: [{ _id: voteId }],
       comments: [{ _id: commentId }],
       quotes: [],
+      // A post has one room; legacy reads it with findOne, so the first wins.
+      messageRoom: { _id: '60d5ec49ad414d7a8d5464f1' },
     });
     expect(voted.vote).toMatchObject({ _id: voteId, type: 'up', startWordIndex: 0, endWordIndex: 4 });
     expect(commented.comment).toMatchObject({ _id: commentId, content: 'Nice' });
@@ -118,6 +126,11 @@ describe('hydrateActivities', () => {
     );
     expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.messageRoom.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.messageRoom.findMany).toHaveBeenCalledWith({
+      where: { postId: { in: [postId] } },
+      select: { id: true, postId: true },
+    });
     expect(prisma.post.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: { in: [postId] } } })
     );
@@ -143,6 +156,13 @@ describe('hydrateActivities', () => {
     expect(voteSelect).not.toHaveProperty('tags');
   });
 
+  it('returns a null room for a post without one', async () => {
+    const prisma = mockPrisma();
+    prisma.messageRoom.findMany.mockResolvedValue([]);
+    const [entry] = await hydrateActivities(prisma as unknown as Prisma, [activity({})]);
+    expect(entry.post?.messageRoom).toBeNull();
+  });
+
   it('returns null for a deleted post or a vote that no longer exists', async () => {
     const prisma = mockPrisma();
     prisma.vote.findMany.mockResolvedValue([]);
@@ -151,6 +171,10 @@ describe('hydrateActivities', () => {
       activity({ _id: '60d5ec49ad414d7a8d5464e2', activityType: 'VOTED', voteId }),
     ]);
     expect(onDeletedPost.post).toBeNull();
+    // Only live posts are looked up for a room.
+    expect(prisma.messageRoom.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { postId: { in: [postId] } } })
+    );
     expect(missingVote.vote).toBeNull();
     expect(missingVote.post).not.toBeNull();
   });

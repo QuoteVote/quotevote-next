@@ -45,6 +45,9 @@ export const Mutation = `type Mutation {
   " Create a new comment "
   addComment(comment: CommentInput!): Comment
 
+  " Update a comment's content (owner or admin) "
+  updateComment(commentId: String!, content: String!): Comment
+
   " Delete a comment "
   deleteComment(commentId: String!): DeletedComment
 

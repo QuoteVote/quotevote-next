@@ -15,11 +15,14 @@ import {
   type PrismaUserRecord,
 } from '~/data/utils/userPrismaMapper';
 
-type HydratePrisma = Pick<PrismaClient, 'user' | 'post' | 'vote' | 'comment' | 'quote'>;
+type HydratePrisma = Pick<
+  PrismaClient,
+  'user' | 'post' | 'vote' | 'comment' | 'quote' | 'messageRoom'
+>;
 
 /**
- * Load what an activity card shows (who acted, the post with its author and
- * counts, and the vote, comment or quote) for a page of activities. Uses a fixed
+ * Load what an activity card shows (who acted, the post with its author, counts
+ * and chat room, and the vote, comment or quote) for a page of activities. Uses a fixed
  * number of queries per page instead of several per entry. Users are read with
  * public profile fields only, since the activity list is public. Deleted posts,
  * comments, quotes and votes come back as null and are left out of the counts.
@@ -43,6 +46,12 @@ export async function hydrateActivities(
   const livePostIds = posts.map((p) => p.id);
   const userIds = unique([...activities.map((a) => a.userId), ...posts.map((p) => p.userId)]);
   const idAndPost = { id: true, postId: true, deleted: true } as const;
+  const roomsLoad = whenAny(livePostIds, (ids) =>
+    prisma.messageRoom.findMany({
+      where: { postId: { in: ids } },
+      select: { id: true, postId: true },
+    })
+  );
 
   const [users, postVotes, postComments, postQuotes, votes, comments, quotes] = await Promise.all([
     whenAny(userIds, (ids) =>
@@ -77,6 +86,11 @@ export async function hydrateActivities(
   const votesByPost = groupIdsByPost(postVotes);
   const commentsByPost = groupIdsByPost(postComments);
   const quotesByPost = groupIdsByPost(postQuotes);
+  // Legacy reads a post's room with findOne, so the first one wins.
+  const roomByPost = new Map<string, { _id: string }>();
+  for (const room of await roomsLoad) {
+    if (room.postId && !roomByPost.has(room.postId)) roomByPost.set(room.postId, { _id: room.id });
+  }
   const postsById = new Map(
     posts.map((p) => {
       const creator = userRecords.get(p.userId);
@@ -88,6 +102,7 @@ export async function hydrateActivities(
           votes: votesByPost.get(p.id) ?? [],
           comments: commentsByPost.get(p.id) ?? [],
           quotes: quotesByPost.get(p.id) ?? [],
+          messageRoom: roomByPost.get(p.id) ?? null,
         },
       ];
     })

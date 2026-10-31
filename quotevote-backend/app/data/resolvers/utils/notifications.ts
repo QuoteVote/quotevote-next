@@ -1,7 +1,19 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { pubsub } from '~/data/utils/pubsub';
 import { NOTIFICATION_CREATED } from '~/data/utils/constants';
-import type { Notification, NotificationType } from '~/types/common';
+import { unique, whenAny } from '~/data/resolvers/utils/batchLoad';
+import {
+  PUBLIC_USER_SELECT,
+  toPublicUser,
+  type PrismaUserRecord,
+} from '~/data/utils/userPrismaMapper';
+import type {
+  Notification,
+  NotificationPost,
+  NotificationType,
+  NotificationWithRelations,
+  User,
+} from '~/types/common';
 
 type NotificationsPrisma = Pick<PrismaClient, 'notification'>;
 
@@ -36,6 +48,69 @@ export const toNotificationEntity = (record: NotificationRecord): Notification =
   postId: record.postId ?? undefined,
   created: record.created,
 });
+
+/** Post columns a notification links to; deleted posts are kept so the UI can say so. */
+export const NOTIFICATION_POST_SELECT = { id: true, url: true, deleted: true } as const;
+
+type NotificationRelationsPrisma = Pick<PrismaClient, 'user' | 'post'>;
+
+const toNotificationPost = (post: {
+  id: string;
+  url: string | null;
+  deleted: boolean;
+}): NotificationPost => ({ _id: post.id, url: post.url, deleted: post.deleted });
+
+/**
+ * Add who sent each notification and the post it points to, with two queries for
+ * the whole list. Senders are read with public fields only.
+ */
+export async function attachNotificationRelations(
+  prisma: NotificationRelationsPrisma,
+  notifications: Notification[]
+): Promise<NotificationWithRelations[]> {
+  const [users, posts] = await Promise.all([
+    whenAny(unique(notifications.map((n) => n.userIdBy)), (ids) =>
+      prisma.user.findMany({ where: { id: { in: ids } }, select: PUBLIC_USER_SELECT })
+    ),
+    whenAny(unique(notifications.map((n) => n.postId)), (ids) =>
+      prisma.post.findMany({ where: { id: { in: ids } }, select: NOTIFICATION_POST_SELECT })
+    ),
+  ]);
+  const usersById = new Map(users.map((u) => [u.id, toPublicUser(u as PrismaUserRecord)]));
+  const postsById = new Map(posts.map((p) => [p.id, toNotificationPost(p)]));
+
+  return notifications.map((n) => ({
+    ...n,
+    userBy: (n.userIdBy && usersById.get(n.userIdBy)) || null,
+    post: (n.postId && postsById.get(n.postId)) || null,
+  }));
+}
+
+/** Load the sender of one notification, for a parent that wasn't loaded in a batch. */
+export async function loadNotificationSender(
+  prisma: Pick<PrismaClient, 'user'>,
+  userIdBy: string | undefined
+): Promise<User | null> {
+  if (!userIdBy) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: userIdBy },
+    select: PUBLIC_USER_SELECT,
+  });
+  return user ? toPublicUser(user as PrismaUserRecord) : null;
+}
+
+/** Load the post of one notification, for a parent that wasn't loaded in a batch. */
+export async function loadNotificationPost(
+  prisma: Pick<PrismaClient, 'post'>,
+  postId: string | undefined
+): Promise<NotificationPost | null> {
+  if (!postId) return null;
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: NOTIFICATION_POST_SELECT,
+  });
+  return post ? toNotificationPost(post) : null;
+}
 
 export interface AddNotificationInput {
   userId: string;

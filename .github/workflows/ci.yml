@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - staging
 
 jobs:
   backend:
@@ -40,6 +41,12 @@ jobs:
       - name: Run type check
         run: pnpm type-check
 
+      # Every frontend GraphQL document must validate against this backend's
+      # schema and call root fields that have a resolver. Known gaps are listed
+      # with their issue in app/data/utils/frontendContract.ts.
+      - name: Check frontend GraphQL contract
+        run: pnpm check:contract
+
       - name: Run tests with coverage
         run: pnpm test -- --coverage --coverageReporters=text --coverageReporters=lcov
 
@@ -51,6 +58,84 @@ jobs:
           flags: backend
           name: backend-coverage
           fail_ci_if_error: false
+
+      - name: Build
+        run: pnpm build
+
+  backend-container:
+    name: Backend container
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Only pull requests that change the backend or this workflow build the image.
+      - name: Check for backend changes
+        id: changes
+        run: |
+          if git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- quotevote-backend .github/workflows/ci.yml; then
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No backend changes, container build skipped"
+          else
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.changes.outputs.backend == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        if: steps.changes.outputs.backend == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./quotevote-backend
+          tags: quotevote-backend:ci
+          load: true
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      # A throwaway single-node replica set, the same shape as production.
+      - name: Start MongoDB
+        if: steps.changes.outputs.backend == 'true'
+        run: |
+          docker run -d --name mongo --network host mongo:7 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do
+            docker exec mongo mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' && break
+            sleep 1
+          done
+          docker exec mongo mongosh --quiet --eval 'rs.initiate()'
+
+      - name: Start the container and wait for the health check
+        if: steps.changes.outputs.backend == 'true'
+        run: |
+          MONGO_URI='mongodb://localhost:27017/quotevote_ci?directConnection=true'
+          docker run -d --name backend --network host \
+            -e MONGO_URI="$MONGO_URI" -e DATABASE_URL="$MONGO_URI" \
+            -e JWT_SECRET=ci-only-secret -e CLIENT_URL=http://localhost:3000 \
+            quotevote-backend:ci
+          for i in $(seq 1 60); do
+            if curl -fs http://localhost:4000/health; then echo; exit 0; fi
+            sleep 1
+          done
+          echo "::error::/health did not return 200 within 60 seconds"
+          docker logs backend
+          exit 1
+
+      - name: Check the server shuts down cleanly
+        if: steps.changes.outputs.backend == 'true'
+        run: |
+          start=$(date +%s)
+          docker stop -t 15 backend
+          took=$(( $(date +%s) - start ))
+          code=$(docker inspect -f '{{.State.ExitCode}}' backend)
+          echo "Stopped in ${took}s with exit code $code"
+          if [ "$code" != "0" ] || [ "$took" -ge 15 ]; then
+            docker logs backend
+            exit 1
+          fi
 
   frontend:
     name: Frontend CI

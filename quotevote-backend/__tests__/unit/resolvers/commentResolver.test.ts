@@ -258,6 +258,148 @@ describe('commentResolver', () => {
     });
   });
 
+  describe('Mutation.updateComment', () => {
+    it('requires authentication', async () => {
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId, content: 'edited' },
+          mockContext(null) as never
+        )
+      ).rejects.toThrow(/Authentication required/);
+    });
+
+    it('updates content when the owner requests it', async () => {
+      const context = mockContext(authedUser());
+      context.prisma.comment.findUnique.mockResolvedValue({
+        id: commentId,
+        userId,
+        deleted: false,
+      });
+      context.prisma.comment.update.mockResolvedValue({
+        id: commentId,
+        userId,
+        postId,
+        content: 'edited',
+        startWordIndex: 0,
+        endWordIndex: 1,
+        url: null,
+        reaction: null,
+        deleted: false,
+        created: date,
+      });
+
+      const result = await commentResolver.Mutation.updateComment(
+        null,
+        { commentId, content: '  edited  ' },
+        context as never
+      );
+
+      expect(context.prisma.comment.update).toHaveBeenCalledWith({
+        where: { id: commentId },
+        data: { content: 'edited' },
+        select: COMMENT_SELECT,
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          _id: commentId,
+          content: 'edited',
+        })
+      );
+    });
+
+    it('allows an admin to update another users comment', async () => {
+      const admin = { ...authedUser(), admin: true };
+      const context = mockContext(admin);
+      context.prisma.comment.findUnique.mockResolvedValue({
+        id: commentId,
+        userId: postOwnerId,
+        deleted: false,
+      });
+      context.prisma.comment.update.mockResolvedValue({
+        id: commentId,
+        userId: postOwnerId,
+        postId,
+        content: 'admin edit',
+        startWordIndex: 0,
+        endWordIndex: 1,
+        url: null,
+        reaction: null,
+        deleted: false,
+        created: date,
+      });
+
+      const result = await commentResolver.Mutation.updateComment(
+        null,
+        { commentId, content: 'admin edit' },
+        context as never
+      );
+
+      expect(result.content).toBe('admin edit');
+      expect(context.prisma.comment.update).toHaveBeenCalled();
+    });
+
+    it('forbids updating another users comment', async () => {
+      const context = mockContext(authedUser());
+      context.prisma.comment.findUnique.mockResolvedValue({
+        id: commentId,
+        userId: postOwnerId,
+        deleted: false,
+      });
+
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId, content: 'nope' },
+          context as never
+        )
+      ).rejects.toThrow(/Not authorized/);
+    });
+
+    it('rejects edits to deleted comments', async () => {
+      const context = mockContext(authedUser());
+      context.prisma.comment.findUnique.mockResolvedValue({
+        id: commentId,
+        userId,
+        deleted: true,
+      });
+
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId, content: 'nope' },
+          context as never
+        )
+      ).rejects.toThrow(/Cannot edit a deleted comment/);
+      expect(context.prisma.comment.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects empty content', async () => {
+      const context = mockContext(authedUser());
+
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId, content: '   ' },
+          context as never
+        )
+      ).rejects.toThrow(/Comment content is required/);
+      expect(context.prisma.comment.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('rejects invalid commentId', async () => {
+      const context = mockContext(authedUser());
+
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId: 'not-an-object-id', content: 'edited' },
+          context as never
+        )
+      ).rejects.toThrow(/Invalid commentId/);
+    });
+  });
+
   describe('Mutation.deleteComment', () => {
     it('soft-deletes when the owner requests it', async () => {
       const context = mockContext(authedUser());

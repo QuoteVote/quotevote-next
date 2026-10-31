@@ -57,6 +57,7 @@ describe('Executable GraphQL Schema', () => {
     expect(fields).toHaveProperty('addPost');
     expect(fields).toHaveProperty('addVote');
     expect(fields).toHaveProperty('addComment');
+    expect(fields).toHaveProperty('updateComment');
     expect(fields).toHaveProperty('createMessage');
     expect(fields).toHaveProperty('updateUser');
     expect(fields).toHaveProperty('reportPost');
