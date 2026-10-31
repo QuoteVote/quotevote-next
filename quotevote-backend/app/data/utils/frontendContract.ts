@@ -27,13 +27,6 @@ export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   GET_PAGINATED_POSTS: '#539',
   GET_FEATURED_POSTS: '#539',
   SEARCH: '#539',
-  // Buddy mutations still use the Roster arguments (#582)
-  ADD_BUDDY: '#582',
-  ACCEPT_BUDDY: '#582',
-  DECLINE_BUDDY: '#582',
-  BLOCK_BUDDY: '#582',
-  UNBLOCK_BUDDY: '#582',
-  REMOVE_BUDDY: '#582',
   // Mutations with no resolver yet (#633)
   SUBMIT_POST: '#633',
   DELETE_POST: '#633',
