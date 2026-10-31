@@ -12,7 +12,7 @@
 import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
 import MessageSend from '@/components/Chat/MessageSend'
 import { useAppStore } from '@/store'
-import { GET_ROSTER } from '@/graphql/queries'
+import { GET_USER_BLOCK_STATUS } from '@/graphql/queries'
 import { toast } from 'sonner'
 
 jest.mock('sonner', () => ({
@@ -106,11 +106,11 @@ describe('MessageSend', () => {
     mutationCallbacks = {}
     mockMutate.mockResolvedValue({ data: { createMessage: { _id: 'msg1', messageRoomId: 'room1' } } })
 
-    // Mock useQuery to return roster data by default
+    // Mock useQuery to return an unblocked status by default
     mockUseQuery.mockImplementation((query) => {
-      if (query === GET_ROSTER) {
+      if (query === GET_USER_BLOCK_STATUS) {
         return {
-          data: { getRoster: [] },
+          data: { userBlockStatus: { userId: 'user2', blockedByMe: false, blockedMe: false } },
           loading: false,
           error: undefined,
         }
@@ -268,16 +268,16 @@ describe('MessageSend', () => {
   })
 
   it('disables input and shows blocked message when user is blocked', async () => {
-    // Mock useQuery to return blocked user via flat roster array
-    mockUseQuery.mockReturnValueOnce({
-      data: {
-        getRoster: [
-          { _id: 'r1', userId: 'user2', buddyId: 'user1', status: 'blocked', initiatedBy: 'user2' },
-        ],
-      },
-      loading: false,
-      error: undefined,
-    })
+    // Other user blocked the current user
+    mockUseQuery.mockImplementation((query) =>
+      query === GET_USER_BLOCK_STATUS
+        ? {
+            data: { userBlockStatus: { userId: 'user2', blockedByMe: false, blockedMe: true } },
+            loading: false,
+            error: undefined,
+          }
+        : { data: undefined, loading: false, error: undefined }
+    )
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
@@ -301,6 +301,28 @@ describe('MessageSend', () => {
     await waitFor(() => {
       const input = screen.getByPlaceholderText('You cannot send messages to this user')
       expect(input).toBeDisabled()
+    })
+  })
+
+  it('queries block status for the other user and disables input when blocked by me', async () => {
+    mockUseQuery.mockImplementation((query) =>
+      query === GET_USER_BLOCK_STATUS
+        ? {
+            data: { userBlockStatus: { userId: 'user2', blockedByMe: true, blockedMe: false } },
+            loading: false,
+            error: undefined,
+          }
+        : { data: undefined, loading: false, error: undefined }
+    )
+
+    render(<MessageSend messageRoomId="room1" type="USER" />)
+
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      GET_USER_BLOCK_STATUS,
+      expect.objectContaining({ variables: { userId: 'user2' }, skip: false })
+    )
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('You have blocked this user')).toBeDisabled()
     })
   })
 

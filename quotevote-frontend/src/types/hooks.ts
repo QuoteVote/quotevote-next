@@ -3,6 +3,8 @@
  * All hook-related types are defined here following Migration Rules
  */
 
+import type { BuddyRequest } from '@/types/buddylist'
+
 // ============================================================================
 // Pagination Types
 // ============================================================================
@@ -135,37 +137,52 @@ export interface UseResponsiveReturn {
 }
 
 // ============================================================================
-// Roster Management Types
+// Buddy Management Types
 // ============================================================================
 
 /**
- * Roster mutation result (generic structure)
+ * Result of removeBuddy / declineBuddy
  */
-export interface RosterMutationResult {
-  /** Success status */
+export interface BuddyMutationResult {
+  _id: string
   success: boolean
-  /** Result message */
-  message?: string
-  /** Additional data */
-  [key: string]: unknown
 }
 
 /**
- * Return type for useRosterManagement hook
+ * Return type for useBuddyManagement hook
  */
-export interface UseRosterManagementReturn {
-  /** Add a buddy (send friend request) */
-  addBuddy: (buddyId: string) => Promise<RosterMutationResult>
+export interface UseBuddyManagementReturn {
+  /** Send a buddy request to a user */
+  addBuddy: (userId: string) => Promise<BuddyRequest>
   /** Accept a buddy request */
-  acceptBuddy: (rosterId: string) => Promise<RosterMutationResult>
+  acceptBuddy: (requestId: string) => Promise<BuddyRequest>
   /** Decline a buddy request */
-  declineBuddy: (rosterId: string) => Promise<RosterMutationResult>
-  /** Block a buddy */
-  blockBuddy: (buddyId: string) => Promise<RosterMutationResult>
-  /** Unblock a buddy */
-  unblockBuddy: (buddyId: string) => Promise<RosterMutationResult>
+  declineBuddy: (requestId: string) => Promise<BuddyMutationResult>
   /** Remove a buddy */
-  removeBuddy: (buddyId: string) => Promise<RosterMutationResult>
+  removeBuddy: (userId: string) => Promise<BuddyMutationResult>
+}
+
+/**
+ * Return type for useUserBlock hook
+ */
+export interface UseUserBlockReturn {
+  /** Current user blocked the other user */
+  blockedByMe: boolean
+  /** Other user blocked the current user */
+  blockedMe: boolean
+  /** Block the other user */
+  block: () => Promise<void>
+  /** Unblock the other user */
+  unblock: () => Promise<void>
+  /** Block status is loading */
+  loading: boolean
+}
+
+/**
+ * Block status data
+ */
+export interface UserBlockStatusData {
+  userBlockStatus: { userId: string; blockedByMe: boolean; blockedMe: boolean }
 }
 
 // ============================================================================
@@ -302,45 +319,6 @@ export interface NotificationSubscriptionData {
 export interface NotificationSubscriptionResult {
   /** Notification data from subscription */
   notification: NotificationSubscriptionData
-}
-
-// ============================================================================
-// Roster Subscription Types
-// ============================================================================
-
-/**
- * Roster entry data structure from subscription
- */
-export interface RosterEntryData {
-  /** Roster entry ID */
-  _id: string
-  /** User ID */
-  userId: string
-  /** Buddy ID */
-  buddyId: string
-  /** Roster status */
-  status: string
-  /** Who initiated the relationship */
-  initiatedBy: string
-  /** Creation timestamp */
-  created: string
-  /** Last update timestamp */
-  updated: string
-  /** Buddy information */
-  buddy?: {
-    _id: string
-    name?: string | null
-    username?: string | null
-    avatar?: string | null
-  } | null
-}
-
-/**
- * Roster subscription result
- */
-export interface RosterSubscriptionResult {
-  /** Roster entry data from subscription */
-  roster: RosterEntryData
 }
 
 /**

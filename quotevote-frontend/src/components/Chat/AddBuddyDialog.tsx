@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Avatar from '@/components/Avatar';
 import { SEARCH_USERNAMES } from '@/graphql/queries';
-import { useRosterManagement } from '@/hooks/useRosterManagement';
+import { useBuddyManagement } from '@/hooks/useBuddyManagement';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
 import type { BuddySearchResult } from '@/types/chat';
@@ -31,7 +31,7 @@ const MIN_QUERY_LENGTH = 2;
 
 const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const { addBuddy } = useRosterManagement();
+  const { addBuddy } = useBuddyManagement();
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
 
   const presenceMap = useAppStore((state) => state.chat.presenceMap);
