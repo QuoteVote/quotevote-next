@@ -112,7 +112,7 @@ We welcome contributions! Please ensure:
 - Code follows the project's style guidelines
 - Documentation is updated as needed
 
-For detailed contribution guidelines, see the individual README files in the frontend and backend directories.
+Start with our [Contribution Guide](CONTRIBUTING.md) for finding work, coordinating assignments, submitting PRs, and understanding the 2.0 staging rules. Package-specific instructions are in the frontend and backend READMEs.
 
 ## 💰 Support
 
