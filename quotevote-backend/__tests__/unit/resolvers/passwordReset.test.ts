@@ -16,8 +16,9 @@ import {
   verifyToken,
 } from '~/data/utils/authentication';
 import sendGridEmail from '~/data/utils/send-grid-mail';
-import { rateLimitMap } from '~/data/utils/rateLimiter';
+import { resetExpiryIndexState } from '~/data/utils/rateLimiter';
 import type { GraphQLContext } from '~/types/graphql';
+import { createRateLimitStore, type RateLimitStore } from '../../helpers/rateLimitStore';
 
 jest.mock('~/data/utils/send-grid-mail', () => ({
   __esModule: true,
@@ -47,16 +48,19 @@ const activeUser = {
   status: 2,
 };
 
-function mockContext(ip = '203.0.113.7'): GraphQLContext {
+let rateLimits: RateLimitStore;
+
+function mockContext(ip = '203.0.113.7', trustProxy: number | false = false): GraphQLContext {
   return {
     prisma: {
+      $runCommandRaw: rateLimits.$runCommandRaw,
       user: {
         findFirst: jest.fn().mockResolvedValue(null),
         findUnique: jest.fn().mockResolvedValue(null),
         update: jest.fn().mockResolvedValue({}),
       },
     },
-    req: { ip },
+    req: { ip, app: { get: (name: string) => (name === 'trust proxy' ? trustProxy : undefined) } },
     user: undefined,
   } as unknown as GraphQLContext;
 }
@@ -71,7 +75,8 @@ const flush = (): Promise<void> => new Promise((resolve) => setImmediate(resolve
 describe('password reset (#623)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    rateLimitMap.clear();
+    resetExpiryIndexState();
+    rateLimits = createRateLimitStore();
   });
 
   describe('reset tokens', () => {
@@ -191,6 +196,45 @@ describe('password reset (#623)', () => {
       await expect(
         userResolver.Mutation.sendPasswordResetEmail(null, { email: 'b@x.io' }, ctx())
       ).resolves.toBe(true);
+    });
+
+    it('limits requests to 10 an hour per visitor when the proxy is trusted', async () => {
+      const ctx = (ip: string) => mockContext(ip, 1);
+      for (let i = 0; i < 10; i += 1) {
+        await userResolver.Mutation.sendPasswordResetEmail(
+          null,
+          { email: `user${i}@x.io` },
+          ctx('198.51.100.1')
+        );
+      }
+
+      await expectCode(
+        userResolver.Mutation.sendPasswordResetEmail(
+          null,
+          { email: 'new@x.io' },
+          ctx('198.51.100.1')
+        ),
+        'TOO_MANY_REQUESTS'
+      );
+      await expect(
+        userResolver.Mutation.sendPasswordResetEmail(
+          null,
+          { email: 'new@x.io' },
+          ctx('198.51.100.2')
+        )
+      ).resolves.toBe(true);
+    });
+
+    it('skips the per-visitor limit when the proxy is not trusted', async () => {
+      for (let i = 0; i < 11; i += 1) {
+        await userResolver.Mutation.sendPasswordResetEmail(
+          null,
+          { email: `user${i}@x.io` },
+          mockContext('10.0.0.1')
+        );
+      }
+
+      expect(rateLimits.docs.has('ip:10.0.0.1:passwordResetEmail')).toBe(false);
     });
   });
 

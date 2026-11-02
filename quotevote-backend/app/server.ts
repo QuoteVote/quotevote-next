@@ -12,6 +12,7 @@ import { createHttpContext } from './context';
 import { disconnectPrisma, prisma } from './lib/prisma';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
 import * as auth from './data/utils/authentication';
+import { parseTrustProxy } from './data/utils/trustProxy';
 import { createSubscriptionServer } from './subscriptions';
 
 // Load environment variables
@@ -53,6 +54,11 @@ async function startServer() {
   const subscriptionServer = createSubscriptionServer(httpServer, { schema });
 
   // 3. Middleware & Routes Integration
+  // Behind the hosting platform's proxy, set TRUST_PROXY=1 so req.ip is the
+  // visitor's address instead of the proxy's.
+  const trustProxy = parseTrustProxy(process.env.TRUST_PROXY);
+  if (trustProxy) app.set('trust proxy', trustProxy);
+
   app.use(
     cors<cors.CorsRequest>({
       origin: process.env.CLIENT_URL || 'http://localhost:3000',

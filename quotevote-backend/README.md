@@ -71,6 +71,10 @@ SECRET=your_jwt_secret_key
 # CORS
 CLIENT_URL=http://localhost:3000
 
+# Proxies in front of the server (1 on the hosting platform). Leave unset locally.
+# Per-visitor rate limits only apply when this is set.
+TRUST_PROXY=1
+
 # Email (if using SendGrid)
 SENDGRID_API_KEY=your_sendgrid_api_key
 
