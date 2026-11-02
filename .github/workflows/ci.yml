@@ -172,7 +172,10 @@ jobs:
 
       # Catches documents selecting fields the deployed API does not expose,
       # which type-check cannot see and which fail at runtime with HTTP 400.
+      # The snapshot is the current API's schema. Pull requests into staging
+      # target the new backend, and Backend CI's contract check covers them.
       - name: Validate GraphQL documents against schema snapshot
+        if: github.base_ref != 'staging'
         run: pnpm validate:graphql
 
       - name: Run tests
