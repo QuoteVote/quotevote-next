@@ -4,6 +4,10 @@ import mongoose from 'mongoose';
 import BotReport from '~/data/models/BotReport';
 import UserReport from '~/data/models/UserReport';
 
+// Mongoose sets `schema.aliases` at runtime but dropped it from its types in 9.x.
+const aliasesOf = (schema: object): Record<string, string> | undefined =>
+  (schema as { aliases?: Record<string, string> }).aliases;
+
 describe('BotReport & UserReport Legacy Compatibility', () => {
   const schemaPath = path.resolve(__dirname, '../../../prisma/schema/social.prisma');
   const schemaContent = fs.readFileSync(schemaPath, 'utf8');
@@ -77,8 +81,8 @@ describe('BotReport & UserReport Legacy Compatibility', () => {
     });
 
     it('should provide aliases for userId and reporterId', () => {
-      expect(BotReport.schema.aliases?.userId).toBe('_reportedUserId');
-      expect(BotReport.schema.aliases?.reporterId).toBe('_reporterId');
+      expect(aliasesOf(BotReport.schema)?.userId).toBe('_reportedUserId');
+      expect(aliasesOf(BotReport.schema)?.reporterId).toBe('_reporterId');
     });
 
     it('should configure legacy named indexes', () => {
@@ -104,8 +108,8 @@ describe('BotReport & UserReport Legacy Compatibility', () => {
     });
 
     it('should provide aliases for reportedUserId and reporterId', () => {
-      expect(UserReport.schema.aliases?.reportedUserId).toBe('_reportedUserId');
-      expect(UserReport.schema.aliases?.reporterId).toBe('_reporterId');
+      expect(aliasesOf(UserReport.schema)?.reportedUserId).toBe('_reportedUserId');
+      expect(aliasesOf(UserReport.schema)?.reporterId).toBe('_reporterId');
     });
 
     it('should configure legacy named indexes', () => {
