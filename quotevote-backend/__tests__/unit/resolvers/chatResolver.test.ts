@@ -6,7 +6,7 @@ import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 const date = new Date('2026-01-01T00:00:00.000Z');
 
 const createContext = () => ({
-  userId: 'user-1',
+  userId: 'user-1' as string | null,
   prisma: {
     messageRoom: {
       findUnique: jest.fn(),

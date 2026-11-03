@@ -51,5 +51,27 @@ describe('rosterResolver', () => {
       expect(result[0].buddy.name).toBe('Bob');
       expect(result[0]._id).toBe(mockRosterId.toString());
     });
+    it('keeps a legacy entry that has no initiatedBy', async () => {
+      const mockUserId = '507f1f77bcf86cd799439011';
+      const mockBuddyId = new mongoose.Types.ObjectId();
+
+      (Roster.find as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue([
+          {
+            _id: new mongoose.Types.ObjectId(),
+            userId: new mongoose.Types.ObjectId(mockUserId),
+            buddyId: mockBuddyId,
+          },
+        ]),
+      });
+      (User.find as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue([{ _id: mockBuddyId, name: 'Bob', username: 'bob' }]),
+      });
+
+      const result = await rosterResolver.Query.getRoster(null, {}, { userId: mockUserId });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].initiatedBy).toBeUndefined();
+    });
   });
 });

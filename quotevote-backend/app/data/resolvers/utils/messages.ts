@@ -118,9 +118,11 @@ export const addUserToPostRoom = async (
         data: { lastActivity: now },
       });
     }
-    messageRoom = await prisma.messageRoom.findUnique({
+    const reloaded = await prisma.messageRoom.findUnique({
       where: { id: messageRoom.id },
     });
+    if (!reloaded) throw new Error('Message room was removed while adding a member');
+    messageRoom = reloaded;
   } else {
     messageRoom = await prisma.messageRoom.create({
       data: {
