@@ -73,7 +73,7 @@ The following release-specific rules apply while the legacy application and migr
 
 1. **Protect the current beta.** The hosted beta continues to use the legacy API until a coordinated cutover. Most compatible changes target `main`. Frontend changes that require the new GraphQL contract (for example, Group → Tag and Buddy API migration) should target **`staging`**, following the issue's instructions and maintainer confirmation.
 2. **Preserve existing data.** The Prisma models map to legacy MongoDB collections and fields. Test against legacy-shaped fixtures, including absent optional fields and older records. Never run `prisma db push`, `pnpm prisma:push`, destructive migrations, or data backfills against production or a shared database without an explicitly reviewed plan and authorization.
-3. **Keep frontend and backend contracts aligned.** Backend CI runs `pnpm check:contract` to validate frontend GraphQL documents, including whether root resolvers exist. Frontend CI runs `pnpm validate:graphql` against its configured schema snapshot. Coordinate intentional staging-only changes and keep documented exceptions accurate; do not hand-edit a schema snapshot merely to silence failures.
+3. **Keep frontend and backend contracts aligned.** Backend CI runs `pnpm check:contract` to validate frontend GraphQL documents against the new backend, including whether root resolvers exist. Frontend CI runs `pnpm validate:graphql` against the current API's schema snapshot on pull requests into `main`; pull requests into `staging` skip it and rely on the contract check. Keep documented exceptions accurate, and do not hand-edit a schema snapshot merely to silence failures.
 4. **Preserve authorization and privacy.** Enforce permissions server-side for writes and reads, including room membership, cross-account actions, blocked users, public-user field selection, and disabled or deleted content. Include negative tests.
 5. **Respect product decisions and dependencies.** Voting semantics, deletion and retention, Terms acceptance, and other policy-sensitive changes may need explicit product decisions before implementation. Surface assumptions in the issue rather than choosing a policy silently.
 6. **Use isolated environments.** Never access, export, attach, or disclose real members' private messages, personal information, tokens, keys, or production database records in issues, PRs, fixtures, logs, or screenshots. Use synthetic or properly anonymized data. Deployment, staging credentials, backfills, and the production cutover are coordinated by maintainers.
@@ -91,6 +91,7 @@ The following release-specific rules apply while the legacy application and migr
    | `pnpm test` | `pnpm test` |
    | `pnpm validate:graphql` | `pnpm check:contract` |
    | `pnpm build` | `pnpm build` |
+   | `pnpm exec prettier --check <changed files>` | `pnpm exec prettier --check <changed files>` |
 
    Playwright E2E tests may require browsers, a configured test environment, and test credentials. State explicitly if they were skipped or could not run. Automated CI checks supplement, rather than replace, testing actual user journeys.
 4. In the PR description include:
