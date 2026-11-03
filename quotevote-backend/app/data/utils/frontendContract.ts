@@ -37,12 +37,6 @@ export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   // Mutations with no resolver yet (#633)
   VOTE: '#633',
   DELETE_VOTE: '#633',
-  SEND_MESSAGE: '#633',
-  DELETE_MESSAGE: '#633',
-  CREATE_POST_MESSAGE_ROOM: '#633',
-  READ_MESSAGES: '#633',
-  ADD_MESSAGE_REACTION: '#633',
-  UPDATE_MESSAGE_REACTION: '#633',
   FOLLOW_USER: '#633',
   REPORT_USER: '#633',
   DISABLE_USER: '#633',

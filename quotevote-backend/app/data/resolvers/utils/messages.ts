@@ -2,6 +2,7 @@ import type { Message, MessageRoom, PrismaClient } from '@prisma/client';
 import type * as Common from '~/types/common';
 import { unique, whenAny } from '~/data/resolvers/utils/batchLoad';
 import { canAccessRoom } from '~/data/utils/roomAccess';
+import { MESSAGE_ROOM_SELECT, type MessageRoomRecord } from '~/data/resolvers/utils/chatRooms';
 import {
   PUBLIC_USER_SELECT,
   toPublicUser,
@@ -87,50 +88,52 @@ export const getUnreadMessages = async (
 /**
  * Add a user to a post's message room.
  * Creates the room if it doesn't exist. Idempotent for existing members.
+ * Legacy rooms have no createdAt/updatedAt, so every read and write selects.
  */
 export const addUserToPostRoom = async (
-  prisma: PrismaClient,
+  prisma: Pick<PrismaClient, 'messageRoom'>,
   postId: string,
   userId: string
-): Promise<MessageRoom> => {
-  let messageRoom = await prisma.messageRoom.findFirst({
+): Promise<MessageRoomRecord> => {
+  const existing = await prisma.messageRoom.findFirst({
     where: {
       postId,
       messageType: 'POST',
     },
+    select: MESSAGE_ROOM_SELECT,
   });
 
-  if (messageRoom) {
-    const now = new Date();
-    const addMemberResult = await prisma.messageRoom.updateMany({
-      where: {
-        id: messageRoom.id,
-        NOT: { userIds: { has: userId } },
-      },
-      data: {
-        userIds: { push: userId },
-        lastActivity: now,
-      },
-    });
-    if (addMemberResult.count === 0) {
-      await prisma.messageRoom.update({
-        where: { id: messageRoom.id },
-        data: { lastActivity: now },
-      });
-    }
-    messageRoom = await prisma.messageRoom.findUnique({
-      where: { id: messageRoom.id },
-    });
-  } else {
-    messageRoom = await prisma.messageRoom.create({
+  if (!existing) {
+    return prisma.messageRoom.create({
       data: {
         userIds: [userId],
         postId,
         messageType: 'POST',
         lastActivity: new Date(),
       },
+      select: MESSAGE_ROOM_SELECT,
     });
   }
 
-  return messageRoom;
+  const now = new Date();
+  const addMemberResult = await prisma.messageRoom.updateMany({
+    where: {
+      id: existing.id,
+      NOT: { userIds: { has: userId } },
+    },
+    data: {
+      userIds: { push: userId },
+      lastActivity: now,
+    },
+  });
+  if (addMemberResult.count === 0) {
+    await prisma.messageRoom.updateMany({
+      where: { id: existing.id },
+      data: { lastActivity: now },
+    });
+  }
+  const userIds = existing.userIds.includes(userId)
+    ? existing.userIds
+    : [...existing.userIds, userId];
+  return { ...existing, userIds, lastActivity: now };
 };
