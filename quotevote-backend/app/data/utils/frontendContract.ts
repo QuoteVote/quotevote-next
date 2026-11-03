@@ -47,8 +47,6 @@ export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   REPORT_USER: '#633',
   DISABLE_USER: '#633',
   ENABLE_USER: '#633',
-  SEND_USER_INVITE: '#633',
-  SEND_INVESTOR_EMAIL: '#633',
 };
 
 const DOCUMENT_PATTERN = /export const (\w+) = gql`([\s\S]*?)`/g;
