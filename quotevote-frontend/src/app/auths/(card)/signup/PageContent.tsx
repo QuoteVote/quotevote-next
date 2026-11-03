@@ -9,26 +9,14 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { UPDATE_USER } from '@/graphql/mutations'
-import { VERIFY_PASSWORD_RESET_TOKEN } from '@/graphql/queries'
-import { setToken } from '@/lib/auth'
-import { useAppStore } from '@/store/useAppStore'
+import { COMPLETE_SIGNUP } from '@/graphql/mutations'
+import { VERIFY_INVITE_SIGNUP_TOKEN } from '@/graphql/queries'
+import { CURRENT_TERMS_VERSION } from '@/lib/constants/terms'
+import type { CompleteSignupData, VerifyInviteSignupTokenData } from '@/types/signup'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-
-interface VerifyTokenData {
-  verifyUserPasswordResetToken: {
-    _id: string
-    username: string
-    email: string
-  } | null
-}
-
-interface UpdateUserData {
-  updateUser: Record<string, unknown>
-}
 
 const signupSchema = z
   .object({
@@ -46,6 +34,9 @@ const signupSchema = z
         'Must contain uppercase, lowercase, and number'
       ),
     confirmPassword: z.string(),
+    tos: z.boolean().refine((accepted) => accepted, {
+      message: 'You must agree to the Terms of Service',
+    }),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Passwords do not match',
@@ -58,23 +49,22 @@ export default function SignupPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token') || ''
-  const setUserData = useAppStore((s) => s.setUserData)
   const [submitting, setSubmitting] = useState(false)
 
   // Verify the invite token
-  const { data: tokenData, loading: tokenLoading, error: tokenError } = useQuery<VerifyTokenData>(VERIFY_PASSWORD_RESET_TOKEN, {
+  const { data: tokenData, loading: tokenLoading, error: tokenError } = useQuery<VerifyInviteSignupTokenData>(VERIFY_INVITE_SIGNUP_TOKEN, {
     variables: { token },
     skip: !token,
   })
 
-  const verifiedUser = tokenData?.verifyUserPasswordResetToken
+  const verifiedUser = tokenData?.verifyInviteSignupToken
   // The address the invite was approved for. It stays on the account (#592).
   const invitedEmail =
     token && typeof verifiedUser?.email === 'string' && verifiedUser.email
       ? verifiedUser.email
       : undefined
 
-  const [updateUser] = useMutation<UpdateUserData>(UPDATE_USER)
+  const [completeSignup] = useMutation<CompleteSignupData>(COMPLETE_SIGNUP)
 
   const {
     register,
@@ -83,6 +73,7 @@ export default function SignupPageContent() {
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
+    defaultValues: { tos: false },
   })
 
   useEffect(() => {
@@ -93,23 +84,19 @@ export default function SignupPageContent() {
     setSubmitting(true)
     try {
       if (token && verifiedUser) {
-        // Invite-based signup: update the existing user via GraphQL. The email is
-        // left out so the account keeps the address the invite was approved for.
-        setToken(token)
-        const result = await updateUser({
+        // Invite-based signup. The invite token is not a session, so the user signs in
+        // afterwards. The email is left out so the account keeps the invited address.
+        const result = await completeSignup({
           variables: {
-            user: {
-              _id: verifiedUser._id,
-              name: '',
-              username: values.username,
-              password: values.password,
-            },
+            token,
+            username: values.username,
+            password: values.password,
+            acceptedTermsVersion: CURRENT_TERMS_VERSION,
           },
         })
-        if (result.data?.updateUser) {
-          setUserData(result.data.updateUser as Record<string, unknown>)
-          toast.success('Account set up! Redirecting...')
-          router.push('/')
+        if (result.data?.completeSignup) {
+          toast.success('Account created! Please sign in.')
+          router.push('/auths/login')
           return
         }
       } else {
@@ -226,6 +213,31 @@ export default function SignupPageContent() {
           />
           {errors.confirmPassword && (
             <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+          )}
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-start gap-2">
+            <input
+              id="signup-tos"
+              type="checkbox"
+              {...register('tos')}
+              data-testid="signup-tos-checkbox"
+              aria-label="I agree to the Terms of Service"
+              aria-invalid={Boolean(errors.tos)}
+              aria-describedby={errors.tos ? 'signup-tos-error' : undefined}
+              className="mt-1 h-4 w-4 accent-primary"
+            />
+            <div className="text-sm leading-6">
+              <label htmlFor="signup-tos">I agree to the </label>
+              <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+          {errors.tos && (
+            <p id="signup-tos-error" role="alert" className="text-sm text-destructive">
+              {errors.tos.message}
+            </p>
           )}
         </div>
         <Button type="submit" disabled={submitting} className="w-full" data-testid="signup-submit-button">
