@@ -4,6 +4,9 @@ import mongoose from 'mongoose';
 import BotReport from '~/data/models/BotReport';
 import UserReport from '~/data/models/UserReport';
 
+/** A schema index as Mongoose lists it: the keys, then the options. */
+type IndexSpec = [Record<string, number>, { name?: string; unique?: boolean } | undefined];
+
 describe('BotReport & UserReport Legacy Compatibility', () => {
   const schemaPath = path.resolve(__dirname, '../../../prisma/schema/social.prisma');
   const schemaContent = fs.readFileSync(schemaPath, 'utf8');
@@ -82,7 +85,7 @@ describe('BotReport & UserReport Legacy Compatibility', () => {
     });
 
     it('should configure legacy named indexes', () => {
-      const indexes = BotReport.schema.indexes();
+      const indexes = BotReport.schema.indexes() as IndexSpec[];
       const indexNames = indexes.map(([, options]) => options?.name);
 
       expect(indexNames).toContain('_reporterId_1__reportedUserId_1');
@@ -109,7 +112,7 @@ describe('BotReport & UserReport Legacy Compatibility', () => {
     });
 
     it('should configure legacy named indexes', () => {
-      const indexes = UserReport.schema.indexes();
+      const indexes = UserReport.schema.indexes() as IndexSpec[];
       const indexNames = indexes.map(([, options]) => options?.name);
 
       expect(indexNames).toContain('_reportedUserId_1_status_1');
@@ -121,7 +124,7 @@ describe('BotReport & UserReport Legacy Compatibility', () => {
   describe('Legacy & Prisma Deduplication Behavior', () => {
     it('should verify that legacy and Prisma reports share the exact same MongoDB unique index key', () => {
       // Both rely on {_reporterId: 1, _reportedUserId: 1} unique index
-      const indexes = BotReport.schema.indexes();
+      const indexes = BotReport.schema.indexes() as IndexSpec[];
       const uniqueIndex = indexes.find(
         ([fields]) => (fields as Record<string, number>)._reporterId === 1 && (fields as Record<string, number>)._reportedUserId === 1
       );
