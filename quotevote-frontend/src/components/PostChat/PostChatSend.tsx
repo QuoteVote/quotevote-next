@@ -169,6 +169,7 @@ export default function PostChatSend({
           text: text.trim(),
           type,
           created: dateSubmitted.toISOString(),
+          deleted: false,
           user: {
             __typename: 'User' as const,
             _id: ((user._id || user.id) as string) || '',

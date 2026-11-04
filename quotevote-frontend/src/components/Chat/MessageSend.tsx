@@ -96,7 +96,7 @@ export default function MessageSend({
     messageRoomId || ''
   );
 
-  const [createMessage, { loading }] = useMutation<{ createMessage?: { __typename?: string; _id?: string; messageRoomId?: string; userName?: string; userId?: string; title?: string | null; text?: string; type?: string; created?: string; readBy?: unknown[]; user?: { __typename?: string; _id?: string; name?: string; username?: string; avatar?: string } } }>(SEND_MESSAGE, {
+  const [createMessage, { loading }] = useMutation<{ createMessage?: { __typename?: string; _id?: string; messageRoomId?: string; userName?: string; userId?: string; title?: string | null; text?: string; type?: string; created?: string; deleted?: boolean | null; readBy?: unknown[]; user?: { __typename?: string; _id?: string; name?: string; username?: string; avatar?: string } } }>(SEND_MESSAGE, {
     onError: (err) => {
       // Check if error is due to blocking
       const errorMessage = err.message || 'Failed to send message';

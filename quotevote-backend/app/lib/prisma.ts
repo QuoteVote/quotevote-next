@@ -3,7 +3,7 @@
  *
  * Provides a single shared PrismaClient instance for the entire application.
  * Uses globalThis caching to prevent multiple instances during development
- * hot-reloads (ts-node-dev --respawn).
+ * hot-reloads (`tsx watch`).
  *
  * ## Injection Path
  *

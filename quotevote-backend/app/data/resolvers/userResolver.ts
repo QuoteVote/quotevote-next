@@ -20,6 +20,7 @@ import {
   type PrismaUserRecord,
 } from '~/data/utils/userPrismaMapper';
 import { uniqueArrayObjects } from '~/data/resolvers/utils/common';
+import { loadUserReputation } from '~/data/resolvers/utils/reputation';
 import type * as Common from '~/types/common';
 import type { FollowInfoEntry, GraphQLContext } from '~/types/graphql';
 
@@ -86,8 +87,9 @@ const INVITE_STATUS_REQUESTED = 1;
 /** Legacy invite code for an approved invite whose account isn't set up yet. */
 const INVITE_STATUS_APPROVED = 4;
 
-/** Reset email requests allowed per address in each window. */
+/** Reset email requests allowed per email address, and per visitor, in each window. */
 const RESET_EMAIL_LIMIT_PER_EMAIL = 3;
+const RESET_EMAIL_LIMIT_PER_IP = 10;
 const RESET_EMAIL_WINDOW_MS = 60 * 60 * 1000;
 
 /** Same rule as the reset page: 8+ characters with upper, lower and a digit. */
@@ -102,9 +104,15 @@ function invalidResetLink(): GraphQLError {
 }
 
 /** Applies a rate limit, turning the limiter's error into a GraphQL error. */
-function enforceRateLimit(key: string, action: string, limit: number, windowMs: number): void {
+async function enforceRateLimit(
+  prisma: GraphQLContext['prisma'],
+  key: string,
+  action: string,
+  limit: number,
+  windowMs: number
+): Promise<void> {
   try {
-    checkRateLimit(key, action, limit, windowMs);
+    await checkRateLimit(prisma, key, action, limit, windowMs);
   } catch {
     throw new GraphQLError('Too many requests. Please try again later.', {
       extensions: { code: 'TOO_MANY_REQUESTS' },
@@ -471,14 +479,26 @@ export const userResolver = {
         });
       }
 
-      // Per address only: the server doesn't trust proxy headers yet, so behind a
-      // proxy every request would share one IP and a per-IP limit would apply site-wide.
-      enforceRateLimit(
+      await enforceRateLimit(
+        context.prisma,
         `email:${email.toLowerCase()}`,
         'passwordResetEmail',
         RESET_EMAIL_LIMIT_PER_EMAIL,
         RESET_EMAIL_WINDOW_MS
       );
+      // Per visitor only when the server trusts the platform's proxy (TRUST_PROXY).
+      // Otherwise every request carries the proxy's address and the limit would
+      // apply to the whole site.
+      const visitorIp = context.req?.app?.get('trust proxy') ? context.req.ip : undefined;
+      if (visitorIp) {
+        await enforceRateLimit(
+          context.prisma,
+          `ip:${visitorIp}`,
+          'passwordResetEmail',
+          RESET_EMAIL_LIMIT_PER_IP,
+          RESET_EMAIL_WINDOW_MS
+        );
+      }
 
       const user = await context.prisma.user.findFirst({
         where: { email: { equals: email, mode: 'insensitive' } },
@@ -929,5 +949,15 @@ export const userResolver = {
         message: 'Bot report submitted successfully',
       };
     },
+  },
+  User: {
+    // Legacy users have no embedded reputation, so a profile reads the stored
+    // row or calculates one. Only runs when a query selects the field.
+    reputation: async (
+      parent: Common.User,
+      _args: unknown,
+      context: GraphQLContext
+    ): Promise<Common.Reputation | null> =>
+      parent.reputation ?? loadUserReputation(context.prisma, parent._id),
   },
 };

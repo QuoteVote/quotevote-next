@@ -4,6 +4,13 @@ import mongoose from 'mongoose';
 import BotReport from '~/data/models/BotReport';
 import UserReport from '~/data/models/UserReport';
 
+/** A schema index as Mongoose lists it: the keys, then the options. */
+type IndexSpec = [Record<string, number>, { name?: string; unique?: boolean } | undefined];
+
+// Mongoose sets `schema.aliases` at runtime but dropped it from its types in 9.x.
+const aliasesOf = (schema: object): Record<string, string> | undefined =>
+  (schema as { aliases?: Record<string, string> }).aliases;
+
 describe('BotReport & UserReport Legacy Compatibility', () => {
   const schemaPath = path.resolve(__dirname, '../../../prisma/schema/social.prisma');
   const schemaContent = fs.readFileSync(schemaPath, 'utf8');
@@ -77,12 +84,12 @@ describe('BotReport & UserReport Legacy Compatibility', () => {
     });
 
     it('should provide aliases for userId and reporterId', () => {
-      expect(BotReport.schema.aliases?.userId).toBe('_reportedUserId');
-      expect(BotReport.schema.aliases?.reporterId).toBe('_reporterId');
+      expect(aliasesOf(BotReport.schema)?.userId).toBe('_reportedUserId');
+      expect(aliasesOf(BotReport.schema)?.reporterId).toBe('_reporterId');
     });
 
     it('should configure legacy named indexes', () => {
-      const indexes = BotReport.schema.indexes();
+      const indexes = BotReport.schema.indexes() as IndexSpec[];
       const indexNames = indexes.map(([, options]) => options?.name);
 
       expect(indexNames).toContain('_reporterId_1__reportedUserId_1');
@@ -104,12 +111,12 @@ describe('BotReport & UserReport Legacy Compatibility', () => {
     });
 
     it('should provide aliases for reportedUserId and reporterId', () => {
-      expect(UserReport.schema.aliases?.reportedUserId).toBe('_reportedUserId');
-      expect(UserReport.schema.aliases?.reporterId).toBe('_reporterId');
+      expect(aliasesOf(UserReport.schema)?.reportedUserId).toBe('_reportedUserId');
+      expect(aliasesOf(UserReport.schema)?.reporterId).toBe('_reporterId');
     });
 
     it('should configure legacy named indexes', () => {
-      const indexes = UserReport.schema.indexes();
+      const indexes = UserReport.schema.indexes() as IndexSpec[];
       const indexNames = indexes.map(([, options]) => options?.name);
 
       expect(indexNames).toContain('_reportedUserId_1_status_1');
@@ -121,9 +128,11 @@ describe('BotReport & UserReport Legacy Compatibility', () => {
   describe('Legacy & Prisma Deduplication Behavior', () => {
     it('should verify that legacy and Prisma reports share the exact same MongoDB unique index key', () => {
       // Both rely on {_reporterId: 1, _reportedUserId: 1} unique index
-      const indexes = BotReport.schema.indexes();
+      const indexes = BotReport.schema.indexes() as IndexSpec[];
       const uniqueIndex = indexes.find(
-        ([fields]) => (fields as Record<string, number>)._reporterId === 1 && (fields as Record<string, number>)._reportedUserId === 1
+        ([fields]) =>
+          (fields as Record<string, number>)._reporterId === 1 &&
+          (fields as Record<string, number>)._reportedUserId === 1
       );
       expect(uniqueIndex).toBeDefined();
       expect(uniqueIndex?.[1]?.unique).toBe(true);

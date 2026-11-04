@@ -22,10 +22,11 @@ export async function whenAny<T>(
 export const isLive = (row: { deleted?: boolean | null }): boolean => row.deleted !== true;
 
 export const groupIdsByPost = (
-  rows: { id: string; postId: string; deleted?: boolean | null }[]
+  rows: { id: string; postId: string | null; deleted?: boolean | null }[]
 ): Map<string, { _id: string }[]> => {
   const byPost = new Map<string, { _id: string }[]>();
   for (const row of rows.filter(isLive)) {
+    if (!row.postId) continue;
     const list = byPost.get(row.postId) ?? [];
     list.push({ _id: row.id });
     byPost.set(row.postId, list);

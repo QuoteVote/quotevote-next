@@ -41,7 +41,8 @@ export const rosterResolver = {
           _id: entry._id.toString(),
           userId: entry.userId.toString(),
           buddyId: entry.buddyId.toString(),
-          initiatedBy: entry.initiatedBy.toString(),
+          // Legacy roster rows can be missing who started them.
+          initiatedBy: entry.initiatedBy?.toString(),
           buddy: { ...buddy, _id: buddy._id.toString() },
         });
       }

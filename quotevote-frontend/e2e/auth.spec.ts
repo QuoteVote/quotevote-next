@@ -144,82 +144,22 @@ test.describe("Invite Request CTA (E2E-AUTH-005)", () => {
   });
 });
 
-test.describe("Signup / Account Creation (E2E-AUTH-001)", () => {
+test.describe("Signup is invitation-only (E2E-AUTH-001)", () => {
   // Override global storage state so we start as a logged-out visitor
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test("creates a new account, logs in, and routes to authenticated dashboard", async ({ page }) => {
-    // 1. Listen for page errors from the start of the test
-    const pageErrors: string[] = [];
-    page.on("pageerror", (error) => pageErrors.push(error.message));
-
-    const errorToastLocator = page.locator('[data-sonner-toast][data-type="error"]');
-    const uniqueId = Date.now();
-    const uniqueUsername = `user_${uniqueId.toString().slice(-10)}`;
-    const uniqueEmail = `e2e-signup-${uniqueId}@example.com`;
-    const validPassword = `Password${uniqueId}!`;
-
-    // 2. Open Quote.Vote while logged out and navigate to signup
+  test("opening signup without an invite link redirects to Request Access", async ({ page }) => {
     await page.goto("/auths/signup");
 
-    // 3. Assert signup form and elements load successfully
-    const signupForm = page.getByTestId("signup-form");
-    const usernameInput = page.getByTestId("signup-username-input");
-    const emailInput = page.getByTestId("signup-email-input");
-    const passwordInput = page.getByTestId("signup-password-input");
-    const confirmPasswordInput = page.getByTestId("signup-confirm-password-input");
-    const submitButton = page.getByTestId("signup-submit-button");
+    await page.waitForURL("**/auths/request-access", { timeout: 15000 });
+    await expect(page.getByTestId("signup-form")).toHaveCount(0);
+  });
 
-    await expect(signupForm).toBeVisible();
-    await expect(usernameInput).toBeVisible();
-    await expect(emailInput).toBeVisible();
-    await expect(passwordInput).toBeVisible();
-    await expect(confirmPasswordInput).toBeVisible();
-    await expect(submitButton).toBeVisible();
+  test("an invalid invite link shows the invalid invite screen, not a signup form", async ({ page }) => {
+    await page.goto("/auths/signup?token=not-a-real-invite");
 
-    // 4. Fill in direct signup credentials
-    await usernameInput.fill(uniqueUsername);
-    await emailInput.fill(uniqueEmail);
-    await passwordInput.fill(validPassword);
-    await confirmPasswordInput.fill(validPassword);
-
-    // 5. Submit the signup form
-    await submitButton.click();
-
-    // 6. Direct signup redirects to /auths/login
-    await page.waitForURL("**/auths/login", { timeout: 15000 });
-
-    // 7. Complete login using newly created credentials
-    await page.getByPlaceholder('Email/Username').fill(uniqueEmail);
-    await page.getByPlaceholder('Password').fill(validPassword);
-
-    await page.click('#tos');
-    await page.click('#coc');
-
-    const loginButton = page.getByRole('button', { name: 'Log in' });
-    await expect(loginButton).toBeEnabled();
-
-    await loginButton.click({ force: true });
-
-    // 8. Verify navigation to the authenticated experience /
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 15000 });
-
-    // 9. Confirm the new user is authenticated
-    const authNav = page.getByTestId("authenticated-navigation").filter({ visible: true });
-    await expect(authNav).toBeVisible();
-
-    const profileMenu = page.getByTestId("user-profile-menu").filter({ visible: true });
-    await expect(profileMenu).toBeVisible();
-
-    // 10. Confirm session persists after page reload
-    await page.reload();
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 15000 });
-    await expect(authNav).toBeVisible();
-    await expect(profileMenu).toBeVisible();
-
-    // 11. No runtime errors or generic error toasts appear
-    await expect(errorToastLocator).toHaveCount(0);
-    expect(pageErrors).toHaveLength(0);
+    await expect(page.getByText("Invalid Invite")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("signup-form")).toHaveCount(0);
   });
 });
 
@@ -356,4 +296,4 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
   });
 });
 
-
+

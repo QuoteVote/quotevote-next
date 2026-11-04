@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { logger } from '~/data/utils/logger';
-import type { ReputationMetrics } from '~/types/common';
+import type { Reputation, ReputationMetrics } from '~/types/common';
 
 // ============================================================================
 // Types
@@ -242,4 +242,120 @@ export const recalculateAllReputations = async (
   }
 
   return results;
+};
+
+// ============================================================================
+// Profile Reputation
+// ============================================================================
+
+export type ProfileReputationPrisma = ReputationPrisma & Pick<PrismaClient, 'userReputation'>;
+
+interface RawReputation {
+  _id?: unknown;
+  overallScore?: unknown;
+  inviteNetworkScore?: unknown;
+  conductScore?: unknown;
+  activityScore?: unknown;
+  metrics?: Record<string, unknown>;
+  lastCalculated?: unknown;
+}
+
+const METRIC_KEYS = [
+  'totalInvitesSent',
+  'totalInvitesAccepted',
+  'totalInvitesDeclined',
+  'averageInviteeReputation',
+  'totalReportsReceived',
+  'totalReportsResolved',
+  'totalUpvotes',
+  'totalDownvotes',
+  'totalPosts',
+  'totalComments',
+] as const satisfies readonly (keyof ReputationMetrics)[];
+
+/** Raw reads return Extended JSON, so numbers may arrive wrapped, e.g. `{ $numberDouble }`. */
+const rawNumber = (value: unknown): number => {
+  if (typeof value === 'number') return value;
+  if (value && typeof value === 'object') {
+    const wrapped = Object.values(value)[0];
+    const parsed = Number(wrapped);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
+const rawDate = (value: unknown): Date | null => {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const inner =
+    value && typeof value === 'object' && '$date' in value
+      ? (value as { $date: unknown }).$date
+      : value;
+  const date =
+    inner && typeof inner === 'object'
+      ? new Date(rawNumber(inner))
+      : new Date(inner as string | number);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const rawId = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && '$oid' in value) {
+    const oid = (value as { $oid: unknown }).$oid;
+    return typeof oid === 'string' ? oid : null;
+  }
+  return null;
+};
+
+export type ProfileReputation = Reputation & { _userId: string };
+
+// Field resolvers on the UserReputation type don't run, so the shape is final
+// here. The schema declares scores and metrics as Int, and legacy stores fractions.
+const toProfileReputation = (
+  id: string,
+  userId: string,
+  source: RawReputation | ReputationData
+): ProfileReputation => ({
+  _id: id,
+  _userId: userId,
+  userId,
+  overallScore: Math.round(rawNumber(source.overallScore)),
+  inviteNetworkScore: Math.round(rawNumber(source.inviteNetworkScore)),
+  conductScore: Math.round(rawNumber(source.conductScore)),
+  activityScore: Math.round(rawNumber(source.activityScore)),
+  metrics: Object.fromEntries(
+    METRIC_KEYS.map((key) => [
+      key,
+      Math.round(rawNumber((source.metrics as Record<string, unknown> | undefined)?.[key])),
+    ])
+  ) as unknown as ReputationMetrics,
+  lastCalculated: (rawDate(source.lastCalculated) ?? new Date()).toISOString(),
+});
+
+/**
+ * Reputation shown on a profile. Legacy keeps one stored row per user and
+ * refreshes it daily; its owner field is `_userId`, which the Prisma model
+ * reads as `userId`, so the row is read raw. A user with no stored row gets a
+ * calculated one, which is not saved. Null when the user doesn't exist.
+ */
+export const loadUserReputation = async (
+  prisma: ProfileReputationPrisma,
+  userId: string
+): Promise<ProfileReputation | null> => {
+  try {
+    const rows = (await prisma.userReputation.findRaw({
+      filter: { $or: [{ _userId: { $oid: userId } }, { userId: { $oid: userId } }] },
+      options: { limit: 1 },
+    })) as unknown as RawReputation[];
+    const stored = rows[0];
+    if (stored) {
+      return toProfileReputation(rawId(stored._id) ?? userId, userId, stored);
+    }
+    return toProfileReputation(userId, userId, await calculateUserReputation(prisma, userId));
+  } catch (error: unknown) {
+    logger.error('Error loading user reputation', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+    });
+    return null;
+  }
 };

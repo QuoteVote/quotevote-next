@@ -5,14 +5,13 @@ A modern, type-safe backend API built with Express, TypeScript, and GraphQL. Thi
 ## 🚀 Tech Stack
 
 - **Runtime**: Node.js 20.x+
-- **Framework**: [Express](https://expressjs.com/) 5.2.1
+- **Framework**: [Express](https://expressjs.com/) 5.3.0
 - **Language**: [TypeScript](https://www.typescriptlang.org/) 5.9.3 (Strict Mode)
 - **GraphQL**: [Apollo Server](https://www.apollographql.com/docs/apollo-server/) (to be migrated)
 - **Database**: MongoDB with Mongoose (to be migrated)
-- **Security**: [Helmet](https://helmetjs.github.io/) 8.1.0
-- **CORS**: [cors](https://github.com/expressjs/cors) 2.8.5
-- **Logging**: [Morgan](https://github.com/expressjs/morgan) 1.10.1
-- **Development**: [tsx](https://github.com/esbuild-kit/tsx) 4.21.0
+- **CORS**: [cors](https://github.com/expressjs/cors) 2.8.6
+- **Logging**: [Winston](https://github.com/winstonjs/winston) 3.19.0
+- **Development**: [tsx](https://github.com/privatenumber/tsx) 4.23.15 (`pnpm dev` runs `tsx watch`)
 - **Package Manager**: [pnpm](https://pnpm.io/)
 
 ## 📋 Prerequisites
@@ -70,6 +69,10 @@ SECRET=your_jwt_secret_key
 
 # CORS
 CLIENT_URL=http://localhost:3000
+
+# Proxies in front of the server (1 on the hosting platform). Leave unset locally.
+# Per-visitor rate limits only apply when this is set.
+TRUST_PROXY=1
 
 # Email (if using SendGrid)
 SENDGRID_API_KEY=your_sendgrid_api_key
@@ -224,7 +227,7 @@ pnpm format:check
 
 - **Order Matters**: Middleware is executed in the order it's defined
 - **Error Handling**: Use error-handling middleware at the end
-- **Security**: Always use Helmet for security headers
+- **Security**: Security headers aren't set yet; they're part of the security pass (#107)
 - **CORS**: Configure CORS properly for your frontend URL
 
 ### Route Structure
@@ -434,7 +437,7 @@ Before submitting a PR, ensure:
 
 ## 🔒 Security
 
-- **Helmet**: Security headers configured
+- **Security headers**: not set yet, part of the security pass (#107)
 - **CORS**: Properly configured for frontend
 - **Environment Variables**: Sensitive data in `.env` (not committed)
 - **Input Validation**: Validate all user inputs
