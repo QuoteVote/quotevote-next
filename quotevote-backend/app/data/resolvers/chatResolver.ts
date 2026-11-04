@@ -265,7 +265,13 @@ export const chatResolver = {
       const text = args.message.text?.trim();
       if (!text) throw badInput('Message text is required');
       try {
-        checkRateLimit(userId, 'sendMessage', MESSAGE_RATE_LIMIT, MESSAGE_RATE_WINDOW_MS);
+        await checkRateLimit(
+          context.prisma,
+          userId,
+          'sendMessage',
+          MESSAGE_RATE_LIMIT,
+          MESSAGE_RATE_WINDOW_MS
+        );
       } catch {
         throw new GraphQLError('Too many messages. Please try again later.', {
           extensions: { code: 'TOO_MANY_REQUESTS' },

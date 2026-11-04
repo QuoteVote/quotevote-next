@@ -62,9 +62,14 @@ function validEmail(raw: string | null | undefined): string {
   return email;
 }
 
-function enforceRateLimit(key: string, action: string, limit: number): void {
+async function enforceRateLimit(
+  prisma: GraphQLContext['prisma'],
+  key: string,
+  action: string,
+  limit: number
+): Promise<void> {
   try {
-    checkRateLimit(key, action, limit, HOUR_MS);
+    await checkRateLimit(prisma, key, action, limit, HOUR_MS);
   } catch {
     throw new GraphQLError('Too many requests. Please try again later.', {
       extensions: { code: 'TOO_MANY_REQUESTS' },
@@ -190,7 +195,7 @@ export const userInviteResolver = {
         });
       }
       const email = validEmail(args.email);
-      enforceRateLimit(inviterId, 'sendUserInvite', INVITES_PER_HOUR);
+      await enforceRateLimit(context.prisma, inviterId, 'sendUserInvite', INVITES_PER_HOUR);
 
       const existingUser = await context.prisma.user.findFirst({
         where: { email },
@@ -243,9 +248,19 @@ export const userInviteResolver = {
     ): Promise<boolean> => {
       const email = validEmail(args.email);
       if (context.req?.ip) {
-        enforceRateLimit(`ip:${context.req.ip}`, 'sendInvestorMail', CONTACTS_PER_IP_PER_HOUR);
+        await enforceRateLimit(
+          context.prisma,
+          `ip:${context.req.ip}`,
+          'sendInvestorMail',
+          CONTACTS_PER_IP_PER_HOUR
+        );
       }
-      enforceRateLimit(`email:${email}`, 'sendInvestorMail', CONTACTS_PER_EMAIL_PER_HOUR);
+      await enforceRateLimit(
+        context.prisma,
+        `email:${email}`,
+        'sendInvestorMail',
+        CONTACTS_PER_EMAIL_PER_HOUR
+      );
 
       const to = process.env.TO_INVESTOR_EMAIL;
       if (!to) {
@@ -306,10 +321,7 @@ export const userInviteResolver = {
 
         // Re-open a declined request as status 1. Do not touch approved invites
         // (status 4) — resetting those would invalidate the emailed signup link.
-        if (
-          !existingUser.password &&
-          existingUser.status === INVITE_STATUS_DECLINED
-        ) {
+        if (!existingUser.password && existingUser.status === INVITE_STATUS_DECLINED) {
           user = await context.prisma.user.update({
             where: { id: existingUser.id },
             data: { status: INVITE_STATUS_REQUESTED },
