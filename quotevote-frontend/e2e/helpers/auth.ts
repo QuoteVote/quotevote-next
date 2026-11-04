@@ -3,6 +3,10 @@ import type { Page } from '@playwright/test';
 export const AUTHOR_USERNAME = (process.env.E2E_AUTHOR_USERNAME ?? 'authorUser').trim();
 export const AUTHOR_PASSWORD = process.env.E2E_AUTHOR_PASSWORD ?? '';
 
+/** Optional admin account for the invite review specs (E2E-AUTH-010). */
+export const ADMIN_USERNAME = (process.env.E2E_ADMIN_USERNAME ?? '').trim();
+export const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? '';
+
 /** Optional second account for @person DM search (E2E-CHAT-008). */
 export const PEER_USERNAME = (process.env.E2E_PEER_USERNAME ?? '').trim();
 

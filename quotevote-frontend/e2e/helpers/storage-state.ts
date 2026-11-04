@@ -4,6 +4,7 @@ import type { FullConfig } from '@playwright/test';
 import type { AuthSession } from './api';
 
 export const AUTHOR_STORAGE_PATH = path.join(__dirname, '../.auth/authorUser.json');
+export const ADMIN_STORAGE_PATH = path.join(__dirname, '../.auth/adminUser.json');
 
 interface PlaywrightStorageState {
   cookies: Array<{
@@ -62,16 +63,24 @@ function buildStorageState(baseURL: string, session: AuthSession): PlaywrightSto
   };
 }
 
+export async function saveStorageState(
+  storagePath: string,
+  baseURL: string,
+  session: AuthSession
+): Promise<void> {
+  fs.mkdirSync(path.dirname(storagePath), { recursive: true });
+  fs.writeFileSync(
+    storagePath,
+    JSON.stringify(buildStorageState(baseURL, session), null, 2),
+    'utf8'
+  );
+}
+
 export async function saveAuthorStorageState(
   baseURL: string,
   session: AuthSession
 ): Promise<void> {
-  fs.mkdirSync(path.dirname(AUTHOR_STORAGE_PATH), { recursive: true });
-  fs.writeFileSync(
-    AUTHOR_STORAGE_PATH,
-    JSON.stringify(buildStorageState(baseURL, session), null, 2),
-    'utf8'
-  );
+  await saveStorageState(AUTHOR_STORAGE_PATH, baseURL, session);
 }
 
 export function authorStorageStatePath(config?: FullConfig): string | undefined {
