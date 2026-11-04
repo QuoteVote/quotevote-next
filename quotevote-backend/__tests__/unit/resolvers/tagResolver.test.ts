@@ -1,6 +1,14 @@
-import { tagResolver } from '~/data/resolvers/tagResolver';
+import {
+  MAX_TAG_DESCRIPTION_LENGTH,
+  MAX_TAG_TITLE_LENGTH,
+  tagResolver,
+} from '~/data/resolvers/tagResolver';
 import { TAG_RECORD_SELECT } from '~/data/utils/tagPrismaMapper';
 import type { GraphQLContext } from '~/types/graphql';
+
+jest.mock('~/data/utils/rateLimiter', () => ({
+  checkRateLimit: jest.fn().mockResolvedValue(undefined),
+}));
 
 const tagId = '507f1f77bcf86cd799439011';
 const creatorId = '507f1f77bcf86cd799439012';
@@ -31,7 +39,6 @@ const validTagInput = {
   description: 'Tech discussion',
   privacy: 'public' as const,
 };
-
 
 describe('tagResolver', () => {
   beforeEach(() => {
@@ -245,18 +252,10 @@ describe('tagResolver', () => {
       const ctx = mockContext(creatorId);
 
       await expect(
-        tagResolver.Mutation.createTag(
-          null,
-          { tag: { ...validTagInput, title: '   ' } },
-          ctx
-        )
+        tagResolver.Mutation.createTag(null, { tag: { ...validTagInput, title: '   ' } }, ctx)
       ).rejects.toThrow(/Tag title is required/);
       await expect(
-        tagResolver.Mutation.createTag(
-          null,
-          { tag: { ...validTagInput, description: '' } },
-          ctx
-        )
+        tagResolver.Mutation.createTag(null, { tag: { ...validTagInput, description: '' } }, ctx)
       ).rejects.toThrow(/Tag description is required/);
     });
 
@@ -276,12 +275,33 @@ describe('tagResolver', () => {
       const ctx = mockContext(creatorId);
 
       await expect(
+        tagResolver.Mutation.createTag(null, { tag: { ...validTagInput, creatorId: adminId } }, ctx)
+      ).rejects.toThrow(/Not authorized to create a tag as another user/);
+      expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects titles and descriptions that exceed the length caps', async () => {
+      const ctx = mockContext(creatorId);
+
+      await expect(
         tagResolver.Mutation.createTag(
           null,
-          { tag: { ...validTagInput, creatorId: adminId } },
+          { tag: { ...validTagInput, title: 'a'.repeat(MAX_TAG_TITLE_LENGTH + 1) } },
           ctx
         )
-      ).rejects.toThrow(/Not authorized to create a tag as another user/);
+      ).rejects.toThrow(new RegExp(`at most ${MAX_TAG_TITLE_LENGTH}`));
+      await expect(
+        tagResolver.Mutation.createTag(
+          null,
+          {
+            tag: {
+              ...validTagInput,
+              description: 'a'.repeat(MAX_TAG_DESCRIPTION_LENGTH + 1),
+            },
+          },
+          ctx
+        )
+      ).rejects.toThrow(new RegExp(`at most ${MAX_TAG_DESCRIPTION_LENGTH}`));
       expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
     });
 
@@ -292,6 +312,28 @@ describe('tagResolver', () => {
       await expect(
         tagResolver.Mutation.createTag(null, { tag: validTagInput }, ctx)
       ).rejects.toThrow(/Tag name already exist/);
+      expect(ctx.prisma.tag.findFirst).toHaveBeenCalledWith({
+        where: { OR: [{ title: 'Technology' }, { url: '/technology' }] },
+        select: { id: true },
+      });
+      expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects titles that collide on the derived URL (case/spacing)', async () => {
+      const ctx = mockContext(creatorId);
+      (ctx.prisma.tag.findFirst as jest.Mock).mockResolvedValue({ id: tagId });
+
+      await expect(
+        tagResolver.Mutation.createTag(
+          null,
+          { tag: { ...validTagInput, title: 'Review 666 Tag' } },
+          ctx
+        )
+      ).rejects.toThrow(/Tag name already exist/);
+      expect(ctx.prisma.tag.findFirst).toHaveBeenCalledWith({
+        where: { OR: [{ title: 'Review 666 Tag' }, { url: '/review-666-tag' }] },
+        select: { id: true },
+      });
       expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
     });
 

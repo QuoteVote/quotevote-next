@@ -17,12 +17,21 @@ import { Prisma } from '@prisma/client';
 import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { isObjectId, toCommonTag, TAG_RECORD_SELECT } from '~/data/utils/tagPrismaMapper';
+import { checkRateLimit } from '~/data/utils/rateLimiter';
 
 const TAG_PRIVACY_VALUES: ReadonlySet<Common.TagPrivacy> = new Set([
   'public',
   'private',
   'restricted',
 ]);
+
+/** Caps for createTag so oversized titles don't flood every member's tag picker. */
+export const MAX_TAG_TITLE_LENGTH = 50;
+export const MAX_TAG_DESCRIPTION_LENGTH = 500;
+
+/** Tags a member may create per hour. */
+const TAGS_PER_HOUR = 10;
+const HOUR_MS = 60 * 60 * 1000;
 
 export interface TagArgs {
   tagId: string;
@@ -116,6 +125,14 @@ export const tagResolver = {
       const actorId = requireUserId(context);
       const input = args.tag;
 
+      try {
+        await checkRateLimit(context.prisma, actorId, 'createTag', TAGS_PER_HOUR, HOUR_MS);
+      } catch {
+        throw new GraphQLError('Too many tags. Please try again later.', {
+          extensions: { code: 'TOO_MANY_REQUESTS' },
+        });
+      }
+
       if (!input?.title?.trim()) {
         throw new GraphQLError('Tag title is required', {
           extensions: { code: 'BAD_USER_INPUT' },
@@ -142,8 +159,25 @@ export const tagResolver = {
       const title = input.title.trim();
       const description = input.description.trim();
 
+      if (title.length > MAX_TAG_TITLE_LENGTH) {
+        throw new GraphQLError(`Tag title must be at most ${MAX_TAG_TITLE_LENGTH} characters`, {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      if (description.length > MAX_TAG_DESCRIPTION_LENGTH) {
+        throw new GraphQLError(
+          `Tag description must be at most ${MAX_TAG_DESCRIPTION_LENGTH} characters`,
+          {
+            extensions: { code: 'BAD_USER_INPUT' },
+          }
+        );
+      }
+
+      const url = tagUrlFromTitle(title);
+
+      // Titles that differ only in case or spacing share a URL, so check both.
       const existing = await context.prisma.tag.findFirst({
-        where: { title },
+        where: { OR: [{ title }, { url }] },
         select: { id: true },
       });
       if (existing) {
@@ -160,7 +194,7 @@ export const tagResolver = {
           privacy: input.privacy,
           adminIds: [actorId],
           allowedUserIds: [actorId],
-          url: tagUrlFromTitle(title),
+          url,
           created: new Date(),
         },
         select: TAG_RECORD_SELECT,
