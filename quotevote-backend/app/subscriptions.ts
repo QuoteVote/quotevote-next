@@ -2,18 +2,14 @@ import type { Server as HttpServer } from 'http';
 import { createRequire } from 'module';
 import { WebSocketServer } from 'ws';
 import type { GraphQLSchema } from 'graphql';
+// Type-only: the runtime import goes through `exports`, which this tsconfig's
+// node module resolution can't read, so the declarations are named directly.
+import type { useServer as UseServer } from 'graphql-ws/dist/use/ws';
 import { createWsContext } from './context';
 import type { WsGraphQLContext } from './types/graphql';
 
 const requireGraphqlWs = createRequire(__filename);
-const { useServer } = requireGraphqlWs('graphql-ws/use/ws') as {
-  useServer: (
-    options: Record<string, unknown>,
-    wsServer: WebSocketServer
-  ) => {
-    dispose: () => Promise<void>;
-  };
-};
+const { useServer } = requireGraphqlWs('graphql-ws/use/ws') as { useServer: typeof UseServer };
 
 export interface SubscriptionServer {
   wsServer: WebSocketServer;
@@ -39,10 +35,12 @@ export function createSubscriptionServer(
   const disposable = useServer(
     {
       schema: options.schema,
-      context: async (ctx) =>
-        options.contextFactory
-          ? options.contextFactory(ctx.connectionParams as Record<string, unknown> | undefined)
-          : createWsContext(ctx.connectionParams as Record<string, unknown> | undefined),
+      context: async (ctx): Promise<WsGraphQLContext> => {
+        const connectionParams = ctx.connectionParams ?? undefined;
+        return options.contextFactory
+          ? options.contextFactory(connectionParams)
+          : createWsContext(connectionParams);
+      },
     },
     wsServer
   );

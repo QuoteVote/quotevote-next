@@ -20,6 +20,7 @@ import {
   type PrismaUserRecord,
 } from '~/data/utils/userPrismaMapper';
 import { uniqueArrayObjects } from '~/data/resolvers/utils/common';
+import { loadUserReputation } from '~/data/resolvers/utils/reputation';
 import type * as Common from '~/types/common';
 import type { FollowInfoEntry, GraphQLContext } from '~/types/graphql';
 
@@ -948,5 +949,15 @@ export const userResolver = {
         message: 'Bot report submitted successfully',
       };
     },
+  },
+  User: {
+    // Legacy users have no embedded reputation, so a profile reads the stored
+    // row or calculates one. Only runs when a query selects the field.
+    reputation: async (
+      parent: Common.User,
+      _args: unknown,
+      context: GraphQLContext
+    ): Promise<Common.Reputation | null> =>
+      parent.reputation ?? loadUserReputation(context.prisma, parent._id),
   },
 };

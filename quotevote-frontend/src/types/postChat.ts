@@ -27,6 +27,8 @@ export interface PostChatMessageData {
   text: string
   /** ISO timestamp of creation */
   created: string
+  /** Set when its author deleted it; the text is then a note saying so */
+  deleted?: boolean | null
   /** User details */
   user: PostChatUser
 }
@@ -109,6 +111,7 @@ export interface MessagesData {
     text: string
     type: string
     created: string
+    deleted?: boolean | null
   }>
 }
 
@@ -126,6 +129,7 @@ export interface CreateMessageData {
     text: string
     type: string
     created: string
+    deleted?: boolean | null
     user: {
       __typename?: string
       _id: string

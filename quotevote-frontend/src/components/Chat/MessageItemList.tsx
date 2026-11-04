@@ -181,7 +181,7 @@ export default function MessageItemList({ room }: MessageItemListProps) {
             <QuoteHeaderMessage postDetails={quoteData} postCreator={chatParticipantCreator} />
           )}
           {messageData.map((message) => (
-            <MessageItem key={message._id} message={message} />
+            <MessageItem key={message._id} message={message} roomType={messageType} />
           ))}
         </div>
       </ScrollableFeed>

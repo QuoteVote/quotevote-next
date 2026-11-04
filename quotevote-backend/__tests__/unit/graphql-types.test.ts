@@ -261,25 +261,25 @@ describe('GraphQL domain typedefs (7.28 migration)', () => {
       // Check PresenceStatusEnum
       const presenceEnum = typeMap.PresenceStatus as GraphQLEnumType;
       expect(presenceEnum).toBeDefined();
-      expect(presenceEnum.getValue('online').value).toBe('online');
-      expect(presenceEnum.getValue('away').value).toBe('away');
+      expect(presenceEnum.getValue('online')?.value).toBe('online');
+      expect(presenceEnum.getValue('away')?.value).toBe('away');
 
       // Check AccountStatusEnum
       const accountEnum = typeMap.AccountStatus as GraphQLEnumType;
       expect(accountEnum).toBeDefined();
-      expect(accountEnum.getValue('suspended').value).toBe('suspended');
-      expect(accountEnum.getValue('pending').value).toBe('pending');
+      expect(accountEnum.getValue('suspended')?.value).toBe('suspended');
+      expect(accountEnum.getValue('pending')?.value).toBe('pending');
 
       // Check MessageTypeEnum
       const messageEnum = typeMap.MessageType as GraphQLEnumType;
       expect(messageEnum).toBeDefined();
-      expect(messageEnum.getValue('SYSTEM').value).toBe('SYSTEM');
+      expect(messageEnum.getValue('SYSTEM')?.value).toBe('SYSTEM');
 
       // Check NotificationTypeEnum
       const notificationEnum = typeMap.NotificationType as GraphQLEnumType;
       expect(notificationEnum).toBeDefined();
-      expect(notificationEnum.getValue('SYSTEM').value).toBe('SYSTEM');
-      expect(notificationEnum.getValue('VOTE').value).toBe('VOTE');
+      expect(notificationEnum.getValue('SYSTEM')?.value).toBe('SYSTEM');
+      expect(notificationEnum.getValue('VOTE')?.value).toBe('VOTE');
     });
 
     it('verifies relationship resolvers correctly fetch and filter database models', async () => {
