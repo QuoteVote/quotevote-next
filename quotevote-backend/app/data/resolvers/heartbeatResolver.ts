@@ -52,7 +52,7 @@ export function toPublicPresence(doc: {
   userId: string;
   status: Common.PresenceStatus;
   statusMessage?: string | null;
-  lastHeartbeat?: Date | string | number;
+  lastHeartbeat?: Date | string | number | null;
   lastSeen?: Date | string | number | null;
 }): Common.Presence {
   return {
@@ -60,7 +60,7 @@ export function toPublicPresence(doc: {
     userId: doc.userId,
     status: doc.status,
     statusMessage: doc.statusMessage ?? undefined,
-    lastHeartbeat: doc.lastHeartbeat,
+    lastHeartbeat: doc.lastHeartbeat ?? undefined,
     lastSeen: doc.lastSeen ?? undefined,
   };
 }
@@ -166,7 +166,7 @@ export const heartbeatResolver = {
 
       return {
         success: true,
-        timestamp: new Date(presence.lastHeartbeat).toISOString(),
+        timestamp: (presence.lastHeartbeat ?? now).toISOString(),
         status: presence.status,
         statusMessage: presence.statusMessage ?? '',
       };

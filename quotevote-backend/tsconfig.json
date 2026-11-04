@@ -12,9 +12,8 @@
     "outDir": "dist",
     "rootDir": ".",
     "esModuleInterop": true,
-    "allowJs": true,
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "types": [
@@ -24,9 +23,7 @@
   },
   "include": [
     "app/**/*.ts",
-    "app/**/*.js",
     "__tests__/**/*.ts",
-    "__tests__/**/*.js",
     "scripts/**/*.ts",
     "jest.setup.ts"
   ],

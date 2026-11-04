@@ -4,10 +4,15 @@ import * as bcrypt from 'bcryptjs';
 import { userResolver } from '~/data/resolvers/userResolver';
 import type { GraphQLContext } from '~/types/graphql';
 import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
+import { loadUserReputation } from '~/data/resolvers/utils/reputation';
 
 jest.mock('bcryptjs', () => ({
   genSalt: jest.fn().mockResolvedValue('salt'),
   hash: jest.fn().mockResolvedValue('hashed-password'),
+}));
+
+jest.mock('~/data/resolvers/utils/reputation', () => ({
+  loadUserReputation: jest.fn(),
 }));
 
 const actorId = '507f1f77bcf86cd799439011';
@@ -802,5 +807,42 @@ describe('userResolver', () => {
     });
   });
   });
-  
 
+describe('User.reputation', () => {
+  const reputation = {
+    _id: 'r1',
+    overallScore: 100,
+    inviteNetworkScore: 0,
+    conductScore: 250,
+    activityScore: 1,
+    metrics: {} as never,
+    lastCalculated: '2026-10-16T15:08:48.328Z',
+  };
+
+  beforeEach(() => {
+    (loadUserReputation as jest.Mock).mockReset();
+  });
+
+  it('returns an embedded reputation without a query', async () => {
+    const ctx = mockContext();
+
+    const result = await userResolver.User.reputation(
+      { _id: otherId, reputation } as never,
+      {},
+      ctx
+    );
+
+    expect(result).toBe(reputation);
+    expect(loadUserReputation).not.toHaveBeenCalled();
+  });
+
+  it('loads the stored or calculated reputation for a legacy user', async () => {
+    const ctx = mockContext();
+    (loadUserReputation as jest.Mock).mockResolvedValue(reputation);
+
+    const result = await userResolver.User.reputation({ _id: otherId } as never, {}, ctx);
+
+    expect(loadUserReputation).toHaveBeenCalledWith(ctx.prisma, otherId);
+    expect(result).toBe(reputation);
+  });
+});
