@@ -25,6 +25,7 @@ import {
   type PrismaUserRecord,
 } from '~/data/utils/userPrismaMapper';
 import { logger } from '~/data/utils/logger';
+import { checkRateLimit } from '~/data/utils/rateLimiter';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -37,6 +38,58 @@ const INVITE_STATUS_APPROVED = 4;
 
 function isObjectId(id: string): boolean {
   return OBJECT_ID_PATTERN.test(id);
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_EMAIL_LENGTH = 254;
+
+/** Invites a member may send per hour. */
+const INVITES_PER_HOUR = 10;
+/** Contact form submissions per address and per visitor per hour. */
+const CONTACTS_PER_EMAIL_PER_HOUR = 1;
+const CONTACTS_PER_IP_PER_HOUR = 5;
+const HOUR_MS = 60 * 60 * 1000;
+
+const badInput = (message: string): GraphQLError =>
+  new GraphQLError(message, { extensions: { code: 'BAD_USER_INPUT' } });
+
+/** Trimmed, lowercased email, or BAD_USER_INPUT when it isn't one. */
+function validEmail(raw: string | null | undefined): string {
+  const email = raw?.trim().toLowerCase() ?? '';
+  if (!email || email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(email)) {
+    throw badInput('Please enter a valid email address');
+  }
+  return email;
+}
+
+async function enforceRateLimit(
+  prisma: GraphQLContext['prisma'],
+  key: string,
+  action: string,
+  limit: number
+): Promise<void> {
+  try {
+    await checkRateLimit(prisma, key, action, limit, HOUR_MS);
+  } catch {
+    throw new GraphQLError('Too many requests. Please try again later.', {
+      extensions: { code: 'TOO_MANY_REQUESTS' },
+    });
+  }
+}
+
+/** Send without failing the mutation when mail is misconfigured in local/dev. */
+async function sendQuietly(
+  label: string,
+  email: Parameters<typeof sendGridEmail>[0]
+): Promise<void> {
+  try {
+    const result = await sendGridEmail(email);
+    if (result.error) logger.warn(`${label} email failed`, { error: result.error });
+  } catch (err) {
+    logger.warn(`${label} email error`, {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 function isApprovedInviteStatus(inviteStatus: string): boolean {
@@ -125,6 +178,103 @@ export const userInviteResolver = {
   },
 
   Mutation: {
+    /**
+     * A member invites someone by email. Accounts are invite-only, so the
+     * invite becomes an access request in the admin queue (as if the person had
+     * requested access), with the inviter recorded on the invite.
+     */
+    sendUserInvite: async (
+      _parent: unknown,
+      args: { email: string },
+      context: GraphQLContext
+    ): Promise<{ code: string; message: string }> => {
+      const inviterId = context.userId;
+      if (!inviterId) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      const email = validEmail(args.email);
+      await enforceRateLimit(context.prisma, inviterId, 'sendUserInvite', INVITES_PER_HOUR);
+
+      const existingUser = await context.prisma.user.findFirst({
+        where: { email },
+        select: { id: true },
+      });
+      if (existingUser) throw badInput('User with this email already exists');
+
+      // Legacy invites store the inviter as `_inviterId`; Prisma writes `invitedBy`.
+      const previous = (await context.prisma.userInvite.findRaw({
+        filter: {
+          email,
+          $or: [{ _inviterId: { $oid: inviterId } }, { invitedBy: { $oid: inviterId } }],
+        },
+        options: { limit: 1, projection: { _id: 1 } },
+      })) as unknown as unknown[];
+      if (previous.length > 0) throw badInput('Invite already sent to this email');
+
+      try {
+        await context.prisma.user.create({
+          data: { email, username: email, status: INVITE_STATUS_REQUESTED, password: null },
+          select: { id: true },
+        });
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          throw badInput('User with this email already exists');
+        }
+        throw err;
+      }
+      await context.prisma.userInvite.create({
+        data: { email, invitedById: inviterId, status: 'pending' },
+        select: { id: true },
+      });
+
+      await sendQuietly('sendUserInvite', {
+        to: email,
+        templateId: SENDGRID_TEMPLATE_IDS.INVITE_REQUEST_RECEIVED_CONFIRMATION,
+      });
+
+      return { code: 'SUCCESS', message: 'Invitation sent successfully' };
+    },
+
+    /**
+     * The investor contact form. Tells the team by email; unlike legacy, it no
+     * longer creates a placeholder account, since anyone can submit it.
+     */
+    sendInvestorMail: async (
+      _parent: unknown,
+      args: { email: string },
+      context: GraphQLContext
+    ): Promise<boolean> => {
+      const email = validEmail(args.email);
+      if (context.req?.ip) {
+        await enforceRateLimit(
+          context.prisma,
+          `ip:${context.req.ip}`,
+          'sendInvestorMail',
+          CONTACTS_PER_IP_PER_HOUR
+        );
+      }
+      await enforceRateLimit(
+        context.prisma,
+        `email:${email}`,
+        'sendInvestorMail',
+        CONTACTS_PER_EMAIL_PER_HOUR
+      );
+
+      const to = process.env.TO_INVESTOR_EMAIL;
+      if (!to) {
+        logger.warn('sendInvestorMail: TO_INVESTOR_EMAIL is not set');
+        return true;
+      }
+      await sendQuietly('sendInvestorMail', {
+        to,
+        subject: 'New investor contact',
+        text: `New investor contact: ${email}`,
+      });
+      return true;
+    },
+
     requestUserAccess: async (
       _parent: unknown,
       args: { requestUserAccessInput: Common.RequestUserAccessInput },
@@ -171,10 +321,7 @@ export const userInviteResolver = {
 
         // Re-open a declined request as status 1. Do not touch approved invites
         // (status 4) — resetting those would invalidate the emailed signup link.
-        if (
-          !existingUser.password &&
-          existingUser.status === INVITE_STATUS_DECLINED
-        ) {
+        if (!existingUser.password && existingUser.status === INVITE_STATUS_DECLINED) {
           user = await context.prisma.user.update({
             where: { id: existingUser.id },
             data: { status: INVITE_STATUS_REQUESTED },

@@ -85,7 +85,7 @@ PresenceSchema.statics.updateHeartbeat = updateHeartbeatImpl;
 /**
  * Re-bind every schema static onto the live model.
  *
- * Under ts-node-dev / hot reload, `mongoose.models.Presence` often already exists
+ * Under `tsx watch` / hot reload, `mongoose.models.Presence` often already exists
  * from a previous module evaluation. In that case `mongoose.model(...)` is skipped
  * and schema.statics assigned above never replace the stale methods on the cached
  * model. Binding here (for *all* statics, not just one) keeps call sites on the

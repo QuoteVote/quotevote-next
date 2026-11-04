@@ -54,7 +54,7 @@ const formatTime = (date?: string | number | Date): string => {
   });
 };
 
-const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
+const MessageItemComponent: FC<MessageItemProps> = ({ message, roomType }) => {
   const currentUser = useAppStore((state) => state.user.data);
   const ensureAuth = useGuestGuard();
 
@@ -62,11 +62,15 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
   const isOwnMessage = currentUserId
     ? normalizeId(message.userId) === currentUserId
     : false;
-  const isAdmin = currentUser?.admin === true;
-  const canDelete = isOwnMessage || isAdmin;
+  const isDeleted = message.deleted === true;
+  // Direct messages can't be deleted (#576); in a post's chat, only by their author.
+  const canDelete = roomType === 'POST' && isOwnMessage && !isDeleted;
   const isDefaultDirection = !isOwnMessage;
 
-  const [deleteMessage] = useMutation(DELETE_MESSAGE);
+  // Refetch rather than drop the message: the room shows a note in its place.
+  const [deleteMessage] = useMutation(DELETE_MESSAGE, {
+    refetchQueries: ['getRoomMessages'],
+  });
 
   const readState = useMemo(() => {
     const readByRaw = message.readBy ?? [];
@@ -158,7 +162,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
                 : 'rounded-[20px_20px_6px_20px] bg-gradient-to-br from-[#52b274] to-[#4a9e63] text-white shadow-[0_4px_12px_rgba(82,178,116,0.35),0_2px_4px_rgba(82,178,116,0.20)] hover:shadow-[0_6px_16px_rgba(82,178,116,0.40),0_3px_6px_rgba(82,178,116,0.25)]'
             )}
           >
-            <p className="whitespace-pre-wrap break-words">
+            <p className={cn('whitespace-pre-wrap break-words', isDeleted && 'italic')}>
               {message.text}
             </p>
           </div>
@@ -167,7 +171,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message }) => {
             <button
               type="button"
               onClick={handleDelete}
-              className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white text-red-500 shadow-[0_3px_10px_rgba(0,0,0,0.2)] opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-red-50 hover:scale-110 hover:shadow-[0_4px_14px_rgba(0,0,0,0.25)]"
+              className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white text-red-600 shadow-[0_3px_10px_rgba(0,0,0,0.2)] opacity-0 transition-all duration-200 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 hover:bg-red-50 hover:scale-110 hover:shadow-[0_4px_14px_rgba(0,0,0,0.25)] [@media(hover:none)]:opacity-100"
               aria-label="Delete message"
             >
               <Trash2 className="h-3.5 w-3.5" />

@@ -50,6 +50,8 @@ export interface ChatMessage {
     created: string
     /** Message type (e.g., system, user) */
     type?: string
+    /** Set when its author deleted it; the text is then a note saying so */
+    deleted?: boolean | null
     /** Mutation type (e.g., created/updated/deleted) */
     mutation_type?: string
     /** Additional backend fields */
@@ -117,6 +119,8 @@ export interface ExtendedChatMessage extends ChatMessage {
  */
 export interface MessageItemProps {
   message: ExtendedChatMessage;
+  /** The room's type: only messages in a post's chat can be deleted */
+  roomType?: string | null;
 }
 
 /**

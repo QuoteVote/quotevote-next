@@ -65,4 +65,20 @@ describe('GraphQL Input Types Validation', () => {
     expect(result.errors).toBeUndefined();
     expect(result.data?.testPostInput).toBe('Success: My Title');
   });
+
+  it('should accept legacy groupId on PostInput', async () => {
+    const source = `
+      mutation {
+        testPostInput(input: {
+          userId: "123",
+          groupId: "456",
+          title: "My Title"
+          text: "Some content"
+        })
+      }
+    `;
+    const result = await graphql({ schema, source });
+    expect(result.errors).toBeUndefined();
+    expect(result.data?.testPostInput).toBe('Success: My Title');
+  });
 });

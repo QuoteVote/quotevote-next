@@ -34,7 +34,8 @@ const mockUseMutation = jest.fn(() => [mockMutate, { loading: false, error: null
 jest.mock('@apollo/client/react', () => ({
   ...jest.requireActual('@apollo/client/react'),
   useQuery: (query: unknown, options?: unknown) => mockUseQuery(query, options),
-  useMutation: () => mockUseMutation(),
+  useMutation: (mutation: unknown, options?: unknown) =>
+    (mockUseMutation as jest.Mock)(mutation, options),
 }))
 
 // Mock next/navigation
@@ -202,6 +203,35 @@ describe('PostChatMessage', () => {
 
     const deleteButton = screen.queryByLabelText('Delete message')
     expect(deleteButton).not.toBeInTheDocument()
+  })
+
+  it("doesn't offer delete to an admin on someone else's message", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({ user: { data: { ...mockCurrentUser, admin: true } } })
+    )
+    render(<PostChatMessage message={mockMessage} />)
+    expect(screen.queryByLabelText('Delete message')).not.toBeInTheDocument()
+  })
+
+  it('shows a deleted message as a note, without delete or reactions', () => {
+    render(
+      <PostChatMessage
+        message={{ ...mockOwnMessage, text: 'Message deleted by its author', deleted: true }}
+      />
+    )
+    expect(screen.getByText('Message deleted by its author')).toHaveClass('italic')
+    expect(screen.queryByLabelText('Delete message')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('post-chat-reactions')).not.toBeInTheDocument()
+    expect(mockUseQuery).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ skip: true }))
+  })
+
+  it('refetches the chat after deleting, so the note takes the message\'s place', () => {
+    render(<PostChatMessage message={mockOwnMessage} />)
+    expect(mockUseMutation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ refetchQueries: ['getRoomMessages'] })
+    )
   })
 
   it('deletes message when delete button is clicked', async () => {

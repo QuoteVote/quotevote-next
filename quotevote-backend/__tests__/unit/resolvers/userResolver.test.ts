@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { userResolver } from '~/data/resolvers/userResolver';
 import type { GraphQLContext } from '~/types/graphql';
 import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
+import { loadUserReputation } from '~/data/resolvers/utils/reputation';
 
 jest.mock('bcryptjs', () => ({
   genSalt: jest.fn().mockResolvedValue('salt'),
@@ -18,6 +19,7 @@ jest.mock('~/data/utils/pubsub', () => ({
 
 jest.mock('~/data/resolvers/utils/reputation', () => ({
   calculateUserReputation: jest.fn().mockResolvedValue({}),
+  loadUserReputation: jest.fn(),
 }));
 
 const actorId = '507f1f77bcf86cd799439011';
@@ -999,7 +1001,10 @@ describe('userResolver', () => {
 
     it('disables and enables a user', async () => {
       const ctx = mockContext({ admin: true });
-      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: otherId });
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: otherId,
+        isAdmin: false,
+      });
       (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
         id: otherId,
         username: 'bob',
@@ -1022,6 +1027,57 @@ describe('userResolver', () => {
       const enabled = await userResolver.Mutation.enableUser(null, { userId: otherId }, ctx);
       expect(enabled.accountStatus).toBe('active');
     });
+
+    it('refuses to disable an admin account', async () => {
+      const ctx = mockContext({ admin: true });
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: otherId,
+        isAdmin: true,
+      });
+
+      await expect(
+        userResolver.Mutation.disableUser(null, { userId: otherId }, ctx)
+      ).rejects.toThrow(/Cannot disable admin accounts/);
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
   });
 });
 
+describe('User.reputation', () => {
+  const reputation = {
+    _id: 'r1',
+    overallScore: 100,
+    inviteNetworkScore: 0,
+    conductScore: 250,
+    activityScore: 1,
+    metrics: {} as never,
+    lastCalculated: '2026-10-16T15:08:48.328Z',
+  };
+
+  beforeEach(() => {
+    (loadUserReputation as jest.Mock).mockReset();
+  });
+
+  it('returns an embedded reputation without a query', async () => {
+    const ctx = mockContext();
+
+    const result = await userResolver.User.reputation(
+      { _id: otherId, reputation } as never,
+      {},
+      ctx
+    );
+
+    expect(result).toBe(reputation);
+    expect(loadUserReputation).not.toHaveBeenCalled();
+  });
+
+  it('loads the stored or calculated reputation for a legacy user', async () => {
+    const ctx = mockContext();
+    (loadUserReputation as jest.Mock).mockResolvedValue(reputation);
+
+    const result = await userResolver.User.reputation({ _id: otherId } as never, {}, ctx);
+
+    expect(loadUserReputation).toHaveBeenCalledWith(ctx.prisma, otherId);
+    expect(result).toBe(reputation);
+  });
+});

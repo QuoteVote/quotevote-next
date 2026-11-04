@@ -1,5 +1,6 @@
 import { quoteResolver } from '~/data/resolvers/quoteResolver';
 import { toQuote } from '~/data/resolvers/utils/commentsQuotes';
+import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 import type { GraphQLContext } from '~/types/graphql';
 
 const date = new Date('2026-01-01T00:00:00.000Z');
@@ -24,6 +25,7 @@ function mockContext(user: GraphQLContext['user'] = null) {
   return {
     prisma: {
       quote: {
+        findRaw: jest.fn(),
         findMany: jest.fn(),
         findUnique: jest.fn(),
         create: jest.fn(),
@@ -35,6 +37,10 @@ function mockContext(user: GraphQLContext['user'] = null) {
       },
       activity: {
         create: jest.fn().mockResolvedValue({ id: 'activity-1' }),
+      },
+      user: {
+        findMany: jest.fn().mockResolvedValue([]),
+        findUnique: jest.fn().mockResolvedValue(null),
       },
     },
     req: {} as GraphQLContext['req'],
@@ -56,60 +62,120 @@ function authedUser(admin = false): NonNullable<GraphQLContext['user']> {
 }
 
 describe('quoteResolver', () => {
-  it('returns the newest non-deleted quotes through Prisma', async () => {
+  const quoteRow = (id: string, author = userId) => ({
+    id,
+    userId: author,
+    quoted: postOwnerId,
+    postId,
+    quote: 'A thoughtful line',
+    startWordIndex: 1,
+    endWordIndex: 3,
+    deleted: false,
+    created: date,
+  });
+
+  it('picks the newest quotes not marked deleted, keeping rows without the field', async () => {
     const context = mockContext();
+    context.prisma.quote.findRaw.mockResolvedValue([{ _id: { $oid: quoteId } }]);
+    context.prisma.quote.findMany.mockResolvedValue([quoteRow(quoteId)]);
+
+    const result = await quoteResolver.Query.latestQuotes({}, { limit: 5 }, context as never);
+
+    expect(context.prisma.quote.findRaw).toHaveBeenCalledWith({
+      filter: { deleted: { $ne: true } },
+      options: { sort: { created: -1 }, limit: 5, projection: { _id: 1 } },
+    });
+    expect(context.prisma.quote.findMany).toHaveBeenCalledWith({
+      where: { id: { in: [quoteId] } },
+      select: QUOTE_SELECT,
+    });
+    expect(result).toEqual([{ ...toQuote(quoteRow(quoteId)), user: expect.any(Object) }]);
+  });
+
+  it('keeps the newest-first order and loads every author in one query', async () => {
+    const context = mockContext();
+    const olderId = '60d5ec49ad414d7a8d5464b2';
+    context.prisma.quote.findRaw.mockResolvedValue([
+      { _id: { $oid: quoteId } },
+      { _id: { $oid: olderId } },
+    ]);
     context.prisma.quote.findMany.mockResolvedValue([
-      {
-        id: quoteId,
-        userId,
-        quoted: postOwnerId,
-        postId,
-        quote: 'A thoughtful line',
-        startWordIndex: 1,
-        endWordIndex: 3,
-        deleted: false,
-        created: date,
-      },
+      quoteRow(olderId, postOwnerId),
+      quoteRow(quoteId),
+    ]);
+    context.prisma.user.findMany.mockResolvedValue([
+      { id: userId, username: 'alice', name: 'Alice' },
+      { id: postOwnerId, username: 'bob', name: 'Bob' },
     ]);
 
     const result = await quoteResolver.Query.latestQuotes({}, { limit: 5 }, context as never);
 
-    expect(context.prisma.quote.findMany).toHaveBeenCalledWith({
-      where: {
-        OR: [{ deleted: false }, { deleted: { isSet: false } }],
-      },
-      orderBy: { created: 'desc' },
-      take: 5,
-      select: QUOTE_SELECT,
+    expect(result.map((q) => q._id)).toEqual([quoteId, olderId]);
+    expect(result.map((q) => q.user?.username)).toEqual(['alice', 'bob']);
+    expect(context.prisma.user.findMany).toHaveBeenCalledTimes(1);
+    expect(context.prisma.user.findMany).toHaveBeenCalledWith({
+      where: { id: { in: [userId, postOwnerId] } },
+      select: PUBLIC_USER_SELECT,
     });
-    expect(result).toEqual([
-      {
-        _id: quoteId,
-        userId,
-        quoted: postOwnerId,
-        postId,
-        quote: 'A thoughtful line',
-        startWordIndex: 1,
-        endWordIndex: 3,
-        deleted: false,
-        created: date,
-      },
-    ]);
+  });
+
+  it('skips the row and author reads when there are no quotes', async () => {
+    const context = mockContext();
+    context.prisma.quote.findRaw.mockResolvedValue([]);
+
+    const result = await quoteResolver.Query.latestQuotes({}, { limit: 5 }, context as never);
+
+    expect(result).toEqual([]);
+    expect(context.prisma.quote.findMany).not.toHaveBeenCalled();
+    expect(context.prisma.user.findMany).not.toHaveBeenCalled();
   });
 
   it('caps latestQuotes at 100 and falls back for non-positive limits', async () => {
     const context = mockContext();
-    context.prisma.quote.findMany.mockResolvedValue([]);
+    context.prisma.quote.findRaw.mockResolvedValue([]);
 
     await quoteResolver.Query.latestQuotes({}, { limit: 500 }, context as never);
-    expect(context.prisma.quote.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ take: 100 })
+    expect(context.prisma.quote.findRaw).toHaveBeenCalledWith(
+      expect.objectContaining({ options: expect.objectContaining({ limit: 100 }) })
     );
 
     await quoteResolver.Query.latestQuotes({}, { limit: 0 }, context as never);
-    expect(context.prisma.quote.findMany).toHaveBeenLastCalledWith(
-      expect.objectContaining({ take: 100 })
+    expect(context.prisma.quote.findRaw).toHaveBeenLastCalledWith(
+      expect.objectContaining({ options: expect.objectContaining({ limit: 100 }) })
     );
+  });
+
+  describe('Quote.user', () => {
+    it('returns an author that was already loaded without a query', async () => {
+      const context = mockContext();
+      const user = { _id: userId, username: 'alice' };
+
+      const result = await quoteResolver.Quote.user(
+        { ...toQuote(quoteRow(quoteId)), user } as never,
+        {},
+        context as never
+      );
+
+      expect(result).toBe(user);
+      expect(context.prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('loads the author with public fields when the parent has none', async () => {
+      const context = mockContext();
+      context.prisma.user.findUnique.mockResolvedValue({ id: userId, username: 'alice' });
+
+      const result = await quoteResolver.Quote.user(
+        toQuote(quoteRow(quoteId)) as never,
+        {},
+        context as never
+      );
+
+      expect(context.prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
+        select: PUBLIC_USER_SELECT,
+      });
+      expect(result).toMatchObject({ _id: userId, username: 'alice' });
+    });
   });
 
   describe('Mutation.addQuote', () => {

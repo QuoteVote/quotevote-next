@@ -42,3 +42,23 @@ export interface RosterSummary {
     skipped: Record<string, number>;
   };
 }
+
+export interface BuddyBackfillRow {
+  pairKey: string;
+  requesterId: string;
+  recipientId: string;
+  status: 'pending' | 'accepted';
+  createdAt: Date;
+  acceptedAt: Date | null;
+}
+
+export interface UserBlockBackfillRow {
+  blockerId: string;
+  blockedUserId: string;
+}
+
+export interface RosterBackfillPlan {
+  buddies: BuddyBackfillRow[];
+  blocks: UserBlockBackfillRow[];
+  skipped: Record<string, number>;
+}
