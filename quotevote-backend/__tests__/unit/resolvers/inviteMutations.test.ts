@@ -3,7 +3,8 @@ process.env.JWT_SECRET = 'test_secret';
 import { Prisma } from '@prisma/client';
 import sendGridEmail from '~/data/utils/send-grid-mail';
 import { userInviteResolver } from '~/data/resolvers/userInviteResolver';
-import { rateLimitMap } from '~/data/utils/rateLimiter';
+import { resetExpiryIndexState } from '~/data/utils/rateLimiter';
+import { createRateLimitStore, type RateLimitStore } from '../../helpers/rateLimitStore';
 
 jest.mock('~/data/utils/send-grid-mail', () => ({
   __esModule: true,
@@ -17,6 +18,7 @@ jest.mock('~/data/utils/logger', () => ({
 
 const inviterId = '507f1f77bcf86cd799439011';
 const sendMail = sendGridEmail as jest.Mock;
+let rateLimits: RateLimitStore;
 
 const createContext = (userId: string | null = inviterId, ip = '203.0.113.7') => ({
   userId,
@@ -31,6 +33,7 @@ const createContext = (userId: string | null = inviterId, ip = '203.0.113.7') =>
       findRaw: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockResolvedValue({ id: 'invite' }),
     },
+    $runCommandRaw: rateLimits.$runCommandRaw,
   },
 });
 
@@ -44,7 +47,8 @@ const contact = (context: Context, email: string) =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  rateLimitMap.clear();
+  resetExpiryIndexState();
+  rateLimits = createRateLimitStore();
   delete process.env.TO_INVESTOR_EMAIL;
 });
 

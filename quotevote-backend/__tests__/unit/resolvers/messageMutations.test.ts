@@ -1,13 +1,20 @@
 import { chatResolver } from '~/data/resolvers/chatResolver';
 import { MESSAGE_ROOM_SELECT } from '~/data/resolvers/utils/chatRooms';
 import { MESSAGE_RECORD_SELECT, REACTION_SELECT } from '~/data/resolvers/utils/commentsQuotes';
-import { rateLimitMap } from '~/data/utils/rateLimiter';
+import { RATE_LIMIT_COLLECTION, resetExpiryIndexState } from '~/data/utils/rateLimiter';
 import { SUBSCRIPTION_EVENTS } from '~/types/graphql';
+import { createRateLimitStore, type RateLimitStore } from '../../helpers/rateLimitStore';
 
 const me = '60d5ec49ad414d7a8d5464a0';
 const bobId = '60d5ec49ad414d7a8d5464a1';
 const carolId = '60d5ec49ad414d7a8d5464a2';
 const dmId = '60d5ec49ad414d7a8d5464c1';
+
+let rateLimits: RateLimitStore;
+
+/** Rate limit commands go to the in-memory store; the rest are recorded here. */
+const isRateLimitCommand = (command: Record<string, unknown>): boolean =>
+  Object.values(command).includes(RATE_LIMIT_COLLECTION);
 const postRoomId = '60d5ec49ad414d7a8d5464c3';
 const postId = '60d5ec49ad414d7a8d5464b1';
 const messageId = '60d5ec49ad414d7a8d5464d1';
@@ -77,7 +84,9 @@ const createContext = (userId: string | null = me) => ({
       create: jest.fn(),
       update: jest.fn(),
     },
-    $runCommandRaw: jest.fn().mockResolvedValue({ ok: 1 }),
+    $runCommandRaw: jest.fn((command: Record<string, unknown>) =>
+      isRateLimitCommand(command) ? rateLimits.$runCommandRaw(command) : Promise.resolve({ ok: 1 })
+    ),
   },
   pubsub: { publish: jest.fn() },
 });
@@ -90,7 +99,8 @@ const send = (context: Context, message: Record<string, unknown>) =>
   Mutation.createMessage({}, { message: { title: 't', ...message } }, context as never);
 
 beforeEach(() => {
-  rateLimitMap.clear();
+  resetExpiryIndexState();
+  rateLimits = createRateLimitStore();
 });
 
 describe('createMessage', () => {
@@ -363,7 +373,10 @@ describe('updateMessageReadBy', () => {
       where: { id: { in: ['legacy', 'new'] } },
       data: { readBy: { push: me } },
     });
-    const command = context.prisma.$runCommandRaw.mock.calls[0][0];
+    const command = context.prisma.$runCommandRaw.mock.calls[0][0] as {
+      update: string;
+      updates: { u: unknown }[];
+    };
     expect(command.update).toBe('messagerooms');
     expect(JSON.stringify(command.updates[0].u)).toContain(`{"${me}":{"$oid":"new"}}`);
   });
