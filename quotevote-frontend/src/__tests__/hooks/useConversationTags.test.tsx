@@ -6,15 +6,15 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { MockedProvider } from "@apollo/client/testing/react";
 import type { ReactNode } from "react";
 import { useConversationTags } from "@/hooks/useConversationTags";
-import { GET_GROUP, GET_POST_GROUP_ID } from "@/graphql/queries";
+import { GET_POST_GROUP_ID, GET_TAG } from "@/graphql/queries";
 
 const postMock = (postId: string, groupId: string | null) => ({
   request: { query: GET_POST_GROUP_ID, variables: { postId } },
   result: { data: { post: { __typename: "Post", _id: postId, groupId } } },
 });
-const groupMock = (groupId: string, title: string) => ({
-  request: { query: GET_GROUP, variables: { groupId } },
-  result: { data: { group: { __typename: "Group", _id: groupId, title } } },
+const groupMock = (tagId: string, title: string) => ({
+  request: { query: GET_TAG, variables: { tagId } },
+  result: { data: { tag: { __typename: "Tag", _id: tagId, title } } },
 });
 
 const wrapper = (mocks: unknown[]) => {
@@ -54,7 +54,7 @@ describe("useConversationTags (#531)", () => {
         error: new Error("404"),
       },
       postMock("p3", "g9"),
-      { request: { query: GET_GROUP, variables: { groupId: "g9" } }, error: new Error("gone") },
+      { request: { query: GET_TAG, variables: { tagId: "g9" } }, error: new Error("gone") },
       postMock("p4", "g1"),
       groupMock("g1", "Climate"),
     ];

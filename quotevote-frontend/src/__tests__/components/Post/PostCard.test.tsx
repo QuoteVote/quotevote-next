@@ -94,7 +94,7 @@ describe('PostCard Component', () => {
 
     beforeEach(() => {
       mockUseQuery.mockImplementation(() => ({
-        data: { group: { _id: 'group-qa', title: 'QA' } },
+        data: { tag: { _id: 'group-qa', title: 'QA' } },
         loading: false,
         error: undefined,
       }))

@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useApolloClient } from "@apollo/client/react";
-import { GET_GROUP, GET_POST_GROUP_ID } from "@/graphql/queries";
+import { GET_POST_GROUP_ID, GET_TAG } from "@/graphql/queries";
 import type { ConversationTag } from "@/types/chat";
 
 interface PostGroupIdData {
   post?: { _id: string; groupId?: string | null } | null;
 }
 
-interface GroupData {
-  group?: { _id: string; title: string } | null;
+interface TagData {
+  tag?: { _id: string; title: string } | null;
 }
 
 /**
@@ -53,12 +53,12 @@ export function useConversationTags(postIds: string[]): Record<string, Conversat
       const groups = await Promise.all(
         groupIds.map((groupId) =>
           client
-            .query<GroupData>({
-              query: GET_GROUP,
-              variables: { groupId },
+            .query<TagData>({
+              query: GET_TAG,
+              variables: { tagId: groupId },
               fetchPolicy: "cache-first",
             })
-            .then((result) => result.data?.group ?? null)
+            .then((result) => result.data?.tag ?? null)
             .catch(() => null)
         )
       );

@@ -18,9 +18,6 @@ import type { ContractProblem, ContractReport, FrontendDocument } from '~/types/
  */
 export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   // Group names (#539)
-  GROUPS_QUERY: '#539',
-  GET_GROUP: '#539',
-  CREATE_GROUP: '#539',
   GET_POST: '#539',
   GET_POST_GROUP_ID: '#539',
   GET_TOP_POSTS: '#539',
@@ -47,6 +44,7 @@ export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   REPORT_USER: '#633',
   DISABLE_USER: '#633',
   ENABLE_USER: '#633',
+  CREATE_TAG: '#633',
   SEND_USER_INVITE: '#633',
   SEND_INVESTOR_EMAIL: '#633',
 };

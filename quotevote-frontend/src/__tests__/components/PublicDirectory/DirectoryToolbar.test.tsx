@@ -8,7 +8,7 @@ import { fireEvent, render, screen } from '../../utils/test-utils'
 import { DirectoryToolbar } from '@/app/components/PublicDirectory/DirectoryToolbar'
 import { useAppStore } from '@/store'
 import { useQuery } from '@apollo/client/react'
-import { GROUPS_QUERY } from '@/graphql/queries'
+import { TAGS_QUERY } from '@/graphql/queries'
 
 const mockReplace = jest.fn()
 let mockSearch = ''
@@ -159,8 +159,8 @@ describe('DirectoryToolbar search input', () => {
     mockSearch = ''
     ;(useQuery as unknown as jest.Mock).mockImplementation((doc: unknown) => ({
       data:
-        doc === GROUPS_QUERY
-          ? { groups: [{ _id: 'g1', title: 'Politics', privacy: 'public' }] }
+        doc === TAGS_QUERY
+          ? { tags: [{ _id: 'g1', title: 'Politics', privacy: 'public' }] }
           : undefined,
       loading: false,
       error: undefined,

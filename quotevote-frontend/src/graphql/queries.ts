@@ -76,11 +76,11 @@ export const VERIFY_PASSWORD_RESET_TOKEN = gql`
 `
 
 /**
- * Get groups query for post creation
+ * Get tags, for post creation and the topic filter. Leave out `limit` to get every tag.
  */
-export const GROUPS_QUERY = gql`
-  query groups($limit: Int!) {
-    groups(limit: $limit) {
+export const TAGS_QUERY = gql`
+  query tags($limit: Int) {
+    tags(limit: $limit) {
       _id
       creatorId
       adminIds
@@ -94,11 +94,11 @@ export const GROUPS_QUERY = gql`
 `
 
 /**
- * Get a single group by ID
+ * Get a single tag by ID
  */
-export const GET_GROUP = gql`
-  query getGroup($groupId: String!) {
-    group(groupId: $groupId) {
+export const GET_TAG = gql`
+  query getTag($tagId: String!) {
+    tag(tagId: $tagId) {
       _id
       title
     }
