@@ -5,7 +5,7 @@ import { logActivity } from '~/data/resolvers/utils/activities';
 import { addNotification } from '~/data/resolvers/utils/notifications';
 import { updateTrending } from '~/data/resolvers/utils/posts';
 import { addUserToPostRoom } from '~/data/resolvers/utils/messages';
-import { COMMENT_SELECT, toComment } from '~/data/resolvers/utils/commentsQuotes';
+import { COMMENT_SELECT, loadAuthor, toComment } from '~/data/resolvers/utils/commentsQuotes';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -195,5 +195,14 @@ export const commentResolver = {
 
       return { _id: args.commentId };
     },
+  },
+  // The post page loads authors in a batch. Mutation results load theirs here.
+  Comment: {
+    user: async (
+      parent: Common.Comment & { user?: Common.User | null },
+      _args: unknown,
+      context: GraphQLContext
+    ): Promise<Common.User | null> =>
+      parent.user !== undefined ? parent.user : loadAuthor(context.prisma, parent.userId),
   },
 };

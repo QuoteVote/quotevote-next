@@ -2,7 +2,13 @@ import { GraphQLError } from 'graphql';
 import { ActivityEventTypeValues } from '~/data/utils/constants';
 import { logActivity } from '~/data/resolvers/utils/activities';
 import { updateTrending } from '~/data/resolvers/utils/posts';
-import { NOT_DELETED, QUOTE_SELECT, toQuote } from '~/data/resolvers/utils/commentsQuotes';
+import { whenAny } from '~/data/resolvers/utils/batchLoad';
+import {
+  QUOTE_SELECT,
+  attachAuthors,
+  loadAuthor,
+  toQuote,
+} from '~/data/resolvers/utils/commentsQuotes';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -28,15 +34,25 @@ export const quoteResolver = {
       _parent: unknown,
       args: { limit: number },
       context: GraphQLContext
-    ): Promise<Common.Quote[]> => {
-      const quotes = await context.prisma.quote.findMany({
-        // NOT_DELETED keeps legacy rows that never received a deleted field.
-        where: { ...NOT_DELETED },
-        orderBy: { created: 'desc' },
-        take: args.limit > 0 ? Math.min(args.limit, MAX_LATEST_QUOTES) : MAX_LATEST_QUOTES,
-        select: QUOTE_SELECT,
-      });
-      return quotes.map(toQuote);
+    ): Promise<(Common.Quote & { user: Common.User | null })[]> => {
+      // Prisma can't filter `deleted` and keep legacy rows that never received
+      // the field (`isSet` isn't allowed on it), so pick the ids raw, as legacy
+      // does with `$ne: true`, then read the rows with the safe select.
+      const picked = (await context.prisma.quote.findRaw({
+        filter: { deleted: { $ne: true } },
+        options: {
+          sort: { created: -1 },
+          limit: args.limit > 0 ? Math.min(args.limit, MAX_LATEST_QUOTES) : MAX_LATEST_QUOTES,
+          projection: { _id: 1 },
+        },
+      })) as unknown as { _id: { $oid: string } }[];
+      const ids = picked.map((row) => row._id.$oid);
+      const quotes = await whenAny(ids, (quoteIds) =>
+        context.prisma.quote.findMany({ where: { id: { in: quoteIds } }, select: QUOTE_SELECT })
+      );
+      const byId = new Map(quotes.map((quote) => [quote.id, toQuote(quote)]));
+      const ordered = ids.flatMap((id) => byId.get(id) ?? []);
+      return attachAuthors(context.prisma, ordered);
     },
   },
 
@@ -130,5 +146,14 @@ export const quoteResolver = {
 
       return { _id: args.quoteId };
     },
+  },
+  // The post page loads authors in a batch. Other results load theirs here.
+  Quote: {
+    user: async (
+      parent: Common.Quote & { user?: Common.User | null },
+      _args: unknown,
+      context: GraphQLContext
+    ): Promise<Common.User | null> =>
+      parent.user !== undefined ? parent.user : loadAuthor(context.prisma, parent.userId),
   },
 };
