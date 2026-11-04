@@ -80,45 +80,22 @@ export default function SignupPageContent() {
     if (invitedEmail) setValue('email', invitedEmail)
   }, [invitedEmail, setValue])
 
+  // Membership is invitation-only: accounts are only created by finishing an approved invite.
   const onSubmit = async (values: SignupFormData) => {
+    if (!token || !verifiedUser) return
     setSubmitting(true)
     try {
-      if (token && verifiedUser) {
-        // Invite-based signup. The invite token is not a session, so the user signs in
-        // afterwards. The email is left out so the account keeps the invited address.
-        const result = await completeSignup({
-          variables: {
-            token,
-            username: values.username,
-            password: values.password,
-            acceptedTermsVersion: CURRENT_TERMS_VERSION,
-          },
-        })
-        if (result.data?.completeSignup) {
-          toast.success('Account created! Please sign in.')
-          router.push('/auths/login')
-          return
-        }
-      } else {
-        // signup via REST /auth/register endpoint
-        const { env } = await import('@/config/env')
-        const response = await fetch(`${env.serverUrl}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: values.username,
-            email: values.email,
-            username: values.username,
-            password: values.password,
-            status: 'active',
-          }),
-        })
-        
-        const data = await response.json()
-        if (!response.ok) {
-          toast.error(data?.error_message || data?.message || 'Signup failed')
-          return
-        }
+      // The invite token is not a session, so the user signs in afterwards. The email is
+      // left out so the account keeps the invited address.
+      const result = await completeSignup({
+        variables: {
+          token,
+          username: values.username,
+          password: values.password,
+          acceptedTermsVersion: CURRENT_TERMS_VERSION,
+        },
+      })
+      if (result.data?.completeSignup) {
         toast.success('Account created! Please sign in.')
         router.push('/auths/login')
       }
@@ -141,8 +118,8 @@ export default function SignupPageContent() {
     )
   }
 
-  // If token provided but invalid
-  if (token && !tokenLoading && (!verifiedUser || tokenError)) {
+  // No invite, or an invalid, expired or already-used one
+  if (!token || (!tokenLoading && (!verifiedUser || tokenError))) {
     return (
       <div className="space-y-4 text-center">
         <h1 className="text-2xl font-bold">Invalid Invite</h1>
