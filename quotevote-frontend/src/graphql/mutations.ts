@@ -404,6 +404,7 @@ export const SEND_MESSAGE = gql`
       text
       type
       created
+      deleted
       user {
         _id
         name

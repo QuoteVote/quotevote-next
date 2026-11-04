@@ -225,8 +225,8 @@ describe('MessageItem', () => {
     expect(screen.getByText(/Just now|m ago|ago/i)).toBeInTheDocument()
   })
 
-  it('shows delete button on hover for own messages', () => {
-    render(<MessageItem message={mockOwnMessage} />)
+  it('shows delete button on hover for own messages in a post chat', () => {
+    render(<MessageItem message={mockOwnMessage} roomType="POST" />)
 
     const messageContainer = screen.getByText('My message').closest('.group')
     if (messageContainer) {
@@ -253,7 +253,7 @@ describe('MessageItem', () => {
     // Reset mock for this test
     mockMutate.mockResolvedValueOnce({ data: { deleteMessage: { _id: 'msg1' } } })
 
-    render(<MessageItem message={mockOwnMessage} />)
+    render(<MessageItem message={mockOwnMessage} roomType="POST" />)
 
     const deleteButton = screen.getByLabelText('Delete message')
     fireEvent.click(deleteButton)
@@ -277,7 +277,7 @@ describe('MessageItem', () => {
     // Mock mutation to throw error
     mockMutate.mockRejectedValueOnce(new Error('Failed to delete message'))
 
-    render(<MessageItem message={mockOwnMessage} />)
+    render(<MessageItem message={mockOwnMessage} roomType="POST" />)
 
     const deleteButton = screen.getByLabelText('Delete message')
     fireEvent.click(deleteButton)
@@ -285,6 +285,36 @@ describe('MessageItem', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Delete Error'))
     })
+  })
+
+  it('never offers delete on a direct message, even your own', () => {
+    render(<MessageItem message={mockOwnMessage} roomType="USER" />)
+    expect(screen.queryByLabelText('Delete message')).not.toBeInTheDocument()
+  })
+
+  it("doesn't offer delete to an admin on someone else's message", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({ user: { data: { ...mockCurrentUser, admin: true } } })
+    )
+    render(<MessageItem message={mockOtherMessage} roomType="POST" />)
+    expect(screen.queryByLabelText('Delete message')).not.toBeInTheDocument()
+  })
+
+  it('shows a deleted message as a note, without delete', () => {
+    render(
+      <MessageItem
+        message={{ ...mockOwnMessage, text: 'Message deleted by its author', deleted: true }}
+        roomType="POST"
+      />
+    )
+    expect(screen.getByText('Message deleted by its author')).toHaveClass('italic')
+    expect(screen.queryByLabelText('Delete message')).not.toBeInTheDocument()
+  })
+
+  it('shows the delete button on keyboard focus, not only on hover', () => {
+    render(<MessageItem message={mockOwnMessage} roomType="POST" />)
+    expect(screen.getByLabelText('Delete message')).toHaveClass('focus-visible:opacity-100')
   })
 
   it('does not show delete button for other user messages', () => {
