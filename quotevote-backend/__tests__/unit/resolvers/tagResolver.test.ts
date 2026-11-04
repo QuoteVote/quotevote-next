@@ -6,22 +6,32 @@ const tagId = '507f1f77bcf86cd799439011';
 const creatorId = '507f1f77bcf86cd799439012';
 const adminId = '507f1f77bcf86cd799439013';
 
-function mockContext(): GraphQLContext {
+function mockContext(userId: string | null = null): GraphQLContext {
   return {
     prisma: {
       tag: {
         findUnique: jest.fn(),
         findMany: jest.fn(),
+        findFirst: jest.fn(),
+        create: jest.fn(),
       },
     } as unknown as GraphQLContext['prisma'],
     req: {} as GraphQLContext['req'],
     res: {} as GraphQLContext['res'],
     pubsub: {} as GraphQLContext['pubsub'],
-    user: null,
-    userId: null,
+    user: userId ? ({ _id: userId } as GraphQLContext['user']) : null,
+    userId,
     requestId: 'test-request-id',
   };
 }
+
+const validTagInput = {
+  creatorId,
+  title: 'Technology',
+  description: 'Tech discussion',
+  privacy: 'public' as const,
+};
+
 
 describe('tagResolver', () => {
   beforeEach(() => {
@@ -216,6 +226,115 @@ describe('tagResolver', () => {
         url: undefined,
         description: undefined,
         created: legacyRecord.created,
+        updatedAt: undefined,
+      });
+    });
+  });
+
+  describe('Mutation.createTag', () => {
+    it('requires authentication', async () => {
+      const ctx = mockContext();
+
+      await expect(
+        tagResolver.Mutation.createTag(null, { tag: validTagInput }, ctx)
+      ).rejects.toThrow(/Authentication required/);
+      expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects empty title and description', async () => {
+      const ctx = mockContext(creatorId);
+
+      await expect(
+        tagResolver.Mutation.createTag(
+          null,
+          { tag: { ...validTagInput, title: '   ' } },
+          ctx
+        )
+      ).rejects.toThrow(/Tag title is required/);
+      await expect(
+        tagResolver.Mutation.createTag(
+          null,
+          { tag: { ...validTagInput, description: '' } },
+          ctx
+        )
+      ).rejects.toThrow(/Tag description is required/);
+    });
+
+    it('rejects invalid privacy', async () => {
+      const ctx = mockContext(creatorId);
+
+      await expect(
+        tagResolver.Mutation.createTag(
+          null,
+          { tag: { ...validTagInput, privacy: 'secret' as 'public' } },
+          ctx
+        )
+      ).rejects.toThrow(/Invalid tag privacy/);
+    });
+
+    it('rejects creating a tag as another user', async () => {
+      const ctx = mockContext(creatorId);
+
+      await expect(
+        tagResolver.Mutation.createTag(
+          null,
+          { tag: { ...validTagInput, creatorId: adminId } },
+          ctx
+        )
+      ).rejects.toThrow(/Not authorized to create a tag as another user/);
+      expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects duplicate titles', async () => {
+      const ctx = mockContext(creatorId);
+      (ctx.prisma.tag.findFirst as jest.Mock).mockResolvedValue({ id: tagId });
+
+      await expect(
+        tagResolver.Mutation.createTag(null, { tag: validTagInput }, ctx)
+      ).rejects.toThrow(/Tag name already exist/);
+      expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
+    });
+
+    it('creates a tag with creator as admin/member and a title-derived url', async () => {
+      const ctx = mockContext(creatorId);
+      const createdAt = new Date('2026-02-01T00:00:00Z');
+      (ctx.prisma.tag.findFirst as jest.Mock).mockResolvedValue(null);
+      (ctx.prisma.tag.create as jest.Mock).mockResolvedValue({
+        id: tagId,
+        creatorId,
+        adminIds: [creatorId],
+        allowedUserIds: [creatorId],
+        privacy: 'public',
+        title: 'Technology',
+        url: '/technology',
+        description: 'Tech discussion',
+        created: createdAt,
+      });
+
+      const result = await tagResolver.Mutation.createTag(null, { tag: validTagInput }, ctx);
+
+      expect(ctx.prisma.tag.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          creatorId,
+          title: 'Technology',
+          description: 'Tech discussion',
+          privacy: 'public',
+          adminIds: [creatorId],
+          allowedUserIds: [creatorId],
+          url: '/technology',
+        }),
+        select: TAG_RECORD_SELECT,
+      });
+      expect(result).toEqual({
+        _id: tagId,
+        creatorId,
+        adminIds: [creatorId],
+        allowedUserIds: [creatorId],
+        privacy: 'public',
+        title: 'Technology',
+        url: '/technology',
+        description: 'Tech discussion',
+        created: createdAt,
         updatedAt: undefined,
       });
     });
