@@ -575,6 +575,29 @@ export const UPDATE_USER = gql`
 `
 
 /**
+ * Finish an invite-based signup (new backend). The invite token is not a session,
+ * so the user signs in afterwards.
+ */
+export const COMPLETE_SIGNUP = gql`
+  mutation completeSignup(
+    $token: String!
+    $username: String!
+    $password: String!
+    $acceptedTermsVersion: String!
+  ) {
+    completeSignup(
+      token: $token
+      username: $username
+      password: $password
+      acceptedTermsVersion: $acceptedTermsVersion
+    ) {
+      _id
+      username
+    }
+  }
+`
+
+/**
  * Update user avatar mutation
  * Used by AvatarEditor for updating avatar qualities (topType, hairColor, etc.)
  */
