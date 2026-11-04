@@ -20,7 +20,7 @@ import { useAppStore } from '@/store'
 import { GET_BUDDY_LIST, GET_CHAT_ROOMS, GET_CHAT_ROOM_SEARCH_DATA } from '@/graphql/queries'
 
 // ─── Tags (the post's group) ───────────────────────────────────────────────
-const mockTags: Record<string, { groupId: string; title: string }> = {}
+const mockTags: Record<string, { tagId: string; title: string }> = {}
 jest.mock('@/hooks/useConversationTags', () => ({
   useConversationTags: () => mockTags,
 }))
@@ -180,7 +180,7 @@ describe('ChatList', () => {
   })
 
   it('shows the post\'s tag instead of a generic Group label (#531)', async () => {
-    mockTags['post1'] = { groupId: 'g1', title: 'Climate' }
+    mockTags['post1'] = { tagId: 'g1', title: 'Climate' }
     render(<ChatList filterType="groups" />)
 
     const tag = await screen.findByTestId('discussion-tag')
@@ -200,7 +200,7 @@ describe('ChatList', () => {
   })
 
   it('filters the list by the tag when the tag is clicked, without opening the room (#531)', async () => {
-    mockTags['post1'] = { groupId: 'g1', title: 'Local News' }
+    mockTags['post1'] = { tagId: 'g1', title: 'Local News' }
     const onSearchChange = jest.fn()
     render(<ChatList filterType="groups" onSearchChange={onSearchChange} />)
 
@@ -315,7 +315,7 @@ describe('ChatList', () => {
   })
 
   it('finds discussions by #tag, from its first letters and in any case', async () => {
-    mockTags['post1'] = { groupId: 'g1', title: 'Climate' }
+    mockTags['post1'] = { tagId: 'g1', title: 'Climate' }
     const { rerender } = render(<ChatList filterType="groups" search="#clim" />)
     expect(await screen.findByText('Interesting Quote')).toBeInTheDocument()
 
@@ -327,7 +327,7 @@ describe('ChatList', () => {
   })
 
   it('combines terms: #tag and text must both match', async () => {
-    mockTags['post1'] = { groupId: 'g1', title: 'Climate' }
+    mockTags['post1'] = { tagId: 'g1', title: 'Climate' }
     withSearchData()
     const { rerender } = render(<ChatList filterType="groups" search="#climate vacancy" />)
     expect(await screen.findByText('Interesting Quote')).toBeInTheDocument()

@@ -3,6 +3,7 @@
 import { type ReactElement } from 'react'
 import { useSearchParams } from 'next/navigation'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
+import { getTagIdParam } from '@/lib/utils/tagParam'
 import { DirectoryHeader } from './DirectoryHeader'
 import { DirectoryToolbar } from './DirectoryToolbar'
 
@@ -23,7 +24,7 @@ export function PublicDirectoryContent(): ReactElement {
   const sortOrder = sortParam === 'asc' ? 'asc' : 'desc'
   const interactions = searchParams.get('interactions') === 'true'
   const following = searchParams.get('following') === 'true'
-  const groupId = searchParams.get('group') || undefined
+  const tagId = getTagIdParam(searchParams) || undefined
 
   return (
     <div
@@ -48,7 +49,7 @@ export function PublicDirectoryContent(): ReactElement {
             sortOrder={sortOrder}
             interactions={interactions}
             friendsOnly={following}
-            groupId={groupId}
+            tagId={tagId}
             compact
           />
         </div>

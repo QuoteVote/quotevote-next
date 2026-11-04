@@ -6,11 +6,11 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { MockedProvider } from "@apollo/client/testing/react";
 import type { ReactNode } from "react";
 import { useConversationTags } from "@/hooks/useConversationTags";
-import { GET_POST_GROUP_ID, GET_TAG } from "@/graphql/queries";
+import { GET_POST_TAG_ID, GET_TAG } from "@/graphql/queries";
 
-const postMock = (postId: string, groupId: string | null) => ({
-  request: { query: GET_POST_GROUP_ID, variables: { postId } },
-  result: { data: { post: { __typename: "Post", _id: postId, groupId } } },
+const postMock = (postId: string, tagId: string | null) => ({
+  request: { query: GET_POST_TAG_ID, variables: { postId } },
+  result: { data: { post: { __typename: "Post", _id: postId, tagId } } },
 });
 const groupMock = (tagId: string, title: string) => ({
   request: { query: GET_TAG, variables: { tagId } },
@@ -39,9 +39,9 @@ describe("useConversationTags (#531)", () => {
 
     await waitFor(() => {
       expect(result.current).toEqual({
-        p1: { groupId: "g1", title: "Climate" },
-        p2: { groupId: "g1", title: "Climate" },
-        p3: { groupId: "g2", title: "Housing" },
+        p1: { tagId: "g1", title: "Climate" },
+        p2: { tagId: "g1", title: "Climate" },
+        p3: { tagId: "g2", title: "Housing" },
       });
     });
   });
@@ -50,7 +50,7 @@ describe("useConversationTags (#531)", () => {
     const mocks = [
       postMock("p1", null),
       {
-        request: { query: GET_POST_GROUP_ID, variables: { postId: "p2" } },
+        request: { query: GET_POST_TAG_ID, variables: { postId: "p2" } },
         error: new Error("404"),
       },
       postMock("p3", "g9"),
@@ -63,7 +63,7 @@ describe("useConversationTags (#531)", () => {
     });
 
     await waitFor(() => {
-      expect(result.current).toEqual({ p4: { groupId: "g1", title: "Climate" } });
+      expect(result.current).toEqual({ p4: { tagId: "g1", title: "Climate" } });
     });
   });
 

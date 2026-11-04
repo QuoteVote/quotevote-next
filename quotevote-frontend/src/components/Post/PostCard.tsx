@@ -45,7 +45,7 @@ function PostCardComponent({
   comments = [],
   quotes = [],
   messageRoom,
-  groupId,
+  tagId,
   citationUrl,
   attribution,
   searchKey,
@@ -125,8 +125,8 @@ function PostCardComponent({
     messages.length
 
   const { data: tagData } = useQuery<{ tag?: { _id: string; title: string } | null }>(GET_TAG, {
-    variables: { tagId: groupId || '' },
-    skip: !groupId,
+    variables: { tagId: tagId || '' },
+    skip: !tagId,
     errorPolicy: 'all',
     fetchPolicy: 'cache-first',
   })
@@ -154,17 +154,18 @@ function PostCardComponent({
   // (display name, falling back to username) so an unset avatar looks
   // identical across the post card, profile and messages.
   const avatarSeed = creator?.name || username
-  const tagTitle = groupId && tagData?.tag ? tagData.tag.title : null
+  const tagTitle = tagId && tagData?.tag ? tagData.tag.title : null
 
   // Opens the home results with this tag applied, keeping the current search,
   // date, sort and Following filters when already on the home page.
   const handleTagClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!groupId) return
+    if (!tagId) return
     const params = new URLSearchParams(
       window.location.pathname === '/' ? window.location.search : ''
     )
-    params.set('group', groupId)
+    params.set('tag', tagId)
+    params.delete('group')
     params.delete('page')
     router.push(`/?${params.toString()}`)
   }

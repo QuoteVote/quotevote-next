@@ -128,7 +128,7 @@ export const GET_POST = gql`
       _id
       userId
       created
-      groupId
+      tagId
       title
       text
       url
@@ -220,7 +220,7 @@ export const GET_TOP_POSTS = gql`
     $interactions: Boolean
     $userId: String
     $sortOrder: String
-    $groupId: String
+    $tagId: String
   ) {
     posts(
       limit: $limit
@@ -232,12 +232,12 @@ export const GET_TOP_POSTS = gql`
       interactions: $interactions
       userId: $userId
       sortOrder: $sortOrder
-      groupId: $groupId
+      tagId: $tagId
     ) {
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
@@ -315,7 +315,7 @@ export const GET_PAGINATED_POSTS = gql`
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
@@ -442,7 +442,7 @@ export const GET_FEATURED_POSTS = gql`
     $startDateRange: String
     $endDateRange: String
     $friendsOnly: Boolean
-    $groupId: String
+    $tagId: String
     $userId: String
     $approved: Boolean
     $deleted: Boolean
@@ -456,7 +456,7 @@ export const GET_FEATURED_POSTS = gql`
       startDateRange: $startDateRange
       endDateRange: $endDateRange
       friendsOnly: $friendsOnly
-      groupId: $groupId
+      tagId: $tagId
       userId: $userId
       approved: $approved
       deleted: $deleted
@@ -466,7 +466,7 @@ export const GET_FEATURED_POSTS = gql`
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
@@ -646,13 +646,13 @@ export const GET_CHAT_ROOM_SEARCH_DATA = gql`
 `
 
 /**
- * The tag (group) of a discussion's post, shown on its Messages card (#531)
+ * The tag of a discussion's post, shown on its Messages card (#531)
  */
-export const GET_POST_GROUP_ID = gql`
-  query getPostGroupId($postId: String!) {
+export const GET_POST_TAG_ID = gql`
+  query getPostTagId($postId: String!) {
     post(postId: $postId) {
       _id
-      groupId
+      tagId
     }
   }
 `
@@ -684,7 +684,7 @@ export const SEARCH = gql`
         title
         text
         url
-        groupId
+        tagId
         creator {
           _id
           name

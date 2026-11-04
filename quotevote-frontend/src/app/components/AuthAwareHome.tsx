@@ -7,6 +7,7 @@ import { DashboardShell } from '@/components/DashboardShell'
 import { PublicDirectoryContent } from './PublicDirectory/PublicDirectoryContent'
 import { DirectoryToolbar } from './PublicDirectory/DirectoryToolbar'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
+import { getTagIdParam } from '@/lib/utils/tagParam'
 
 export function AuthAwareHome(): ReactElement {
   const user = useAppStore((s) => s.user.data)
@@ -34,7 +35,7 @@ function AuthenticatedFeed(): ReactElement {
   const sortParam = searchParams.get('sort')
   const sortOrder = sortParam === 'asc' ? 'asc' : 'desc'
   const interactions = searchParams.get('interactions') === 'true'
-  const groupId = searchParams.get('group') || undefined
+  const tagId = getTagIdParam(searchParams) || undefined
   const following = searchParams.get('following') === 'true'
 
   return (
@@ -60,7 +61,7 @@ function AuthenticatedFeed(): ReactElement {
               sortOrder={sortOrder}
               interactions={interactions}
               friendsOnly={following}
-              groupId={groupId}
+              tagId={tagId}
               compact
             />
           </div>

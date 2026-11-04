@@ -213,7 +213,7 @@ describe("Post Component", () => {
       }));
       const postWithMeta = {
         ...mockPost,
-        groupId: "g1",
+        tagId: "g1",
         citationUrl: "https://www.example.com/article",
       };
       const { getByTestId } = render(<Post {...mockProps} post={postWithMeta} />);

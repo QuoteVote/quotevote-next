@@ -127,9 +127,16 @@ describe('DirectoryToolbar', () => {
     })
 
     it('labels the tag as a Topic pill', () => {
-      mockSearch = 'group=g1'
+      mockSearch = 'tag=g1'
       render(<DirectoryToolbar />)
       expect(screen.getByRole('button', { name: 'Remove Topic filter' })).toBeInTheDocument()
+    })
+
+    it('still reads the tag from an older group link, and removes it', () => {
+      mockSearch = 'group=g1'
+      render(<DirectoryToolbar />)
+      fireEvent.click(screen.getByRole('button', { name: 'Remove Topic filter' }))
+      expect(mockReplace).toHaveBeenLastCalledWith('/', { scroll: false })
     })
 
     it('clears everything with Clear all when two or more filters are on', () => {
@@ -171,7 +178,7 @@ describe('DirectoryToolbar search input', () => {
     render(<DirectoryToolbar />)
     const input = screen.getByTestId('directory-search')
     fireEvent.change(input, { target: { value: '#politics' } })
-    expect(mockReplace).toHaveBeenCalledWith('?group=g1', { scroll: false })
+    expect(mockReplace).toHaveBeenCalledWith('?tag=g1', { scroll: false })
     expect(mockReplace).not.toHaveBeenCalledWith(expect.stringContaining('q='), expect.anything())
   })
 
@@ -192,7 +199,7 @@ describe('DirectoryToolbar search input', () => {
     fireEvent.keyDown(box, { key: 'ArrowDown' })
     expect(box).toHaveAttribute('aria-activedescendant', screen.getByRole('option').id)
     fireEvent.submit(box.closest('form') as HTMLFormElement)
-    expect(mockReplace).toHaveBeenLastCalledWith('?group=g1', { scroll: false })
+    expect(mockReplace).toHaveBeenLastCalledWith('?tag=g1', { scroll: false })
     expect(box).toHaveValue('')
   })
 
@@ -202,7 +209,7 @@ describe('DirectoryToolbar search input', () => {
     fireEvent.focus(box)
     fireEvent.change(box, { target: { value: 'polit' } })
     fireEvent.click(screen.getByRole('option', { name: /Politics/ }))
-    expect(mockReplace).toHaveBeenLastCalledWith('?group=g1', { scroll: false })
+    expect(mockReplace).toHaveBeenLastCalledWith('?tag=g1', { scroll: false })
   })
 
   it('closes the suggestions with Escape', () => {
@@ -219,7 +226,7 @@ describe('DirectoryToolbar search input', () => {
     fireEvent.click(screen.getByTestId('filter-filters'))
     expect(screen.getByRole('radio', { name: 'Any topic' })).toBeChecked()
     fireEvent.click(screen.getByRole('radio', { name: '#Politics' }))
-    expect(mockReplace).toHaveBeenLastCalledWith('?group=g1', { scroll: false })
+    expect(mockReplace).toHaveBeenLastCalledWith('?tag=g1', { scroll: false })
   })
 
   it('keeps unknown #words and plain text as text search', () => {
