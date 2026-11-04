@@ -13,7 +13,7 @@ import { requireAuth } from '../../app/data/utils/requireAuth';
 import * as auth from '../../app/data/utils/authentication';
 import { prisma } from '../../app/lib/prisma';
 import type * as Common from '../../app/types/common';
-import { toPublicUser } from '../../app/data/utils/userPrismaMapper';
+import { toPublicUser, type PrismaUserRecord } from '../../app/data/utils/userPrismaMapper';
 
 // Mock logger
 jest.mock('../../app/data/utils/logger', () => ({
@@ -125,7 +125,7 @@ describe('requireAuth Integration Tests', () => {
                   where: { id: decoded.userId },
                 });
                 if (prismaUser) {
-                  user = toPublicUser(prismaUser);
+                  user = toPublicUser(prismaUser as PrismaUserRecord);
                 }
               }
             } catch {

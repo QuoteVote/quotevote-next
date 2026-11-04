@@ -6,7 +6,7 @@ import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 const date = new Date('2026-01-01T00:00:00.000Z');
 
 const createContext = () => ({
-  userId: 'user-1',
+  userId: 'user-1' as string | null,
   prisma: {
     messageRoom: {
       findUnique: jest.fn(),
@@ -443,7 +443,7 @@ describe('chatResolver Prisma queries', () => {
     expect(context.prisma.message.findMany).not.toHaveBeenCalled();
   });
 
-  it('does not return soft-deleted messages', async () => {
+  it("shows a deleted message in a post's chat as a note from its author", async () => {
     const context = createContext();
     context.prisma.messageRoom.findUnique.mockResolvedValue({
       messageType: 'POST',
@@ -490,12 +490,47 @@ describe('chatResolver Prisma queries', () => {
       context as never
     );
 
-    expect(messages.map((message) => message._id)).toEqual(['visible']);
+    expect(messages.map((message) => [message._id, message.text, message.deleted])).toEqual([
+      ['visible', 'Visible', false],
+      ['deleted', 'Message deleted by its author', true],
+    ]);
     expect(context.prisma.message.findMany).toHaveBeenCalledWith({
       where: { messageRoomId: 'post-room' },
       orderBy: { created: 'asc' },
       select: MESSAGE_RECORD_SELECT,
     });
+  });
+
+  it('keeps deleted direct messages hidden', async () => {
+    const context = createContext();
+    context.prisma.messageRoom.findUnique.mockResolvedValue({
+      messageType: 'USER',
+      userIds: ['user-1'],
+    });
+    const base = {
+      messageRoomId: 'dm',
+      userId: 'user-1',
+      userName: null,
+      title: null,
+      type: null,
+      mutationType: null,
+      readBy: [],
+      readByDetailed: [],
+      deliveredTo: [],
+      created: date,
+    };
+    context.prisma.message.findMany.mockResolvedValue([
+      { ...base, id: 'visible', text: 'Visible', deleted: false },
+      { ...base, id: 'deleted', text: 'Deleted', deleted: true },
+    ]);
+
+    const messages = await chatResolver.Query.messages(
+      {},
+      { messageRoomId: 'dm' },
+      context as never
+    );
+
+    expect(messages.map((message) => message._id)).toEqual(['visible']);
   });
 
   it('returns legacy messages that have no deleted flag or timestamps', async () => {

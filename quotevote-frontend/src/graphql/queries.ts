@@ -35,6 +35,7 @@ export const GET_ROOM_MESSAGES = gql`
         created
         type
         readBy
+        deleted
         user {
           _id
           name
@@ -72,6 +73,15 @@ export const GET_ROSTER = gql`
 export const VERIFY_PASSWORD_RESET_TOKEN = gql`
   query VerifyUserPasswordResetToken($token: String!) {
     verifyUserPasswordResetToken(token: $token)
+  }
+`
+
+/**
+ * Verify an invite signup link (new backend). Returns the approved, unfinished invite or null.
+ */
+export const VERIFY_INVITE_SIGNUP_TOKEN = gql`
+  query VerifyInviteSignupToken($token: String!) {
+    verifyInviteSignupToken(token: $token)
   }
 `
 

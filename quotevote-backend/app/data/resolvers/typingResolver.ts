@@ -70,14 +70,14 @@ export const typingResolver = {
       args: UpdateTypingArgs,
       context: GraphQLContext
     ): Promise<TypingResult> => {
-      if (!context.user?._id) {
+      const userId = context.userId;
+      if (!context.user?._id || !userId) {
         throw new GraphQLError('Authentication required', {
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
 
       const { messageRoomId, isTyping } = args.typing;
-      const userId = context.userId;
 
       try {
         const room = await loadRoomAccessInput(context, messageRoomId);

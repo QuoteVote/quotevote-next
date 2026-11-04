@@ -1,5 +1,6 @@
 import { commentResolver } from '~/data/resolvers/commentResolver';
 import { toComment } from '~/data/resolvers/utils/commentsQuotes';
+import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 import type { GraphQLContext } from '~/types/graphql';
 
 const date = new Date('2026-01-01T00:00:00.000Z');
@@ -57,6 +58,9 @@ function mockContext(user: GraphQLContext['user'] = null) {
       },
       activity: {
         create: jest.fn().mockResolvedValue({ id: 'activity-1' }),
+      },
+      user: {
+        findUnique: jest.fn().mockResolvedValue(null),
       },
       notification: {
         create: jest.fn().mockResolvedValue({
@@ -465,6 +469,54 @@ describe('commentResolver', () => {
         deleted: false,
         created: date,
       });
+    });
+  });
+
+  describe('Comment.user', () => {
+    const comment = {
+      _id: 'c1',
+      userId,
+      postId,
+      content: 'hi',
+      startWordIndex: 0,
+      endWordIndex: 1,
+      deleted: false,
+      created: date,
+    };
+
+    it('returns an author the post page already loaded without a query', async () => {
+      const context = mockContext();
+      const user = { _id: userId, username: 'alice' };
+
+      const result = await commentResolver.Comment.user(
+        { ...comment, user } as never,
+        {},
+        context as never
+      );
+
+      expect(result).toBe(user);
+      expect(context.prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('loads the author of a mutation result with public fields', async () => {
+      const context = mockContext();
+      context.prisma.user.findUnique.mockResolvedValue({ id: userId, username: 'alice' });
+
+      const result = await commentResolver.Comment.user(comment as never, {}, context as never);
+
+      expect(context.prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
+        select: PUBLIC_USER_SELECT,
+      });
+      expect(result).toMatchObject({ _id: userId, username: 'alice' });
+    });
+
+    it('returns null when the author no longer exists', async () => {
+      const context = mockContext();
+
+      const result = await commentResolver.Comment.user(comment as never, {}, context as never);
+
+      expect(result).toBeNull();
     });
   });
 });

@@ -1,4 +1,10 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import {
+  PUBLIC_USER_SELECT,
+  toPublicUser,
+  type PrismaUserRecord,
+} from '~/data/utils/userPrismaMapper';
+import { unique, whenAny } from '~/data/resolvers/utils/batchLoad';
 import type * as Common from '~/types/common';
 
 /**
@@ -75,6 +81,34 @@ export function toQuote(record: QuoteRecord): Common.Quote {
     deleted: record.deleted,
     created: record.created,
   };
+}
+
+/**
+ * Load the author of one comment or quote with public fields only, for a
+ * parent that wasn't loaded with its author, such as a mutation result.
+ */
+export async function loadAuthor(
+  prisma: Pick<PrismaClient, 'user'>,
+  userId: string | undefined
+): Promise<Common.User | null> {
+  if (!userId) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: PUBLIC_USER_SELECT,
+  });
+  return user ? toPublicUser(user as PrismaUserRecord) : null;
+}
+
+/** Attach authors with public fields to a list of comments or quotes in one query. */
+export async function attachAuthors<T extends { userId: string }>(
+  prisma: Pick<PrismaClient, 'user'>,
+  rows: T[]
+): Promise<(T & { user: Common.User | null })[]> {
+  const users = await whenAny(unique(rows.map((row) => row.userId)), (ids) =>
+    prisma.user.findMany({ where: { id: { in: ids } }, select: PUBLIC_USER_SELECT })
+  );
+  const byId = new Map(users.map((u) => [u.id, toPublicUser(u as PrismaUserRecord)]));
+  return rows.map((row) => ({ ...row, user: byId.get(row.userId) ?? null }));
 }
 
 /**

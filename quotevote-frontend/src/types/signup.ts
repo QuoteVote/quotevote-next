@@ -36,3 +36,18 @@ export interface SignupResponse {
         token?: string;
     };
 }
+
+export interface VerifyInviteSignupTokenData {
+    verifyInviteSignupToken: {
+        _id: string;
+        username: string;
+        email: string;
+    } | null;
+}
+
+export interface CompleteSignupData {
+    completeSignup: {
+        _id: string;
+        username: string;
+    } | null;
+}

@@ -7,7 +7,7 @@ import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { requireAuth, requireAuthMiddleware } from '~/data/utils/requireAuth';
 import { verifyToken, refresh } from '~/data/utils/authentication';
-import { checkRateLimit, rateLimitMap } from '~/data/utils/rateLimiter';
+import { checkRateLimit } from '~/data/utils/rateLimiter';
 import { GraphQLContext } from '~/types/graphql';
 import { AuthenticatedRequest, NextFunction } from '~/types/express';
 
@@ -134,35 +134,14 @@ describe('Professional Utility Coverage Gaps', () => {
   });
 
   /**
-   * Tests for rate limiting edge cases like missing users and manual cache cleanup.
+   * Tests for rate limiting edge cases like missing users.
    */
-  describe('rateLimiter - Bypass & Cleanup', () => {
-    beforeEach(() => {
-      rateLimitMap.clear();
-      jest.useFakeTimers();
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
-    it('should bypass rate limit if userId is missing', () => {
-      const mockReq = { user: {} } as unknown as AuthenticatedRequest; 
-      expect(checkRateLimit(mockReq, 'action')).toBe(true);
-      expect(rateLimitMap.size).toBe(0);
-    });
-
-    it('should verify manual cleanup behavior', () => {
-      const key = 'user1:action';
-      rateLimitMap.set(key, { count: 10, resetAt: Date.now() - 1000 }); 
-      
-      const now = Date.now();
-      for (const [k, v] of rateLimitMap.entries()) {
-        if (now >= v.resetAt) {
-          rateLimitMap.delete(k);
-        }
-      }
-      expect(rateLimitMap.has(key)).toBe(false);
+  describe('rateLimiter - Bypass', () => {
+    it('should bypass rate limit if userId is missing', async () => {
+      const mockReq = { user: {} } as unknown as AuthenticatedRequest;
+      const store = { $runCommandRaw: jest.fn() };
+      await expect(checkRateLimit(store, mockReq, 'action')).resolves.toBe(true);
+      expect(store.$runCommandRaw).not.toHaveBeenCalled();
     });
   });
 });

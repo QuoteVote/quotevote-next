@@ -881,7 +881,7 @@ describe('Notification Model & Relations', () => {
       include: { user: true, sender: true },
     });
     expect(full!.user.id).toBe(recipient.id);
-    expect(full!.sender.id).toBe(sender.id);
+    expect(full?.sender?.id).toBe(sender.id);
   });
 });
 
