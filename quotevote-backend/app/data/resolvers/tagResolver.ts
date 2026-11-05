@@ -125,14 +125,6 @@ export const tagResolver = {
       const actorId = requireUserId(context);
       const input = args.tag;
 
-      try {
-        await checkRateLimit(context.prisma, actorId, 'createTag', TAGS_PER_HOUR, HOUR_MS);
-      } catch {
-        throw new GraphQLError('Too many tags. Please try again later.', {
-          extensions: { code: 'TOO_MANY_REQUESTS' },
-        });
-      }
-
       if (!input?.title?.trim()) {
         throw new GraphQLError('Tag title is required', {
           extensions: { code: 'BAD_USER_INPUT' },
@@ -183,6 +175,15 @@ export const tagResolver = {
       if (existing) {
         throw new GraphQLError('Tag name already exist!', {
           extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      // After validation so refused attempts don't consume the hourly budget.
+      try {
+        await checkRateLimit(context.prisma, actorId, 'createTag', TAGS_PER_HOUR, HOUR_MS);
+      } catch {
+        throw new GraphQLError('Too many tags. Please try again later.', {
+          extensions: { code: 'TOO_MANY_REQUESTS' },
         });
       }
 

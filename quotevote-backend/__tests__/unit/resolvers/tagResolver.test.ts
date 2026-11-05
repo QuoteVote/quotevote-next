@@ -4,11 +4,14 @@ import {
   tagResolver,
 } from '~/data/resolvers/tagResolver';
 import { TAG_RECORD_SELECT } from '~/data/utils/tagPrismaMapper';
+import { checkRateLimit } from '~/data/utils/rateLimiter';
 import type { GraphQLContext } from '~/types/graphql';
 
 jest.mock('~/data/utils/rateLimiter', () => ({
   checkRateLimit: jest.fn().mockResolvedValue(undefined),
 }));
+
+const mockCheckRateLimit = checkRateLimit as jest.MockedFunction<typeof checkRateLimit>;
 
 const tagId = '507f1f77bcf86cd799439011';
 const creatorId = '507f1f77bcf86cd799439012';
@@ -316,6 +319,19 @@ describe('tagResolver', () => {
         where: { OR: [{ title: 'Technology' }, { url: '/technology' }] },
         select: { id: true },
       });
+      expect(mockCheckRateLimit).not.toHaveBeenCalled();
+      expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses when the rate limit is exceeded without creating', async () => {
+      const ctx = mockContext(creatorId);
+      (ctx.prisma.tag.findFirst as jest.Mock).mockResolvedValue(null);
+      mockCheckRateLimit.mockRejectedValueOnce(new Error('rate limited'));
+
+      await expect(
+        tagResolver.Mutation.createTag(null, { tag: validTagInput }, ctx)
+      ).rejects.toThrow(/Too many tags/);
+      expect(mockCheckRateLimit).toHaveBeenCalled();
       expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
     });
 
