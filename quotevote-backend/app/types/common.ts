@@ -625,9 +625,10 @@ export interface TypingInput {
 }
 
 export interface ReportUserInput {
-  reportedUserId: string;
-  reporterId: string;
+  _reportedUserId: string;
   reason: string;
+  description?: string | null;
+  severity?: string | null;
 }
 
 export interface RequestUserAccessInput {

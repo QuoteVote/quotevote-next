@@ -37,10 +37,6 @@ export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   // Mutations with no resolver yet (#633)
   VOTE: '#633',
   DELETE_VOTE: '#633',
-  FOLLOW_USER: '#633',
-  REPORT_USER: '#633',
-  DISABLE_USER: '#633',
-  ENABLE_USER: '#633',
 };
 
 const DOCUMENT_PATTERN = /export const (\w+) = gql`([\s\S]*?)`/g;
