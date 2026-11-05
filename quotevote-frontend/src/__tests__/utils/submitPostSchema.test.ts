@@ -131,6 +131,33 @@ describe('submitPostSchema - Citation URL validation', () => {
     })
   })
 
+  describe('new tag name length', () => {
+    it('accepts a new tag name at the 50-character limit', () => {
+      expect(submitPostSchema.safeParse({ ...validBasePost, tag: { title: 'a'.repeat(50) } }).success).toBe(true)
+      expect(submitPostSchema.safeParse({ ...validBasePost, tag: 'b'.repeat(50) }).success).toBe(true)
+    })
+
+    it('rejects a new tag name over 50 characters, as the API does', () => {
+      const result = submitPostSchema.safeParse({ ...validBasePost, tag: { title: 'a'.repeat(51) } })
+      expect(result.success).toBe(false)
+      expect(result.error?.issues[0].message).toBe('Tag names can be at most 50 characters')
+      expect(submitPostSchema.safeParse({ ...validBasePost, tag: 'b'.repeat(51) }).success).toBe(false)
+    })
+
+    it('ignores spaces around the name', () => {
+      expect(
+        submitPostSchema.safeParse({ ...validBasePost, tag: { title: ` ${'a'.repeat(50)} ` } }).success
+      ).toBe(true)
+    })
+
+    it("doesn't check existing tags chosen from the list", () => {
+      expect(
+        submitPostSchema.safeParse({ ...validBasePost, tag: { _id: 'tag-1', title: 'a'.repeat(80) } })
+          .success
+      ).toBe(true)
+    })
+  })
+
   describe('isSubmitPostFormReady', () => {
     it('returns false when required fields are missing', () => {
       expect(isSubmitPostFormReady({ title: '', text: '', citationUrl: '' })).toBe(false)

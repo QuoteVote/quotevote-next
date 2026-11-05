@@ -202,7 +202,7 @@ export default function SignupPageContent() {
               aria-label="I agree to the Terms of Service"
               aria-invalid={Boolean(errors.tos)}
               aria-describedby={errors.tos ? 'signup-tos-error' : undefined}
-              className="mt-1 h-4 w-4 accent-primary"
+              className="size-6 shrink-0 accent-primary"
             />
             <div className="text-sm leading-6">
               <label htmlFor="signup-tos">I agree to the </label>

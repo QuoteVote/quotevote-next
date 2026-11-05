@@ -28,7 +28,7 @@ Acceptance records are **not** exposed on public User GraphQL fields. Future sup
 
 ## Enforcement
 
-1. **`POST /auth/register`** — requires `acceptedTermsVersion`. Nested `prisma.user.create` + `termsAcceptances.create` (MongoDB replica set / Prisma transactions already required by the migration strategy).
+1. **`POST /auth/register`** — always refused with 403 (#665). Membership is invitation-only, so it creates no account and no `TermsAcceptance`, whatever Terms version is sent. `direct_registration` stays in the `TermsAcceptance` source enum for any existing rows.
 2. **`completeSignup(token, username, password, acceptedTermsVersion)`** — invite completion only. Invite JWTs have `type: invite_signup` and are rejected by `verifyToken` for general sessions. Requires `User.status === 4` and no password.
 3. **`updateUser`** — may still hash password changes for completed accounts (Settings). Unfinished invites (`status` 1 or 4, no password) must use `completeSignup`.
 4. **`POST /auth/guest`** — removed (consentless accounts).
@@ -48,4 +48,4 @@ Invite lifecycle uses legacy numeric `User.status` (admin UI / `userInviteReques
 
 Retention follows the Privacy Notice (#566 / #569) and account-deletion policy. Do not enable the production Terms gate until Privacy Notice publication, Terms effective date, and founder go-live approval for v2.0.0 are coordinated with #568/#569.
 
-**Route note:** the Next.js frontend posts direct registration to `/auth/register` on the new backend. Confirm production routing vs legacy `/register` before cutover.
+**Route note:** the Next.js frontend no longer calls `/auth/register`; `/auths/signup` without an invite redirects to Request Access. The legacy API's `/register` is outside this backend, so check it at cutover.

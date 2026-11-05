@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { registeredUser } from "./fixtures/registeredUser";
 import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from "./helpers/auth";
-import { GRAPHQL_ROUTE, registerAuthorUser } from "./helpers/api";
+import { GRAPHQL_ROUTE } from "./helpers/api";
 
 /**
  * E2E-AUTH-006: Magic-link eyebrow is disabled (#460)
@@ -183,21 +183,6 @@ test.describe("Password Login (E2E-AUTH-002)", () => {
   const testUsername = (AUTHOR_USERNAME || registeredUser.username).trim();
   const testPassword = (AUTHOR_PASSWORD || registeredUser.password).trim();
   const testEmail = registeredUser.email || `${testUsername}@e2e.quotevote.test`;
-
-  test.beforeAll(async () => {
-    if (AUTHOR_PASSWORD) {
-      try {
-        await registerAuthorUser({
-          username: testUsername,
-          password: testPassword,
-          name: "E2E Author",
-          email: testEmail,
-        });
-      } catch {
-        // Account may already exist on test backend
-      }
-    }
-  });
 
   test("logs in with valid username and password, routes to dashboard, and preserves session after reload", async ({ page }) => {
     test.skip(!AUTHOR_PASSWORD, "E2E_AUTHOR_PASSWORD is required for live backend auth");

@@ -28,34 +28,17 @@ We renamed the secret key in the `.env` file.
 
 ## 📚 API Guide
 
-### 1. Register (Create Account)
+### 1. Register (Closed)
 
 **`POST /auth/register`**
 
-Requires `acceptedTermsVersion` matching the server's current Terms version (see [terms-acceptance.md](./terms-acceptance.md)). Guest registration (`POST /auth/guest`) has been removed.
+Always refused: Quote.Vote is invitation-only, so this route creates no account (#665). Accounts come from an approved request through the `completeSignup` mutation (see [terms-acceptance.md](./terms-acceptance.md)). Guest registration (`POST /auth/guest`) has been removed.
 
-```bash
-curl -X POST http://localhost:4000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "username": "johndoe",
-    "email": "john@example.com",
-    "password": "securepassword123",
-    "acceptedTermsVersion": "2026-10-15"
-  }'
-```
-
-**Response:**
+**Response (403):**
 
 ```json
 {
-  "message": "User registered successfully",
-  "user": {
-    "_id": "...",
-    "username": "johndoe",
-    "email": "john@example.com"
-  }
+  "error_message": "Quote.Vote is invitation-only. Request access to join."
 }
 ```
 

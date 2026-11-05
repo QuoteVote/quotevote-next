@@ -3,11 +3,9 @@ import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcryptjs';
 import { GraphQLError } from 'graphql';
 import type { Request, Response } from 'express';
-import { Prisma } from '@prisma/client';
 import { logger } from './logger';
 import { prisma } from '~/lib/prisma';
 import type { JWTPayload, PasswordResetTokenPayload } from '../../types/express';
-import { CURRENT_TERMS_HASH, CURRENT_TERMS_VERSION, isCurrentTermsVersion } from './termsPolicy';
 
 /**
  * Environment Variables correctly typed via process.env augmentation
@@ -39,16 +37,6 @@ export interface InviteSignupTokenPayload {
   iat?: number;
   exp?: number;
 }
-
-/**
- * Formats a string to title case (e.g., "fast_food" -> "Fast_food").
- * @param str The string to format.
- * @returns The formatted string.
- */
-export const toTitleCase = (str: string): string => {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
 
 /**
  * Issues a one-day invite-signup token. Valid only for `completeSignup`, never
@@ -173,103 +161,13 @@ export const isPasswordResetTokenCurrent = (
 };
 
 /**
- * Registers a new user after validating required fields, Terms version, and
- * username uniqueness. Creates the user and TermsAcceptance atomically.
+ * Direct registration is closed: membership is invitation-only, so accounts are only
+ * activated by the completeSignup mutation after an admin approves a request.
  */
-export const register = async (req: Request, res: Response): Promise<void> => {
-  logger.info('Registering new user', { username: req.body.username });
-  try {
-    const requiredFields = ['name', 'email', 'username', 'password'];
-
-    for (const field of requiredFields) {
-      if (!req.body[field]) {
-        res.status(400).json({
-          error_message: `${toTitleCase(field)} is required.`,
-        });
-        return;
-      }
-    }
-
-    const acceptedTermsVersion = req.body.acceptedTermsVersion;
-    if (!isCurrentTermsVersion(acceptedTermsVersion)) {
-      res.status(400).json({
-        error_message: 'You must accept the current Terms of Service to create an account.',
-      });
-      return;
-    }
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ username: req.body.username }, { email: req.body.email }],
-      },
-      select: { id: true, username: true, email: true },
-    });
-    if (existingUser) {
-      // OR can match on either field — identify which one(s) collided.
-      const usernameConflict = existingUser.username === req.body.username;
-      const emailConflict = existingUser.email === req.body.email;
-      const conflict =
-        usernameConflict && !emailConflict
-          ? `Username ${existingUser.username} already exists!`
-          : emailConflict && !usernameConflict
-            ? 'Email already exists!'
-            : 'Username or email already exists!';
-      res.status(409).json({
-        error_message: conflict,
-      });
-      return;
-    }
-
-    const { name, email, username, password, status } = req.body;
-
-    // Hash password explicitly (Prisma has no hooks)
-    const hashedPassword = await generateHashPassword(password);
-
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        username,
-        password: hashedPassword,
-        accountStatus: status === 'disabled' ? 'disabled' : 'active',
-        termsAcceptances: {
-          create: {
-            termsVersion: CURRENT_TERMS_VERSION,
-            termsHash: CURRENT_TERMS_HASH,
-            source: 'direct_registration',
-          },
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        username: true,
-      },
-    });
-
-    res.status(201).json({
-      message: 'User registered successfully',
-      user: {
-        _id: user.id,
-        name: user.name,
-        email: user.email,
-        username: user.username,
-      },
-    });
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-      res.status(409).json({
-        error_message: 'Username or email already exists!',
-      });
-      return;
-    }
-    logger.error('Registration error', { error: err });
-    res.status(500).json({
-      error_message: 'Error saving user',
-    });
-  }
+export const register = (_req: Request, res: Response): void => {
+  res.status(403).json({
+    error_message: 'Quote.Vote is invitation-only. Request access to join.',
+  });
 };
 
 /**

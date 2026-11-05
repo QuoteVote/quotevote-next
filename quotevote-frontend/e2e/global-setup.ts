@@ -5,7 +5,7 @@ import {
   AUTHOR_PASSWORD,
   AUTHOR_USERNAME,
 } from './helpers/auth';
-import { getApiUrl, loginViaApi, registerAuthorUser } from './helpers/api';
+import { getApiUrl, loginViaApi } from './helpers/api';
 import {
   ADMIN_STORAGE_PATH,
   saveAuthorStorageState,
@@ -41,17 +41,6 @@ export default async function globalSetup(): Promise<void> {
     return;
   }
 
-  const shouldRegister = process.env.E2E_REGISTER_AUTHOR === 'true';
-
-  if (shouldRegister) {
-    await registerAuthorUser({
-      username: AUTHOR_USERNAME,
-      password: AUTHOR_PASSWORD,
-      name: 'E2E Author',
-      email: `${AUTHOR_USERNAME}@e2e.quotevote.test`,
-    });
-  }
-
   try {
     const session = await loginViaApi(AUTHOR_USERNAME, AUTHOR_PASSWORD);
     await saveAuthorStorageState(baseURL, session);
@@ -60,7 +49,7 @@ export default async function globalSetup(): Promise<void> {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(
       `[e2e] Unable to authenticate "${AUTHOR_USERNAME}" against ${getApiUrl()}: ${message}. ` +
-        'Set E2E_REGISTER_AUTHOR=true for local backends or provide valid credentials.'
+        'Seed the author on local backends with `pnpm seed:e2e-author` in quotevote-backend, or provide valid credentials.'
     );
   }
 }
