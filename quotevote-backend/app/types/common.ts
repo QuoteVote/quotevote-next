@@ -36,6 +36,12 @@ export type StoredNotificationType = NotificationType;
 
 export type VoteType = 'up' | 'down';
 
+/** The six passage responses a member can give, as stored in a vote's `tags`. */
+export type VoteTag = '#agree' | '#disagree' | '#true' | '#false' | '#like' | '#dislike';
+
+/** The pair a response belongs to. A member holds at most one response per pair on a passage. */
+export type VoteAxis = 'agreement' | 'truth' | 'liking';
+
 export type MessageType = 'USER' | 'POST' | 'SYSTEM';
 
 export type RosterStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
@@ -558,14 +564,17 @@ export interface CommentInput {
   reaction?: string;
 }
 
+/** `addVote` input, as the GraphQL `VoteInput` sends it: one response as a string. */
 export interface VoteInput {
-  userId: string;
+  /** Must be the signed-in member when sent; the resolver votes as the signed-in member. */
+  userId?: string | null;
   postId: string;
   type: VoteType;
-  startWordIndex?: number;
-  endWordIndex?: number;
-  tags?: string[];
-  content?: string;
+  tags: string;
+  startWordIndex: number;
+  endWordIndex: number;
+  /** Ignored: the resolver stores the passage text from the post itself. */
+  content?: string | null;
 }
 
 export interface QuoteInput {

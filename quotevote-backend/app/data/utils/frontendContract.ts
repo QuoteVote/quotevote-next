@@ -35,8 +35,6 @@ export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   UNBLOCK_BUDDY: '#582',
   REMOVE_BUDDY: '#582',
   // Mutations with no resolver yet (#633)
-  VOTE: '#633',
-  DELETE_VOTE: '#633',
   FOLLOW_USER: '#633',
   REPORT_USER: '#633',
   DISABLE_USER: '#633',
