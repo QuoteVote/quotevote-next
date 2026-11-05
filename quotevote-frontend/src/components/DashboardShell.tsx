@@ -35,6 +35,7 @@ import { useOnTabVisible } from '@/hooks/useOnTabVisible';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { useRosterManagement } from '@/hooks/useRosterManagement';
 import { useSyncCurrentUserProfile } from '@/hooks/useSyncCurrentUserProfile';
+import { useSyncCurrentUserPresence } from '@/hooks/useSyncCurrentUserPresence';
 import ChatContent from '@/components/Chat/ChatContent';
 import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from '@/graphql/queries';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
@@ -74,6 +75,7 @@ function DashboardClient() {
   usePresenceSubscription();
   useRosterManagement();
   useSyncCurrentUserProfile();
+  useSyncCurrentUserPresence();
   return null;
 }
 

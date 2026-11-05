@@ -92,7 +92,7 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
       <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
         {users.map((user) => {
           const presence = presenceMap[user._id];
-          const isOnline = presence?.status === 'online';
+          const isAvailable = presence?.status === 'online';
 
           return (
             <div
@@ -107,9 +107,9 @@ const AddBuddyDialog = ({ open, onClose }: AddBuddyDialogProps) => {
                 />
                 {presence && (
                   <span
-                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${isOnline ? 'bg-[#52b274]' : 'bg-muted-foreground'
+                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${isAvailable ? 'bg-[#52b274]' : 'bg-muted-foreground'
                       }`}
-                    aria-label={isOnline ? 'Online' : 'Offline'}
+                    aria-label={isAvailable ? 'Available' : 'Offline'}
                   />
                 )}
               </div>

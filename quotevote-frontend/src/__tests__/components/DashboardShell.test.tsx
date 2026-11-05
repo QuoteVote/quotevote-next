@@ -35,6 +35,7 @@ jest.mock("@/hooks/usePresenceHeartbeat", () => ({ usePresenceHeartbeat: jest.fn
 jest.mock("@/hooks/usePresenceSubscription", () => ({ usePresenceSubscription: jest.fn() }));
 jest.mock("@/hooks/useRosterManagement", () => ({ useRosterManagement: jest.fn() }));
 jest.mock("@/hooks/useSyncCurrentUserProfile", () => ({ useSyncCurrentUserProfile: jest.fn() }));
+jest.mock("@/hooks/useSyncCurrentUserPresence", () => ({ useSyncCurrentUserPresence: jest.fn() }));
 jest.mock("@/hooks/useMediaQuery", () => ({ useMediaQuery: () => false }));
 
 jest.mock("@/components/Chat/ChatContent", () => ({
