@@ -213,6 +213,40 @@ describe('userInviteResolver', () => {
         )
       ).rejects.toThrow(/Invalid invite signup token/);
     });
+
+    it('rejects a missing token', async () => {
+      const ctx = mockContext();
+      await expect(
+        userInviteResolver.Mutation.completeSignup(
+          null,
+          {
+            token: '',
+            username: 'newuser',
+            password: 'Password1',
+            acceptedTermsVersion: CURRENT_TERMS_VERSION,
+          },
+          ctx
+        )
+      ).rejects.toThrow(/token, username, and password are required/);
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects an expired invite token', async () => {
+      const ctx = mockContext();
+      await expect(
+        userInviteResolver.Mutation.completeSignup(
+          null,
+          {
+            token: auth.generateInviteSignupToken(userId, -60),
+            username: 'newuser',
+            password: 'Password1',
+            acceptedTermsVersion: CURRENT_TERMS_VERSION,
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Invite signup token has expired/);
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('verifyInviteSignupToken', () => {

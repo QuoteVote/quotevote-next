@@ -57,123 +57,29 @@ describe('Authentication Utils', () => {
   });
 
   describe('register', () => {
-    it('should return 400 if fields are missing', async () => {
-      req.body = { username: 'test' }; // missing password etc
-      await auth.register(req as Request, res as Response);
-      expect(status).toHaveBeenCalledWith(400);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({ error_message: expect.stringMatching(/required/) })
-      );
-    });
+    const validRegistration = {
+      name: 'Test',
+      email: 'test@example.com',
+      username: 'testuser',
+      password: 'password123',
+    };
 
-    it('should return 400 if Terms version is missing or stale', async () => {
-      req.body = {
-        name: 'Test',
-        email: 'test@example.com',
-        username: 'testuser',
-        password: 'password123',
-      };
-      await auth.register(req as Request, res as Response);
-      expect(status).toHaveBeenCalledWith(400);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({ error_message: expect.stringMatching(/Terms of Service/) })
-      );
+    it.each([
+      ['with the current Terms version', { acceptedTermsVersion: CURRENT_TERMS_VERSION }],
+      ['without a Terms version', {}],
+      ['with a stale Terms version', { acceptedTermsVersion: 'stale' }],
+      ['when asking for an active account', { status: 'active' }],
+    ])('refuses direct registration %s and creates nothing', (_label, extra) => {
+      req.body = { ...validRegistration, ...extra };
 
-      req.body.acceptedTermsVersion = 'stale';
-      await auth.register(req as Request, res as Response);
-      expect(status).toHaveBeenCalledWith(400);
-    });
+      auth.register(req as Request, res as Response);
 
-    it('should register a new user with nested TermsAcceptance', async () => {
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
-      (prisma.user.create as jest.Mock).mockResolvedValue({
-        id: 'newId',
-        name: 'Test',
-        email: 'test@example.com',
-        username: 'testuser',
-      });
-
-      req.body = {
-        name: 'Test',
-        email: 'test@example.com',
-        username: 'testuser',
-        password: 'password123',
-        acceptedTermsVersion: CURRENT_TERMS_VERSION,
-      };
-
-      await auth.register(req as Request, res as Response);
-
-      expect(prisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            termsAcceptances: {
-              create: expect.objectContaining({
-                termsVersion: CURRENT_TERMS_VERSION,
-                source: 'direct_registration',
-              }),
-            },
-          }),
-        })
-      );
-      expect(res.status).toHaveBeenCalledWith(201);
-    });
-
-    it('should report username conflict when only username matches', async () => {
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue({
-        id: 'existing',
-        username: 'testuser',
-        email: 'other@example.com',
-      });
-      req.body = {
-        name: 'Test',
-        email: 'test@example.com',
-        username: 'testuser',
-        password: 'password123',
-        acceptedTermsVersion: CURRENT_TERMS_VERSION,
-      };
-
-      await auth.register(req as Request, res as Response);
-
-      expect(res.status).toHaveBeenCalledWith(409);
+      expect(status).toHaveBeenCalledWith(403);
       expect(json).toHaveBeenCalledWith({
-        error_message: 'Username testuser already exists!',
+        error_message: expect.stringMatching(/invitation-only/),
       });
-    });
-
-    it('should report email conflict when only email matches', async () => {
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue({
-        id: 'existing',
-        username: 'taken_user',
-        email: 'test@example.com',
-      });
-      req.body = {
-        name: 'Test',
-        email: 'test@example.com',
-        username: 'brand_new',
-        password: 'password123',
-        acceptedTermsVersion: CURRENT_TERMS_VERSION,
-      };
-
-      await auth.register(req as Request, res as Response);
-
-      expect(res.status).toHaveBeenCalledWith(409);
-      expect(json).toHaveBeenCalledWith({
-        error_message: 'Email already exists!',
-      });
-    });
-
-    it('should handle generic error during registration', async () => {
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
-      (prisma.user.create as jest.Mock).mockRejectedValue(new Error('Unexpected'));
-      req.body = {
-        name: 'n',
-        email: 'e',
-        username: 'u',
-        password: 'p',
-        acceptedTermsVersion: CURRENT_TERMS_VERSION,
-      };
-      await auth.register(req as Request, res as Response);
-      expect(status).toHaveBeenCalledWith(500);
+      expect(prisma.user.findFirst).not.toHaveBeenCalled();
+      expect(prisma.user.create).not.toHaveBeenCalled();
     });
   });
 
@@ -490,40 +396,6 @@ describe('Authentication Utils', () => {
   });
 
   describe('Additional Coverage', () => {
-    it('should test toTitleCase edge cases', () => {
-      expect(auth.toTitleCase('')).toBe('');
-      expect(auth.toTitleCase('HELLO')).toBe('Hello');
-      expect(auth.toTitleCase(null as unknown as string)).toBe('');
-    });
-
-    it('should handle registration with status disabled', async () => {
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
-      (prisma.user.create as jest.Mock).mockResolvedValue({
-        id: '1',
-        name: 'n',
-        email: 'e',
-        username: 'u',
-      });
-      await auth.register(
-        {
-          body: {
-            name: 'n',
-            email: 'e',
-            username: 'u',
-            password: 'p',
-            status: 'disabled',
-            acceptedTermsVersion: CURRENT_TERMS_VERSION,
-          },
-        } as Request,
-        res as Response
-      );
-      expect(prisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ accountStatus: 'disabled' }),
-        })
-      );
-    });
-
     it('should handle email username in addCreatorToUser', async () => {
       (prisma.user.findFirst as jest.Mock).mockResolvedValue({
         id: '123',
