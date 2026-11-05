@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { containsUrl, sanitizeUrl } from '@/lib/utils/sanitizeUrl'
 import { ATTRIBUTION_MAX_LENGTH } from '@/lib/constants/attribution'
 import { SUBMIT_POST_TITLE_MAX_LENGTH } from '@/lib/constants/submitPost'
+import { TAG_TITLE_MAX_LENGTH } from '@/lib/constants/tags'
 
 export const submitPostSchema = z.object({
   title: z
@@ -55,6 +56,15 @@ export const submitPostSchema = z.object({
         return false
       },
       { message: 'Please select or create a tag' }
+    )
+    .refine(
+      (value) => {
+        // Only a new tag has a name to check: existing ones are chosen from the list.
+        if (!value || (typeof value === 'object' && '_id' in value)) return true
+        const title = typeof value === 'string' ? value : value.title
+        return title.trim().length <= TAG_TITLE_MAX_LENGTH
+      },
+      { message: `Tag names can be at most ${TAG_TITLE_MAX_LENGTH} characters` }
     ),
 })
 
