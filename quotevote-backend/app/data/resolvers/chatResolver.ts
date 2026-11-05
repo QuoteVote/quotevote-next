@@ -71,12 +71,13 @@ function visibleMessages(
   );
 }
 
-/** The message and its room, when the caller may change it. */
-async function loadWritableMessage(
-  context: GraphQLContext,
-  messageId: string,
-  userId: string
-): Promise<{ message: MessageRecord; room: NonNullable<Awaited<ReturnType<typeof findRoom>>> }> {
+type LoadedMessage = {
+  message: MessageRecord;
+  room: NonNullable<Awaited<ReturnType<typeof findRoom>>>;
+};
+
+/** A live message and its room. */
+async function loadMessage(context: GraphQLContext, messageId: string): Promise<LoadedMessage> {
   const message = isObjectId(messageId)
     ? await context.prisma.message.findUnique({
         where: { id: messageId },
@@ -85,8 +86,18 @@ async function loadWritableMessage(
     : null;
   const room = message ? await findRoom(context.prisma, message.messageRoomId) : null;
   if (!message || !room || !isLive(message)) throw notFound('Message not found');
-  await assertCanWrite(context.prisma, room, userId);
   return { message, room };
+}
+
+/** The message and its room, when the caller may write in that room. */
+async function loadWritableMessage(
+  context: GraphQLContext,
+  messageId: string,
+  userId: string
+): Promise<LoadedMessage> {
+  const loaded = await loadMessage(context, messageId);
+  await assertCanWrite(context.prisma, loaded.room, userId);
+  return loaded;
 }
 
 export const chatResolver = {
@@ -317,7 +328,9 @@ export const chatResolver = {
       context: GraphQLContext
     ): Promise<{ _id: string }> => {
       const userId = requireUserId(context);
-      const { message, room } = await loadWritableMessage(context, args.messageId, userId);
+      // Not loadWritableMessage: a deleted post closes its chat to new messages, but authors
+      // can still delete what they wrote there (#576 D4, #664).
+      const { message, room } = await loadMessage(context, args.messageId);
       if (room.messageType !== 'POST') throw forbidden("Direct messages can't be deleted");
       if (message.userId !== userId) throw forbidden('Only the author can delete this message');
 
