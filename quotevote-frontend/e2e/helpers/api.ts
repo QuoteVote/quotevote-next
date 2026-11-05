@@ -49,44 +49,6 @@ export async function loginViaApi(
   return { token, user: data.user as AuthSession['user'] };
 }
 
-export async function registerAuthorUser(input: {
-  username: string;
-  password: string;
-  name: string;
-  email: string;
-}): Promise<void> {
-  const baseUrl = getApiUrl();
-  const paths = ['/auth/register', '/register'];
-
-  for (const path of paths) {
-    const response = await fetch(`${baseUrl}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-
-    if (response.status === 409) {
-      return;
-    }
-
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.includes('application/json')) {
-      continue;
-    }
-
-    if (response.ok) {
-      return;
-    }
-
-    const data = (await response.json()) as { error_message?: string; message?: string };
-    throw new Error(
-      data.error_message ?? data.message ?? `Registration failed with status ${response.status}`
-    );
-  }
-
-  throw new Error('Registration failed: no register endpoint responded with JSON');
-}
-
 interface GraphQLPayload<T> {
   data?: T;
   errors?: Array<{ message: string }>;

@@ -75,7 +75,7 @@ async function startServer() {
     res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'unavailable' });
   });
 
-  // Auth Routes — guest registration removed (#573: no consentless accounts)
+  // Auth Routes — guest registration removed (#573); /auth/register always refuses (#665)
   app.post('/auth/register', auth.register);
   app.post('/auth/login', auth.login);
   app.post('/auth/refresh', auth.refresh);
