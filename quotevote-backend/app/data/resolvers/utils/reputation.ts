@@ -49,12 +49,23 @@ const countVotesByType = async (
   prisma: ReputationPrisma,
   userId: string
 ): Promise<{ upvoteCount: number; downvoteCount: number; totalVotes: number }> => {
-  const [upvoteCount, downvoteCount, totalVotes] = await Promise.all([
-    prisma.vote.count({ where: { userId, type: 'up' } }),
-    prisma.vote.count({ where: { userId, type: 'down' } }),
-    prisma.vote.count({ where: { userId } }),
-  ]);
-  return { upvoteCount, downvoteCount, totalVotes };
+  // Live votes only: switching a passage response soft-deletes the old one (#542), so
+  // counting deleted votes would grow with every switch. Raw, because Prisma can't filter
+  // `deleted` and keep legacy votes that never received the field.
+  const rows = (await prisma.vote.aggregateRaw({
+    pipeline: [
+      { $match: { userId: { $oid: userId }, deleted: { $ne: true } } },
+      { $group: { _id: '$type', count: { $sum: 1 } } },
+    ],
+  })) as unknown as { _id: unknown; count: unknown }[];
+
+  const countOf = (type: string): number => {
+    const count = rows.find((row) => row._id === type)?.count;
+    return typeof count === 'number' ? count : 0;
+  };
+  const upvoteCount = countOf('up');
+  const downvoteCount = countOf('down');
+  return { upvoteCount, downvoteCount, totalVotes: upvoteCount + downvoteCount };
 };
 
 const countUserContent = async (

@@ -1950,11 +1950,12 @@ function formatTimeAgo(created: string | undefined, now: number): string {
   return months === 1 ? '1mo ago' : `${months}mo ago`;
 }
 
-function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
+export function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
   const creatorName = post.creator?.name || post.creator?.username || 'Anonymous';
   const username = post.creator?.username || 'anonymous';
-  const upvotes = post.upvotes ?? 0;
-  const downvotes = post.downvotes ?? 0;
+  // A post's score is its Approve and Reject counts; passage votes don't change it (#542).
+  const approvals = post.approvedBy?.length ?? 0;
+  const rejections = post.rejectedBy?.length ?? 0;
   const commentCount = post.comments?.length || 0;
   const quoteCount = post.quotes?.length || 0;
   const href = post.url ? toAppPostUrl(post.url) : undefined;
@@ -2040,13 +2041,13 @@ function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
         <div className="flex items-center gap-1.5">
           <ThumbsUp size={14} style={{ color: '#2ecc71' }} aria-hidden />
           <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
-            {upvotes}
+            {approvals}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <ThumbsDown size={14} style={{ color: '#ef4444' }} aria-hidden />
           <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
-            {downvotes}
+            {rejections}
           </span>
         </div>
         <div className="flex items-center gap-1.5">

@@ -1,3 +1,5 @@
+import type { VoteAxis, VoteTag, VoteType } from '~/types/common';
+
 export const SubscriptionEvents = {
   MESSAGE_CREATED: 'MESSAGE_CREATED',
   USER_MESSAGE_CREATED: 'USER_MESSAGE_CREATED',
@@ -27,6 +29,19 @@ export const VoteTypeValues = {
   UP: 'up',
   DOWN: 'down',
 } as const;
+
+/**
+ * Each passage response, its pair and its vote type. Agree/Disagree, True/False and
+ * Like/Dislike are independent pairs, and the two sides of a pair are exclusive (#542).
+ */
+export const VOTE_TAGS: Readonly<Record<VoteTag, { axis: VoteAxis; type: VoteType }>> = {
+  '#agree': { axis: 'agreement', type: 'up' },
+  '#disagree': { axis: 'agreement', type: 'down' },
+  '#true': { axis: 'truth', type: 'up' },
+  '#false': { axis: 'truth', type: 'down' },
+  '#like': { axis: 'liking', type: 'up' },
+  '#dislike': { axis: 'liking', type: 'down' },
+};
 
 export const RosterStatusValues = {
   PENDING: 'pending',

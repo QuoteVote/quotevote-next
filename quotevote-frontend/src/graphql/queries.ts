@@ -481,6 +481,8 @@ export const GET_FEATURED_POSTS = gql`
         text
         upvotes
         downvotes
+        approvedBy
+        rejectedBy
         bookmarkedBy
         created
         url
