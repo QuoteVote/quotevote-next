@@ -299,13 +299,29 @@ describe('deleteMessage', () => {
     expect(context.prisma.message.updateMany).not.toHaveBeenCalled();
   });
 
-  it("refuses changes in a deleted post's chat", async () => {
+  it('lets the author delete their earlier message after the post is deleted (#664)', async () => {
     const context = createContext();
     context.prisma.message.findUnique.mockResolvedValue(record({ messageRoomId: postRoomId }));
     context.prisma.messageRoom.findUnique.mockResolvedValue(postRoom());
     context.prisma.post.findUnique.mockResolvedValue({ deleted: true });
 
-    await expect(remove(context)).rejects.toThrow("This post's chat is read-only");
+    await expect(remove(context)).resolves.toEqual({ _id: messageId });
+    expect(context.prisma.message.updateMany).toHaveBeenCalledWith({
+      where: { id: messageId },
+      data: { deleted: true },
+    });
+  });
+
+  it("still refuses someone else's message after the post is deleted", async () => {
+    const context = createContext();
+    context.prisma.message.findUnique.mockResolvedValue(
+      record({ messageRoomId: postRoomId, userId: bobId })
+    );
+    context.prisma.messageRoom.findUnique.mockResolvedValue(postRoom());
+    context.prisma.post.findUnique.mockResolvedValue({ deleted: true });
+
+    await expect(remove(context)).rejects.toMatchObject({ extensions: { code: 'FORBIDDEN' } });
+    expect(context.prisma.message.updateMany).not.toHaveBeenCalled();
   });
 
   it('treats missing, invalid and already deleted messages as not found', async () => {
@@ -423,6 +439,15 @@ describe('message reactions', () => {
     );
     context.prisma.messageRoom.findUnique.mockResolvedValue(postRoom());
   };
+
+  it("refuses a reaction in a deleted post's chat", async () => {
+    const context = createContext();
+    withPostMessage(context);
+    context.prisma.post.findUnique.mockResolvedValue({ deleted: true });
+
+    await expect(react(context, '👍')).rejects.toThrow("This post's chat is read-only");
+    expect(context.prisma.reaction.create).not.toHaveBeenCalled();
+  });
 
   it('adds a reaction for the caller, ignoring any userId sent', async () => {
     const context = createContext();
