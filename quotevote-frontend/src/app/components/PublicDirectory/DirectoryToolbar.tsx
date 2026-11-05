@@ -5,23 +5,24 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Calendar, ListFilter } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 import { useDebounce } from '@/hooks/useDebounce'
-import { GET_GROUP, GROUPS_QUERY } from '@/graphql/queries'
+import { GET_TAG, TAGS_QUERY } from '@/graphql/queries'
 import { cn } from '@/lib/utils'
+import { getTagIdParam } from '@/lib/utils/tagParam'
 import { useAppStore } from '@/store'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import DateRangeFilter from '@/components/SearchContainer/DateRangeFilter'
 import ActiveFilters from '@/components/SearchContainer/ActiveFilters'
 import { DirectorySearch } from './DirectorySearch'
 import { DirectoryFiltersPanel } from './DirectoryFiltersPanel'
-import type { Group } from '@/types/components'
+import type { Tag } from '@/types/components'
 import type { DirectorySort, DirectoryTopic } from '@/types/directory'
 
-interface GroupsQueryData {
-  groups: Group[]
+interface TagsQueryData {
+  tags: Tag[]
 }
 
-interface GroupQueryData {
-  group?: { _id: string; title: string }
+interface TagQueryData {
+  tag?: { _id: string; title: string } | null
 }
 
 function controlClass(active: boolean): string {
@@ -56,7 +57,7 @@ export function DirectoryToolbar(): ReactElement {
   const to = searchParams.get('to') || ''
   const interactions = searchParams.get('interactions') === 'true'
   const following = searchParams.get('following') === 'true'
-  const groupId = searchParams.get('group') || ''
+  const tagId = getTagIdParam(searchParams)
 
   const [searchInput, setSearchInput] = useState(q)
   const debouncedSearch = useDebounce(searchInput, 300)
@@ -69,19 +70,19 @@ export function DirectoryToolbar(): ReactElement {
     if (!q && searchInput) setSearchInput('')
   }
 
-  const { data: groupData } = useQuery<GroupQueryData>(GET_GROUP, {
-    variables: { groupId },
-    skip: !groupId,
+  const { data: tagData } = useQuery<TagQueryData>(GET_TAG, {
+    variables: { tagId },
+    skip: !tagId,
     errorPolicy: 'all',
     fetchPolicy: 'cache-first',
   })
 
-  const { data: groupsData } = useQuery<GroupsQueryData>(GROUPS_QUERY, {
+  const { data: tagsData } = useQuery<TagsQueryData>(TAGS_QUERY, {
     variables: { limit: 100 },
     errorPolicy: 'all',
   })
-  const publicGroups = (groupsData?.groups ?? []).filter((g) => g.privacy !== 'private')
-  const topics: DirectoryTopic[] = publicGroups.map((g) => ({ _id: g._id, title: g.title }))
+  const publicTags = (tagsData?.tags ?? []).filter((t) => t.privacy !== 'private')
+  const topics: DirectoryTopic[] = publicTags.map((t) => ({ _id: t._id, title: t.title }))
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   const updateParams = useCallback(
@@ -105,15 +106,15 @@ export function DirectoryToolbar(): ReactElement {
       const text = raw.trim()
       lastApplied.current = raw
       const tag = /^#(\S+)$/.exec(text)?.[1]?.toLowerCase()
-      const group = tag ? publicGroups.find((g) => g.title.toLowerCase() === tag) : undefined
-      if (group) {
+      const match = tag ? publicTags.find((t) => t.title.toLowerCase() === tag) : undefined
+      if (match) {
         setSearchInput('')
-        updateParams({ group: group._id, q: null })
+        updateParams({ tag: match._id, group: null, q: null })
       } else {
         updateParams({ q: text || null })
       }
     },
-    [publicGroups, updateParams]
+    [publicTags, updateParams]
   )
 
   // Keyed on the debounced input only: removing the search pill clears `q` in the URL,
@@ -123,7 +124,7 @@ export function DirectoryToolbar(): ReactElement {
   useEffect(() => {
     if (debouncedSearch === q || debouncedSearch === lastApplied.current) return
     const typedTag = /^\s*#(\S*)\s*$/.exec(debouncedSearch)?.[1]?.toLowerCase()
-    if (typedTag !== undefined && !publicGroups.some((g) => g.title.toLowerCase() === typedTag)) {
+    if (typedTag !== undefined && !publicTags.some((t) => t.title.toLowerCase() === typedTag)) {
       return
     }
     applySearch(debouncedSearch)
@@ -143,29 +144,38 @@ export function DirectoryToolbar(): ReactElement {
           ? `From ${formatDay(from)}`
           : `Until ${formatDay(to)}`
     : ''
-  const activeFilterCount = (interactions ? 1 : 0) + (following ? 1 : 0) + (groupId ? 1 : 0)
+  const activeFilterCount = (interactions ? 1 : 0) + (following ? 1 : 0) + (tagId ? 1 : 0)
 
   const handleSortChange = (next: DirectorySort) => {
     updateParams({ interactions: next === 'popular' ? 'true' : null, sort: null })
   }
 
   const clearFilters = () => {
-    updateParams({ interactions: null, sort: null, following: null, group: null })
+    updateParams({ interactions: null, sort: null, following: null, tag: null, group: null })
   }
 
   const clearAll = () => {
     setSearchInput('')
     lastApplied.current = ''
-    updateParams({ q: null, interactions: null, sort: null, following: null, group: null, from: null, to: null })
+    updateParams({
+      q: null,
+      interactions: null,
+      sort: null,
+      following: null,
+      tag: null,
+      group: null,
+      from: null,
+      to: null,
+    })
   }
 
   const selectTopic = (topic: DirectoryTopic) => {
     setSearchInput('')
     lastApplied.current = ''
-    updateParams({ group: topic._id, q: null })
+    updateParams({ tag: topic._id, group: null, q: null })
   }
 
-  const groupTitle = groupData?.group?.title
+  const groupTitle = tagData?.tag?.title
   const activeFilters = [
     {
       key: 'q',
@@ -177,10 +187,10 @@ export function DirectoryToolbar(): ReactElement {
       },
     },
     {
-      key: 'group',
+      key: 'tag',
       label: 'Topic',
-      value: groupId ? (groupTitle ? `#${groupTitle}` : 'Selected') : '',
-      onRemove: () => updateParams({ group: null }),
+      value: tagId ? (groupTitle ? `#${groupTitle}` : 'Selected') : '',
+      onRemove: () => updateParams({ tag: null, group: null }),
     },
     {
       key: 'interactions',
@@ -244,8 +254,8 @@ export function DirectoryToolbar(): ReactElement {
               following={following}
               onFollowingChange={(next) => updateParams({ following: next ? 'true' : null })}
               topics={topics}
-              topicId={groupId}
-              onTopicChange={(id) => updateParams({ group: id || null })}
+              topicId={tagId}
+              onTopicChange={(id) => updateParams({ tag: id || null, group: null })}
               onClear={clearFilters}
               onDone={() => setFiltersOpen(false)}
             />

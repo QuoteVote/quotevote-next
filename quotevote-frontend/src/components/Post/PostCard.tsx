@@ -9,7 +9,7 @@ import { ArrowRight, Bookmark, ExternalLink, Hash, MessagesSquare, Share2 } from
 import { cn } from '@/lib/utils'
 import { getDomain, toAppPostUrl, toAbsolutePostUrl } from '@/lib/utils/sanitizeUrl'
 import { useAppStore } from '@/store'
-import { GET_GROUP } from '@/graphql/queries'
+import { GET_TAG } from '@/graphql/queries'
 import { UPDATE_POST_BOOKMARK } from '@/graphql/mutations'
 import { toast } from 'sonner'
 import getTopPostsVoteHighlights from '@/lib/utils/getTopPostsVoteHighlights'
@@ -45,7 +45,7 @@ function PostCardComponent({
   comments = [],
   quotes = [],
   messageRoom,
-  groupId,
+  tagId,
   citationUrl,
   attribution,
   searchKey,
@@ -124,9 +124,9 @@ function PostCardComponent({
     quotes.length +
     messages.length
 
-  const { data: groupData } = useQuery<{ group?: { _id: string; title: string } }>(GET_GROUP, {
-    variables: { groupId: groupId || '' },
-    skip: !groupId,
+  const { data: tagData } = useQuery<{ tag?: { _id: string; title: string } | null }>(GET_TAG, {
+    variables: { tagId: tagId || '' },
+    skip: !tagId,
     errorPolicy: 'all',
     fetchPolicy: 'cache-first',
   })
@@ -154,17 +154,18 @@ function PostCardComponent({
   // (display name, falling back to username) so an unset avatar looks
   // identical across the post card, profile and messages.
   const avatarSeed = creator?.name || username
-  const tagTitle = groupId && groupData?.group ? groupData.group.title : null
+  const tagTitle = tagId && tagData?.tag ? tagData.tag.title : null
 
   // Opens the home results with this tag applied, keeping the current search,
   // date, sort and Following filters when already on the home page.
   const handleTagClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!groupId) return
+    if (!tagId) return
     const params = new URLSearchParams(
       window.location.pathname === '/' ? window.location.search : ''
     )
-    params.set('group', groupId)
+    params.set('tag', tagId)
+    params.delete('group')
     params.delete('page')
     router.push(`/?${params.toString()}`)
   }

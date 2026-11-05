@@ -90,11 +90,11 @@ describe('PostCard Component', () => {
   })
 
   describe('Search result cards (#528)', () => {
-    const tagged = { ...mockPostCardProps, url: '/post/qa/test/post1', groupId: 'group-qa' }
+    const tagged = { ...mockPostCardProps, url: '/post/qa/test/post1', tagId: 'group-qa' }
 
     beforeEach(() => {
       mockUseQuery.mockImplementation(() => ({
-        data: { group: { _id: 'group-qa', title: 'QA' } },
+        data: { tag: { _id: 'group-qa', title: 'QA' } },
         loading: false,
         error: undefined,
       }))
@@ -127,7 +127,15 @@ describe('PostCard Component', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Show posts tagged #QA' }))
 
       expect(mockPush).toHaveBeenCalledTimes(1)
-      expect(mockPush).toHaveBeenCalledWith('/?q=civic&group=group-qa')
+      expect(mockPush).toHaveBeenCalledWith('/?q=civic&tag=group-qa')
+    })
+
+    it('replaces a tag filter from an older group link', () => {
+      window.history.replaceState(null, '', '/?group=old-tag')
+      render(<PostCard {...tagged} />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show posts tagged #QA' }))
+      expect(mockPush).toHaveBeenCalledWith('/?tag=group-qa')
     })
 
     it('starts a fresh tag filter when used away from the home page', () => {
@@ -135,7 +143,7 @@ describe('PostCard Component', () => {
       render(<PostCard {...tagged} />)
 
       fireEvent.click(screen.getByRole('button', { name: 'Show posts tagged #QA' }))
-      expect(mockPush).toHaveBeenCalledWith('/?group=group-qa')
+      expect(mockPush).toHaveBeenCalledWith('/?tag=group-qa')
     })
 
     it('opens the post from the rest of the card, with the mouse or the keyboard', () => {

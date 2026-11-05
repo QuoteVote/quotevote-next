@@ -146,11 +146,11 @@ export const UPDATE_USER_PASSWORD = gql`
 `
 
 /**
- * Create group mutation
+ * Create a tag. The caller becomes its creator and admin.
  */
-export const CREATE_GROUP = gql`
-  mutation createGroup($group: GroupInput!) {
-    createGroup(group: $group) {
+export const CREATE_TAG = gql`
+  mutation createTag($tag: TagInput!) {
+    createTag(tag: $tag) {
       _id
       title
       description

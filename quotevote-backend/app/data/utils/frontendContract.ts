@@ -17,16 +17,6 @@ import type { ContractProblem, ContractReport, FrontendDocument } from '~/types/
  * entry whose document no longer exists.
  */
 export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
-  // Group names (#539)
-  GROUPS_QUERY: '#539',
-  GET_GROUP: '#539',
-  CREATE_GROUP: '#539',
-  GET_POST: '#539',
-  GET_POST_GROUP_ID: '#539',
-  GET_TOP_POSTS: '#539',
-  GET_PAGINATED_POSTS: '#539',
-  GET_FEATURED_POSTS: '#539',
-  SEARCH: '#539',
   // Buddy mutations still use the Roster arguments (#582)
   ADD_BUDDY: '#582',
   ACCEPT_BUDDY: '#582',
@@ -41,6 +31,7 @@ export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   REPORT_USER: '#633',
   DISABLE_USER: '#633',
   ENABLE_USER: '#633',
+  CREATE_TAG: '#633',
 };
 
 const DOCUMENT_PATTERN = /export const (\w+) = gql`([\s\S]*?)`/g;
