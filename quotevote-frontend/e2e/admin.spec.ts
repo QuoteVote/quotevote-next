@@ -1,9 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
+import fs from "fs";
+import { GRAPHQL_ROUTE } from "./helpers/api";
+import { ADMIN_STORAGE_PATH } from "./helpers/storage-state";
 
-const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql";
-
-const fakeAdminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbi0xMjMiLCJhZG1pbiI6dHJ1ZX0.signature";
-const fakeUserToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyLTEyMyIsImFkbWluIjpmYWxzZX0.signature";
+// The proxy verifies the session token, so these specs sign in for real: the
+// admin through E2E_ADMIN_* in global setup, the regular user as the author.
+const hasAdminSession = fs.existsSync(ADMIN_STORAGE_PATH);
 
 async function mockGraphQLOperation(
   page: Page,
@@ -11,7 +13,7 @@ async function mockGraphQLOperation(
   responseData: object | null,
   errorData?: object[]
 ) {
-  await page.route(GRAPHQL_URL, async (route) => {
+  await page.route(GRAPHQL_ROUTE, async (route) => {
     let body: { operationName?: string } = {};
     try {
       body = route.request().postDataJSON() as { operationName?: string };
@@ -36,23 +38,8 @@ async function mockGraphQLOperation(
 }
 
 test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", () => {
-  test.use({ 
-    storageState: { 
-      cookies: [
-        {
-          name: 'qv-token',
-          value: fakeAdminToken,
-          domain: 'localhost',
-          path: '/',
-          expires: -1,
-          httpOnly: false,
-          secure: false,
-          sameSite: 'Lax',
-        }
-      ], 
-      origins: [] 
-    } 
-  });
+  test.skip(!hasAdminSession, "Set E2E_ADMIN_USERNAME and E2E_ADMIN_PASSWORD to run the admin specs.");
+  test.use({ storageState: hasAdminSession ? ADMIN_STORAGE_PATH : undefined });
 
   const visitorEmail = `e2e-pending-${Date.now()}@example.com`;
 
@@ -101,7 +88,7 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
   test("Administrator can approve a pending invitation request", async ({ page }) => {
     let currentStatus = "1"; // 1 = Pending
 
-    await page.route(GRAPHQL_URL, async (route) => {
+    await page.route(GRAPHQL_ROUTE, async (route) => {
       let body: { operationName?: string } = {};
       try {
         body = route.request().postDataJSON() as { operationName?: string };
@@ -177,7 +164,7 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
   test("Administrator can reject a pending invitation request", async ({ page }) => {
     let currentStatus = "1"; // 1 = Pending
 
-    await page.route(GRAPHQL_URL, async (route) => {
+    await page.route(GRAPHQL_ROUTE, async (route) => {
       let body: { operationName?: string } = {};
       try {
         body = route.request().postDataJSON() as { operationName?: string };
@@ -249,24 +236,6 @@ test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", 
 });
 
 test.describe("Admin Invitation Request Authorization Validation", () => {
-  test.use({ 
-    storageState: { 
-      cookies: [
-        {
-          name: 'qv-token',
-          value: fakeUserToken, // Non-admin user
-          domain: 'localhost',
-          path: '/',
-          expires: -1,
-          httpOnly: false,
-          secure: false,
-          sameSite: 'Lax',
-        }
-      ], 
-      origins: [] 
-    } 
-  });
-
   test("Regular authenticated users receive authorization error", async ({ page }) => {
     await mockGraphQLOperation(page, "userInviteRequests", null, [
       { message: "Not Authorized" }

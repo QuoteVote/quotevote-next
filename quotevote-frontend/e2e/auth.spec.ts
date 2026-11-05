@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { registeredUser } from "./fixtures/registeredUser";
 import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from "./helpers/auth";
+import { GRAPHQL_ROUTE } from "./helpers/api";
 
 /**
  * E2E-AUTH-006: Magic-link eyebrow is disabled (#460)
@@ -40,14 +41,12 @@ test.describe("Magic-link eyebrow disabled (E2E-AUTH-006)", () => {
  * password setup, admin invite management, email delivery.
  */
 
-const GRAPHQL_URL = "http://localhost:4000/graphql";
-
 async function mockGraphQLOperation(
   page: Page,
   operationName: string,
   responseData: object
 ) {
-  await page.route(GRAPHQL_URL, async (route) => {
+  await page.route(GRAPHQL_ROUTE, async (route) => {
     let body: { operationName?: string } = {};
     try {
       body = route.request().postDataJSON() as { operationName?: string };
@@ -68,6 +67,8 @@ async function mockGraphQLOperation(
 }
 
 test.describe("Invite Request CTA (E2E-AUTH-005)", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   const visitorEmail = `e2e-invite-${Date.now()}@example.com`;
 
   test.beforeEach(async ({ page }) => {

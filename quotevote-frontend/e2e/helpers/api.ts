@@ -1,5 +1,11 @@
 import { getLoginToken, postLogin } from '../../src/lib/auth/restLogin';
 
+/**
+ * Route pattern for mocking GraphQL in specs. It matches whichever backend the
+ * frontend under test calls, so mocks work against any local or test API.
+ */
+export const GRAPHQL_ROUTE = '**/graphql';
+
 const DEFAULT_API_URL = 'http://localhost:4000';
 
 export function getApiUrl(): string {
@@ -104,29 +110,27 @@ export async function deletePostViaApi(postId: string, token: string): Promise<v
   }
 }
 
-export async function findGroupIdByTitle(token: string, title: string): Promise<string> {
+export async function findTagIdByTitle(token: string, title: string): Promise<string> {
+  // No limit: the new backend reads `limit: 0` as none, and the composer asks the same way.
   const data = await graphqlRequest<{
-    groups: Array<{ _id: string; title: string; privacy?: string | null }>;
+    tags: Array<{ _id: string; title: string; privacy?: string | null }>;
   }>(
     token,
     `
-      query groups($limit: Int!) {
-        groups(limit: $limit) {
+      query tags {
+        tags {
           _id
           title
           privacy
         }
       }
-    `,
-    { limit: 200 }
+    `
   );
 
-  const match = data.groups.find(
-    (group) => group.title.toLowerCase() === title.toLowerCase()
-  );
+  const match = data.tags.find((tag) => tag.title.toLowerCase() === title.toLowerCase());
 
   if (!match?._id) {
-    throw new Error(`No group/tag found with title "${title}"`);
+    throw new Error(`No tag found with title "${title}"`);
   }
 
   return match._id;
@@ -136,7 +140,7 @@ export async function createPostViaApi(
   token: string,
   input: {
     userId: string;
-    groupId: string;
+    tagId: string;
     title: string;
     text: string;
   }
@@ -156,7 +160,7 @@ export async function createPostViaApi(
     {
       post: {
         userId: input.userId,
-        groupId: input.groupId,
+        tagId: input.tagId,
         title: input.title,
         text: input.text,
       },
