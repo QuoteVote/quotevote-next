@@ -1,6 +1,15 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Loader } from '@/components/common/Loader';
+import { buildPageMetadata, pageTitle } from '@/lib/seo/metadata';
 import ErrorPageContent from './PageContent';
+
+export const metadata: Metadata = buildPageMetadata({
+  title: pageTitle('Link error'),
+  description: 'This Quote.Vote link is invalid or has expired.',
+  path: '/auths/error-page',
+  noIndex: true,
+});
 
 /**
  * Error Page (Server Component Wrapper)

@@ -12,6 +12,7 @@ import { metadata as passwordResetMetadata } from '@/app/auths/(card)/password-r
 import { metadata as requestAccessMetadata } from '@/app/auths/request-access/page'
 import { metadata as aboutMetadata } from '@/app/about/page'
 import { metadata as planMetadata } from '@/app/plan/page'
+import { metadata as unauthMetadata } from '@/app/unauth/page'
 
 describe('Page Metadata', () => {
   describe('Auth pages', () => {
@@ -89,6 +90,31 @@ describe('Page Metadata', () => {
         const title = String(meta.title)
         expect(title.length).toBeGreaterThan(0)
       })
+    })
+  })
+
+  describe('SEO fields', () => {
+    const indexedPages = [
+      { name: 'login', meta: loginMetadata, path: '/auths/login' },
+      { name: 'forgot-password', meta: forgotPasswordMetadata, path: '/auths/forgot-password' },
+      { name: 'request-access', meta: requestAccessMetadata, path: '/auths/request-access' },
+      { name: 'about', meta: aboutMetadata, path: '/about' },
+      { name: 'plan', meta: planMetadata, path: '/plan' },
+    ]
+
+    indexedPages.forEach(({ name, meta, path }) => {
+      it(`${name} page has its own description, canonical url and preview tags`, () => {
+        expect(meta.description).toBeTruthy()
+        expect(meta.alternates?.canonical).toBe(path)
+        expect(meta.openGraph).toMatchObject({ url: path, title: meta.title })
+        expect(meta.twitter).toMatchObject({ card: 'summary_large_image', title: meta.title })
+        expect(meta.robots).toBeUndefined()
+      })
+    })
+
+    it('token and utility pages are excluded from search indexing', () => {
+      expect(passwordResetMetadata.robots).toEqual({ index: false, follow: false })
+      expect(unauthMetadata.robots).toEqual({ index: false, follow: false })
     })
   })
 })

@@ -8,6 +8,7 @@ import {
   validateSchema,
 } from 'graphql';
 import { schema } from '~/data/schema';
+import { PRESENCE_RECORD_SELECT } from '~/data/resolvers/heartbeatResolver';
 
 describe('Executable GraphQL Schema', () => {
   it('is a valid GraphQLSchema instance', () => {
@@ -56,6 +57,7 @@ describe('Executable GraphQL Schema', () => {
     expect(fields).toHaveProperty('addPost');
     expect(fields).toHaveProperty('addVote');
     expect(fields).toHaveProperty('addComment');
+    expect(fields).toHaveProperty('updateComment');
     expect(fields).toHaveProperty('createMessage');
     expect(fields).toHaveProperty('updateUser');
     expect(fields).toHaveProperty('reportPost');
@@ -203,9 +205,11 @@ describe('Executable GraphQL Schema', () => {
 
     expect(findUnique).toHaveBeenCalledWith({
       where: { userId: '60d5ec49ad414d7a8d5464a0' },
+      select: PRESENCE_RECORD_SELECT,
     });
     expect(update).toHaveBeenCalledWith({
       where: { userId: '60d5ec49ad414d7a8d5464a0' },
+      select: PRESENCE_RECORD_SELECT,
       data: { lastHeartbeat: expect.any(Date), lastSeen: expect.any(Date) },
     });
     expect(result.errors).toBeUndefined();

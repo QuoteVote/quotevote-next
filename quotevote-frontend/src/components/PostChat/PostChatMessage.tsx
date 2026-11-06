@@ -33,27 +33,20 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
 
   const userId = user._id || user.id
   const isDefaultDirection = message.userId !== userId
-  const isOwner = userId === message.userId || user.admin
+  const isDeleted = message.deleted === true
+  // Only the author can delete their own message (#576), and a deleted one stays as a note.
+  const canDelete = userId === message.userId && !isDeleted
 
   const { loading, data } = useQuery<MessageReactionsData>(GET_MESSAGE_REACTIONS, {
     variables: { messageId: message._id },
+    skip: isDeleted,
   })
 
   const messageReactions = (!loading && data?.messageReactions) || []
 
+  // Refetch rather than drop the message: the chat shows a note in its place.
   const [deleteMessage] = useMutation<DeleteMessageData>(DELETE_MESSAGE, {
-    update(cache, { data: mutationData }) {
-      if (!mutationData?.deleteMessage) return
-      cache.modify({
-        fields: {
-          messages(existing: readonly { __ref: string }[] = [], { readField }) {
-            return existing.filter(
-              (messageRef) => readField('_id', messageRef) !== mutationData.deleteMessage._id
-            )
-          },
-        },
-      })
-    },
+    refetchQueries: ['getRoomMessages'],
   })
 
   const handleDelete = async () => {
@@ -104,27 +97,38 @@ export default function PostChatMessage({ message }: PostChatMessageProps) {
               : 'bg-emerald-500 text-white before:-right-2.5 before:border-t-emerald-500'
           )}
         >
-          <p className="whitespace-pre-wrap wrap-break-word tracking-wide">{message.text}</p>
-          <PostChatReactions
-            created={message.created}
-            messageId={message._id}
-            reactions={messageReactions}
-            isDefaultDirection={isDefaultDirection}
-            userName={name}
-            username={username}
-          />
+          <p
+            className={cn(
+              'whitespace-pre-wrap wrap-break-word tracking-wide',
+              isDeleted && 'italic'
+            )}
+          >
+            {message.text}
+          </p>
+          {!isDeleted && (
+            <PostChatReactions
+              created={message.created}
+              messageId={message._id}
+              reactions={messageReactions}
+              isDefaultDirection={isDefaultDirection}
+              userName={name}
+              username={username}
+            />
+          )}
         </div>
 
         {/* Delete Button */}
-        {isOwner && (
+        {canDelete && (
           <button
             type="button"
             onClick={handleDelete}
             className={cn(
               'absolute -top-2 z-10 flex h-7 w-7 items-center justify-center',
               'rounded-full bg-white shadow-md',
-              'text-red-500 opacity-0 transition-opacity group-hover:opacity-100',
-              'hover:bg-red-50 hover:text-red-600',
+              'text-red-600 opacity-0 transition-opacity group-hover:opacity-100',
+              'group-focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2',
+              'hover:bg-red-50 hover:text-red-700',
               isDefaultDirection ? '-right-2' : '-left-2'
             )}
             aria-label="Delete message"

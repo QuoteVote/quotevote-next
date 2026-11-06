@@ -1,5 +1,13 @@
 import type { Message, MessageRoom, PrismaClient } from '@prisma/client';
+import type * as Common from '~/types/common';
+import { unique, whenAny } from '~/data/resolvers/utils/batchLoad';
 import { canAccessRoom } from '~/data/utils/roomAccess';
+import { MESSAGE_ROOM_SELECT, type MessageRoomRecord } from '~/data/resolvers/utils/chatRooms';
+import {
+  PUBLIC_USER_SELECT,
+  toPublicUser,
+  type PrismaUserRecord,
+} from '~/data/utils/userPrismaMapper';
 /**
  * Return a room when the caller may read its history.
  * Post-room history is public; direct/user-room history requires membership.
@@ -17,6 +25,31 @@ export const getReadableMessageRoom = async (
   if (!room) return null;
   return canAccessRoom(room, userId) ? room : null;
 };
+
+/**
+ * Add each message's author in one query, with the name and room type legacy
+ * returned alongside it. Authors are read with public fields only.
+ */
+export async function attachMessageAuthors(
+  prisma: Pick<PrismaClient, 'user'>,
+  messages: Common.Message[],
+  messageType: Common.MessageType
+): Promise<Common.MessageWithAuthor[]> {
+  const users = await whenAny(unique(messages.map((message) => message.userId)), (ids) =>
+    prisma.user.findMany({ where: { id: { in: ids } }, select: PUBLIC_USER_SELECT })
+  );
+  const usersById = new Map(users.map((user) => [user.id, toPublicUser(user as PrismaUserRecord)]));
+
+  return messages.map((message) => {
+    const user = usersById.get(message.userId) ?? null;
+    return {
+      ...message,
+      userName: user ? user.name : 'Unknown User',
+      type: messageType,
+      user,
+    };
+  });
+}
 
 /**
  * Get all non-deleted messages in a message room.
@@ -55,50 +88,52 @@ export const getUnreadMessages = async (
 /**
  * Add a user to a post's message room.
  * Creates the room if it doesn't exist. Idempotent for existing members.
+ * Legacy rooms have no createdAt/updatedAt, so every read and write selects.
  */
 export const addUserToPostRoom = async (
-  prisma: PrismaClient,
+  prisma: Pick<PrismaClient, 'messageRoom'>,
   postId: string,
   userId: string
-): Promise<MessageRoom> => {
-  let messageRoom = await prisma.messageRoom.findFirst({
+): Promise<MessageRoomRecord> => {
+  const existing = await prisma.messageRoom.findFirst({
     where: {
       postId,
       messageType: 'POST',
     },
+    select: MESSAGE_ROOM_SELECT,
   });
 
-  if (messageRoom) {
-    const now = new Date();
-    const addMemberResult = await prisma.messageRoom.updateMany({
-      where: {
-        id: messageRoom.id,
-        NOT: { userIds: { has: userId } },
-      },
-      data: {
-        userIds: { push: userId },
-        lastActivity: now,
-      },
-    });
-    if (addMemberResult.count === 0) {
-      await prisma.messageRoom.update({
-        where: { id: messageRoom.id },
-        data: { lastActivity: now },
-      });
-    }
-    messageRoom = await prisma.messageRoom.findUnique({
-      where: { id: messageRoom.id },
-    });
-  } else {
-    messageRoom = await prisma.messageRoom.create({
+  if (!existing) {
+    return prisma.messageRoom.create({
       data: {
         userIds: [userId],
         postId,
         messageType: 'POST',
         lastActivity: new Date(),
       },
+      select: MESSAGE_ROOM_SELECT,
     });
   }
 
-  return messageRoom;
+  const now = new Date();
+  const addMemberResult = await prisma.messageRoom.updateMany({
+    where: {
+      id: existing.id,
+      NOT: { userIds: { has: userId } },
+    },
+    data: {
+      userIds: { push: userId },
+      lastActivity: now,
+    },
+  });
+  if (addMemberResult.count === 0) {
+    await prisma.messageRoom.updateMany({
+      where: { id: existing.id },
+      data: { lastActivity: now },
+    });
+  }
+  const userIds = existing.userIds.includes(userId)
+    ? existing.userIds
+    : [...existing.userIds, userId];
+  return { ...existing, userIds, lastActivity: now };
 };

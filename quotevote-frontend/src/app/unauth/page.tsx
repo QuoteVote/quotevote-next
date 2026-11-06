@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { buildPageMetadata, pageTitle } from '@/lib/seo/metadata'
+
+export const metadata: Metadata = buildPageMetadata({
+  title: pageTitle('Session expired'),
+  description: 'Your Quote.Vote session has expired. Sign in again to continue.',
+  path: '/unauth',
+  noIndex: true,
+})
 
 export default function UnauthPage() {
   return (

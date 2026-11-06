@@ -1,5 +1,6 @@
 import { commentResolver } from '~/data/resolvers/commentResolver';
 import { toComment } from '~/data/resolvers/utils/commentsQuotes';
+import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 import type { GraphQLContext } from '~/types/graphql';
 
 const date = new Date('2026-01-01T00:00:00.000Z');
@@ -57,6 +58,9 @@ function mockContext(user: GraphQLContext['user'] = null) {
       },
       activity: {
         create: jest.fn().mockResolvedValue({ id: 'activity-1' }),
+      },
+      user: {
+        findUnique: jest.fn().mockResolvedValue(null),
       },
       notification: {
         create: jest.fn().mockResolvedValue({
@@ -258,6 +262,148 @@ describe('commentResolver', () => {
     });
   });
 
+  describe('Mutation.updateComment', () => {
+    it('requires authentication', async () => {
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId, content: 'edited' },
+          mockContext(null) as never
+        )
+      ).rejects.toThrow(/Authentication required/);
+    });
+
+    it('updates content when the owner requests it', async () => {
+      const context = mockContext(authedUser());
+      context.prisma.comment.findUnique.mockResolvedValue({
+        id: commentId,
+        userId,
+        deleted: false,
+      });
+      context.prisma.comment.update.mockResolvedValue({
+        id: commentId,
+        userId,
+        postId,
+        content: 'edited',
+        startWordIndex: 0,
+        endWordIndex: 1,
+        url: null,
+        reaction: null,
+        deleted: false,
+        created: date,
+      });
+
+      const result = await commentResolver.Mutation.updateComment(
+        null,
+        { commentId, content: '  edited  ' },
+        context as never
+      );
+
+      expect(context.prisma.comment.update).toHaveBeenCalledWith({
+        where: { id: commentId },
+        data: { content: 'edited' },
+        select: COMMENT_SELECT,
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          _id: commentId,
+          content: 'edited',
+        })
+      );
+    });
+
+    it('allows an admin to update another users comment', async () => {
+      const admin = { ...authedUser(), admin: true };
+      const context = mockContext(admin);
+      context.prisma.comment.findUnique.mockResolvedValue({
+        id: commentId,
+        userId: postOwnerId,
+        deleted: false,
+      });
+      context.prisma.comment.update.mockResolvedValue({
+        id: commentId,
+        userId: postOwnerId,
+        postId,
+        content: 'admin edit',
+        startWordIndex: 0,
+        endWordIndex: 1,
+        url: null,
+        reaction: null,
+        deleted: false,
+        created: date,
+      });
+
+      const result = await commentResolver.Mutation.updateComment(
+        null,
+        { commentId, content: 'admin edit' },
+        context as never
+      );
+
+      expect(result.content).toBe('admin edit');
+      expect(context.prisma.comment.update).toHaveBeenCalled();
+    });
+
+    it('forbids updating another users comment', async () => {
+      const context = mockContext(authedUser());
+      context.prisma.comment.findUnique.mockResolvedValue({
+        id: commentId,
+        userId: postOwnerId,
+        deleted: false,
+      });
+
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId, content: 'nope' },
+          context as never
+        )
+      ).rejects.toThrow(/Not authorized/);
+    });
+
+    it('rejects edits to deleted comments', async () => {
+      const context = mockContext(authedUser());
+      context.prisma.comment.findUnique.mockResolvedValue({
+        id: commentId,
+        userId,
+        deleted: true,
+      });
+
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId, content: 'nope' },
+          context as never
+        )
+      ).rejects.toThrow(/Cannot edit a deleted comment/);
+      expect(context.prisma.comment.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects empty content', async () => {
+      const context = mockContext(authedUser());
+
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId, content: '   ' },
+          context as never
+        )
+      ).rejects.toThrow(/Comment content is required/);
+      expect(context.prisma.comment.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('rejects invalid commentId', async () => {
+      const context = mockContext(authedUser());
+
+      await expect(
+        commentResolver.Mutation.updateComment(
+          null,
+          { commentId: 'not-an-object-id', content: 'edited' },
+          context as never
+        )
+      ).rejects.toThrow(/Invalid commentId/);
+    });
+  });
+
   describe('Mutation.deleteComment', () => {
     it('soft-deletes when the owner requests it', async () => {
       const context = mockContext(authedUser());
@@ -323,6 +469,54 @@ describe('commentResolver', () => {
         deleted: false,
         created: date,
       });
+    });
+  });
+
+  describe('Comment.user', () => {
+    const comment = {
+      _id: 'c1',
+      userId,
+      postId,
+      content: 'hi',
+      startWordIndex: 0,
+      endWordIndex: 1,
+      deleted: false,
+      created: date,
+    };
+
+    it('returns an author the post page already loaded without a query', async () => {
+      const context = mockContext();
+      const user = { _id: userId, username: 'alice' };
+
+      const result = await commentResolver.Comment.user(
+        { ...comment, user } as never,
+        {},
+        context as never
+      );
+
+      expect(result).toBe(user);
+      expect(context.prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('loads the author of a mutation result with public fields', async () => {
+      const context = mockContext();
+      context.prisma.user.findUnique.mockResolvedValue({ id: userId, username: 'alice' });
+
+      const result = await commentResolver.Comment.user(comment as never, {}, context as never);
+
+      expect(context.prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
+        select: PUBLIC_USER_SELECT,
+      });
+      expect(result).toMatchObject({ _id: userId, username: 'alice' });
+    });
+
+    it('returns null when the author no longer exists', async () => {
+      const context = mockContext();
+
+      const result = await commentResolver.Comment.user(comment as never, {}, context as never);
+
+      expect(result).toBeNull();
     });
   });
 });

@@ -8,7 +8,7 @@ import type {
   BuddyWithPresenceResult,
 } from '~/types/graphql';
 import { isObjectId } from '~/data/resolvers/utils/common';
-import { toPublicPresence } from '~/data/resolvers/heartbeatResolver';
+import { PRESENCE_RECORD_SELECT, toPublicPresence } from '~/data/resolvers/heartbeatResolver';
 import { findBlockBetween, requireTargetUser } from '~/data/utils/userBlock';
 import { toPairKey } from '~/data/utils/rosterMigration';
 
@@ -101,7 +101,10 @@ export const buddyResolver = {
 
       const [users, presences] = await Promise.all([
         context.prisma.user.findMany({ where: { id: { in: ids } }, select: USER_SELECT }),
-        context.prisma.presence.findMany({ where: { userId: { in: ids } } }),
+        context.prisma.presence.findMany({
+          where: { userId: { in: ids } },
+          select: PRESENCE_RECORD_SELECT,
+        }),
       ]);
       const presenceMap = new Map(presences.map((p) => [p.userId, p]));
       return users.map((u) => {

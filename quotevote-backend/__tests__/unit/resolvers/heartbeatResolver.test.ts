@@ -1,5 +1,5 @@
 import { GraphQLError } from 'graphql';
-import { heartbeatResolver } from '~/data/resolvers/heartbeatResolver';
+import { PRESENCE_RECORD_SELECT, heartbeatResolver } from '~/data/resolvers/heartbeatResolver';
 import { pubsub } from '~/data/utils/pubsub';
 import { SUBSCRIPTION_EVENTS } from '~/types/graphql';
 import type { GraphQLContext } from '~/types/graphql';
@@ -91,9 +91,13 @@ describe('heartbeatResolver', () => {
 
       const result = await heartbeatResolver.Mutation.heartbeat(null, {}, context);
 
-      expect(findUnique).toHaveBeenCalledWith({ where: { userId: actorId } });
+      expect(findUnique).toHaveBeenCalledWith({
+        where: { userId: actorId },
+        select: PRESENCE_RECORD_SELECT,
+      });
       expect(upsert).toHaveBeenCalledWith({
         where: { userId: actorId },
+        select: PRESENCE_RECORD_SELECT,
         create: {
           userId: actorId,
           status: 'online',
@@ -128,6 +132,7 @@ describe('heartbeatResolver', () => {
 
         expect(update).toHaveBeenCalledWith({
           where: { userId: actorId },
+          select: PRESENCE_RECORD_SELECT,
           data: { lastHeartbeat: now, lastSeen: now },
         });
         expect(result.status).toBe(status);
@@ -160,6 +165,7 @@ describe('heartbeatResolver', () => {
 
       expect(update).toHaveBeenCalledWith({
         where: { userId: actorId },
+        select: PRESENCE_RECORD_SELECT,
         data: {
           lastHeartbeat: now,
           lastSeen: now,
@@ -193,6 +199,7 @@ describe('heartbeatResolver', () => {
 
         expect(update).toHaveBeenCalledWith({
           where: { userId: actorId },
+          select: PRESENCE_RECORD_SELECT,
           data: expect.objectContaining({ status: 'online' }),
         });
       }
@@ -248,6 +255,7 @@ describe('heartbeatResolver', () => {
       };
       expect(upsert).toHaveBeenCalledWith({
         where: { userId: actorId },
+        select: PRESENCE_RECORD_SELECT,
         create: { userId: actorId, ...data },
         update: data,
       });
@@ -287,6 +295,7 @@ describe('heartbeatResolver', () => {
 
       expect(upsert).toHaveBeenCalledWith({
         where: { userId: actorId },
+        select: PRESENCE_RECORD_SELECT,
         create: expect.objectContaining({
           status: 'offline',
           preferredStatus: 'online',

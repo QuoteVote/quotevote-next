@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { MESSAGE_ROOM_SELECT } from '~/data/resolvers/utils/chatRooms';
 import { addUserToPostRoom, getMessages, getUnreadMessages } from '~/data/resolvers/utils/messages';
 
 type PrismaMock = {
@@ -70,6 +71,7 @@ describe('messages resolver utilities', () => {
     ).resolves.toEqual(room);
     expect(prisma.messageRoom.findFirst).toHaveBeenCalledWith({
       where: { postId: 'post1', messageType: 'POST' },
+      select: MESSAGE_ROOM_SELECT,
     });
     expect(prisma.messageRoom.create).toHaveBeenCalledWith({
       data: {
@@ -78,20 +80,25 @@ describe('messages resolver utilities', () => {
         messageType: 'POST',
         lastActivity: expect.any(Date),
       },
+      select: MESSAGE_ROOM_SELECT,
     });
   });
 
   it('adds a user and updates activity for an existing room', async () => {
     const prisma = createPrismaMock();
     const existingRoom = { id: 'room1', userIds: ['other-user'] };
-    const updatedRoom = { ...existingRoom, userIds: ['other-user', 'user1'] };
     prisma.messageRoom.findFirst.mockResolvedValue(existingRoom);
     prisma.messageRoom.updateMany.mockResolvedValue({ count: 1 });
-    prisma.messageRoom.findUnique.mockResolvedValue(updatedRoom);
 
     await expect(
       addUserToPostRoom(prisma as unknown as PrismaClient, 'post1', 'user1')
-    ).resolves.toEqual(updatedRoom);
+    ).resolves.toEqual({
+      ...existingRoom,
+      userIds: ['other-user', 'user1'],
+      lastActivity: expect.any(Date),
+    });
+    // Legacy rooms have no createdAt, so the room is never read back.
+    expect(prisma.messageRoom.findUnique).not.toHaveBeenCalled();
     expect(prisma.messageRoom.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'room1',
@@ -109,12 +116,11 @@ describe('messages resolver utilities', () => {
     const existingRoom = { id: 'room1', userIds: ['user1'] };
     prisma.messageRoom.findFirst.mockResolvedValue(existingRoom);
     prisma.messageRoom.updateMany.mockResolvedValue({ count: 0 });
-    prisma.messageRoom.findUnique.mockResolvedValue(existingRoom);
-    prisma.messageRoom.update.mockResolvedValue(existingRoom);
 
-    await addUserToPostRoom(prisma as unknown as PrismaClient, 'post1', 'user1');
+    const room = await addUserToPostRoom(prisma as unknown as PrismaClient, 'post1', 'user1');
 
-    expect(prisma.messageRoom.update).toHaveBeenCalledWith({
+    expect(room.userIds).toEqual(['user1']);
+    expect(prisma.messageRoom.updateMany).toHaveBeenLastCalledWith({
       where: { id: 'room1' },
       data: {
         lastActivity: expect.any(Date),

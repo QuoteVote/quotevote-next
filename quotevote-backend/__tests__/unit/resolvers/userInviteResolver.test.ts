@@ -376,9 +376,11 @@ describe('userInviteResolver', () => {
         ctx
       );
 
+      // Selecting only id keeps Prisma from reading back legacy accounts with no createdAt.
       expect(ctx.prisma.user.update).toHaveBeenCalledWith({
         where: { id: userId },
         data: { status: 4 },
+        select: { id: true },
       });
       expect(result.code).toBe('SUCCESS');
       expect(result.inviteToken).toBeDefined();
@@ -401,9 +403,11 @@ describe('userInviteResolver', () => {
         ctx
       );
 
+      // Selecting only id keeps Prisma from reading back legacy accounts with no createdAt.
       expect(ctx.prisma.user.update).toHaveBeenCalledWith({
         where: { id: userId },
         data: { status: 2 },
+        select: { id: true },
       });
       expect(result.message).toMatch(/declined/);
     });

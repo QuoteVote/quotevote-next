@@ -4,7 +4,7 @@
  */
 
 import { render, screen } from "@/__tests__/utils/test-utils";
-import PostDetailPage from "@/app/(dashboard)/post/[group]/[title]/[postId]/page";
+import PostDetailPage from "@/app/(dashboard)/post/[group]/[title]/[postId]/PostPageContent";
 import { GET_POST } from "@/graphql/queries";
 
 let mockSearch = "deleted=1";

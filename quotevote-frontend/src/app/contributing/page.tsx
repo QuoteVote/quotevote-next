@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
+import { buildPageMetadata, pageTitle } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
-  title: 'Contributing - Quote.Vote',
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: pageTitle('Contributing'),
+  description:
+    'How to contribute to Quote.Vote, the open-source platform for thoughtful public dialogue.',
+  path: '/contributing',
+});
 
 export default function ContributingPage() {
   return (

@@ -2,7 +2,7 @@
  * Test suite for common resolver utilities.
  */
 
-import { uniqueArrayObjects, isObjectId } from '~/data/resolvers/utils/common';
+import { uniqueArrayObjects, isObjectId, escapeRegExp } from '~/data/resolvers/utils/common';
 
 describe('common resolver utilities', () => {
   describe('uniqueArrayObjects', () => {
@@ -53,6 +53,23 @@ describe('common resolver utilities', () => {
       expect(isObjectId('507f1f77bcf86cd79943901')).toBe(false); // 23 chars
       expect(isObjectId('507f1f77bcf86cd7994390111')).toBe(false); // 25 chars
       expect(isObjectId('507f1f77bcf86cd79943901z')).toBe(false); // non-hex
+    });
+  });
+
+  describe('escapeRegExp', () => {
+    it('escapes every regex metacharacter', () => {
+      expect(escapeRegExp('.*+?^${}()|[]\\')).toBe('\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\');
+    });
+
+    it('leaves plain text unchanged', () => {
+      expect(escapeRegExp('town hall')).toBe('town hall');
+    });
+
+    it('builds a pattern that only matches the literal text', () => {
+      const pattern = new RegExp(escapeRegExp('a.*b'));
+
+      expect(pattern.test('a.*b')).toBe(true);
+      expect(pattern.test('axxb')).toBe(false);
     });
   });
 });

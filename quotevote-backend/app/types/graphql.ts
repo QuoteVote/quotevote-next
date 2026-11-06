@@ -156,7 +156,11 @@ export interface QueryResolvers {
   user: ResolverFn<Common.User | null, unknown, { username: string }>;
   users: ResolverFn<Common.User[], unknown, { limit?: number; offset?: number }>;
   searchUser: ResolverFn<Common.User[], unknown, { queryName: string }>;
-  getUserFollowInfo: ResolverFn<Common.User[], unknown, { username: string; filter: string }>;
+  getUserFollowInfo: ResolverFn<
+    FollowInfoEntry[],
+    unknown,
+    { username: string; filter?: string | null }
+  >;
   checkDuplicateEmail: ResolverFn<boolean, unknown, { email: string }>;
 
   // Post queries
@@ -188,6 +192,7 @@ export interface QueryResolvers {
   messageReactions: ResolverFn<Common.Reaction[], unknown, { messageId: string }>;
 
   // Roster (buddy) queries
+  getPresence: ResolverFn<PresenceView | null, unknown, { userId: string }>;
   getBuddyList: ResolverFn<BuddyWithPresenceResult[]>;
   buddyRequests: ResolverFn<BuddyRelationshipResult[]>;
   roster: ResolverFn<RosterQueryResult>;
@@ -563,3 +568,19 @@ export type PostDetail = Omit<GraphQLPost, 'votes' | 'comments' | 'quotes' | 'me
   quotes: (Common.Quote & { user: Common.User | null })[];
   messageRoom: Common.MessageRoom | null;
 };
+
+/**
+ * One row of `getUserFollowInfo`, which the schema returns as JSON. Same shape as the
+ * legacy resolver; `profileFollows` is whether the profile's owner follows this user.
+ */
+export interface FollowInfoEntry {
+  id: string;
+  username: string;
+  avatar: unknown;
+  numFollowers: number;
+  numFollowing: number;
+  profileFollows: boolean;
+}
+
+/** `getPresence` result. Without a stored record there is no `_id`, as in legacy. */
+export type PresenceView = Omit<Common.Presence, '_id'> & { _id?: string };

@@ -8,6 +8,7 @@ import { AuthModalProvider } from "@/context/AuthModalContext";
 import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
+import { DEFAULT_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo/metadata";
 import "./globals.css";
 
 /**
@@ -29,19 +30,21 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
+  metadataBase: getSiteUrl(),
   title: "Quote.Vote - Text-First Platform for Thoughtful Dialogue",
-  description: "An open-source, text-only social platform for thoughtful dialogue. Every post creates its own chatroom where people can quote, vote, and respond in real time.",
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
   keywords: ["quote", "vote", "dialogue", "civic engagement", "open source", "democracy", "discussion"],
   authors: [{ name: "Quote.Vote Team" }],
   openGraph: {
-    title: "Quote.Vote",
+    title: SITE_NAME,
     description: "A text-first platform for thoughtful public dialogue",
+    siteName: SITE_NAME,
     type: "website",
-    url: "https://quote.vote",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Quote.Vote",
+    title: SITE_NAME,
     description: "A text-first platform for thoughtful public dialogue",
   },
 };

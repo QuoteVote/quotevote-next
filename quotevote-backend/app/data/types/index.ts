@@ -41,6 +41,7 @@ import { ChatRoomType } from './ChatRooms';
 import { TagType } from './Tag';
 import { MessageType, ReadByDetailedEntryType } from './Message';
 import { MessageRoomType, PostDetailsType } from './MessageRoom';
+import { MessageSearchHitType, MessageSearchResultType } from './MessageSearch';
 import { NotificationType } from './Notification';
 import { PostType } from './Post';
 import { PostsType } from './Posts';
@@ -82,6 +83,7 @@ export * from './ChatRooms';
 export * from './Tag';
 export * from './Message';
 export * from './MessageRoom';
+export * from './MessageSearch';
 export * from './Notification';
 export * from './Post';
 export * from './Posts';
@@ -147,6 +149,8 @@ export const domainTypes: readonly GraphQLNamedType[] = [
   MessageType,
   ReadByDetailedEntryType,
   MessageRoomType,
+  MessageSearchHitType,
+  MessageSearchResultType,
   PostDetailsType,
   // Soft-delete payloads
   DeletedPostType,

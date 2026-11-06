@@ -5,7 +5,7 @@ import { logActivity } from '~/data/resolvers/utils/activities';
 import { addNotification } from '~/data/resolvers/utils/notifications';
 import { updateTrending } from '~/data/resolvers/utils/posts';
 import { addUserToPostRoom } from '~/data/resolvers/utils/messages';
-import { COMMENT_SELECT, toComment } from '~/data/resolvers/utils/commentsQuotes';
+import { COMMENT_SELECT, loadAuthor, toComment } from '~/data/resolvers/utils/commentsQuotes';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -106,6 +106,59 @@ export const commentResolver = {
       return toComment(created);
     },
 
+    updateComment: async (
+      _parent: unknown,
+      args: { commentId: string; content: string },
+      context: GraphQLContext
+    ): Promise<Common.Comment> => {
+      const userId = requireUserId(context);
+      const isAdmin = context.user?.admin === true;
+
+      if (!isObjectId(args.commentId)) {
+        throw new GraphQLError('Invalid commentId', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const content = args.content?.trim();
+      if (!content) {
+        throw new GraphQLError('Comment content is required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const existing = await context.prisma.comment.findUnique({
+        where: { id: args.commentId },
+        select: { id: true, userId: true, deleted: true },
+      });
+      if (!existing) {
+        throw new GraphQLError('Comment not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Soft-deleted comments are not editable (legacy rule from #633).
+      if (existing.deleted) {
+        throw new GraphQLError('Cannot edit a deleted comment', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      if (existing.userId !== userId && !isAdmin) {
+        throw new GraphQLError('Not authorized to update this comment', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      const updated = await context.prisma.comment.update({
+        where: { id: args.commentId },
+        data: { content },
+        select: COMMENT_SELECT,
+      });
+
+      return toComment(updated);
+    },
+
     deleteComment: async (
       _parent: unknown,
       args: { commentId: string },
@@ -142,5 +195,14 @@ export const commentResolver = {
 
       return { _id: args.commentId };
     },
+  },
+  // The post page loads authors in a batch. Mutation results load theirs here.
+  Comment: {
+    user: async (
+      parent: Common.Comment & { user?: Common.User | null },
+      _args: unknown,
+      context: GraphQLContext
+    ): Promise<Common.User | null> =>
+      parent.user !== undefined ? parent.user : loadAuthor(context.prisma, parent.userId),
   },
 };

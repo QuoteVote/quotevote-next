@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
+import { buildPageMetadata, pageTitle } from '@/lib/seo/metadata'
 import Link from 'next/link'
 import { Globe } from '@/components/Icons'
 
-export const metadata: Metadata = {
-  title: 'Thank You — Quote.Vote',
-  description: 'Thank you for your interest in investing with Quote.Vote',
-}
+export const metadata: Metadata = buildPageMetadata({
+  title: pageTitle('Thank You'),
+  description: 'Thank you for your interest in investing with Quote.Vote.',
+  path: '/auths/investor-thanks',
+  noIndex: true,
+})
 
 export default function InvestorThanksPage() {
   return (

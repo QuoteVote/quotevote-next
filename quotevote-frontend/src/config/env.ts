@@ -10,12 +10,14 @@ import { z } from 'zod';
 const envSchema = z.object({
   NEXT_PUBLIC_GRAPHQL_ENDPOINT: z.string().url().optional(),
   NEXT_PUBLIC_SERVER_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
 const parsed = envSchema.safeParse({
   NEXT_PUBLIC_GRAPHQL_ENDPOINT: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
   NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL,
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NODE_ENV: process.env.NODE_ENV,
 });
 

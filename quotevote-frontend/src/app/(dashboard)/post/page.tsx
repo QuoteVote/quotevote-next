@@ -1,13 +1,15 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { buildPageMetadata, pageTitle } from '@/lib/seo/metadata';
 import { SubHeader } from '@/components/SubHeader';
 import PostSkeleton from '@/components/Post/PostSkeleton';
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList';
 
-export const metadata: Metadata = {
-  title: 'Posts - Quote.Vote',
-  description: 'Browse and discover posts on Quote.Vote',
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: pageTitle('Posts'),
+  description: 'Browse and discover posts on Quote.Vote.',
+  path: '/post',
+});
 
 // Mark as dynamic to prevent static optimization issues
 export const dynamic = 'force-dynamic';

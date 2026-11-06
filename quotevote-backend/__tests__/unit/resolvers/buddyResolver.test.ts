@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { buddyResolver } from '~/data/resolvers/buddyResolver';
+import { PRESENCE_RECORD_SELECT } from '~/data/resolvers/heartbeatResolver';
 import { toPairKey } from '~/data/utils/rosterMigration';
 import { BuddyUserType } from '~/data/types/Buddy';
 import type { GraphQLContext } from '~/types/graphql';
@@ -206,6 +207,7 @@ describe('buddyResolver queries', () => {
     expect(list.find((b) => b.user._id === THIRD)!.presence).toBeNull();
     expect(m.prisma.user.findMany).toHaveBeenCalledTimes(1);
     expect(m.prisma.presence.findMany).toHaveBeenCalledTimes(1);
+    expect(m.prisma.presence.findMany.mock.calls[0][0].select).toBe(PRESENCE_RECORD_SELECT);
     expect(m.prisma.userBlock.findMany).toHaveBeenCalledTimes(1);
     const sel = m.prisma.user.findMany.mock.calls[0][0].select;
     expect(sel).toEqual({ id: true, name: true, username: true, avatar: true });

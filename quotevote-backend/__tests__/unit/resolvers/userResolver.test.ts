@@ -4,10 +4,22 @@ import * as bcrypt from 'bcryptjs';
 import { userResolver } from '~/data/resolvers/userResolver';
 import type { GraphQLContext } from '~/types/graphql';
 import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
+import { loadUserReputation } from '~/data/resolvers/utils/reputation';
 
 jest.mock('bcryptjs', () => ({
   genSalt: jest.fn().mockResolvedValue('salt'),
   hash: jest.fn().mockResolvedValue('hashed-password'),
+}));
+
+jest.mock('~/data/utils/pubsub', () => ({
+  pubsub: {
+    publish: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+jest.mock('~/data/resolvers/utils/reputation', () => ({
+  calculateUserReputation: jest.fn().mockResolvedValue({}),
+  loadUserReputation: jest.fn(),
 }));
 
 const actorId = '507f1f77bcf86cd799439011';
@@ -20,6 +32,7 @@ function mockContext(overrides: Partial<GraphQLContext['user']> = {}): GraphQLCo
         findFirst: jest.fn(),
         findMany: jest.fn(),
         findUnique: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
         update: jest.fn(),
       },
       botReport: {
@@ -28,6 +41,21 @@ function mockContext(overrides: Partial<GraphQLContext['user']> = {}): GraphQLCo
       },
       userReport: {
         findMany: jest.fn(),
+        findFirst: jest.fn(),
+        create: jest.fn(),
+      },
+      notification: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({
+          id: 'notif-1',
+          userId: otherId,
+          userIdBy: actorId,
+          label: 'followed',
+          status: 'new',
+          notificationType: 'FOLLOW',
+          postId: null,
+          created: new Date(),
+        }),
       },
     } as unknown as GraphQLContext['prisma'],
     user: {
@@ -52,9 +80,20 @@ describe('userResolver', () => {
 
       expect(result).toBeNull();
       expect(ctx.prisma.user.findFirst).toHaveBeenCalledWith({
-        where: { username: 'alice', accountStatus: 'active' },
-        select: expect.any(Object),
+        where: { username: 'alice' },
+        select: { ...PUBLIC_USER_SELECT, accountStatus: true },
       });
+    });
+
+    it('returns null for a disabled account', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue({
+        id: actorId,
+        username: 'alice',
+        accountStatus: 'disabled',
+      });
+
+      await expect(userResolver.Query.user(null, { username: 'alice' }, ctx)).resolves.toBeNull();
     });
 
     it('returns public user profile when found', async () => {
@@ -100,12 +139,27 @@ describe('userResolver', () => {
             { name: { contains: '@.*', mode: 'insensitive' } },
             { username: { contains: '@.*', mode: 'insensitive' } },
           ],
-          accountStatus: 'active',
         },
-        select: expect.any(Object),
-        take: 10,
+        select: { ...PUBLIC_USER_SELECT, accountStatus: true },
+        take: 20,
       });
       expect(result).toHaveLength(1);
+    });
+
+    it('leaves out disabled accounts in code and returns at most 10', async () => {
+      const ctx = mockContext();
+      const rows = Array.from({ length: 14 }, (_, i) => ({
+        id: `507f1f77bcf86cd7994390${String(i).padStart(2, '0')}`,
+        username: `user${i}`,
+        accountStatus: i < 3 ? 'disabled' : 'active',
+      }));
+      (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue(rows);
+
+      const result = await userResolver.Query.searchUser(null, { queryName: 'user' }, ctx);
+
+      expect(result).toHaveLength(10);
+      expect(result.map((u) => u.username)).not.toContain('user0');
+      expect(result[0].username).toBe('user3');
     });
   });
 
@@ -547,6 +601,7 @@ describe('userResolver', () => {
           botReports: { increment: 1 },
           lastBotReportDate: expect.any(Date),
         },
+        select: { id: true },
       });
 
       expect(result).toEqual({
@@ -774,6 +829,255 @@ describe('userResolver', () => {
       });
     });
   });
-  });
-  
 
+  describe('Mutation.followUser', () => {
+    it('requires authentication', async () => {
+      await expect(
+        userResolver.Mutation.followUser(
+          null,
+          { user_id: otherId, action: 'follow' },
+          { ...mockContext(), user: null }
+        )
+      ).rejects.toThrow(/Authentication required/);
+    });
+
+    it('rejects self-follow', async () => {
+      await expect(
+        userResolver.Mutation.followUser(null, { user_id: actorId, action: 'follow' }, mockContext())
+      ).rejects.toThrow(/Can't follow the same user/);
+    });
+
+    it('follows a user, updates both arrays, and notifies once', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findUnique as jest.Mock)
+        .mockResolvedValueOnce({
+          id: actorId,
+          name: 'Alice',
+          username: 'alice',
+          followingIds: [],
+          accountStatus: 'active',
+        })
+        .mockResolvedValueOnce({
+          id: otherId,
+          followerIds: [],
+          accountStatus: 'active',
+        });
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({ id: actorId });
+      (ctx.prisma.user.findUniqueOrThrow as jest.Mock).mockResolvedValue({
+        id: actorId,
+        username: 'alice',
+        name: 'Alice',
+        followingIds: [otherId],
+        followerIds: [],
+      });
+
+      const result = await userResolver.Mutation.followUser(
+        null,
+        { user_id: otherId, action: 'follow' },
+        ctx
+      );
+
+      expect(ctx.prisma.user.update).toHaveBeenCalledWith({
+        where: { id: actorId },
+        data: { followingIds: [otherId] },
+        select: { id: true },
+      });
+      expect(ctx.prisma.user.update).toHaveBeenCalledWith({
+        where: { id: otherId },
+        data: { followerIds: [actorId] },
+        select: { id: true },
+      });
+      expect(ctx.prisma.notification.create).toHaveBeenCalled();
+      expect(result._id).toBe(actorId);
+      expect(result._followingId).toEqual([otherId]);
+    });
+
+    it('unfollows without creating a notification', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findUnique as jest.Mock)
+        .mockResolvedValueOnce({
+          id: actorId,
+          name: 'Alice',
+          username: 'alice',
+          followingIds: [otherId],
+          accountStatus: 'active',
+        })
+        .mockResolvedValueOnce({
+          id: otherId,
+          followerIds: [actorId],
+          accountStatus: 'active',
+        });
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({ id: actorId });
+      (ctx.prisma.user.findUniqueOrThrow as jest.Mock).mockResolvedValue({
+        id: actorId,
+        username: 'alice',
+        followingIds: [],
+        followerIds: [],
+      });
+
+      await userResolver.Mutation.followUser(null, { user_id: otherId, action: 'un-follow' }, ctx);
+
+      expect(ctx.prisma.user.update).toHaveBeenCalledWith({
+        where: { id: actorId },
+        data: { followingIds: [] },
+        select: { id: true },
+      });
+      expect(ctx.prisma.notification.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Mutation.reportUser', () => {
+    it('creates a report and returns SUCCESS', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: otherId });
+      (ctx.prisma.userReport.findFirst as jest.Mock).mockResolvedValue(null);
+      (ctx.prisma.userReport.create as jest.Mock).mockResolvedValue({ id: 'report-1' });
+
+      const result = await userResolver.Mutation.reportUser(
+        null,
+        {
+          reportUserInput: {
+            _reportedUserId: otherId,
+            reason: 'spam',
+            description: 'lots of spam',
+            severity: 'high',
+          },
+        },
+        ctx
+      );
+
+      expect(ctx.prisma.userReport.create).toHaveBeenCalledWith({
+        data: {
+          reporterId: actorId,
+          reportedUserId: otherId,
+          reason: 'spam',
+          description: 'lots of spam',
+          severity: 'high',
+          status: 'pending',
+        },
+        select: { id: true },
+      });
+      expect(result).toEqual({
+        code: 'SUCCESS',
+        message: 'User report submitted successfully',
+      });
+    });
+
+    it('rejects self-reports and duplicates', async () => {
+      const ctx = mockContext();
+
+      await expect(
+        userResolver.Mutation.reportUser(
+          null,
+          { reportUserInput: { _reportedUserId: actorId, reason: 'spam' } },
+          ctx
+        )
+      ).rejects.toThrow(/Cannot report yourself/);
+
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: otherId });
+      (ctx.prisma.userReport.findFirst as jest.Mock).mockResolvedValue({ id: 'existing' });
+
+      await expect(
+        userResolver.Mutation.reportUser(
+          null,
+          { reportUserInput: { _reportedUserId: otherId, reason: 'spam' } },
+          ctx
+        )
+      ).rejects.toThrow(/already reported/);
+    });
+  });
+
+  describe('Mutation.disableUser / enableUser', () => {
+    it('requires admin for disable and enable', async () => {
+      const ctx = mockContext({ admin: false });
+
+      await expect(
+        userResolver.Mutation.disableUser(null, { userId: otherId }, ctx)
+      ).rejects.toThrow(/Admin access required/);
+      await expect(
+        userResolver.Mutation.enableUser(null, { userId: otherId }, ctx)
+      ).rejects.toThrow(/Admin access required/);
+    });
+
+    it('disables and enables a user', async () => {
+      const ctx = mockContext({ admin: true });
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: otherId,
+        isAdmin: false,
+      });
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
+        id: otherId,
+        username: 'bob',
+        accountStatus: 'disabled',
+      });
+
+      const disabled = await userResolver.Mutation.disableUser(null, { userId: otherId }, ctx);
+      expect(ctx.prisma.user.update).toHaveBeenCalledWith({
+        where: { id: otherId },
+        data: { accountStatus: 'disabled' },
+        select: expect.objectContaining({ accountStatus: true }),
+      });
+      expect(disabled.accountStatus).toBe('disabled');
+
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
+        id: otherId,
+        username: 'bob',
+        accountStatus: 'active',
+      });
+      const enabled = await userResolver.Mutation.enableUser(null, { userId: otherId }, ctx);
+      expect(enabled.accountStatus).toBe('active');
+    });
+
+    it('refuses to disable an admin account', async () => {
+      const ctx = mockContext({ admin: true });
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: otherId,
+        isAdmin: true,
+      });
+
+      await expect(
+        userResolver.Mutation.disableUser(null, { userId: otherId }, ctx)
+      ).rejects.toThrow(/Cannot disable admin accounts/);
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('User.reputation', () => {
+  const reputation = {
+    _id: 'r1',
+    overallScore: 100,
+    inviteNetworkScore: 0,
+    conductScore: 250,
+    activityScore: 1,
+    metrics: {} as never,
+    lastCalculated: '2026-10-16T15:08:48.328Z',
+  };
+
+  beforeEach(() => {
+    (loadUserReputation as jest.Mock).mockReset();
+  });
+
+  it('returns an embedded reputation without a query', async () => {
+    const ctx = mockContext();
+
+    const result = await userResolver.User.reputation(
+      { _id: otherId, reputation } as never,
+      {},
+      ctx
+    );
+
+    expect(result).toBe(reputation);
+    expect(loadUserReputation).not.toHaveBeenCalled();
+  });
+
+  it('loads the stored or calculated reputation for a legacy user', async () => {
+    const ctx = mockContext();
+    (loadUserReputation as jest.Mock).mockResolvedValue(reputation);
+
+    const result = await userResolver.User.reputation({ _id: otherId } as never, {}, ctx);
+
+    expect(loadUserReputation).toHaveBeenCalledWith(ctx.prisma, otherId);
+    expect(result).toBe(reputation);
+  });
+});

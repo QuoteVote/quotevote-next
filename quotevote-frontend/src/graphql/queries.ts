@@ -35,6 +35,7 @@ export const GET_ROOM_MESSAGES = gql`
         created
         type
         readBy
+        deleted
         user {
           _id
           name
@@ -927,6 +928,50 @@ export const GET_BOT_REPORTED_USERS = gql`
       joined
       avatar
       contributorBadge
+    }
+  }
+`
+
+/**
+ * Server-side SEO queries: minimal public fields for metadata, structured data and the sitemap
+ */
+export const GET_POST_METADATA = gql`
+  query postMetadata($postId: String!) {
+    post(postId: $postId) {
+      _id
+      title
+      text
+      url
+      created
+      creator {
+        name
+        username
+      }
+    }
+  }
+`
+
+export const GET_USER_METADATA = gql`
+  query userMetadata($username: String!) {
+    user(username: $username) {
+      _id
+      name
+      username
+      avatar
+    }
+  }
+`
+
+export const GET_SITEMAP_POSTS = gql`
+  query sitemapPosts($limit: Int!, $offset: Int!, $searchKey: String!) {
+    posts(limit: $limit, offset: $offset, searchKey: $searchKey) {
+      entities {
+        url
+        created
+        creator {
+          username
+        }
+      }
     }
   }
 `

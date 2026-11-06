@@ -16,3 +16,11 @@ export function isObjectId(id: string): boolean {
 export const uniqueArrayObjects = <T>(arr: T[]): T[] => {
   return arr.filter((elem, pos, self) => self.indexOf(elem) === pos);
 };
+
+/**
+ * Escape regex metacharacters. Prisma's `contains` on MongoDB passes the text
+ * to `$regex` unescaped, so user-supplied search text must go through this.
+ */
+export function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

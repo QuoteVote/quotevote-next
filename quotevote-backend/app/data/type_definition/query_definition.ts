@@ -72,6 +72,9 @@ type Query {
   " This will query the user message room"
   messageRoom(otherUserId: String!): MessageRoom
 
+  " Search the text of messages in the signed-in user's conversations "
+  searchMessages(text: String!, limit: Int, cursor: String): MessageSearchResult
+
   " This will query duplicate email"
   checkDuplicateEmail(email: String!): JSON
 
