@@ -1,13 +1,11 @@
 import express from 'express';
-import { ApolloServer } from '@apollo/server';
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { expressMiddleware } from '@as-integrations/express5';
 import cors from 'cors';
 import http from 'http';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { schema } from './data/schema';
-import type { GraphQLContext } from './types/graphql';
+import { createApolloServer } from './apolloServer';
 import { createHttpContext } from './context';
 import { disconnectPrisma, prisma } from './lib/prisma';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
@@ -41,14 +39,7 @@ async function startServer() {
   startPresenceCleanup(prisma);
 
   // 2. Apollo Server Setup (v4/v5 Syntax)
-  const server = new ApolloServer<GraphQLContext>({
-    schema,
-    // stop() closes the HTTP server and waits for in-flight requests.
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-    // Signals are handled below. Apollo's own handler also called stop() and kept the
-    // process alive after SIGTERM.
-    stopOnTerminationSignals: false,
-  });
+  const server = createApolloServer(schema, httpServer);
 
   await server.start();
   const subscriptionServer = createSubscriptionServer(httpServer, { schema });
