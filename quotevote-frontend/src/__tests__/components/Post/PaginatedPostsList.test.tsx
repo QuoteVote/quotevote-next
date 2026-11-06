@@ -109,7 +109,7 @@ describe('PaginatedPostsList Component', () => {
 
     it('says nothing matched a search and offers to clear it', () => {
       window.history.replaceState(null, '', '/?q=civic&group=g1')
-      render(<PaginatedPostsList searchKey="civic" groupId="g1" />)
+      render(<PaginatedPostsList searchKey="civic" tagId="g1" />)
 
       const empty = screen.getByTestId('posts-empty')
       expect(empty).toHaveTextContent('No posts found')

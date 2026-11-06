@@ -30,7 +30,7 @@ export default function PaginatedPostsList({
   interactions = false,
   userId,
   sortOrder,
-  groupId,
+  tagId,
   approved,
   showPageInfo = true,
   showFirstLast = true,
@@ -66,7 +66,7 @@ export default function PaginatedPostsList({
       onPageChange,
       onPageSizeChange,
     },
-    [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved]
+    [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, tagId, approved]
   )
 
   // Create GraphQL variables
@@ -81,7 +81,7 @@ export default function PaginatedPostsList({
     interactions,
     userId,
     sortOrder,
-    groupId,
+    tagId,
     approved,
   })
 
@@ -121,7 +121,7 @@ export default function PaginatedPostsList({
       setAllLoadedPosts([])
       setLoadMorePage(1)
     }
-  }, [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved, loadMoreMode])
+  }, [searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, tagId, approved, loadMoreMode])
 
   // Accumulate posts in load-more mode
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function PaginatedPostsList({
       interactions,
       userId,
       sortOrder,
-      groupId,
+      tagId,
       approved,
     })
 
@@ -172,7 +172,7 @@ export default function PaginatedPostsList({
     }).catch(() => {
       setIsLoadingMore(false)
     })
-  }, [isLoadingMore, loading, loadMorePage, defaultPageSize, searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, groupId, approved, fetchMore])
+  }, [isLoadingMore, loading, loadMorePage, defaultPageSize, searchKey, startDateRange, endDateRange, friendsOnly, interactions, userId, sortOrder, tagId, approved, fetchMore])
 
   // Determine which posts to display
   const basePosts = loadMoreMode ? allLoadedPosts : (entities || [])
@@ -219,7 +219,7 @@ export default function PaginatedPostsList({
       comments={post.comments || undefined}
       quotes={post.quotes || undefined}
       messageRoom={post.messageRoom || undefined}
-      groupId={post.groupId}
+      tagId={post.tagId}
       citationUrl={post.citationUrl || undefined}
       attribution={post.attribution || undefined}
       searchKey={searchKey}
@@ -229,9 +229,9 @@ export default function PaginatedPostsList({
 
   // Render empty state: say why the list is empty and offer a way out (#528)
   const hasFilters = Boolean(
-    searchKey || groupId || friendsOnly || interactions || startDateRange || endDateRange
+    searchKey || tagId || friendsOnly || interactions || startDateRange || endDateRange
   )
-  const otherFilters = Boolean(groupId || friendsOnly || interactions || startDateRange || endDateRange)
+  const otherFilters = Boolean(tagId || friendsOnly || interactions || startDateRange || endDateRange)
   const clearFilters = () => {
     router.replace(window.location.pathname)
   }
@@ -240,7 +240,7 @@ export default function PaginatedPostsList({
     let message = emptyMessage
     if (searchKey) {
       message = `Nothing matches \u201c${searchKey}\u201d${otherFilters ? ' with the current filters' : ''}. Try other words${otherFilters ? ' or clear the filters' : ''}.`
-    } else if (friendsOnly && !groupId && !startDateRange && !endDateRange) {
+    } else if (friendsOnly && !tagId && !startDateRange && !endDateRange) {
       message = 'Posts from people you follow will show up here.'
     } else if (hasFilters) {
       message = 'Try another tag or date range, or clear the filters.'
@@ -375,4 +375,3 @@ export default function PaginatedPostsList({
     </PaginatedList>
   )
 }
-

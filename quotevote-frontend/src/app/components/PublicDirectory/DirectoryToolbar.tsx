@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Calendar, ListFilter } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 import { useDebounce } from '@/hooks/useDebounce'
-import { GET_GROUP, GROUPS_QUERY } from '@/graphql/queries'
+import { GET_TAG, TAGS_QUERY } from '@/graphql/queries'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -13,15 +13,15 @@ import DateRangeFilter from '@/components/SearchContainer/DateRangeFilter'
 import ActiveFilters from '@/components/SearchContainer/ActiveFilters'
 import { DirectorySearch } from './DirectorySearch'
 import { DirectoryFiltersPanel } from './DirectoryFiltersPanel'
-import type { Group } from '@/types/components'
+import type { Tag } from '@/types/components'
 import type { DirectorySort, DirectoryTopic } from '@/types/directory'
 
-interface GroupsQueryData {
-  groups: Group[]
+interface TagsQueryData {
+  tags: Tag[]
 }
 
-interface GroupQueryData {
-  group?: { _id: string; title: string }
+interface TagQueryData {
+  tag?: { _id: string; title: string }
 }
 
 function controlClass(active: boolean): string {
@@ -56,7 +56,7 @@ export function DirectoryToolbar(): ReactElement {
   const to = searchParams.get('to') || ''
   const interactions = searchParams.get('interactions') === 'true'
   const following = searchParams.get('following') === 'true'
-  const groupId = searchParams.get('group') || ''
+  const tagId = searchParams.get('group') || ''
 
   const [searchInput, setSearchInput] = useState(q)
   const debouncedSearch = useDebounce(searchInput, 300)
@@ -69,19 +69,19 @@ export function DirectoryToolbar(): ReactElement {
     if (!q && searchInput) setSearchInput('')
   }
 
-  const { data: groupData } = useQuery<GroupQueryData>(GET_GROUP, {
-    variables: { groupId },
-    skip: !groupId,
+  const { data: tagData } = useQuery<TagQueryData>(GET_TAG, {
+    variables: { tagId },
+    skip: !tagId,
     errorPolicy: 'all',
     fetchPolicy: 'cache-first',
   })
 
-  const { data: groupsData } = useQuery<GroupsQueryData>(GROUPS_QUERY, {
+  const { data: tagsData } = useQuery<TagsQueryData>(TAGS_QUERY, {
     variables: { limit: 100 },
     errorPolicy: 'all',
   })
-  const publicGroups = (groupsData?.groups ?? []).filter((g) => g.privacy !== 'private')
-  const topics: DirectoryTopic[] = publicGroups.map((g) => ({ _id: g._id, title: g.title }))
+  const publicTags = (tagsData?.tags ?? []).filter((tag) => tag.privacy !== 'private')
+  const topics: DirectoryTopic[] = publicTags.map((tag) => ({ _id: tag._id, title: tag.title }))
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   const updateParams = useCallback(
@@ -105,15 +105,15 @@ export function DirectoryToolbar(): ReactElement {
       const text = raw.trim()
       lastApplied.current = raw
       const tag = /^#(\S+)$/.exec(text)?.[1]?.toLowerCase()
-      const group = tag ? publicGroups.find((g) => g.title.toLowerCase() === tag) : undefined
-      if (group) {
+      const selectedTag = tag ? publicTags.find((item) => item.title.toLowerCase() === tag) : undefined
+      if (selectedTag) {
         setSearchInput('')
-        updateParams({ group: group._id, q: null })
+        updateParams({ group: selectedTag._id, q: null })
       } else {
         updateParams({ q: text || null })
       }
     },
-    [publicGroups, updateParams]
+    [publicTags, updateParams]
   )
 
   // Keyed on the debounced input only: removing the search pill clears `q` in the URL,
@@ -123,7 +123,7 @@ export function DirectoryToolbar(): ReactElement {
   useEffect(() => {
     if (debouncedSearch === q || debouncedSearch === lastApplied.current) return
     const typedTag = /^\s*#(\S*)\s*$/.exec(debouncedSearch)?.[1]?.toLowerCase()
-    if (typedTag !== undefined && !publicGroups.some((g) => g.title.toLowerCase() === typedTag)) {
+    if (typedTag !== undefined && !publicTags.some((tag) => tag.title.toLowerCase() === typedTag)) {
       return
     }
     applySearch(debouncedSearch)
@@ -143,7 +143,7 @@ export function DirectoryToolbar(): ReactElement {
           ? `From ${formatDay(from)}`
           : `Until ${formatDay(to)}`
     : ''
-  const activeFilterCount = (interactions ? 1 : 0) + (following ? 1 : 0) + (groupId ? 1 : 0)
+  const activeFilterCount = (interactions ? 1 : 0) + (following ? 1 : 0) + (tagId ? 1 : 0)
 
   const handleSortChange = (next: DirectorySort) => {
     updateParams({ interactions: next === 'popular' ? 'true' : null, sort: null })
@@ -165,7 +165,7 @@ export function DirectoryToolbar(): ReactElement {
     updateParams({ group: topic._id, q: null })
   }
 
-  const groupTitle = groupData?.group?.title
+  const tagTitle = tagData?.tag?.title
   const activeFilters = [
     {
       key: 'q',
@@ -179,7 +179,7 @@ export function DirectoryToolbar(): ReactElement {
     {
       key: 'group',
       label: 'Topic',
-      value: groupId ? (groupTitle ? `#${groupTitle}` : 'Selected') : '',
+      value: tagId ? (tagTitle ? `#${tagTitle}` : 'Selected') : '',
       onRemove: () => updateParams({ group: null }),
     },
     {
@@ -244,7 +244,7 @@ export function DirectoryToolbar(): ReactElement {
               following={following}
               onFollowingChange={(next) => updateParams({ following: next ? 'true' : null })}
               topics={topics}
-              topicId={groupId}
+              topicId={tagId}
               onTopicChange={(id) => updateParams({ group: id || null })}
               onClear={clearFilters}
               onDone={() => setFiltersOpen(false)}

@@ -90,11 +90,11 @@ describe('PostCard Component', () => {
   })
 
   describe('Search result cards (#528)', () => {
-    const tagged = { ...mockPostCardProps, url: '/post/qa/test/post1', groupId: 'group-qa' }
+    const tagged = { ...mockPostCardProps, url: '/post/qa/test/post1', tagId: 'group-qa' }
 
     beforeEach(() => {
       mockUseQuery.mockImplementation(() => ({
-        data: { group: { _id: 'group-qa', title: 'QA' } },
+        data: { tag: { _id: 'group-qa', title: 'QA' } },
         loading: false,
         error: undefined,
       }))

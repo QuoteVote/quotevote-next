@@ -17,8 +17,8 @@ interface RosterMutationData {
     addBuddy: RosterMutationResult
     acceptBuddy: RosterMutationResult
     declineBuddy: RosterMutationResult
-    blockBuddy: RosterMutationResult
-    unblockBuddy: RosterMutationResult
+    blockUser: RosterMutationResult
+    unblockUser: RosterMutationResult
     removeBuddy: RosterMutationResult
 }
 
@@ -60,7 +60,7 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
     const addBuddy = async (buddyId: string): Promise<RosterMutationResult> => {
         try {
             const result = await addBuddyMutation({
-                variables: { roster: { buddyId } },
+                variables: { userId: buddyId },
             })
             const data = result.data as RosterMutationData
             addPendingRequest(data.addBuddy)
@@ -73,7 +73,7 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
     const acceptBuddy = async (rosterId: string): Promise<RosterMutationResult> => {
         try {
             const result = await acceptBuddyMutation({
-                variables: { rosterId },
+                variables: { requestId: rosterId },
             })
             const data = result.data as RosterMutationData
             removePendingRequest(rosterId)
@@ -86,7 +86,7 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
     const declineBuddy = async (rosterId: string): Promise<RosterMutationResult> => {
         try {
             const result = await declineBuddyMutation({
-                variables: { rosterId },
+                variables: { requestId: rosterId },
             })
             const data = result.data as RosterMutationData
             removePendingRequest(rosterId)
@@ -99,11 +99,11 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
     const blockBuddy = async (buddyId: string): Promise<RosterMutationResult> => {
         try {
             const result = await blockBuddyMutation({
-                variables: { buddyId },
+                variables: { userId: buddyId },
             })
             const data = result.data as RosterMutationData
             addBlockedUser(buddyId)
-            return data.blockBuddy
+            return data.blockUser
         } catch (error: unknown) {
             throw error
         }
@@ -112,11 +112,11 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
     const unblockBuddy = async (buddyId: string): Promise<RosterMutationResult> => {
         try {
             const result = await unblockBuddyMutation({
-                variables: { buddyId },
+                variables: { userId: buddyId },
             })
             const data = result.data as RosterMutationData
             removeBlockedUser(buddyId)
-            return data.unblockBuddy
+            return data.unblockUser
         } catch (error: unknown) {
             throw error
         }
@@ -125,7 +125,7 @@ export const useRosterManagement = (): UseRosterManagementReturn => {
     const removeBuddy = async (buddyId: string): Promise<RosterMutationResult> => {
         try {
             const result = await removeBuddyMutation({
-                variables: { buddyId },
+                variables: { userId: buddyId },
             })
             const data = result.data as RosterMutationData
             return data.removeBuddy

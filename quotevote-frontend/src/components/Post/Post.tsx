@@ -37,7 +37,7 @@ import {
   DELETE_POST,
   DELETE_VOTE,
 } from "@/graphql/mutations";
-import { GET_GROUP, GET_POST, GET_TOP_POSTS, GET_USERS } from "@/graphql/queries";
+import { GET_TAG, GET_POST, GET_TOP_POSTS, GET_USERS } from "@/graphql/queries";
 import useGuestGuard from "@/hooks/useGuestGuard";
 import { POST_ACTION_PILL_CLASS } from "@/lib/constants/postActions";
 import { VOTE_AXIS, VOTE_LABELS } from "@/lib/constants/voteAxes";
@@ -133,11 +133,11 @@ export default function Post({
     errorPolicy: "all",
   });
 
-  // Post has no nested `group` field; cache-first reuses GET_GROUP (also used by PostCard)
-  // so the same groupId does not refetch on re-render or return visits in this session.
-  const { data: groupData } = useQuery<{ group?: { _id: string; title: string } }>(GET_GROUP, {
-    variables: { groupId: post.groupId || "" },
-    skip: !post.groupId,
+  // Post has no nested `tag` field; cache-first reuses GET_TAG (also used by PostCard)
+  // so the same tagId does not refetch on re-render or return visits in this session.
+  const { data: tagData } = useQuery<{ tag?: { _id: string; title: string } }>(GET_TAG, {
+    variables: { tagId: post.tagId || "" },
+    skip: !post.tagId,
     errorPolicy: "all",
     fetchPolicy: "cache-first",
   });
@@ -444,7 +444,7 @@ export default function Post({
   const discussionCount = post.comments?.length || 0;
   const citationHref = post.citationUrl ? sanitizeUrl(post.citationUrl) : null;
   const citationDomain = citationHref ? getDomain(citationHref) : null;
-  const communityTitle = groupData?.group?.title;
+  const communityTitle = tagData?.tag?.title;
 
   return (
     <div className="flex flex-col" role="article" aria-label={title || "Post"}>
@@ -496,7 +496,7 @@ export default function Post({
             <button
               type="button"
               aria-label={`Filter by #${communityTitle}`}
-              onClick={() => router.push(`/?group=${post.groupId}`)}
+              onClick={() => router.push(`/?group=${post.tagId}`)}
               className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 transition-colors cursor-pointer"
             >
               <Hash className="size-3.5 stroke-[2.5]" />

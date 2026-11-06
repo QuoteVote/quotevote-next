@@ -208,7 +208,7 @@ export interface PresenceIconProps {
  * The tag (group) a discussion's post belongs to, shown on its card as #title (#531)
  */
 export interface ConversationTag {
-  groupId: string;
+  tagId: string;
   title: string;
 }
 

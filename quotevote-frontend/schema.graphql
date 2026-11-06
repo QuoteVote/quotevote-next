@@ -1,15 +1,24 @@
-# Snapshot of the deployed API schema (https://api.quote.vote/graphql).
-# Regenerate with: pnpm schema:update
+# Snapshot of the new quotevote-backend executable schema.
+# Regenerate from quotevote-backend/app/data/schema.ts after the staging API is available.
 # Used by scripts/validate-graphql.mjs to catch documents that would 400 at runtime.
 
+enum AccountStatus {
+  active
+  disabled
+  pending
+  suspended
+}
+
+"""Paginated list of activity feed entries."""
 type Activities {
   entities: [Activity]
   pagination: Pagination
 }
 
+"""Activity feed entry — a user action on a post/vote/quote/comment."""
 type Activity {
   _id: String
-  activityType: String
+  activityType: ActivityEventType
   comment: Comment
   commentId: String
   content: String
@@ -24,34 +33,75 @@ type Activity {
   voteId: String
 }
 
+input ActivityEventInput {
+  payload: JSON!
+  timestamp: String
+  type: String!
+}
+
+enum ActivityEventType {
+  COMMENTED
+  DOWNVOTED
+  LIKED
+  POSTED
+  QUOTED
+  UPVOTED
+  VOTED
+}
+
+"""Result of declining a request or removing a buddy."""
+type BuddyMutationResult {
+  _id: String!
+  success: Boolean!
+}
+
+"""A buddy request or accepted buddy pair."""
+type BuddyRelationship {
+  _id: String!
+  acceptedAt: Date
+  createdAt: Date!
+  recipient: BuddyUser!
+  requester: BuddyUser!
+  status: BuddyStatus!
+}
+
+enum BuddyStatus {
+  accepted
+  pending
+}
+
+"""Public subset of a user shown in buddy lists and requests."""
+type BuddyUser {
+  _id: String!
+  avatar: JSON
+  name: String
+  username: String
+}
+
+"""Buddy user joined with their current presence."""
 type BuddyWithPresence {
   presence: Presence
-  roster: Roster!
-  user: User!
+  user: BuddyUser!
 }
 
-input CardPaymentMethodInput {
-  cvc: String!
-  exp_month: String!
-  exp_year: String!
-  number: String!
-}
-
+"""Lightweight chat-room list-view projection of a MessageRoom."""
 type ChatRoom {
   _id: ID!
   created: Date
   messageType: String
   unreadMessages: Int
   user: User
-  users: JSON
+  users: [String]
 }
 
+"""Comment attached to a post, aligned with Prisma Comment."""
 type Comment {
   _id: String
   content: String
   created: Date
   deleted: Boolean
   endWordIndex: Int
+  post: Post
   postId: String
   reaction: String
   startWordIndex: Int
@@ -91,77 +141,76 @@ type Creator {
   score: Int
 }
 
+"""ISO-8601 date string (also accepts epoch ms on input)."""
 scalar Date
 
-"""Returns a Date of format of "YYYY-MM-DD HH:mm:ss" in String"""
+"""DateTime scalar type"""
 scalar DateTime
 
+"""Response payload for a soft-deleted Comment mutation."""
 type DeletedComment {
   _id: String
 }
 
+"""Response payload for a soft-deleted Message mutation."""
 type DeletedMessage {
   _id: String
 }
 
+"""Response payload for a soft-deleted Post mutation."""
 type DeletedPost {
   _id: String
 }
 
+"""Response payload for a soft-deleted Quote mutation."""
 type DeletedQuote {
   _id: String
 }
 
+"""Response payload for a removed roster entry."""
 type DeletedRoster {
   _id: String!
   success: Boolean!
 }
 
+"""Response payload for a soft-deleted Vote mutation."""
 type DeletedVote {
   _id: String
 }
 
-type Group {
-  _id: String!
-  adminIds: [String!]
-  allowedUserIds: [String!]
-  created: String!
-  creatorId: String!
-  description: String!
-  pendingUsers: [User]
-  privacy: String!
-  title: String!
-  url: String!
-}
-
-input GroupInput {
-  creatorId: String!
-  description: String!
-  privacy: String!
-  title: String!
-  url: String
-}
-
+"""Response from a presence heartbeat mutation."""
 type HeartbeatResponse {
+  status: PresenceStatus
+  statusMessage: String
   success: Boolean!
   timestamp: Date!
 }
 
-"""
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-"""
+enum InviteStatus {
+  accepted
+  declined
+  expired
+  pending
+}
+
+"""Arbitrary JSON value (objects, arrays, primitives)."""
 scalar JSON
 
+"""Chat / direct-message entry."""
 type Message {
   _id: ID!
   created: Date
   deleted: Boolean
+  messageRoom: MessageRoom
   messageRoomId: String
   mutation_type: String
-  readBy: JSON
+  presence: Presence
+  reactions: [Reaction]
+  readBy: [String]
+  readByDetailed: [ReadByDetailedEntry]
   text: String
   title: String
-  type: String
+  type: MessageType
   user: User
   userAvatar: String!
   userId: String
@@ -169,114 +218,270 @@ type Message {
 }
 
 input MessageInput {
-  """ Either user._id or post._id """
+  """Either user._id or post._id"""
   componentId: String
 
-  """ Message Room ID"""
+  """Message Room ID"""
   messageRoomId: String
 
-  """ Content of the chat message """
+  """Content of the chat message"""
   text: String!
 
-  """ Title of the chat message """
+  """Title of the chat message"""
   title: String!
 
-  """ Type of the message USER or POST """
+  """Type of the message USER or POST"""
   type: String
 }
 
+"""Chat room (direct or group), aligned with Prisma MessageRoom."""
 type MessageRoom {
   _id: ID!
   avatar: JSON
   created: Date
   lastActivity: Date
   lastMessageTime: Date
-  messageType: String
+  messageType: MessageType
   messages: [Message]
+  post: Post
   postDetails: PostDetails
   postId: String
   title: String
+  typingIndicators: [TypingIndicator]
   unreadMessages: Int
-  users: JSON
+  users: [String]
+  usersData: [User]
+}
+
+enum MessageType {
+  POST
+  SYSTEM
+  USER
 }
 
 type Mutation {
-  acceptBuddy(rosterId: String!): Roster
+  """ Accept buddy request """
+  acceptBuddy(requestId: String!): BuddyRelationship!
+
+  """ Add reaction to an action/post """
   addActionReaction(reaction: ReactionInput!): Reaction
-  addBuddy(roster: RosterInput!): Roster
+
+  """ Add buddy request """
+  addBuddy(userId: String!): BuddyRelationship!
+
+  """ Create a new comment """
   addComment(comment: CommentInput!): Comment
+
+  """ Add reaction to a chat message """
   addMessageReaction(reaction: ReactionInput!): Reaction
+
+  """ Create a new post """
   addPost(post: PostInput!): Post
+
+  """ Create a new quote """
   addQuote(quote: QuoteInput!): Quote
-  addStripeCustomer(stripeCustomer: StripeCustomerInput!): JSON
+
+  """ Add or update a vote """
   addVote(vote: VoteInput!): Vote
+
+  """ Approve a post (admin only) """
   approvePost(postId: String!, remove: Boolean, userId: String!): Post
-  blockBuddy(buddyId: String!): Roster
+
+  """ Block a user (idempotent; removes pending buddy requests) """
+  blockUser(userId: String!): UserBlockStatus!
+
+  """ Clear presence status (on logout) """
   clearPresence: Boolean
-  createGroup(group: GroupInput!): Group
+
+  """ Complete invite-based signup with Terms acceptance (token is not a session)
+  """
+  completeSignup(acceptedTermsVersion: String!, password: String!, token: String!, username: String!): User
+
+  """ Create a new chat message """
   createMessage(message: MessageInput!): Message
+
+  """ Create a chat room for a post """
   createPostMessageRoom(postId: String!): MessageRoom
-  declineBuddy(rosterId: String!): DeletedRoster
+
+  """ Create a tag """
+  createTag(tag: TagInput!): Tag
+
+  """ Decline buddy request """
+  declineBuddy(requestId: String!): BuddyMutationResult!
+
+  """ Delete an action/post reaction """
+  deleteActionReaction(_id: String!): Boolean
+
+  """ Delete a comment """
   deleteComment(commentId: String!): DeletedComment
+
+  """ Delete a chat message """
   deleteMessage(messageId: String!): DeletedMessage
+
+  """ Soft-delete a post """
   deletePost(postId: String!): DeletedPost
+
+  """ Delete a quote """
   deleteQuote(quoteId: String!): DeletedQuote
+
+  """ Delete a vote """
   deleteVote(voteId: String!): DeletedVote
+
+  """ Disable a user account (admin only) """
   disableUser(userId: String!): User
+
+  """ Enable a user account (admin only) """
   enableUser(userId: String!): User
+
+  """ Follow or unfollow a user """
   followUser(action: String!, user_id: String!): User
+
+  """ Send heartbeat to keep presence active """
   heartbeat: HeartbeatResponse
+
+  """ Recalculate user reputation metrics """
   recalculateReputation(userId: String!): JSON
+
+  """ Reject a post (admin only) """
   rejectPost(postId: String!, remove: Boolean, userId: String!): Post
-  removeBuddy(buddyId: String!): DeletedRoster
+
+  """ Remove a buddy, or withdraw a pending request """
+  removeBuddy(userId: String!): BuddyMutationResult!
+
+  """ Remove user notification """
   removeNotification(notificationId: String!): Notification
+
+  """ Report a user account as a bot """
   reportBot(reporterId: String!, userId: String!): JSON
+
+  """ Report a post """
   reportPost(postId: String!, userId: String!): Post
+
+  """ Submit a user report """
   reportUser(reportUserInput: ReportUserInput!): JSON
+
+  """ Request user access """
   requestUserAccess(requestUserAccessInput: RequestUserAccessInput!): User
+
+  """ Send investor email """
   sendInvestorMail(email: String!): JSON
+
+  """ Send password reset link email """
   sendPasswordResetEmail(email: String!): JSON
+
+  """ Send a user invitation """
   sendUserInvite(email: String!): JSON
+
+  """ Approve or reject user access invite (admin only) """
   sendUserInviteApproval(inviteStatus: String!, userId: String!): JSON
+
+  """ Append activity event to Solid pod """
+  solidAppendActivityEvent(input: ActivityEventInput!): Boolean
+
+  """ Disconnect from Solid pod """
+  solidDisconnect: Boolean
+
+  """ Finish Solid connection authentication """
+  solidFinishConnect(code: String!, redirectUri: String!, state: String!): SolidConnectResult
+
+  """ Pull portable state from Solid pod """
+  solidPullPortableState: PortableState
+
+  """ Push portable state to Solid pod """
+  solidPushPortableState(input: PortableStateInput!): Boolean
+
+  """ Start Solid connection authorization flow """
+  solidStartConnect(issuer: String!): SolidConnectResult
+
+  """ Toggle voting capabilities on a post """
   toggleVoting(postId: String!): Post
-  unblockBuddy(buddyId: String!): Roster
+
+  """ Unblock a user (idempotent) """
+  unblockUser(userId: String!): UserBlockStatus!
+
+  """ Update an existing action/post reaction """
   updateActionReaction(_id: String!, emoji: String!): Reaction
+
+  """ Update a post's featured slot (admin only) """
   updateFeaturedSlot(featuredSlot: Int, postId: String!): Post
+
+  """ Update messages as read in a room """
   updateMessageReadBy(messageRoomId: String!): [Message]
+
+  """ Bookmark or unbookmark a post """
   updatePostBookmark(postId: String!, userId: String!): Post
+
+  """ Update user presence status """
   updatePresence(presence: PresenceInput!): Presence
+
+  """ Update an existing chat message reaction """
   updateReaction(_id: String!, emoji: String!): Reaction
+
+  """ Update typing status in chat room """
   updateTyping(typing: TypingInput!): TypingResponse
+
+  """ Update user profile details """
   updateUser(user: UserInput!): User
+
+  """ Update user avatar image """
   updateUserAvatar(avatarQualities: JSON, user_id: String!): User
+
+  """ Reset user password with token """
   updateUserPassword(password: String, token: String, username: String): JSON
 }
 
+"""User-facing notification (follow / upvote / comment / etc)."""
 type Notification {
   _id: String
   created: Date
   label: String
-  notificationType: String
+  notificationType: NotificationType
   post: Post
   status: String
+  user: User
   userBy: User
   userId: String
   userIdBy: String
 }
 
+enum NotificationType {
+  COMMENT
+  COMMENTED
+  DOWNVOTED
+  FOLLOW
+  MENTION
+  MESSAGE
+  QUOTE
+  SYSTEM
+  UPVOTED
+  VOTE
+}
+
+"""Mongoose ObjectId scalar type"""
 scalar ObjectId
 
+"""Cursor / offset pagination metadata returned alongside list queries."""
 type Pagination {
   limit: Int
   offset: Int
   total_count: Int
 }
 
+type PortableState {
+  collections: [JSON]
+  version: String
+}
+
+input PortableStateInput {
+  collections: [JSON]
+  version: String
+}
+
+"""A user post, aligned with Prisma Post / Mongoose Post model."""
 type Post {
   _id: String
   approvedBy: [String]
   attribution: String
-  attributionType: String
   bookmarkedBy: [String]
   citationUrl: String
   comments: [Comment]
@@ -287,12 +492,12 @@ type Post {
   downvotes: Int
   enable_voting: Boolean
   featuredSlot: Int
-  groupId: String
   messageRoom: MessageRoom
   pointTimestamp: String
   quotes: [Quote]
   rejectedBy: [String]
   reportedBy: [String]
+  tagId: String
   text: String
   title: String
   upvotes: Int
@@ -302,6 +507,7 @@ type Post {
   votes: [Vote]
 }
 
+"""Inlined Post snapshot displayed with the MessageRoom that wraps it."""
 type PostDetails {
   _id: ID
   text: String
@@ -312,29 +518,33 @@ type PostDetails {
 
 input PostInput {
   attribution: String
-  attributionType: String
   citationUrl: String
-  groupId: String!
+  tagId: String!
   text: String!
   title: String!
   userId: String!
 }
 
+"""Paginated list of posts."""
 type Posts {
   entities: [Post]
   pagination: Pagination
 }
 
+"""User presence status (online / away / dnd / offline / invisible)."""
 type Presence {
   _id: String!
   lastHeartbeat: Date!
   lastSeen: Date
+  preferredStatus: PresenceStatus
+  preferredStatusMessage: String
   status: PresenceStatus!
   statusMessage: String
   user: User
   userId: String!
 }
 
+"""Input for updating presence"""
 input PresenceInput {
   status: String!
   statusMessage: String
@@ -348,6 +558,7 @@ enum PresenceStatus {
   online
 }
 
+"""Presence change payload delivered over subscriptions."""
 type PresenceUpdate {
   lastSeen: Date
   status: PresenceStatus!
@@ -362,17 +573,20 @@ type Query {
   """ This will give the public news feed """
   activities(activityEvent: JSON, endDateRange: String, limit: Int, offset: Int, searchKey: String, startDateRange: String, user_id: String): Activities
 
+  """ Pending buddy requests sent to or by the current user"""
+  buddyRequests: [BuddyRelationship!]!
+
   """ This will query duplicate email"""
   checkDuplicateEmail(email: String!): JSON
 
   """ Posts selected for homepage carousel """
-  featuredPosts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, groupId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
+  featuredPosts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, tagId: String, userId: String): Posts
 
   """ Get users reported as bots (admin only) """
   getBotReportedUsers(limit: Int, sortBy: String): [User]
 
   """ Get buddy list with presence information"""
-  getBuddyList: [BuddyWithPresence]
+  getBuddyList: [BuddyWithPresence!]!
 
   """ Get user presence by user ID"""
   getPresence(userId: String!): Presence
@@ -395,11 +609,11 @@ type Query {
   """ Get user reputation information """
   getUserReputation(userId: String!): UserReputation
 
-  """ Get a specific group by ID """
-  group(groupId: String!): Group
+  """ Hello world check """
+  hello: String
 
-  """ Get all groups """
-  groups(created: String, key: String, limit: Int, title: String): [Group]
+  """ Get latest quotes """
+  latestQuotes(limit: Int!): [Quote!]!
 
   """ This will query the message Reactions"""
   messageReactions(messageId: String!): [Reaction]
@@ -423,7 +637,7 @@ type Query {
   postMessageRoom(postId: String!): MessageRoom
 
   """ This will query the list of posts """
-  posts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, groupId: String, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, userId: String): Posts
+  posts(approved: Boolean, deleted: Boolean, endDateRange: String, friendsOnly: Boolean, interactions: Boolean, limit: Int, offset: Int, searchKey: String, sortOrder: String, startDateRange: String, tagId: String, userId: String): Posts
 
   """ Search content by text """
   searchContent(text: String!): [Content]
@@ -434,11 +648,26 @@ type Query {
   """ This will search for users by username or name """
   searchUser(queryName: String!): [User]
 
+  """ Get Solid connection status """
+  solidConnectionStatus: SolidConnectionStatus!
+
+  """ Status of server """
+  status: String
+
+  """ Get a specific tag by ID """
+  tag(tagId: String!): Tag
+
+  """ Get all tags """
+  tags(created: String, key: String, limit: Int, title: String): [Tag]
+
   """ This will query the top posts (alias for posts) """
   topPosts(endDateRange: String, friendsOnly: Boolean, interactions: Boolean, limit: Int!, offset: Int!, searchKey: String!, sortOrder: String, startDateRange: String, userId: String): Posts
 
   """ This will query the user """
   user(creatorId: String, user_id: String, username: String): User
+
+  """ Block state between the current user and another user"""
+  userBlockStatus(userId: String!): UserBlockStatus!
 
   """ This will query the list of user invite requests """
   userInviteRequests: [UserInvite]
@@ -446,16 +675,21 @@ type Query {
   """ This will query the list of available users (Admin only) """
   users(limit: Int, offset: Int): [User]
 
+  """ Verify a limited-purpose invite signup token (not a session)"""
+  verifyInviteSignupToken(token: String!): JSON
+
   """ This will query user info if token is valid"""
   verifyUserPasswordResetToken(token: String!): JSON
 }
 
+"""A quoted excerpt of a post."""
 type Quote {
   _id: String
   created: Date
   deleted: Boolean
   endWordIndex: Int
-  postId: Int
+  post: Post
+  postId: ID
   quote: String
   quoted: String
   quoter: String
@@ -472,12 +706,15 @@ input QuoteInput {
   startWordIndex: Int!
 }
 
+"""Emoji reaction on a message or action (vote/comment/etc)."""
 type Reaction {
   _id: String
   actionId: String
   created: String
   emoji: String
+  message: Message
   messageId: String
+  user: User
   userId: String
 }
 
@@ -486,6 +723,34 @@ input ReactionInput {
   emoji: String
   messageId: String
   userId: String
+}
+
+"""Per-user read receipt for a message."""
+type ReadByDetailedEntry {
+  readAt: Date
+  userId: String
+}
+
+enum ReportReason {
+  fake_account
+  harassment
+  inappropriate_content
+  other
+  spam
+}
+
+enum ReportSeverity {
+  critical
+  high
+  low
+  medium
+}
+
+enum ReportStatus {
+  dismissed
+  pending
+  resolved
+  reviewed
 }
 
 input ReportUserInput {
@@ -521,6 +786,7 @@ input RequestUserAccessInput {
   email: String!
 }
 
+"""Buddy-list entry linking two users with a relationship status."""
 type Roster {
   _id: String!
   buddy: User
@@ -530,6 +796,7 @@ type Roster {
   presence: Presence
   status: RosterStatus!
   updated: Date!
+  user: User
   userId: String!
 }
 
@@ -540,6 +807,7 @@ input RosterInput {
 enum RosterStatus {
   accepted
   blocked
+  declined
   pending
 }
 
@@ -547,23 +815,64 @@ input SendUserInviteInput {
   email: String!
 }
 
-input StripeCustomerInput {
-  card: CardPaymentMethodInput!
-  email: String!
-  first_name: String!
-  last_name: String
+type SolidConnectResult {
+  authorizationUrl: String
+  issuer: String
+  message: String
+  success: Boolean
+  webId: String
+}
+
+type SolidConnectionStatus {
+  connected: Boolean
+  issuer: String
+  lastSyncAt: String
+  webId: String
 }
 
 type Subscription {
   message(messageRoomId: String!): Message
   notification(userId: String!): Notification
   presence(userId: String): PresenceUpdate
-  roster(userId: String!): Roster
   typing(messageRoomId: String!): TypingIndicator
 }
 
+"""Tag / community, aligned with Prisma Tag."""
+type Tag {
+  _id: String!
+  adminIds: [String!]
+  adminUsers: [User]
+  allowedUserIds: [String!]
+  allowedUsers: [User]
+  created: String!
+  creator: User
+  creatorId: String!
+  description: String!
+  pendingUsers: [User]
+  privacy: TagPrivacy!
+  rosters: [Roster]
+  title: String!
+  url: String!
+}
+
+input TagInput {
+  creatorId: String!
+  description: String!
+  privacy: String!
+  title: String!
+  url: String
+}
+
+enum TagPrivacy {
+  private
+  public
+  restricted
+}
+
+"""Live typing indicator broadcast within a message room."""
 type TypingIndicator {
   isTyping: Boolean!
+  messageRoom: MessageRoom
   messageRoomId: String!
   timestamp: Date!
   user: User
@@ -575,38 +884,58 @@ input TypingInput {
   messageRoomId: String!
 }
 
+"""Response payload for updateTyping mutation."""
 type TypingResponse {
   success: Boolean!
 }
 
+"""
+Registered user account, aligned with Prisma User / Mongoose User model.
+"""
 type User {
   _followersId: [String]
   _followingId: [String]
   _id: String!
-  _votesId: Int
+  _votesId: String
   _wallet: String
-  accountStatus: String
+  accountStatus: AccountStatus
   admin: Boolean
   avatar: JSON
+  bio: String
   botReports: Int
+  comments: [Comment]
   contributorBadge: Boolean
+  createdTags: [Tag]
   downvotes: Int
   email: String
   favorited: Int
   joined: String
   lastBotReportDate: String
+  memberOfTags: [Tag]
   name: String
+  posts: [Post]
+  presence: Presence
   reputation: UserReputation
+  rosters: [Roster]
   themePreference: String
   tokens: Int
   upvotes: Int
   userId: ID
   username: String
+  votes: [Vote]
+}
+
+"""Block state between the current user and another user."""
+type UserBlockStatus {
+  blockedByMe: Boolean!
+  blockedMe: Boolean!
+  userId: String!
 }
 
 input UserInput {
   _id: String!
   avatar: String
+  bio: String
   contributorBadge: Boolean
   email: String
   name: String
@@ -616,6 +945,7 @@ input UserInput {
   username: String
 }
 
+"""Outstanding invite record for a prospective user."""
 type UserInvite {
   _id: String!
   _userId: String
@@ -631,12 +961,17 @@ type UserReport {
   adminNotes: String
   createdAt: String!
   description: String
-  reason: String!
-  severity: String!
-  status: String!
+  reason: ReportReason!
+  reportedUser: User
+  reporter: User
+  severity: ReportSeverity!
+  status: ReportStatus!
   updatedAt: String!
 }
 
+"""
+Aggregated reputation score for a user across invite/conduct/activity axes.
+"""
 type UserReputation {
   _id: String!
   _userId: String!
@@ -651,16 +986,18 @@ type UserReputation {
   updatedAt: String!
 }
 
+"""User vote (up/down) on a post, aligned with Prisma Vote."""
 type Vote {
   _id: String
   content: String
   created: Date
   deleted: Boolean
   endWordIndex: Int
+  post: Post
   postId: String
   startWordIndex: Int
   tags: String
-  type: String
+  type: VoteType
   user: User
   userId: String
 }
@@ -673,4 +1010,9 @@ input VoteInput {
   tags: String!
   type: String!
   userId: String
+}
+
+enum VoteType {
+  down
+  up
 }

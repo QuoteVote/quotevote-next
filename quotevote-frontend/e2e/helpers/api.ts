@@ -142,14 +142,14 @@ export async function deletePostViaApi(postId: string, token: string): Promise<v
   }
 }
 
-export async function findGroupIdByTitle(token: string, title: string): Promise<string> {
+export async function findTagIdByTitle(token: string, title: string): Promise<string> {
   const data = await graphqlRequest<{
-    groups: Array<{ _id: string; title: string; privacy?: string | null }>;
+    tags: Array<{ _id: string; title: string; privacy?: string | null }>;
   }>(
     token,
     `
-      query groups($limit: Int!) {
-        groups(limit: $limit) {
+      query tags($limit: Int!) {
+        tags(limit: $limit) {
           _id
           title
           privacy
@@ -159,8 +159,8 @@ export async function findGroupIdByTitle(token: string, title: string): Promise<
     { limit: 200 }
   );
 
-  const match = data.groups.find(
-    (group) => group.title.toLowerCase() === title.toLowerCase()
+  const match = data.tags.find(
+    (tag) => tag.title.toLowerCase() === title.toLowerCase()
   );
 
   if (!match?._id) {
@@ -174,7 +174,7 @@ export async function createPostViaApi(
   token: string,
   input: {
     userId: string;
-    groupId: string;
+    tagId: string;
     title: string;
     text: string;
   }
@@ -194,7 +194,7 @@ export async function createPostViaApi(
     {
       post: {
         userId: input.userId,
-        groupId: input.groupId,
+        tagId: input.tagId,
         title: input.title,
         text: input.text,
       },

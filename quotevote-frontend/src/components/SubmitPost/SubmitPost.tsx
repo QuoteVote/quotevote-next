@@ -2,16 +2,16 @@
 
 import { useQuery } from '@apollo/client/react'
 import { useAppStore } from '@/store'
-import { GROUPS_QUERY } from '@/graphql/queries'
+import { TAGS_QUERY } from '@/graphql/queries'
 import { SubmitPostForm } from './SubmitPostForm'
 import { SubmitPostSkeleton } from './SubmitPostSkeleton'
-import type { SubmitPostProps, Group } from '@/types/components'
+import type { SubmitPostProps, Tag } from '@/types/components'
 
 export function SubmitPost({ setOpen }: SubmitPostProps) {
   const user = useAppStore((state) => state.user.data)
   const userId = user?._id || user?.id
 
-  const { loading, error, data } = useQuery(GROUPS_QUERY, {
+  const { loading, error, data } = useQuery(TAGS_QUERY, {
     variables: { limit: 0 },
     skip: !userId,
   })
@@ -36,20 +36,19 @@ export function SubmitPost({ setOpen }: SubmitPostProps) {
     return <SubmitPostSkeleton />
   }
 
-  const groups: Group[] = (data as { groups?: Group[] } | undefined)?.groups ?? []
-  const groupsOptions: Group[] = groups.filter((group) => {
-    const isUserAllowed = group.allowedUserIds?.includes(String(userId)) ?? false
-    return group.privacy === 'public' || (group.privacy === 'private' && isUserAllowed)
+  const tags: Tag[] = (data as { tags?: Tag[] } | undefined)?.tags ?? []
+  const tagOptions: Tag[] = tags.filter((tag) => {
+    const isUserAllowed = tag.allowedUserIds?.includes(String(userId)) ?? false
+    return tag.privacy === 'public' || (tag.privacy === 'private' && isUserAllowed)
   })
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col">
       <SubmitPostForm
-        options={groupsOptions}
+        options={tagOptions}
         user={{ _id: String(userId), ...user } as { _id: string; [key: string]: unknown }}
         setOpen={setOpen}
       />
     </div>
   )
 }
-

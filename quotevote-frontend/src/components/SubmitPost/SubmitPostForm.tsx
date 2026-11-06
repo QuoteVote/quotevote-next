@@ -34,8 +34,8 @@ import {
 } from "@/lib/utils/submitPostDraft";
 import { ATTRIBUTION_MAX_LENGTH } from "@/lib/constants/attribution";
 import { SUBMIT_POST_TITLE_MAX_LENGTH } from "@/lib/constants/submitPost";
-import { CREATE_GROUP, SUBMIT_POST } from "@/graphql/mutations";
-import { GROUPS_QUERY } from "@/graphql/queries";
+import { CREATE_TAG, SUBMIT_POST } from "@/graphql/mutations";
+import { TAGS_QUERY } from "@/graphql/queries";
 import type { SubmitPostFormProps } from "@/types/components";
 import { cn } from "@/lib/utils";
 
@@ -82,7 +82,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
   const setSelectedPost = useAppStore((state) => state.setSelectedPost);
   const apolloClient = useApolloClient();
   const [submitPost, { loading }] = useMutation(SUBMIT_POST);
-  const [createTag, { loading: loadingTag }] = useMutation(CREATE_GROUP);
+  const [createTag, { loading: loadingTag }] = useMutation(CREATE_TAG);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const errorAlertRef = useRef<HTMLDivElement>(null);
@@ -195,17 +195,17 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
 
         const createTagResult = await createTag({
           variables: {
-            group: {
+            tag: {
               creatorId: user._id,
               title: tagTitle,
               description: `Description for: ${tagTitle} tag`,
               privacy: "public",
             },
           },
-          refetchQueries: [{ query: GROUPS_QUERY, variables: { limit: 0 } }],
+          refetchQueries: [{ query: TAGS_QUERY, variables: { limit: 0 } }],
         });
 
-        newTag = (createTagResult.data as { createGroup?: { _id: string } })?.createGroup;
+        newTag = (createTagResult.data as { createTag?: { _id: string } })?.createTag;
         setIsCreatingTag(false);
         setNewTagName("");
 
@@ -240,7 +240,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
             userId: user._id,
             text,
             title,
-            groupId: postTagId,
+            tagId: postTagId,
             citationUrl: sanitizedCitationUrl,
             attribution: resolvedAttribution,
           },

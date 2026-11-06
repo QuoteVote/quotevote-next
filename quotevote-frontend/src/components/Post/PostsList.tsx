@@ -93,7 +93,7 @@ function LoadPostsList({ data, onLoadMore, loading = false }: LoadPostsListProps
           comments={post.comments || []}
           quotes={post.quotes || []}
           messageRoom={post.messageRoom || undefined}
-          groupId={post.groupId || undefined}
+          tagId={post.tagId || undefined}
           citationUrl={post.citationUrl || undefined}
         />
       ))}
@@ -151,4 +151,3 @@ export default function PostList({
     />
   )
 }
-
