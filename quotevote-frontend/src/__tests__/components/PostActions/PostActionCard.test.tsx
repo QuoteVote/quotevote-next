@@ -10,7 +10,7 @@
  * - User permissions and ownership
  */
 
-import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
+import { render, screen, fireEvent, waitFor, cleanup } from '@/__tests__/utils/test-utils'
 import PostActionCard from '@/components/PostActions/PostActionCard'
 import type { PostAction } from '@/types/postActions'
 import * as storeModule from '@/store'
@@ -842,6 +842,41 @@ describe('PostActionCard', () => {
       expect(screen.getByText(/Quoted highlight snippet/i)).toBeInTheDocument()
     })
   })
+
+  describe('Vote response badge', () => {
+    const renderVote = (type: 'up' | 'down', tags?: unknown) => {
+      const voteAction = {
+        _id: 'vote-response',
+        __typename: 'Vote',
+        content: 'A passage',
+        created: new Date().toISOString(),
+        type,
+        tags,
+        user: { _id: 'user1', username: 'user1', name: 'User One' },
+      } as PostAction
+      render(<PostActionCard postAction={voteAction} postUrl="/post/123" />)
+      return screen.getByTestId('activity-label-button')
+    }
+
+    it.each([
+      ['up', '#agree', '↑ Agree'],
+      ['down', '#disagree', '↓ Disagree'],
+      ['up', '#true', '↑ True'],
+      ['down', '#false', '↓ False'],
+      ['up', '#like', '↑ Like'],
+      ['down', '#dislike', '↓ Dislike'],
+    ] as const)('labels a %s vote tagged %s as "%s"', (type, tags, label) => {
+      expect(renderVote(type, tags)).toHaveTextContent(label)
+    })
+
+    it('reads the response from older votes that store tags as an array', () => {
+      expect(renderVote('up', ['#like'])).toHaveTextContent('↑ Like')
+    })
+
+    it('falls back to Agree or Disagree when the vote has no known response', () => {
+      expect(renderVote('up')).toHaveTextContent('↑ Agree')
+      cleanup()
+      expect(renderVote('down', 'legacy')).toHaveTextContent('↓ Disagree')
+    })
+  })
 })
-
-

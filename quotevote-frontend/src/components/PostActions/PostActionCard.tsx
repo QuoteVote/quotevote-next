@@ -16,7 +16,9 @@ import { DELETE_VOTE, DELETE_COMMENT, DELETE_QUOTE } from '@/graphql/mutations'
 import { GET_ACTION_REACTIONS } from '@/graphql/queries'
 import { cn } from '@/lib/utils'
 import { toCommentDeepLink } from '@/lib/utils/sanitizeUrl'
+import { VOTE_LABELS } from '@/lib/constants/voteAxes'
 import useGuestGuard from '@/hooks/useGuestGuard'
+import type { VoteOption } from '@/types/voting'
 import type {
   PostActionCardProps,
   ActionReactionsData,
@@ -25,14 +27,25 @@ import type {
   DeleteQuoteData,
 } from '@/types/postActions'
 
+// The vote's response (True, Like...). The API returns `tags` as a string, older data as
+// an array; votes without a known response fall back to Agree/Disagree.
+function voteResponseLabel(tags: unknown, isUp: boolean): string {
+  const values = Array.isArray(tags) ? tags : typeof tags === 'string' ? tags.split(',') : []
+  const tag = values.map((t) => String(t).trim()).find((t) => t in VOTE_LABELS)
+  if (tag) return VOTE_LABELS[tag as VoteOption]
+  return isUp ? 'Agree' : 'Disagree'
+}
+
 // ── Type badge / activity label button (RC1-019) ─────────────────────────────
 function ActionTypeBadge({
   type,
   voteType,
+  voteTags,
   className,
 }: {
   type: string
   voteType?: string
+  voteTags?: unknown
   className?: string
 }) {
   if (type === 'Vote') {
@@ -48,7 +61,7 @@ function ActionTypeBadge({
           className
         )}
       >
-        {isUp ? '↑ Agree' : '↓ Disagree'}
+        {isUp ? '↑' : '↓'} {voteResponseLabel(voteTags, isUp)}
       </span>
     )
   }
@@ -300,7 +313,12 @@ export default function PostActionCard({
           </div>
           {type !== 'Message' && (
             <div className="ml-0.5 shrink-0 self-baseline">
-              <ActionTypeBadge type={type} voteType={voteType} className="leading-none" />
+              <ActionTypeBadge
+                type={type}
+                voteType={voteType}
+                voteTags={get(postAction, 'tags')}
+                className="leading-none"
+              />
             </div>
           )}
         </div>
