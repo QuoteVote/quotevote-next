@@ -1,7 +1,6 @@
 import * as bcrypt from 'bcryptjs';
 import { GraphQLError } from 'graphql';
-import { Prisma, ReportStatus } from '@prisma/client';
-import type { ReportReason, ReportSeverity } from '@prisma/client';
+import { Prisma, ReportReason, ReportSeverity, ReportStatus } from '@prisma/client';
 import { normalizeBio } from '../utils/bioValidation';
 import { toIsoDateString } from '~/data/utils/serializeDate';
 import {
@@ -20,7 +19,11 @@ import {
   type PrismaUserRecord,
 } from '~/data/utils/userPrismaMapper';
 import { uniqueArrayObjects } from '~/data/resolvers/utils/common';
-import { loadUserReputation } from '~/data/resolvers/utils/reputation';
+import { addNotification } from '~/data/resolvers/utils/notifications';
+import {
+  calculateUserReputation,
+  loadUserReputation,
+} from '~/data/resolvers/utils/reputation';
 import type * as Common from '~/types/common';
 import type { FollowInfoEntry, GraphQLContext } from '~/types/graphql';
 
@@ -57,6 +60,20 @@ function isDisabled(user: { accountStatus?: string | null }): boolean {
 function isReportStatus(value: string): value is ReportStatus {
   return (Object.values(ReportStatus) as string[]).includes(value);
 }
+
+function isReportReason(value: string): value is ReportReason {
+  return (Object.values(ReportReason) as string[]).includes(value);
+}
+
+function isReportSeverity(value: string): value is ReportSeverity {
+  return (Object.values(ReportSeverity) as string[]).includes(value);
+}
+
+const ADMIN_USER_STATUS_SELECT = {
+  ...PUBLIC_USER_SELECT,
+  accountStatus: true,
+  isAdmin: true,
+} as const satisfies Prisma.UserSelect;
 
 type UserReportResult = {
   _id: string;
@@ -948,6 +965,284 @@ export const userResolver = {
         code: 'SUCCESS',
         message: 'Bot report submitted successfully',
       };
+    },
+
+    followUser: async (
+      _parent: unknown,
+      args: { user_id: string; action: string },
+      context: GraphQLContext
+    ): Promise<Common.User> => {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const actorId = context.user._id.toString();
+      const targetId = args.user_id;
+
+      if (!targetId || !isObjectId(targetId)) {
+        throw new GraphQLError('Invalid user_id', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      if (actorId === targetId) {
+        throw new GraphQLError("Can't follow the same user.", {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const [actor, target] = await Promise.all([
+        context.prisma.user.findUnique({
+          where: { id: actorId },
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            followingIds: true,
+            accountStatus: true,
+          },
+        }),
+        context.prisma.user.findUnique({
+          where: { id: targetId },
+          select: { id: true, followerIds: true, accountStatus: true },
+        }),
+      ]);
+
+      if (!actor || isDisabled(actor)) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (!target || isDisabled(target)) {
+        throw new GraphQLError('User not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const follow = args.action === 'follow';
+      const actorFollowing = uniqueArrayObjects(actor.followingIds ?? []);
+      const targetFollowers = uniqueArrayObjects(target.followerIds ?? []);
+
+      const nextFollowing = follow
+        ? uniqueArrayObjects([...actorFollowing, targetId])
+        : actorFollowing.filter((id) => id !== targetId);
+      const nextFollowers = follow
+        ? uniqueArrayObjects([...targetFollowers, actorId])
+        : targetFollowers.filter((id) => id !== actorId);
+
+      await Promise.all([
+        context.prisma.user.update({
+          where: { id: actorId },
+          data: { followingIds: nextFollowing },
+          select: { id: true },
+        }),
+        context.prisma.user.update({
+          where: { id: targetId },
+          data: { followerIds: nextFollowers },
+          select: { id: true },
+        }),
+      ]);
+
+      if (follow) {
+        const alreadyNotified = await context.prisma.notification.findFirst({
+          where: {
+            userId: targetId,
+            userIdBy: actorId,
+            notificationType: 'FOLLOW',
+          },
+          select: { id: true },
+        });
+        if (!alreadyNotified) {
+          const labelName = actor.name?.trim() || actor.username;
+          await addNotification(context.prisma, {
+            userId: targetId,
+            userIdBy: actorId,
+            notificationType: 'FOLLOW',
+            label: `${labelName} has started following you.`,
+          });
+        }
+      }
+
+      const updatedActor = await context.prisma.user.findUniqueOrThrow({
+        where: { id: actorId },
+        select: PUBLIC_USER_SELECT,
+      });
+      return toPublicUser(updatedActor as PrismaUserRecord);
+    },
+
+    reportUser: async (
+      _parent: unknown,
+      args: { reportUserInput: Common.ReportUserInput },
+      context: GraphQLContext
+    ): Promise<{ code: string; message: string }> => {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const reporterId = context.user._id.toString();
+      const input = args.reportUserInput;
+      const reportedUserId = input?._reportedUserId;
+
+      if (!reportedUserId || !isObjectId(reportedUserId)) {
+        throw new GraphQLError('Valid reported user id is required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      if (reporterId === reportedUserId) {
+        throw new GraphQLError('Cannot report yourself', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      if (!input.reason || !isReportReason(input.reason)) {
+        throw new GraphQLError('Invalid report reason', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const severityRaw = input.severity?.trim() || 'medium';
+      if (!isReportSeverity(severityRaw)) {
+        throw new GraphQLError('Invalid report severity', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const reportedUser = await context.prisma.user.findUnique({
+        where: { id: reportedUserId },
+        select: { id: true },
+      });
+      if (!reportedUser) {
+        throw new GraphQLError('User not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const existingReport = await context.prisma.userReport.findFirst({
+        where: {
+          reporterId,
+          reportedUserId,
+          status: { in: [ReportStatus.pending, ReportStatus.reviewed] },
+        },
+        select: { id: true },
+      });
+      if (existingReport) {
+        throw new GraphQLError('You have already reported this user', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      await context.prisma.userReport.create({
+        data: {
+          reporterId,
+          reportedUserId,
+          reason: input.reason,
+          description: input.description?.trim() || undefined,
+          severity: severityRaw,
+          status: ReportStatus.pending,
+        },
+        select: { id: true },
+      });
+
+      // Fire-and-forget: reputation must not block the report response.
+      void calculateUserReputation(context.prisma, reportedUserId).catch((err: unknown) => {
+        logger.warn('reportUser: reputation recalculation failed', {
+          reportedUserId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+
+      return {
+        code: 'SUCCESS',
+        message: 'User report submitted successfully',
+      };
+    },
+
+    disableUser: async (
+      _parent: unknown,
+      args: { userId: string },
+      context: GraphQLContext
+    ): Promise<Common.User> => {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (context.user.admin !== true) {
+        throw new GraphQLError('Admin access required', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+      if (!args.userId || !isObjectId(args.userId)) {
+        throw new GraphQLError('Invalid userId', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const existing = await context.prisma.user.findUnique({
+        where: { id: args.userId },
+        select: { id: true, isAdmin: true },
+      });
+      if (!existing) {
+        throw new GraphQLError('User not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+      if (existing.isAdmin) {
+        throw new GraphQLError('Cannot disable admin accounts', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      const updated = await context.prisma.user.update({
+        where: { id: args.userId },
+        data: { accountStatus: 'disabled' },
+        select: ADMIN_USER_STATUS_SELECT,
+      });
+      return toPublicUser(updated as PrismaUserRecord);
+    },
+
+    enableUser: async (
+      _parent: unknown,
+      args: { userId: string },
+      context: GraphQLContext
+    ): Promise<Common.User> => {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (context.user.admin !== true) {
+        throw new GraphQLError('Admin access required', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+      if (!args.userId || !isObjectId(args.userId)) {
+        throw new GraphQLError('Invalid userId', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const existing = await context.prisma.user.findUnique({
+        where: { id: args.userId },
+        select: { id: true },
+      });
+      if (!existing) {
+        throw new GraphQLError('User not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const updated = await context.prisma.user.update({
+        where: { id: args.userId },
+        data: { accountStatus: 'active' },
+        select: ADMIN_USER_STATUS_SELECT,
+      });
+      return toPublicUser(updated as PrismaUserRecord);
     },
   },
   User: {

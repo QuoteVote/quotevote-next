@@ -24,12 +24,6 @@ export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
   BLOCK_BUDDY: '#582',
   UNBLOCK_BUDDY: '#582',
   REMOVE_BUDDY: '#582',
-  // Mutations with no resolver yet (#633)
-  FOLLOW_USER: '#633',
-  REPORT_USER: '#633',
-  DISABLE_USER: '#633',
-  ENABLE_USER: '#633',
-  CREATE_TAG: '#633',
 };
 
 const DOCUMENT_PATTERN = /export const (\w+) = gql`([\s\S]*?)`/g;
