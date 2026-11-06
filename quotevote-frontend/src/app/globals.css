@@ -2143,6 +2143,8 @@ p { line-height: 1.625; }
   }
   body {
     @apply bg-background text-foreground;
+    /* Long unbroken words and links in user text wrap instead of overflowing their card. */
+    overflow-wrap: break-word;
   }
 }
 
