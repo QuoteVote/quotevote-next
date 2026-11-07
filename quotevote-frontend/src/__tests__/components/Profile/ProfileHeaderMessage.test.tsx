@@ -15,7 +15,7 @@
 import { render, screen, fireEvent } from '../../utils/test-utils';
 import { ProfileHeader } from '../../../components/Profile/ProfileHeader';
 import { useAppStore } from '@/store';
-import { GET_CHAT_ROOM, GET_ROSTER } from '@/graphql/queries';
+import { GET_CHAT_ROOM, GET_USER_BLOCK_STATUS } from '@/graphql/queries';
 import type { ProfileUser } from '@/types/profile';
 import type { DocumentNode } from 'graphql';
 
@@ -78,8 +78,10 @@ function setupQueries(messageRoom: { _id: string; users: string[] } | null) {
     if (doc === GET_CHAT_ROOM) {
       return { data: { messageRoom }, loading: false, error: undefined };
     }
-    if (doc === GET_ROSTER) {
-      return { data: { getRoster: [] }, loading: false, error: undefined };
+    if (doc === GET_USER_BLOCK_STATUS) {
+      return {
+        data: { userBlockStatus: { userId: 'user1', blockedByMe: false, blockedMe: false } },
+        loading: false, error: undefined };
     }
     return { data: undefined, loading: false, error: undefined };
   });
@@ -138,19 +140,9 @@ describe('ProfileHeader — Message button', () => {
       if (doc === GET_CHAT_ROOM) {
         return { data: { messageRoom: null }, loading: false, error: undefined };
       }
-      if (doc === GET_ROSTER) {
+      if (doc === GET_USER_BLOCK_STATUS) {
         return {
-          data: {
-            getRoster: [
-              {
-                _id: 'r1',
-                userId: 'currentuser',
-                buddyId: 'user1',
-                status: 'blocked',
-                initiatedBy: 'currentuser',
-              },
-            ],
-          },
+          data: { userBlockStatus: { userId: 'user1', blockedByMe: true, blockedMe: false } },
           loading: false,
           error: undefined,
         };

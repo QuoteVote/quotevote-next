@@ -5,15 +5,15 @@ import { useQuery } from '@apollo/client/react';
 import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store';
-import { GET_BUDDY_LIST, GET_ROSTER } from '@/graphql/queries';
+import { GET_BUDDY_LIST, GET_BUDDY_REQUESTS } from '@/graphql/queries';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
-import { useRosterManagement } from '@/hooks/useRosterManagement';
+import { useBuddyManagement } from '@/hooks/useBuddyManagement';
 import { cn } from '@/lib/utils';
 import { PRESENCE_DOT_CLASS, PRESENCE_LABEL, PRESENCE_TEXT_CLASS, toPresenceStatus } from '@/lib/constants/presence';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import BuddyItemList from './BuddyItemList';
-import { Buddy, BuddyItem, BuddyListWithPresenceProps, Presence, GetBuddyListData, GetRosterData } from '@/types/buddylist';
+import { Buddy, BuddyItem, BuddyListWithPresenceProps, Presence, GetBuddyListData, GetBuddyRequestsData } from '@/types/buddylist';
 
 export default function BuddyListWithPresence({ search = '' }: BuddyListWithPresenceProps) {
     const currentUser = useAppStore((state) => state.user.data);
@@ -27,12 +27,12 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
         skip: !currentUser?._id,
     });
 
-    const { data: rosterData, refetch: refetchRoster, error: rosterError } = useQuery<GetRosterData>(GET_ROSTER, {
+    const { data: requestsData, error: requestsError } = useQuery<GetBuddyRequestsData>(GET_BUDDY_REQUESTS, {
         fetchPolicy: 'cache-and-network',
         skip: !currentUser?._id,
     });
 
-    const { acceptBuddy, declineBuddy } = useRosterManagement();
+    const { acceptBuddy, declineBuddy } = useBuddyManagement();
 
     // Subscribe to presence updates
     usePresenceSubscription();
@@ -51,48 +51,38 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
         }
     }, [data, setBuddyList]);
 
-    // Derived state: Pending Requests from flat roster array
+    // Derived state: incoming pending requests (current user is the recipient)
     const pendingRequests = useMemo(() => {
-        if (!rosterData?.getRoster || !currentUser?._id) return [];
+        const currentUserId = currentUser?._id?.toString();
+        if (!requestsData?.buddyRequests || !currentUserId) return [];
 
-        const currentUserId = currentUser._id?.toString() || (currentUser.id as string | undefined);
-        if (!currentUserId) return [];
-
-        // Only show requests RECEIVED by the current user:
-        // buddyId is currentUser AND initiatedBy is someone else
-        return rosterData.getRoster
-            .filter((entry) => {
-                if (entry.status !== 'pending') return false;
-                if (!entry.initiatedBy) return false;
-                return (
-                    entry.buddyId?.toString() === currentUserId &&
-                    entry.initiatedBy?.toString() !== currentUserId
-                );
-            })
-            .map((entry) => ({
-                id: entry._id,
-                buddyId: entry.userId,
-                status: entry.status,
-                buddy: entry.buddy,
+        return requestsData.buddyRequests
+            .filter(
+                (req) =>
+                    req.status === 'pending' && req.recipient._id.toString() === currentUserId
+            )
+            .map((req) => ({
+                id: req._id,
+                buddyId: req.requester._id,
+                status: req.status,
+                buddy: req.requester,
             }));
-    }, [rosterData, currentUser]);
+    }, [requestsData, currentUser]);
 
-    const handleAcceptBuddy = async (rosterId: string) => {
+    const handleAcceptBuddy = async (requestId: string) => {
         try {
-            await acceptBuddy(rosterId);
+            await acceptBuddy(requestId);
             toast.success('Buddy request accepted!');
-            refetchRoster();
             refetch();
         } catch (error) {
             toast.error((error as Error).message || 'Failed to accept buddy request');
         }
     };
 
-    const handleDeclineBuddy = async (rosterId: string) => {
+    const handleDeclineBuddy = async (requestId: string) => {
         try {
-            await declineBuddy(rosterId);
+            await declineBuddy(requestId);
             toast('Buddy request declined');
-            refetchRoster();
             refetch();
         } catch (error) {
             toast.error((error as Error).message || 'Failed to decline buddy request');
@@ -109,7 +99,7 @@ export default function BuddyListWithPresence({ search = '' }: BuddyListWithPres
 
     if (loading && !data) return <LoadingSpinner size={50} />;
 
-    if (buddyListError || rosterError) {
+    if (buddyListError || requestsError) {
         return (
             <div role="alert" className="p-5 text-center text-[#c62828] dark:text-[#ff6b6b]">
                 Error loading buddy list. Please try refreshing.
