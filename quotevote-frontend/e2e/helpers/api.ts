@@ -92,17 +92,22 @@ interface GraphQLPayload<T> {
   errors?: Array<{ message: string }>;
 }
 
-async function graphqlRequest<T>(
-  token: string,
+/** GraphQL POST against the E2E API. Pass `token` when the operation needs auth. */
+export async function graphqlRequest<T>(
   query: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
+  token?: string | null
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${getApiUrl()}/graphql`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: JSON.stringify({ query, variables }),
   });
 
@@ -126,7 +131,6 @@ async function graphqlRequest<T>(
 export async function deletePostViaApi(postId: string, token: string): Promise<void> {
   try {
     await graphqlRequest<{ deletePost?: { _id: string } }>(
-      token,
       `
         mutation deletePost($postId: String!) {
           deletePost(postId: $postId) {
@@ -134,7 +138,8 @@ export async function deletePostViaApi(postId: string, token: string): Promise<v
           }
         }
       `,
-      { postId }
+      { postId },
+      token
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -146,7 +151,6 @@ export async function findGroupIdByTitle(token: string, title: string): Promise<
   const data = await graphqlRequest<{
     groups: Array<{ _id: string; title: string; privacy?: string | null }>;
   }>(
-    token,
     `
       query groups($limit: Int!) {
         groups(limit: $limit) {
@@ -156,7 +160,8 @@ export async function findGroupIdByTitle(token: string, title: string): Promise<
         }
       }
     `,
-    { limit: 200 }
+    { limit: 200 },
+    token
   );
 
   const match = data.groups.find(
@@ -182,7 +187,6 @@ export async function createPostViaApi(
   const data = await graphqlRequest<{
     addPost: { _id: string; url?: string | null };
   }>(
-    token,
     `
       mutation addPost($post: PostInput!) {
         addPost(post: $post) {
@@ -198,7 +202,8 @@ export async function createPostViaApi(
         title: input.title,
         text: input.text,
       },
-    }
+    },
+    token
   );
 
   if (!data.addPost?._id) {
@@ -219,7 +224,6 @@ export async function searchUsersViaApi(
   query: string
 ): Promise<SearchUserResult[]> {
   const data = await graphqlRequest<{ searchUser: SearchUserResult[] }>(
-    token,
     `
       query searchUsernames($query: String!) {
         searchUser(queryName: $query) {
@@ -229,7 +233,8 @@ export async function searchUsersViaApi(
         }
       }
     `,
-    { query }
+    { query },
+    token
   );
 
   return data.searchUser ?? [];
@@ -265,7 +270,6 @@ export async function createMessageViaApi(
   const data = await graphqlRequest<{
     createMessage: { _id: string; messageRoomId: string; text: string };
   }>(
-    token,
     `
       mutation chat($message: MessageInput!) {
         createMessage(message: $message) {
@@ -275,7 +279,8 @@ export async function createMessageViaApi(
         }
       }
     `,
-    { message }
+    { message },
+    token
   );
 
   if (!data.createMessage?._id || !data.createMessage.messageRoomId) {
@@ -288,7 +293,6 @@ export async function createMessageViaApi(
 export async function deleteMessageViaApi(messageId: string, token: string): Promise<void> {
   try {
     await graphqlRequest<{ deleteMessage?: { _id: string } }>(
-      token,
       `
         mutation deleteMessage($messageId: String!) {
           deleteMessage(messageId: $messageId) {
@@ -296,10 +300,73 @@ export async function deleteMessageViaApi(messageId: string, token: string): Pro
           }
         }
       `,
-      { messageId }
+      { messageId },
+      token
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(`deleteMessage cleanup warning: ${message}`);
   }
+}
+
+/** #498 — password reset email (public mutation). */
+export async function sendPasswordResetEmailViaApi(email: string): Promise<boolean> {
+  const data = await graphqlRequest<{ sendPasswordResetEmail: boolean }>(
+    `
+      mutation sendPasswordResetEmail($email: String!) {
+        sendPasswordResetEmail(email: $email)
+      }
+    `,
+    { email }
+  );
+  return data.sendPasswordResetEmail === true;
+}
+
+/** #498 — guest access request; returns the pending user id. */
+export async function requestUserAccessViaApi(
+  email: string
+): Promise<{ _id: string; email: string }> {
+  const data = await graphqlRequest<{
+    requestUserAccess: { _id: string; email: string };
+  }>(
+    `
+      mutation requestUserAccess($requestUserAccessInput: RequestUserAccessInput!) {
+        requestUserAccess(requestUserAccessInput: $requestUserAccessInput) {
+          _id
+          email
+        }
+      }
+    `,
+    { requestUserAccessInput: { email } }
+  );
+
+  if (!data.requestUserAccess?._id) {
+    throw new Error('requestUserAccess did not return a user id');
+  }
+  return data.requestUserAccess;
+}
+
+/** #498 — admin approve / resend / decline (`inviteStatus` "4" | "2" | "1"). */
+export async function sendUserInviteApprovalViaApi(
+  token: string,
+  userId: string,
+  inviteStatus: string
+): Promise<{ code?: string; message?: string }> {
+  const data = await graphqlRequest<{
+    sendUserInviteApproval: { code?: string; message?: string } | null;
+  }>(
+    `
+      mutation sendUserInviteApproval($userId: String!, $inviteStatus: String!) {
+        sendUserInviteApproval(userId: $userId, inviteStatus: $inviteStatus)
+      }
+    `,
+    { userId, inviteStatus },
+    token
+  );
+
+  const result = data.sendUserInviteApproval;
+  if (!result) {
+    throw new Error('sendUserInviteApproval returned an empty result');
+  }
+  return result;
 }
