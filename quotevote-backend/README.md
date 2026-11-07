@@ -76,6 +76,12 @@ TRUST_PROXY=1
 
 # Email (if using SendGrid)
 SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_SENDER_EMAIL=noreply@quotevote.com
+
+# Local SendGrid mock for email E2E (#498) — start with: pnpm sendgrid:mock
+# SENDGRID_API_KEY=SG.e2e-mock
+# SENDGRID_SENDER_EMAIL=noreply@quotevote.local
+# SENDGRID_MOCK_BASE_URL=http://127.0.0.1:4010
 
 # Other environment variables
 # Add additional variables as needed
