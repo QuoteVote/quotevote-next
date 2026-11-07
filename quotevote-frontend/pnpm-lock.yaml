@@ -174,9 +174,6 @@ importers:
       jest-environment-jsdom:
         specifier: ^29.7.0
         version: 29.7.0
-      mailosaur:
-        specifier: ^8.8.1
-        version: 8.8.1
       next-test-api-route-handler:
         specifier: ^5.0.3
         version: 5.0.3(next@16.1.1(@babel/core@7.28.5)(@playwright/test@1.61.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
@@ -3499,10 +3496,6 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
-
-  mailosaur@8.8.1:
-    resolution: {integrity: sha512-fW5FE9b+SdsX6XGSaYdZeGE9CKahuYNMaewBNojc0DI7tpXrnYxxqdp2YAvPq85a+OYCjg9KXCLOsI8uCCFU9w==}
-    engines: {node: '>= v6.0.0'}
 
   make-dir@4.0.0:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
@@ -8310,12 +8303,6 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
-
-  mailosaur@8.8.1:
-    dependencies:
-      https-proxy-agent: 5.0.1
-    transitivePeerDependencies:
-      - supports-color
 
   make-dir@4.0.0:
     dependencies:
