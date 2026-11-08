@@ -1,5 +1,5 @@
 import { chatResolver } from '~/data/resolvers/chatResolver';
-
+import type { GraphQLContext } from '~/types/graphql';
 const prismaMock = {
   messageRoomMember: {
     findUnique: jest.fn(),
@@ -8,7 +8,6 @@ const prismaMock = {
 
 describe('Chat Resolver Authorization (Unit/Integration)', () => {
   const mockRoomId = 'room-alpha-123';
-  const memberUserId = 'user-member-1';
   const nonMemberUserId = 'user-outsider-2';
 
   beforeEach(() => {
@@ -20,7 +19,7 @@ describe('Chat Resolver Authorization (Unit/Integration)', () => {
     const args = { messageRoomId: mockRoomId };
 
     await expect(
-      chatResolver.Query.messages(null, args, context as any)
+      chatResolver.Query.messages(null, args, context as unknown as GraphQLContext)
     ).rejects.toThrow(); 
   });
 
@@ -31,7 +30,7 @@ describe('Chat Resolver Authorization (Unit/Integration)', () => {
     const args = { messageRoomId: mockRoomId };
 
     await expect(
-      chatResolver.Query.messages(null, args, context as any)
+      chatResolver.Query.messages(null, args, context as unknown as GraphQLContext)
     ).rejects.toThrow();
   });
 });
