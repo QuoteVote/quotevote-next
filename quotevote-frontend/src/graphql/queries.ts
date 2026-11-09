@@ -653,7 +653,7 @@ export const GET_CHAT_ROOMS = gql`
 `
 
 /**
- * Message text and authors for each room, used by the Messages search (#531).
+ * Message authors for each room, used by the Messages search for @person (#531).
  * Fetched only while the user is searching, not with the polled room list.
  */
 export const GET_CHAT_ROOM_SEARCH_DATA = gql`
@@ -662,7 +662,6 @@ export const GET_CHAT_ROOM_SEARCH_DATA = gql`
       _id
       messages {
         _id
-        text
         userId
         user {
           _id
@@ -670,6 +669,23 @@ export const GET_CHAT_ROOM_SEARCH_DATA = gql`
           name
         }
       }
+    }
+  }
+`
+
+/**
+ * Messages matching a search across the signed-in user's conversations (#601)
+ */
+export const SEARCH_MESSAGES = gql`
+  query searchMessages($text: String!, $limit: Int, $cursor: String) {
+    searchMessages(text: $text, limit: $limit, cursor: $cursor) {
+      results {
+        _id
+        messageRoomId
+        created
+        snippet
+      }
+      nextCursor
     }
   }
 `

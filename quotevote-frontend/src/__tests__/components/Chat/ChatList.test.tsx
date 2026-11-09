@@ -12,12 +12,13 @@
  * - Unread message badge
  * - Sorting by most recent activity
  * - #531: search by message text, @person and #tag; the tag chip in place of "Group"
+ * - #601: message text searched on the server, a page at a time
  */
 
-import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
+import { act, render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
 import ChatList from '@/components/Chat/ChatList'
 import { useAppStore } from '@/store'
-import { GET_BUDDY_LIST, GET_CHAT_ROOMS, GET_CHAT_ROOM_SEARCH_DATA } from '@/graphql/queries'
+import { GET_BUDDY_LIST, GET_CHAT_ROOMS, GET_CHAT_ROOM_SEARCH_DATA, SEARCH_MESSAGES } from '@/graphql/queries'
 
 // ─── Tags (the post's group) ───────────────────────────────────────────────
 const mockTags: Record<string, { tagId: string; title: string }> = {}
@@ -30,6 +31,10 @@ const mockUseQuery = jest.fn()
 jest.mock('@apollo/client/react', () => ({
   ...jest.requireActual('@apollo/client/react'),
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
+}))
+
+jest.mock('@/hooks/useDebounce', () => ({
+  useDebounce: <T,>(value: T) => value,
 }))
 
 // ─── Zustand store mock ────────────────────────────────────────────────────
@@ -247,8 +252,26 @@ describe('ChatList', () => {
 
   // ── #531: message text, @person, #tag ─────────────────────────────────────
 
+  const serverMessages = [
+    { _id: 'm1', messageRoomId: 'room-dm-1', created: '2026-11-01T10:00:00Z', snippet: 'Are you coming to the town hall on Thursday?' },
+    { _id: 'm3', messageRoomId: 'room-group-1', created: '2026-11-01T09:00:00Z', snippet: 'Vacancy data from the survey would help.' },
+  ]
+
   const withSearchData = (extra: Record<string, unknown> = {}) => {
-    mockUseQuery.mockImplementation((query) => {
+    mockUseQuery.mockImplementation((query, options) => {
+      if (query === SEARCH_MESSAGES) {
+        if (options?.skip) return { data: undefined, loading: false }
+        const text = String(options?.variables?.text).toLowerCase()
+        return {
+          data: {
+            searchMessages: {
+              results: serverMessages.filter((m) => m.snippet.toLowerCase().includes(text)),
+              nextCursor: null,
+            },
+          },
+          loading: false,
+        }
+      }
       if (query === GET_CHAT_ROOMS) {
         return { data: { messageRooms: [dmRoom, groupRoom] }, loading: false, refetch: jest.fn() }
       }
@@ -259,14 +282,14 @@ describe('ChatList', () => {
               {
                 _id: 'room-dm-1',
                 messages: [
-                  { _id: 'm1', text: 'Are you coming to the town hall on Thursday?', userId: 'user2', user: { _id: 'user2', username: 'janed', name: 'Jane Doe' } },
-                  { _id: 'm2', text: 'Yes, see you there.', userId: 'user1', user: { _id: 'user1', username: 'me', name: 'Me Myself' } },
+                  { _id: 'm1', userId: 'user2', user: { _id: 'user2', username: 'janed', name: 'Jane Doe' } },
+                  { _id: 'm2', userId: 'user1', user: { _id: 'user1', username: 'me', name: 'Me Myself' } },
                 ],
               },
               {
                 _id: 'room-group-1',
                 messages: [
-                  { _id: 'm3', text: 'Vacancy data from the survey would help.', userId: 'user3', user: { _id: 'user3', username: 'sam', name: 'Sam Rivera' } },
+                  { _id: 'm3', userId: 'user3', user: { _id: 'user3', username: 'sam', name: 'Sam Rivera' } },
                 ],
               },
             ],
@@ -341,12 +364,179 @@ describe('ChatList', () => {
     expect(await screen.findByText('Jane Doe')).toBeInTheDocument()
   })
 
-  it('only loads message text while searching', () => {
+  it('runs no message search or author query without a search', () => {
     render(<ChatList filterType="chats" />)
     expect(mockUseQuery).toHaveBeenCalledWith(
       GET_CHAT_ROOM_SEARCH_DATA,
       expect.objectContaining({ skip: true })
     )
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      SEARCH_MESSAGES,
+      expect.objectContaining({ skip: true })
+    )
+  })
+
+  // ── #601: message text searched on the server ─────────────────────────────
+
+  const withServerSearch = (result: Record<string, unknown>) => {
+    mockUseQuery.mockImplementation((query, options) => {
+      if (query === GET_CHAT_ROOMS) {
+        return { data: { messageRooms: [dmRoom, groupRoom] }, loading: false, refetch: jest.fn() }
+      }
+      if (query === SEARCH_MESSAGES && !options?.skip) return { loading: false, ...result }
+      return { data: undefined, loading: false, refetch: jest.fn() }
+    })
+  }
+
+  const page = (results: typeof serverMessages, nextCursor: string | null = null) => ({
+    data: { searchMessages: { results, nextCursor } },
+  })
+
+  it('sends the text without @person or #tag terms to the server', () => {
+    withSearchData()
+    render(<ChatList filterType="chats" search="town hall @janed #news" />)
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      SEARCH_MESSAGES,
+      expect.objectContaining({ skip: false, variables: expect.objectContaining({ text: 'town hall' }) })
+    )
+  })
+
+  it('does not load every message for a plain text search', () => {
+    withSearchData()
+    render(<ChatList filterType="chats" search="town hall" />)
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      GET_CHAT_ROOM_SEARCH_DATA,
+      expect.objectContaining({ skip: true })
+    )
+  })
+
+  it('does not ask for message text just to find a person', () => {
+    const printed = JSON.stringify(GET_CHAT_ROOM_SEARCH_DATA)
+    expect(printed).toContain('"userId"')
+    expect(printed).not.toContain('"text"')
+  })
+
+  it('counts the other matches in a conversation', async () => {
+    withServerSearch(page([
+      serverMessages[0],
+      { ...serverMessages[0], _id: 'm5', snippet: 'town hall again' },
+      { ...serverMessages[0], _id: 'm6', snippet: 'another town hall' },
+    ].map((m) => ({ ...m, snippet: m.snippet.toLowerCase() }))))
+    render(<ChatList filterType="chats" search="town hall" />)
+
+    expect(await screen.findByTestId('chat-search-more-matches')).toHaveTextContent('+2 more matches')
+    expect(screen.getAllByTestId('chat-search-result')).toHaveLength(1)
+  })
+
+  it('shows searching, not "no match", until the server answers', () => {
+    withServerSearch({ data: undefined, loading: true })
+    render(<ChatList filterType="chats" search="town hall" />)
+
+    expect(screen.getByTestId('chat-search-pending')).toBeInTheDocument()
+    expect(screen.queryByTestId('chat-empty-search-state')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Searching messages')
+  })
+
+  it('keeps title matches on screen while messages are searched', () => {
+    withServerSearch({ data: undefined, loading: true })
+    render(<ChatList filterType="chats" search="jane" />)
+
+    expect(screen.getByText('Jane Doe')).toBeInTheDocument()
+    expect(screen.getByTestId('chat-search-pending')).toBeInTheDocument()
+  })
+
+  it('offers a retry when the search fails', () => {
+    const refetch = jest.fn()
+    withServerSearch({ data: undefined, error: new Error('boom'), refetch })
+    render(<ChatList filterType="chats" search="town hall" />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't search message text.")
+    expect(screen.queryByTestId('chat-empty-search-state')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(refetch).toHaveBeenCalled()
+  })
+
+  it('shows the empty state when the server finds nothing', async () => {
+    withServerSearch(page([]))
+    render(<ChatList filterType="chats" search="zzznomatch" />)
+    expect(await screen.findByTestId('chat-empty-search-state')).toBeInTheDocument()
+  })
+
+  it('loads the next page from the button, with the cursor', async () => {
+    const fetchMore = jest.fn().mockResolvedValue({})
+    withServerSearch({ ...page([serverMessages[0]], 'cursor-1'), fetchMore })
+    render(<ChatList filterType="chats" search="town hall" />)
+
+    fireEvent.click(screen.getByTestId('chat-search-load-more'))
+    await waitFor(() => expect(fetchMore).toHaveBeenCalledTimes(1))
+    expect(fetchMore.mock.calls[0][0].variables).toEqual(
+      expect.objectContaining({ text: 'town hall', cursor: 'cursor-1' })
+    )
+    await waitFor(() => expect(screen.getByTestId('chat-search-load-more')).toBeEnabled())
+  })
+
+  it('says so and offers a retry when the next page fails', async () => {
+    const fetchMore = jest.fn().mockRejectedValue(new Error('boom'))
+    withServerSearch({ ...page([serverMessages[0]], 'cursor-1'), fetchMore })
+    render(<ChatList filterType="chats" search="town hall" />)
+
+    fireEvent.click(screen.getByTestId('chat-search-load-more'))
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load more results.")
+    expect(screen.getByTestId('chat-search-load-more')).toHaveTextContent('Try again')
+  })
+
+  describe('loading on scroll', () => {
+    const RealObserver = global.IntersectionObserver
+    let notify: (isIntersecting: boolean) => void
+
+    beforeEach(() => {
+      global.IntersectionObserver = class {
+        constructor(callback: IntersectionObserverCallback) {
+          notify = (isIntersecting) =>
+            callback([{ isIntersecting } as IntersectionObserverEntry], this as unknown as IntersectionObserver)
+        }
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+        takeRecords() {
+          return []
+        }
+      } as unknown as typeof IntersectionObserver
+    })
+
+    afterEach(() => {
+      global.IntersectionObserver = RealObserver
+    })
+
+    it('loads the next page when the end of the list comes into view', async () => {
+      const fetchMore = jest.fn(() => new Promise(() => {}))
+      withServerSearch({ ...page([serverMessages[0]], 'cursor-1'), fetchMore })
+      render(<ChatList filterType="chats" search="town hall" />)
+
+      expect(fetchMore).not.toHaveBeenCalled()
+      await act(async () => notify(true))
+      expect(fetchMore).toHaveBeenCalled()
+    })
+
+    it('does not retry on its own after a page fails', async () => {
+      const fetchMore = jest.fn().mockRejectedValue(new Error('boom'))
+      withServerSearch({ ...page([serverMessages[0]], 'cursor-1'), fetchMore })
+      render(<ChatList filterType="chats" search="town hall" />)
+
+      await act(async () => notify(true))
+      await screen.findByRole('alert')
+      expect(fetchMore).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps looking when a page only has matches in the other tab', async () => {
+      const fetchMore = jest.fn(() => new Promise(() => {}))
+      withServerSearch({ ...page([serverMessages[1]], 'cursor-1'), fetchMore })
+      render(<ChatList filterType="chats" search="vacancy" />)
+
+      expect(screen.queryByTestId('chat-empty-search-state')).not.toBeInTheDocument()
+      await act(async () => notify(true))
+      expect(fetchMore).toHaveBeenCalled()
+    })
   })
 
   // ── Room selection ────────────────────────────────────────────────────────
