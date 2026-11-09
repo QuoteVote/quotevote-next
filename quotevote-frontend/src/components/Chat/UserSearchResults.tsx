@@ -7,12 +7,12 @@ import { useQuery } from '@apollo/client/react';
 
 import Avatar from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
-import { SEARCH_USERNAMES, GET_ROSTER } from '@/graphql/queries';
-import { useRosterManagement } from '@/hooks/useRosterManagement';
+import { SEARCH_USERNAMES, GET_BUDDY_LIST, GET_BUDDY_REQUESTS } from '@/graphql/queries';
+import { useBuddyManagement } from '@/hooks/useBuddyManagement';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
 import type { BuddySearchResult } from '@/types/chat';
-import type { GetRosterData } from '@/types/buddylist';
+import type { GetBuddyListData, GetBuddyRequestsData } from '@/types/buddylist';
 
 interface UserSearchResultsProps {
   searchQuery: string;
@@ -29,7 +29,7 @@ interface SearchUserVariables {
 type BuddyRelation =
   | { type: 'buddy' }
   | { type: 'pending_sent' }
-  | { type: 'pending_received'; rosterId: string };
+  | { type: 'pending_received'; requestId: string };
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -37,9 +37,9 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
   const currentUser = useAppStore((state) => state.user.data) as
     | { _id?: string }
     | undefined;
-  const { addBuddy, acceptBuddy } = useRosterManagement();
+  const { addBuddy, acceptBuddy } = useBuddyManagement();
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
-  const [acceptingRosterId, setAcceptingRosterId] = useState<string | null>(null);
+  const [acceptingRequestId, setAcceptingRequestId] = useState<string | null>(null);
 
   const { data, loading } = useQuery<SearchUserResponse, SearchUserVariables>(
     SEARCH_USERNAMES,
@@ -49,29 +49,35 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
     }
   );
 
-  const { data: rosterData } = useQuery<GetRosterData>(GET_ROSTER, {
+  const { data: buddyListData } = useQuery<GetBuddyListData>(GET_BUDDY_LIST, {
+    fetchPolicy: 'cache-and-network',
+    skip: !currentUser?._id,
+  });
+
+  const { data: requestsData } = useQuery<GetBuddyRequestsData>(GET_BUDDY_REQUESTS, {
     fetchPolicy: 'cache-and-network',
     skip: !currentUser?._id,
   });
 
   const getBuddyRelation = (userId: string): BuddyRelation | null => {
-    if (!rosterData?.getRoster || !currentUser?._id) return null;
+    if (!currentUser?._id) return null;
     const currentUserId = currentUser._id;
 
-    const entry = rosterData.getRoster.find(
-      (r) =>
-        (r.userId === currentUserId && r.buddyId === userId) ||
-        (r.userId === userId && r.buddyId === currentUserId)
-    );
-    if (!entry) return null;
-    if (entry.status === 'accepted') return { type: 'buddy' };
-    if (entry.status === 'pending') {
-      if (entry.buddyId === currentUserId) {
-        return { type: 'pending_received', rosterId: entry._id };
-      }
-      return { type: 'pending_sent' };
+    if (buddyListData?.getBuddyList?.some((entry) => entry.user._id === userId)) {
+      return { type: 'buddy' };
     }
-    return null;
+
+    const request = requestsData?.buddyRequests?.find(
+      (r) =>
+        r.status === 'pending' &&
+        ((r.requester._id === currentUserId && r.recipient._id === userId) ||
+          (r.requester._id === userId && r.recipient._id === currentUserId))
+    );
+    if (!request) return null;
+    if (request.recipient._id === currentUserId) {
+      return { type: 'pending_received', requestId: request._id };
+    }
+    return { type: 'pending_sent' };
   };
 
   const handleAddBuddy = async (userId: string): Promise<void> => {
@@ -89,17 +95,17 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
     }
   };
 
-  const handleAcceptBuddy = async (rosterId: string): Promise<void> => {
+  const handleAcceptBuddy = async (requestId: string): Promise<void> => {
     try {
-      setAcceptingRosterId(rosterId);
-      await acceptBuddy(rosterId);
+      setAcceptingRequestId(requestId);
+      await acceptBuddy(requestId);
       toast.success('Buddy request accepted!');
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Failed to accept request'
       );
     } finally {
-      setAcceptingRosterId(null);
+      setAcceptingRequestId(null);
     }
   };
 
@@ -182,20 +188,20 @@ const UserSearchResults: FC<UserSearchResultsProps> = ({ searchQuery }) => {
                 size="sm"
                 onClick={() =>
                   handleAcceptBuddy(
-                    (relation as { type: 'pending_received'; rosterId: string })
-                      .rosterId
+                    (relation as { type: 'pending_received'; requestId: string })
+                      .requestId
                   )
                 }
                 disabled={
-                  acceptingRosterId ===
-                  (relation as { type: 'pending_received'; rosterId: string })
-                    .rosterId
+                  acceptingRequestId ===
+                  (relation as { type: 'pending_received'; requestId: string })
+                    .requestId
                 }
                 className="ml-auto min-h-8 bg-[#2f7a4c] text-white hover:bg-[#276640]"
               >
-                {acceptingRosterId ===
-                (relation as { type: 'pending_received'; rosterId: string })
-                  .rosterId ? (
+                {acceptingRequestId ===
+                (relation as { type: 'pending_received'; requestId: string })
+                  .requestId ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
                   <>

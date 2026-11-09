@@ -12,7 +12,7 @@
 import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
 import BuddyListWithPresence from '@/components/BuddyList/BuddyListWithPresence'
 import { useAppStore } from '@/store'
-import { GET_BUDDY_LIST, GET_ROSTER } from '@/graphql/queries'
+import { GET_BUDDY_LIST, GET_BUDDY_REQUESTS } from '@/graphql/queries'
 import { toast } from 'sonner'
 
 jest.mock('sonner', () => ({
@@ -40,11 +40,11 @@ jest.mock('@apollo/client/react', () => ({
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }))
 
-// Mock useRosterManagement
+// Mock useBuddyManagement
 const mockAcceptBuddy = jest.fn().mockResolvedValue({})
 const mockDeclineBuddy = jest.fn().mockResolvedValue({})
-jest.mock('@/hooks/useRosterManagement', () => ({
-  useRosterManagement: jest.fn(() => ({
+jest.mock('@/hooks/useBuddyManagement', () => ({
+  useBuddyManagement: jest.fn(() => ({
         acceptBuddy: mockAcceptBuddy,
         declineBuddy: mockDeclineBuddy,
   })),
@@ -110,30 +110,26 @@ const mockBuddyListEntries = [
   },
 ]
 
-const mockRosterEntries = [
+const mockOutgoingRequests = [
   {
-    _id: 'roster1',
-    userId: 'user2',
-    buddyId: 'user1',
-    status: 'accepted',
-    initiatedBy: 'user2',
-    buddy: { _id: 'user2', username: 'buddy1', avatar: null },
+    _id: 'req0',
+    status: 'pending',
+    requester: { _id: 'user1', username: 'currentuser' },
+    recipient: { _id: 'user5', username: 'someone' },
   },
 ]
 
-const mockPendingRosterEntries = [
+const mockPendingRequests = [
   {
     _id: 'req1',
-    userId: 'user4',
-    buddyId: 'user1',
     status: 'pending',
-    initiatedBy: 'user4',
-    buddy: {
+    requester: {
       _id: 'user4',
       username: 'requester',
       name: 'Requester User',
       avatar: 'https://example.com/avatar3.jpg',
     },
+    recipient: { _id: 'user1', username: 'currentuser' },
   },
 ]
 
@@ -151,9 +147,9 @@ describe('BuddyListWithPresence', () => {
           refetch: jest.fn(),
         }
                                 }
-      if (query === GET_ROSTER) {
+      if (query === GET_BUDDY_REQUESTS) {
         return {
-          data: { getRoster: mockRosterEntries },
+          data: { buddyRequests: mockOutgoingRequests },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -260,9 +256,9 @@ describe('BuddyListWithPresence', () => {
           refetch: jest.fn(),
         }
       }
-      if (query === GET_ROSTER) {
+      if (query === GET_BUDDY_REQUESTS) {
         return {
-          data: { getRoster: mockPendingRosterEntries },
+          data: { buddyRequests: [...mockOutgoingRequests, ...mockPendingRequests] },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -292,9 +288,9 @@ describe('BuddyListWithPresence', () => {
           refetch: jest.fn(),
         }
       }
-      if (query === GET_ROSTER) {
+      if (query === GET_BUDDY_REQUESTS) {
         return {
-          data: { getRoster: mockPendingRosterEntries },
+          data: { buddyRequests: [...mockOutgoingRequests, ...mockPendingRequests] },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -347,9 +343,9 @@ describe('BuddyListWithPresence', () => {
           refetch: jest.fn(),
         }
       }
-      if (query === GET_ROSTER) {
+      if (query === GET_BUDDY_REQUESTS) {
         return {
-          data: { getRoster: mockPendingRosterEntries },
+          data: { buddyRequests: [...mockOutgoingRequests, ...mockPendingRequests] },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
@@ -440,8 +436,8 @@ describe('BuddyListWithPresence', () => {
       if (query === GET_BUDDY_LIST) {
         return { data: { getBuddyList: mockBuddyListEntries }, loading: false, refetch: jest.fn() }
       }
-      if (query === GET_ROSTER) {
-        return { data: { getRoster: mockPendingRosterEntries }, loading: false, refetch: jest.fn() }
+      if (query === GET_BUDDY_REQUESTS) {
+        return { data: { buddyRequests: mockPendingRequests }, loading: false, refetch: jest.fn() }
       }
       return { data: undefined, loading: false, refetch: jest.fn() }
     })
@@ -464,9 +460,9 @@ describe('BuddyListWithPresence', () => {
           refetch: jest.fn(),
         }
       }
-      if (query === GET_ROSTER) {
+      if (query === GET_BUDDY_REQUESTS) {
         return {
-          data: { getRoster: mockPendingRosterEntries },
+          data: { buddyRequests: [...mockOutgoingRequests, ...mockPendingRequests] },
           loading: false,
           error: undefined,
           refetch: jest.fn(),
