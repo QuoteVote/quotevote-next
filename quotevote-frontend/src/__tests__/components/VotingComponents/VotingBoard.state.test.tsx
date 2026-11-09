@@ -313,6 +313,62 @@ describe("VotingBoard — state machine", () => {
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
   });
 
+  it("desktop: new passage marks wait until the popup closes, so a vote keeps it open", async () => {
+    mockTouch(false);
+    const activity = [
+      {
+        start: 0,
+        end: 5,
+        upvotes: 1,
+        downvotes: 0,
+        quotes: 0,
+        comments: 0,
+        actionIds: ["v1"],
+      },
+    ];
+    const board = (segments: typeof activity) => (
+      <VotingBoard content={CONTENT} highlights activity={segments}>
+        {() => <div>toolbar</div>}
+      </VotingBoard>
+    );
+    const { container, rerender } = render(board([]));
+
+    setSelectionForSubstring(container, "unique");
+    await commitDesktopSelection(container);
+    await waitFor(() => {
+      expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
+    });
+
+    rerender(board(activity));
+    expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
+    expect(screen.queryByTestId("passage-activity")).not.toBeInTheDocument();
+
+    window.getSelection()?.removeAllRanges();
+    await act(async () => {
+      document.dispatchEvent(new Event("selectionchange"));
+    });
+    expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
+    expect(screen.getByTestId("passage-activity")).toBeInTheDocument();
+  });
+
+  it("shows new passage marks straight away when no selection is open", () => {
+    mockTouch(false);
+    const segment = {
+      start: 0,
+      end: 5,
+      upvotes: 1,
+      downvotes: 0,
+      quotes: 0,
+      comments: 0,
+      actionIds: ["v1"],
+    };
+    const { rerender } = render(<VotingBoard content={CONTENT} highlights activity={[]} />);
+    expect(screen.queryByTestId("passage-activity")).not.toBeInTheDocument();
+
+    rerender(<VotingBoard content={CONTENT} highlights activity={[segment]} />);
+    expect(screen.getByTestId("passage-activity")).toBeInTheDocument();
+  });
+
   it("touch: valid selection enters native before first tap", async () => {
     jest.useFakeTimers();
     mockTouch(true);

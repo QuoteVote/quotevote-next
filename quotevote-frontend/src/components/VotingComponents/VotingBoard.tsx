@@ -41,6 +41,8 @@ const ACTIVITY_PASSAGE_CLASS =
 
 const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
 
+const NO_ACTIVITY: PassageActivitySegment[] = [];
+
 function LinkedPassageMark({
   children,
   className,
@@ -147,7 +149,7 @@ export default function VotingBoard({
   style,
   focusedComment,
   onHighlightClick,
-  activity = [],
+  activity = NO_ACTIVITY,
   onActivityClick,
 }: VotingBoardProps) {
   void votes;
@@ -236,6 +238,13 @@ export default function VotingBoard({
     },
     [clearSuppress, resetToIdle]
   );
+
+  // Marks wait while a selection is open. Re-rendering the passage would replace the text
+  // nodes the browser selection sits in, collapse it and close the voting popup.
+  const [renderedActivity, setRenderedActivity] = useState(activity);
+  if (phase === "idle" && renderedActivity !== activity) {
+    setRenderedActivity(activity);
+  }
 
   const commentData = focusedComment || null;
   const startWordIndex = commentData?.startWordIndex ?? 0;
@@ -632,10 +641,13 @@ export default function VotingBoard({
     }
   }, []);
 
-  const ActivityPassageMark = useMemo(() => makeActivityPassageMark(activity), [activity]);
+  const ActivityPassageMark = useMemo(
+    () => makeActivityPassageMark(renderedActivity),
+    [renderedActivity]
+  );
   const findActivityChunks = useCallback(
-    () => activity.map((segment) => ({ start: segment.start, end: segment.end })),
-    [activity]
+    () => renderedActivity.map((segment) => ({ start: segment.start, end: segment.end })),
+    [renderedActivity]
   );
 
   const handlePassageClick = useCallback(
@@ -651,14 +663,14 @@ export default function VotingBoard({
         // Finishing a text selection over a marked passage shouldn't open Discussion.
         const sel = typeof window !== "undefined" ? window.getSelection() : null;
         if (sel && !sel.isCollapsed && sel.toString().trim()) return;
-        const segment = activity[Number(activityMark.dataset.activityIndex)];
+        const segment = renderedActivity[Number(activityMark.dataset.activityIndex)];
         if (segment) {
           e.preventDefault();
           onActivityClick(segment);
         }
       }
     },
-    [activity, onActivityClick, onHighlightClick]
+    [renderedActivity, onActivityClick, onHighlightClick]
   );
 
   const resolveAnchorRect = useCallback((): DOMRect | null => {
@@ -729,7 +741,7 @@ export default function VotingBoard({
         );
       }
 
-      if (activity.length > 0) {
+      if (renderedActivity.length > 0) {
         return (
           <Highlighter
             style={{ whiteSpace: "pre-line" }}
