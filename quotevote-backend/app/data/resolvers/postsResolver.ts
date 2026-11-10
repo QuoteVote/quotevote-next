@@ -354,6 +354,9 @@ export const postsResolver = {
           url: '',
           citationUrl,
           attribution,
+          // MongoDB leaves an unset list field absent. Write it so every new post has the array
+          // from the start (reportPost also tolerates posts that don't).
+          reportedBy: [],
           created: new Date(),
           pointTimestamp: new Date(),
         },
@@ -698,16 +701,26 @@ export const postsResolver = {
         });
       }
 
-      // The NOT filter makes the update its own dedupe, so concurrent requests
-      // from the same user can't double count `reported`.
-      const { count } = await context.prisma.post.updateMany({
-        where: { id: args.postId, NOT: { reportedBy: { has: args.userId } } },
-        data: {
-          reportedBy: { push: args.userId },
-          reported: { increment: 1 },
-        },
-      });
-      if (count === 0) {
+      // One atomic MongoDB update does both the duplicate check and the write, so concurrent
+      // requests from the same user can't double count `reported`. Prisma's list filters cannot
+      // match a post whose `reportedBy` field is absent (posts made before `addPost` wrote `[]`,
+      // and legacy posts), which turned a valid report into "Post not found". MongoDB's `$ne`
+      // does match an absent field, and `$push` / `$inc` create absent fields, so this one
+      // update goes through a raw command. The collection name is the Post model's `@@map`.
+      const result = (await context.prisma.$runCommandRaw({
+        update: 'posts',
+        updates: [
+          {
+            q: { _id: { $oid: args.postId }, reportedBy: { $ne: args.userId } },
+            u: {
+              $push: { reportedBy: args.userId },
+              $inc: { reported: 1 },
+              $currentDate: { updatedAt: true },
+            },
+          },
+        ],
+      })) as { nModified?: number };
+      if (!result.nModified) {
         const latest = await context.prisma.post.findUnique({
           where: { id: args.postId },
           select: { reportedBy: true },

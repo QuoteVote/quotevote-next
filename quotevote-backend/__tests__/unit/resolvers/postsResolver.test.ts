@@ -39,6 +39,7 @@ function mockContext(user: GraphQLContext['user'] = null): GraphQLContext {
         updateMany: jest.fn(),
         findUniqueOrThrow: jest.fn(),
       },
+      $runCommandRaw: jest.fn(),
     } as unknown as GraphQLContext['prisma'],
     user,
     userId: user?._id?.toString() ?? null,
@@ -290,6 +291,23 @@ describe('postsResolver', () => {
       admin: false,
     } as NonNullable<GraphQLContext['user']>);
 
+    // The report is one raw MongoDB update. Prisma's list filters cannot match a post that has no
+    // `reportedBy` field at all (posts made by `addPost` before it wrote `[]`, and legacy posts),
+    // but MongoDB's `$ne` does match a missing field, and `$push`/`$inc` create absent fields.
+    const reportCommand = (reportedPostId: string, reporterId: string) => ({
+      update: 'posts',
+      updates: [
+        {
+          q: { _id: { $oid: reportedPostId }, reportedBy: { $ne: reporterId } },
+          u: {
+            $push: { reportedBy: reporterId },
+            $inc: { reported: 1 },
+            $currentDate: { updatedAt: true },
+          },
+        },
+      ],
+    });
+
     it('throws UNAUTHENTICATED GraphQLError when user is not authenticated', async () => {
       await expect(
         postsResolver.Mutation.reportPost(
@@ -442,7 +460,11 @@ describe('postsResolver', () => {
           reportedBy: [validUserId],
         });
 
-      (authContext.prisma.post.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      (authContext.prisma.$runCommandRaw as jest.Mock).mockResolvedValue({
+        ok: 1,
+        n: 0,
+        nModified: 0,
+      });
 
       await expect(
         postsResolver.Mutation.reportPost(
@@ -457,13 +479,9 @@ describe('postsResolver', () => {
         })
       );
 
-      expect(authContext.prisma.post.updateMany).toHaveBeenCalledWith({
-        where: { id: validPostId, NOT: { reportedBy: { has: validUserId } } },
-        data: {
-          reportedBy: { push: validUserId },
-          reported: { increment: 1 },
-        },
-      });
+      expect(authContext.prisma.$runCommandRaw).toHaveBeenCalledWith(
+        reportCommand(validPostId, validUserId)
+      );
     });
 
     it('throws NOT_FOUND GraphQLError when update matches nothing and post was deleted or missing on re-read', async () => {
@@ -474,7 +492,11 @@ describe('postsResolver', () => {
         })
         .mockResolvedValueOnce(null);
 
-      (authContext.prisma.post.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      (authContext.prisma.$runCommandRaw as jest.Mock).mockResolvedValue({
+        ok: 1,
+        n: 0,
+        nModified: 0,
+      });
 
       await expect(
         postsResolver.Mutation.reportPost(
@@ -496,7 +518,11 @@ describe('postsResolver', () => {
         deleted: false,
       });
 
-      (authContext.prisma.post.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (authContext.prisma.$runCommandRaw as jest.Mock).mockResolvedValue({
+        ok: 1,
+        n: 1,
+        nModified: 1,
+      });
 
       (authContext.prisma.post.findUniqueOrThrow as jest.Mock).mockResolvedValue({
         id: validPostId,
@@ -520,13 +546,9 @@ describe('postsResolver', () => {
         authContext
       );
 
-      expect(authContext.prisma.post.updateMany).toHaveBeenCalledWith({
-        where: { id: validPostId, NOT: { reportedBy: { has: validUserId } } },
-        data: {
-          reportedBy: { push: validUserId },
-          reported: { increment: 1 },
-        },
-      });
+      expect(authContext.prisma.$runCommandRaw).toHaveBeenCalledWith(
+        reportCommand(validPostId, validUserId)
+      );
 
       expect(result).toMatchObject({
         _id: validPostId,
@@ -535,6 +557,48 @@ describe('postsResolver', () => {
         reportedBy: [validUserId],
         reported: 1,
       });
+    });
+
+    it('reports a post that has no reportedBy field (created before addPost wrote one)', async () => {
+      // Regression for the "Post not found" bug: the old `NOT: { reportedBy: { has } }` filter
+      // matched nothing on such a post, so a valid report fell through to NOT_FOUND.
+      (authContext.prisma.post.findUnique as jest.Mock).mockResolvedValue({
+        userId: otherUserId,
+        deleted: false,
+        // no `reportedBy` key at all, as MongoDB stores it
+      });
+
+      (authContext.prisma.$runCommandRaw as jest.Mock).mockResolvedValue({
+        ok: 1,
+        n: 1,
+        nModified: 1,
+      });
+
+      (authContext.prisma.post.findUniqueOrThrow as jest.Mock).mockResolvedValue({
+        id: validPostId,
+        userId: otherUserId,
+        tagId,
+        title: 'Legacy Post',
+        text: 'Post content',
+        reportedBy: [validUserId],
+        reported: 1,
+        votedBy: [],
+        created: new Date(),
+      });
+
+      (authContext.prisma.user.findMany as jest.Mock).mockResolvedValue([
+        { id: otherUserId, username: 'bob', name: 'Bob' },
+      ]);
+
+      const result = await postsResolver.Mutation.reportPost(
+        null,
+        { postId: validPostId, userId: validUserId },
+        authContext
+      );
+
+      expect(result).toMatchObject({ _id: validPostId, reportedBy: [validUserId], reported: 1 });
+      // Never reaches the "already reported / not found" re-read, and no Prisma list filter is used.
+      expect(authContext.prisma.post.updateMany).not.toHaveBeenCalled();
     });
   });
 
@@ -769,6 +833,9 @@ describe('postsResolver', () => {
             tagId,
             title: 'Hello World',
             text: 'Body text',
+            // MongoDB leaves an unset list field absent. Write it so reports and later
+            // list reads see an array from the first moment.
+            reportedBy: [],
           }),
         })
       );
