@@ -1,6 +1,9 @@
 import fs from "fs";
 import path from "path";
-import nextConfig from "../../../next.config";
+import { PHASE_TEST } from "next/constants";
+import createNextConfig from "../../../next.config";
+
+const nextConfig = createNextConfig(PHASE_TEST);
 
 const APP_DIR = path.resolve(__dirname, "../../app");
 

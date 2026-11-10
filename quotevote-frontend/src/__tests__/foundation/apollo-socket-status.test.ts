@@ -15,16 +15,15 @@ jest.mock('graphql-ws', () => ({
   },
 }))
 
-jest.mock('@/lib/utils/getServerUrl', () => ({
-  ...jest.requireActual('@/lib/utils/getServerUrl'),
-  areGraphqlSubscriptionsEnabled: () => true,
-  getGraphqlWsServerUrl: () => 'ws://localhost:4000/graphql',
-}))
-
 describe('Apollo client socket status', () => {
   afterEach(() => {
     setSocketConnected(false)
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' })
+  })
+
+  it('connects the socket to the configured API', () => {
+    createApolloClient()
+    expect(mockCreateClient.mock.calls.at(-1)?.[0]?.url).toBe('ws://localhost:4000/graphql')
   })
 
   it('marks the socket connected and closed from graphql-ws events', () => {

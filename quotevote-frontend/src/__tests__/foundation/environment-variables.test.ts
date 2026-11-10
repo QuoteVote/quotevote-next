@@ -54,7 +54,7 @@ describe('Environment Variables', () => {
         const { env: testEnv } = require('@/config/env')
         // Access the property to trigger validation
         void testEnv.serverUrl
-      }).toThrow(/NEXT_PUBLIC_SERVER_URL is required/)
+      }).toThrow(/API address is not set/)
     })
 
     it('constructs graphqlEndpoint from serverUrl when explicit endpoint not set', () => {
@@ -77,6 +77,32 @@ describe('Environment Variables', () => {
       const { env: testEnv } = require('@/config/env')
 
       expect(testEnv.graphqlEndpoint).toBe('http://custom-endpoint.com/graphql')
+    })
+  })
+
+  describe('Derived addresses', () => {
+    it('derives the server and WebSocket addresses from NEXT_PUBLIC_GRAPHQL_ENDPOINT', () => {
+      process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:4000'
+      process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT = 'https://staging-api.example.com/graphql'
+
+      jest.resetModules()
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { env: testEnv } = require('@/config/env')
+
+      expect(testEnv.serverUrl).toBe('https://staging-api.example.com')
+      expect(testEnv.graphqlWsEndpoint).toBe('wss://staging-api.example.com/graphql')
+    })
+
+    it('throws when the address is not an http(s) URL', () => {
+      process.env.NEXT_PUBLIC_SERVER_URL = 'javascript:alert(1)'
+      delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_GRAPHQL_ENDPOINT
+
+      jest.resetModules()
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        require('@/config/env')
+      }).toThrow(/http:\/\/ or https:\/\//)
     })
   })
 
