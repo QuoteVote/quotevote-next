@@ -164,10 +164,26 @@ describe('send-grid-mail', () => {
         await sendGridEmail(emailData);
 
         const client = (sgMail as unknown as { client: { setDefaultRequest: jest.Mock } }).client;
-        expect(client.setDefaultRequest).toHaveBeenCalledWith(
-          'baseUrl',
-          'http://127.0.0.1:4010/'
-        );
+        expect(client.setDefaultRequest).toHaveBeenCalledWith('baseUrl', 'http://127.0.0.1:4010/');
+      });
+
+      it('should ignore SENDGRID_MOCK_BASE_URL when NODE_ENV is production', async () => {
+        process.env.NODE_ENV = 'production';
+        process.env.SENDGRID_MOCK_BASE_URL = 'http://127.0.0.1:4010';
+
+        const emailData: EmailData = {
+          to: 'test@example.com',
+          subject: 'Test',
+          html: '<p>Test</p>',
+        };
+
+        const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
+        mockSend.mockResolvedValue([{}, {}] as never);
+
+        await sendGridEmail(emailData);
+
+        const client = (sgMail as unknown as { client: { setDefaultRequest: jest.Mock } }).client;
+        expect(client.setDefaultRequest).not.toHaveBeenCalled();
       });
 
       it('should use custom from address when provided', async () => {

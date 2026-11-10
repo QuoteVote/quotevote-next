@@ -86,11 +86,23 @@ function extractRecipients(body: Record<string, unknown>): string[] {
   return [...emails];
 }
 
+function asObjectRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+/**
+ * @sendgrid/mail serializes personalizations to snake_case on the wire
+ * (`dynamic_template_data`). Accept camelCase too for hand-built requests.
+ */
 function extractDynamicTemplateData(
   body: Record<string, unknown>
 ): Record<string, unknown> | undefined {
-  if (body.dynamicTemplateData && typeof body.dynamicTemplateData === 'object') {
-    return body.dynamicTemplateData as Record<string, unknown>;
+  const fromBody =
+    asObjectRecord(body.dynamic_template_data) ?? asObjectRecord(body.dynamicTemplateData);
+  if (fromBody) {
+    return fromBody;
   }
 
   const personalizations = body.personalizations;
@@ -98,14 +110,17 @@ function extractDynamicTemplateData(
     return undefined;
   }
 
-  const first = personalizations[0];
-  if (first && typeof first === 'object' && 'dynamicTemplateData' in first) {
-    const data = (first as { dynamicTemplateData?: unknown }).dynamicTemplateData;
-    if (data && typeof data === 'object') {
-      return data as Record<string, unknown>;
-    }
+  const first = asObjectRecord(personalizations[0]);
+  if (!first) {
+    return undefined;
   }
 
+  return asObjectRecord(first.dynamic_template_data) ?? asObjectRecord(first.dynamicTemplateData);
+}
+
+function extractTemplateId(body: Record<string, unknown>): string | undefined {
+  if (typeof body.template_id === 'string') return body.template_id;
+  if (typeof body.templateId === 'string') return body.templateId;
   return undefined;
 }
 
@@ -152,7 +167,7 @@ function recordSend(body: Record<string, unknown>): MockedSendGridEmail {
     to: extractRecipients(body),
     from: typeof body.from === 'string' ? body.from : undefined,
     subject: typeof body.subject === 'string' ? body.subject : undefined,
-    templateId: typeof body.templateId === 'string' ? body.templateId : undefined,
+    templateId: extractTemplateId(body),
     dynamicTemplateData,
     html,
     text: content.text,

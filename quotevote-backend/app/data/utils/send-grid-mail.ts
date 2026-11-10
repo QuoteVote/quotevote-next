@@ -120,14 +120,16 @@ import { parseEnvironmentConfig } from '../../types/environment';
  */
 function applySendGridMockBaseUrl(): void {
   const mockBaseUrl = process.env.SENDGRID_MOCK_BASE_URL?.trim();
-  if (!mockBaseUrl) {
+  // Local E2E only — never redirect password-reset / invite tokens in production.
+  if (!mockBaseUrl || process.env.NODE_ENV === 'production') {
     return;
   }
 
   const normalized = mockBaseUrl.endsWith('/') ? mockBaseUrl : `${mockBaseUrl}/`;
   // @sendgrid/mail types omit `.client`; runtime MailService exposes it.
-  const client = (sgMail as unknown as { client: { setDefaultRequest: (key: string, value: string) => void } })
-    .client;
+  const client = (
+    sgMail as unknown as { client: { setDefaultRequest: (key: string, value: string) => void } }
+  ).client;
   client.setDefaultRequest('baseUrl', normalized);
   logger.info('SendGrid client redirected to mock', { baseUrl: normalized });
 }
