@@ -512,26 +512,27 @@ describe('userResolver', () => {
       });
     });
 
-    it('throws BAD_USER_INPUT GraphQLError when user has already reported this target', async () => {
+    it('returns ALREADY_REPORTED instead of throwing when the user already reported this target', async () => {
       const ctx = mockContext();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: validUserId });
       (ctx.prisma.botReport.findFirst as jest.Mock).mockResolvedValue({ id: 'report-id-123' });
 
-      await expect(
-        userResolver.Mutation.reportBot(
-          null,
-          { userId: validUserId, reporterId: validReporterId },
-          ctx
-        )
-      ).rejects.toThrow(
-        expect.objectContaining({
-          message: 'You have already reported this user as a bot',
-          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
-        })
+      const result = await userResolver.Mutation.reportBot(
+        null,
+        { userId: validUserId, reporterId: validReporterId },
+        ctx
       );
+
+      expect(result).toEqual({
+        code: 'ALREADY_REPORTED',
+        message: 'You have already reported this user as a bot',
+      });
+      // A repeat report is not a failure, and it must not count twice.
+      expect(ctx.prisma.botReport.create).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
     });
 
-    it('throws BAD_USER_INPUT GraphQLError when duplicate report race occurs (P2002)', async () => {
+    it('returns ALREADY_REPORTED instead of throwing when a duplicate report race occurs (P2002)', async () => {
       const ctx = mockContext();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: validUserId });
       (ctx.prisma.botReport.findFirst as jest.Mock).mockResolvedValue(null);
@@ -542,18 +543,18 @@ describe('userResolver', () => {
       });
       (ctx.prisma.botReport.create as jest.Mock).mockRejectedValue(p2002Error);
 
-      await expect(
-        userResolver.Mutation.reportBot(
-          null,
-          { userId: validUserId, reporterId: validReporterId },
-          ctx
-        )
-      ).rejects.toThrow(
-        expect.objectContaining({
-          message: 'You have already reported this user as a bot',
-          extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
-        })
+      const result = await userResolver.Mutation.reportBot(
+        null,
+        { userId: validUserId, reporterId: validReporterId },
+        ctx
       );
+
+      expect(result).toEqual({
+        code: 'ALREADY_REPORTED',
+        message: 'You have already reported this user as a bot',
+      });
+      // The racing request lost: it must not bump the target's botReports counter.
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
     });
 
     it('re-throws unexpected database errors', async () => {

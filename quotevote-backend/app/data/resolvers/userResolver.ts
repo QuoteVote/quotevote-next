@@ -929,10 +929,14 @@ export const userResolver = {
         },
         select: { id: true },
       });
+      // Reporting someone you already reported is a normal outcome, not a failure, so it is
+      // returned (like SUCCESS) instead of thrown. The client shows a neutral message.
+      const alreadyReported = {
+        code: 'ALREADY_REPORTED',
+        message: 'You have already reported this user as a bot',
+      };
       if (existingReport) {
-        throw new GraphQLError('You have already reported this user as a bot', {
-          extensions: { code: 'BAD_USER_INPUT' },
-        });
+        return alreadyReported;
       }
 
       try {
@@ -943,10 +947,9 @@ export const userResolver = {
           },
         });
       } catch (err: unknown) {
+        // Two requests raced and the unique (reporter, user) index rejected this one.
         if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-          throw new GraphQLError('You have already reported this user as a bot', {
-            extensions: { code: 'BAD_USER_INPUT' },
-          });
+          return alreadyReported;
         }
         throw err;
       }
