@@ -299,6 +299,7 @@ export class UserService {
 | `pnpm test`          | Run tests                                |
 | `pnpm test:watch`    | Run tests in watch mode                  |
 | `pnpm test:coverage` | Run tests with coverage                  |
+| `pnpm data:check`    | Read-only record and index check (#183)  |
 
 ## 📚 Key Conventions
 
