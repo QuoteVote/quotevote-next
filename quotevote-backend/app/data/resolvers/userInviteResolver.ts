@@ -84,7 +84,10 @@ async function enforceRateLimit(
 }
 
 /** Sends an email and reports whether it went out. Never throws. */
-async function trySend(label: string, email: Parameters<typeof sendGridEmail>[0]): Promise<boolean> {
+async function trySend(
+  label: string,
+  email: Parameters<typeof sendGridEmail>[0]
+): Promise<boolean> {
   try {
     const result = await sendGridEmail(email);
     if (result.success) return true;
@@ -746,7 +749,10 @@ export const userInviteResolver = {
         // Signup didn't finish, so the link stays usable.
         if (inviteId) {
           await context.prisma.userInvite
-            .updateMany({ where: { id: inviteId, status: 'accepted' }, data: { status: 'pending' } })
+            .updateMany({
+              where: { id: inviteId, status: 'accepted' },
+              data: { status: 'pending' },
+            })
             .catch((releaseErr: unknown) => {
               logger.error('completeSignup could not release a member invite', {
                 inviteId,
