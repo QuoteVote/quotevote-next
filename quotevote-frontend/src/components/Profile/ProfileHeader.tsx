@@ -168,7 +168,9 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
       if (data?.reportBot?.code === 'ALREADY_REPORTED') {
         toast.info(data.reportBot.message ?? 'You have already reported this user as a bot');
       } else {
-        toast.success('User reported successfully. Thank you for helping keep our platform safe.');
+        toast.success('User reported successfully!', {
+          description: 'Thank you for helping keep Quote.Vote safe.',
+        });
       }
       setReportDialogOpen(false);
     } catch (error) {

@@ -108,8 +108,11 @@ describe("ProfileHeader: Report Bot flow", () => {
 
     await user.click(within(dialog).getByRole("button", { name: /^report bot$/i }));
 
+    // A short headline, with the thanks on its own line underneath.
     await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining("reported successfully"))
+      expect(toast.success).toHaveBeenCalledWith("User reported successfully!", {
+        description: "Thank you for helping keep Quote.Vote safe.",
+      })
     );
     expect(toast.info).not.toHaveBeenCalled();
     expect(toast.error).not.toHaveBeenCalled();
