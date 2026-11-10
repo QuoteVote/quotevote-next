@@ -212,6 +212,9 @@ type Mutation {
   addVote(vote: VoteInput!): Vote
   approvePost(postId: String!, remove: Boolean, userId: String!): Post
   blockBuddy(buddyId: String!): Roster
+
+  """ Soft-delete all active notifications for the signed-in user (#464). Returns how many were cleared."""
+  clearAllNotifications: Int!
   clearPresence: Boolean
   createGroup(group: GroupInput!): Group
   createMessage(message: MessageInput!): Message
@@ -412,6 +415,9 @@ type Query {
 
   """ This will query the user messages by Message Room ID"""
   messages(messageRoomId: String!): [Message]
+
+  """ Cleared notifications for the signed-in user (status deleted), newest first (#464)"""
+  notificationHistory(limit: Int): [Notification]
 
   """ This will query user notifications"""
   notifications: [Notification]

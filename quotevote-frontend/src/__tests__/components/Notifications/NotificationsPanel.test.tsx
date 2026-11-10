@@ -6,6 +6,7 @@
 import { render, screen, resetStore } from "@/__tests__/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { NotificationsPanel } from "@/components/Notifications/NotificationsPanel";
+import { DELETE_NOTIFICATION } from "@/graphql/mutations";
 import { GET_NOTIFICATIONS } from "@/graphql/queries";
 import { useAppStore } from "@/store";
 
@@ -62,6 +63,13 @@ const notifications = [
 
 const mocks = [
   { request: { query: GET_NOTIFICATIONS }, result: { data: { notifications } } },
+  {
+    request: {
+      query: DELETE_NOTIFICATION,
+      variables: { notificationId: "n1" },
+    },
+    result: { data: { removeNotification: { _id: "n1", status: "deleted" } } },
+  },
 ];
 
 function openPanel() {
@@ -110,7 +118,9 @@ describe("NotificationsPanel (#532)", () => {
     openPanel();
     render(<NotificationsPanel />, { mocks });
 
-    await userEvent.setup().click(await screen.findByRole("button", { name: "Close notifications" }));
+    await userEvent
+      .setup()
+      .click(await screen.findByRole("button", { name: "Close notifications" }));
     expect(useAppStore.getState().ui.notificationsOpen).toBe(false);
   });
 

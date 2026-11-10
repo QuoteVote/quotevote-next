@@ -20,8 +20,9 @@ export interface NotificationPost {
 export interface Notification {
   _id: string;
   userId: string;
-  userIdBy: string;
-  userBy: NotificationUser;
+  userIdBy?: string | null;
+  /** Legacy rows can omit a sender; UI must tolerate null (#464 / #681). */
+  userBy?: NotificationUser | null;
   label: string;
   status: string;
   created: string | number | Date;

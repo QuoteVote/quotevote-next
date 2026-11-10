@@ -184,6 +184,7 @@ export interface QueryResolvers {
 
   // Notification queries
   notifications: ResolverFn<Common.Notification[], unknown, { limit?: number | null }>;
+  notificationHistory: ResolverFn<Common.Notification[], unknown, { limit?: number | null }>;
 
   // Message queries
   messages: ResolverFn<Common.Message[], unknown, { messageRoomId: string }>;
@@ -328,6 +329,7 @@ export interface MutationResolvers {
 
   // Notification mutations
   removeNotification: ResolverFn<Common.Notification, unknown, { notificationId: string }>;
+  clearAllNotifications: ResolverFn<number>;
 
   // Invite & Report mutations
   sendUserInvite: ResolverFn<MutationResult, unknown, { email: string }>;

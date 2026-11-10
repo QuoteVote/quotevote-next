@@ -87,6 +87,9 @@ type Query {
   " This will query user notifications"
   notifications: [Notification]
 
+  " Cleared notifications for the signed-in user (status deleted), newest first (#464)"
+  notificationHistory(limit: Int): [Notification]
+
   " This will query the message Reactions"
   messageReactions(messageId: String!): [Reaction]
 
