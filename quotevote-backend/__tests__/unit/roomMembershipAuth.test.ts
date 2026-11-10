@@ -110,7 +110,9 @@ function buildPrisma() {
       findMany: jest.fn(
         async ({ where }: { where: { messageRoomId: string | { in: string[] } } }) => {
           const ids =
-            typeof where.messageRoomId === 'string' ? [where.messageRoomId] : where.messageRoomId.in;
+            typeof where.messageRoomId === 'string'
+              ? [where.messageRoomId]
+              : where.messageRoomId.in;
           return messages.filter((message) => ids.includes(message.messageRoomId));
         }
       ),
@@ -118,7 +120,9 @@ function buildPrisma() {
       create: jest.fn(async () => messages[0]),
     },
     reaction: {
-      findUnique: jest.fn(async ({ where }: { where: { id: string } }) => byId(reactions, where.id)),
+      findUnique: jest.fn(async ({ where }: { where: { id: string } }) =>
+        byId(reactions, where.id)
+      ),
       findFirst: jest.fn(async () => null),
       create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         id: newReactionId,
@@ -126,10 +130,12 @@ function buildPrisma() {
         created: date,
         ...data,
       })),
-      update: jest.fn(async ({ where, data }: { where: { id: string }; data: { emoji: string } }) => ({
-        ...byId(reactions, where.id),
-        emoji: data.emoji,
-      })),
+      update: jest.fn(
+        async ({ where, data }: { where: { id: string }; data: { emoji: string } }) => ({
+          ...byId(reactions, where.id),
+          emoji: data.emoji,
+        })
+      ),
     },
     typing: {
       findMany: jest.fn(async () => []),
@@ -185,12 +191,15 @@ describe('Room membership authorization (executable schema)', () => {
       expect(result.data).toEqual({ found: [{ _id: dmMessageId, text: 'hello' }] });
     });
 
-    it.each([guest, outsider, member])('keeps a post chat readable by $label', async ({ userId }) => {
-      const { result } = await run(source, userId, { id: postRoomId });
+    it.each([guest, outsider, member])(
+      'keeps a post chat readable by $label',
+      async ({ userId }) => {
+        const { result } = await run(source, userId, { id: postRoomId });
 
-      expect(result.errors).toBeUndefined();
-      expect(result.data).toEqual({ found: [{ _id: postMessageId, text: 'hello' }] });
-    });
+        expect(result.errors).toBeUndefined();
+        expect(result.data).toEqual({ found: [{ _id: postMessageId, text: 'hello' }] });
+      }
+    );
 
     it('returns nothing for an unknown room', async () => {
       const { result } = await run(source, memberId, { id: unknownRoomId });
@@ -366,11 +375,11 @@ describe('Room membership authorization (executable schema)', () => {
       const { result, prisma } = await run(source, outsiderId, { id: dmMessageId });
 
       expect(codeOf(result)).toBe('FORBIDDEN');
-      expect(messageOf(result)).toBe('Not a member of this conversation');
+      expect(messageOf(result)).toBe("Direct messages can't be deleted");
       expect(prisma.message.updateMany).not.toHaveBeenCalled();
     });
 
-    it("does not let even a member delete a direct message", async () => {
+    it('does not let even a member delete a direct message', async () => {
       const { result, prisma } = await run(source, memberId, { id: dmMessageId });
 
       expect(codeOf(result)).toBe('FORBIDDEN');
