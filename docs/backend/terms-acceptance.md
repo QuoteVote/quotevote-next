@@ -44,6 +44,15 @@ Invite lifecycle uses legacy numeric `User.status` (admin UI / `userInviteReques
 3. `verifyInviteSignupToken` — public query for the signup form (requires `status: 4`, no password).
 4. `completeSignup` — sets username/password, ensures `accountStatus: active`, writes `TermsAcceptance` with `invite_completion`.
 
+### Member invites (#672)
+
+A member's invite skips the admin queue. Public requests still go through steps 1 and 2.
+
+- `sendUserInvite` — signed-in, active members only; 10 invites an hour and at most 20 unused (pending, unexpired) invites per member. Refuses an address with an account, a pending request or a declined request. Creates the account at `status: 4` (so it never shows in `userInviteRequests`) and a `UserInvite` (`pending`, `expiresAt` in 7 days, `invitedBy` = the member), then emails `invite_url` and `inviter_name`. If the email fails, the account and invite are removed and the member gets an error. An expired, unused invite can be sent again: the same invite gets a new expiry and link.
+- The token is the same `invite_signup` / `completeSignup` token with `inviteId` and `email` claims, valid 7 days. The link is only ever in the email.
+- The `UserInvite` row decides whether the link works: `verifyInviteSignupToken` and `completeSignup` require it to be `pending` and unexpired, with the token, invite and account emails matching. `completeSignup` claims it with one conditional `updateMany` (`pending` → `accepted`), so a link works once even with two requests at once, and puts it back to `pending` if the final account update fails.
+- Tokens without `inviteId` (admin approval) work as before.
+
 ## Retention and cutover
 
 Retention follows the Privacy Notice (#566 / #569) and account-deletion policy. Do not enable the production Terms gate until Privacy Notice publication, Terms effective date, and founder go-live approval for v2.0.0 are coordinated with #568/#569.

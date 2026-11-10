@@ -11,6 +11,7 @@ import {
   verifyPasswordResetToken,
 } from '~/data/utils/authentication';
 import { checkRateLimit } from '~/data/utils/rateLimiter';
+import { isMemberInviteUsable } from '~/data/utils/memberInvite';
 import sendGridEmail, { SENDGRID_TEMPLATE_IDS } from '~/data/utils/send-grid-mail';
 import { logger } from '~/data/utils/logger';
 import {
@@ -447,12 +448,14 @@ export const userResolver = {
       // signup page. Session tokens are not links and are refused.
       let userId: string;
       let resetPayload: ReturnType<typeof verifyPasswordResetToken> | null = null;
+      let invitePayload: ReturnType<typeof verifyInviteSignupToken> | null = null;
       try {
         resetPayload = verifyPasswordResetToken(token);
         userId = resetPayload.userId;
       } catch {
         try {
-          userId = verifyInviteSignupToken(token).userId;
+          invitePayload = verifyInviteSignupToken(token);
+          userId = invitePayload.userId;
         } catch {
           return null;
         }
@@ -476,6 +479,11 @@ export const userResolver = {
         if (!isPasswordResetTokenCurrent(resetPayload, user.password)) return null;
       } else if (user.password || user.status !== INVITE_STATUS_APPROVED) {
         // Invite links only work until the account is set up.
+        return null;
+      } else if (
+        invitePayload &&
+        !(await isMemberInviteUsable(context.prisma, invitePayload, user.email))
+      ) {
         return null;
       }
 
