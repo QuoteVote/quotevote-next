@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { reportError } from '@/lib/errorTracking/client';
 
 interface Props {
   children: ReactNode;
@@ -49,7 +50,8 @@ export class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    // Production error tracking (e.g., Sentry) can be wired here when configured
+    // Sent to error tracking when NEXT_PUBLIC_SENTRY_DSN is set (#183)
+    reportError(error, { source: 'error-boundary' });
   }
 
   handleReset = (): void => {

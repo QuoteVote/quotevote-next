@@ -1,3 +1,5 @@
+// Must stay first: sets up error tracking before anything else loads (#183).
+import './instrument';
 import express from 'express';
 import { expressMiddleware } from '@as-integrations/express5';
 import cors from 'cors';
@@ -12,6 +14,7 @@ import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence
 import * as auth from './data/utils/authentication';
 import { parseTrustProxy } from './data/utils/trustProxy';
 import { createSubscriptionServer } from './subscriptions';
+import { flushErrorTracking, reportError, shouldReportHttpError } from '~/lib/errorTracking';
 
 // Load environment variables
 dotenv.config();
@@ -79,6 +82,14 @@ async function startServer() {
     })
   );
 
+  // Unexpected errors from the REST routes are reported, then Express answers as before.
+  app.use(
+    (error: unknown, req: express.Request, _res: express.Response, next: express.NextFunction) => {
+      if (shouldReportHttpError(error)) reportError(error, { source: 'http', route: req.path });
+      next(error);
+    }
+  );
+
   // 4. Start Server
   await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
   console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
@@ -108,6 +119,7 @@ async function startServer() {
     // Disconnect database clients in parallel — allSettled ensures one
     // failure does not prevent the other from disconnecting.
     await Promise.allSettled([disconnectPrisma(), mongoose.disconnect()]);
+    await flushErrorTracking();
 
     process.exit(0);
   };

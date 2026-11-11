@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { reportError } from '@/lib/errorTracking/client';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -13,6 +14,7 @@ export default function DashboardError({ error, reset }: ErrorProps) {
     if (process.env.NODE_ENV === 'development') {
       console.error('[DashboardError]', error);
     }
+    reportError(error, { source: 'error-page', digest: error.digest });
   }, [error]);
 
   return (
