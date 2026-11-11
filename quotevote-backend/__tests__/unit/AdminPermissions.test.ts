@@ -65,9 +65,9 @@ function buildPrisma() {
 type Operation = {
   name: string;
   source: string;
-// Prisma calls that must NOT occur if the caller is rejected
+  // Prisma calls that must NOT occur if the caller is rejected
   guarded: (p: ReturnType<typeof buildPrisma>) => jest.Mock[];
-// Expected result for an admin with empty data
+  // Expected result for an admin with empty data
   adminData: Record<string, unknown>;
 };
 
@@ -97,7 +97,7 @@ const operations: Operation[] = [
     adminData: { result: [] },
   },
   {
-  // An admin receives NOT_FOUND (non-existent user): proves that authorization was passed
+    // An admin receives NOT_FOUND (non-existent user): proves that authorization was passed
     name: 'sendUserInviteApproval',
     source: `mutation { result: sendUserInviteApproval(userId: "${targetUserId}", inviteStatus: "approved") }`,
     guarded: (p) => [p.user.findUnique, p.user.update],
@@ -107,22 +107,25 @@ const operations: Operation[] = [
 
 describe('admin permissions matrix (executable schema)', () => {
   describe.each(operations)('$name', (op) => {
-    it.each(['guest', 'member'] as const)('rejects %s without touching the database', async (role) => {
-      const prisma = buildPrisma();
-      const user = USERS[role];
+    it.each(['guest', 'member'] as const)(
+      'rejects %s without touching the database',
+      async (role) => {
+        const prisma = buildPrisma();
+        const user = USERS[role];
 
-      const result = await graphql({
-        schema,
-        source: op.source,
-        contextValue: { user, userId: user?._id ?? null, prisma },
-      });
+        const result = await graphql({
+          schema,
+          source: op.source,
+          contextValue: { user, userId: user?._id ?? null, prisma },
+        });
 
-      expect(result.errors?.[0].extensions?.code).toBe(REJECTION[role][op.name]);
-      expect(result.data?.result ?? null).toBeNull();
-      for (const fn of op.guarded(prisma)) {
-        expect(fn).not.toHaveBeenCalled();
+        expect(result.errors?.[0].extensions?.code).toBe(REJECTION[role][op.name]);
+        expect(result.data?.result ?? null).toBeNull();
+        for (const fn of op.guarded(prisma)) {
+          expect(fn).not.toHaveBeenCalled();
+        }
       }
-    });
+    );
 
     it('lets an admin through the authorization gate', async () => {
       const prisma = buildPrisma();
@@ -159,5 +162,4 @@ describe('admin permissions matrix (executable schema)', () => {
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
   });
-
 });
