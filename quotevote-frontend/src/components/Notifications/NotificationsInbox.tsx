@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useSubscription } from "@apollo/client/react";
 import { toast } from "sonner";
 import { CLEAR_ALL_NOTIFICATIONS } from "@/graphql/mutations";
@@ -46,6 +46,11 @@ export function NotificationsInbox({
     (state) => (state.user.data._id || state.user.data.id) as string | undefined
   );
   const [view, setView] = useState<InboxView>("active");
+  const activeTabRef = useRef<HTMLButtonElement>(null);
+
+  const focusActiveTab = (): void => {
+    activeTabRef.current?.focus();
+  };
 
   const {
     loading: activeLoading,
@@ -103,6 +108,10 @@ export function NotificationsInbox({
     if (activeNotifications.length === 0 || clearing) return;
     try {
       await clearAll();
+      // Clear all unmounts after refetch; focus Active once that commit lands.
+      queueMicrotask(() => {
+        focusActiveTab();
+      });
     } catch {
       toast.error("Couldn't clear your notifications. Please try again.");
     }
@@ -121,6 +130,7 @@ export function NotificationsInbox({
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-1">
           <Button
+            ref={activeTabRef}
             type="button"
             variant={view === "active" ? "secondary" : "ghost"}
             size="sm"
@@ -151,7 +161,7 @@ export function NotificationsInbox({
             size="sm"
             className="h-8"
             disabled={clearing}
-            onClick={() => void handleClearAll()}
+            onClick={() => handleClearAll()}
             data-testid="clear-all-notifications"
           >
             Clear all
@@ -195,6 +205,7 @@ export function NotificationsInbox({
           pageView={pageView}
           mode={view}
           onNavigate={onNavigate}
+          onActiveListEmptied={focusActiveTab}
           emptyTitle={view === "history" ? "No cleared notifications yet" : "You're all caught up!"}
           emptyDescription={
             view === "history" ? "Cleared alerts will show up here." : "No alerts right now."

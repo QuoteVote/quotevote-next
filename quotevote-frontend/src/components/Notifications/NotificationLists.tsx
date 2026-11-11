@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useApolloClient } from "@apollo/client/react";
 import moment from "moment";
@@ -20,6 +21,9 @@ import { toAppPostUrl } from "@/lib/utils/sanitizeUrl";
 import type { Notification } from "@/types/notification";
 import { cn } from "@/lib/utils";
 
+/** After × clears a row, focus the next/previous clear control or fall back to Active. */
+type PendingClearFocus = { kind: "clear"; id: string } | { kind: "active-tab" };
+
 function notificationDisplayName(userBy: Notification["userBy"]): string {
   return userBy?.name || userBy?.username || "Someone";
 }
@@ -31,6 +35,8 @@ interface NotificationListsProps {
   mode?: "active" | "history";
   /** Called after a notification sends the user somewhere (e.g. to close the panel). */
   onNavigate?: () => void;
+  /** When × clears the last active row, focus falls back here (Active tab). */
+  onActiveListEmptied?: () => void;
   emptyTitle?: string;
   emptyDescription?: string;
 }
@@ -108,6 +114,7 @@ export function NotificationLists({
   pageView = false,
   mode = "active",
   onNavigate,
+  onActiveListEmptied,
   emptyTitle = "You're all caught up!",
   emptyDescription = "No alerts right now.",
 }: NotificationListsProps) {
@@ -118,8 +125,30 @@ export function NotificationLists({
   // Times read in the viewer's time zone, which the server doesn't know (#605).
   const hasMounted = useHasMounted();
   const isHistory = mode === "history";
+  const pendingClearFocusRef = useRef<PendingClearFocus | null>(null);
+  const onActiveListEmptiedRef = useRef(onActiveListEmptied);
 
   const [removeNotification] = useMutation(DELETE_NOTIFICATION);
+
+  useLayoutEffect(() => {
+    onActiveListEmptiedRef.current = onActiveListEmptied;
+  }, [onActiveListEmptied]);
+
+  // Keep keyboard focus in the list after × removes the focused control (#464 / Moti).
+  useLayoutEffect(() => {
+    const pending = pendingClearFocusRef.current;
+    if (!pending) return;
+    pendingClearFocusRef.current = null;
+
+    if (pending.kind === "active-tab") {
+      onActiveListEmptiedRef.current?.();
+      return;
+    }
+
+    document
+      .querySelector<HTMLElement>(`[data-clear-notification="${pending.id}"]`)
+      ?.focus();
+  }, [notifications]);
 
   const handleDelete = async (notificationId: string): Promise<void> => {
     if (!ensureAuth()) return;
@@ -149,6 +178,19 @@ export function NotificationLists({
     } catch {
       toast.error("Couldn't clear that notification. Please try again.");
     }
+  };
+
+  const handleClearWithFocus = (notificationId: string): void => {
+    const index = notifications.findIndex((notification) => notification._id === notificationId);
+    const nextId = index >= 0 ? notifications[index + 1]?._id : undefined;
+    const prevId = index > 0 ? notifications[index - 1]?._id : undefined;
+    const focusTargetId = nextId ?? prevId;
+
+    pendingClearFocusRef.current = focusTargetId
+      ? { kind: "clear", id: focusTargetId }
+      : { kind: "active-tab" };
+
+    void handleDelete(notificationId);
   };
 
   const navigateToNotification = (
@@ -275,7 +317,8 @@ export function NotificationLists({
                   variant="ghost"
                   size="icon"
                   className="mr-2 mt-3 size-8 flex-shrink-0 text-muted-foreground transition-opacity hover:text-foreground focus-visible:ring-[#2f7a4c] dark:focus-visible:ring-[#7fdc9c] [@media(hover:hover)]:opacity-0 group-hover:opacity-100! group-focus-within:opacity-100! focus-visible:opacity-100!"
-                  onClick={() => void handleDelete(notification._id)}
+                  data-clear-notification={notification._id}
+                  onClick={() => handleClearWithFocus(notification._id)}
                   aria-label={`Clear notification from ${displayName}`}
                 >
                   <X className="w-4 h-4" aria-hidden />

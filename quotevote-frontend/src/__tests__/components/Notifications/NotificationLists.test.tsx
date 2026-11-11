@@ -4,11 +4,16 @@
  */
 
 import { renderToString } from "react-dom/server.node";
-import { ApolloProvider } from "@apollo/client/react";
+import { ApolloProvider, useQuery } from "@apollo/client/react";
 import { createMockApolloClient, render, screen, within } from "@/__tests__/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { NotificationLists } from "@/components/Notifications/NotificationLists";
 import { DELETE_NOTIFICATION } from "@/graphql/mutations";
+import {
+  GET_NOTIFICATION_HISTORY,
+  GET_NOTIFICATIONS,
+  NOTIFICATION_HISTORY_LIMIT,
+} from "@/graphql/queries";
 import type { Notification } from "@/types/notification";
 
 const mockPush = jest.fn();
@@ -61,6 +66,43 @@ const follow: Notification = {
   _id: "n-follow",
   label: "",
   notificationType: "FOLLOW",
+};
+
+const followTwo: Notification = {
+  ...follow,
+  _id: "n-follow-2",
+  userBy: { _id: "cara-id", name: "Cara Local", username: "cara" },
+};
+
+/** Mirrors NotificationsInbox: list props come from the Apollo cache after × clears. */
+function CacheBackedNotificationLists({
+  onActiveListEmptied,
+}: {
+  onActiveListEmptied?: () => void;
+}) {
+  const { data } = useQuery<{ notifications?: Notification[] }>(GET_NOTIFICATIONS);
+  return (
+    <NotificationLists
+      notifications={data?.notifications ?? []}
+      pageView
+      onActiveListEmptied={onActiveListEmptied}
+    />
+  );
+}
+
+function notificationsQueryMock(items: Notification[]) {
+  return {
+    request: { query: GET_NOTIFICATIONS },
+    result: { data: { notifications: items } },
+  };
+}
+
+const historyQueryMock = {
+  request: {
+    query: GET_NOTIFICATION_HISTORY,
+    variables: { limit: NOTIFICATION_HISTORY_LIMIT },
+  },
+  result: { data: { notificationHistory: [] } },
 };
 
 describe("NotificationLists (#532)", () => {
@@ -174,6 +216,53 @@ describe("NotificationLists (#532)", () => {
     const del = screen.getByRole("button", { name: "Clear notification from Bob Local" });
     expect(row).not.toContainElement(del);
     expect(within(row).queryByRole("button")).toBeNull();
+  });
+
+  it("moves keyboard focus to the next clear control after × removes a row", async () => {
+    const user = userEvent.setup();
+    render(<CacheBackedNotificationLists />, {
+      mocks: [
+        notificationsQueryMock([follow, followTwo]),
+        deleteMock("n-follow"),
+        // refetchQueries after delete
+        notificationsQueryMock([followTwo]),
+        historyQueryMock,
+      ],
+    });
+
+    const firstClear = await screen.findByRole("button", {
+      name: "Clear notification from Bob Local",
+    });
+    firstClear.focus();
+    await user.click(firstClear);
+
+    const secondClear = await screen.findByRole("button", {
+      name: "Clear notification from Cara Local",
+    });
+    expect(secondClear).toHaveFocus();
+    expect(
+      screen.queryByRole("button", { name: "Clear notification from Bob Local" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("falls back to onActiveListEmptied when × clears the last row", async () => {
+    const onActiveListEmptied = jest.fn();
+    const user = userEvent.setup();
+    render(<CacheBackedNotificationLists onActiveListEmptied={onActiveListEmptied} />, {
+      mocks: [
+        notificationsQueryMock([follow]),
+        deleteMock("n-follow"),
+        notificationsQueryMock([]),
+        historyQueryMock,
+      ],
+    });
+
+    await user.click(
+      await screen.findByRole("button", { name: "Clear notification from Bob Local" })
+    );
+
+    expect(onActiveListEmptied).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("You're all caught up!")).toBeInTheDocument();
   });
 
   it("shows the time in a machine-readable element, reading millisecond strings too", () => {
