@@ -7,7 +7,7 @@ import { useQuery, useMutation } from '@apollo/client/react';
 import { MessageCircle, Flag, MoreHorizontal, Pencil } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
-import type { ProfileUser } from '@/types/profile';
+import type { ProfileUser, ReportBotResult } from '@/types/profile';
 import type { StagedChatRoom } from '@/types/chat';
 import { GET_CHAT_ROOM } from '@/graphql/queries';
 import { REPORT_BOT } from '@/graphql/mutations';
@@ -151,17 +151,27 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
     setChatOpen(true);
   };
 
-  const [reportBot, { loading: reportLoading }] = useMutation(REPORT_BOT);
+  const [reportBot, { loading: reportLoading }] = useMutation<{
+    reportBot: ReportBotResult | null;
+  }>(REPORT_BOT);
 
   const handleReportBot = async () => {
     try {
-      await reportBot({
+      const { data } = await reportBot({
         variables: {
           userId: _id,
           reporterId: loggedInUserIdString,
         },
       });
-      toast.success('User reported successfully. Thank you for helping keep our platform safe.');
+      // Reporting someone you already reported is a normal outcome, not a failure: close the
+      // dialog and say so in a neutral toast instead of an error.
+      if (data?.reportBot?.code === 'ALREADY_REPORTED') {
+        toast.info(data.reportBot.message ?? 'You have already reported this user as a bot');
+      } else {
+        toast.success('User reported successfully!', {
+          description: 'Thank you for helping keep Quote.Vote safe.',
+        });
+      }
       setReportDialogOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to report user');
@@ -234,7 +244,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon">
+                    <Button variant="outline" size="icon" aria-label="More options">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
