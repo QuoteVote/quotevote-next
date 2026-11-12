@@ -25,9 +25,6 @@ function mockContext(user: GraphQLContext['user'] = null) {
     vote: {
       findRaw: jest.fn().mockResolvedValue([]),
       findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     post: {
       findUnique: jest.fn().mockResolvedValue({
@@ -42,8 +39,14 @@ function mockContext(user: GraphQLContext['user'] = null) {
     activity: {
       create: jest.fn().mockResolvedValue({ id: 'activity-1' }),
     },
-    $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+    // Soft-deletes report each vote they changed, unless a test says otherwise.
+    $runCommandRaw: jest.fn((command: Record<string, unknown>) =>
+      Promise.resolve(command.update === 'votes' ? { ok: 1, n: 1, nModified: 1 } : { ok: 1 })
+    ),
+    // Interactive transactions run against the same mock client.
+    $transaction: jest.fn(),
   };
+  prisma.$transaction.mockImplementation((run: (tx: unknown) => Promise<unknown>) => run(prisma));
   return {
     prisma,
     req: {} as GraphQLContext['req'],
@@ -90,6 +93,41 @@ const addVote = (ctx: Ctx, vote: Common.VoteInput) =>
 const deleteVote = (ctx: Ctx, id: string) =>
   voteResolver.Mutation.deleteVote(null, { voteId: id }, ctx as unknown as GraphQLContext);
 
+type RawCommand = Record<string, unknown>;
+const rawCommands = (ctx: Ctx): RawCommand[] =>
+  ctx.prisma.$runCommandRaw.mock.calls.map(([command]) => command as RawCommand);
+const insertedVote = (ctx: Ctx) => {
+  const insert = rawCommands(ctx).find((c) => c.insert === 'votes');
+  return (insert?.documents as Record<string, unknown>[] | undefined)?.[0];
+};
+/** The soft-delete of votes, if the write made one. */
+const softDelete = (ctx: Ctx) => {
+  const update = rawCommands(ctx).find((c) => c.update === 'votes');
+  return (update?.updates as { q: unknown; u: unknown }[] | undefined)?.[0];
+};
+const liveVotes = (...ids: string[]) => ({
+  _id: { $in: ids.map((id) => ({ $oid: id })) },
+  deleted: { $ne: true },
+});
+const noneModified = (ctx: Ctx) =>
+  ctx.prisma.$runCommandRaw.mockImplementation((command: Record<string, unknown>) =>
+    Promise.resolve(command.update === 'votes' ? { ok: 1, n: 0, nModified: 0 } : { ok: 1 })
+  );
+const writeConflict = () => Object.assign(new Error('write conflict'), { code: 'P2034' });
+
+/** The `$set` stage of the post counts update. */
+const postCountsSet = (ctx: Ctx) => {
+  const update = rawCommands(ctx).find((c) => c.update === 'posts');
+  const [{ q, u }] = update?.updates as { q: unknown; u: { $set: Record<string, unknown> }[] }[];
+  return { q, set: u[0].$set };
+};
+const totalBy = (set: Record<string, unknown>, field: 'upvotes' | 'downvotes') =>
+  (set[field] as { $max: [number, { $add: [unknown, number] }] }).$max[1].$add[1];
+const votedByEntry = (set: Record<string, unknown>) => {
+  const votedBy = set.votedBy as { $concatArrays?: [unknown, unknown[]] };
+  return votedBy.$concatArrays ? votedBy.$concatArrays[1][0] : null;
+};
+
 describe('voteResolver', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -101,7 +139,7 @@ describe('voteResolver', () => {
       await expect(addVote(ctx, voteInput())).rejects.toMatchObject({
         extensions: { code: 'UNAUTHENTICATED' },
       });
-      expect(ctx.prisma.vote.create).not.toHaveBeenCalled();
+      expect(ctx.prisma.$runCommandRaw).not.toHaveBeenCalled();
     });
 
     it('refuses a vote for another member', async () => {
@@ -109,7 +147,7 @@ describe('voteResolver', () => {
       await expect(addVote(ctx, voteInput({ userId: otherUserId }))).rejects.toMatchObject({
         extensions: { code: 'FORBIDDEN' },
       });
-      expect(ctx.prisma.vote.create).not.toHaveBeenCalled();
+      expect(ctx.prisma.$runCommandRaw).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -124,7 +162,7 @@ describe('voteResolver', () => {
       await expect(addVote(ctx, voteInput(overrides))).rejects.toMatchObject({
         extensions: { code: 'BAD_USER_INPUT' },
       });
-      expect(ctx.prisma.vote.create).not.toHaveBeenCalled();
+      expect(ctx.prisma.$runCommandRaw).not.toHaveBeenCalled();
     });
 
     it('refuses a vote on a deleted post', async () => {
@@ -143,7 +181,6 @@ describe('voteResolver', () => {
 
     it('stores a new response with the passage text from the post, and notifies the author', async () => {
       const ctx = mockContext(authedUser());
-      ctx.prisma.vote.create.mockResolvedValue(voteRecord(voteId, 'up'));
 
       const result = await addVote(ctx, voteInput({ content: 'something else entirely' }));
 
@@ -157,23 +194,23 @@ describe('voteResolver', () => {
         },
         options: { projection: { tags: 1 } },
       });
-      expect(ctx.prisma.vote.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            userId,
-            postId,
-            type: 'up',
-            tags: ['#agree'],
-            startWordIndex: 4,
-            endWordIndex: 15,
-            content: 'quick brown',
-          }),
-        })
-      );
-      expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+      const doc = insertedVote(ctx);
+      expect(doc).toMatchObject({
+        userId: { $oid: userId },
+        postId: { $oid: postId },
+        type: 'up',
+        tags: '#agree',
+        startWordIndex: 4,
+        endWordIndex: 15,
+        content: 'quick brown',
+        deleted: false,
+      });
+      const newId = (doc?._id as { $oid: string }).$oid;
+      expect(newId).toMatch(/^[a-f0-9]{24}$/);
+      expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(1);
       expect(ctx.prisma.activity.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ activityType: 'VOTED', voteId, postId, userId }),
+          data: expect.objectContaining({ activityType: 'VOTED', voteId: newId, postId, userId }),
         })
       );
       expect(addNotification).toHaveBeenCalledWith(ctx.prisma, {
@@ -183,16 +220,45 @@ describe('voteResolver', () => {
         label: 'quick brown',
         postId,
       });
-      expect(result).toMatchObject({ _id: voteId, type: 'up', tags: ['#agree'] });
+      expect(result).toMatchObject({
+        _id: newId,
+        type: 'up',
+        tags: ['#agree'],
+        content: 'quick brown',
+        deleted: false,
+      });
+    });
+
+    it('stores the response as the string the current API reads', async () => {
+      const ctx = mockContext(authedUser());
+
+      await addVote(ctx, voteInput({ tags: '#false', type: 'down' }));
+
+      expect(insertedVote(ctx)?.tags).toBe('#false');
+    });
+
+    it("adds the vote to the post's totals and votedBy in the same transaction", async () => {
+      const ctx = mockContext(authedUser());
+
+      await addVote(ctx, voteInput());
+
+      const { q, set } = postCountsSet(ctx);
+      expect(q).toEqual({ _id: { $oid: postId } });
+      expect(totalBy(set, 'upvotes')).toBe(1);
+      expect(totalBy(set, 'downvotes')).toBe(0);
+      expect(votedByEntry(set)).toEqual({ type: 'up', userId: { $oid: userId } });
+      expect(softDelete(ctx)).toBeUndefined();
+      expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it("doesn't change the post's score", async () => {
       const ctx = mockContext(authedUser());
-      ctx.prisma.vote.create.mockResolvedValue(voteRecord(voteId, 'up'));
 
       await addVote(ctx, voteInput());
 
       expect(ctx.prisma.post.update).not.toHaveBeenCalled();
+      const { set } = postCountsSet(ctx);
+      expect(Object.keys(set).sort()).toEqual(['downvotes', 'upvotes', 'votedBy']);
     });
 
     it('keeps responses in the other pairs on the same passage', async () => {
@@ -202,12 +268,14 @@ describe('voteResolver', () => {
         { _id: { $oid: oldVoteId }, tags: '#true' },
         { _id: { $oid: '60d5ec49ad414d7a8d5464b3' }, tags: ['#dislike'] },
       ]);
-      ctx.prisma.vote.create.mockResolvedValue(voteRecord(voteId, 'up'));
 
       await addVote(ctx, voteInput());
 
-      expect(ctx.prisma.vote.updateMany).not.toHaveBeenCalled();
-      expect(ctx.prisma.vote.create).toHaveBeenCalledTimes(1);
+      expect(softDelete(ctx)).toBeUndefined();
+      expect(insertedVote(ctx)).toBeDefined();
+      const { set } = postCountsSet(ctx);
+      expect(totalBy(set, 'upvotes')).toBe(1);
+      expect(totalBy(set, 'downvotes')).toBe(0);
     });
 
     it('replaces the other side of the pair in one transaction', async () => {
@@ -216,20 +284,37 @@ describe('voteResolver', () => {
         { _id: { $oid: oldVoteId }, tags: '#agree' },
         { _id: { $oid: '60d5ec49ad414d7a8d5464b3' }, tags: '#like' },
       ]);
-      ctx.prisma.vote.create.mockResolvedValue(voteRecord(voteId, 'down'));
 
       const result = await addVote(ctx, voteInput({ tags: '#disagree', type: 'down' }));
 
       expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(1);
-      expect(ctx.prisma.vote.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: [oldVoteId] } },
-        data: { deleted: true },
+      expect(softDelete(ctx)).toEqual({
+        q: liveVotes(oldVoteId),
+        u: { $set: { deleted: true }, $currentDate: { updatedAt: true } },
+        multi: true,
       });
       expect(addNotification).toHaveBeenCalledWith(
         ctx.prisma,
         expect.objectContaining({ notificationType: 'DOWNVOTED' })
       );
-      expect(result).toMatchObject({ _id: voteId, type: 'down', tags: ['#disagree'] });
+      const { set } = postCountsSet(ctx);
+      expect(totalBy(set, 'upvotes')).toBe(-1);
+      expect(totalBy(set, 'downvotes')).toBe(1);
+      expect(votedByEntry(set)).toEqual({ type: 'down', userId: { $oid: userId } });
+      expect(result).toMatchObject({ type: 'down', tags: ['#disagree'] });
+    });
+
+    it('only takes a replaced vote off the totals if it was still live', async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.vote.findRaw.mockResolvedValue([{ _id: { $oid: oldVoteId }, tags: '#agree' }]);
+      // A concurrent request already replaced it.
+      noneModified(ctx);
+
+      await addVote(ctx, voteInput({ tags: '#disagree', type: 'down' }));
+
+      const { set } = postCountsSet(ctx);
+      expect(totalBy(set, 'upvotes')).toBe(0);
+      expect(totalBy(set, 'downvotes')).toBe(1);
     });
 
     it('returns the response already held instead of adding it again', async () => {
@@ -240,7 +325,7 @@ describe('voteResolver', () => {
       const result = await addVote(ctx, voteInput());
 
       expect(result).toMatchObject({ _id: oldVoteId, tags: ['#agree'] });
-      expect(ctx.prisma.vote.create).not.toHaveBeenCalled();
+      expect(ctx.prisma.$runCommandRaw).not.toHaveBeenCalled();
       expect(checkRateLimit).not.toHaveBeenCalled();
       expect(ctx.prisma.activity.create).not.toHaveBeenCalled();
       expect(addNotification).not.toHaveBeenCalled();
@@ -256,16 +341,35 @@ describe('voteResolver', () => {
 
       await addVote(ctx, voteInput());
 
-      expect(ctx.prisma.vote.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: ['60d5ec49ad414d7a8d5464b3'] } },
-        data: { deleted: true },
-      });
-      expect(ctx.prisma.vote.create).not.toHaveBeenCalled();
+      expect(softDelete(ctx)?.q).toEqual(liveVotes('60d5ec49ad414d7a8d5464b3'));
+      expect(insertedVote(ctx)).toBeUndefined();
+      const { set } = postCountsSet(ctx);
+      expect(totalBy(set, 'upvotes')).toBe(0);
+      expect(totalBy(set, 'downvotes')).toBe(-1);
+      expect(votedByEntry(set)).toEqual({ type: 'up', userId: { $oid: userId } });
+    });
+
+    it('runs the vote again when a concurrent vote on the post wins a write conflict', async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.$transaction.mockRejectedValueOnce(writeConflict());
+
+      await addVote(ctx, voteInput());
+
+      expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(ctx.prisma.activity.create).toHaveBeenCalledTimes(1);
+    });
+
+    it("doesn't retry other failures", async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.$transaction.mockRejectedValueOnce(new Error('connection lost'));
+
+      await expect(addVote(ctx, voteInput())).rejects.toThrow('connection lost');
+      expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(ctx.prisma.activity.create).not.toHaveBeenCalled();
     });
 
     it("doesn't notify members voting on their own post", async () => {
       const ctx = mockContext(authedUser(postOwnerId));
-      ctx.prisma.vote.create.mockResolvedValue(voteRecord(voteId, 'up'));
 
       await addVote(ctx, voteInput({ userId: postOwnerId }));
 
@@ -281,7 +385,7 @@ describe('voteResolver', () => {
         extensions: { code: 'TOO_MANY_REQUESTS' },
       });
       expect(checkRateLimit).toHaveBeenCalledWith(ctx.prisma, userId, 'addVote', 30, 60000);
-      expect(ctx.prisma.vote.create).not.toHaveBeenCalled();
+      expect(ctx.prisma.$runCommandRaw).not.toHaveBeenCalled();
     });
   });
 
@@ -305,43 +409,139 @@ describe('voteResolver', () => {
 
     it("soft-deletes the member's own vote", async () => {
       const ctx = mockContext(authedUser());
-      ctx.prisma.vote.findUnique.mockResolvedValue({ id: voteId, userId, deleted: false });
+      ctx.prisma.vote.findUnique.mockResolvedValue({
+        id: voteId,
+        userId,
+        postId,
+        type: 'up',
+        deleted: false,
+      });
 
       await expect(deleteVote(ctx, voteId)).resolves.toEqual({ _id: voteId });
-      expect(ctx.prisma.vote.update).toHaveBeenCalledWith({
-        where: { id: voteId },
-        data: { deleted: true },
-        select: { id: true },
+      expect(softDelete(ctx)).toEqual({
+        q: liveVotes(voteId),
+        u: { $set: { deleted: true }, $currentDate: { updatedAt: true } },
+        multi: true,
       });
+    });
+
+    it("takes the vote off the post's totals and drops the member from votedBy", async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.vote.findUnique.mockResolvedValue({
+        id: voteId,
+        userId,
+        postId,
+        type: 'up',
+        deleted: false,
+      });
+
+      await deleteVote(ctx, voteId);
+
+      expect(ctx.prisma.vote.findRaw).toHaveBeenCalledWith({
+        filter: {
+          postId: { $oid: postId },
+          userId: { $oid: userId },
+          deleted: { $ne: true },
+        },
+        options: { projection: { type: 1 }, sort: { created: -1 }, limit: 1 },
+      });
+      const { q, set } = postCountsSet(ctx);
+      expect(q).toEqual({ _id: { $oid: postId } });
+      expect(totalBy(set, 'upvotes')).toBe(-1);
+      expect(totalBy(set, 'downvotes')).toBe(0);
+      expect(votedByEntry(set)).toBeNull();
+      expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the member in votedBy with their latest other vote on the post', async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.vote.findUnique.mockResolvedValue({
+        id: voteId,
+        userId,
+        postId,
+        type: 'up',
+        deleted: false,
+      });
+      ctx.prisma.vote.findRaw.mockResolvedValue([{ type: 'down' }]);
+
+      await deleteVote(ctx, voteId);
+
+      const { set } = postCountsSet(ctx);
+      expect(totalBy(set, 'upvotes')).toBe(-1);
+      expect(votedByEntry(set)).toEqual({ type: 'down', userId: { $oid: userId } });
+    });
+
+    it("doesn't take the vote off twice when another request deleted it first", async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.vote.findUnique.mockResolvedValue({
+        id: voteId,
+        userId,
+        postId,
+        type: 'up',
+        deleted: false,
+      });
+      noneModified(ctx);
+
+      await expect(deleteVote(ctx, voteId)).resolves.toEqual({ _id: voteId });
+      expect(softDelete(ctx)).toBeDefined();
+      expect(rawCommands(ctx).some((c) => c.update === 'posts')).toBe(false);
+    });
+
+    it('runs the delete again after a write conflict', async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.vote.findUnique.mockResolvedValue({
+        id: voteId,
+        userId,
+        postId,
+        type: 'up',
+        deleted: false,
+      });
+      ctx.prisma.$transaction.mockRejectedValueOnce(writeConflict());
+
+      await expect(deleteVote(ctx, voteId)).resolves.toEqual({ _id: voteId });
+      expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(rawCommands(ctx).filter((c) => c.update === 'posts')).toHaveLength(1);
     });
 
     it("refuses to delete another member's vote", async () => {
       const ctx = mockContext(authedUser(otherUserId));
-      ctx.prisma.vote.findUnique.mockResolvedValue({ id: voteId, userId, deleted: false });
+      ctx.prisma.vote.findUnique.mockResolvedValue({
+        id: voteId,
+        userId,
+        postId,
+        type: 'up',
+        deleted: false,
+      });
 
       await expect(deleteVote(ctx, voteId)).rejects.toMatchObject({
         extensions: { code: 'FORBIDDEN' },
       });
-      expect(ctx.prisma.vote.update).not.toHaveBeenCalled();
+      expect(ctx.prisma.$runCommandRaw).not.toHaveBeenCalled();
     });
 
     it("lets an admin delete another member's vote", async () => {
       const ctx = mockContext(authedUser(otherUserId, true));
-      ctx.prisma.vote.findUnique.mockResolvedValue({ id: voteId, userId, deleted: false });
+      ctx.prisma.vote.findUnique.mockResolvedValue({
+        id: voteId,
+        userId,
+        postId,
+        type: 'up',
+        deleted: false,
+      });
 
       await deleteVote(ctx, voteId);
-      expect(ctx.prisma.vote.update).toHaveBeenCalledTimes(1);
+      expect(softDelete(ctx)?.q).toEqual(liveVotes(voteId));
     });
 
     it.each([
       ['an unknown vote', null],
-      ['an already deleted vote', { id: voteId, userId, deleted: true }],
+      ['an already deleted vote', { id: voteId, userId, postId, type: 'up', deleted: true }],
     ])('returns the id without writing for %s', async (_label, row) => {
       const ctx = mockContext(authedUser());
       ctx.prisma.vote.findUnique.mockResolvedValue(row);
 
       await expect(deleteVote(ctx, voteId)).resolves.toEqual({ _id: voteId });
-      expect(ctx.prisma.vote.update).not.toHaveBeenCalled();
+      expect(ctx.prisma.$runCommandRaw).not.toHaveBeenCalled();
     });
 
     it('returns the id without a lookup for an invalid id', async () => {
