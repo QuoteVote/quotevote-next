@@ -1,454 +1,197 @@
 # Quote.Vote Backend
 
-A modern, type-safe backend API built with Express, TypeScript, and GraphQL. This project represents a complete migration from a JavaScript/Babel codebase to a fully TypeScript-based architecture.
+The Quote.Vote backend serves the platform's GraphQL API, real-time subscriptions, and authentication endpoints. It is an Express 5 application written in strict TypeScript, using Apollo Server, Prisma, and MongoDB.
 
-## 🚀 Tech Stack
+> **Migration status (2.0 staging):** The TypeScript/Apollo/Prisma architecture is implemented, while some legacy Mongoose paths remain during the migration. The `staging` branch is the integration branch for the 2.0 backend cutover; `main` continues to support the current beta until the coordinated switch. See [#637](https://github.com/QuoteVote/quotevote-next/issues/637), [#169](https://github.com/QuoteVote/quotevote-next/issues/169), and [#182](https://github.com/QuoteVote/quotevote-next/issues/182) for current release status.
 
-- **Runtime**: Node.js 20.x+
-- **Framework**: [Express](https://expressjs.com/) 5.3.0
-- **Language**: [TypeScript](https://www.typescriptlang.org/) 5.9.3 (Strict Mode)
-- **GraphQL**: [Apollo Server](https://www.apollographql.com/docs/apollo-server/) (to be migrated)
-- **Database**: MongoDB with Mongoose (to be migrated)
-- **CORS**: [cors](https://github.com/expressjs/cors) 2.8.6
-- **Logging**: [Winston](https://github.com/winstonjs/winston) 3.19.0
-- **Development**: [tsx](https://github.com/privatenumber/tsx) 4.23.15 (`pnpm dev` runs `tsx watch`)
-- **Package Manager**: [pnpm](https://pnpm.io/)
+## Technology
 
-## 📋 Prerequisites
+| Area | Current implementation |
+| --- | --- |
+| Runtime | **Node.js 24** (CI and production Docker image) |
+| Package manager | **pnpm 9** (CI and Docker use pnpm 9; Docker pins 9.15.9) |
+| Language | **TypeScript 5**, strict mode; compiled as CommonJS |
+| HTTP API | **Express 5** with CORS |
+| GraphQL | **Apollo Server 5**, GraphQL 16, Express 5 integration |
+| Real-time | **graphql-ws** subscriptions over WebSocket |
+| Persistence | **MongoDB** with **Prisma 6**; remaining **Mongoose 9** code is transitional |
+| Authentication | JWT-based sessions, invitation-based onboarding |
+| Testing | Jest 30 / ts-jest; GraphQL contract validation; GitHub Actions |
+| Deployment | Multi-stage Node 24 Docker image with health check and graceful shutdown |
 
-- **Node.js**: 20.x or higher
-- **pnpm**: Latest version (install with `npm install -g pnpm`)
-- **MongoDB**: Local instance or connection string
+The installed dependency versions are defined in [package.json](package.json), rather than guaranteed by the table above.
 
-## 🛠️ Getting Started
+## Repository layout and request flow
 
-### Clone Repository
-
-```bash
-# Clone repository
-git clone https://github.com/QuoteVote/quotevote-next
+```text
+quotevote-next/
+├── quotevote-backend/
+│   ├── app/
+│   │   ├── start.ts            # Production entry; registers compiled path aliases
+│   │   ├── server.ts           # Express/Apollo startup, routes, shutdown
+│   │   ├── context.ts          # Typed HTTP/WebSocket GraphQL context
+│   │   ├── lib/prisma.ts       # Shared Prisma Client lifecycle
+│   │   ├── subscriptions.ts    # graphql-ws subscription server
+│   │   ├── data/
+│   │   │   ├── schema.ts       # Executable GraphQL schema
+│   │   │   ├── resolvers/      # Domain operations
+│   │   │   ├── utils/          # Authentication and shared utilities
+│   │   │   └── models/         # Remaining legacy Mongoose models
+│   │   └── solid/             # Solid Pod integration (still being completed)
+│   ├── prisma/schema/         # Multi-file Prisma schema, mapped to MongoDB
+│   ├── __tests__/             # Jest unit and integration tests
+│   ├── scripts/               # Data checks, migration scripts, seeds
+│   ├── Dockerfile
+│   └── package.json
+├── quotevote-frontend/
+└── docs/
 ```
 
-### Installation
+- The HTTP GraphQL endpoint is **`/graphql`**. Apollo uses the executable schema in `app/data/schema.ts` and the context factory in `app/context.ts`.
+- GraphQL subscriptions use the WebSocket server in `app/subscriptions.ts`.
+- Existing REST authentication endpoints include **`/auth/login`**, **`/auth/refresh`**, and **`/auth/register`**. Direct registration is intentionally refused; onboarding follows the invitation/access-request workflows.
+- **`GET /health`** returns a health response based on the current server's connection/shutdown state. The transitional implementation still checks Mongoose connectivity.
+- Resolvers should use the injected **`context.prisma`**. The application-level Prisma singleton belongs in startup, context construction, and utilities where direct access is explicitly justified.
+- **`~/*`** resolves to **`app/*`**. The production entry point registers this alias for compiled JavaScript.
+
+## Prerequisites
+
+1. **Node.js 24** and **pnpm 9**. Match CI and the backend Docker image when reproducing build or test failures.
+2. **MongoDB**, preferably a local replica set or an isolated MongoDB Atlas development database. Prisma operations involving transactions require a compatible MongoDB deployment.
+3. A local **`.env`** containing your own development credentials. Never commit secrets or connect destructive test scripts to production data.
+
+## Local development
+
+Clone and install from the backend directory:
 
 ```bash
-# Navigate to the project directory
+git clone https://github.com/QuoteVote/quotevote-next.git
 cd quotevote-next/quotevote-backend
+corepack enable
+corepack prepare pnpm@9.15.9 --activate
+pnpm install --ignore-workspace
 ```
 
-```bash
-# Install dependencies
-pnpm install
+Create `quotevote-backend/.env` with values suitable for your **isolated local database**:
+
+```dotenv
+NODE_ENV=development
+PORT=4000
+MONGO_URI=mongodb://127.0.0.1:27017/quotevote_dev?replicaSet=rs0
+DATABASE_URL=mongodb://127.0.0.1:27017/quotevote_dev?replicaSet=rs0
+JWT_SECRET=replace-with-a-long-random-local-development-secret
+CLIENT_URL=http://localhost:3000
 ```
 
-### Development
+The example assumes a local replica set named `rs0`; use the actual hostname, replica-set name, and connection options of your MongoDB installation. **`MONGO_URI`** is used by the remaining Mongoose connection, while **`DATABASE_URL`** is used by Prisma. Point both at the same intended development database for migration testing.
+
+Other configuration depends on the feature being exercised:
+
+| Setting | Purpose |
+| --- | --- |
+| `TRUST_PROXY` | Configure only for a known reverse proxy (e.g., `1` for one trusted hop); leave unset locally |
+| `SENDGRID_API_KEY`, `SENDGRID_SENDER_EMAIL` | Transactional email integration |
+| `SENDGRID_MOCK_BASE_URL` | Local SendGrid mock for the email E2E specs (`pnpm sendgrid:mock`); see `quotevote-frontend/.env.e2e.example` |
+| `SOLID_TOKEN_ENCRYPTION_KEY` and other `SOLID_*` settings | Solid integration; see `app/solid/README.md` and issue [#511](https://github.com/QuoteVote/quotevote-next/issues/511) |
+
+Generate the Prisma client, validate the schema, and start the dev server:
 
 ```bash
-# Start development server with hot reload
+pnpm prisma:generate
+pnpm prisma:validate
 pnpm dev
 ```
 
-The server will be available at [http://localhost:4000](http://localhost:4000).
-
-### Environment Variables
-
-#### This will be update after the backend fully setuped.
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-# Server Configuration
-PORT=4000
-NODE_ENV=development
-
-# Database
-DATABASE_URL=mongodb://localhost:27017/quotevote
-
-# Security
-SECRET=your_jwt_secret_key
-
-# CORS
-CLIENT_URL=http://localhost:3000
-
-# Proxies in front of the server (1 on the hosting platform). Leave unset locally.
-# Per-visitor rate limits only apply when this is set.
-TRUST_PROXY=1
-
-# Email (if using SendGrid)
-SENDGRID_API_KEY=your_sendgrid_api_key
-SENDGRID_SENDER_EMAIL=noreply@quotevote.com
-
-# Local SendGrid mock for email E2E (#498) — start with: pnpm sendgrid:mock
-# SENDGRID_API_KEY=SG.e2e-mock
-# SENDGRID_SENDER_EMAIL=noreply@quotevote.local
-# SENDGRID_MOCK_BASE_URL=http://127.0.0.1:4010
-
-# Other environment variables
-# Add additional variables as needed
-```
-
-## 🎯 Path Aliases
-
-This project uses TypeScript path aliases for clean imports. Always use these aliases instead of relative paths:
-
-- `~/*` → `./app/*` (general alias)
-
-### Example Usage
-
-```typescript
-// ✅ GOOD - Using path aliases
-import { User } from '~/data/models/User';
-import type { UserType } from '~/types/user';
-import { authenticate } from '~/data/utils/auth';
-
-// ❌ BAD - Using relative paths
-import { User } from '../../../data/models/User';
-```
-
-**Note**: Path aliases are configured in `tsconfig.json`. Additional aliases can be added as the project grows.
-
-## 🧪 Testing
-
-### Running Tests
+By default, the API listens at **http://localhost:4000** and serves GraphQL at **http://localhost:4000/graphql**. To check the running service:
 
 ```bash
-# Run all tests
-pnpm test
-
-# Run tests in watch mode
-pnpm test:watch
-
-# Run tests with coverage
-pnpm test:coverage
-
-# Run tests in CI mode
-pnpm test:ci
-
-# Run a specific test file
-pnpm test app/__tests__/utils/auth.test.ts
+curl -i http://localhost:4000/health
 ```
 
-### Test Requirements
+Run the frontend separately from `quotevote-frontend/` and configure its backend URL as documented in the [frontend README](../quotevote-frontend/README.md).
 
-- **Test Location**: All test files **MUST** be in `app/__tests__/` directory
-- **Test Naming**: Use `.test.ts` or `.spec.ts` extensions
-- **Test Organization**:
-  - Unit tests: `app/__tests__/unit/`
-  - Integration tests: `app/__tests__/integration/`
-  - Utility tests: `app/__tests__/utils/`
-- **Testing is MANDATORY**: After each phase or module migration, all tests must pass before proceeding
-
-### Test Structure
-
-```typescript
-import { describe, it, expect } from '@jest/globals';
-import { authenticate } from '~/data/utils/auth';
-
-describe('authenticate', () => {
-  it('should authenticate valid user', () => {
-    const result = authenticate('valid-token');
-    expect(result).toBeDefined();
-  });
-});
-```
-
-## 🏗️ Building for Production
+## Build and run
 
 ```bash
-# Build the application
 pnpm build
-
-# Start production server
 pnpm start
 ```
 
-The compiled JavaScript will be in the `dist/` directory.
+`pnpm build` compiles TypeScript into `dist/`. `pnpm start` runs **`dist/app/start.js`**, which registers path aliases before loading the server. The [Dockerfile](Dockerfile) uses Node 24, builds the application, and starts the same compiled entry point.
 
-## 📝 Code Quality
+## Tests and validation
 
-### TypeScript Requirements
-
-- **Strict Mode**: All TypeScript strict mode checks must pass
-- **No `any` Types**: Never use `any` - use proper types or `unknown`
-- **Type Definitions**: All types must be placed in `app/types/` directory
-- **Type Imports**: Use `import type` for type-only imports
-- **Explicit Return Types**: Functions should have explicit return types when not obvious
-
-### Code Standards
-
-- **Clean Code**: Write readable, self-documenting code
-- **Modularity**: Keep modules small and focused
-- **Single Responsibility**: Each function/module should have one clear purpose
-- **DRY Principle**: Extract common logic into reusable utilities
-- **Error Handling**: Always handle errors appropriately
-- **Async/Await**: Prefer async/await over promises
-
-### Type Definition Examples
-
-```typescript
-// ✅ GOOD - Types in app/types/user.ts
-// app/types/user.ts
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  createdAt: Date;
-}
-
-export type UserInput = Omit<User, 'id' | 'createdAt'>;
-
-// Usage in controller
-import type { User, UserInput } from '~/types/user';
-
-// ❌ BAD - Types defined inline
-// Controller file (WRONG)
-interface User {
-  id: string;
-  username: string;
-}
-```
-
-### Linting and Formatting
+Backend Jest tests live in **`__tests__/unit/`** and **`__tests__/integration/`**. Jest currently discovers **`__tests__/**/*.test.ts`**; Prisma-specific tests have their own command.
 
 ```bash
-# Run linter
+# General backend Jest suite
+pnpm test
+
+# A targeted test file
+pnpm test -- __tests__/unit/authentication.test.ts
+
+# Prisma-specific tests (requires a compatible local MongoDB replica set)
+pnpm test:prisma
+
+# Static checks and production compilation
 pnpm lint
-
-# Fix linting issues
-pnpm lint:fix
-
-# Check TypeScript types
 pnpm type-check
-
-# Format code
-pnpm format
-
-# Check formatting
 pnpm format:check
+pnpm prisma:validate
+pnpm check:contract
+pnpm build
 ```
 
-## 🎨 Architecture Guidelines
+`pnpm check:contract` validates frontend GraphQL documents against the backend's executable schema and resolver coverage. The GitHub Actions workflow runs linting, type checks, tests with coverage, the GraphQL contract check, production builds, and a conditional Docker smoke test.
 
-### Express Middleware
+**End-to-end browser tests** live in `quotevote-frontend/e2e/` and use Playwright. The CI E2E job is currently gated by credentials and can show a successful job **with browser tests skipped**. Check the job steps and executed-test counts before treating E2E coverage as a release gate. See [#85](https://github.com/QuoteVote/quotevote-next/issues/85) and [#108](https://github.com/QuoteVote/quotevote-next/issues/108).
 
-- **Order Matters**: Middleware is executed in the order it's defined
-- **Error Handling**: Use error-handling middleware at the end
-- **Security**: Security headers aren't set yet; they're part of the security pass (#107)
-- **CORS**: Configure CORS properly for your frontend URL
+### Useful package scripts
 
-### Route Structure
+| Script | Purpose |
+| --- | --- |
+| `pnpm dev` | Start `tsx watch app/server.ts` |
+| `pnpm build` / `pnpm start` | Compile and run the production entry point |
+| `pnpm test` / `pnpm test:prisma` | Run Jest or Prisma-specific tests |
+| `pnpm lint` / `pnpm lint:fix` | Check or fix ESLint findings |
+| `pnpm type-check` | TypeScript check without emitting files |
+| `pnpm format` / `pnpm format:check` | Apply or verify Prettier formatting |
+| `pnpm check:contract` | Verify frontend GraphQL documents against backend |
+| `pnpm prisma:generate` / `pnpm prisma:validate` | Generate Prisma Client or validate schema |
+| `pnpm prisma:health` / `pnpm prisma:test` | Local Prisma connectivity and CRUD checks |
+| `pnpm roster:audit` | Read-only legacy relationship audit |
+| `pnpm roster:backfill` | Legacy Roster-to-Prisma backfill; defaults to dry run |
 
-```typescript
-// ✅ GOOD - Organized route structure
-// app/routes/users.ts
-import { Router } from 'express';
-import { getUsers, createUser } from '~/controllers/userController';
+See the actual [scripts in package.json](package.json) for the complete list and command behavior.
 
-const router = Router();
+## Database migration safety
 
-router.get('/', getUsers);
-router.post('/', createUser);
+The Prisma models in `prisma/schema/` deliberately map to existing MongoDB collections and fields so historical accounts, content, and relationships remain compatible during the 2.0 cutover.
 
-export default router;
-```
+- The new backend currently operates alongside some Mongoose code. **#169** tracks its final removal.
+- Use **isolated databases** for local migration tests, seed scripts, and experiments.
+- **Do not run `pnpm prisma:push`, `pnpm prisma:sync`, or `prisma db push` against a shared staging or production database.** These commands can change indexes on existing collections. Follow the reviewed index and cutover process instead ([#694](https://github.com/QuoteVote/quotevote-next/issues/694)).
+- The Roster-to-Buddy/UserBlock backfill supports a dry run; `--apply` writes data and requires deliberate coordination.
+- Staging must use a **separate database restored from a recent production backup**, followed by documented data checks and smoke tests ([#182](https://github.com/QuoteVote/quotevote-next/issues/182), [#183](https://github.com/QuoteVote/quotevote-next/issues/183)).
+- **Solid remains under integration:** the current staging code still contains legacy Solid/Mongoose paths and an incomplete authorization callback. PR [#571](https://github.com/QuoteVote/quotevote-next/pull/571) proposes the Prisma-backed Solid-OIDC implementation and member experience. Its end-to-end provider interoperability must be verified before release.
 
-### Controller Pattern
+## Security and operations
 
-```typescript
-// ✅ GOOD - Controller with proper types
-// app/controllers/userController.ts
-import type { Request, Response } from 'express';
-import type { UserInput } from '~/types/user';
-import { UserService } from '~/services/userService';
+- Provide **`JWT_SECRET`** in every deployed environment; the development fallback is intentionally unsuitable for production.
+- Restrict **`CLIENT_URL`** to the expected frontend origin, configure **`TRUST_PROXY`** only for your deployment topology, and keep database/email/Solid credentials in environment secrets.
+- Review authentication, authorization, rate limits, subscriptions, moderation, and deployment behavior under [#107](https://github.com/QuoteVote/quotevote-next/issues/107).
+- Error tracking, production rollback, and monitoring are tracked under [#183](https://github.com/QuoteVote/quotevote-next/issues/183). Their proposed changes must be merged and configured before relying on them operationally.
+- Preserve current application behavior during the migration; avoid exposing messages, tokens, user information, or other sensitive data in logs and issue reports.
 
-export async function getUsers(req: Request, res: Response): Promise<void> {
-  try {
-    const users = await UserService.getAll();
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}
-```
+## Contributing and references
 
-### Service Layer
+Read the repository [contribution guide](../CONTRIBUTING.md) before taking on an issue or submitting a pull request. Coordinate 2.0 changes against `staging`, especially when the frontend depends on the new GraphQL contract. Include tests for changed behavior and follow the issue's acceptance criteria.
 
-```typescript
-// ✅ GOOD - Service with business logic
-// app/services/userService.ts
-import { User } from '~/data/models/User';
-import type { UserInput } from '~/types/user';
+- [2.0 release roadmap — #637](https://github.com/QuoteVote/quotevote-next/issues/637)
+- [Mongoose removal — #169](https://github.com/QuoteVote/quotevote-next/issues/169)
+- [Backend documentation — #175](https://github.com/QuoteVote/quotevote-next/issues/175)
+- [Migration rules](../docs/Migration-Rules.md)
+- [Backend testing guide](../docs/backend/testing_guide.md)
+- [Express](https://expressjs.com/), [Apollo Server](https://www.apollographql.com/docs/apollo-server/), [Prisma](https://www.prisma.io/docs/), [Jest](https://jestjs.io/)
 
-export class UserService {
-  static async getAll(): Promise<User[]> {
-    return User.find();
-  }
-
-  static async create(input: UserInput): Promise<User> {
-    return User.create(input);
-  }
-}
-```
-
-## 🔧 Available Scripts
-
-| Script               | Description                              |
-| -------------------- | ---------------------------------------- |
-| `pnpm dev`           | Start development server with hot reload |
-| `pnpm build`         | Build TypeScript to JavaScript           |
-| `pnpm start`         | Start production server                  |
-| `pnpm lint`          | Run ESLint                               |
-| `pnpm lint:fix`      | Fix ESLint issues                        |
-| `pnpm type-check`    | Check TypeScript types                   |
-| `pnpm format`        | Format code with Prettier                |
-| `pnpm format:check`  | Check code formatting                    |
-| `pnpm test`          | Run tests                                |
-| `pnpm test:watch`    | Run tests in watch mode                  |
-| `pnpm test:coverage` | Run tests with coverage                  |
-
-## 📚 Key Conventions
-
-### Naming Conventions
-
-- **Files**: camelCase (e.g., `userController.ts`)
-- **Classes**: PascalCase (e.g., `UserService`)
-- **Functions**: camelCase (e.g., `getUserById`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_RETRY_COUNT`)
-- **Types/Interfaces**: PascalCase (e.g., `User`, `ApiResponse`)
-- **Models**: PascalCase, singular (e.g., `User`, `Post`)
-
-### File Organization
-
-- **Controllers**: `app/controllers/`
-- **Services**: `app/services/`
-- **Models**: `app/data/models/`
-- **Routes**: `app/routes/`
-- **Middleware**: `app/middleware/`
-- **Resolvers**: `app/data/resolvers/`
-- **Utilities**: `app/data/utils/`
-- **Type definitions**: `app/types/` (MANDATORY)
-- **Test files**: `app/__tests__/` (MANDATORY)
-- **GraphQL**: `app/graphql/`
-
-### Error Handling
-
-```typescript
-// ✅ GOOD - Proper error handling
-try {
-  const result = await someAsyncOperation();
-  res.json(result);
-} catch (error) {
-  console.error('Error:', error);
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? error.message : undefined,
-  });
-}
-```
-
-### Async/Await
-
-```typescript
-// ✅ GOOD - Using async/await
-export async function getUser(req: Request, res: Response): Promise<void> {
-  const user = await User.findById(req.params.id);
-  res.json(user);
-}
-
-// ❌ BAD - Using promises
-export function getUser(req: Request, res: Response): void {
-  User.findById(req.params.id).then((user) => {
-    res.json(user);
-  });
-}
-```
-
-## 🚫 Common Pitfalls to Avoid
-
-- ❌ Using `any` type
-- ❌ Defining types inline in files (must use `app/types/`)
-- ❌ Placing test files outside `app/__tests__/`
-- ❌ Using relative imports when path aliases are available
-- ❌ Using `npm` or `yarn` instead of `pnpm`
-- ❌ Not handling errors properly
-- ❌ Using promises instead of async/await
-- ❌ Not using explicit return types
-- ❌ Mixing JavaScript and TypeScript files
-- ❌ Not using `import type` for type-only imports
-- ❌ Leaving console.log statements in production code
-
-## 🔄 Migration from Old Server
-
-This backend is a complete migration from the old `server` directory:
-
-### Key Changes
-
-- **JavaScript → TypeScript**: Complete type safety
-- **Babel → TypeScript Compiler**: Native TypeScript compilation
-- **CommonJS → ES Modules**: Modern module system
-- **Express 4 → Express 5**: Latest Express version
-- **Manual Setup → Structured Architecture**: Organized code structure
-
-### Migration Approach
-
-- **Complete Framework Replacement**: Old codebase will be completely removed after migration
-- **Fresh Codebase Strategy**: Code is migrated in logical groups
-- **TypeScript First**: All new code must be TypeScript
-- **Testing Required**: Tests must pass after each migration phase
-
-### Legacy Codebase
-
-The original backend codebase is available for reference during migration:
-
-- **[Legacy Backend Repository](https://github.com/QuoteVote/quotevote-monorepo/tree/main/server)** - Original JavaScript/Babel/Express 4 codebase
-
-When migrating features or modules:
-
-- Reference the legacy codebase for business logic and API endpoints
-- Convert JavaScript to TypeScript with proper type definitions
-- Update to Express 5 patterns and modern async/await
-- Restructure code following the new architecture guidelines
-- Ensure all tests pass before proceeding to the next migration phase
-
-## 📖 Additional Resources
-
-### Documentation
-
-- [Express Documentation](https://expressjs.com/)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [Apollo Server Documentation](https://www.apollographql.com/docs/apollo-server/)
-- [Mongoose Documentation](https://mongoosejs.com/docs/)
-- [Jest Documentation](https://jestjs.io/)
-- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
-
-### Migration Documentation
-
-For detailed migration rules and guidelines, see [Migration-Rules.md](../docs/Migration-Rules.md) (frontend migration rules apply similarly to backend).
-
-## 🤝 Contributing
-
-Before submitting a PR, ensure:
-
-- [ ] All tests pass (`pnpm test`)
-- [ ] TypeScript compiles without errors (`pnpm type-check`)
-- [ ] Linting passes (`pnpm lint`)
-- [ ] Code is formatted (`pnpm format:check`)
-- [ ] No `any` types are used
-- [ ] All types are defined in `app/types/` directory
-- [ ] All test files are in `app/__tests__/` directory
-- [ ] Path aliases are used for all imports
-- [ ] Dependencies installed with `pnpm`
-- [ ] Error handling is implemented
-- [ ] Async/await is used instead of promises
-
-## 🔒 Security
-
-- **Security headers**: not set yet, part of the security pass (#107)
-- **CORS**: Properly configured for frontend
-- **Environment Variables**: Sensitive data in `.env` (not committed)
-- **Input Validation**: Validate all user inputs
-- **Error Messages**: Don't expose sensitive information in error messages
-
----
-
-**Built with ❤️ using Express, TypeScript, and Node.js**
+**License:** This repository is distributed under [GNU AGPL-3.0](../LICENSE). The backend `package.json` currently declares `"license": "ISC"`; that manifest metadata conflicts with the repository license and should be reconciled separately. This README update does not change licensing terms or package metadata.
