@@ -5,7 +5,13 @@
 
 import { renderToString } from "react-dom/server.node";
 import { ApolloProvider, useQuery } from "@apollo/client/react";
-import { createMockApolloClient, render, screen, within } from "@/__tests__/utils/test-utils";
+import {
+  createMockApolloClient,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@/__tests__/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { NotificationLists } from "@/components/Notifications/NotificationLists";
 import { DELETE_NOTIFICATION } from "@/graphql/mutations";
@@ -239,7 +245,7 @@ describe("NotificationLists (#532)", () => {
     const secondClear = await screen.findByRole("button", {
       name: "Clear notification from Cara Local",
     });
-    expect(secondClear).toHaveFocus();
+    await waitFor(() => expect(secondClear).toHaveFocus());
     expect(
       screen.queryByRole("button", { name: "Clear notification from Bob Local" })
     ).not.toBeInTheDocument();

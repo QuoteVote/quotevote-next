@@ -145,9 +145,7 @@ export function NotificationLists({
       return;
     }
 
-    document
-      .querySelector<HTMLElement>(`[data-clear-notification="${pending.id}"]`)
-      ?.focus();
+    document.querySelector<HTMLElement>(`[data-clear-notification="${pending.id}"]`)?.focus();
   }, [notifications]);
 
   const handleDelete = async (notificationId: string): Promise<void> => {
