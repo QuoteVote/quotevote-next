@@ -1,8 +1,8 @@
 /**
  * Unit Tests for SendGrid Email Utility */
 
-import sendGridEmail, { 
-  SENDGRID_TEMPLATE_IDS, 
+import sendGridEmail, {
+  SENDGRID_TEMPLATE_IDS,
   EmailData,
 } from '../../app/data/utils/send-grid-mail';
 
@@ -25,7 +25,7 @@ describe('send-grid-mail', () => {
   beforeEach(() => {
     // Reset all mocks before each test
     jest.clearAllMocks();
-    
+
     // Set up test environment variables
     process.env = {
       ...originalEnv,
@@ -35,6 +35,11 @@ describe('send-grid-mail', () => {
       JWT_SECRET: 'test-secret',
       SENDGRID_API_KEY: 'test-api-key-123',
       SENDGRID_SENDER_EMAIL: 'test@quote.vote',
+    };
+    delete process.env.SENDGRID_MOCK_BASE_URL;
+
+    (sgMail as unknown as { client: { setDefaultRequest: jest.Mock } }).client = {
+      setDefaultRequest: jest.fn(),
     };
 
     mockConfig = {
@@ -63,7 +68,7 @@ describe('send-grid-mail', () => {
     });
 
     it('should have string values for all template IDs', () => {
-      Object.values(SENDGRID_TEMPLATE_IDS).forEach(templateId => {
+      Object.values(SENDGRID_TEMPLATE_IDS).forEach((templateId) => {
         expect(typeof templateId).toBe('string');
         expect(templateId.length).toBeGreaterThan(0);
       });
@@ -89,10 +94,10 @@ describe('send-grid-mail', () => {
         // Assert: Verify the results
         expect(result.success).toBe(true);
         expect(result.message).toBe('Email sent successfully');
-        
+
         expect(sgMail.setApiKey).toHaveBeenCalledWith('test-api-key-123');
         expect(sgMail.send).toHaveBeenCalledTimes(1);
-        
+
         expect(logger.info).toHaveBeenCalledWith(
           'Email sent successfully',
           expect.objectContaining({
@@ -118,7 +123,7 @@ describe('send-grid-mail', () => {
         const result = await sendGridEmail(emailData);
 
         expect(result.success).toBe(true);
-        
+
         // Test that the sent message includes our dynamic data
         const sendCall = mockSend.mock.calls[0][0];
         expect(sendCall).toMatchObject({
@@ -142,6 +147,43 @@ describe('send-grid-mail', () => {
         // Access the first call's first argument
         const sendCall = mockSend.mock.calls[0][0] as unknown as Record<string, unknown>;
         expect(sendCall.from).toContain('test@quote.vote');
+      });
+
+      it('should redirect SendGrid client to mock base URL when env is set', async () => {
+        process.env.SENDGRID_MOCK_BASE_URL = 'http://127.0.0.1:4010';
+
+        const emailData: EmailData = {
+          to: 'test@example.com',
+          subject: 'Test',
+          html: '<p>Test</p>',
+        };
+
+        const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
+        mockSend.mockResolvedValue([{}, {}] as never);
+
+        await sendGridEmail(emailData);
+
+        const client = (sgMail as unknown as { client: { setDefaultRequest: jest.Mock } }).client;
+        expect(client.setDefaultRequest).toHaveBeenCalledWith('baseUrl', 'http://127.0.0.1:4010/');
+      });
+
+      it('should ignore SENDGRID_MOCK_BASE_URL when NODE_ENV is production', async () => {
+        process.env.NODE_ENV = 'production';
+        process.env.SENDGRID_MOCK_BASE_URL = 'http://127.0.0.1:4010';
+
+        const emailData: EmailData = {
+          to: 'test@example.com',
+          subject: 'Test',
+          html: '<p>Test</p>',
+        };
+
+        const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
+        mockSend.mockResolvedValue([{}, {}] as never);
+
+        await sendGridEmail(emailData);
+
+        const client = (sgMail as unknown as { client: { setDefaultRequest: jest.Mock } }).client;
+        expect(client.setDefaultRequest).not.toHaveBeenCalled();
       });
 
       it('should use custom from address when provided', async () => {
@@ -169,10 +211,12 @@ describe('send-grid-mail', () => {
         };
         const mockSend = sgMail.send as jest.MockedFunction<typeof sgMail.send>;
         mockSend.mockResolvedValue([{}, {}] as never);
-        
+
         const result = await sendGridEmail(emailData);
         expect(result.success).toBe(true);
-        const sendCall = mockSend.mock.calls[0][0] as unknown as { content: Array<{ type: string }> };
+        const sendCall = mockSend.mock.calls[0][0] as unknown as {
+          content: Array<{ type: string }>;
+        };
         expect(sendCall.content[0].type).toBe('text/plain');
       });
     });
@@ -212,9 +256,7 @@ describe('send-grid-mail', () => {
           html: '<p>Test</p>',
         } as EmailData; // Cast to bypass TypeScript checking for this test
 
-        await expect(sendGridEmail(emailData)).rejects.toThrow(
-          'Recipient email (to) is required'
-        );
+        await expect(sendGridEmail(emailData)).rejects.toThrow('Recipient email (to) is required');
       });
 
       it('should return error result when SendGrid API fails', async () => {
@@ -299,9 +341,9 @@ describe('send-grid-mail', () => {
           message: 'Error',
           response: {
             body: {
-              something: 'else'
-            }
-          }
+              something: 'else',
+            },
+          },
         };
         mockSend.mockRejectedValue(sgError);
 
@@ -316,11 +358,9 @@ describe('send-grid-mail', () => {
           message: 'Forbidden',
           response: {
             body: {
-              errors: [
-                { message: 'authorization grant is invalid' }
-              ]
-            }
-          }
+              errors: [{ message: 'authorization grant is invalid' }],
+            },
+          },
         };
         mockSend.mockRejectedValue(sgError);
 
@@ -383,9 +423,9 @@ describe('send-grid-mail', () => {
           message: 'Error',
           response: {
             body: {
-              errors: [{ message: 'some other error' }]
-            }
-          }
+              errors: [{ message: 'some other error' }],
+            },
+          },
         };
         mockSend.mockRejectedValue(sgError);
         await sendGridEmail(emailData);
