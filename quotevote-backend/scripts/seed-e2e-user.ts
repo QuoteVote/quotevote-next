@@ -8,7 +8,8 @@
  * cleanup: they just ask for a new user. Modelled on seed-e2e-author.ts, including the refusal
  * to run against a database that is not local.
  *
- * Usage: pnpm seed:e2e-user   (reads DATABASE_URL from quotevote-backend/.env)
+ * Usage: pnpm seed:e2e-user   (needs DATABASE_URL, e.g. from quotevote-backend/.env: it must be
+ * the database behind E2E_API_URL, and the script stops with an error if it is not set)
  */
 import dotenv from 'dotenv';
 import { randomBytes } from 'crypto';
@@ -19,8 +20,8 @@ import { PrismaClient } from '@prisma/client';
 dotenv.config({ quiet: true });
 
 async function main(): Promise<void> {
-  const databaseUrl =
-    process.env.DATABASE_URL || process.env.MONGO_URI || 'mongodb://localhost:27017/quotevote';
+  const databaseUrl = process.env.DATABASE_URL || process.env.MONGO_URI;
+  if (!databaseUrl) throw new Error('DATABASE_URL is required: the database behind E2E_API_URL.');
 
   // safety guard: only run against a local database
   const { hostname } = new URL(databaseUrl);
