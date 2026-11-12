@@ -30,6 +30,9 @@ const safeSecret = JWT_SECRET || 'dev_jwt_secret_fallback_do_not_use_in_prod';
 export const INVITE_SIGNUP_TOKEN_TYPE = 'invite_signup' as const;
 export const INVITE_SIGNUP_TOKEN_PURPOSE = 'completeSignup' as const;
 
+/** How long an admin-approved signup link stays valid. */
+export const ADMIN_INVITE_TTL_SECONDS = 60 * 60 * 24;
+
 /** How long a member's invite link stays valid (#672). */
 export const MEMBER_INVITE_TTL_SECONDS = 60 * 60 * 24 * 7;
 
@@ -52,7 +55,7 @@ export interface InviteSignupTokenPayload {
  */
 export const generateInviteSignupToken = (
   userId: string,
-  expiresInSeconds = 60 * 60 * 24,
+  expiresInSeconds = ADMIN_INVITE_TTL_SECONDS,
   invite?: { inviteId: string; email: string }
 ): string => {
   const payload: InviteSignupTokenPayload = {

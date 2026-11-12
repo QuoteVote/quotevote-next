@@ -39,8 +39,8 @@ Frontend wiring (`completeSignup` / `verifyInviteSignupToken` / `/terms`) ships 
 
 Invite lifecycle uses legacy numeric `User.status` (admin UI / `userInviteRequests` already filter on these). Do **not** overload `accountStatus` for invite state — that field stays for moderation (`active` / `disabled` / …).
 
-1. `requestUserAccess` — creates a user with `status: 1`, email as temporary username, no password. Re-opens only declined invites (`status: 2` → `1`); approved invites (`status: 4`) are left alone so emailed signup links stay valid.
-2. `sendUserInviteApproval` (admin) — approve → `status: 4` and email a one-day invite-signup token; decline → `status: 2` (not `accountStatus: disabled`).
+1. `requestUserAccess` — creates a user with `status: 1`, email as temporary username, no password. Re-opens declined invites (`status: 2` → `1`). An unfinished invite (`status: 4`) is handled as in [Expired invites](#expired-invites-691). An address with a password is refused, whatever its `accountStatus`.
+2. `sendUserInviteApproval` (admin) — approve → `status: 4`, record a `UserInvite` (`pending`, `expiresAt` in one day, no inviter) and email a one-day invite-signup token; decline → `status: 2` (not `accountStatus: disabled`). The token itself is unchanged: it carries no `inviteId`.
 3. `verifyInviteSignupToken` — public query for the signup form (requires `status: 4`, no password).
 4. `completeSignup` — sets username/password, ensures `accountStatus: active`, writes `TermsAcceptance` with `invite_completion`.
 
@@ -52,6 +52,15 @@ A member's invite skips the admin queue. Public requests still go through steps 
 - The token is the same `invite_signup` / `completeSignup` token with `inviteId` and `email` claims, valid 7 days. The link is only ever in the email.
 - The `UserInvite` row decides whether the link works: `verifyInviteSignupToken` and `completeSignup` require it to be `pending` and unexpired, with the token, invite and account emails matching. `completeSignup` claims it with one conditional `updateMany` (`pending` → `accepted`), so a link works once even with two requests at once, and puts it back to `pending` if the final account update fails.
 - Tokens without `inviteId` (admin approval) work as before.
+
+### Expired invites (#691)
+
+An account invited by a member or approved by an admin that never finished signup (`status: 4`, no password) can ask for access again:
+
+- If any `pending` `UserInvite` for the address is still unexpired, `requestUserAccess` refuses with "An invite was already sent to this email. Check your inbox for the signup link." The request forms show that message.
+- Otherwise each lapsed invite is marked `expired`, the account goes back to `status: 1` (so it shows in `userInviteRequests`), and the usual confirmation email is sent. Approvals made before approvals were recorded have no `UserInvite`, so they count as lapsed.
+- Each step is a conditional update on the record as it was read. If a member renews the invite at the same moment, the person is told to check their inbox; if they finish signup at the same moment, they get "Email already exists"; two requests at once both succeed.
+- `checkDuplicateEmail` no longer counts an unfinished invite as an existing account, so the request forms that check first reach `requestUserAccess`.
 
 ## Retention and cutover
 

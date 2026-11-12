@@ -10,6 +10,10 @@ import { GET_CHECK_DUPLICATE_EMAIL } from "@/graphql/queries";
 import { RequestAccessSuccess } from "@/components/RequestAccess/RequestAccessSuccess";
 import { Globe } from "@/components/Icons";
 import { parseRequestAccessEmail } from "@/lib/validation/requestAccessSchema";
+import {
+  INVITE_ALREADY_SENT_MESSAGE,
+  isInviteAlreadySentError,
+} from "@/lib/utils/inviteAlreadySent";
 import { PRIMARY_ACTION_CLASS } from "@/lib/constants/formControls";
 import { cn } from "@/lib/utils";
 
@@ -96,6 +100,8 @@ export function RequestAccessPageContent() {
       const message = err instanceof Error ? err.message : "";
       if (message.includes("email: Path `email` is required.")) {
         setErrorMessage("Email is required");
+      } else if (isInviteAlreadySentError(err)) {
+        setErrorMessage(INVITE_ALREADY_SENT_MESSAGE);
       } else {
         setErrorMessage("We couldn’t send your request. Please try again in a moment.");
       }
