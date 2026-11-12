@@ -28,7 +28,9 @@
     "roster:backfill": "tsx scripts/roster-backfill.ts",
     "roster:seed-fixtures": "tsx scripts/seed-roster-fixtures.ts",
     "seed:e2e-author": "tsx scripts/seed-e2e-author.ts",
+    "seed:e2e-user": "tsx scripts/seed-e2e-user.ts",
     "botreport:repair": "tsx scripts/repair-bot-reports.ts",
+    "sendgrid:mock": "tsx scripts/sendgrid-mock-server.ts",
     "postinstall": "prisma generate --schema=./prisma/schema"
   },
   "prisma": {

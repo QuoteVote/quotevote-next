@@ -91,6 +91,7 @@ Other configuration depends on the feature being exercised:
 | --- | --- |
 | `TRUST_PROXY` | Configure only for a known reverse proxy (e.g., `1` for one trusted hop); leave unset locally |
 | `SENDGRID_API_KEY`, `SENDGRID_SENDER_EMAIL` | Transactional email integration |
+| `SENDGRID_MOCK_BASE_URL` | Local SendGrid mock for the email E2E specs (`pnpm sendgrid:mock`); see `quotevote-frontend/.env.e2e.example` |
 | `SOLID_TOKEN_ENCRYPTION_KEY` and other `SOLID_*` settings | Solid integration; see `app/solid/README.md` and issue [#511](https://github.com/QuoteVote/quotevote-next/issues/511) |
 
 Generate the Prisma client, validate the schema, and start the dev server:

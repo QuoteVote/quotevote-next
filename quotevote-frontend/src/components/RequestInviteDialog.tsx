@@ -28,6 +28,10 @@ import { Label } from '@/components/ui/label';
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
 import { GET_CHECK_DUPLICATE_EMAIL } from '@/graphql/queries';
 import { parseRequestAccessEmail } from '@/lib/validation/requestAccessSchema';
+import {
+  INVITE_ALREADY_SENT_MESSAGE,
+  isInviteAlreadySentError,
+} from '@/lib/utils/inviteAlreadySent';
 import { loginUser } from '@/lib/auth';
 import { useAppStore } from '@/store/useAppStore';
 import {
@@ -111,6 +115,10 @@ export function RequestInviteDialog({ open, onClose, view = 'invite' }: RequestI
         handleClose();
       }, 3000);
     } catch (err) {
+      if (isInviteAlreadySentError(err)) {
+        setError(INVITE_ALREADY_SENT_MESSAGE);
+        return;
+      }
       const submitError = err as Error;
       setError('An unexpected error occurred. Please try again later.');
       toast.error('Failed to submit request');

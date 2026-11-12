@@ -420,11 +420,16 @@ export const userResolver = {
       // Case-insensitive exact match without building a regex from user input.
       const matches = await context.prisma.user.findMany({
         where: { email: { equals: email, mode: 'insensitive' } },
-        select: { status: true },
+        select: { status: true, password: true },
       });
 
-      // An undecided request may be submitted again, so it isn't a duplicate (legacy rule).
-      if (matches.some((u) => u.status === INVITE_STATUS_REQUESTED)) return [];
+      // An undecided request may be submitted again, so it isn't a duplicate (legacy
+      // rule). Nor is an invite that was never used: requestUserAccess either points
+      // the person at it or, once it has lapsed, puts them back in the queue (#691).
+      const canRequestAgain = (u: { status: number | null; password: string | null }): boolean =>
+        u.status === INVITE_STATUS_REQUESTED ||
+        (u.status === INVITE_STATUS_APPROVED && !u.password);
+      if (matches.some(canRequestAgain)) return [];
 
       // This query is public: the form only needs to know a match exists, so no
       // user fields are returned.
