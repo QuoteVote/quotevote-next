@@ -22,6 +22,30 @@ function requireUserId(context: GraphQLContext): string {
   return context.user._id.toString();
 }
 
+function clampNotificationLimit(limit?: number | null): number {
+  const requested =
+    typeof limit === 'number' && Number.isFinite(limit)
+      ? Math.floor(limit)
+      : DEFAULT_NOTIFICATION_LIMIT;
+  return Math.min(Math.max(requested, 1), MAX_NOTIFICATION_LIMIT);
+}
+
+async function listNotificationsForStatus(
+  context: GraphQLContext,
+  userId: string,
+  status: 'new' | 'deleted',
+  limit?: number | null
+): Promise<Common.NotificationWithRelations[]> {
+  const notifications = await context.prisma.notification.findMany({
+    where: { userId, status },
+    orderBy: { created: 'desc' },
+    take: clampNotificationLimit(limit),
+    select: NOTIFICATION_SELECT,
+  });
+
+  return attachNotificationRelations(context.prisma, notifications.map(toNotificationEntity));
+}
+
 export const notificationResolver = {
   Query: {
     /**
@@ -35,22 +59,19 @@ export const notificationResolver = {
       context: GraphQLContext
     ): Promise<Common.NotificationWithRelations[]> => {
       const userId = requireUserId(context);
+      return listNotificationsForStatus(context, userId, 'new', args.limit);
+    },
 
-      const requested =
-        typeof args.limit === 'number' && Number.isFinite(args.limit) ? Math.floor(args.limit) : DEFAULT_NOTIFICATION_LIMIT;
-      const limit = Math.min(Math.max(requested, 1), MAX_NOTIFICATION_LIMIT);
-
-      const notifications = await context.prisma.notification.findMany({
-        where: { userId, status: 'new' },
-        orderBy: { created: 'desc' },
-        take: limit,
-        select: NOTIFICATION_SELECT,
-      });
-
-      return attachNotificationRelations(
-        context.prisma,
-        notifications.map(toNotificationEntity)
-      );
+    /**
+     * Returns cleared notifications (status: `deleted`) for Notification History (#464).
+     */
+    notificationHistory: async (
+      _parent: unknown,
+      args: { limit?: number | null },
+      context: GraphQLContext
+    ): Promise<Common.NotificationWithRelations[]> => {
+      const userId = requireUserId(context);
+      return listNotificationsForStatus(context, userId, 'deleted', args.limit);
     },
   },
   Mutation: {
@@ -98,6 +119,25 @@ export const notificationResolver = {
       });
 
       return toNotificationEntity(updated);
+    },
+
+    /**
+     * Soft-deletes every active (`new`) notification for the signed-in user (#464).
+     * Returns how many rows were updated.
+     */
+    clearAllNotifications: async (
+      _parent: unknown,
+      _args: unknown,
+      context: GraphQLContext
+    ): Promise<number> => {
+      const userId = requireUserId(context);
+
+      const result = await context.prisma.notification.updateMany({
+        where: { userId, status: 'new' },
+        data: { status: 'deleted' },
+      });
+
+      return result.count;
     },
   },
   // The query loads these in a batch. The live notification subscription
