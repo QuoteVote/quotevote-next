@@ -29,6 +29,7 @@
     "roster:seed-fixtures": "tsx scripts/seed-roster-fixtures.ts",
     "seed:e2e-author": "tsx scripts/seed-e2e-author.ts",
     "botreport:repair": "tsx scripts/repair-bot-reports.ts",
+    "db:unique-indexes": "tsx scripts/unique-indexes.ts",
     "postinstall": "prisma generate --schema=./prisma/schema"
   },
   "prisma": {
