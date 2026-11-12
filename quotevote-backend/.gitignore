@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 /dist
+
+# data check reports (pnpm data:check)
+/data-check-*.json
