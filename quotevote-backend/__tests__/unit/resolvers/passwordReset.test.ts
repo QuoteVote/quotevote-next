@@ -8,6 +8,7 @@ import * as jwt from 'jsonwebtoken';
 import { GraphQLError } from 'graphql';
 import { userResolver } from '~/data/resolvers/userResolver';
 import {
+  MEMBER_INVITE_TTL_SECONDS,
   PASSWORD_RESET_TOKEN_TTL_SECONDS,
   generateInviteSignupToken,
   generatePasswordResetToken,
@@ -59,6 +60,7 @@ function mockContext(ip = '203.0.113.7', trustProxy: number | false = false): Gr
         findUnique: jest.fn().mockResolvedValue(null),
         update: jest.fn().mockResolvedValue({}),
       },
+      userInvite: { findUnique: jest.fn().mockResolvedValue(null) },
     },
     req: { ip, app: { get: (name: string) => (name === 'trust proxy' ? trustProxy : undefined) } },
     user: undefined,
@@ -343,9 +345,14 @@ describe('password reset (#623)', () => {
   });
 
   describe('Query.verifyUserPasswordResetToken', () => {
-    const verify = (token: string, user: Record<string, unknown> | null = activeUser) => {
+    const verify = (
+      token: string,
+      user: Record<string, unknown> | null = activeUser,
+      invite: Record<string, unknown> | null = null
+    ) => {
       const ctx = mockContext();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue(user);
+      (ctx.prisma.userInvite.findUnique as jest.Mock).mockResolvedValue(invite);
       return userResolver.Query.verifyUserPasswordResetToken(null, { token }, ctx);
     };
 
@@ -374,6 +381,24 @@ describe('password reset (#623)', () => {
         expect.objectContaining({ _id: userId })
       );
       await expect(verify(invite, activeUser)).resolves.toBeNull();
+    });
+
+    it('accepts a member invite link only while its invite is open (#672)', async () => {
+      const email = activeUser.email;
+      const token = generateInviteSignupToken(userId, MEMBER_INVITE_TTL_SECONDS, {
+        inviteId: '507f1f77bcf86cd799439022',
+        email,
+      });
+      const pending = { ...activeUser, password: null, status: 4 };
+      const open = { email, status: 'pending', expiresAt: new Date(Date.now() + 60_000) };
+
+      await expect(verify(token, pending, open)).resolves.toEqual(
+        expect.objectContaining({ _id: userId })
+      );
+      await expect(verify(token, pending, { ...open, status: 'accepted' })).resolves.toBeNull();
+      await expect(
+        verify(token, pending, { ...open, expiresAt: new Date(Date.now() - 60_000) })
+      ).resolves.toBeNull();
     });
 
     it('returns null for a session token, an expired link and garbage', async () => {

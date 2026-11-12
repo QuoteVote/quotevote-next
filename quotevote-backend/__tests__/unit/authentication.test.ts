@@ -113,6 +113,56 @@ describe('Authentication Utils', () => {
         /cannot be used in this endpoint/
       );
     });
+
+    describe('member invite tokens (#672)', () => {
+      const realJwt = jest.requireActual('jsonwebtoken') as typeof jwt;
+      const userId = '507f1f77bcf86cd799439011';
+      const invite = { inviteId: '507f1f77bcf86cd799439022', email: 'friend@example.com' };
+
+      beforeEach(() => {
+        (jwt.sign as jest.Mock).mockImplementation((payload, secret, opts) =>
+          realJwt.sign(payload, secret as string, opts as jwt.SignOptions)
+        );
+        (jwt.verify as jest.Mock).mockImplementation((token, secret) =>
+          realJwt.verify(token as string, secret as string)
+        );
+      });
+
+      it('carries the invite and its recipient, and lasts 7 days', () => {
+        const token = auth.generateInviteSignupToken(
+          userId,
+          auth.MEMBER_INVITE_TTL_SECONDS,
+          invite
+        );
+        const payload = auth.verifyInviteSignupToken(token);
+
+        expect(payload).toMatchObject({
+          userId,
+          ...invite,
+          type: 'invite_signup',
+          purpose: 'completeSignup',
+        });
+        expect((payload.exp ?? 0) - (payload.iat ?? 0)).toBe(7 * 24 * 60 * 60);
+      });
+
+      it('is refused as a session', async () => {
+        const token = auth.generateInviteSignupToken(
+          userId,
+          auth.MEMBER_INVITE_TTL_SECONDS,
+          invite
+        );
+        await expect(auth.verifyToken(token)).rejects.toThrow(/cannot be used in this endpoint/);
+      });
+
+      it('refuses a token with only one of the invite claims', () => {
+        const base = { userId, type: 'invite_signup', purpose: 'completeSignup' };
+        const noEmail = realJwt.sign({ ...base, inviteId: invite.inviteId }, 'test_secret');
+        const noInvite = realJwt.sign({ ...base, email: invite.email }, 'test_secret');
+
+        expect(() => auth.verifyInviteSignupToken(noEmail)).toThrow('Invalid invite signup token');
+        expect(() => auth.verifyInviteSignupToken(noInvite)).toThrow('Invalid invite signup token');
+      });
+    });
   });
 
   describe('generateHashPassword', () => {
