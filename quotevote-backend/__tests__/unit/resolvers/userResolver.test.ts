@@ -57,6 +57,7 @@ function mockContext(overrides: Partial<GraphQLContext['user']> = {}): GraphQLCo
           created: new Date(),
         }),
       },
+      $runCommandRaw: jest.fn().mockResolvedValue({ value: { count: 1 } }),
     } as unknown as GraphQLContext['prisma'],
     user: {
       _id: actorId,
@@ -301,6 +302,20 @@ describe('userResolver', () => {
       );
     });
 
+    it('ignores avatar, which only changes through updateUserAvatar', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({ id: actorId, username: 'alice' });
+
+      await userResolver.Mutation.updateUser(
+        null,
+        { user: { _id: actorId, bio: 'Hi', avatar: 'https://example.com/x.png' } },
+        ctx
+      );
+
+      const call = (ctx.prisma.user.update as jest.Mock).mock.calls[0][0];
+      expect(call.data).toEqual({ bio: 'Hi' });
+    });
+
     it('rejects unfinished invite accounts from updateUser', async () => {
       const ctx = mockContext();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
@@ -322,22 +337,39 @@ describe('userResolver', () => {
 
   describe('Mutation.updateUserAvatar', () => {
     const avatarQualities = {
-      topType: 'LongHairStraight',
-      hairColor: 'Brown',
+      topType: 'LongHairDreads',
+      accessoriesType: 'Round',
+      hatColor: 'Blue02',
+      hairColor: 'Black',
+      facialHairType: 'Blank',
+      facialHairColor: 'BrownDark',
       clotheType: 'Hoodie',
+      clotheColor: 'PastelGreen',
+      graphicType: 'Bear',
+      eyeType: 'Happy',
+      eyebrowType: 'DefaultNatural',
+      mouthType: 'Smile',
+      skinColor: 'Brown',
     };
 
+    const save = (
+      qualities: unknown,
+      ctx: GraphQLContext = mockContext(),
+      userId: string = actorId
+    ): Promise<unknown> =>
+      userResolver.Mutation.updateUserAvatar(
+        null,
+        { user_id: userId, avatarQualities: qualities as Record<string, unknown> },
+        ctx
+      );
+
     it('requires authentication', async () => {
-      await expect(
-        userResolver.Mutation.updateUserAvatar(
-          null,
-          { user_id: actorId, avatarQualities },
-          { ...mockContext(), user: null }
-        )
-      ).rejects.toThrow(GraphQLError);
+      await expect(save(avatarQualities, { ...mockContext(), user: null })).rejects.toThrow(
+        GraphQLError
+      );
     });
 
-    it('updates own avatar qualities', async () => {
+    it('saves exactly the 13 qualities for the member', async () => {
       const ctx = mockContext();
       (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
         id: actorId,
@@ -345,11 +377,7 @@ describe('userResolver', () => {
         avatar: avatarQualities,
       });
 
-      const result = await userResolver.Mutation.updateUserAvatar(
-        null,
-        { user_id: actorId, avatarQualities },
-        ctx
-      );
+      const result = (await save(avatarQualities, ctx)) as { avatar: unknown };
 
       expect(ctx.prisma.user.update).toHaveBeenCalledWith({
         where: { id: actorId },
@@ -371,24 +399,41 @@ describe('userResolver', () => {
       expect(result.avatar).toEqual(avatarQualities);
     });
 
-    it('forbids updating another user avatar', async () => {
-      await expect(
-        userResolver.Mutation.updateUserAvatar(
-          null,
-          { user_id: otherId, avatarQualities },
-          mockContext({ admin: false })
-        )
-      ).rejects.toThrow(/Not authorized/);
+    it('forbids changing another member avatar, also for admins', async () => {
+      await expect(save(avatarQualities, mockContext({ admin: false }), otherId)).rejects.toThrow(
+        /Not authorized/
+      );
+      const adminCtx = mockContext({ admin: true });
+      await expect(save(avatarQualities, adminCtx, otherId)).rejects.toThrow(/Not authorized/);
+      expect(adminCtx.prisma.user.update).not.toHaveBeenCalled();
     });
 
-    it('rejects non-object avatarQualities', async () => {
-      await expect(
-        userResolver.Mutation.updateUserAvatar(
-          null,
-          { user_id: actorId, avatarQualities: null },
-          mockContext()
-        )
-      ).rejects.toThrow(/avatarQualities/);
+    it.each([
+      ['null', null, /must be an object/],
+      ['an array', [avatarQualities], /must be an object/],
+      ['a string', 'https://example.com/me.png', /must be an object/],
+      ['a missing key', { ...avatarQualities, skinColor: undefined }, /skinColor is required/],
+      ['an unknown key', { ...avatarQualities, url: 'https://example.com/x.png' }, /Unknown/],
+      ['an unknown value', { ...avatarQualities, eyeType: 'Lasers' }, /eyeType has an unsupported/],
+      ['a nested value', { ...avatarQualities, topType: { $ne: null } }, /topType is required/],
+    ])('rejects %s as BAD_USER_INPUT without saving', async (_label, qualities, message) => {
+      const ctx = mockContext();
+      const error = await save(qualities, ctx).catch((err: unknown) => err);
+      expect(error).toBeInstanceOf(GraphQLError);
+      expect((error as GraphQLError).message).toMatch(message);
+      expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+      expect(ctx.prisma.$runCommandRaw).not.toHaveBeenCalled();
+    });
+
+    it('rate limits avatar saves', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.$runCommandRaw as jest.Mock).mockResolvedValue({
+        value: { count: 31, resetAt: { $date: new Date(Date.now() + 60_000).toISOString() } },
+      });
+      const error = await save(avatarQualities, ctx).catch((err: unknown) => err);
+      expect((error as GraphQLError).extensions.code).toBe('TOO_MANY_REQUESTS');
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
     });
   });
 
@@ -685,7 +730,7 @@ describe('userResolver', () => {
       const ctx = mockContext({ admin: true });
       (ctx.prisma.userReport.findMany as jest.Mock).mockResolvedValue([record]);
       (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([reporter, reportedUser]);
-    
+
       const [report] = await userResolver.Query.getUserReports(null, { userId: targetId }, ctx);
 
       expect(ctx.prisma.user.findMany).toHaveBeenCalledWith({
@@ -706,7 +751,7 @@ describe('userResolver', () => {
       expect(report.reportedUser).toMatchObject({ _id: targetId, username: 'carol' });
     });
 
-      it('returns null for a reporter whose account no longer exists', async () => {
+    it('returns null for a reporter whose account no longer exists', async () => {
       const ctx = mockContext({ admin: true });
       (ctx.prisma.userReport.findMany as jest.Mock).mockResolvedValue([record]);
       (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([reportedUser]);
@@ -730,11 +775,11 @@ describe('userResolver', () => {
       expect(report.updatedAt).toBe(created.toISOString());
     });
   });
-    describe('Query.getBotReportedUsers', () => {
+  describe('Query.getBotReportedUsers', () => {
     const joined = new Date('2025-01-01T00:00:00.000Z');
     const lastReport = new Date('2026-02-01T00:00:00.000Z');
 
-        it.each([
+    it.each([
       { label: 'a signed-out caller', user: null, code: 'UNAUTHENTICATED' },
       { label: 'a non-admin member', user: { _id: actorId, admin: false }, code: 'FORBIDDEN' },
     ])('rejects $label and never queries users', async ({ user, code }) => {
@@ -797,9 +842,7 @@ describe('userResolver', () => {
 
       await userResolver.Query.getBotReportedUsers(null, { limit: 10000 }, ctx);
 
-      expect(ctx.prisma.user.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 500 })
-      );
+      expect(ctx.prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 500 }));
     });
 
     it('maps the fields the admin bot list shows', async () => {
@@ -844,7 +887,11 @@ describe('userResolver', () => {
 
     it('rejects self-follow', async () => {
       await expect(
-        userResolver.Mutation.followUser(null, { user_id: actorId, action: 'follow' }, mockContext())
+        userResolver.Mutation.followUser(
+          null,
+          { user_id: actorId, action: 'follow' },
+          mockContext()
+        )
       ).rejects.toThrow(/Can't follow the same user/);
     });
 
