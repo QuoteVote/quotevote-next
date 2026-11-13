@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { avatarEditorFont } from "@/lib/fonts/avatarEditorFont";
 import { buildPageMetadata, decodeParam, pageTitle } from "@/lib/seo/metadata";
 
 interface Props {
@@ -18,5 +19,5 @@ export async function generateMetadata({ params }: Omit<Props, "children">): Pro
 }
 
 export default function AvatarLayout({ children }: Props): ReactNode {
-  return children;
+  return <div className={avatarEditorFont.variable}>{children}</div>;
 }
