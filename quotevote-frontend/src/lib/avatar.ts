@@ -1,3 +1,6 @@
+import { AVATAAARS_VALUES, AVATAR_KEYS } from '@/lib/avatarOptions';
+import type { AvatarDraft, AvatarStyle } from '@/types/avatar';
+
 const AVATAAARS_QUALITY_KEYS = new Set([
   'topType',
   'accessoriesType',
@@ -36,8 +39,8 @@ const DEFAULT_OPTIONS: Record<string, readonly string[]> = {
 
 export type AvatarQualities = Record<string, string>;
 
-export function buildAvatarUrl(qualities: AvatarQualities): string {
-  const params = new URLSearchParams({ avatarStyle: 'Circle' });
+export function buildAvatarUrl(qualities: AvatarQualities, style: AvatarStyle = 'Circle'): string {
+  const params = new URLSearchParams({ avatarStyle: style });
   Object.entries(qualities).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
@@ -104,4 +107,50 @@ export function parseAvatarToUrl(
   }
 
   return undefined;
+}
+
+/**
+ * Reads any stored avatar into a full set of the 13 Avataaars qualities.
+ * Keys or values Avataaars doesn't know are dropped and filled from the member's
+ * deterministic default, so a save always sends a complete, valid object.
+ * Returns null when the stored avatar is an image URL or empty.
+ */
+export function readAvatarQualities(
+  avatar: string | Record<string, unknown> | undefined | null
+): Partial<AvatarDraft> | null {
+  if (!avatar) return null;
+  let value: unknown = avatar;
+  if (typeof avatar === 'string') {
+    try {
+      value = JSON.parse(avatar);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+  const out: Partial<AvatarDraft> = {};
+  for (const key of AVATAR_KEYS) {
+    const v = (value as Record<string, unknown>)[key];
+    if (typeof v === 'string' && AVATAAARS_VALUES[key].includes(v)) out[key] = v;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+/** A complete draft: known stored values first, then the deterministic default for the seed. */
+export function completeDraft(partial: Partial<AvatarDraft> | null, seed: string): AvatarDraft {
+  const base = getDefaultAvatar(seed);
+  const draft = {} as AvatarDraft;
+  for (const key of AVATAR_KEYS) {
+    const fallback = base[key] ?? AVATAAARS_VALUES[key][0];
+    draft[key] = partial?.[key] ?? fallback;
+  }
+  return draft;
+}
+
+/** True when every key holds a value Avataaars accepts. */
+export function isValidDraft(value: Record<string, unknown>): value is AvatarDraft {
+  return AVATAR_KEYS.every((key) => {
+    const v = value[key];
+    return typeof v === 'string' && AVATAAARS_VALUES[key].includes(v);
+  });
 }

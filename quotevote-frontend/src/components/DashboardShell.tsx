@@ -685,7 +685,13 @@ export function DashboardShell({
         {pathname.startsWith('/profile') || pathname.startsWith('/settings') ? (
           // No fixed Messages / Buddy List column here (#536): Profile and Settings
           // are their own pages, and Messages stays one tap away in the main nav.
-          <div className="mx-auto min-w-0 max-w-3xl px-4">
+          <div
+            className={cn(
+              'mx-auto min-w-0 px-4',
+              // The avatar editor (#656) uses a two-column layout on desktop.
+              /^\/profile\/[^/]+\/avatar\/?$/.test(pathname) ? 'max-w-[1232px]' : 'max-w-3xl',
+            )}
+          >
             {children}
           </div>
         ) : (

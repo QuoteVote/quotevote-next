@@ -2176,3 +2176,59 @@ p { line-height: 1.625; }
     border-radius: 2px;
   }
 }
+
+/* Avatar editor (#656): colors from the approved design, scoped to the editor. */
+.avatar-editor {
+  --ae-green: #0e8a5a;
+  --ae-green-ink: #0a6b46;
+  --ae-green-soft: #e6f6ee;
+  --ae-green-tint: #f3fbf7;
+  --ae-green-line: #a8dcc2;
+  --ae-ink: #0f172a;
+  --ae-ink-2: #273246;
+  --ae-muted: #5a6478;
+  --ae-muted-2: #7a8499;
+  --ae-faint: #a3abbd;
+  --ae-line: #e4e8f0;
+  --ae-line-2: #d3d9e4;
+  --ae-line-3: #eef1f6;
+  --ae-ground: #f6f8fb;
+  --ae-surface: #ffffff;
+  --ae-side: #fbfcfe;
+  --ae-thumb: #f3f6fa;
+  --ae-amber-soft: #fdf4df;
+  --ae-amber-ink: #8a5a12;
+  --ae-amber: #e3a21a;
+  --ae-danger: #c42b2b;
+  --ae-danger-line: #f0c6c6;
+  --ae-stage-from: #e9f0ff;
+  --ae-stage-to: #e6f6ee;
+  font-family: var(--font-avatar-editor), var(--font-sans), system-ui, sans-serif;
+  color: var(--ae-ink);
+}
+
+.dark .avatar-editor {
+  --ae-green: #3fbf87;
+  --ae-green-ink: #7fdcb0;
+  --ae-green-soft: #12382a;
+  --ae-green-tint: #10261d;
+  --ae-green-line: #2a6b4f;
+  --ae-ink: #eef2f8;
+  --ae-ink-2: #d4dae5;
+  --ae-muted: #a2abbd;
+  --ae-muted-2: #8b94a7;
+  --ae-faint: #5d6678;
+  --ae-line: #2a3140;
+  --ae-line-2: #384152;
+  --ae-line-3: #232a37;
+  --ae-ground: #0f141c;
+  --ae-surface: #161c26;
+  --ae-side: #131922;
+  --ae-thumb: #1d2430;
+  --ae-amber-soft: #3a2c0f;
+  --ae-amber-ink: #f3c96b;
+  --ae-danger: #ff7a7a;
+  --ae-danger-line: #6b2b2b;
+  --ae-stage-from: #1a2540;
+  --ae-stage-to: #13322a;
+}
