@@ -63,7 +63,8 @@ beforeEach(() => {
 /** The signup token in the invite email, decoded, plus the rest of the email. */
 const sentInvite = () => {
   const email = sendMail.mock.calls[0][0];
-  const url = new URL(email.dynamicTemplateData.invite_url);
+  const link = (email.text as string).split('\n').find((line) => line.startsWith('http')) ?? '';
+  const url = new URL(link);
   return { email, url, payload: verifyInviteSignupToken(url.searchParams.get('token') ?? '') };
 };
 
@@ -131,9 +132,11 @@ describe('sendUserInvite (#672)', () => {
     const { email, url, payload } = sentInvite();
     expect(email).toMatchObject({
       to: 'new@example.com',
-      templateId: 'tpl-confirm',
-      dynamicTemplateData: { inviter_name: 'Ada Lovelace' },
+      subject: 'Ada Lovelace invited you to Quote.Vote',
     });
+    expect(email.templateId).toBeUndefined();
+    expect(email.html).toContain(`href="${url.href.replace(/&/g, '&amp;')}"`);
+    expect(email.text).toContain('expires in 7 days');
     expect(`${url.origin}${url.pathname}`).toBe('http://localhost:3000/auths/signup');
     expect(payload).toMatchObject({
       userId: 'new-user',
@@ -151,7 +154,7 @@ describe('sendUserInvite (#672)', () => {
 
     await invite(context, 'new@example.com');
 
-    expect(sentInvite().email.dynamicTemplateData.inviter_name).toBe('ada');
+    expect(sentInvite().email.subject).toBe('ada invited you to Quote.Vote');
   });
 
   it.each([

@@ -6,8 +6,8 @@
  * E2E_API_URL is set to a non-production API and the mock URL is present.
  *
  * Drive mail via GraphQL/API, then open the extracted link in the browser.
- * Direct invite (E2E-EMAIL-002) is skipped until sendUserInvite includes an
- * onboarding link (backend prerequisite — #672).
+ * Direct invite (E2E-EMAIL-002) uses the author account and the member invite
+ * email from #697.
  */
 import { expect, test } from "@playwright/test";
 import {
@@ -16,7 +16,9 @@ import {
   requestUserAccessViaApi,
   sendPasswordResetEmailViaApi,
   sendUserInviteApprovalViaApi,
+  sendUserInviteViaApi,
 } from "./helpers/api";
+import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from "./helpers/auth";
 import {
   extractAppLink,
   getEmailRecipient,
@@ -111,11 +113,28 @@ test.describe("Transactional email delivery (#498)", () => {
     expect(page.url()).toMatch(/token=/);
   });
 
-  test("E2E-EMAIL-002: direct user invite includes onboarding link", async () => {
-    test.skip(
-      true,
-      "Blocked: sendUserInvite has no onboarding link — see #672 (prerequisite for #498)."
-    );
+  test("E2E-EMAIL-002: direct user invite includes onboarding link", async ({ page }) => {
+    skipUnlessEmailReady();
+    test.skip(!AUTHOR_PASSWORD, "Set E2E_AUTHOR_PASSWORD for the member who sends the invite");
+
+    const recipient = uniqueE2ERecipient("member-invite");
+    const member = await loginViaApi(AUTHOR_USERNAME, AUTHOR_PASSWORD);
+    const receivedAfter = new Date();
+
+    const result = await sendUserInviteViaApi(member.token, recipient);
+    expect(result.code).toBe("SUCCESS");
+
+    const message = await waitForEmail({ sentTo: recipient, receivedAfter });
+    expect(message.subject).toMatch(/invited you to Quote\.Vote$/);
+    expect(message.templateId).toBeUndefined();
+    expect(message.html).toContain("Accept invite");
+    expect(message.text).toContain("expires in 7 days");
+
+    const link = extractAppLink(message);
+    await page.goto(link);
+
+    await expect(page).toHaveURL(/\/auths\/signup/);
+    expect(page.url()).toMatch(/token=/);
   });
 
   test("E2E-EMAIL-003: invite approval email arrives with a working signup link", async ({
