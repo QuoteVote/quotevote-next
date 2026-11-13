@@ -579,7 +579,12 @@ export const userInviteResolver = {
       args: { userId: string; inviteStatus: string },
       context: GraphQLContext
     ): Promise<{ code: string; message: string; inviteToken?: string }> => {
-      if (!context.user?._id || context.user.admin !== true) {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (context.user.admin !== true) {
         throw new GraphQLError('Admin authentication required', {
           extensions: { code: 'FORBIDDEN' },
         });
