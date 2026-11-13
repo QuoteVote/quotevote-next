@@ -799,8 +799,11 @@ export const userResolver = {
       }
 
       if (Object.keys(updates).length === 0) {
+        // Same public fields as a save, so members written by the legacy API
+        // (no createdAt, etc.) read without errors.
         const current = await context.prisma.user.findUnique({
           where: { id: targetId },
+          select: PUBLIC_USER_SELECT,
         });
         if (!current) {
           throw new GraphQLError('User not found', {

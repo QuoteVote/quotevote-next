@@ -316,6 +316,27 @@ describe('userResolver', () => {
       expect(call.data).toEqual({ bio: 'Hi' });
     });
 
+    it('returns the public profile when only avatar was sent', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: actorId,
+        username: 'alice',
+      });
+
+      const result = await userResolver.Mutation.updateUser(
+        null,
+        { user: { _id: actorId, avatar: 'https://example.com/x.png' } },
+        ctx
+      );
+
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: actorId },
+        select: PUBLIC_USER_SELECT,
+      });
+      expect(result.username).toBe('alice');
+    });
+
     it('rejects unfinished invite accounts from updateUser', async () => {
       const ctx = mockContext();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
