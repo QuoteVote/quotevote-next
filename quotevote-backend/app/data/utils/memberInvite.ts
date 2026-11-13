@@ -1,6 +1,6 @@
 /**
- * Member invites (#672): a member's invite link works only while its UserInvite
- * row is pending and unexpired, and only for the address it was sent to.
+ * Member invites (#672) and admin approvals (#691): an invite link works only while
+ * its UserInvite row is pending and unexpired, and only for the address it was sent to.
  */
 
 import type { InviteSignupTokenPayload } from '~/data/utils/authentication';
@@ -14,9 +14,8 @@ function sameEmail(a: string | null | undefined, b: string | null | undefined): 
 }
 
 /**
- * Whether an invite-signup token's member invite can still be used by this
- * account. Tokens without `inviteId` come from admin approval and pass, so that
- * path is unchanged.
+ * Whether an invite-signup token's invite can still be used by this account.
+ * Tokens without `inviteId` are admin approvals sent before #691, and pass as before.
  */
 export async function isMemberInviteUsable(
   prisma: GraphQLContext['prisma'],

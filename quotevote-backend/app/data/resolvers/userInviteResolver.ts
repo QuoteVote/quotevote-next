@@ -5,8 +5,9 @@
  *   1 = access requested, 4 = approved (invite sent), 2 = declined.
  * A member's invite (#672) skips the admin queue: the account starts at 4 and the
  * UserInvite row decides whether its signup link still works. Admin approvals
- * record a UserInvite too, so an access request from an account whose invites have
- * all lapsed puts it back in the admin queue (#691).
+ * record a UserInvite too and their links carry its id, so they work the same way,
+ * and an access request from an account whose invites have all lapsed puts it back
+ * in the admin queue (#691).
  * `accountStatus` stays reserved for moderation (active / disabled / …).
  */
 
@@ -625,19 +626,23 @@ export const userInviteResolver = {
           select: { id: true },
         });
 
-        // Record when this link stops working, so a later access request can tell
-        // a lapsed approval from an open one (#691). No inviter: approvals must not
-        // count toward the admin's own member-invite limit.
-        await context.prisma.userInvite.create({
+        // The approval's UserInvite decides whether its link still works, as for a
+        // member invite: open until it expires, then claimed once at signup (#691).
+        // No inviter: approvals must not count toward the admin's own invite limit.
+        const inviteEmail = invitedUser.email.trim().toLowerCase();
+        const { id: inviteId } = await context.prisma.userInvite.create({
           data: {
-            email: invitedUser.email.trim().toLowerCase(),
+            email: inviteEmail,
             status: 'pending',
             expiresAt: new Date(Date.now() + ADMIN_INVITE_TTL_SECONDS * 1000),
           },
           select: { id: true },
         });
 
-        const inviteToken = generateInviteSignupToken(invitedUser.id);
+        const inviteToken = generateInviteSignupToken(invitedUser.id, ADMIN_INVITE_TTL_SECONDS, {
+          inviteId,
+          email: inviteEmail,
+        });
         const signupPath = `/auths/signup?token=${encodeURIComponent(inviteToken)}`;
 
         try {
