@@ -11,6 +11,7 @@ import {
   verifyPasswordResetToken,
 } from '~/data/utils/authentication';
 import { checkRateLimit } from '~/data/utils/rateLimiter';
+import { validateAvatarQualities } from '~/data/utils/avatarQualities';
 import { isMemberInviteUsable } from '~/data/utils/memberInvite';
 import sendGridEmail, { SENDGRID_TEMPLATE_IDS } from '~/data/utils/send-grid-mail';
 import { logger } from '~/data/utils/logger';
@@ -21,10 +22,7 @@ import {
 } from '~/data/utils/userPrismaMapper';
 import { uniqueArrayObjects } from '~/data/resolvers/utils/common';
 import { addNotification } from '~/data/resolvers/utils/notifications';
-import {
-  calculateUserReputation,
-  loadUserReputation,
-} from '~/data/resolvers/utils/reputation';
+import { calculateUserReputation, loadUserReputation } from '~/data/resolvers/utils/reputation';
 import type * as Common from '~/types/common';
 import type { FollowInfoEntry, GraphQLContext } from '~/types/graphql';
 
@@ -109,6 +107,10 @@ const INVITE_STATUS_APPROVED = 4;
 const RESET_EMAIL_LIMIT_PER_EMAIL = 3;
 const RESET_EMAIL_LIMIT_PER_IP = 10;
 const RESET_EMAIL_WINDOW_MS = 60 * 60 * 1000;
+
+/** Avatar saves allowed per member per hour (#705). The editor saves once per visit. */
+const AVATAR_SAVES_PER_HOUR = 30;
+const HOUR_IN_MS = 60 * 60 * 1000;
 
 /** Same rule as the reset page: 8+ characters with upper, lower and a digit. */
 const PASSWORD_MIN_LENGTH = 8;
@@ -762,9 +764,7 @@ export const userResolver = {
         updates.password = await bcrypt.hash(input.password, salt);
       }
 
-      if (input.avatar !== undefined && input.avatar !== null) {
-        updates.avatar = input.avatar;
-      }
+      // The avatar only changes through updateUserAvatar, which validates it (#705).
 
       if (input.bio !== undefined) {
         try {
@@ -799,8 +799,11 @@ export const userResolver = {
       }
 
       if (Object.keys(updates).length === 0) {
+        // Same public fields as a save, so members written by the legacy API
+        // (no createdAt, etc.) read without errors.
         const current = await context.prisma.user.findUnique({
           where: { id: targetId },
+          select: PUBLIC_USER_SELECT,
         });
         if (!current) {
           throw new GraphQLError('User not found', {
@@ -853,29 +856,36 @@ export const userResolver = {
         });
       }
 
+      // Members change only their own avatar, the same rule as updateUser.
       const actorId = context.user._id.toString();
-      const isAdmin = context.user.admin === true;
-      if (actorId !== targetId && !isAdmin) {
+      if (actorId !== targetId) {
         throw new GraphQLError('Not authorized to update this avatar', {
           extensions: { code: 'FORBIDDEN' },
         });
       }
 
-      if (
-        args.avatarQualities === undefined ||
-        args.avatarQualities === null ||
-        typeof args.avatarQualities !== 'object' ||
-        Array.isArray(args.avatarQualities)
-      ) {
-        throw new GraphQLError('avatarQualities must be an object', {
+      let avatar;
+      try {
+        avatar = validateAvatarQualities(args.avatarQualities);
+      } catch (err) {
+        throw new GraphQLError(err instanceof Error ? err.message : 'Invalid avatar', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
       }
 
+      // After validation so refused attempts don't use up the hourly budget.
+      await enforceRateLimit(
+        context.prisma,
+        actorId,
+        'updateUserAvatar',
+        AVATAR_SAVES_PER_HOUR,
+        HOUR_IN_MS
+      );
+
       try {
         const updated = await context.prisma.user.update({
           where: { id: targetId },
-          data: { avatar: args.avatarQualities as Prisma.InputJsonValue },
+          data: { avatar: avatar as Prisma.InputJsonValue },
           select: PUBLIC_USER_SELECT,
         });
         return toPublicUser(updated as PrismaUserRecord);
