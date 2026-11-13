@@ -14,6 +14,7 @@
 import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import sendGridEmail, { SENDGRID_TEMPLATE_IDS } from '~/data/utils/send-grid-mail';
+import { buildMemberInviteEmail } from '~/data/utils/memberInviteEmail';
 import {
   ADMIN_INVITE_TTL_SECONDS,
   MEMBER_INVITE_TTL_SECONDS,
@@ -412,13 +413,15 @@ export const userInviteResolver = {
         email,
       });
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      // Its own email (#697): the access-request confirmation template has no signup link.
       const sent = await trySend('sendUserInvite', {
         to: email,
-        templateId: SENDGRID_TEMPLATE_IDS.INVITE_REQUEST_RECEIVED_CONFIRMATION,
-        dynamicTemplateData: {
-          inviter_name: inviter.name || inviter.username,
-          invite_url: `${clientUrl}/auths/signup?token=${encodeURIComponent(token)}`,
-        },
+        ...buildMemberInviteEmail({
+          inviterName: inviter.name || inviter.username || 'A member',
+          inviteUrl: `${clientUrl}/auths/signup?token=${encodeURIComponent(token)}`,
+          clientUrl,
+          expiresInDays: Math.round(MEMBER_INVITE_TTL_SECONDS / 86400),
+        }),
       });
 
       // Without the email nobody can use the invite, so take it back rather than
