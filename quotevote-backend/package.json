@@ -26,6 +26,7 @@
     "prisma:parity": "tsx scripts/check-replica-set.ts && tsx scripts/prisma-mongoose-parity.ts",
     "roster:audit": "tsx scripts/roster-audit.ts",
     "roster:backfill": "tsx scripts/roster-backfill.ts",
+    "roster:rollback": "tsx scripts/roster-rollback.ts",
     "roster:seed-fixtures": "tsx scripts/seed-roster-fixtures.ts",
     "botreport:repair": "tsx scripts/repair-bot-reports.ts",
     "postinstall": "prisma generate --schema=./prisma/schema"
