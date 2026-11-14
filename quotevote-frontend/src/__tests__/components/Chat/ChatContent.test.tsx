@@ -301,6 +301,67 @@ describe('ChatContent', () => {
     expect(screen.getByText('Away message')).toBeInTheDocument()
   })
 
+  describe('your own status in the Messages header (#468)', () => {
+    function withOwnStatus(userStatus: string | undefined, userStatusMessage: string) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mockUseAppStore.mockImplementation((selector: any) => {
+        const state = {
+          user: { data: { _id: 'user1', name: 'Test User', username: 'testuser' } },
+          chat: {
+            selectedRoom: null,
+            buddyList: [],
+            presenceMap: {},
+            userStatus,
+            userStatusMessage,
+          },
+        }
+        return selector(state as ReturnType<typeof useAppStore>)
+      })
+    }
+
+    it('calls the online status "Available", not "Online"', () => {
+      withOwnStatus('online', '')
+      render(<ChatContent />)
+
+      expect(screen.getByText('Available')).toBeInTheDocument()
+      expect(screen.queryByText('Online')).not.toBeInTheDocument()
+    })
+
+    it.each([
+      ['away', 'Away'],
+      ['dnd', 'Do Not Disturb'],
+      ['invisible', 'Invisible'],
+    ])('names %s as "%s" when there is no message', (status, label) => {
+      withOwnStatus(status, '')
+      render(<ChatContent />)
+
+      expect(screen.getByText(label)).toBeInTheDocument()
+    })
+
+    it('shows Invisible, not Offline, to the person who chose it', () => {
+      withOwnStatus('invisible', '')
+      render(<ChatContent />)
+
+      expect(screen.queryByText('Offline')).not.toBeInTheDocument()
+    })
+
+    it('does not show a leftover message while Invisible', () => {
+      withOwnStatus('invisible', 'Secret plans')
+      render(<ChatContent />)
+
+      expect(screen.queryByText('Secret plans')).not.toBeInTheDocument()
+      expect(screen.getByText('Invisible')).toBeInTheDocument()
+    })
+
+    it('falls back to Invisible when no status is set', () => {
+      withOwnStatus(undefined, '')
+      render(<ChatContent />)
+
+      expect(screen.getByText('Invisible')).toBeInTheDocument()
+      expect(screen.queryByText('Available')).not.toBeInTheDocument()
+    })
+  })
+
   it('renders close chat button and calls setChatOpen(false) when clicked', () => {
     render(<ChatContent />)
 
