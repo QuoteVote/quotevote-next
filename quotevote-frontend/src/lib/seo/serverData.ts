@@ -2,7 +2,7 @@ import { cache } from "react";
 import { print } from "graphql";
 import type { DocumentNode } from "graphql";
 import { GET_POST_METADATA, GET_SITEMAP_POSTS, GET_USER_METADATA } from "@/graphql/queries";
-import { getGraphqlServerUrl } from "@/lib/utils/getServerUrl";
+import { env } from "@/config/env";
 import type {
   GraphqlResponse,
   PostMetadataData,
@@ -25,7 +25,7 @@ async function queryPublicGraphql<TData>(
   timeoutMs: number = METADATA_TIMEOUT_MS
 ): Promise<TData | null | undefined> {
   try {
-    const response = await fetch(getGraphqlServerUrl(), {
+    const response = await fetch(env.graphqlEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: print(query), variables }),
