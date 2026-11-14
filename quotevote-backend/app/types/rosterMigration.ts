@@ -62,3 +62,44 @@ export interface RosterBackfillPlan {
   blocks: UserBlockBackfillRow[];
   skipped: Record<string, number>;
 }
+
+export interface BuddyRollbackSource {
+  requesterId: string;
+  recipientId: string;
+  status: string;
+  createdAt: Date;
+}
+
+export interface UserBlockRollbackSource {
+  blockerId: string;
+  blockedUserId: string;
+  createdAt: Date;
+}
+
+/** One legacy roster row the rollback wants to exist. Ids are lowercased. */
+export interface RosterRollbackRow {
+  userId: string;
+  buddyId: string;
+  status: 'pending' | 'accepted' | 'blocked';
+  initiatedBy: string;
+  created: Date;
+}
+
+export interface RosterRollbackPlan {
+  create: RosterRollbackRow[];
+  /** Existing rows (same userId, buddyId) whose status or initiatedBy must change. */
+  update: RosterRollbackRow[];
+  remove: { userId: string; buddyId: string }[];
+  /** Source rows (buddy or block) that produce no roster row, by reason. */
+  skipped: Record<string, number>;
+  /** Current roster rows the rollback does not touch, by reason. */
+  leftAlone: Record<string, number>;
+}
+
+export interface RosterRollbackCounts {
+  create: Record<string, number>;
+  update: Record<string, number>;
+  remove: number;
+  skipped: Record<string, number>;
+  leftAlone: Record<string, number>;
+}

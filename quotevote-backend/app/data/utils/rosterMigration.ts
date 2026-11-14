@@ -1,10 +1,15 @@
 import type {
   BuddyBackfillRow,
+  BuddyRollbackSource,
   DateRange,
   RosterAuditRow,
   RosterBackfillPlan,
+  RosterRollbackCounts,
+  RosterRollbackPlan,
+  RosterRollbackRow,
   RosterSummary,
   UserBlockBackfillRow,
+  UserBlockRollbackSource,
   UserBlockedIds,
 } from '~/types/rosterMigration';
 
@@ -279,4 +284,157 @@ export function planRosterBackfill(
   }
 
   return { buddies, blocks: [...blocks.values()], skipped };
+}
+
+/**
+ * The legacy roster changes that make `rosters` match BuddyRelationship and
+ * UserBlock, for a rollback to the legacy API. Pure: no DB access.
+ *
+ * Rows follow what the legacy mutations write: a pending request is one row
+ * requester -> recipient; an accepted pair is two rows, both initiated by the
+ * requester; a block is a blocker -> blocked row that replaces that direction,
+ * and the reverse accepted row stays.
+ *
+ * Current rows on a wanted direction are updated, never created again, so the
+ * (userId, buddyId) unique index cannot fail. Only rows the new tables cover
+ * (pending, accepted, blocked between two existing users) can be removed.
+ */
+export function planRosterRollback(
+  buddies: BuddyRollbackSource[],
+  blocks: UserBlockRollbackSource[],
+  rosters: RosterAuditRow[],
+  existingUserIds: Iterable<string>
+): RosterRollbackPlan {
+  const exists = new Set<string>();
+  for (const id of existingUserIds) exists.add(id.toLowerCase());
+
+  const skipped: Record<string, number> = {};
+  const leftAlone: Record<string, number> = {};
+  const count = (into: Record<string, number>, reason: string): void => {
+    into[reason] = (into[reason] ?? 0) + 1;
+  };
+  /** Lowercased pair, or null after it counts why the pair is not usable. */
+  const pair = (a: string, b: string, into: Record<string, number>): [string, string] | null => {
+    const [x, y] = [a.toLowerCase(), b.toLowerCase()];
+    if (x === y) count(into, 'self');
+    else if (!exists.has(x) || !exists.has(y)) count(into, 'orphan');
+    else return [x, y];
+    return null;
+  };
+
+  const wanted = new Map<string, RosterRollbackRow>(); // "userId>buddyId" -> row
+  const want = (r: RosterRollbackRow): void => {
+    wanted.set(`${r.userId}>${r.buddyId}`, r);
+  };
+
+  for (const b of blocks) {
+    const p = pair(b.blockerId, b.blockedUserId, skipped);
+    if (p)
+      want({
+        userId: p[0],
+        buddyId: p[1],
+        status: 'blocked',
+        initiatedBy: p[0],
+        created: b.createdAt,
+      });
+  }
+
+  const byPair = new Map<
+    string,
+    { requester: string; recipient: string; src: BuddyRollbackSource }[]
+  >();
+  for (const b of buddies) {
+    const p = pair(b.requesterId, b.recipientId, skipped);
+    if (!p) continue;
+    if (b.status !== 'accepted' && b.status !== 'pending') {
+      count(skipped, 'unknownStatus');
+      continue;
+    }
+    const pk = sortedKey(p[0], p[1]);
+    byPair.set(pk, [...(byPair.get(pk) ?? []), { requester: p[0], recipient: p[1], src: b }]);
+  }
+
+  for (const rows of byPair.values()) {
+    // #694: there is no unique index on pairKey yet, so a pair can have more than one row.
+    for (let n = 1; n < rows.length; n += 1) count(skipped, 'duplicatePair');
+    const sorted = [...rows].sort((x, y) => x.src.createdAt.getTime() - y.src.createdAt.getTime());
+    const { requester, recipient, src } =
+      sorted.find((r) => r.src.status === 'accepted') ?? sorted[0];
+    const base = { initiatedBy: requester, created: src.createdAt };
+    if (src.status === 'accepted') {
+      for (const [u, b] of [
+        [requester, recipient],
+        [recipient, requester],
+      ]) {
+        if (!wanted.has(`${u}>${b}`)) want({ userId: u, buddyId: b, status: 'accepted', ...base });
+      }
+    } else if (wanted.has(`${requester}>${recipient}`) || wanted.has(`${recipient}>${requester}`)) {
+      count(skipped, 'pendingBlocked');
+    } else {
+      want({ userId: requester, buddyId: recipient, status: 'pending', ...base });
+    }
+  }
+
+  const update: RosterRollbackRow[] = [];
+  const remove: { userId: string; buddyId: string }[] = [];
+  const seen = new Set<string>();
+  for (const r of rosters) {
+    const u = r.userId.toLowerCase();
+    const b = r.buddyId.toLowerCase();
+    const key = `${u}>${b}`;
+    const w = wanted.get(key);
+    if (w) {
+      seen.add(key);
+      if (r.status !== w.status || r.initiatedBy?.toLowerCase() !== w.initiatedBy) update.push(w);
+      continue;
+    }
+    if (!pair(u, b, leftAlone)) continue;
+    if (r.status === 'declined') count(leftAlone, 'declined');
+    else if (KNOWN.includes(r.status)) remove.push({ userId: u, buddyId: b });
+    else count(leftAlone, 'unknownStatus');
+  }
+
+  const create = [...wanted.entries()].filter(([k]) => !seen.has(k)).map(([, r]) => r);
+  return { create, update, remove, skipped, leftAlone };
+}
+
+/** Counts-only view of a rollback plan, safe to print. */
+export function rollbackCounts(plan: RosterRollbackPlan): RosterRollbackCounts {
+  const byStatus = (rows: RosterRollbackRow[]): Record<string, number> => {
+    const out: Record<string, number> = {};
+    for (const r of rows) out[r.status] = (out[r.status] ?? 0) + 1;
+    return out;
+  };
+  return {
+    create: byStatus(plan.create),
+    update: byStatus(plan.update),
+    remove: plan.remove.length,
+    skipped: plan.skipped,
+    leftAlone: plan.leftAlone,
+  };
+}
+
+/** The database name in a MongoDB connection string, or null when it has none. */
+export function databaseNameFromUrl(url: string): string | null {
+  const m = /^mongodb(?:\+srv)?:\/\/[^/?#]*\/([^?#]*)/.exec(url);
+  if (!m || m[1] === '') return null;
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Makes the operator type the target database name again: returns it when
+ * `dbArg` equals the database in `url`, else throws. Errors never hold the URL.
+ */
+export function assertTargetDatabase(url: string | undefined, dbArg: string | undefined): string {
+  const name = url ? databaseNameFromUrl(url) : null;
+  if (!name) throw new Error('DATABASE_URL must be set and must name a database');
+  if (!dbArg) throw new Error('pass --db <name> with the database name from DATABASE_URL');
+  if (dbArg !== name) {
+    throw new Error(`--db ${dbArg} does not match the database in DATABASE_URL (${name})`);
+  }
+  return name;
 }
