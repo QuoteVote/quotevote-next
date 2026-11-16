@@ -167,7 +167,7 @@ test.describe.serial("SMOKE-001: staging smoke test (#182)", () => {
 
   test("sends the author a direct message", async () => {
     // A first message from a profile is sent without the recipient, so it never arrives.
-    test.fixme(true, "First direct message from a profile is sent without a recipient");
+    test.fixme(true, "First direct message from a profile is sent without a recipient (#713)");
     const { page } = b;
     const text = `Thanks for posting this. Want to bring it to the council? (${stamp})`;
     await page
