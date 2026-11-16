@@ -1,6 +1,6 @@
 # Rollback after the switch
 
-Part of #183. This covers going back to the current API (the legacy server) after the new backend has gone live and written to the database. It is the "written and tested rollback plan" item. It still has to be rehearsed on staging, which this document is written to be used for.
+Part of #183. This covers going back to the current API (the legacy server) after the new backend has gone live and written to the database. It is the "written and tested rollback plan" item. It was rehearsed end to end on a local copy on 2026-11-16 (see [Rehearsal](#rehearsal)), and the same run should be repeated on staging before the switch.
 
 ## When to roll back
 
@@ -8,11 +8,15 @@ Roll back when the new backend causes a problem that can't be fixed forward quic
 
 ## Steps
 
-1. **Point the site back at the current API.** The 2.0 frontend speaks the new backend's contract, so it can't simply be pointed at the legacy server. Promote the last frontend deployment from before the switch (the `main` build that talks to the legacy API) on the hosting platform. That build is already known to work against the legacy API.
+1. **Point the site back at the current API.** The 2.0 frontend speaks the new backend's contract (buddies and blocks use different operations), so it can't simply be pointed at the legacy server. Promote the last frontend deployment from before the switch (the `main` build that talks to the legacy API) on the hosting platform. That build is already known to work against the legacy API.
 2. **Keep the legacy API running.** It stays deployed and connected to the same database until 2.0 is marked final, so there is nothing to restart. Check its health and logs.
-3. **Stop the new backend**, or leave it running with no traffic, so nothing writes from both sides. Scheduled jobs on it (presence cleanup) stop with it.
-4. **Check the result:** sign in, the home feed, a post with its discussion, a profile, messages and notifications, as in the smoke test (#108).
-5. **Tell users if needed.** Buddy and block changes made after the switch need attention (see below).
+3. **Stop the new backend**, so nothing writes from both sides and the roster sync in the next step sees a settled state. Scheduled jobs on it (presence cleanup) stop with it.
+4. **Copy buddies and blocks back to the rosters** (#695), from `quotevote-backend` with `DATABASE_URL` set to the live database:
+   - `pnpm roster:rollback --db <database name>` first. It's a dry run and prints only counts: rows to create, update and remove.
+   - Then `pnpm roster:rollback --db <database name> --apply`. It ends with `PASS: rosters match buddyrelationships and userblocks`. A second run changes nothing, so it's safe to repeat if it stops halfway.
+   - `--db` has to match the database in `DATABASE_URL`, or it refuses to run.
+5. **Check the result:** sign in, the home feed, a post with its discussion, a profile, messages and notifications, as in the smoke test (#108), plus a buddy list and a block.
+6. **Tell users if needed.** True/False and Like/Dislike responses on votes cast after the switch are lost until #693 is in (see below).
 
 No database restore is needed. Both backends read and write the same database, and the checks below show that legacy reads what the new backend writes.
 
@@ -32,18 +36,31 @@ These read and work on legacy:
 ## What doesn't carry back
 
 - **Vote responses and counts.** The new backend stores a vote's response as a list (`["#agree"]`), and legacy reads that as empty, so the site shows such votes as Agree or Disagree by direction, and True/False or Like/Dislike are lost. The new backend also doesn't update a post's `upvotes`, `downvotes` and `votedBy`, so legacy shows counts without any vote cast after the switch. Both are fixed on the new backend side in #693. Until then, votes cast after the switch show this way after a rollback.
-- **Buddies and blocks.** The new backend keeps them in `buddyrelationships` and `userblocks`. Legacy reads `rosters`, which the new backend never writes, so buddy requests, new buddies and blocks made after the switch don't appear after a rollback, and buddies removed after the switch still show. Run the reverse sync (#695) before or right after the rollback, so blocks in particular aren't lost.
+- **Buddies and blocks, until step 4 runs.** The new backend keeps them in `buddyrelationships` and `userblocks`. Legacy reads `rosters`, which the new backend never writes, so without step 4 buddy requests, new buddies and blocks made after the switch don't appear, and buddies removed or people unblocked after the switch still show. With step 4 they all carry back (see [Rehearsal](#rehearsal)).
 - **Member invite links** sent by the new backend and still unused weren't checked against legacy. If they don't open the signup there, those people need a new invite.
-- **New-only records** (`terms_acceptances`, `userinvites` rows for member invites, rate limit counters) are ignored by legacy. They stay in the database and are used again if the new backend comes back.
+- **New-only records** (`terms_acceptances`, `userinvites` rows for member invites, rate limit counters, `buddyrelationships`, `userblocks`, `solidconnections`) are ignored by legacy. They stay in the database and are used again if the new backend comes back.
+- **Indexes the new backend built.** On its first start the new backend builds the indexes its Mongoose models declare and legacy never created: `users.accountStatus`, `votes` (`postId`, `postId`+`userId`, `userId`), `messagerooms.postId`, `presences.status` and two on `messages` (#716). They're non-unique and legacy works with them, so they stay.
 
 ## Already broken on legacy
 
-The admin "user reports" view fails on legacy with any report, old or new (`_reporterId` is returned as an object where the schema expects a string). It is not caused by the new backend.
+- The admin "user reports" view fails on legacy with any report, old or new (`_reporterId` is returned as an object where the schema expects a string). It is not caused by the new backend.
+- A first direct message sent from a profile in the `main` frontend saves a room with a `null` member (#713). Legacy then fails the sender's `messageRooms` query, so they get an error on every page and their Messages list doesn't load. The new backend refuses that message instead of saving it, so it doesn't add such rooms, but it can't read the ones beta has already written either, so they're cleaned up before the switch (#713).
 
-## Rehearsal on staging
+## Rehearsal
 
-Run the same check on staging before the switch, with the staging copy of the database:
+Run on 2026-11-16 on a local copy of a database written by legacy, with the collections only the new backend writes removed, so it started as production would:
 
-1. Use the new backend for the actions above with test accounts.
-2. Run the legacy API against the same database, and the `main` frontend against it.
-3. Go through step 4 above, and compare the data check reports (`pnpm data:check`, #689) before and after.
+- **Legacy:** the production image (3452e87) and a production build of `main`.
+- **New backend:** the `staging` image with `NODE_ENV=production` and a production build of `staging`.
+- **Roster sync:** `roster:rollback` from #710.
+
+| Stage              | What was done                                                                                                                                              | Result                                                                                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| On legacy          | Post, True vote, comment, quote, follow, accepted buddy pair, pending request, block, direct message                                                       | All saved                                                                                                                                           |
+| Switch             | `roster:backfill` dry run, then `--apply` twice                                                                                                            | Counts matched `roster:audit` (1 accepted, 2 pending, 2 blocks); the second run added nothing                                                       |
+| On the new backend | Read everything legacy wrote                                                                                                                               | Post, vote, comment, quote, buddies, blocks and messages all read correctly                                                                         |
+| On the new backend | Post, Like and False votes, comment, quote, follow, accept a legacy request, new request, remove a buddy, block, unblock, reply in a legacy room, new room | All saved. Post vote counts didn't change (#693)                                                                                                    |
+| Rollback           | Stop the new backend, `roster:rollback` dry run, then `--apply` twice                                                                                      | Create 3, update 1, remove 3; `PASS`; the second run changed nothing. A wrong `--db` was refused                                                    |
+| On legacy          | Read everything, as each member                                                                                                                            | Everything carried back except vote responses and counts (above). The block is enforced on legacy. Pages load in the `main` frontend with no errors |
+
+Before the switch on staging, repeat it with the staging copy of the database and compare the data check reports (`pnpm data:check`, #689) before and after.
