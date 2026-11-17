@@ -123,7 +123,7 @@ export default function ControlPanelClient() {
   const activeItem = NAV_ITEMS.find((n) => n.id === activeTab)!
 
   return (
-    <div className="min-h-[calc(100vh-60px)] -mx-4 md:-mx-4">
+    <div className="min-h-[calc(100vh-var(--app-header-h))] -mx-4 md:-mx-4">
 
       {/* ── Mobile: sticky top bar ── */}
       <div className="lg:hidden sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border">
@@ -167,7 +167,7 @@ export default function ControlPanelClient() {
       {/* ── Desktop: sidebar layout ── */}
       <div className="hidden lg:flex">
         {/* Sidebar */}
-        <aside className="w-64 xl:w-72 shrink-0 border-r border-border bg-card min-h-[calc(100vh-60px)] sticky top-[60px] self-start flex flex-col">
+        <aside className="w-64 xl:w-72 shrink-0 border-r border-border bg-card min-h-[calc(100vh-var(--app-header-h))] sticky top-[var(--app-header-h)] self-start flex flex-col">
           {/* Brand */}
           <div className="px-5 py-5 border-b border-border">
             <div className="flex items-center gap-3">
@@ -234,7 +234,7 @@ export default function ControlPanelClient() {
         {/* Main content */}
         <main className="flex-1 min-w-0">
           {/* Breadcrumb bar */}
-          <div className="px-6 py-3.5 border-b border-border bg-background/80 backdrop-blur sticky top-[60px] z-10">
+          <div className="px-6 py-3.5 border-b border-border bg-background/80 backdrop-blur sticky top-[var(--app-header-h)] z-10">
             <div className="flex items-center gap-1.5 text-sm">
               <ShieldCheck className="size-3.5 text-muted-foreground" />
               <span className="text-muted-foreground">Admin</span>

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { ArrowLeft, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Palette } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -235,8 +235,8 @@ export default function EditProfilePageClient({
             />
             <Button variant="outline" asChild className={FOCUS_RING_CLASS}>
               <Link href={`/profile/${username}/avatar`} data-testid="change-photo">
-                <Camera className="size-4" aria-hidden="true" />
-                Change photo
+                <Palette className="size-4" aria-hidden="true" />
+                Customize avatar
               </Link>
             </Button>
           </div>

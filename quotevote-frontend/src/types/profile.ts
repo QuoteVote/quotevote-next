@@ -108,6 +108,15 @@ export interface NoFollowersProps {
   filter: 'followers' | 'following';
 }
 
+/**
+ * Result of the `reportBot` mutation. It is a JSON scalar on the wire, so the shape is not
+ * enforced by the schema. `ALREADY_REPORTED` is a normal outcome, not an error.
+ */
+export interface ReportBotResult {
+  code: 'SUCCESS' | 'ALREADY_REPORTED' | (string & {});
+  message?: string;
+}
+
 export interface ReportUserDialogProps {
   open: boolean;
   onClose: () => void;

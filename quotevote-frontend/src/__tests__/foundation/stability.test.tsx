@@ -21,6 +21,12 @@ jest.mock('next/font/google', () => ({
     variable: '--font-sans',
     className: 'inter',
   })),
+  Plus_Jakarta_Sans: jest.fn(() => ({
+    variable: '--font-redesign',
+  })),
+  Montserrat: jest.fn(() => ({
+    variable: '--font-wordmark',
+  })),
   Geist: jest.fn(() => ({
     variable: '--font-geist-sans',
   })),

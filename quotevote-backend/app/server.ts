@@ -11,6 +11,7 @@ import { createApolloServer } from './apolloServer';
 import { createHttpContext } from './context';
 import { disconnectPrisma, prisma } from './lib/prisma';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
+import { mongooseConnectOptions } from './data/utils/databaseConnection';
 import * as auth from './data/utils/authentication';
 import { parseTrustProxy } from './data/utils/trustProxy';
 import { createSubscriptionServer } from './subscriptions';
@@ -31,7 +32,7 @@ const SHUTDOWN_TIMEOUT_MS = 10000;
 async function startServer() {
   // 1. Database Connection (Mongoose v9)
   try {
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(MONGO_URI, mongooseConnectOptions(process.env.NODE_ENV));
     console.log('✅ Connected to MongoDB');
   } catch (err) {
     console.error('❌ MongoDB Connection Error:', err);

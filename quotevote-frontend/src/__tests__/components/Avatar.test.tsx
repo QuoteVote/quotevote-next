@@ -42,6 +42,24 @@ describe('Avatar Component', () => {
     })
   })
 
+  describe('First-party avatars (#722)', () => {
+    it('shows a stored avataaars.io URL from our own route', () => {
+      render(
+        <Avatar src="https://avataaars.io/?avatarStyle=Circle&topType=Hat" alt="Test User" />
+      )
+
+      const image = screen.getByAltText('Test User')
+      expect(image.getAttribute('src')).toBe('/api/avatar?avatarStyle=Circle&topType=Hat')
+    })
+
+    it('shows the initials, not the old URL, when an avataaars.io URL cannot be read', () => {
+      render(<Avatar src="https://avataaars.io/" alt="Test User" />)
+
+      expect(screen.queryByAltText('Test User')).not.toBeInTheDocument()
+      expect(screen.getByText('TU')).toBeInTheDocument()
+    })
+  })
+
   describe('Size Variants', () => {
     it('renders with size="sm"', () => {
       const { container } = render(<Avatar alt="Test User" size="sm" />)

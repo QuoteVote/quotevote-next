@@ -8,6 +8,9 @@ import { PublicDirectoryContent } from './PublicDirectory/PublicDirectoryContent
 import { DirectoryToolbar } from './PublicDirectory/DirectoryToolbar'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
 import { getTagIdParam } from '@/lib/utils/tagParam'
+import { HomeFeedOptions } from '@/components/Home/HomeFeedOptions'
+import { HomeFeedHeader } from '@/components/Home/HomeFeedHeader'
+import { HomeHighlights } from '@/components/Home/HomeHighlights'
 
 export function AuthAwareHome(): ReactElement {
   const user = useAppStore((s) => s.user.data)
@@ -42,29 +45,45 @@ function AuthenticatedFeed(): ReactElement {
     <DashboardShell>
       <div
         data-testid="authenticated-directory"
-        className="flex h-full min-h-0 flex-col overflow-hidden md:h-auto md:overflow-visible"
+        className="flex h-full min-h-0 flex-col overflow-hidden md:h-auto md:overflow-visible lg:mx-auto lg:grid lg:max-w-[1376px] lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10 lg:px-8 xl:grid-cols-[240px_minmax(0,1fr)_320px]"
       >
-        <div data-testid="directory-sticky-chrome" className="z-40 shrink-0 bg-background">
-          <DirectoryToolbar />
+        {/* Desktop: the filters move into the left column and the search into the top bar. */}
+        <div className="hidden lg:block">
+          <HomeFeedOptions />
         </div>
-        <div
-          data-testid="directory-scroll"
-          className="min-h-0 w-full flex-1 overflow-y-auto md:overflow-visible"
-        >
-          <div className="mx-auto w-full min-w-0 max-w-2xl">
-            <PaginatedPostsList
-              defaultPageSize={20}
-              maxVisiblePages={5}
-              searchKey={q}
-              startDateRange={from || undefined}
-              endDateRange={to || undefined}
-              sortOrder={sortOrder}
-              interactions={interactions}
-              friendsOnly={following}
-              tagId={tagId}
-              compact
-            />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:block">
+          <div
+            data-testid="directory-sticky-chrome"
+            className="z-40 shrink-0 bg-background lg:hidden"
+          >
+            <DirectoryToolbar />
           </div>
+          <div className="hidden lg:block">
+            <HomeFeedHeader />
+          </div>
+          <div
+            data-testid="directory-scroll"
+            className="min-h-0 w-full flex-1 overflow-y-auto md:overflow-visible"
+          >
+            <div className="mx-auto w-full min-w-0 max-w-2xl lg:max-w-none">
+              <PaginatedPostsList
+                defaultPageSize={20}
+                maxVisiblePages={5}
+                searchKey={q}
+                startDateRange={from || undefined}
+                endDateRange={to || undefined}
+                sortOrder={sortOrder}
+                interactions={interactions}
+                friendsOnly={following}
+                tagId={tagId}
+                compact
+                groupByDay={sortOrder === 'desc'}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="hidden xl:block">
+          <HomeHighlights />
         </div>
       </div>
     </DashboardShell>

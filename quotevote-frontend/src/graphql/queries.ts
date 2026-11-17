@@ -905,6 +905,39 @@ export const GET_NOTIFICATIONS = gql`
       notificationType
       post {
         _id
+        title
+        url
+        deleted
+      }
+    }
+  }
+`
+
+/** Default page size for notification history (#464). */
+export const NOTIFICATION_HISTORY_LIMIT = 50;
+
+/**
+ * Cleared notifications for Notification History (#464).
+ */
+export const GET_NOTIFICATION_HISTORY = gql`
+  query notificationHistory($limit: Int) {
+    notificationHistory(limit: $limit) {
+      _id
+      userId
+      userIdBy
+      userBy {
+        _id
+        name
+        avatar
+        username
+        contributorBadge
+      }
+      label
+      status
+      created
+      notificationType
+      post {
+        _id
         url
         deleted
       }
