@@ -104,23 +104,26 @@ function mockTouch(isTouch: boolean) {
 }
 
 function mockTouchWithChangeListener() {
-  let changeListener: (() => void) | null = null;
+  const TOUCH_QUERY = "(hover: none) and (pointer: coarse)";
+  // One listener per query: the board also watches the phone-width query for the sheet.
+  const changeListeners = new Map<string, () => void>();
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: jest.fn().mockImplementation((query: string) => ({
-      matches: query === "(hover: none) and (pointer: coarse)",
+      matches: query === TOUCH_QUERY,
       media: query,
       onchange: null,
       addListener: jest.fn(),
       removeListener: jest.fn(),
       addEventListener: jest.fn((type: string, listener: () => void) => {
-        if (type === "change") changeListener = listener;
+        if (type === "change") changeListeners.set(query, listener);
       }),
       removeEventListener: jest.fn(),
       dispatchEvent: jest.fn(),
     })),
   });
   return () => {
+    const changeListener = changeListeners.get(TOUCH_QUERY);
     if (!changeListener) throw new Error("matchMedia change listener not registered");
     changeListener();
   };

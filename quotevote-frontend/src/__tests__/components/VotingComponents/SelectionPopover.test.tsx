@@ -2,7 +2,7 @@
  * SelectionPopover component tests — pure portal/positioning (issue #484)
  */
 
-import { render, screen, act } from "@/__tests__/utils/test-utils";
+import { render, screen, act, fireEvent } from "@/__tests__/utils/test-utils";
 import SelectionPopover from "@/components/VotingComponents/SelectionPopover";
 import type { SelectionPopoverProps } from "@/types/voting";
 import { createRef } from "react";
@@ -204,5 +204,48 @@ describe("SelectionPopover", () => {
     expect(screen.queryByText("Test content")).not.toBeInTheDocument();
     unmount();
     expect(true).toBe(true);
+  });
+
+  describe("phone sheet", () => {
+    it("shows the content at the bottom over a backdrop, without anchoring to the text", () => {
+      const props = makeProps({ showPopover: true, sheet: true, onDismiss: jest.fn() });
+      render(<SelectionPopover {...props} />);
+
+      const sheet = screen.getByTestId("highlight-popup");
+      expect(sheet).toHaveClass("fixed", "inset-x-0", "bottom-0");
+      expect(screen.getByText("Test content")).toBeVisible();
+      expect(props.resolveAnchorRect).not.toHaveBeenCalled();
+    });
+
+    it("closes on a backdrop tap", () => {
+      const onDismiss = jest.fn();
+      render(<SelectionPopover {...makeProps({ showPopover: true, sheet: true, onDismiss })} />);
+
+      fireEvent.click(screen.getByTestId("selection-sheet-backdrop"));
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders nothing while hidden", () => {
+      render(<SelectionPopover {...makeProps({ showPopover: false, sheet: true })} />);
+      expect(screen.queryByTestId("selection-sheet-backdrop")).not.toBeInTheDocument();
+      expect(screen.queryByText("Test content")).not.toBeInTheDocument();
+    });
+  });
+
+  it("closes on Escape in either layout", () => {
+    const onDismiss = jest.fn();
+    const { rerender } = render(
+      <SelectionPopover {...makeProps({ showPopover: true, onDismiss })} />
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+
+    rerender(<SelectionPopover {...makeProps({ showPopover: true, sheet: true, onDismiss })} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onDismiss).toHaveBeenCalledTimes(2);
+
+    rerender(<SelectionPopover {...makeProps({ showPopover: false, onDismiss })} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onDismiss).toHaveBeenCalledTimes(2);
   });
 });
