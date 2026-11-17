@@ -1,43 +1,33 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { buildAvatarUrl, isValidDraft } from "@/lib/avatar";
-import { AVATAR_KEYS } from "@/lib/avatarOptions";
-
-const UPSTREAM_TIMEOUT_MS = 8000;
+import { completeDraft } from "@/lib/avatar";
+import { AVATAAARS_VALUES, AVATAR_KEYS } from "@/lib/avatarOptions";
+import { renderAvatarSvg } from "@/lib/avatarRender";
+import type { AvatarDraft, AvatarStyle } from "@/types/avatar";
 
 /**
- * Same-origin copy of an Avataaars SVG, so the editor can turn it into a PNG
- * (avataaars.io sends no CORS headers). Only the 13 known qualities with known
- * values are accepted, so this can't be used to fetch anything else.
+ * First-party avatar images (#722). Renders the Avataaars SVG on our own server from
+ * the qualities in the query, so no browser or server ever contacts avataaars.io.
+ * Only the 13 known qualities with known values are read; anything else is ignored,
+ * and missing ones are filled with a fixed default, so every request gets an avatar
+ * and the route can't be used to fetch or inject anything.
  */
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export function GET(request: NextRequest): NextResponse {
   const params = request.nextUrl.searchParams;
-  const qualities: Record<string, string> = {};
+  const known: Partial<AvatarDraft> = {};
   for (const key of AVATAR_KEYS) {
     const value = params.get(key);
-    if (value !== null) qualities[key] = value;
+    if (value !== null && AVATAAARS_VALUES[key].includes(value)) known[key] = value;
   }
-  if (!isValidDraft(qualities)) {
-    return NextResponse.json({ error: "Invalid avatar" }, { status: 400 });
-  }
+  const style: AvatarStyle = params.get("avatarStyle") === "Transparent" ? "Transparent" : "Circle";
+  const svg = renderAvatarSvg(completeDraft(known, ""), style);
 
-  try {
-    const upstream = await fetch(buildAvatarUrl(qualities, "Circle"), {
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
-    const body = await upstream.text();
-    if (!upstream.ok || !body.trimStart().startsWith("<svg")) {
-      return NextResponse.json({ error: "Avatar unavailable" }, { status: 502 });
-    }
-    return new NextResponse(body, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/svg+xml; charset=utf-8",
-        "Cache-Control": "public, max-age=86400, immutable",
-        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
-  } catch {
-    return NextResponse.json({ error: "Avatar unavailable" }, { status: 502 });
-  }
+  return new NextResponse(svg, {
+    status: 200,
+    headers: {
+      "Content-Type": "image/svg+xml; charset=utf-8",
+      "Cache-Control": "public, max-age=86400",
+      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }

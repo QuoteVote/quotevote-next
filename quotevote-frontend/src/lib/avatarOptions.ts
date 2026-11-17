@@ -359,6 +359,7 @@ export const COLORED_CLOTHES = new Set([
   "ShirtVNeck",
 ]);
 
+/** Selena stays a valid stored value but isn't offered: the first-party art has no Selena (#722). */
 export const GRAPHIC_OPTIONS = opts([
   ["Bear", "Bear"],
   ["Bat", "Bat"],
@@ -368,7 +369,6 @@ export const GRAPHIC_OPTIONS = opts([
   ["Hola", "Hola"],
   ["Resist", "Resist"],
   ["Cumbia", "Cumbia"],
-  ["Selena", "Selena"],
   ["Skull", "Skull"],
 ]);
 

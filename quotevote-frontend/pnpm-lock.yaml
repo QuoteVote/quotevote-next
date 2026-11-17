@@ -11,6 +11,12 @@ importers:
       '@apollo/client':
         specifier: ^4.0.9
         version: 4.0.9(graphql-ws@6.0.6(graphql@16.12.0)(ws@8.18.3))(graphql@16.12.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rxjs@7.8.2)
+      '@dicebear/avataaars':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/core':
+        specifier: 9.4.3
+        version: 9.4.3
       '@emoji-mart/data':
         specifier: ^1.2.1
         version: 1.2.1
@@ -389,6 +395,16 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+
+  '@dicebear/avataaars@9.4.3':
+    resolution: {integrity: sha512-LNIZNb1TaXhL2/OfJK+lmw8Kkbn6eot1FHiLoU2/AzOmjSQQVJC0ZvwrZ/tdQEIGeMPu5nhJLmNwH/kFMoF+Tw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      '@dicebear/core': ^9.0.0
+
+  '@dicebear/core@9.4.3':
+    resolution: {integrity: sha512-9ITrQI57k3p5hKuU8HZJ1d0kPdrmTKEJDOdlKQ8CpaChbtmnD1R+dtWmNz5IesYThXM8F64pJ0ZvJ2rsY8Hciw==}
+    engines: {node: '>=18.0.0'}
 
   '@emnapi/core@1.7.1':
     resolution: {integrity: sha512-o1uhUASyo921r2XtHYOHy7gdkGLge8ghBEQHMWmyJFoXlpU58kIrhhN3w26lpQb6dspetweapMn2CSNwQ8I4wg==}
@@ -4674,6 +4690,14 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@bcoe/v8-coverage@0.2.3': {}
+
+  '@dicebear/avataaars@9.4.3(@dicebear/core@9.4.3)':
+    dependencies:
+      '@dicebear/core': 9.4.3
+
+  '@dicebear/core@9.4.3':
+    dependencies:
+      '@types/json-schema': 7.0.15
 
   '@emnapi/core@1.7.1':
     dependencies:
