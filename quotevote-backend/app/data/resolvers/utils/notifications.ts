@@ -50,15 +50,21 @@ export const toNotificationEntity = (record: NotificationRecord): Notification =
 });
 
 /** Post columns a notification links to; deleted posts are kept so the UI can say so. */
-export const NOTIFICATION_POST_SELECT = { id: true, url: true, deleted: true } as const;
+export const NOTIFICATION_POST_SELECT = { id: true, title: true, url: true, deleted: true } as const;
 
 type NotificationRelationsPrisma = Pick<PrismaClient, 'user' | 'post'>;
 
 const toNotificationPost = (post: {
   id: string;
+  title: string | null;
   url: string | null;
   deleted: boolean;
-}): NotificationPost => ({ _id: post.id, url: post.url, deleted: post.deleted });
+}): NotificationPost => ({
+  _id: post.id,
+  title: post.title,
+  url: post.url,
+  deleted: post.deleted,
+});
 
 /**
  * Add who sent each notification and the post it points to, with two queries for
