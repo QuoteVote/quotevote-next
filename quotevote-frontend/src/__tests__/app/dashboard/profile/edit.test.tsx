@@ -114,9 +114,9 @@ describe("Edit Profile page (#536)", () => {
     });
   });
 
-  it("has Change photo, linking to the avatar editor", () => {
+  it("has Customize avatar, linking to the avatar editor", () => {
     render(<EditProfilePageClient username="testuser" />, { mocks: [getUserBioMock] });
-    expect(screen.getByRole("link", { name: /change photo/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /customize avatar/i })).toHaveAttribute(
       "href",
       "/profile/testuser/avatar"
     );

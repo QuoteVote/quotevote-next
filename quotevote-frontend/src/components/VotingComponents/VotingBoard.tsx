@@ -24,20 +24,28 @@ import type {
   SelectionPopupContentProps,
 } from "@/types/voting";
 
-const LINKED_PASSAGE_CLASS =
-  "bg-[#52b274]/20 text-foreground rounded-sm box-decoration-clone cursor-pointer px-0.5";
+/** The passage linked to the selected Discussion item: tint plus a ring (globals.css). */
+const LINKED_PASSAGE_CLASS = "qv-mark qv-mark-linked cursor-pointer";
 
-const RETAINED_PASSAGE_CLASS =
-  "bg-[#52b274]/20 text-foreground rounded-sm box-decoration-clone px-0.5";
+/** The words just selected, kept while the vote popover is open. */
+const RETAINED_PASSAGE_CLASS = "qv-mark qv-mark-retained";
 
 /**
- * Passages with existing votes, quotes or comments (#548): a light tint plus a
- * dotted underline and a small count, so colour isn't the only signal. The
- * count is CSS generated content, so it never becomes part of the selectable
- * text and can't shift the offsets of a new selection.
+ * Passages with existing votes, quotes or comments (#548): a tint and a bottom
+ * edge (green when votes lean up, red when they lean down, grey otherwise) and
+ * a count pill, so colour isn't the only signal. The count is CSS generated
+ * content, so it never becomes part of the selectable text and can't shift the
+ * offsets of a new selection. Styles live in globals.css (`.qv-mark`).
  */
-const ACTIVITY_PASSAGE_CLASS =
-  "bg-[#52b274]/10 text-inherit rounded-sm box-decoration-clone cursor-pointer underline decoration-dotted decoration-2 decoration-[#2f7a4c] underline-offset-4 transition-colors hover:bg-[#52b274]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7a4c] dark:decoration-[#7fdc9c]/80 dark:focus-visible:ring-[#7fdc9c] after:ml-0.5 after:align-super after:text-[0.65em] after:font-semibold after:text-[#2f6f4a] after:content-[attr(data-count)] dark:after:text-[#7fdc9c]";
+const ACTIVITY_PASSAGE_CLASS = "qv-mark qv-mark-activity cursor-pointer";
+
+/** Which way a passage's votes lean, for its highlight colour. */
+export function passageTone(segment: PassageActivitySegment | undefined): "up" | "down" | "neutral" {
+  if (!segment) return "neutral";
+  if (segment.upvotes > segment.downvotes) return "up";
+  if (segment.downvotes > segment.upvotes) return "down";
+  return "neutral";
+}
 
 const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
 
@@ -105,6 +113,7 @@ function makeActivityPassageMark(segments: PassageActivitySegment[]) {
         data-passage-activity="true"
         data-activity-index={highlightIndex}
         data-count={segment ? passageActivityTotal(segment) : undefined}
+        data-tone={passageTone(segment)}
         data-testid="passage-activity"
         className={cn(className, ACTIVITY_PASSAGE_CLASS)}
         role="button"

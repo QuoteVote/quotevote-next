@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { User } from 'lucide-react';
 import type { AvatarProps } from '@/types/components';
 import { cn } from '@/lib/utils';
-import { parseAvatarToUrl } from '@/lib/avatar';
+import { AVATAR_ROUTE, parseAvatarToUrl } from '@/lib/avatar';
 
 /**
  * Avatar Component
@@ -22,10 +22,9 @@ export default function Avatar({
   onClick,
   ...props
 }: AvatarProps) {
-  const resolvedSrc = useMemo(
-    () => parseAvatarToUrl(src ?? undefined) ?? (typeof src === 'string' ? src : undefined),
-    [src]
-  );
+  // parseAvatarToUrl keeps ordinary URLs and drops avataaars.io ones it can't read,
+  // so the raw value is never used as a fallback (#722); those show the initials.
+  const resolvedSrc = useMemo(() => parseAvatarToUrl(src ?? undefined), [src]);
 
   // Calculate size classes and dimensions
   const sizeConfig = useMemo(() => {
@@ -152,7 +151,7 @@ function AvatarMedia({
         onLoad={() => setImageLoaded(true)}
         {...(resolvedSrc.startsWith('data:') ||
         resolvedSrc.startsWith('blob:') ||
-        resolvedSrc.includes('avataaars.io')
+        resolvedSrc.startsWith(AVATAR_ROUTE)
           ? { unoptimized: true }
           : {})}
       />

@@ -63,6 +63,8 @@ export const NotificationTypeValues = {
   /** Legacy addComment wrote this; frontend NotificationLists switches on it. */
   COMMENTED: 'COMMENTED',
   QUOTE: 'QUOTE',
+  /** A member quoted your post; frontend NotificationLists switches on it. */
+  QUOTED: 'QUOTED',
   MESSAGE: 'MESSAGE',
   MENTION: 'MENTION',
   SYSTEM: 'SYSTEM',

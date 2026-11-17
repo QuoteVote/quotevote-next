@@ -1,4 +1,10 @@
+jest.mock('~/data/resolvers/utils/notifications', () => ({
+  addNotification: jest.fn().mockResolvedValue({}),
+  hasUnreadNotification: jest.fn().mockResolvedValue(false),
+}));
+
 import { chatResolver } from '~/data/resolvers/chatResolver';
+import { addNotification, hasUnreadNotification } from '~/data/resolvers/utils/notifications';
 import { MESSAGE_ROOM_SELECT } from '~/data/resolvers/utils/chatRooms';
 import { MESSAGE_RECORD_SELECT, REACTION_SELECT } from '~/data/resolvers/utils/commentsQuotes';
 import { RATE_LIMIT_COLLECTION, resetExpiryIndexState } from '~/data/utils/rateLimiter';
@@ -225,6 +231,85 @@ describe('createMessage', () => {
       data: { userIds: { push: me }, lastActivity: expect.any(Date) },
     });
     expect(message.type).toBe('POST');
+  });
+
+  describe("notifying the post's author", () => {
+    const authorId = carolId;
+    const sendInPostChat = (context: Context, text = 'Good point') => {
+      context.prisma.messageRoom.findUnique.mockResolvedValue(postRoom());
+      context.prisma.messageRoom.findFirst.mockResolvedValue(postRoom());
+      context.prisma.message.create.mockResolvedValue(record({ messageRoomId: postRoomId, text }));
+      return send(context, { messageRoomId: postRoomId, text });
+    };
+
+    beforeEach(() => {
+      jest
+        .mocked(addNotification)
+        .mockClear()
+        .mockResolvedValue({} as never);
+      jest.mocked(hasUnreadNotification).mockClear().mockResolvedValue(false);
+    });
+
+    it('notifies the author as COMMENTED', async () => {
+      const context = createContext();
+      context.prisma.post.findUnique.mockResolvedValue({ deleted: false, userId: authorId });
+
+      await sendInPostChat(context);
+
+      const notification = {
+        userId: authorId,
+        userIdBy: me,
+        notificationType: 'COMMENTED',
+        postId,
+      };
+      expect(hasUnreadNotification).toHaveBeenCalledWith(context.prisma, notification);
+      expect(addNotification).toHaveBeenCalledWith(context.prisma, {
+        ...notification,
+        label: 'Good point',
+      });
+    });
+
+    it("adds nothing while the last one from this member is still in the author's list", async () => {
+      const context = createContext();
+      context.prisma.post.findUnique.mockResolvedValue({ deleted: false, userId: authorId });
+      jest.mocked(hasUnreadNotification).mockResolvedValue(true);
+
+      await sendInPostChat(context);
+
+      expect(context.prisma.message.create).toHaveBeenCalled();
+      expect(addNotification).not.toHaveBeenCalled();
+    });
+
+    it('does not notify you in the chat of your own post', async () => {
+      const context = createContext();
+      context.prisma.post.findUnique.mockResolvedValue({ deleted: false, userId: me });
+
+      await sendInPostChat(context);
+
+      expect(addNotification).not.toHaveBeenCalled();
+    });
+
+    it('never notifies for a direct message', async () => {
+      const context = createContext();
+      context.prisma.messageRoom.findUnique.mockResolvedValue(room());
+      context.prisma.message.create.mockResolvedValue(record());
+
+      await send(context, { messageRoomId: dmId, text: 'hi' });
+
+      expect(hasUnreadNotification).not.toHaveBeenCalled();
+      expect(addNotification).not.toHaveBeenCalled();
+    });
+
+    it('still sends the message when the notification fails', async () => {
+      const context = createContext();
+      context.prisma.post.findUnique.mockResolvedValue({ deleted: false, userId: authorId });
+      jest.mocked(addNotification).mockRejectedValue(new Error('db down'));
+
+      const message = await sendInPostChat(context);
+
+      expect(message.text).toBe('Good point');
+      expect(context.pubsub.publish).toHaveBeenCalled();
+    });
   });
 
   it("keeps a deleted post's chat read-only", async () => {

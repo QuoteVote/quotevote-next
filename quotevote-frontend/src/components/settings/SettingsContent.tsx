@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
 import { UPDATE_USER } from '@/graphql/mutations'
 import { replaceGqlError } from '@/lib/utils/replaceGqlError'
 import Avatar from '@/components/Avatar'
-import { parseAvatarToUrl } from '@/lib/avatar'
+import { buildAvatarUrl, getDefaultAvatar, parseAvatarToUrl } from '@/lib/avatar'
 import { useAppStore } from '@/store/useAppStore'
 import type {
   SettingsFormValues, 
@@ -66,9 +66,9 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
   const setUserData = useAppStore((state) => state.setUserData)
 
   const avatar = userData?.avatar as UserAvatar | string | Record<string, unknown> | undefined
-  const avatarSrc =
-    parseAvatarToUrl(avatar) ?? (typeof avatar === 'string' ? avatar : undefined)
   const username = userData?.username ?? ''
+  // Never the raw value: an avataaars.io URL that can't be read shows the default (#722).
+  const avatarSrc = parseAvatarToUrl(avatar) ?? buildAvatarUrl(getDefaultAvatar(username))
   const email = userData?.email ?? ''
   const name = userData?.name ?? ''
   const userId = userData?.id ?? userData?._id ?? ''

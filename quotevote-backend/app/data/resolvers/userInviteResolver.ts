@@ -4,14 +4,19 @@
  * Invite lifecycle uses legacy numeric `User.status` (not `accountStatus`):
  *   1 = access requested, 4 = approved (invite sent), 2 = declined.
  * A member's invite (#672) skips the admin queue: the account starts at 4 and the
- * UserInvite row decides whether its signup link still works.
+ * UserInvite row decides whether its signup link still works. Admin approvals
+ * record a UserInvite too and their links carry its id, so they work the same way,
+ * and an access request from an account whose invites have all lapsed puts it back
+ * in the admin queue (#691).
  * `accountStatus` stays reserved for moderation (active / disabled / …).
  */
 
 import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import sendGridEmail, { SENDGRID_TEMPLATE_IDS } from '~/data/utils/send-grid-mail';
+import { buildMemberInviteEmail } from '~/data/utils/memberInviteEmail';
 import {
+  ADMIN_INVITE_TTL_SECONDS,
   MEMBER_INVITE_TTL_SECONDS,
   generateHashPassword,
   generateInviteSignupToken,
@@ -192,6 +197,86 @@ async function prepareMemberInvite(
   };
 }
 
+const INVITE_ALREADY_SENT =
+  'An invite was already sent to this email. Check your inbox for the signup link.';
+
+/** Fields `requestUserAccess` returns. No createdAt, which legacy accounts lack. */
+const REQUEST_ACCESS_USER_SELECT = {
+  id: true,
+  email: true,
+  username: true,
+  name: true,
+  accountStatus: true,
+  status: true,
+  password: true,
+  avatar: true,
+  bio: true,
+  contributorBadge: true,
+  upvotes: true,
+  downvotes: true,
+  followingIds: true,
+  followerIds: true,
+  reputation: true,
+  isAdmin: true,
+} as const satisfies Prisma.UserSelect;
+
+/**
+ * #691: an invited account that never finished signup (status 4, no password)
+ * asks for access again. If an invite to the address is still open, the person is
+ * pointed at it. Otherwise every lapsed invite is marked expired and the account
+ * goes back to the admin queue as a request.
+ *
+ * Each step only applies to the record as it was read, so a member renewing the
+ * invite or the person finishing signup at the same moment wins, and this stops.
+ */
+async function reopenLapsedInvite(
+  prisma: GraphQLContext['prisma'],
+  userId: string,
+  email: string,
+  now: Date
+): Promise<'reopened' | 'inviteOpen' | 'changed'> {
+  const pending = await prisma.userInvite.findMany({
+    where: { email, status: 'pending' },
+    select: { id: true, expiresAt: true },
+  });
+  if (pending.some((invite) => invite.expiresAt && invite.expiresAt > now)) {
+    return 'inviteOpen';
+  }
+
+  for (const invite of pending) {
+    const closed = await prisma.userInvite.updateMany({
+      where: { id: invite.id, status: 'pending', expiresAt: invite.expiresAt },
+      data: { status: 'expired' },
+    });
+    if (closed.count === 1) continue;
+    // Changed since we read it. A second request closing it too is fine; a renewal
+    // means the invite is open again.
+    const current = await prisma.userInvite.findUnique({
+      where: { id: invite.id },
+      select: { status: true },
+    });
+    if (current && current.status !== 'expired') {
+      return current.status === 'pending' ? 'inviteOpen' : 'changed';
+    }
+  }
+
+  const moved = await prisma.user.updateMany({
+    where: {
+      id: userId,
+      status: INVITE_STATUS_APPROVED,
+      OR: [{ password: null }, { password: { isSet: false } }],
+    },
+    data: { status: INVITE_STATUS_REQUESTED },
+  });
+  if (moved.count === 1) return 'reopened';
+  // A second request may have moved it first; anything else means it changed.
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { status: true, password: true },
+  });
+  return account?.status === INVITE_STATUS_REQUESTED && !account.password ? 'reopened' : 'changed';
+}
+
 function isApprovedInviteStatus(inviteStatus: string): boolean {
   const normalized = inviteStatus.trim().toLowerCase();
   return normalized === 'approved' || normalized === '4';
@@ -328,13 +413,15 @@ export const userInviteResolver = {
         email,
       });
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      // Its own email (#697): the access-request confirmation template has no signup link.
       const sent = await trySend('sendUserInvite', {
         to: email,
-        templateId: SENDGRID_TEMPLATE_IDS.INVITE_REQUEST_RECEIVED_CONFIRMATION,
-        dynamicTemplateData: {
-          inviter_name: inviter.name || inviter.username,
-          invite_url: `${clientUrl}/auths/signup?token=${encodeURIComponent(token)}`,
-        },
+        ...buildMemberInviteEmail({
+          inviterName: inviter.name || inviter.username || 'A member',
+          inviteUrl: `${clientUrl}/auths/signup?token=${encodeURIComponent(token)}`,
+          clientUrl,
+          expiresInDays: Math.round(MEMBER_INVITE_TTL_SECONDS / 86400),
+        }),
       });
 
       // Without the email nobody can use the invite, so take it back rather than
@@ -406,61 +493,45 @@ export const userInviteResolver = {
 
       const existingUser = await context.prisma.user.findFirst({
         where: { email },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          name: true,
-          accountStatus: true,
-          status: true,
-          password: true,
-          avatar: true,
-          bio: true,
-          contributorBadge: true,
-          upvotes: true,
-          downvotes: true,
-          followingIds: true,
-          followerIds: true,
-          reputation: true,
-          isAdmin: true,
-        },
+        select: REQUEST_ACCESS_USER_SELECT,
       });
 
       let user = existingUser;
 
       if (existingUser) {
-        // Active completed accounts cannot re-request access under the same email.
-        if (existingUser.password && existingUser.accountStatus === 'active') {
+        // A finished account can't request access again under the same email,
+        // whatever its moderation status (#691).
+        if (existingUser.password) {
           throw new GraphQLError('Email already exists', {
             extensions: { code: 'BAD_USER_INPUT' },
           });
         }
 
-        // Re-open a declined request as status 1. Do not touch approved invites
-        // (status 4) — resetting those would invalidate the emailed signup link.
-        if (!existingUser.password && existingUser.status === INVITE_STATUS_DECLINED) {
+        // Re-open a declined request as status 1.
+        if (existingUser.status === INVITE_STATUS_DECLINED) {
           user = await context.prisma.user.update({
             where: { id: existingUser.id },
             data: { status: INVITE_STATUS_REQUESTED },
-            select: {
-              id: true,
-              email: true,
-              username: true,
-              name: true,
-              accountStatus: true,
-              status: true,
-              password: true,
-              avatar: true,
-              bio: true,
-              contributorBadge: true,
-              upvotes: true,
-              downvotes: true,
-              followingIds: true,
-              followerIds: true,
-              reputation: true,
-              isAdmin: true,
-            },
+            select: REQUEST_ACCESS_USER_SELECT,
           });
+        }
+
+        // Invited but never signed up (#691): point them at an open invite, or put
+        // the account back in the admin queue once every invite has lapsed.
+        if (existingUser.status === INVITE_STATUS_APPROVED) {
+          const outcome = await reopenLapsedInvite(
+            context.prisma,
+            existingUser.id,
+            email,
+            new Date()
+          );
+          if (outcome === 'inviteOpen') throw badInput(INVITE_ALREADY_SENT);
+          if (outcome === 'changed') {
+            throw new GraphQLError('Email already exists', {
+              extensions: { code: 'BAD_USER_INPUT' },
+            });
+          }
+          user = { ...existingUser, status: INVITE_STATUS_REQUESTED };
         }
       } else {
         try {
@@ -471,24 +542,7 @@ export const userInviteResolver = {
               status: INVITE_STATUS_REQUESTED,
               password: null,
             },
-            select: {
-              id: true,
-              email: true,
-              username: true,
-              name: true,
-              accountStatus: true,
-              status: true,
-              password: true,
-              avatar: true,
-              bio: true,
-              contributorBadge: true,
-              upvotes: true,
-              downvotes: true,
-              followingIds: true,
-              followerIds: true,
-              reputation: true,
-              isAdmin: true,
-            },
+            select: REQUEST_ACCESS_USER_SELECT,
           });
         } catch (err) {
           if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -529,7 +583,12 @@ export const userInviteResolver = {
       args: { userId: string; inviteStatus: string },
       context: GraphQLContext
     ): Promise<{ code: string; message: string; inviteToken?: string }> => {
-      if (!context.user?._id || context.user.admin !== true) {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (context.user.admin !== true) {
         throw new GraphQLError('Admin authentication required', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -570,7 +629,23 @@ export const userInviteResolver = {
           select: { id: true },
         });
 
-        const inviteToken = generateInviteSignupToken(invitedUser.id);
+        // The approval's UserInvite decides whether its link still works, as for a
+        // member invite: open until it expires, then claimed once at signup (#691).
+        // No inviter: approvals must not count toward the admin's own invite limit.
+        const inviteEmail = invitedUser.email.trim().toLowerCase();
+        const { id: inviteId } = await context.prisma.userInvite.create({
+          data: {
+            email: inviteEmail,
+            status: 'pending',
+            expiresAt: new Date(Date.now() + ADMIN_INVITE_TTL_SECONDS * 1000),
+          },
+          select: { id: true },
+        });
+
+        const inviteToken = generateInviteSignupToken(invitedUser.id, ADMIN_INVITE_TTL_SECONDS, {
+          inviteId,
+          email: inviteEmail,
+        });
         const signupPath = `/auths/signup?token=${encodeURIComponent(inviteToken)}`;
 
         try {

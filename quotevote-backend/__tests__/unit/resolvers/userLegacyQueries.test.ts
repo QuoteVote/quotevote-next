@@ -86,7 +86,7 @@ describe('legacy user queries (#623)', () => {
 
     it('matches case-insensitively without a regex and returns no user fields', async () => {
       const ctx = asGuest();
-      (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([{ status: 4 }]);
+      (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([{ status: 4, password: 'hash' }]);
 
       const result = await userResolver.Query.checkDuplicateEmail(
         null,
@@ -96,7 +96,7 @@ describe('legacy user queries (#623)', () => {
 
       expect(ctx.prisma.user.findMany).toHaveBeenCalledWith({
         where: { email: { equals: 'Alice@Example.com', mode: 'insensitive' } },
-        select: { status: true },
+        select: { status: true, password: true },
       });
       expect(result).toEqual([{ isDuplicate: false, duplicateCount: 1 }]);
     });
@@ -112,6 +112,32 @@ describe('legacy user queries (#623)', () => {
       );
 
       expect(result).toEqual([]);
+    });
+
+    it('treats an invite that was never used as not a duplicate (#691)', async () => {
+      const ctx = asGuest();
+      (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([{ status: 4, password: null }]);
+
+      const result = await userResolver.Query.checkDuplicateEmail(
+        null,
+        { email: 'invited@example.com' },
+        ctx
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it('still reports a declined request as a duplicate', async () => {
+      const ctx = asGuest();
+      (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([{ status: 2, password: null }]);
+
+      const result = await userResolver.Query.checkDuplicateEmail(
+        null,
+        { email: 'declined@example.com' },
+        ctx
+      );
+
+      expect(result).toEqual([{ isDuplicate: false, duplicateCount: 1 }]);
     });
 
     it('returns an empty list when no account uses the email', async () => {

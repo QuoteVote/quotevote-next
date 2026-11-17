@@ -234,8 +234,9 @@ describe('CustomButtons Components', () => {
       const button = container.querySelector('button');
       if (button) {
         expect(button).toBeInTheDocument();
-        // Selected uses default variant (filled)
-        expect(button?.className).toMatch(/bg-green-500|bg-primary/);
+        // Selected is filled with the redesign's primary green
+        expect(button).toHaveAttribute('aria-pressed', 'true');
+        expect(button?.className).toMatch(/bg-\[var\(--shell-primary\)\]/);
       } else {
         // Component hit error boundary
         expect(container).toBeInTheDocument();

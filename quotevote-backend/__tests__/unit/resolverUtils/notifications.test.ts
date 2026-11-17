@@ -5,6 +5,7 @@
 import type { PrismaClient } from '@prisma/client';
 import {
   addNotification,
+  hasUnreadNotification,
   NOTIFICATION_SELECT,
   toNotificationEntity,
 } from '~/data/resolvers/utils/notifications';
@@ -131,6 +132,39 @@ describe('notifications resolver utilities', () => {
         })
       );
       expect(result.postId).toBeUndefined();
+    });
+  });
+
+  describe('hasUnreadNotification', () => {
+    const input = {
+      userId: 'author',
+      userIdBy: 'member',
+      notificationType: 'COMMENTED' as const,
+      postId: 'post-1',
+    };
+
+    it('looks for one not yet cleared, of the same type, from the same member, on the same post', async () => {
+      const findFirst = jest.fn().mockResolvedValue({ id: 'notif-1' });
+      const prisma = { notification: { findFirst } } as unknown as Pick<
+        PrismaClient,
+        'notification'
+      >;
+
+      await expect(hasUnreadNotification(prisma, input)).resolves.toBe(true);
+      expect(findFirst).toHaveBeenCalledWith({
+        where: { ...input, status: 'new' },
+        select: { id: true },
+      });
+    });
+
+    it('is false when there is none', async () => {
+      const findFirst = jest.fn().mockResolvedValue(null);
+      const prisma = { notification: { findFirst } } as unknown as Pick<
+        PrismaClient,
+        'notification'
+      >;
+
+      await expect(hasUnreadNotification(prisma, input)).resolves.toBe(false);
     });
   });
 });
