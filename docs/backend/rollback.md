@@ -2,6 +2,14 @@
 
 Part of #183. This covers going back to the current API (the legacy server) after the new backend has gone live and written to the database. It is the "written and tested rollback plan" item. It was rehearsed end to end on a local copy on 2026-11-16 (see [Rehearsal](#rehearsal)), and the same run should be repeated on staging before the switch.
 
+## Before the switch
+
+These run on the staging copy first, then on the live database at a quiet time before the switch, from `quotevote-backend` with the database URL set:
+
+1. **Data check:** `pnpm data:check` (#689), kept as the baseline to compare after a rollback.
+2. **Rooms with an empty member:** `pnpm rooms:audit` (#713). Read-only, counts only.
+3. **Indexes:** `pnpm db:model-indexes` to see what's missing, then `pnpm db:model-indexes --apply` to build it one index at a time and add the typing TTL (#716, #714). A second run prints `Nothing to do.`; a conflict stops it before any change. See [model-indexes.md](model-indexes.md).
+
 ## When to roll back
 
 Roll back when the new backend causes a problem that can't be fixed forward quickly: sign-in failures, errors on the main pages, data that reads wrong, or load the database can't handle. Error tracking and the health endpoint are the first signals.
@@ -39,12 +47,12 @@ These read and work on legacy:
 - **Buddies and blocks, until step 4 runs.** The new backend keeps them in `buddyrelationships` and `userblocks`. Legacy reads `rosters`, which the new backend never writes, so without step 4 buddy requests, new buddies and blocks made after the switch don't appear, and buddies removed or people unblocked after the switch still show. With step 4 they all carry back (see [Rehearsal](#rehearsal)).
 - **Member invite links** sent by the new backend and still unused weren't checked against legacy. If they don't open the signup there, those people need a new invite.
 - **New-only records** (`terms_acceptances`, `userinvites` rows for member invites, rate limit counters, `buddyrelationships`, `userblocks`, `solidconnections`) are ignored by legacy. They stay in the database and are used again if the new backend comes back.
-- **Indexes the new backend built.** On its first start the new backend builds the indexes its Mongoose models declare and legacy never created: `users.accountStatus`, `votes` (`postId`, `postId`+`userId`, `userId`), `messagerooms.postId`, `presences.status` and two on `messages` (#716). They're non-unique and legacy works with them, so they stay.
+- **Indexes built for the new backend.** `pnpm db:model-indexes --apply` (see [Before the switch](#before-the-switch)) builds the indexes the new backend's models declare and legacy never created: `users.accountStatus`, `votes` (`postId`, `postId`+`userId`, `userId`), `messagerooms.postId`, `presences.status` and two on `messages`, plus the TTL on `typings.expiresAt` (#716, #714). They're non-unique and legacy works with them, so they stay. Since #730 the new backend no longer builds them when it starts.
 
 ## Already broken on legacy
 
 - The admin "user reports" view fails on legacy with any report, old or new (`_reporterId` is returned as an object where the schema expects a string). It is not caused by the new backend.
-- A first direct message sent from a profile in the `main` frontend saves a room with a `null` member (#713). Legacy then fails the sender's `messageRooms` query, so they get an error on every page and their Messages list doesn't load. The new backend refuses that message instead of saving it, so it doesn't add such rooms, but it can't read the ones beta has already written either, so they're cleaned up before the switch (#713).
+- Before #726, a first direct message sent from a profile in the `main` frontend could save a room with a `null` member (#713). Legacy fails the sender's `messageRooms` query on such a room, so they get an error on every page and their Messages list doesn't load. The `main` frontend no longer writes them, and the new backend skips the ones already saved (#727). `pnpm rooms:audit` counts them; they can't be repaired, since the recipient was never saved.
 
 ## Rehearsal
 
