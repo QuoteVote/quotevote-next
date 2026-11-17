@@ -74,6 +74,12 @@ export function buildPostJsonLd(post: PostMetadataData, path: string): JsonLdObj
   };
 }
 
+/** The profile's avatar as an absolute URL; first-party avatars come back as a path. */
+function avatarImageUrl(avatar: UserMetadataData["avatar"]): string | undefined {
+  const src = parseAvatarToUrl(avatar);
+  return src?.startsWith("/") ? absoluteUrl(src) : src;
+}
+
 export function buildProfileJsonLd(user: UserMetadataData): JsonLdObject {
   const url = absoluteUrl(`/profile/${encodeURIComponent(user.username)}`);
   const handle = `@${user.username}`;
@@ -88,7 +94,7 @@ export function buildProfileJsonLd(user: UserMetadataData): JsonLdObject {
       alternateName: handle,
       identifier: user._id,
       url,
-      image: parseAvatarToUrl(user.avatar),
+      image: avatarImageUrl(user.avatar),
     },
   };
 }

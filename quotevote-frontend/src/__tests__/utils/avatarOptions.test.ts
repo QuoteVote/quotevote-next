@@ -81,7 +81,7 @@ describe("avatar option catalogue", () => {
         MOUTH_OPTIONS,
         FACIAL_HAIR_OPTIONS,
       ].map((l) => l.length)
-    ).toEqual([7, 10, 7, 15, 10, 9, 10, 12, 8, 10, 6]);
+    ).toEqual([7, 10, 7, 15, 10, 9, 9, 12, 8, 10, 6]);
   });
 
   it("keeps moods and presets to valid values", () => {

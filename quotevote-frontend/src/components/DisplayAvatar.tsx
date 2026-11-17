@@ -15,7 +15,7 @@ export interface DisplayAvatarProps {
 }
 
 /**
- * Renders a circular cartoon avatar using avataaars.io.
+ * Renders a circular cartoon avatar from the first-party /api/avatar route (#722).
  * Always shows a cartoon character — never falls back to initials or a generic icon.
  *
  * When the user has a configured avatar (avataaars qualities object or URL), it is

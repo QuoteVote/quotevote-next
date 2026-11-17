@@ -39,12 +39,53 @@ const DEFAULT_OPTIONS: Record<string, readonly string[]> = {
 
 export type AvatarQualities = Record<string, string>;
 
+/** Same-origin route that renders an avatar's SVG (#722). */
+export const AVATAR_ROUTE = '/api/avatar';
+
+/**
+ * The first-party image URL for a set of Avataaars qualities. The route renders it on
+ * Quote.Vote's own server, so no browser contacts avataaars.io. Keys go in a fixed
+ * order so the same avatar always has the same URL and caches once.
+ */
 export function buildAvatarUrl(qualities: AvatarQualities, style: AvatarStyle = 'Circle'): string {
   const params = new URLSearchParams({ avatarStyle: style });
-  Object.entries(qualities).forEach(([key, value]) => {
+  for (const key of AVATAR_KEYS) {
+    const value = qualities[key];
     if (value) params.set(key, value);
-  });
-  return `https://avataaars.io/?${params.toString()}`;
+  }
+  return `${AVATAR_ROUTE}?${params.toString()}`;
+}
+
+/** Whether a URL points at avataaars.io, which older saved avatars do. */
+function isAvataaarsUrl(value: string): boolean {
+  try {
+    const host = new URL(value).hostname.toLowerCase();
+    return host === 'avataaars.io' || host.endsWith('.avataaars.io');
+  } catch {
+    return false;
+  }
+}
+
+/** The known qualities in an avataaars.io URL's query, or null when it has none. */
+function qualitiesFromAvataaarsUrl(value: string): AvatarQualities | null {
+  const params = new URL(value).searchParams;
+  const qualities: AvatarQualities = {};
+  for (const key of AVATAR_KEYS) {
+    const v = params.get(key);
+    if (v && AVATAAARS_VALUES[key].includes(v)) qualities[key] = v;
+  }
+  return Object.keys(qualities).length > 0 ? qualities : null;
+}
+
+/**
+ * A stored image URL as something we can show: an avataaars.io URL becomes the same
+ * avatar from our own route (or nothing, so the caller shows the member's default),
+ * and any other URL is kept.
+ */
+function resolveStoredUrl(value: string): string | undefined {
+  if (!isAvataaarsUrl(value)) return value;
+  const qualities = qualitiesFromAvataaarsUrl(value);
+  return qualities ? buildAvatarUrl(qualities) : undefined;
 }
 
 /**
@@ -67,11 +108,11 @@ export function getDefaultAvatar(seed: string): AvatarQualities {
 }
 
 /**
- * Converts any stored avatar value to a renderable URL:
- *  - avataaars qualities object → avataaars.io URL
- *  - JSON-encoded qualities string → avataaars.io URL
- *  - plain URL string → returned as-is
- *  - { url: string } → the url field
+ * Converts any stored avatar value to a renderable, first-party URL:
+ *  - avataaars qualities object or JSON-encoded qualities → our avatar route
+ *  - avataaars.io URL (string or `{ url }`) → the same avatar from our route, or
+ *    undefined when it can't be read, so the caller falls back to the default
+ *  - any other URL string or `{ url }` → returned as-is
  */
 export function parseAvatarToUrl(
   avatar: string | Record<string, unknown> | undefined | null
@@ -85,14 +126,14 @@ export function parseAvatarToUrl(
         return parseAvatarToUrl(parsed as Record<string, unknown>);
       }
     } catch {
-      // Not JSON — treat as a URL
+      // Not JSON: treat as a URL
     }
-    return avatar;
+    return resolveStoredUrl(avatar);
   }
 
   if (typeof avatar === 'object') {
     if ('url' in avatar && typeof avatar.url === 'string') {
-      return avatar.url;
+      return resolveStoredUrl(avatar.url);
     }
 
     const qualities: AvatarQualities = {};
