@@ -202,6 +202,39 @@ describe('MessageSend', () => {
     expect(input).toHaveValue('')
   })
 
+  it('starts a direct room with the recipient, then selects it by its real id (#713)', async () => {
+    const setSelectedChatRoom = jest.fn()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({
+        user: { data: mockCurrentUser },
+        chat: { selectedRoom: null },
+        setSnackbar: jest.fn(),
+        setChatSubmitting: jest.fn(),
+        setSelectedChatRoom,
+      })
+    )
+    mockMutate.mockResolvedValue({
+      data: { createMessage: { _id: 'msg1', messageRoomId: 'new-room' } },
+    })
+
+    render(<MessageSend messageRoomId={null} type="USER" componentId="user2" />)
+
+    fireEvent.change(screen.getByPlaceholderText('Type a message...'), {
+      target: { value: 'hello' },
+    })
+    fireEvent.click(screen.getByLabelText('Send message'))
+
+    await waitFor(() => expect(mockMutate).toHaveBeenCalled())
+    expect(mockMutate.mock.calls[0][0].variables.message).toMatchObject({
+      type: 'USER',
+      messageRoomId: null,
+      componentId: 'user2',
+      text: 'hello',
+    })
+    await waitFor(() => expect(setSelectedChatRoom).toHaveBeenCalledWith('new-room'))
+  })
+
   it('sends message when Enter key is pressed', async () => {
     const setChatSubmitting = jest.fn()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

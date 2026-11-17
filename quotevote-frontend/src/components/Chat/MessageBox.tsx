@@ -264,6 +264,9 @@ function MessageBox({ roomOverride }: MessageBoxProps) {
   const stagedProfileUsername = isStagedRoom
     ? (selectedRoomId as StagedChatRoom).username ?? null
     : null
+  // A staged room doesn't exist yet, so the first message names the other member and the
+  // backend creates the room (#713). MessageSend then selects the room by its real id.
+  const stagedRecipientId = isStagedRoom ? (selectedRoomId as StagedChatRoom).recipientId : null
 
   const { data: roomsData } = useQuery<{ messageRooms: ChatRoom[] }>(GET_CHAT_ROOMS, {
     fetchPolicy: 'cache-and-network',
@@ -329,7 +332,7 @@ function MessageBox({ roomOverride }: MessageBoxProps) {
             messageRoomId={messageRoomId}
             type={messageType ?? 'USER'}
             title={title}
-            componentId={null}
+            componentId={stagedRecipientId}
           />
         </div>
       </div>

@@ -167,6 +167,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
         avatar: typeof avatar === 'string' ? avatar : null,
         messageType: 'USER',
         users: [loggedInUserIdString, _id],
+        recipientId: _id,
         username: username || undefined,
       };
       setSelectedChatRoom(staged);
