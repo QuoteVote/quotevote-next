@@ -77,6 +77,7 @@ function AuthenticatedFeed(): ReactElement {
                 friendsOnly={following}
                 tagId={tagId}
                 compact
+                groupByDay={sortOrder === 'desc'}
               />
             </div>
           </div>

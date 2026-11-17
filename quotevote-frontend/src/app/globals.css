@@ -2389,3 +2389,29 @@ p { line-height: 1.625; }
   --shell-blue-ink: #8fe4ff;
   --shell-card-shadow: 5px 5px 0 #f2f7f3;
 }
+
+/* Neo Brutalism feed (redesign): post card shadows rotate green, pink, blue, yellow. */
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 1) {
+  box-shadow: 5px 5px 0 0 var(--nb-green) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 2) {
+  box-shadow: 5px 5px 0 0 var(--nb-pink) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 3) {
+  box-shadow: 5px 5px 0 0 var(--nb-blue) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n) {
+  box-shadow: 5px 5px 0 0 var(--nb-yellow) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 1):hover {
+  box-shadow: 8px 8px 0 0 var(--nb-green) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 2):hover {
+  box-shadow: 8px 8px 0 0 var(--nb-pink) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 3):hover {
+  box-shadow: 8px 8px 0 0 var(--nb-blue) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n):hover {
+  box-shadow: 8px 8px 0 0 var(--nb-yellow) !important;
+}
