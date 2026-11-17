@@ -8,6 +8,7 @@ import {
   MESSAGE_ROOM_SELECT,
   byLatestMessage,
   filterListedRooms,
+  listRoomIdsForUser,
   loadRoomViews,
 } from '~/data/resolvers/utils/chatRooms';
 import {
@@ -129,8 +130,10 @@ export const chatResolver = {
       context: GraphQLContext
     ): Promise<Common.MessageRoomView[]> => {
       if (!context.userId) return [];
+      const roomIds = await listRoomIdsForUser(context.prisma, context.userId);
+      if (roomIds.length === 0) return [];
       const rooms = await context.prisma.messageRoom.findMany({
-        where: { userIds: { has: context.userId } },
+        where: { id: { in: roomIds } },
         select: MESSAGE_ROOM_SELECT,
       });
       const listed = await filterListedRooms(context.prisma, rooms, context.userId);

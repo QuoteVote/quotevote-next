@@ -25,6 +25,7 @@
     "prisma:test": "tsx scripts/check-replica-set.ts && tsx scripts/prisma-crud-test.ts",
     "prisma:parity": "tsx scripts/check-replica-set.ts && tsx scripts/prisma-mongoose-parity.ts",
     "roster:audit": "tsx scripts/roster-audit.ts",
+    "rooms:audit": "tsx scripts/broken-rooms-audit.ts",
     "roster:backfill": "tsx scripts/roster-backfill.ts",
     "roster:rollback": "tsx scripts/roster-rollback.ts",
     "roster:seed-fixtures": "tsx scripts/seed-roster-fixtures.ts",

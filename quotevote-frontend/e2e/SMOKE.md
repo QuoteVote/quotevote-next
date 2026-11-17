@@ -9,7 +9,7 @@
 5. comment in the discussion
 6. quote a passage
 7. follow the author
-8. direct message the author (marked `fixme` until #713 is fixed)
+8. direct message the author from their profile, and the author opens it
 9. the author's notifications show the vote and the follow
 10. a new comment reaches the author's open post over WebSocket, without a reload
 11. the API it ran against is local
@@ -82,7 +82,7 @@ DATABASE_URL='mongodb://127.0.0.1:27018/quotevote_local?replicaSet=rs0&directCon
 pnpm test:e2e smoke.spec.ts --project=desktop
 ```
 
-`DATABASE_URL` is used by `pnpm seed:e2e-user` to create the two members. A clean run ends with `10 passed, 1 skipped` (the direct message step) and takes under 15 seconds.
+`DATABASE_URL` is used by `pnpm seed:e2e-user` to create the two members. A clean run ends with `11 passed` and takes under 15 seconds.
 
 ## When it fails
 
