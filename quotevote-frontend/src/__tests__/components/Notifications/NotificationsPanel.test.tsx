@@ -110,7 +110,7 @@ describe("NotificationsPanel (#532)", () => {
     render(<NotificationsPanel />, { mocks });
 
     const panel = await screen.findByTestId("notifications-panel");
-    expect(panel).toHaveClass("bottom-[56px]");
+    expect(panel).toHaveClass("bottom-[var(--app-tabbar-h)]");
     expect(panel).not.toHaveClass("left-0");
   });
 

@@ -24,6 +24,6 @@ describe('NavSearch', () => {
   it('renders the search input on other pages', () => {
     mockPathname = '/profile'
     render(<NavSearch />)
-    expect(screen.getByPlaceholderText('Search…')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Search quotes, people and topics')).toBeInTheDocument()
   })
 })
