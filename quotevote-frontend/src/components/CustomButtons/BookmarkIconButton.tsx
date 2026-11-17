@@ -7,7 +7,7 @@ import useGuestGuard from "@/hooks/useGuestGuard";
 import { UPDATE_POST_BOOKMARK, CREATE_POST_MESSAGE_ROOM } from "@/graphql/mutations";
 import { GET_CHAT_ROOMS, GET_POST, GET_USER_ACTIVITY, GET_TOP_POSTS } from "@/graphql/queries";
 import type { BookmarkIconButtonProps } from "@/types/components";
-import { POST_ACTION_PILL_CLASS } from "@/lib/constants/postActions";
+import { POST_ACTION_NEUTRAL_CLASS, POST_ACTION_PILL_CLASS } from "@/lib/constants/postActions";
 import { cn } from "@/lib/utils";
 import { announceBookmarkChange } from "@/lib/utils/bookmarkFeedback";
 
@@ -90,9 +90,10 @@ export function BookmarkIconButton({
         aria-pressed={isBookmarked}
         className={cn(
           POST_ACTION_PILL_CLASS,
-          "text-muted-foreground border-border bg-background shadow-none gap-1 shrink-0",
-          isBookmarked &&
-            "text-amber-600 border-amber-300 bg-amber-50 dark:text-amber-400 dark:border-amber-700 dark:bg-amber-950/40",
+          "gap-2 shrink-0",
+          isBookmarked
+            ? "border-[#f3de9c] bg-[#fff7dd] text-[#875a0e] hover:bg-[#fff1c4] hover:text-[#875a0e] dark:border-[#6b5313] dark:bg-[#3a2c0f] dark:text-[#f3c96b] [.neo-brutalism_&]:border-[var(--shell-line)] [.neo-brutalism_&]:bg-[#ffe533] [.neo-brutalism_&]:text-[#070b14]"
+            : POST_ACTION_NEUTRAL_CLASS,
           className
         )}
       >

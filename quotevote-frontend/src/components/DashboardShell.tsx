@@ -380,14 +380,16 @@ export function DashboardShell({
             className={cn(
               'mx-auto px-0 md:px-4',
               pathname === '/' && 'h-full min-h-0 md:h-auto',
-              pathname.startsWith('/post/') && 'md:px-8 lg:px-12 h-full md:h-auto',
+              pathname.startsWith('/post/') && 'md:px-0 h-full md:h-auto',
             )}
             style={{
               // Home lays out its own columns (left filters, feed, highlights).
-              maxWidth: pathname.startsWith('/control-panel') || pathname === '/'
-                ? 'none'
-                : pathname.startsWith('/post/')
-                  ? '1170px'
+              // Home and the post page lay out their own full-width columns.
+              maxWidth:
+                pathname.startsWith('/control-panel') ||
+                pathname === '/' ||
+                pathname.startsWith('/post/')
+                  ? 'none'
                   : '42rem',
             }}
           >
