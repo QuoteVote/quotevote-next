@@ -560,7 +560,7 @@ describe('userInviteResolver', () => {
       expect(result.inviteToken).toBeDefined();
     });
 
-    it('records when the approval link expires, without changing the link (#691)', async () => {
+    it('records the approval and binds its link to it (#691)', async () => {
       const ctx = mockContext();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: userId,
@@ -588,9 +588,15 @@ describe('userInviteResolver', () => {
       expect(lifetime).toBeGreaterThanOrEqual(auth.ADMIN_INVITE_TTL_SECONDS * 1000 - 1000);
       expect(lifetime).toBeLessThanOrEqual(auth.ADMIN_INVITE_TTL_SECONDS * 1000 + 1000);
 
+      // Same claim as a member link: the record decides whether it still works.
       const payload = auth.verifyInviteSignupToken(result.inviteToken as string);
-      expect(payload?.userId).toBe(userId);
-      expect(payload?.inviteId).toBeUndefined();
+      expect(payload).toEqual(
+        expect.objectContaining({
+          userId,
+          inviteId: '507f1f77bcf86cd799439033',
+          email: 'invitee@example.com',
+        })
+      );
     });
 
     it('sets status 2 on decline without disabling the account', async () => {

@@ -63,17 +63,22 @@ beforeEach(() => {
 /** The signup token in the invite email, decoded, plus the rest of the email. */
 const sentInvite = () => {
   const email = sendMail.mock.calls[0][0];
-  const url = new URL(email.dynamicTemplateData.invite_url);
+  const link = (email.text as string).split('\n').find((line) => line.startsWith('http')) ?? '';
+  const url = new URL(link);
   return { email, url, payload: verifyInviteSignupToken(url.searchParams.get('token') ?? '') };
 };
 
-/** An account still waiting on a member invite, and that invite. */
-const waitingInvite = (context: Context, expiresAt: Date) => {
+/** An account still waiting on an invite, and that invite. Admin approvals have no inviter. */
+const waitingInvite = (
+  context: Context,
+  expiresAt: Date,
+  invitedById: string | null = 'first-inviter'
+) => {
   context.prisma.user.findFirst.mockResolvedValue({ id: 'waiting', password: null, status: 4 });
   context.prisma.userInvite.findFirst.mockResolvedValue({
     id: 'old-invite',
     expiresAt,
-    invitedById: 'first-inviter',
+    invitedById,
   });
 };
 
@@ -131,9 +136,11 @@ describe('sendUserInvite (#672)', () => {
     const { email, url, payload } = sentInvite();
     expect(email).toMatchObject({
       to: 'new@example.com',
-      templateId: 'tpl-confirm',
-      dynamicTemplateData: { inviter_name: 'Ada Lovelace' },
+      subject: 'Ada Lovelace invited you to Quote.Vote',
     });
+    expect(email.templateId).toBeUndefined();
+    expect(email.html).toContain(`href="${url.href.replace(/&/g, '&amp;')}"`);
+    expect(email.text).toContain('expires in 7 days');
     expect(`${url.origin}${url.pathname}`).toBe('http://localhost:3000/auths/signup');
     expect(payload).toMatchObject({
       userId: 'new-user',
@@ -151,7 +158,7 @@ describe('sendUserInvite (#672)', () => {
 
     await invite(context, 'new@example.com');
 
-    expect(sentInvite().email.dynamicTemplateData.inviter_name).toBe('ada');
+    expect(sentInvite().email.subject).toBe('ada invited you to Quote.Vote');
   });
 
   it.each([
@@ -204,6 +211,56 @@ describe('sendUserInvite (#672)', () => {
       userId: 'waiting',
       inviteId: 'old-invite',
       email: 'friend@example.com',
+    });
+  });
+
+  it('invites someone whose admin approval has lapsed, as a 7-day member invite (#691)', async () => {
+    // An admin approved them, so a member may invite them again: the approval's
+    // invite is renewed in the member's name and a member link goes out.
+    const context = createContext();
+    const lapsed = new Date(Date.now() - 60_000);
+    waitingInvite(context, lapsed, null);
+    const before = Date.now();
+
+    await expect(invite(context, 'approved@example.com')).resolves.toMatchObject({
+      code: 'SUCCESS',
+    });
+
+    const renewal = context.prisma.userInvite.updateMany.mock.calls[0][0];
+    expect(renewal.where).toEqual({ id: 'old-invite', status: 'pending', expiresAt: lapsed });
+    expect(renewal.data.invitedById).toBe(inviterId);
+    expect(renewal.data.expiresAt.getTime() - before).toBeGreaterThanOrEqual(7 * DAY_MS);
+    expect(context.prisma.user.create).not.toHaveBeenCalled();
+    expect(sentInvite().payload).toMatchObject({
+      userId: 'waiting',
+      inviteId: 'old-invite',
+      email: 'approved@example.com',
+    });
+  });
+
+  it('refuses while an admin approval is still open (#691)', async () => {
+    const context = createContext();
+    waitingInvite(context, new Date(Date.now() + 60 * 60_000), null);
+
+    await expect(invite(context, 'approved@example.com')).rejects.toThrow(
+      'Invite already sent to this email'
+    );
+    expect(context.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it('gives a lapsed admin approval back when the member invite fails to send (#691)', async () => {
+    const context = createContext();
+    const lapsed = new Date(Date.now() - 60_000);
+    waitingInvite(context, lapsed, null);
+    sendMail.mockRejectedValueOnce(new Error('down'));
+
+    await expect(invite(context, 'approved@example.com')).rejects.toThrow(
+      "We couldn't send the invite email"
+    );
+    expect(context.prisma.userInvite.updateMany).toHaveBeenLastCalledWith({
+      where: { id: 'old-invite', status: 'pending', expiresAt: expect.any(Date) },
+      data: { expiresAt: lapsed, invitedById: null },
     });
   });
 

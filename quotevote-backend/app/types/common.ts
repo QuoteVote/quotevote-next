@@ -25,6 +25,7 @@ export type NotificationType =
   | 'COMMENT'
   | 'COMMENTED'
   | 'QUOTE'
+  | 'QUOTED'
   | 'MESSAGE'
   | 'MENTION'
   | 'SYSTEM'
@@ -306,6 +307,7 @@ export interface Notification {
 /** The post a notification points to; deleted posts are kept so the UI can say so. */
 export interface NotificationPost {
   _id: string;
+  title: string | null;
   url: string | null;
   deleted: boolean;
 }

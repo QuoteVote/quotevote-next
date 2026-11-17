@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { toCommentDeepLink } from '@/lib/utils/sanitizeUrl'
 import { VOTE_LABELS } from '@/lib/constants/voteAxes'
 import useGuestGuard from '@/hooks/useGuestGuard'
-import type { VoteOption } from '@/types/voting'
+import { voteTag } from '@/lib/utils/voteTag'
 import type {
   PostActionCardProps,
   ActionReactionsData,
@@ -27,13 +27,19 @@ import type {
   DeleteQuoteData,
 } from '@/types/postActions'
 
-// The vote's response (True, Like...). The API returns `tags` as a string, older data as
-// an array; votes without a known response fall back to Agree/Disagree.
+// The vote's response (True, Like...); votes without a known response fall back to
+// Agree/Disagree.
 function voteResponseLabel(tags: unknown, isUp: boolean): string {
-  const values = Array.isArray(tags) ? tags : typeof tags === 'string' ? tags.split(',') : []
-  const tag = values.map((t) => String(t).trim()).find((t) => t in VOTE_LABELS)
-  if (tag) return VOTE_LABELS[tag as VoteOption]
+  const tag = voteTag(tags)
+  if (tag) return VOTE_LABELS[tag]
   return isUp ? 'Agree' : 'Disagree'
+}
+
+/** Which colour a Discussion card takes: up and down votes, comments, quotes. */
+export function actionLight(type: string, voteType?: string): 'up' | 'down' | 'comment' | 'quote' {
+  if (type === 'Vote') return voteType === 'up' || voteType === 'upvote' ? 'up' : 'down'
+  if (type === 'Quote') return 'quote'
+  return 'comment'
 }
 
 // ── Type badge / activity label button (RC1-019) ─────────────────────────────
@@ -53,13 +59,7 @@ function ActionTypeBadge({
     return (
       <span
         data-testid="activity-label-button"
-        className={cn(
-          'inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide shrink-0',
-          isUp
-            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-            : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
-          className
-        )}
+        className={cn('qv-tag', isUp ? 'qv-tag-up' : 'qv-tag-down', className)}
       >
         {isUp ? '↑' : '↓'} {voteResponseLabel(voteTags, isUp)}
       </span>
@@ -67,27 +67,15 @@ function ActionTypeBadge({
   }
   if (type === 'Quote') {
     return (
-      <span
-        data-testid="activity-label-button"
-        className={cn(
-          'inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 shrink-0',
-          className
-        )}
-      >
-        ❝ Quote
+      <span data-testid="activity-label-button" className={cn('qv-tag qv-tag-quote', className)}>
+        “ Quote
       </span>
     )
   }
   if (type === 'Comment') {
     return (
-      <span
-        data-testid="activity-label-button"
-        className={cn(
-          'inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400 shrink-0',
-          className
-        )}
-      >
-        💬 Comment
+      <span data-testid="activity-label-button" className={cn('qv-tag qv-tag-comment', className)}>
+        Comment
       </span>
     )
   }
@@ -261,120 +249,113 @@ export default function PostActionCard({
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
       data-post-action="true"
       data-action-type={type}
+      data-light={actionLight(type, voteType)}
       data-selected={selected ? 'true' : undefined}
       data-post-owner={isPostOwner ? 'true' : undefined}
       data-current-user={isOwner && !isPostOwner ? 'true' : undefined}
       className={cn(
-        'group relative flex items-start gap-3 px-3.5 py-3 cursor-pointer transition-colors rounded-xl border',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-        selected
-          ? 'bg-card bg-[linear-gradient(rgba(82,178,116,0.06),rgba(82,178,116,0.06))] border-[#52b274]/40 border-l-[4px] border-l-[#52b274] shadow-sm'
-          : 'bg-card border-border border-l-[4px] border-l-transparent shadow-xs hover:border-foreground/20 hover:shadow-sm'
+        'qv-lit font-redesign group relative flex cursor-pointer items-start gap-3 px-4 py-3.5',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2457e6]'
       )}
     >
       {/* Avatar */}
       <button
         type="button"
         onClick={handleProfileClick}
-        className="shrink-0 self-start mt-0.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="shrink-0 self-start rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         <DisplayAvatar
           avatar={avatar as string | Record<string, unknown> | undefined}
           username={username}
-          size={32}
-          className="cursor-pointer"
+          size={36}
+          className="size-9 cursor-pointer"
         />
       </button>
 
       {/* Content column */}
-      <div className="flex-1 min-w-0">
-
-        {/* Header: name + date (avoid flex-wrap jitter on small screens) */}
-        <div className="flex items-baseline gap-1.5 mb-1.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        {/* Header: name, OP, time, then the type on the right */}
+        <div className="flex items-center gap-2 text-[13px]">
           <button
             type="button"
             onClick={handleProfileClick}
-            className="text-[12px] sm:text-[13px] font-semibold text-[#52b274] hover:underline leading-none"
+            className="truncate font-bold text-[var(--shell-ink)] hover:underline"
           >
             {displayName}
           </button>
           {isPostOwner && (
             <span
               data-op-badge="true"
-              className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 leading-none"
+              className="qv-tag qv-tag-info h-[19px] px-1.5 text-[10.5px]"
               title="Original poster"
             >
               OP
             </span>
           )}
-          <div className="flex min-w-0 items-baseline gap-1">
-            <span className="text-muted-foreground/40 text-xs leading-none">·</span>
-            <time className="text-[10px] sm:text-[11px] text-muted-foreground leading-none">{parsedDate}</time>
-          </div>
+          <time className="shrink-0 text-[var(--shell-muted)]">· {parsedDate}</time>
           {type !== 'Message' && (
-            <div className="ml-0.5 shrink-0 self-baseline">
-              <ActionTypeBadge
-                type={type}
-                voteType={voteType}
-                voteTags={get(postAction, 'tags')}
-                className="leading-none"
-              />
-            </div>
+            <ActionTypeBadge
+              type={type}
+              voteType={voteType}
+              voteTags={get(postAction, 'tags')}
+              className="ml-auto shrink-0"
+            />
           )}
         </div>
 
-        {/* Vote: selected text as an accented blockquote */}
+        {/* Vote: the passage it's about */}
         {type === 'Vote' && (
-          <blockquote className="text-sm leading-relaxed italic text-foreground/80">
+          <blockquote className="text-[14.5px] font-semibold leading-normal text-[var(--shell-ink)]">
             {content
               ? <span>&ldquo;{content}&rdquo;</span>
-              : <span className="italic text-muted-foreground/60">no text selected</span>
+              : <span className="font-normal italic text-[var(--shell-muted)]">no text selected</span>
             }
           </blockquote>
         )}
 
-        {/* Quote: italic excerpt */}
+        {/* Quote: the quoted words */}
         {type === 'Quote' && (
-          <blockquote className="text-sm text-foreground/75 italic leading-relaxed">
-            <span>{quoteContent}</span>
+          <blockquote className="text-[14.5px] font-semibold leading-normal text-[var(--shell-ink)]">
+            <span>&ldquo;{quoteContent}&rdquo;</span>
           </blockquote>
         )}
 
-        {/* Comment: optional quoted context + body */}
+        {/* Comment: the passage it answers, then the comment */}
         {type === 'Comment' && (
-          <div>
+          <div className="flex flex-col gap-1.5">
             {commentQuote && (
-              <blockquote className="mb-1.5 text-[14px] text-muted-foreground italic leading-relaxed">
-                <span>{commentQuote}</span>
+              <blockquote className="border-l-[3px] border-[#fdd835] pl-2.5 text-[13px] font-semibold leading-normal text-[var(--shell-muted)]">
+                <span>&ldquo;{commentQuote}&rdquo;</span>
               </blockquote>
             )}
-            <p className="text-[14px] text-foreground/85 leading-relaxed">{content}</p>
+            <p className="text-[14.5px] leading-[1.55] text-[var(--shell-ink)]">{content}</p>
           </div>
         )}
 
-
-        {/* Footer: reactions + copy/delete (keep emoji alignment consistent) */}
-        <div className="flex items-start justify-between gap-2 mt-2">
+        {/* Footer: reactions, then Copy link and Delete */}
+        <div className="flex items-center justify-between gap-2">
           <CommentReactions actionId={_id} reactions={actionReactions} />
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
+          <div className="flex shrink-0 items-center gap-1">
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={(e) => { e.stopPropagation(); handleCopy() }}
-              className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50"
+              className="h-[30px] px-2.5 text-[13px] font-bold text-[var(--shell-ink-2)]"
               aria-label="Copy link"
             >
-              <Link2 className="h-3.5 w-3.5" />
+              <Link2 className="size-3.5" aria-hidden="true" />
+              Copy link
             </Button>
             {isOwner && (
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={(e) => { e.stopPropagation(); handleDelete() }}
-                className="h-7 w-7 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
+                className="h-[30px] px-2.5 text-[13px] font-bold text-[var(--shell-down)] hover:bg-destructive/10 hover:text-[var(--shell-down)]"
                 aria-label="Delete"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="size-3.5" aria-hidden="true" />
+                Delete
               </Button>
             )}
           </div>

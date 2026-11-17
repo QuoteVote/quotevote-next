@@ -8,6 +8,7 @@ import { AuthModalProvider } from "@/context/AuthModalContext";
 import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
+import { redesignFont, wordmarkFont } from "@/lib/fonts/redesignFont";
 import { DEFAULT_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo/metadata";
 import "./globals.css";
 
@@ -65,7 +66,12 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={cn(inter.variable, "font-sans antialiased")}
+        className={cn(
+          inter.variable,
+          redesignFont.variable,
+          wordmarkFont.variable,
+          "font-sans antialiased"
+        )}
       >
         <ErrorBoundary>
           <ApolloProviderWrapper>

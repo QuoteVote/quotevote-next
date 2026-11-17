@@ -5,14 +5,16 @@
  *   1 = access requested, 4 = approved (invite sent), 2 = declined.
  * A member's invite (#672) skips the admin queue: the account starts at 4 and the
  * UserInvite row decides whether its signup link still works. Admin approvals
- * record a UserInvite too, so an access request from an account whose invites have
- * all lapsed puts it back in the admin queue (#691).
+ * record a UserInvite too and their links carry its id, so they work the same way,
+ * and an access request from an account whose invites have all lapsed puts it back
+ * in the admin queue (#691).
  * `accountStatus` stays reserved for moderation (active / disabled / …).
  */
 
 import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import sendGridEmail, { SENDGRID_TEMPLATE_IDS } from '~/data/utils/send-grid-mail';
+import { buildMemberInviteEmail } from '~/data/utils/memberInviteEmail';
 import {
   ADMIN_INVITE_TTL_SECONDS,
   MEMBER_INVITE_TTL_SECONDS,
@@ -411,13 +413,15 @@ export const userInviteResolver = {
         email,
       });
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      // Its own email (#697): the access-request confirmation template has no signup link.
       const sent = await trySend('sendUserInvite', {
         to: email,
-        templateId: SENDGRID_TEMPLATE_IDS.INVITE_REQUEST_RECEIVED_CONFIRMATION,
-        dynamicTemplateData: {
-          inviter_name: inviter.name || inviter.username,
-          invite_url: `${clientUrl}/auths/signup?token=${encodeURIComponent(token)}`,
-        },
+        ...buildMemberInviteEmail({
+          inviterName: inviter.name || inviter.username || 'A member',
+          inviteUrl: `${clientUrl}/auths/signup?token=${encodeURIComponent(token)}`,
+          clientUrl,
+          expiresInDays: Math.round(MEMBER_INVITE_TTL_SECONDS / 86400),
+        }),
       });
 
       // Without the email nobody can use the invite, so take it back rather than
@@ -579,7 +583,12 @@ export const userInviteResolver = {
       args: { userId: string; inviteStatus: string },
       context: GraphQLContext
     ): Promise<{ code: string; message: string; inviteToken?: string }> => {
-      if (!context.user?._id || context.user.admin !== true) {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (context.user.admin !== true) {
         throw new GraphQLError('Admin authentication required', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -620,19 +629,23 @@ export const userInviteResolver = {
           select: { id: true },
         });
 
-        // Record when this link stops working, so a later access request can tell
-        // a lapsed approval from an open one (#691). No inviter: approvals must not
-        // count toward the admin's own member-invite limit.
-        await context.prisma.userInvite.create({
+        // The approval's UserInvite decides whether its link still works, as for a
+        // member invite: open until it expires, then claimed once at signup (#691).
+        // No inviter: approvals must not count toward the admin's own invite limit.
+        const inviteEmail = invitedUser.email.trim().toLowerCase();
+        const { id: inviteId } = await context.prisma.userInvite.create({
           data: {
-            email: invitedUser.email.trim().toLowerCase(),
+            email: inviteEmail,
             status: 'pending',
             expiresAt: new Date(Date.now() + ADMIN_INVITE_TTL_SECONDS * 1000),
           },
           select: { id: true },
         });
 
-        const inviteToken = generateInviteSignupToken(invitedUser.id);
+        const inviteToken = generateInviteSignupToken(invitedUser.id, ADMIN_INVITE_TTL_SECONDS, {
+          inviteId,
+          email: inviteEmail,
+        });
         const signupPath = `/auths/signup?token=${encodeURIComponent(inviteToken)}`;
 
         try {

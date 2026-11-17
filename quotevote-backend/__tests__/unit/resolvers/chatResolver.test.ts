@@ -12,6 +12,8 @@ const createContext = () => ({
       findUnique: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      // The caller's room ids; the tests below set the rooms through findMany.
+      findRaw: jest.fn().mockResolvedValue([{ _id: { $oid: 'room-id' } }]),
       update: jest.fn(),
     },
     message: {
@@ -139,7 +141,7 @@ describe('chatResolver Prisma queries', () => {
     const rooms = await chatResolver.Query.messageRooms({}, {}, context as never);
 
     expect(context.prisma.messageRoom.findMany).toHaveBeenCalledWith({
-      where: { userIds: { has: me } },
+      where: { id: { in: ['room-id'] } },
       select: MESSAGE_ROOM_SELECT,
     });
     expect(MESSAGE_ROOM_SELECT).not.toHaveProperty('createdAt');
@@ -200,6 +202,40 @@ describe('chatResolver Prisma queries', () => {
     );
     const listed = await chatResolver.Query.messageRooms({}, {}, context as never);
     expect(listed.map((r) => r._id).sort()).toEqual([postRoomId, otherPostRoom].sort());
+  });
+
+  it('skips rooms saved with an empty member, so they never break the list (#713)', async () => {
+    const context = createContext();
+    context.userId = me;
+    context.prisma.messageRoom.findRaw.mockResolvedValue([
+      { _id: { $oid: dmId } },
+      { _id: 'not-an-oid' },
+    ]);
+    context.prisma.messageRoom.findMany.mockResolvedValue([
+      room({ id: dmId, userIds: [me, bobId] }),
+    ]);
+    context.prisma.user.findMany.mockResolvedValue([bob]);
+
+    const rooms = await chatResolver.Query.messageRooms({}, {}, context as never);
+
+    expect(context.prisma.messageRoom.findRaw).toHaveBeenCalledWith({
+      filter: { $and: [{ users: { $oid: me } }, { users: { $ne: null } }] },
+      options: { projection: { _id: 1 } },
+    });
+    expect(context.prisma.messageRoom.findMany).toHaveBeenCalledWith({
+      where: { id: { in: [dmId] } },
+      select: MESSAGE_ROOM_SELECT,
+    });
+    expect(rooms.map((r) => r._id)).toEqual([dmId]);
+  });
+
+  it('reads nothing more when the member has no readable rooms', async () => {
+    const context = createContext();
+    context.userId = me;
+    context.prisma.messageRoom.findRaw.mockResolvedValue([]);
+
+    await expect(chatResolver.Query.messageRooms({}, {}, context as never)).resolves.toEqual([]);
+    expect(context.prisma.messageRoom.findMany).not.toHaveBeenCalled();
   });
 
   it('returns no rooms to a guest', async () => {

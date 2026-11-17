@@ -155,7 +155,10 @@ test.describe("E2E-MOD-007: Report User as Bot", () => {
 
     // Expect: a report is only a signal. Nothing on the profile labels the user as a bot.
     await page.reload();
-    await expect(page.getByRole("heading", { name: target.name })).toBeVisible();
-    await expect(page.getByText(/bot/i)).toHaveCount(0);
+    const heading = page.getByRole("heading", { name: target.name });
+    await expect(heading).toBeVisible();
+    // Scope to the name block (heading, @handle, bio) so unrelated page text cannot trip this.
+    const nameBlock = heading.locator("xpath=../..");
+    await expect(nameBlock).not.toContainText(/bot|automated/i);
   });
 });

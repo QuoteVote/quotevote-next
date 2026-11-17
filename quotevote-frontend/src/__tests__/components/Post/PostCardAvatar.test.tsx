@@ -86,8 +86,9 @@ describe('PostCard — default avatar seed', () => {
     expect(screen.getByTestId('avatar')).toHaveAttribute('data-seed', 'testuser')
   })
 
-  it('still shows the username as the visible author label', () => {
+  it('shows the display name with the @username under it', () => {
     render(<PostCard {...baseProps} />)
-    expect(screen.getByText('testuser')).toBeInTheDocument()
+    expect(screen.getByText('Test User')).toBeInTheDocument()
+    expect(screen.getByText(/@testuser ·/)).toBeInTheDocument()
   })
 })

@@ -279,7 +279,7 @@ export async function createMissingUniqueIndexes(
     }
     if (attention.length > 0) {
       logger.error(
-        `Unique indexes not created, run pnpm db:unique-indexes --dry-run for details:\n${formatUniqueIndexResults(attention)}`
+        `Unique indexes not created, run pnpm db:unique-indexes for details:\n${formatUniqueIndexResults(attention)}`
       );
     }
     return results;

@@ -905,6 +905,7 @@ export const GET_NOTIFICATIONS = gql`
       notificationType
       post {
         _id
+        title
         url
         deleted
       }

@@ -337,3 +337,27 @@ export async function sendUserInviteApprovalViaApi(
   }
   return result;
 }
+
+/** A member invites someone by email (#672); the invite email carries the signup link (#697). */
+export async function sendUserInviteViaApi(
+  token: string,
+  email: string
+): Promise<{ code?: string; message?: string }> {
+  const data = await graphqlRequest<{
+    sendUserInvite: { code?: string; message?: string } | null;
+  }>(
+    `
+      mutation sendUserInvite($email: String!) {
+        sendUserInvite(email: $email)
+      }
+    `,
+    { email },
+    token
+  );
+
+  const result = data.sendUserInvite;
+  if (!result) {
+    throw new Error('sendUserInvite returned an empty result');
+  }
+  return result;
+}

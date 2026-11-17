@@ -12,6 +12,7 @@ import { disconnectPrisma, prisma } from './lib/prisma';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
 import { createMissingUniqueIndexes } from './data/utils/uniqueIndexes';
 import type { UniqueIndexModel } from './types/uniqueIndexes';
+import { buildsIndexesAtStartup, mongooseConnectOptions } from './data/utils/databaseConnection';
 import * as auth from './data/utils/authentication';
 import { parseTrustProxy } from './data/utils/trustProxy';
 import { createSubscriptionServer } from './subscriptions';
@@ -31,7 +32,7 @@ const SHUTDOWN_TIMEOUT_MS = 10000;
 async function startServer() {
   // 1. Database Connection (Mongoose v9)
   try {
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(MONGO_URI, mongooseConnectOptions(process.env.NODE_ENV));
     console.log('✅ Connected to MongoDB');
   } catch (err) {
     console.error('❌ MongoDB Connection Error:', err);
@@ -39,11 +40,15 @@ async function startServer() {
   }
 
   // Unique indexes the schema relies on for duplicate protection (#694). Only adds the
-  // missing ones, and never stops the server from starting.
-  await createMissingUniqueIndexes(
-    (command) => prisma.$runCommandRaw(command as Prisma.InputJsonObject),
-    Prisma.dmmf.datamodel.models as unknown as UniqueIndexModel[]
-  );
+  // missing ones, and never stops the server from starting. Not in production: starting
+  // the backend never changes indexes there (#716); `pnpm db:unique-indexes --apply`
+  // builds them on purpose before the switch.
+  if (buildsIndexesAtStartup(process.env.NODE_ENV)) {
+    await createMissingUniqueIndexes(
+      (command) => prisma.$runCommandRaw(command as Prisma.InputJsonObject),
+      Prisma.dmmf.datamodel.models as unknown as UniqueIndexModel[]
+    );
+  }
 
   // Start Presence Cleanup Job
   startPresenceCleanup(prisma);
