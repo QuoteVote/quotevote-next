@@ -383,7 +383,8 @@ export function DashboardShell({
               pathname.startsWith('/post/') && 'md:px-8 lg:px-12 h-full md:h-auto',
             )}
             style={{
-              maxWidth: pathname.startsWith('/control-panel')
+              // Home lays out its own columns (left filters, feed, highlights).
+              maxWidth: pathname.startsWith('/control-panel') || pathname === '/'
                 ? 'none'
                 : pathname.startsWith('/post/')
                   ? '1170px'

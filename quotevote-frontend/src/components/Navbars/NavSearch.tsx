@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search, X, Loader2 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
@@ -15,10 +15,20 @@ function isTypingTarget(target: EventTarget | null): boolean {
 export default function NavSearch() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isHome = pathname === "/";
+  const urlQuery = isHome ? searchParams.get("q") || "" : "";
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(urlQuery);
   const [focused, setFocused] = useState(false);
+
+  // When the search is cleared elsewhere (a filter chip, Clear all), empty the box too.
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery);
+  if (urlQuery !== prevUrlQuery) {
+    setPrevUrlQuery(urlQuery);
+    if (!urlQuery && inputValue) setInputValue("");
+  }
 
   const debouncedQuery = useDebounce(inputValue, 400);
 
@@ -27,29 +37,37 @@ export default function NavSearch() {
     [inputValue, debouncedQuery]
   );
 
-  // Home (`/`) has its own search in the directory toolbar, so the nav search is hidden there.
-  // Other pages: navigate to home with the query.
+  // Other pages: go home with the query. Home: update `q` and keep the other filters.
+  // Below `lg`, home uses the search in its own toolbar, so this box is hidden there.
   useEffect(() => {
-    if (debouncedQuery) {
-      router.push(`/?q=${encodeURIComponent(debouncedQuery)}`);
+    if (!isHome) {
+      if (debouncedQuery) router.push(`/?q=${encodeURIComponent(debouncedQuery)}`);
+      return;
     }
+    const next = debouncedQuery.trim();
+    if (next === urlQuery) return;
+    const params = new URLSearchParams(searchParams.toString());
+    if (next) params.set("q", next);
+    else params.delete("q");
+    params.delete("page");
+    const query = params.toString();
+    router.replace(query ? `/?${query}` : "/", { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
 
   // "/" focuses the search from anywhere on the page, unless the user is typing.
   useEffect(() => {
-    if (pathname === "/") return undefined;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
       if (isTypingTarget(e.target)) return;
+      // Hidden on home below `lg`, where the toolbar search is used instead.
+      if (isHome && !window.matchMedia?.("(min-width: 1024px)").matches) return;
       e.preventDefault();
       inputRef.current?.focus();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [pathname]);
-
-  if (pathname === "/") return null;
+  }, [isHome]);
 
   const clearSearch = () => {
     setInputValue("");
@@ -60,7 +78,8 @@ export default function NavSearch() {
     <div
       role="search"
       className={cn(
-        "flex h-11 w-full items-center gap-2.5 rounded-[var(--shell-radius)] pr-2 pl-4 transition-shadow duration-150",
+        isHome ? "hidden lg:flex" : "flex",
+        "h-11 w-full items-center gap-2.5 rounded-[var(--shell-radius)] pr-2 pl-4 transition-shadow duration-150",
         "border-[length:var(--shell-border-w)] border-[var(--shell-field-line)] bg-[var(--shell-field)]",
         focused && "shadow-[var(--shell-focus)]"
       )}

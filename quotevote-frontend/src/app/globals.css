@@ -2268,6 +2268,18 @@ p { line-height: 1.625; }
   --shell-shadow: none;
   --shell-tab-shadow: 0 -8px 24px -18px rgba(15, 23, 42, 0.35);
   --shell-focus: 0 0 0 4px rgba(36, 87, 230, 0.22);
+  --shell-track: #e8ecf2;
+  --shell-divider: #eef1f6;
+  --shell-green: #0e8a5a;
+  --shell-green-soft: #e6f6ee;
+  --shell-green-tint: #eef9f3;
+  --shell-green-line: #d5efe1;
+  --shell-blue: #2457e6;
+  --shell-blue-soft: #e9f0ff;
+  --shell-blue-ink: #1a44c0;
+  --shell-down: #c42b2b;
+  --shell-card-radius: 18px;
+  --shell-card-shadow: none;
 }
 
 @media (min-width: 768px) {
@@ -2303,6 +2315,16 @@ p { line-height: 1.625; }
   --shell-tab-on: #3fbf87;
   --shell-badge-ring: #0b1120;
   --shell-tab-shadow: 0 -8px 24px -18px rgba(0, 0, 0, 0.6);
+  --shell-track: #111a2e;
+  --shell-divider: #1b2640;
+  --shell-green: #3fbf87;
+  --shell-green-soft: #12382a;
+  --shell-green-tint: #10261d;
+  --shell-green-line: #2a6b4f;
+  --shell-blue: #8cc8ff;
+  --shell-blue-soft: #13324a;
+  --shell-blue-ink: #8cc8ff;
+  --shell-down: #ff7a7a;
 }
 
 .neo-brutalism {
@@ -2328,6 +2350,17 @@ p { line-height: 1.625; }
   --shell-badge-ring: #070b14;
   --shell-shadow: 2px 2px 0 #070b14;
   --shell-tab-shadow: none;
+  --shell-track: #f3efd9;
+  --shell-divider: rgba(7, 11, 20, 0.15);
+  --shell-green: #008f23;
+  --shell-green-soft: #9af5c5;
+  --shell-green-tint: #9af5c5;
+  --shell-green-line: #070b14;
+  --shell-blue: #0b5fd6;
+  --shell-blue-soft: #8fe4ff;
+  --shell-blue-ink: #070b14;
+  --shell-card-radius: 4px;
+  --shell-card-shadow: 5px 5px 0 #070b14;
 }
 
 .dark.neo-brutalism,
@@ -2345,4 +2378,14 @@ p { line-height: 1.625; }
   --shell-tab-on: #20c45f;
   --shell-badge-ring: #f2f7f3;
   --shell-shadow: 2px 2px 0 #f2f7f3;
+  --shell-track: #111a2e;
+  --shell-divider: rgba(242, 247, 243, 0.2);
+  --shell-green: #20c45f;
+  --shell-green-soft: #12382a;
+  --shell-green-tint: #12382a;
+  --shell-green-line: #f2f7f3;
+  --shell-blue: #8fe4ff;
+  --shell-blue-soft: #13324a;
+  --shell-blue-ink: #8fe4ff;
+  --shell-card-shadow: 5px 5px 0 #f2f7f3;
 }

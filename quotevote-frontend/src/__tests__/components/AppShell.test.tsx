@@ -142,10 +142,10 @@ describe("NavSearch", () => {
     expect(comment).toHaveFocus();
   });
 
-  it("is hidden on home, which has its own search", () => {
+  it("only shows on large screens on home, where the toolbar search covers smaller ones", () => {
     mockPathname = "/";
     render(<NavSearch />);
-    expect(screen.queryByRole("search")).not.toBeInTheDocument();
+    expect(screen.getByRole("search")).toHaveClass("hidden", "lg:flex");
   });
 });
 

@@ -223,7 +223,7 @@ describe('notificationResolver', () => {
         { id: senderId, username: 'bob', name: 'Bob', avatar: 'bob.png', contributorBadge: true },
       ]);
       (ctx.prisma.post.findMany as jest.Mock).mockResolvedValue([
-        { id: postId, url: '/post/a/b/' + postId, deleted: true },
+        { id: postId, title: 'Night buses', url: '/post/a/b/' + postId, deleted: true },
       ]);
 
       const result = await notificationResolver.Query.notifications(null, {}, ctx);
@@ -246,7 +246,12 @@ describe('notificationResolver', () => {
         contributorBadge: true,
         email: '',
       });
-      expect(result[1].post).toEqual({ _id: postId, url: '/post/a/b/' + postId, deleted: true });
+      expect(result[1].post).toEqual({
+        _id: postId,
+        title: 'Night buses',
+        url: '/post/a/b/' + postId,
+        deleted: true,
+      });
       // An unknown sender and a notification with no post come back as null.
       expect(result[2].userBy).toBeNull();
       expect(result[2].post).toBeNull();
@@ -286,6 +291,7 @@ describe('notificationResolver', () => {
       });
       (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
         id: '60d5ec49ad414d7a8d5464a2',
+        title: 'Park and ride',
         url: '/post/x',
         deleted: false,
       });
@@ -296,6 +302,7 @@ describe('notificationResolver', () => {
       });
       await expect(notificationResolver.Notification.post(base, {}, ctx)).resolves.toEqual({
         _id: '60d5ec49ad414d7a8d5464a2',
+        title: 'Park and ride',
         url: '/post/x',
         deleted: false,
       });
