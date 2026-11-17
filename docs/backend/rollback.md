@@ -9,6 +9,7 @@ These run on the staging copy first, then on the live database at a quiet time b
 1. **Data check:** `pnpm data:check` (#689), kept as the baseline to compare after a rollback.
 2. **Rooms with an empty member:** `pnpm rooms:audit` (#713). Read-only, counts only.
 3. **Indexes:** `pnpm db:model-indexes` to see what's missing, then `pnpm db:model-indexes --apply` to build it one index at a time and add the typing TTL (#716, #714). A second run prints `Nothing to do.`; a conflict stops it before any change. See [model-indexes.md](model-indexes.md).
+4. **Unique indexes:** `pnpm db:unique-indexes`, then `pnpm db:unique-indexes --apply` (#694, #702). It counts records that share a key first and skips that index if there are any, listing them to resolve.
 
 ## When to roll back
 
