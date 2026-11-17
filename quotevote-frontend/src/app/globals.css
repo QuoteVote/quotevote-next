@@ -2530,3 +2530,96 @@ p { line-height: 1.625; }
   background: #f2f7f3;
   color: #070b14;
 }
+
+/* ============================================================ */
+/* Discussion cards (redesign): coloured by type                 */
+/* PostActionCard sets data-light to up, down, comment or quote. */
+/* ============================================================ */
+
+.qv-lit {
+  --light: #56b3ff;
+  background: var(--shell-surface);
+  border: 1.5px solid var(--light);
+  border-bottom-width: 4px;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--light) 8%, transparent),
+    0 4px 10px -8px color-mix(in srgb, var(--light) 55%, transparent),
+    0 14px 28px -22px rgba(15, 23, 42, 0.25);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.qv-lit[data-light="up"] { --light: #52b274; }
+.qv-lit[data-light="down"] { --light: #ff6060; }
+.qv-lit[data-light="comment"] { --light: #fdd835; }
+.qv-lit[data-light="quote"] { --light: #e36dfa; }
+.qv-lit[data-selected="true"] {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--light) 16%, transparent),
+    0 6px 14px -8px color-mix(in srgb, var(--light) 70%, transparent);
+}
+
+/* Type tags */
+.qv-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.qv-tag-up { background: #e3f6ea; color: #11683d; }
+.qv-tag-down { background: #fde7e7; color: #a12424; }
+.qv-tag-quote { background: #f7e6fc; color: #7a2690; }
+.qv-tag-comment { background: #fff5c7; color: #6b5300; }
+.qv-tag-info { background: #e9f0ff; color: #1a44c0; }
+.dark .qv-tag-up { background: rgba(82, 178, 116, 0.2); color: #7fdcb0; }
+.dark .qv-tag-down { background: rgba(255, 96, 96, 0.18); color: #ff9a9a; }
+.dark .qv-tag-quote { background: rgba(227, 109, 250, 0.18); color: #f0b3fc; }
+.dark .qv-tag-comment { background: rgba(253, 216, 53, 0.16); color: #fde68a; }
+.dark .qv-tag-info { background: #13324a; color: #8cc8ff; }
+
+/* Neo Brutalism: ink border, square corners, hard shadow in the type colour.
+   Beats the older [data-post-action] retrofit, which is kept for other cards. */
+.neo-brutalism [data-post-action="true"].qv-lit {
+  border: 2.5px solid #070b14 !important;
+  border-radius: 4px !important;
+  background-color: var(--card) !important;
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  box-shadow: 5px 5px 0 var(--light) !important;
+}
+.neo-brutalism [data-post-action="true"].qv-lit:hover,
+.neo-brutalism [data-post-action="true"].qv-lit[data-selected="true"] {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--light) !important;
+}
+.dark.neo-brutalism [data-post-action="true"].qv-lit,
+.neo-brutalism.dark [data-post-action="true"].qv-lit {
+  border-color: #f2f7f3 !important;
+}
+.neo-brutalism .qv-tag {
+  border: 2px solid #070b14;
+  color: #070b14;
+}
+.neo-brutalism .qv-tag-up { background: #9af5c5; }
+.neo-brutalism .qv-tag-down { background: #ffc2c6; }
+.neo-brutalism .qv-tag-quote { background: #e3ccff; }
+.neo-brutalism .qv-tag-comment { background: #ffe533; }
+.neo-brutalism .qv-tag-info { background: #8fe4ff; }
+
+/* Redesigned Discussion cards keep their plain quotes in Neo Brutalism; only a
+   comment's quoted passage has the yellow bar (beats the older blockquote retrofit). */
+.neo-brutalism [data-post-action="true"].qv-lit blockquote {
+  border-left-width: 0 !important;
+  background-color: transparent;
+  padding: 0 !important;
+  border-radius: 0;
+}
+.neo-brutalism [data-post-action="true"].qv-lit blockquote.border-l-\[3px\] {
+  border-left: 3px solid #070b14 !important;
+  padding-left: 0.625rem !important;
+}
