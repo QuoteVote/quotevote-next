@@ -52,5 +52,6 @@ export interface HomeDiscussion {
   newCount: number;
   /** Who acted, most recent first, without repeats. */
   actors: Array<{ name: string; username: string; avatar?: string | Record<string, unknown> }>;
-  kind: "COMMENTED" | "QUOTED";
+  /** What people did on the post: commented, quoted, or both. */
+  kinds: Array<"COMMENTED" | "QUOTED">;
 }

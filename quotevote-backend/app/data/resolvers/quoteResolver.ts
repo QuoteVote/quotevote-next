@@ -2,6 +2,7 @@ import { GraphQLError } from 'graphql';
 import { ActivityEventTypeValues } from '~/data/utils/constants';
 import { logActivity } from '~/data/resolvers/utils/activities';
 import { updateTrending } from '~/data/resolvers/utils/posts';
+import { addNotification } from '~/data/resolvers/utils/notifications';
 import { whenAny } from '~/data/resolvers/utils/batchLoad';
 import {
   QUOTE_SELECT,
@@ -106,6 +107,17 @@ export const quoteResolver = {
         { userId, postId, quoteId: created.id },
         `Quoted on '${post.title}' post.`
       );
+      // Legacy never notified on quotes; the author now hears about them like comments and
+      // votes. No notification for quoting your own post.
+      if (post.userId !== userId) {
+        await addNotification(context.prisma, {
+          userId: post.userId,
+          userIdBy: userId,
+          notificationType: 'QUOTED',
+          label: created.quote,
+          postId,
+        });
+      }
 
       return toQuote(created);
     },

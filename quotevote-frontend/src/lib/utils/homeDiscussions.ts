@@ -36,12 +36,14 @@ export function buildDiscussions(notifications: Notification[], limit = 3): Home
         url,
         newCount: 0,
         actors: [],
-        kind: n.notificationType as HomeDiscussion["kind"],
+        kinds: [],
         latest: toTime(n.created),
       };
       byPost.set(post._id, row);
     }
     if (n.status === "new") row.newCount += 1;
+    const kind = n.notificationType as HomeDiscussion["kinds"][number];
+    if (!row.kinds.includes(kind)) row.kinds.push(kind);
     const actor = n.userBy;
     if (actor && !row.actors.some((a) => a.username === actor.username)) {
       row.actors.push({
@@ -58,11 +60,25 @@ export function buildDiscussions(notifications: Notification[], limit = 3): Home
     .map(({ latest: _latest, ...row }) => row);
 }
 
-/** "Lena Torres commented", "Jonah Kim and 4 others commented". */
+/** What the row's people did: commented, quoted, or a mix of both. */
+function discussionVerb(row: HomeDiscussion): "commented" | "quoted your post" | "responded" {
+  const quoted = row.kinds.includes("QUOTED");
+  const commented = row.kinds.includes("COMMENTED");
+  if (quoted && commented) return "responded";
+  return quoted ? "quoted your post" : "commented";
+}
+
+/**
+ * "Lena Torres commented", "Jonah Kim and 4 others commented", "Sam and 1 other responded"
+ * when the post got both comments and quotes.
+ */
 export function describeDiscussion(row: HomeDiscussion): string {
-  const verb = row.kind === "QUOTED" ? "quoted your post" : "commented";
+  const verb = discussionVerb(row);
   const [first, ...rest] = row.actors;
-  if (!first) return row.kind === "QUOTED" ? "Someone quoted your post" : "New comments";
+  if (!first) {
+    if (verb === "responded") return "New responses";
+    return verb === "quoted your post" ? "Someone quoted your post" : "New comments";
+  }
   if (rest.length === 0) return `${first.name} ${verb}`;
   const others = rest.length === 1 ? "1 other" : `${rest.length} others`;
   return `${first.name} and ${others} ${verb}`;

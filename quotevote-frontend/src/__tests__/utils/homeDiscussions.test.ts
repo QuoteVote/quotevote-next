@@ -60,6 +60,16 @@ describe("buildDiscussions", () => {
     const [row] = buildDiscussions([note("1", { notificationType: "QUOTED", by: "sam" })]);
     expect(describeDiscussion(row)).toBe("SAM quoted your post");
   });
+
+  it("says responded when a post got both comments and quotes", () => {
+    const [row] = buildDiscussions([
+      note("1", { notificationType: "QUOTED", by: "sam", created: "2026-11-10T12:00:00.000Z" }),
+      note("2", { notificationType: "COMMENTED", by: "bob", created: "2026-11-10T11:00:00.000Z" }),
+    ]);
+    expect(row.kinds).toEqual(["QUOTED", "COMMENTED"]);
+    expect(describeDiscussion(row)).toBe("SAM and 1 other responded");
+    expect(describeDiscussion({ ...row, actors: [] })).toBe("New responses");
+  });
 });
 
 describe("safePostPath", () => {
