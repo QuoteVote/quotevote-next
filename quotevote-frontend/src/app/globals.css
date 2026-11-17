@@ -2278,6 +2278,7 @@ p { line-height: 1.625; }
   --shell-blue-soft: #e9f0ff;
   --shell-blue-ink: #1a44c0;
   --shell-down: #c42b2b;
+  --shell-down-soft: #fdecec;
   --shell-card-radius: 18px;
   --shell-card-shadow: none;
 }
@@ -2325,6 +2326,7 @@ p { line-height: 1.625; }
   --shell-blue-soft: #13324a;
   --shell-blue-ink: #8cc8ff;
   --shell-down: #ff7a7a;
+  --shell-down-soft: #3a1a1e;
 }
 
 .neo-brutalism {
@@ -2359,6 +2361,7 @@ p { line-height: 1.625; }
   --shell-blue: #0b5fd6;
   --shell-blue-soft: #8fe4ff;
   --shell-blue-ink: #070b14;
+  --shell-down-soft: #ffb3b8;
   --shell-card-radius: 4px;
   --shell-card-shadow: 5px 5px 0 #070b14;
 }
@@ -2387,6 +2390,7 @@ p { line-height: 1.625; }
   --shell-blue: #8fe4ff;
   --shell-blue-soft: #13324a;
   --shell-blue-ink: #8fe4ff;
+  --shell-down-soft: #3a1a1e;
   --shell-card-shadow: 5px 5px 0 #f2f7f3;
 }
 

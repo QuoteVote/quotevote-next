@@ -75,6 +75,8 @@ export interface UserVote {
 export interface SelectionPopupControls {
   /** Clears the text selection and hides the popup */
   dismiss: () => void;
+  /** True on phones, where the popup is a bottom sheet instead of floating by the text */
+  sheet: boolean;
 }
 
 /**
@@ -84,6 +86,7 @@ export interface SelectionPopupContentProps {
   render: (selection: SelectedText, controls: SelectionPopupControls) => React.ReactNode;
   selection: SelectedText;
   dismiss: () => void;
+  sheet: boolean;
 }
 
 /**
@@ -119,6 +122,11 @@ export interface VotingPopupProps {
    * Hides the popup and clears the selection
    */
   onDismiss?: () => void;
+  /**
+   * `popover` floats next to the selection; `sheet` is the phone bottom sheet, with a
+   * drag handle and the selected passage on top.
+   */
+  variant?: "popover" | "sheet";
 }
 
 /**
@@ -211,6 +219,14 @@ export interface SelectionPopoverProps {
    * Additional style props
    */
   style?: React.CSSProperties;
+  /**
+   * Phone layout: a bottom sheet over a dimmed backdrop instead of a popover by the text
+   */
+  sheet?: boolean;
+  /**
+   * Closes the popup (backdrop tap and Escape)
+   */
+  onDismiss?: () => void;
   /**
    * Child components to render inside the popover
    */

@@ -683,9 +683,10 @@ export default function Post({
             activity={passageActivity}
             onActivityClick={handleActivityClick}
           >
-            {(selection, { dismiss }) => (
+            {(selection, { dismiss, sheet }) => (
               <Suspense fallback={null}>
                 <VotingPopup
+                  variant={sheet ? "sheet" : "popover"}
                   onVote={(vote) => handleVoting(vote, selection)}
                   onQuote={handleQuote}
                   selectedText={selection}

@@ -197,4 +197,28 @@ describe("VotingPopup", () => {
     buttons.forEach((button) => expect(button.tagName).toBe("BUTTON"));
     expect(screen.getByRole("group", { name: "Passage actions" })).toBeInTheDocument();
   });
+
+  describe("redesign", () => {
+    it("explains the outline under the responses, with Press on the popover", () => {
+      renderPopup();
+      openVoteMode();
+      expect(
+        screen.getByText("Your vote is outlined. Press it again to remove it.")
+      ).toBeInTheDocument();
+    });
+
+    it("shows the passage and says Tap in the phone sheet", () => {
+      renderPopup({ variant: "sheet" });
+      expect(screen.getByText(selectedText.text)).toBeInTheDocument();
+      openVoteMode();
+      expect(
+        screen.getByText("Your vote is outlined. Tap it again to remove it.")
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the passage out of the desktop popover", () => {
+      renderPopup();
+      expect(screen.queryByText(selectedText.text)).not.toBeInTheDocument();
+    });
+  });
 });
