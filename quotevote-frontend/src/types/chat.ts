@@ -192,6 +192,8 @@ export interface StagedChatRoom {
   avatar: string | Record<string, unknown> | null;
   messageType: 'USER';
   users: string[];
+  /** The other member. Sent as `componentId`, since the room doesn't exist yet (#713). */
+  recipientId: string;
   username?: string;
 }
 
