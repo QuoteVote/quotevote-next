@@ -30,26 +30,39 @@ const safeSecret = JWT_SECRET || 'dev_jwt_secret_fallback_do_not_use_in_prod';
 export const INVITE_SIGNUP_TOKEN_TYPE = 'invite_signup' as const;
 export const INVITE_SIGNUP_TOKEN_PURPOSE = 'completeSignup' as const;
 
+/** How long an admin-approved signup link stays valid. */
+export const ADMIN_INVITE_TTL_SECONDS = 60 * 60 * 24;
+
+/** How long a member's invite link stays valid (#672). */
+export const MEMBER_INVITE_TTL_SECONDS = 60 * 60 * 24 * 7;
+
 export interface InviteSignupTokenPayload {
   userId: string;
   type: typeof INVITE_SIGNUP_TOKEN_TYPE;
   purpose: typeof INVITE_SIGNUP_TOKEN_PURPOSE;
+  /** The UserInvite row that decides if the link still works (member invites, approvals). */
+  inviteId?: string;
+  /** Set with `inviteId`: the address the invite was sent to. */
+  email?: string;
   iat?: number;
   exp?: number;
 }
 
 /**
- * Issues a one-day invite-signup token. Valid only for `completeSignup`, never
- * as a general GraphQL session.
+ * Issues an invite-signup token, one day by default. Valid only for
+ * `completeSignup`, never as a general GraphQL session. Member invites pass
+ * `invite`, which binds the token to that invite and its recipient.
  */
 export const generateInviteSignupToken = (
   userId: string,
-  expiresInSeconds = 60 * 60 * 24
+  expiresInSeconds = ADMIN_INVITE_TTL_SECONDS,
+  invite?: { inviteId: string; email: string }
 ): string => {
   const payload: InviteSignupTokenPayload = {
     userId,
     type: INVITE_SIGNUP_TOKEN_TYPE,
     purpose: INVITE_SIGNUP_TOKEN_PURPOSE,
+    ...(invite ? { inviteId: invite.inviteId, email: invite.email } : {}),
   };
   return jwt.sign(payload, safeSecret, { expiresIn: expiresInSeconds });
 };
@@ -65,7 +78,9 @@ export const verifyInviteSignupToken = (rawToken: string): InviteSignupTokenPayl
     if (
       decoded.type !== INVITE_SIGNUP_TOKEN_TYPE ||
       decoded.purpose !== INVITE_SIGNUP_TOKEN_PURPOSE ||
-      !decoded.userId
+      !decoded.userId ||
+      // A member invite token carries both claims or neither.
+      Boolean(decoded.inviteId) !== Boolean(decoded.email)
     ) {
       throw new GraphQLError('Invalid invite signup token', {
         extensions: { code: 'UNAUTHENTICATED' },

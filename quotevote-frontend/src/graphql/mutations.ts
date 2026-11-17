@@ -531,6 +531,15 @@ export const DELETE_NOTIFICATION = gql`
 `
 
 /**
+ * Soft-delete every active notification for the signed-in user (#464).
+ */
+export const CLEAR_ALL_NOTIFICATIONS = gql`
+  mutation clearAllNotifications {
+    clearAllNotifications
+  }
+`
+
+/**
  * Request user access mutation
  * Used for requesting platform access via email invitation
  */

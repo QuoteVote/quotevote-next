@@ -625,7 +625,9 @@ describe('PostActionCard', () => {
 
       const card = document.querySelector('[data-selected="true"]')
       expect(card).toBeInTheDocument()
-      expect(card?.className).toContain('border-l-[#52b274]')
+      // The card keeps its type colour (a comment is yellow) and lifts when selected.
+      expect(card?.className).toContain('qv-lit')
+      expect(card).toHaveAttribute('data-light', 'comment')
       expect(card?.className).toContain('items-start')
     })
 
@@ -838,8 +840,43 @@ describe('PostActionCard', () => {
 
       const badges = screen.getAllByTestId('activity-label-button')
       expect(badges.length).toBeGreaterThan(0)
-      expect(badges[0]).toHaveTextContent('❝ Quote')
+      expect(badges[0]).toHaveTextContent('“ Quote')
       expect(screen.getByText(/Quoted highlight snippet/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('Card colour (redesign)', () => {
+    it.each([
+      ['Vote', { type: 'up' }, 'up'],
+      ['Vote', { type: 'down' }, 'down'],
+      ['Quote', { quote: 'q' }, 'quote'],
+      ['Comment', { content: 'c' }, 'comment'],
+    ])('colours a %s card %s', (typename, extra, light) => {
+      const action = {
+        _id: `a-${light}`,
+        __typename: typename,
+        created: new Date().toISOString(),
+        content: '',
+        user: { _id: 'user1', username: 'user1', name: 'User One' },
+        ...extra,
+      } as unknown as PostAction
+      render(<PostActionCard postAction={action} postUrl="/post/123" />)
+      expect(document.querySelector('[data-post-action="true"]')).toHaveAttribute(
+        'data-light',
+        light
+      )
+    })
+
+    it('shows Copy link without hovering', () => {
+      const comment = {
+        _id: 'comment-visible',
+        __typename: 'Comment',
+        content: 'A comment',
+        created: new Date().toISOString(),
+        user: { _id: 'user1', username: 'user1', name: 'User One' },
+      } as unknown as PostAction
+      render(<PostActionCard postAction={comment} postUrl="/post/123" />)
+      expect(screen.getByRole('button', { name: 'Copy link' })).toHaveTextContent('Copy link')
     })
   })
 

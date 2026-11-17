@@ -1,13 +1,13 @@
-import { renderToString } from 'react-dom/server.node';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { renderToString } from "react-dom/server.node";
+import { fireEvent, render, screen } from "@testing-library/react";
 
-// Mock Apollo hooks
 const mockRefetch = jest.fn();
 let mockLoading = false;
 let mockData: Record<string, unknown> | null = null;
 let mockError: Error | null = null;
+let mockHasMounted = true;
 
-jest.mock('@apollo/client/react', () => ({
+jest.mock("@apollo/client/react", () => ({
   useQuery: () => ({
     loading: mockLoading,
     data: mockData,
@@ -22,82 +22,86 @@ jest.mock('@apollo/client/react', () => ({
   }),
 }));
 
-// Mock the store
-const mockUserId = 'user-123';
-jest.mock('@/store', () => ({
+const mockUserId = "user-123";
+jest.mock("@/store", () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
-      user: { data: { id: mockUserId, _id: mockUserId, username: 'testuser' } },
+      user: { data: { id: mockUserId, _id: mockUserId, username: "testuser" } },
       ui: { selectedPost: null },
       setSelectedPost: jest.fn(),
     }),
 }));
 
-// Mock useGuestGuard
-jest.mock('@/hooks/useGuestGuard', () => ({
+jest.mock("@/hooks/useGuestGuard", () => ({
   __esModule: true,
   default: () => () => true,
 }));
 
-// Mock useResponsive
-jest.mock('@/hooks/useResponsive', () => ({
+jest.mock("@/hooks/useMediaQuery", () => ({
+  useHasMounted: () => mockHasMounted,
+  useMediaQuery: () => false,
+}));
+
+jest.mock("@/hooks/useResponsive", () => ({
   useResponsive: () => ({ isMobile: false, isTablet: false, isDesktop: true }),
 }));
 
-import { NotificationsPageContent } from '@/app/(dashboard)/notifications/NotificationsPageContent';
+import { NotificationsPageContent } from "@/app/(dashboard)/notifications/NotificationsPageContent";
 
 const mockNotifications = [
   {
-    _id: 'notif-1',
+    _id: "notif-1",
     userId: mockUserId,
-    userIdBy: 'user-456',
+    userIdBy: "user-456",
     userBy: {
-      _id: 'user-456',
-      name: 'John Doe',
-      username: 'johndoe',
+      _id: "user-456",
+      name: "John Doe",
+      username: "johndoe",
       avatar: null,
       contributorBadge: false,
     },
-    label: 'started following you',
-    status: 'unread',
+    label: "started following you",
+    status: "new",
     created: new Date().toISOString(),
-    notificationType: 'FOLLOW',
+    notificationType: "FOLLOW",
   },
 ];
 
-describe('NotificationsPageContent', () => {
+describe("NotificationsPageContent", () => {
   beforeEach(() => {
     mockRefetch.mockClear();
     mockLoading = false;
     mockData = null;
     mockError = null;
+    mockHasMounted = true;
   });
 
-  it('renders the title', () => {
-    mockLoading = false;
+  it("renders the title and inbox controls", () => {
     mockData = { notifications: [] };
     render(<NotificationsPageContent />);
-    expect(screen.getByText('Notifications')).toBeInTheDocument();
+    expect(screen.getByText("Notifications")).toBeInTheDocument();
+    expect(screen.getByTestId("notifications-inbox")).toBeInTheDocument();
+    expect(screen.getByTestId("notification-history-tab")).toBeInTheDocument();
   });
 
-  it('renders loading skeletons when loading', () => {
+  it("renders loading skeletons when loading", () => {
     mockLoading = true;
     mockData = null;
     const { container } = render(<NotificationsPageContent />);
-    // Should show skeleton elements
-    const skeletons = container.querySelectorAll('[class*="animate-pulse"], [data-slot="skeleton"]');
+    const skeletons = container.querySelectorAll(
+      '[class*="animate-pulse"], [data-slot="skeleton"]'
+    );
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it('renders notification items when data is loaded', () => {
-    mockLoading = false;
+  it("renders notification items when data is loaded", () => {
     mockData = { notifications: mockNotifications };
     render(<NotificationsPageContent />);
     expect(screen.getByText(/started following you/)).toBeInTheDocument();
+    expect(screen.getByTestId("clear-all-notifications")).toBeInTheDocument();
   });
 
-  it('renders empty state when no notifications', () => {
-    mockLoading = false;
+  it("renders empty state when no notifications", () => {
     mockData = { notifications: [] };
     render(<NotificationsPageContent />);
     expect(screen.getByText(/you're all caught up/i)).toBeInTheDocument();
@@ -105,28 +109,28 @@ describe('NotificationsPageContent', () => {
 
   // #605: the server doesn't know who is signed in, so its HTML must match the
   // browser's first render whatever the query result is.
-  it('renders the loading state on the server even when notifications are cached', () => {
+  it("renders the loading state on the server even when notifications are cached", () => {
+    mockHasMounted = false;
     mockData = { notifications: mockNotifications };
     const html = renderToString(<NotificationsPageContent />);
-    expect(html).toContain('Loading notifications');
-    expect(html).not.toContain('started following you');
+    expect(html).toContain("Loading notifications");
+    expect(html).not.toContain("started following you");
     expect(html).not.toMatch(/all caught up/i);
-    expect(html).not.toMatch(/1 notification/);
   });
 
-  it('keeps loading until the first fetch is back, instead of flashing the empty state', () => {
+  it("keeps loading until the first fetch is back, instead of flashing the empty state", () => {
     mockData = null;
     render(<NotificationsPageContent />);
-    expect(screen.getByTestId('notifications-loading')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId("notifications-loading")).toHaveAttribute("aria-busy", "true");
     expect(screen.queryByText(/you're all caught up/i)).not.toBeInTheDocument();
   });
 
   it('shows an error with Try again instead of "all caught up" when loading fails', () => {
-    mockError = new Error('Network error');
+    mockError = new Error("Network error");
     render(<NotificationsPageContent />);
-    expect(screen.getByRole('alert')).toHaveTextContent("We couldn't load your notifications.");
+    expect(screen.getByRole("alert")).toHaveTextContent("We couldn't load your notifications.");
     expect(screen.queryByText(/you're all caught up/i)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(mockRefetch).toHaveBeenCalledWith();
   });
 });

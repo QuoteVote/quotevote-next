@@ -865,7 +865,7 @@ body {
 /* Flattens inline gradients and border-images from MainNavBar   */
 /* ============================================================ */
 
-.neo-brutalism header.fixed {
+.neo-brutalism header.fixed:not([data-app-header]) {
   background: var(--card) !important;
   background-image: none !important;
   border-bottom: 3px solid var(--nb-border-color) !important;
@@ -873,8 +873,8 @@ body {
   box-shadow: 0 4px 0 0 var(--nb-border-color);
 }
 
-.dark.neo-brutalism header.fixed,
-.neo-brutalism.dark header.fixed {
+.dark.neo-brutalism header.fixed:not([data-app-header]),
+.neo-brutalism.dark header.fixed:not([data-app-header]) {
   background: var(--card) !important;
   box-shadow: 0 4px 0 0 var(--nb-shadow-color);
 }
@@ -2175,4 +2175,451 @@ p { line-height: 1.625; }
     outline-offset: 2px;
     border-radius: 2px;
   }
+}
+
+/* Avatar editor (#656): colors from the approved design, scoped to the editor. */
+.avatar-editor {
+  --ae-green: #0e8a5a;
+  --ae-green-ink: #0a6b46;
+  --ae-green-soft: #e6f6ee;
+  --ae-green-tint: #f3fbf7;
+  --ae-green-line: #a8dcc2;
+  --ae-ink: #0f172a;
+  --ae-ink-2: #273246;
+  --ae-muted: #5a6478;
+  --ae-muted-2: #7a8499;
+  --ae-faint: #a3abbd;
+  --ae-line: #e4e8f0;
+  --ae-line-2: #d3d9e4;
+  --ae-line-3: #eef1f6;
+  --ae-ground: #f6f8fb;
+  --ae-surface: #ffffff;
+  --ae-side: #fbfcfe;
+  --ae-thumb: #f3f6fa;
+  --ae-amber-soft: #fdf4df;
+  --ae-amber-ink: #8a5a12;
+  --ae-amber: #e3a21a;
+  --ae-danger: #c42b2b;
+  --ae-danger-line: #f0c6c6;
+  --ae-stage-from: #e9f0ff;
+  --ae-stage-to: #e6f6ee;
+  font-family: var(--font-avatar-editor), var(--font-sans), system-ui, sans-serif;
+  color: var(--ae-ink);
+}
+
+.dark .avatar-editor {
+  --ae-green: #3fbf87;
+  --ae-green-ink: #7fdcb0;
+  --ae-green-soft: #12382a;
+  --ae-green-tint: #10261d;
+  --ae-green-line: #2a6b4f;
+  --ae-ink: #eef2f8;
+  --ae-ink-2: #d4dae5;
+  --ae-muted: #a2abbd;
+  --ae-muted-2: #8b94a7;
+  --ae-faint: #5d6678;
+  --ae-line: #2a3140;
+  --ae-line-2: #384152;
+  --ae-line-3: #232a37;
+  --ae-ground: #0f141c;
+  --ae-surface: #161c26;
+  --ae-side: #131922;
+  --ae-thumb: #1d2430;
+  --ae-amber-soft: #3a2c0f;
+  --ae-amber-ink: #f3c96b;
+  --ae-danger: #ff7a7a;
+  --ae-danger-line: #6b2b2b;
+  --ae-stage-from: #1a2540;
+  --ae-stage-to: #13322a;
+}
+
+/* ============================================================ */
+/* App shell (redesign): top bar and phone tab bar               */
+/* Colors from the approved Figma design, in all four themes.    */
+/* ============================================================ */
+
+:root {
+  --app-header-h: 60px;
+  --app-tabbar-h: calc(64px + env(safe-area-inset-bottom, 0px));
+  --shell-surface: #ffffff;
+  --shell-line: #e4e8f0;
+  --shell-border-w: 1px;
+  --shell-radius: 12px;
+  --shell-pill-radius: 22px;
+  --shell-create-radius: 18px;
+  --shell-ink: #0f172a;
+  --shell-ink-2: #273246;
+  --shell-muted: #5a6478;
+  --shell-field: #f1f4f8;
+  --shell-field-line: #e4e8f0;
+  --shell-key-bg: #ffffff;
+  --shell-key-line: #d3d9e4;
+  --shell-hover: #eef2f7;
+  --shell-on-bg: #e9f0ff;
+  --shell-on-ink: #2457e6;
+  --shell-primary: #0f7d56;
+  --shell-primary-hover: #0c6e4b;
+  --shell-primary-line: #0b6b49;
+  --shell-primary-ink: #ffffff;
+  --shell-tab-on: #0f7d56;
+  --shell-badge: #e5484d;
+  --shell-badge-ink: #ffffff;
+  --shell-badge-ring: #ffffff;
+  --shell-shadow: none;
+  --shell-tab-shadow: 0 -8px 24px -18px rgba(15, 23, 42, 0.35);
+  --shell-focus: 0 0 0 4px rgba(36, 87, 230, 0.22);
+  --shell-track: #e8ecf2;
+  --shell-divider: #eef1f6;
+  --shell-green: #0e8a5a;
+  --shell-green-soft: #e6f6ee;
+  --shell-green-tint: #eef9f3;
+  --shell-green-line: #d5efe1;
+  --shell-blue: #2457e6;
+  --shell-blue-soft: #e9f0ff;
+  --shell-blue-ink: #1a44c0;
+  --shell-down: #c42b2b;
+  --shell-card-radius: 18px;
+  --shell-card-shadow: none;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --app-header-h: 72px;
+  }
+}
+
+.font-redesign {
+  font-family: var(--font-redesign), var(--font-sans), system-ui, sans-serif;
+}
+
+.font-wordmark {
+  font-family: var(--font-wordmark), var(--font-redesign), sans-serif;
+}
+
+.dark {
+  --shell-surface: #0d1526;
+  --shell-line: #1b2640;
+  --shell-ink: #e8edf5;
+  --shell-ink-2: #c6d0de;
+  --shell-muted: #94a3b8;
+  --shell-field: #111a2e;
+  --shell-field-line: #24304a;
+  --shell-key-bg: #1b2640;
+  --shell-key-line: #24304a;
+  --shell-hover: #1b2640;
+  --shell-on-bg: #13324a;
+  --shell-on-ink: #8cc8ff;
+  --shell-primary: #169a6b;
+  --shell-primary-hover: #13865d;
+  --shell-primary-line: #13865d;
+  --shell-tab-on: #3fbf87;
+  --shell-badge-ring: #0b1120;
+  --shell-tab-shadow: 0 -8px 24px -18px rgba(0, 0, 0, 0.6);
+  --shell-track: #111a2e;
+  --shell-divider: #1b2640;
+  --shell-green: #3fbf87;
+  --shell-green-soft: #12382a;
+  --shell-green-tint: #10261d;
+  --shell-green-line: #2a6b4f;
+  --shell-blue: #8cc8ff;
+  --shell-blue-soft: #13324a;
+  --shell-blue-ink: #8cc8ff;
+  --shell-down: #ff7a7a;
+}
+
+.neo-brutalism {
+  --shell-line: #070b14;
+  --shell-border-w: 2px;
+  --shell-radius: 4px;
+  --shell-pill-radius: 4px;
+  --shell-create-radius: 4px;
+  --shell-ink: #070b14;
+  --shell-ink-2: #1b2130;
+  --shell-muted: #4a505c;
+  --shell-field-line: #070b14;
+  --shell-key-line: #070b14;
+  --shell-on-bg: #ffe533;
+  --shell-on-ink: #070b14;
+  --shell-primary: #20c45f;
+  --shell-primary-hover: #1bb054;
+  --shell-primary-line: #070b14;
+  --shell-primary-ink: #070b14;
+  --shell-tab-on: #008f23;
+  --shell-badge: #ff646f;
+  --shell-badge-ink: #070b14;
+  --shell-badge-ring: #070b14;
+  --shell-shadow: 2px 2px 0 #070b14;
+  --shell-tab-shadow: none;
+  --shell-track: #f3efd9;
+  --shell-divider: rgba(7, 11, 20, 0.15);
+  --shell-green: #008f23;
+  --shell-green-soft: #9af5c5;
+  --shell-green-tint: #9af5c5;
+  --shell-green-line: #070b14;
+  --shell-blue: #0b5fd6;
+  --shell-blue-soft: #8fe4ff;
+  --shell-blue-ink: #070b14;
+  --shell-card-radius: 4px;
+  --shell-card-shadow: 5px 5px 0 #070b14;
+}
+
+.dark.neo-brutalism,
+.neo-brutalism.dark {
+  --shell-surface: #0d1526;
+  --shell-line: #f2f7f3;
+  --shell-ink: #f2f7f3;
+  --shell-ink-2: #e2e8f0;
+  --shell-muted: #b6c0cf;
+  --shell-field: #111a2e;
+  --shell-field-line: #f2f7f3;
+  --shell-key-bg: #1b2640;
+  --shell-key-line: #f2f7f3;
+  --shell-hover: #1b2640;
+  --shell-tab-on: #20c45f;
+  --shell-badge-ring: #f2f7f3;
+  --shell-shadow: 2px 2px 0 #f2f7f3;
+  --shell-track: #111a2e;
+  --shell-divider: rgba(242, 247, 243, 0.2);
+  --shell-green: #20c45f;
+  --shell-green-soft: #12382a;
+  --shell-green-tint: #12382a;
+  --shell-green-line: #f2f7f3;
+  --shell-blue: #8fe4ff;
+  --shell-blue-soft: #13324a;
+  --shell-blue-ink: #8fe4ff;
+  --shell-card-shadow: 5px 5px 0 #f2f7f3;
+}
+
+/* Neo Brutalism feed (redesign): post card shadows rotate green, pink, blue, yellow. */
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 1) {
+  box-shadow: 5px 5px 0 0 var(--nb-green) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 2) {
+  box-shadow: 5px 5px 0 0 var(--nb-pink) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 3) {
+  box-shadow: 5px 5px 0 0 var(--nb-blue) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n) {
+  box-shadow: 5px 5px 0 0 var(--nb-yellow) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 1):hover {
+  box-shadow: 8px 8px 0 0 var(--nb-green) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 2):hover {
+  box-shadow: 8px 8px 0 0 var(--nb-pink) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n + 3):hover {
+  box-shadow: 8px 8px 0 0 var(--nb-blue) !important;
+}
+.neo-brutalism [data-post-list] > .group\/card:nth-of-type(4n):hover {
+  box-shadow: 8px 8px 0 0 var(--nb-yellow) !important;
+}
+
+/* ============================================================ */
+/* Post page passages (redesign): VotingBoard highlights          */
+/* ============================================================ */
+
+.qv-mark {
+  color: inherit;
+  border-radius: 4px;
+  padding: 1px 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+.qv-mark:focus-visible {
+  outline: 2px solid #2457e6;
+  outline-offset: 2px;
+}
+.qv-mark-activity[data-tone="up"] {
+  background: #ddf4e6;
+  box-shadow: inset 0 -2px 0 #52b274;
+}
+.qv-mark-activity[data-tone="down"] {
+  background: #fde3e3;
+  box-shadow: inset 0 -2px 0 #ff6060;
+}
+.qv-mark-activity[data-tone="neutral"] {
+  background: #eef2f7;
+  box-shadow: inset 0 -2px 0 #8a94a8;
+}
+.qv-mark-activity:hover {
+  filter: brightness(0.97);
+}
+.qv-mark-activity::after {
+  content: attr(data-count);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 19px;
+  padding: 0 6px;
+  margin-left: 4px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #ffffff;
+  font: 800 10.5px var(--font-redesign), sans-serif;
+  line-height: 1;
+  vertical-align: 3px;
+}
+.qv-mark-linked {
+  background: #c9eed8;
+  box-shadow: 0 0 0 2px #52b274;
+}
+.qv-mark-retained {
+  background: #dce7ff;
+  box-shadow: 0 0 0 2px #9db8ff;
+}
+
+.dark .qv-mark-activity[data-tone="up"] {
+  background: rgba(82, 178, 116, 0.22);
+}
+.dark .qv-mark-activity[data-tone="down"] {
+  background: rgba(255, 96, 96, 0.2);
+}
+.dark .qv-mark-activity[data-tone="neutral"] {
+  background: rgba(148, 163, 184, 0.18);
+}
+.dark .qv-mark-activity::after {
+  background: #e8edf5;
+  color: #0b1120;
+}
+.dark .qv-mark-linked {
+  background: rgba(82, 178, 116, 0.35);
+}
+.dark .qv-mark-retained {
+  background: rgba(91, 140, 255, 0.3);
+  box-shadow: 0 0 0 2px #5b8cff;
+}
+
+.neo-brutalism .qv-mark-activity[data-tone="up"] {
+  background: #9af5c5;
+  box-shadow: inset 0 -3px 0 #070b14;
+}
+.neo-brutalism .qv-mark-activity[data-tone="down"] {
+  background: #ffc2c6;
+  box-shadow: inset 0 -3px 0 #070b14;
+}
+.neo-brutalism .qv-mark-activity[data-tone="neutral"] {
+  background: #f3efd9;
+  box-shadow: inset 0 -3px 0 #070b14;
+}
+.neo-brutalism .qv-mark-activity::after {
+  background: #070b14;
+  color: #ffffff;
+}
+.neo-brutalism .qv-mark-linked {
+  background: #ffe533;
+  box-shadow: 0 0 0 2px #070b14;
+}
+.neo-brutalism .qv-mark-retained {
+  background: #8fe4ff;
+  box-shadow: 0 0 0 2px #070b14;
+}
+.dark.neo-brutalism .qv-mark-activity,
+.neo-brutalism.dark .qv-mark-activity,
+.dark.neo-brutalism .qv-mark-linked,
+.neo-brutalism.dark .qv-mark-linked,
+.dark.neo-brutalism .qv-mark-retained,
+.neo-brutalism.dark .qv-mark-retained {
+  color: #070b14;
+}
+.dark.neo-brutalism .qv-mark-activity::after,
+.neo-brutalism.dark .qv-mark-activity::after {
+  background: #f2f7f3;
+  color: #070b14;
+}
+
+/* ============================================================ */
+/* Discussion cards (redesign): coloured by type                 */
+/* PostActionCard sets data-light to up, down, comment or quote. */
+/* ============================================================ */
+
+.qv-lit {
+  --light: #56b3ff;
+  background: var(--shell-surface);
+  border: 1.5px solid var(--light);
+  border-bottom-width: 4px;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--light) 8%, transparent),
+    0 4px 10px -8px color-mix(in srgb, var(--light) 55%, transparent),
+    0 14px 28px -22px rgba(15, 23, 42, 0.25);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.qv-lit[data-light="up"] { --light: #52b274; }
+.qv-lit[data-light="down"] { --light: #ff6060; }
+.qv-lit[data-light="comment"] { --light: #fdd835; }
+.qv-lit[data-light="quote"] { --light: #e36dfa; }
+.qv-lit[data-selected="true"] {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--light) 16%, transparent),
+    0 6px 14px -8px color-mix(in srgb, var(--light) 70%, transparent);
+}
+
+/* Type tags */
+.qv-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.qv-tag-up { background: #e3f6ea; color: #11683d; }
+.qv-tag-down { background: #fde7e7; color: #a12424; }
+.qv-tag-quote { background: #f7e6fc; color: #7a2690; }
+.qv-tag-comment { background: #fff5c7; color: #6b5300; }
+.qv-tag-info { background: #e9f0ff; color: #1a44c0; }
+.dark .qv-tag-up { background: rgba(82, 178, 116, 0.2); color: #7fdcb0; }
+.dark .qv-tag-down { background: rgba(255, 96, 96, 0.18); color: #ff9a9a; }
+.dark .qv-tag-quote { background: rgba(227, 109, 250, 0.18); color: #f0b3fc; }
+.dark .qv-tag-comment { background: rgba(253, 216, 53, 0.16); color: #fde68a; }
+.dark .qv-tag-info { background: #13324a; color: #8cc8ff; }
+
+/* Neo Brutalism: ink border, square corners, hard shadow in the type colour.
+   Beats the older [data-post-action] retrofit, which is kept for other cards. */
+.neo-brutalism [data-post-action="true"].qv-lit {
+  border: 2.5px solid #070b14 !important;
+  border-radius: 4px !important;
+  background-color: var(--card) !important;
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  box-shadow: 5px 5px 0 var(--light) !important;
+}
+.neo-brutalism [data-post-action="true"].qv-lit:hover,
+.neo-brutalism [data-post-action="true"].qv-lit[data-selected="true"] {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--light) !important;
+}
+.dark.neo-brutalism [data-post-action="true"].qv-lit,
+.neo-brutalism.dark [data-post-action="true"].qv-lit {
+  border-color: #f2f7f3 !important;
+}
+.neo-brutalism .qv-tag {
+  border: 2px solid #070b14;
+  color: #070b14;
+}
+.neo-brutalism .qv-tag-up { background: #9af5c5; }
+.neo-brutalism .qv-tag-down { background: #ffc2c6; }
+.neo-brutalism .qv-tag-quote { background: #e3ccff; }
+.neo-brutalism .qv-tag-comment { background: #ffe533; }
+.neo-brutalism .qv-tag-info { background: #8fe4ff; }
+
+/* Redesigned Discussion cards keep their plain quotes in Neo Brutalism; only a
+   comment's quoted passage has the yellow bar (beats the older blockquote retrofit). */
+.neo-brutalism [data-post-action="true"].qv-lit blockquote {
+  border-left-width: 0 !important;
+  background-color: transparent;
+  padding: 0 !important;
+  border-radius: 0;
+}
+.neo-brutalism [data-post-action="true"].qv-lit blockquote.border-l-\[3px\] {
+  border-left: 3px solid #070b14 !important;
+  padding-left: 0.625rem !important;
 }

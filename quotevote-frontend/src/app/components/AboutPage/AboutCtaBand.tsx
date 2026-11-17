@@ -7,6 +7,10 @@ import { useMutation } from "@apollo/client/react";
 import { REQUEST_USER_ACCESS_MUTATION } from "@/graphql/mutations";
 import { Globe } from "@/components/Icons";
 import { parseRequestAccessEmail } from "@/lib/validation/requestAccessSchema";
+import {
+  INVITE_ALREADY_SENT_MESSAGE,
+  isInviteAlreadySentError,
+} from "@/lib/utils/inviteAlreadySent";
 
 /**
  * Three-column CTA: request invite, newsletter-style email, and donate.
@@ -40,6 +44,8 @@ export function AboutCtaBand() {
       const message = error instanceof Error ? error.message : "";
       if (message.includes("Email already exists")) {
         setErrorMessage("This email is already registered.");
+      } else if (isInviteAlreadySentError(error)) {
+        setErrorMessage(INVITE_ALREADY_SENT_MESSAGE);
       } else {
         setErrorMessage("Failed to submit. Please try again.");
       }

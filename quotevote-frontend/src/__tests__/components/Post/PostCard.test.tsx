@@ -165,11 +165,42 @@ describe('PostCard Component', () => {
       expect(mockPush).not.toHaveBeenCalled()
     })
 
-    it('shows author, time and activity together in the footer', () => {
+    it('shows the author above the title and the activity in the footer', () => {
       render(<PostCard {...tagged} comments={[{ _id: 'c1', created: '2024-01-01', userId: 'u1' }]} />)
 
       expect(screen.getByTestId('post-card-interactions')).toHaveTextContent('1 interaction')
-      expect(screen.getByText('testuser')).toBeInTheDocument()
+      const author = screen.getByText('Test User')
+      const title = screen.getByRole('heading', { name: 'Test Post Title' })
+      expect(author.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
+
+    it('shows the stored up and down vote totals', () => {
+      render(<PostCard {...tagged} upvotes={24} downvotes={5} />)
+
+      expect(screen.getByTestId('post-card-upvotes')).toHaveTextContent('Up votes:24')
+      expect(screen.getByTestId('post-card-downvotes')).toHaveTextContent('Down votes:5')
+    })
+
+    it('counts the votes when the totals are missing', () => {
+      render(
+        <PostCard
+          {...tagged}
+          votes={[
+            { _id: 'v1', type: 'up', startWordIndex: 0, endWordIndex: 1 },
+            { _id: 'v2', type: 'up', startWordIndex: 0, endWordIndex: 1 },
+            { _id: 'v3', type: 'down', startWordIndex: 0, endWordIndex: 1 },
+          ]}
+        />
+      )
+
+      expect(screen.getByTestId('post-card-upvotes')).toHaveTextContent('2')
+      expect(screen.getByTestId('post-card-downvotes')).toHaveTextContent('1')
+    })
+
+    it('shows only the time when the list has day headings', () => {
+      render(<PostCard {...tagged} created="2026-11-12T14:57:00" timeOnly />)
+
+      expect(screen.getByText('2:57 PM')).toBeInTheDocument()
     })
   })
 
@@ -305,7 +336,9 @@ describe('PostCard Component', () => {
       )
 
       expect(screen.getByText(/1 interaction/)).toBeInTheDocument()
-      expect(screen.getByText('Source: arxiv.org')).toBeInTheDocument()
+      expect(
+        screen.getByRole('link', { name: 'Source: arxiv.org (opens in a new tab)' })
+      ).toHaveAttribute('href', 'https://arxiv.org/abs/123')
       expect(screen.getByText('— Ada Lovelace')).toBeInTheDocument()
     })
   })

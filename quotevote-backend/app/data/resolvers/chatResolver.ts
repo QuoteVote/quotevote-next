@@ -8,6 +8,7 @@ import {
   MESSAGE_ROOM_SELECT,
   byLatestMessage,
   filterListedRooms,
+  listRoomIdsForUser,
   loadRoomViews,
 } from '~/data/resolvers/utils/chatRooms';
 import {
@@ -25,6 +26,7 @@ import {
   findRoom,
   forbidden,
   notFound,
+  notifyPostAuthorOfMessage,
   requireUserId,
   resolveRoomForMessage,
   validEmoji,
@@ -128,8 +130,10 @@ export const chatResolver = {
       context: GraphQLContext
     ): Promise<Common.MessageRoomView[]> => {
       if (!context.userId) return [];
+      const roomIds = await listRoomIdsForUser(context.prisma, context.userId);
+      if (roomIds.length === 0) return [];
       const rooms = await context.prisma.messageRoom.findMany({
-        where: { userIds: { has: context.userId } },
+        where: { id: { in: roomIds } },
         select: MESSAGE_ROOM_SELECT,
       });
       const listed = await filterListedRooms(context.prisma, rooms, context.userId);
@@ -319,6 +323,7 @@ export const chatResolver = {
       // Legacy marks new-message events with mutation_type 'CREATED'.
       const event = { ...message, mutation_type: 'CREATED' };
       await context.pubsub.publish(SUBSCRIPTION_EVENTS.MESSAGE_CREATED, { message: event });
+      await notifyPostAuthorOfMessage(context.prisma, room, userId, text);
       return event;
     },
 
