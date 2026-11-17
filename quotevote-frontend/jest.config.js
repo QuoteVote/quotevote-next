@@ -56,4 +56,13 @@ const customJestConfig = {
   workerIdleMemoryLimit: '512MB',
 }
 
-module.exports = createJestConfig(customJestConfig)
+// next/jest leaves node_modules untransformed; DiceBear (#722) ships ES modules only,
+// so let it through (also under pnpm's .pnpm folder) and keep next/jest's other patterns.
+module.exports = async () => {
+  const config = await createJestConfig(customJestConfig)()
+  config.transformIgnorePatterns = [
+    '/node_modules/(?!(\\.pnpm/@dicebear|@dicebear))',
+    ...config.transformIgnorePatterns.filter((pattern) => !pattern.includes('node_modules')),
+  ]
+  return config
+}

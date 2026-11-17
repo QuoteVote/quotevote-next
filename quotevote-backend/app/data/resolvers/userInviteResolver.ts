@@ -3,17 +3,26 @@
  *
  * Invite lifecycle uses legacy numeric `User.status` (not `accountStatus`):
  *   1 = access requested, 4 = approved (invite sent), 2 = declined.
+ * A member's invite (#672) skips the admin queue: the account starts at 4 and the
+ * UserInvite row decides whether its signup link still works. Admin approvals
+ * record a UserInvite too and their links carry its id, so they work the same way,
+ * and an access request from an account whose invites have all lapsed puts it back
+ * in the admin queue (#691).
  * `accountStatus` stays reserved for moderation (active / disabled / …).
  */
 
 import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import sendGridEmail, { SENDGRID_TEMPLATE_IDS } from '~/data/utils/send-grid-mail';
+import { buildMemberInviteEmail } from '~/data/utils/memberInviteEmail';
 import {
+  ADMIN_INVITE_TTL_SECONDS,
+  MEMBER_INVITE_TTL_SECONDS,
   generateHashPassword,
   generateInviteSignupToken,
   verifyInviteSignupToken,
 } from '~/data/utils/authentication';
+import { isMemberInviteUsable } from '~/data/utils/memberInvite';
 import {
   CURRENT_TERMS_HASH,
   CURRENT_TERMS_VERSION,
@@ -45,6 +54,8 @@ const MAX_EMAIL_LENGTH = 254;
 
 /** Invites a member may send per hour. */
 const INVITES_PER_HOUR = 10;
+/** Pending, unexpired invites a member may have at once. */
+const MAX_UNUSED_INVITES = 20;
 /** Contact form submissions per address and per visitor per hour. */
 const CONTACTS_PER_EMAIL_PER_HOUR = 1;
 const CONTACTS_PER_IP_PER_HOUR = 5;
@@ -77,19 +88,193 @@ async function enforceRateLimit(
   }
 }
 
-/** Send without failing the mutation when mail is misconfigured in local/dev. */
-async function sendQuietly(
+/** Sends an email and reports whether it went out. Never throws. */
+async function trySend(
   label: string,
   email: Parameters<typeof sendGridEmail>[0]
-): Promise<void> {
+): Promise<boolean> {
   try {
     const result = await sendGridEmail(email);
-    if (result.error) logger.warn(`${label} email failed`, { error: result.error });
+    if (result.success) return true;
+    logger.warn(`${label} email failed`, { error: result.error });
   } catch (err) {
     logger.warn(`${label} email error`, {
       error: err instanceof Error ? err.message : String(err),
     });
   }
+  return false;
+}
+
+/** Send without failing the mutation when mail is misconfigured in local/dev. */
+async function sendQuietly(
+  label: string,
+  email: Parameters<typeof sendGridEmail>[0]
+): Promise<void> {
+  await trySend(label, email);
+}
+
+const INVITE_LINK_UNUSABLE = 'This invite link has expired or has already been used';
+
+/** The member invite a new link points at, and how to take it back if the email fails. */
+interface MemberInviteTarget {
+  userId: string;
+  inviteId: string;
+  undo: () => Promise<unknown>;
+}
+
+/**
+ * Sets up a member invite to `email`: a new placeholder account and invite, or a
+ * fresh expiry on an expired, unused one. Any other account, pending request or
+ * declined request on the address is refused, so a member can't override an admin.
+ */
+async function prepareMemberInvite(
+  prisma: GraphQLContext['prisma'],
+  email: string,
+  inviterId: string,
+  now: Date,
+  expiresAt: Date
+): Promise<MemberInviteTarget> {
+  const existingUser = await prisma.user.findFirst({
+    where: { email },
+    select: { id: true, password: true, status: true },
+  });
+
+  if (!existingUser) {
+    let userId: string;
+    try {
+      ({ id: userId } = await prisma.user.create({
+        data: { email, username: email, status: INVITE_STATUS_APPROVED, password: null },
+        select: { id: true },
+      }));
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw badInput('User with this email already exists');
+      }
+      throw err;
+    }
+    const { id: inviteId } = await prisma.userInvite.create({
+      data: { email, invitedById: inviterId, status: 'pending', expiresAt },
+      select: { id: true },
+    });
+    return {
+      userId,
+      inviteId,
+      undo: async () => {
+        await prisma.userInvite.deleteMany({ where: { id: inviteId } });
+        await prisma.user.deleteMany({ where: { id: userId } });
+      },
+    };
+  }
+
+  // Only an account still waiting on a member invite can be invited again.
+  const waitingOnInvite = !existingUser.password && existingUser.status === INVITE_STATUS_APPROVED;
+  const invite = waitingOnInvite
+    ? await prisma.userInvite.findFirst({
+        where: { email, status: 'pending' },
+        orderBy: { expiresAt: 'desc' },
+        select: { id: true, expiresAt: true, invitedById: true },
+      })
+    : null;
+  const previousExpiry = invite?.expiresAt;
+  if (!invite || !previousExpiry) throw badInput('User with this email already exists');
+  if (previousExpiry > now) throw badInput('Invite already sent to this email');
+
+  // Expired and unused: renew it, only if nobody else renewed or used it first.
+  const renewed = await prisma.userInvite.updateMany({
+    where: { id: invite.id, status: 'pending', expiresAt: previousExpiry },
+    data: { expiresAt, invitedById: inviterId },
+  });
+  if (renewed.count !== 1) throw badInput('Invite already sent to this email');
+
+  return {
+    userId: existingUser.id,
+    inviteId: invite.id,
+    undo: () =>
+      prisma.userInvite.updateMany({
+        where: { id: invite.id, status: 'pending', expiresAt },
+        data: { expiresAt: previousExpiry, invitedById: invite.invitedById },
+      }),
+  };
+}
+
+const INVITE_ALREADY_SENT =
+  'An invite was already sent to this email. Check your inbox for the signup link.';
+
+/** Fields `requestUserAccess` returns. No createdAt, which legacy accounts lack. */
+const REQUEST_ACCESS_USER_SELECT = {
+  id: true,
+  email: true,
+  username: true,
+  name: true,
+  accountStatus: true,
+  status: true,
+  password: true,
+  avatar: true,
+  bio: true,
+  contributorBadge: true,
+  upvotes: true,
+  downvotes: true,
+  followingIds: true,
+  followerIds: true,
+  reputation: true,
+  isAdmin: true,
+} as const satisfies Prisma.UserSelect;
+
+/**
+ * #691: an invited account that never finished signup (status 4, no password)
+ * asks for access again. If an invite to the address is still open, the person is
+ * pointed at it. Otherwise every lapsed invite is marked expired and the account
+ * goes back to the admin queue as a request.
+ *
+ * Each step only applies to the record as it was read, so a member renewing the
+ * invite or the person finishing signup at the same moment wins, and this stops.
+ */
+async function reopenLapsedInvite(
+  prisma: GraphQLContext['prisma'],
+  userId: string,
+  email: string,
+  now: Date
+): Promise<'reopened' | 'inviteOpen' | 'changed'> {
+  const pending = await prisma.userInvite.findMany({
+    where: { email, status: 'pending' },
+    select: { id: true, expiresAt: true },
+  });
+  if (pending.some((invite) => invite.expiresAt && invite.expiresAt > now)) {
+    return 'inviteOpen';
+  }
+
+  for (const invite of pending) {
+    const closed = await prisma.userInvite.updateMany({
+      where: { id: invite.id, status: 'pending', expiresAt: invite.expiresAt },
+      data: { status: 'expired' },
+    });
+    if (closed.count === 1) continue;
+    // Changed since we read it. A second request closing it too is fine; a renewal
+    // means the invite is open again.
+    const current = await prisma.userInvite.findUnique({
+      where: { id: invite.id },
+      select: { status: true },
+    });
+    if (current && current.status !== 'expired') {
+      return current.status === 'pending' ? 'inviteOpen' : 'changed';
+    }
+  }
+
+  const moved = await prisma.user.updateMany({
+    where: {
+      id: userId,
+      status: INVITE_STATUS_APPROVED,
+      OR: [{ password: null }, { password: { isSet: false } }],
+    },
+    data: { status: INVITE_STATUS_REQUESTED },
+  });
+  if (moved.count === 1) return 'reopened';
+  // A second request may have moved it first; anything else means it changed.
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { status: true, password: true },
+  });
+  return account?.status === INVITE_STATUS_REQUESTED && !account.password ? 'reopened' : 'changed';
 }
 
 function isApprovedInviteStatus(inviteStatus: string): boolean {
@@ -169,6 +354,11 @@ export const userInviteResolver = {
         return null;
       }
 
+      // A used or expired member invite shows as invalid straight away.
+      if (!(await isMemberInviteUsable(context.prisma, payload, user.email))) {
+        return null;
+      }
+
       return {
         _id: user.id,
         email: user.email,
@@ -179,60 +369,74 @@ export const userInviteResolver = {
 
   Mutation: {
     /**
-     * A member invites someone by email. Accounts are invite-only, so the
-     * invite becomes an access request in the admin queue (as if the person had
-     * requested access), with the inviter recorded on the invite.
+     * A member invites someone by email (#672). Unlike a public access request,
+     * this skips the admin queue: the invitee gets a signup link bound to this
+     * invite and address, usable once within 7 days. The link only goes in the
+     * email; it is never logged or returned.
      */
     sendUserInvite: async (
       _parent: unknown,
       args: { email: string },
       context: GraphQLContext
     ): Promise<{ code: string; message: string }> => {
+      const inviter = context.user;
       const inviterId = context.userId;
-      if (!inviterId) {
+      if (!inviter || !inviterId) {
         throw new GraphQLError('Authentication required', {
           extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (inviter.accountStatus !== 'active') {
+        throw new GraphQLError('Only active members can send invites', {
+          extensions: { code: 'FORBIDDEN' },
         });
       }
       const email = validEmail(args.email);
       await enforceRateLimit(context.prisma, inviterId, 'sendUserInvite', INVITES_PER_HOUR);
 
-      const existingUser = await context.prisma.user.findFirst({
-        where: { email },
-        select: { id: true },
+      const now = new Date();
+      const unused = await context.prisma.userInvite.count({
+        where: { invitedById: inviterId, status: 'pending', expiresAt: { gt: now } },
       });
-      if (existingUser) throw badInput('User with this email already exists');
-
-      // Legacy invites store the inviter as `_inviterId`; Prisma writes `invitedBy`.
-      const previous = (await context.prisma.userInvite.findRaw({
-        filter: {
-          email,
-          $or: [{ _inviterId: { $oid: inviterId } }, { invitedBy: { $oid: inviterId } }],
-        },
-        options: { limit: 1, projection: { _id: 1 } },
-      })) as unknown as unknown[];
-      if (previous.length > 0) throw badInput('Invite already sent to this email');
-
-      try {
-        await context.prisma.user.create({
-          data: { email, username: email, status: INVITE_STATUS_REQUESTED, password: null },
-          select: { id: true },
-        });
-      } catch (err) {
-        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-          throw badInput('User with this email already exists');
-        }
-        throw err;
+      if (unused >= MAX_UNUSED_INVITES) {
+        throw new GraphQLError(
+          `You have ${MAX_UNUSED_INVITES} unused invites. You can send more once some are accepted or expire.`,
+          { extensions: { code: 'TOO_MANY_REQUESTS' } }
+        );
       }
-      await context.prisma.userInvite.create({
-        data: { email, invitedById: inviterId, status: 'pending' },
-        select: { id: true },
+
+      const expiresAt = new Date(now.getTime() + MEMBER_INVITE_TTL_SECONDS * 1000);
+      const target = await prepareMemberInvite(context.prisma, email, inviterId, now, expiresAt);
+
+      const token = generateInviteSignupToken(target.userId, MEMBER_INVITE_TTL_SECONDS, {
+        inviteId: target.inviteId,
+        email,
+      });
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      // Its own email (#697): the access-request confirmation template has no signup link.
+      const sent = await trySend('sendUserInvite', {
+        to: email,
+        ...buildMemberInviteEmail({
+          inviterName: inviter.name || inviter.username || 'A member',
+          inviteUrl: `${clientUrl}/auths/signup?token=${encodeURIComponent(token)}`,
+          clientUrl,
+          expiresInDays: Math.round(MEMBER_INVITE_TTL_SECONDS / 86400),
+        }),
       });
 
-      await sendQuietly('sendUserInvite', {
-        to: email,
-        templateId: SENDGRID_TEMPLATE_IDS.INVITE_REQUEST_RECEIVED_CONFIRMATION,
-      });
+      // Without the email nobody can use the invite, so take it back rather than
+      // leave the address stuck behind "Invite already sent".
+      if (!sent) {
+        await target.undo().catch((err: unknown) => {
+          logger.error('sendUserInvite could not take back an unsent invite', {
+            inviteId: target.inviteId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+        throw new GraphQLError("We couldn't send the invite email. Please try again later.", {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+        });
+      }
 
       return { code: 'SUCCESS', message: 'Invitation sent successfully' };
     },
@@ -289,61 +493,45 @@ export const userInviteResolver = {
 
       const existingUser = await context.prisma.user.findFirst({
         where: { email },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          name: true,
-          accountStatus: true,
-          status: true,
-          password: true,
-          avatar: true,
-          bio: true,
-          contributorBadge: true,
-          upvotes: true,
-          downvotes: true,
-          followingIds: true,
-          followerIds: true,
-          reputation: true,
-          isAdmin: true,
-        },
+        select: REQUEST_ACCESS_USER_SELECT,
       });
 
       let user = existingUser;
 
       if (existingUser) {
-        // Active completed accounts cannot re-request access under the same email.
-        if (existingUser.password && existingUser.accountStatus === 'active') {
+        // A finished account can't request access again under the same email,
+        // whatever its moderation status (#691).
+        if (existingUser.password) {
           throw new GraphQLError('Email already exists', {
             extensions: { code: 'BAD_USER_INPUT' },
           });
         }
 
-        // Re-open a declined request as status 1. Do not touch approved invites
-        // (status 4) — resetting those would invalidate the emailed signup link.
-        if (!existingUser.password && existingUser.status === INVITE_STATUS_DECLINED) {
+        // Re-open a declined request as status 1.
+        if (existingUser.status === INVITE_STATUS_DECLINED) {
           user = await context.prisma.user.update({
             where: { id: existingUser.id },
             data: { status: INVITE_STATUS_REQUESTED },
-            select: {
-              id: true,
-              email: true,
-              username: true,
-              name: true,
-              accountStatus: true,
-              status: true,
-              password: true,
-              avatar: true,
-              bio: true,
-              contributorBadge: true,
-              upvotes: true,
-              downvotes: true,
-              followingIds: true,
-              followerIds: true,
-              reputation: true,
-              isAdmin: true,
-            },
+            select: REQUEST_ACCESS_USER_SELECT,
           });
+        }
+
+        // Invited but never signed up (#691): point them at an open invite, or put
+        // the account back in the admin queue once every invite has lapsed.
+        if (existingUser.status === INVITE_STATUS_APPROVED) {
+          const outcome = await reopenLapsedInvite(
+            context.prisma,
+            existingUser.id,
+            email,
+            new Date()
+          );
+          if (outcome === 'inviteOpen') throw badInput(INVITE_ALREADY_SENT);
+          if (outcome === 'changed') {
+            throw new GraphQLError('Email already exists', {
+              extensions: { code: 'BAD_USER_INPUT' },
+            });
+          }
+          user = { ...existingUser, status: INVITE_STATUS_REQUESTED };
         }
       } else {
         try {
@@ -354,24 +542,7 @@ export const userInviteResolver = {
               status: INVITE_STATUS_REQUESTED,
               password: null,
             },
-            select: {
-              id: true,
-              email: true,
-              username: true,
-              name: true,
-              accountStatus: true,
-              status: true,
-              password: true,
-              avatar: true,
-              bio: true,
-              contributorBadge: true,
-              upvotes: true,
-              downvotes: true,
-              followingIds: true,
-              followerIds: true,
-              reputation: true,
-              isAdmin: true,
-            },
+            select: REQUEST_ACCESS_USER_SELECT,
           });
         } catch (err) {
           if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -412,7 +583,12 @@ export const userInviteResolver = {
       args: { userId: string; inviteStatus: string },
       context: GraphQLContext
     ): Promise<{ code: string; message: string; inviteToken?: string }> => {
-      if (!context.user?._id || context.user.admin !== true) {
+      if (!context.user?._id) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (context.user.admin !== true) {
         throw new GraphQLError('Admin authentication required', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -453,7 +629,23 @@ export const userInviteResolver = {
           select: { id: true },
         });
 
-        const inviteToken = generateInviteSignupToken(invitedUser.id);
+        // The approval's UserInvite decides whether its link still works, as for a
+        // member invite: open until it expires, then claimed once at signup (#691).
+        // No inviter: approvals must not count toward the admin's own invite limit.
+        const inviteEmail = invitedUser.email.trim().toLowerCase();
+        const { id: inviteId } = await context.prisma.userInvite.create({
+          data: {
+            email: inviteEmail,
+            status: 'pending',
+            expiresAt: new Date(Date.now() + ADMIN_INVITE_TTL_SECONDS * 1000),
+          },
+          select: { id: true },
+        });
+
+        const inviteToken = generateInviteSignupToken(invitedUser.id, ADMIN_INVITE_TTL_SECONDS, {
+          inviteId,
+          email: inviteEmail,
+        });
         const signupPath = `/auths/signup?token=${encodeURIComponent(inviteToken)}`;
 
         try {
@@ -573,6 +765,13 @@ export const userInviteResolver = {
         });
       }
 
+      // A member invite also needs its invite pending and unexpired, and the token,
+      // the invite and the account to name the same address.
+      const inviteId = payload.inviteId;
+      if (inviteId && !(await isMemberInviteUsable(context.prisma, payload, existing.email))) {
+        throw badInput(INVITE_LINK_UNUSABLE);
+      }
+
       const usernameTaken = await context.prisma.user.findFirst({
         where: {
           username,
@@ -587,6 +786,16 @@ export const userInviteResolver = {
       }
 
       const hashedPassword = await generateHashPassword(password);
+
+      // Claim the member invite in one conditional write, so of two requests at
+      // once only one gets through.
+      if (inviteId) {
+        const claimed = await context.prisma.userInvite.updateMany({
+          where: { id: inviteId, status: 'pending', expiresAt: { gt: new Date() } },
+          data: { status: 'accepted' },
+        });
+        if (claimed.count !== 1) throw badInput(INVITE_LINK_UNUSABLE);
+      }
 
       try {
         const updated = await context.prisma.user.update({
@@ -612,6 +821,20 @@ export const userInviteResolver = {
 
         return toPublicUser(updated as PrismaUserRecord);
       } catch (err) {
+        // Signup didn't finish, so the link stays usable.
+        if (inviteId) {
+          await context.prisma.userInvite
+            .updateMany({
+              where: { id: inviteId, status: 'accepted' },
+              data: { status: 'pending' },
+            })
+            .catch((releaseErr: unknown) => {
+              logger.error('completeSignup could not release a member invite', {
+                inviteId,
+                error: releaseErr instanceof Error ? releaseErr.message : String(releaseErr),
+              });
+            });
+        }
         if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
           throw new GraphQLError('Username already exists or terms already accepted', {
             extensions: { code: 'BAD_USER_INPUT' },

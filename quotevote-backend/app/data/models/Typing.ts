@@ -7,7 +7,8 @@ const TypingSchema = new Schema<TypingDocument, TypingModel>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     isTyping: { type: Boolean, default: true },
     timestamp: { type: Date, default: Date.now },
-    expiresAt: { type: Date, index: true },
+    // Indexed only by the TTL index below (#714); `index: true` here declared it twice.
+    expiresAt: { type: Date },
   },
   { timestamps: true }
 );

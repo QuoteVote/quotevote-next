@@ -1,4 +1,9 @@
+jest.mock('~/data/resolvers/utils/notifications', () => ({
+  addNotification: jest.fn().mockResolvedValue({}),
+}));
+
 import { quoteResolver } from '~/data/resolvers/quoteResolver';
+import { addNotification } from '~/data/resolvers/utils/notifications';
 import { toQuote } from '~/data/resolvers/utils/commentsQuotes';
 import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 import type { GraphQLContext } from '~/types/graphql';
@@ -62,6 +67,8 @@ function authedUser(admin = false): NonNullable<GraphQLContext['user']> {
 }
 
 describe('quoteResolver', () => {
+  beforeEach(() => jest.clearAllMocks());
+
   const quoteRow = (id: string, author = userId) => ({
     id,
     userId: author,
@@ -252,6 +259,39 @@ describe('quoteResolver', () => {
       expect(result._id).toBe(quoteId);
       expect(result.userId).toBe(userId);
       expect(result.quoted).toBe(postOwnerId);
+      expect(addNotification).toHaveBeenCalledWith(context.prisma, {
+        userId: postOwnerId,
+        userIdBy: userId,
+        notificationType: 'QUOTED',
+        label: 'line',
+        postId,
+      });
+    });
+
+    it('does not notify you about quoting your own post', async () => {
+      const context = mockContext(authedUser());
+      context.prisma.post.findUnique.mockResolvedValue({
+        id: postId,
+        title: 'Hello',
+        userId,
+        deleted: false,
+        pointTimestamp: date,
+        dayPoints: 1,
+      });
+      context.prisma.quote.create.mockResolvedValue({
+        ...quoteRow(quoteId),
+        quoted: userId,
+      });
+      context.prisma.post.update.mockResolvedValue({});
+
+      await quoteResolver.Mutation.addQuote(
+        null,
+        { quote: { postId, quote: 'line', startWordIndex: 0, endWordIndex: 1 } } as never,
+        context as never
+      );
+
+      expect(context.prisma.quote.create).toHaveBeenCalled();
+      expect(addNotification).not.toHaveBeenCalled();
     });
   });
 

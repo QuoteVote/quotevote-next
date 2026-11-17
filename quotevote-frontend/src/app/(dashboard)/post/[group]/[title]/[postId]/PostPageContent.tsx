@@ -7,6 +7,7 @@ import { WifiOff } from 'lucide-react'
 import PostController from '@/components/Post/PostController'
 import PostUnavailable from '@/components/Post/PostUnavailable'
 import PostActionList from '@/components/PostActions/PostActionList'
+import SelectedPassageSummary from '@/components/PostActions/SelectedPassageSummary'
 import PostChatSend from '@/components/PostChat/PostChatSend'
 import MobileDiscussionSplit from '@/components/Post/MobileDiscussionSplit'
 import DiscussionSplitPane from '@/components/Post/DiscussionSplitPane'
@@ -14,6 +15,7 @@ import { useHasMounted, useIsMobile, useIsLandscapeMobile } from '@/hooks/useMed
 import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
 import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
 import { toLinkedPassage } from '@/lib/utils/discussionSplit'
+import { summarizePassage } from '@/lib/utils/passageSummary'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
 import { useAppStore } from '@/store'
 import type { PostQueryData } from '@/types/post'
@@ -44,6 +46,8 @@ interface InteractionSectionProps {
   selectedActionId?: string | null
   onActionSelect?: (action: PostAction) => void
   onCountChange?: (count: number) => void
+  /** Clears the selected passage and Discussion item. */
+  onClearSelection?: () => void
 }
 
 export default function PostDetailPage(): React.ReactNode {
@@ -126,6 +130,12 @@ function PostLayout({ postId }: { postId: string }) {
     ],
   )
 
+  const handleClearSelection = useCallback(() => {
+    setSelectedActionId(null)
+    setFocusedComment(null)
+    setLinkedPassage(null)
+  }, [setFocusedComment, setLinkedPassage])
+
   const handleActivateLinkedComment = useCallback(
     (actionId: string) => {
       if (selectedActionId === actionId && discussionOpen) {
@@ -156,6 +166,7 @@ function PostLayout({ postId }: { postId: string }) {
       selectedActionId={selectedActionId}
       onActionSelect={handleActionSelect}
       onCountChange={setDiscussionCount}
+      onClearSelection={handleClearSelection}
     />
   )
 
@@ -186,7 +197,8 @@ function PostLayout({ postId }: { postId: string }) {
   }
 
   // Desktop, tablet and landscape phones: side by side with a draggable divider (#516).
-  const containerHeight = isLandscape ? 'h-[calc(100vh-80px)]' : 'h-[85vh]'
+  // The split fills the screen under the top bar (landscape phones included).
+  const containerHeight = 'h-[calc(100dvh-var(--app-header-h))]'
   return (
     <DiscussionSplitPane className={containerHeight} contentPane={quotePane}>
       {discussion}
@@ -200,8 +212,10 @@ function InteractionSection({
   selectedActionId = null,
   onActionSelect,
   onCountChange,
+  onClearSelection,
 }: InteractionSectionProps) {
   const [wsDisconnected, setWsDisconnected] = useState(false)
+  const linkedPassage = useAppStore((s) => s.ui.linkedPassage)
 
   const { loading: postLoading, data: postData, refetch: refetchPost } = useQuery<PostQueryData>(
     GET_POST,
@@ -322,15 +336,29 @@ function InteractionSection({
     onCountChange?.(postActions.length)
   }, [postActions.length, onCountChange])
 
+  const passageSummary = useMemo(
+    () => summarizePassage(post?.text, linkedPassage, postActions),
+    [post?.text, linkedPassage, postActions]
+  )
+
   return (
     <div className="flex flex-col h-full">
-      {!hideHeader && (
-        <div data-discussion-header className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-card shrink-0">
-          <span className="text-sm font-semibold text-foreground/75">
-            Discussion · {postActions.length}
-          </span>
+      {!hideHeader || passageSummary ? (
+        <div className="font-redesign flex shrink-0 flex-col gap-3 px-4 pt-4 pb-2 lg:px-6 lg:pt-[22px]">
+          {!hideHeader && (
+            <h2
+              data-discussion-title
+              className="text-[22px]! leading-tight! font-extrabold! tracking-[-0.02em]! text-[var(--shell-ink)]"
+            >
+              Discussion{' '}
+              <span className="font-semibold text-[var(--shell-muted)]">· {postActions.length}</span>
+            </h2>
+          )}
+          {passageSummary && onClearSelection ? (
+            <SelectedPassageSummary summary={passageSummary} onClear={onClearSelection} />
+          ) : null}
         </div>
-      )}
+      ) : null}
 
       {wsDisconnected && (
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/50 dark:border-amber-800/30 text-amber-700 dark:text-amber-400 text-xs">

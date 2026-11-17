@@ -99,6 +99,9 @@ export const Mutation = `type Mutation {
   " Remove user notification "
   removeNotification(notificationId: String!): Notification
 
+  " Soft-delete all active notifications for the signed-in user (#464). Returns how many were cleared."
+  clearAllNotifications: Int!
+
   " Add reaction to a chat message "
   addMessageReaction(reaction: ReactionInput!): Reaction
 

@@ -588,7 +588,8 @@ describe('ProfileHeader Component', () => {
 
           await waitFor(() => {
             expect((toast.success as jest.Mock)).toHaveBeenCalledWith(
-              expect.stringContaining('reported successfully')
+              'User reported successfully!',
+              expect.objectContaining({ description: expect.any(String) })
             );
           }, { timeout: 3000 });
         }
