@@ -1,6 +1,6 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- avataaars.io SVGs are rendered as-is, like DisplayAvatar */
+/* eslint-disable @next/next/no-img-element -- first-party avatar SVGs from /api/avatar, like DisplayAvatar */
 import type { ReactNode } from "react";
 import { buildAvatarUrl } from "@/lib/avatar";
 import { cn } from "@/lib/utils";

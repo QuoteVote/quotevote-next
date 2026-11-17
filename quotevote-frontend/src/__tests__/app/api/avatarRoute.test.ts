@@ -1,11 +1,12 @@
 /**
  * @jest-environment node
  *
- * Same-origin avatar SVG used for the PNG download (#656).
+ * First-party avatar SVGs (#722), also used for the PNG download (#656).
  */
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/avatar/route";
 import { completeDraft } from "@/lib/avatar";
+import { renderAvatarSvg } from "@/lib/avatarRender";
 
 const draft = completeDraft({ topType: "LongHairDreads" }, "maya");
 const url = (params: Record<string, string>): NextRequest =>
@@ -17,30 +18,36 @@ describe("GET /api/avatar", () => {
     global.fetch = realFetch;
   });
 
-  it("rejects missing or unknown values without calling avataaars.io", async () => {
+  it("renders the avatar on our own server, with no outbound request", async () => {
     const fetchSpy = jest.fn();
     global.fetch = fetchSpy;
-    expect((await GET(url({ ...draft, topType: "Nope" }))).status).toBe(400);
-    expect((await GET(url({ topType: "LongHairDreads" }))).status).toBe(400);
+
+    const res = GET(url(draft));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("image/svg+xml");
+    expect(res.headers.get("content-security-policy")).toBe(
+      "default-src 'none'; style-src 'unsafe-inline'"
+    );
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(await res.text()).toBe(renderAvatarSvg(draft, "Circle"));
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("returns the avataaars.io SVG for a valid avatar", async () => {
-    const fetchSpy = jest.fn().mockResolvedValue(new Response("<svg></svg>", { status: 200 }));
-    global.fetch = fetchSpy;
-    const res = await GET(url(draft));
-    expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toContain("image/svg+xml");
-    expect(await res.text()).toBe("<svg></svg>");
-    const requested = new URL(fetchSpy.mock.calls[0][0] as string);
-    expect(requested.hostname).toBe("avataaars.io");
-    expect(requested.searchParams.get("topType")).toBe("LongHairDreads");
+  it("draws the transparent style when asked", async () => {
+    const res = GET(url({ ...draft, avatarStyle: "Transparent" }));
+    expect(await res.text()).toBe(renderAvatarSvg(draft, "Transparent"));
   });
 
-  it("answers 502 when avataaars.io fails or returns something else", async () => {
-    global.fetch = jest.fn().mockResolvedValue(new Response("<html>", { status: 200 }));
-    expect((await GET(url(draft))).status).toBe(502);
-    global.fetch = jest.fn().mockRejectedValue(new Error("down"));
-    expect((await GET(url(draft))).status).toBe(502);
+  it("ignores unknown keys and values, and fills missing ones, so it always answers an avatar", async () => {
+    const partial = GET(url({ topType: "LongHairDreads", skinColor: "Nope", evil: "<script>" }));
+    expect(partial.status).toBe(200);
+    expect(await partial.text()).toBe(
+      renderAvatarSvg(completeDraft({ topType: "LongHairDreads" }, ""), "Circle")
+    );
+
+    const empty = GET(url({}));
+    expect(empty.status).toBe(200);
+    expect(await empty.text()).toMatch(/^<svg/);
   });
 });
