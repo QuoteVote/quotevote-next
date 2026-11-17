@@ -35,6 +35,7 @@ import {
 } from '~/data/utils/userPrismaMapper';
 import { logger } from '~/data/utils/logger';
 import { checkRateLimit } from '~/data/utils/rateLimiter';
+import { requireRole } from '~/data/utils/requireRole';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -583,16 +584,7 @@ export const userInviteResolver = {
       args: { userId: string; inviteStatus: string },
       context: GraphQLContext
     ): Promise<{ code: string; message: string; inviteToken?: string }> => {
-      if (!context.user?._id) {
-        throw new GraphQLError('Authentication required', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-      if (context.user.admin !== true) {
-        throw new GraphQLError('Admin authentication required', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+      requireRole(context, 'inviteApprover');
 
       if (!args.userId || !isObjectId(args.userId)) {
         throw new GraphQLError('Valid userId is required', {
