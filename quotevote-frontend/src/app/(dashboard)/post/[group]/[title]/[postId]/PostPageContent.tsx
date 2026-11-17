@@ -186,7 +186,8 @@ function PostLayout({ postId }: { postId: string }) {
   }
 
   // Desktop, tablet and landscape phones: side by side with a draggable divider (#516).
-  const containerHeight = isLandscape ? 'h-[calc(100vh-80px)]' : 'h-[85vh]'
+  // The split fills the screen under the top bar (landscape phones included).
+  const containerHeight = 'h-[calc(100dvh-var(--app-header-h))]'
   return (
     <DiscussionSplitPane className={containerHeight} contentPane={quotePane}>
       {discussion}
