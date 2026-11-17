@@ -5,22 +5,32 @@ describe("SelectedPassageSummary", () => {
   it("shows the passage with its votes and responses", () => {
     render(
       <SelectedPassageSummary
-        summary={{ text: "raise money for bus lanes", agree: 4, disagree: 1, responses: 6 }}
+        summary={{
+          text: "raise money for bus lanes",
+          votes: [
+            { key: "#agree", label: "agree", count: 4, direction: "up" },
+            { key: "#false", label: "false", count: 1, direction: "down" },
+            { key: "#like", label: "like", count: 2, direction: "up" },
+          ],
+          responses: 7,
+        }}
         onClear={jest.fn()}
       />
     );
     const section = screen.getByRole("region", { name: "Selected passage" });
     expect(section).toHaveTextContent("raise money for bus lanes");
     expect(section).toHaveTextContent("↑ 4 agree");
-    expect(section).toHaveTextContent("↓ 1 disagree");
-    expect(section).toHaveTextContent("6 responses");
+    expect(section).toHaveTextContent("↓ 1 false");
+    expect(section).toHaveTextContent("↑ 2 like");
+    expect(section).not.toHaveTextContent("disagree");
+    expect(section).toHaveTextContent("7 responses");
   });
 
   it("says 1 response and clears the selection", () => {
     const onClear = jest.fn();
     render(
       <SelectedPassageSummary
-        summary={{ text: "a trial", agree: 0, disagree: 0, responses: 1 }}
+        summary={{ text: "a trial", votes: [], responses: 1 }}
         onClear={onClear}
       />
     );

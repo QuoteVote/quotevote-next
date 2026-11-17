@@ -25,6 +25,7 @@ import {
   findRoom,
   forbidden,
   notFound,
+  notifyPostAuthorOfMessage,
   requireUserId,
   resolveRoomForMessage,
   validEmoji,
@@ -319,6 +320,7 @@ export const chatResolver = {
       // Legacy marks new-message events with mutation_type 'CREATED'.
       const event = { ...message, mutation_type: 'CREATED' };
       await context.pubsub.publish(SUBSCRIPTION_EVENTS.MESSAGE_CREATED, { message: event });
+      await notifyPostAuthorOfMessage(context.prisma, room, userId, text);
       return event;
     },
 

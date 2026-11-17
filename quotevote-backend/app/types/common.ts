@@ -25,6 +25,7 @@ export type NotificationType =
   | 'COMMENT'
   | 'COMMENTED'
   | 'QUOTE'
+  | 'QUOTED'
   | 'MESSAGE'
   | 'MENTION'
   | 'SYSTEM'

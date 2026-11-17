@@ -7,7 +7,10 @@ function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`
 }
 
-/** The selected passage at the top of Discussion: its words, votes and responses. */
+/**
+ * The selected passage at the top of Discussion: its words, its votes per response
+ * (agree, true, like, ...) and how many responses it has.
+ */
 export default function SelectedPassageSummary({ summary, onClear }: SelectedPassageSummaryProps) {
   return (
     <section
@@ -33,8 +36,18 @@ export default function SelectedPassageSummary({ summary, onClear }: SelectedPas
         </button>
       </div>
       <p className="flex flex-wrap items-center gap-3 text-[13px]! leading-normal! font-extrabold">
-        <span className="text-[#11683d] dark:text-[#7fdcb0]">↑ {summary.agree} agree</span>
-        <span className="text-[#a12424] dark:text-[#ff9a9a]">↓ {summary.disagree} disagree</span>
+        {summary.votes.map((vote) => (
+          <span
+            key={vote.key}
+            className={
+              vote.direction === 'up'
+                ? 'text-[#11683d] dark:text-[#7fdcb0]'
+                : 'text-[#a12424] dark:text-[#ff9a9a]'
+            }
+          >
+            {vote.direction === 'up' ? '↑' : '↓'} {vote.count} {vote.label}
+          </span>
+        ))}
         <span className="font-bold text-[var(--shell-muted)]">
           {plural(summary.responses, 'response', 'responses')}
         </span>

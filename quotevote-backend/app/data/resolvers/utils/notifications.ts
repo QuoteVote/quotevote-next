@@ -127,6 +127,22 @@ export interface AddNotificationInput {
 }
 
 /**
+ * Whether `userIdBy` already has a notification of this type to `userId` on the post that's
+ * still in their list (status `new`, not cleared), so a run of messages in a busy discussion
+ * notifies the author once until they clear it.
+ */
+export const hasUnreadNotification = async (
+  prisma: NotificationsPrisma,
+  input: Pick<AddNotificationInput, 'userId' | 'userIdBy' | 'notificationType' | 'postId'>
+): Promise<boolean> => {
+  const existing = await prisma.notification.findFirst({
+    where: { ...input, status: 'new' },
+    select: { id: true },
+  });
+  return existing !== null;
+};
+
+/**
  * Create a notification and publish it via PubSub for real-time delivery.
  */
 export const addNotification = async (

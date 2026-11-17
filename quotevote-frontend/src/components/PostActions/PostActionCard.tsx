@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { toCommentDeepLink } from '@/lib/utils/sanitizeUrl'
 import { VOTE_LABELS } from '@/lib/constants/voteAxes'
 import useGuestGuard from '@/hooks/useGuestGuard'
-import type { VoteOption } from '@/types/voting'
+import { voteTag } from '@/lib/utils/voteTag'
 import type {
   PostActionCardProps,
   ActionReactionsData,
@@ -27,12 +27,11 @@ import type {
   DeleteQuoteData,
 } from '@/types/postActions'
 
-// The vote's response (True, Like...). The API returns `tags` as a string, older data as
-// an array; votes without a known response fall back to Agree/Disagree.
+// The vote's response (True, Like...); votes without a known response fall back to
+// Agree/Disagree.
 function voteResponseLabel(tags: unknown, isUp: boolean): string {
-  const values = Array.isArray(tags) ? tags : typeof tags === 'string' ? tags.split(',') : []
-  const tag = values.map((t) => String(t).trim()).find((t) => t in VOTE_LABELS)
-  if (tag) return VOTE_LABELS[tag as VoteOption]
+  const tag = voteTag(tags)
+  if (tag) return VOTE_LABELS[tag]
   return isUp ? 'Agree' : 'Disagree'
 }
 

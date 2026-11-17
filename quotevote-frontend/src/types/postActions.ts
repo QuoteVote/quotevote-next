@@ -176,10 +176,20 @@ export interface DeleteQuoteData {
 
 
 /** The selected passage at the top of Discussion, with its responses. */
+/** Votes on a passage for one response (agree, false, like, ...) or plain up/down votes. */
+export interface PassageVoteCount {
+  /** The response tag (`#agree`), or `up`/`down` for votes without one. */
+  key: string
+  /** Lowercase label shown after the count, e.g. "agree" or "upvotes". */
+  label: string
+  count: number
+  direction: 'up' | 'down'
+}
+
 export interface PassageSummary {
   text: string
-  agree: number
-  disagree: number
+  /** Only the responses that have votes, each pair together. */
+  votes: PassageVoteCount[]
   responses: number
 }
 
