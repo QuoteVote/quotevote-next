@@ -41,7 +41,7 @@ export function NotificationsPanel() {
         className={cn(
           "w-full p-0 gap-0 overflow-hidden",
           isMobile
-            ? "bottom-[56px] h-[calc(100dvh-6.5rem)] max-h-[85dvh] rounded-t-2xl sm:max-w-none"
+            ? "bottom-[var(--app-tabbar-h)] h-[calc(100dvh-var(--app-header-h)-var(--app-tabbar-h))] max-h-[85dvh] rounded-t-2xl sm:max-w-none"
             : "sm:w-[400px] sm:max-w-[400px] inset-y-0 h-full"
         )}
         data-testid="notifications-panel"

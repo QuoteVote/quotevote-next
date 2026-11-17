@@ -865,7 +865,7 @@ body {
 /* Flattens inline gradients and border-images from MainNavBar   */
 /* ============================================================ */
 
-.neo-brutalism header.fixed {
+.neo-brutalism header.fixed:not([data-app-header]) {
   background: var(--card) !important;
   background-image: none !important;
   border-bottom: 3px solid var(--nb-border-color) !important;
@@ -873,8 +873,8 @@ body {
   box-shadow: 0 4px 0 0 var(--nb-border-color);
 }
 
-.dark.neo-brutalism header.fixed,
-.neo-brutalism.dark header.fixed {
+.dark.neo-brutalism header.fixed:not([data-app-header]),
+.neo-brutalism.dark header.fixed:not([data-app-header]) {
   background: var(--card) !important;
   box-shadow: 0 4px 0 0 var(--nb-shadow-color);
 }
@@ -2231,4 +2231,118 @@ p { line-height: 1.625; }
   --ae-danger-line: #6b2b2b;
   --ae-stage-from: #1a2540;
   --ae-stage-to: #13322a;
+}
+
+/* ============================================================ */
+/* App shell (redesign): top bar and phone tab bar               */
+/* Colors from the approved Figma design, in all four themes.    */
+/* ============================================================ */
+
+:root {
+  --app-header-h: 60px;
+  --app-tabbar-h: calc(64px + env(safe-area-inset-bottom, 0px));
+  --shell-surface: #ffffff;
+  --shell-line: #e4e8f0;
+  --shell-border-w: 1px;
+  --shell-radius: 12px;
+  --shell-pill-radius: 22px;
+  --shell-create-radius: 18px;
+  --shell-ink: #0f172a;
+  --shell-ink-2: #273246;
+  --shell-muted: #5a6478;
+  --shell-field: #f1f4f8;
+  --shell-field-line: #e4e8f0;
+  --shell-key-bg: #ffffff;
+  --shell-key-line: #d3d9e4;
+  --shell-hover: #eef2f7;
+  --shell-on-bg: #e9f0ff;
+  --shell-on-ink: #2457e6;
+  --shell-primary: #0f7d56;
+  --shell-primary-hover: #0c6e4b;
+  --shell-primary-line: #0b6b49;
+  --shell-primary-ink: #ffffff;
+  --shell-tab-on: #0f7d56;
+  --shell-badge: #e5484d;
+  --shell-badge-ink: #ffffff;
+  --shell-badge-ring: #ffffff;
+  --shell-shadow: none;
+  --shell-tab-shadow: 0 -8px 24px -18px rgba(15, 23, 42, 0.35);
+  --shell-focus: 0 0 0 4px rgba(36, 87, 230, 0.22);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --app-header-h: 72px;
+  }
+}
+
+.font-redesign {
+  font-family: var(--font-redesign), var(--font-sans), system-ui, sans-serif;
+}
+
+.font-wordmark {
+  font-family: var(--font-wordmark), var(--font-redesign), sans-serif;
+}
+
+.dark {
+  --shell-surface: #0d1526;
+  --shell-line: #1b2640;
+  --shell-ink: #e8edf5;
+  --shell-ink-2: #c6d0de;
+  --shell-muted: #94a3b8;
+  --shell-field: #111a2e;
+  --shell-field-line: #24304a;
+  --shell-key-bg: #1b2640;
+  --shell-key-line: #24304a;
+  --shell-hover: #1b2640;
+  --shell-on-bg: #13324a;
+  --shell-on-ink: #8cc8ff;
+  --shell-primary: #169a6b;
+  --shell-primary-hover: #13865d;
+  --shell-primary-line: #13865d;
+  --shell-tab-on: #3fbf87;
+  --shell-badge-ring: #0b1120;
+  --shell-tab-shadow: 0 -8px 24px -18px rgba(0, 0, 0, 0.6);
+}
+
+.neo-brutalism {
+  --shell-line: #070b14;
+  --shell-border-w: 2px;
+  --shell-radius: 4px;
+  --shell-pill-radius: 4px;
+  --shell-create-radius: 4px;
+  --shell-ink: #070b14;
+  --shell-ink-2: #1b2130;
+  --shell-muted: #4a505c;
+  --shell-field-line: #070b14;
+  --shell-key-line: #070b14;
+  --shell-on-bg: #ffe533;
+  --shell-on-ink: #070b14;
+  --shell-primary: #20c45f;
+  --shell-primary-hover: #1bb054;
+  --shell-primary-line: #070b14;
+  --shell-primary-ink: #070b14;
+  --shell-tab-on: #008f23;
+  --shell-badge: #ff646f;
+  --shell-badge-ink: #070b14;
+  --shell-badge-ring: #070b14;
+  --shell-shadow: 2px 2px 0 #070b14;
+  --shell-tab-shadow: none;
+}
+
+.dark.neo-brutalism,
+.neo-brutalism.dark {
+  --shell-surface: #0d1526;
+  --shell-line: #f2f7f3;
+  --shell-ink: #f2f7f3;
+  --shell-ink-2: #e2e8f0;
+  --shell-muted: #b6c0cf;
+  --shell-field: #111a2e;
+  --shell-field-line: #f2f7f3;
+  --shell-key-bg: #1b2640;
+  --shell-key-line: #f2f7f3;
+  --shell-hover: #1b2640;
+  --shell-tab-on: #20c45f;
+  --shell-badge-ring: #f2f7f3;
+  --shell-shadow: 2px 2px 0 #f2f7f3;
 }

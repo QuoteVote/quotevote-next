@@ -1,17 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { Search, X, Loader2 } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { Search, X, Loader2 } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { cn } from "@/lib/utils";
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
+}
 
 export default function NavSearch() {
   const router = useRouter();
   const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [focused, setFocused] = useState(false);
 
   const debouncedQuery = useDebounce(inputValue, 400);
@@ -30,50 +36,69 @@ export default function NavSearch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
 
-  if (pathname === '/') return null;
+  // "/" focuses the search from anywhere on the page, unless the user is typing.
+  useEffect(() => {
+    if (pathname === "/") return undefined;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isTypingTarget(e.target)) return;
+      e.preventDefault();
+      inputRef.current?.focus();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [pathname]);
+
+  if (pathname === "/") return null;
 
   const clearSearch = () => {
-    setInputValue('');
+    setInputValue("");
     inputRef.current?.focus();
   };
 
   return (
     <div
+      role="search"
       className={cn(
-        'flex items-center gap-2 h-[38px] w-full rounded-full px-3.5 transition-all duration-200 border',
-        focused
-          ? 'bg-white dark:bg-card border-[#52b274] shadow-[0_0_0_3px_rgba(82,178,116,0.15)]'
-          : 'bg-[#f0f2f5] dark:bg-muted border-transparent hover:bg-[#e4e6eb] dark:hover:bg-muted/70'
+        "flex h-11 w-full items-center gap-2.5 rounded-[var(--shell-radius)] pr-2 pl-4 transition-shadow duration-150",
+        "border-[length:var(--shell-border-w)] border-[var(--shell-field-line)] bg-[var(--shell-field)]",
+        focused && "shadow-[var(--shell-focus)]"
       )}
     >
-      <Search
-        className={cn(
-          'size-[15px] flex-shrink-0 transition-colors',
-          focused ? 'text-[#52b274]' : 'text-gray-500'
-        )}
-      />
+      <Search className="size-[18px] flex-shrink-0 text-[var(--shell-muted)]" aria-hidden="true" />
+      <label htmlFor="nav-search" className="sr-only">
+        Search
+      </label>
       <input
+        id="nav-search"
         ref={inputRef}
         type="text"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder="Search…"
-        className="bg-transparent text-base text-foreground placeholder:text-muted-foreground outline-none border-none w-full"
+        placeholder="Search quotes, people and topics"
+        className="w-full border-none bg-transparent text-base text-[var(--shell-ink)] outline-none placeholder:text-[var(--shell-muted)] md:text-[14.5px]"
       />
       {isDebouncePending ? (
-        <Loader2 className="size-3.5 flex-shrink-0 animate-spin text-gray-400" />
+        <Loader2 className="size-3.5 flex-shrink-0 animate-spin text-[var(--shell-muted)]" />
       ) : inputValue ? (
         <button
           type="button"
           onClick={clearSearch}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer border-0 bg-transparent p-0"
+          className="inline-flex size-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-[var(--shell-muted)] hover:text-[var(--shell-ink)]"
           aria-label="Clear search"
         >
-          <X className="size-3.5" />
+          <X className="size-4" />
         </button>
-      ) : null}
+      ) : (
+        <kbd
+          aria-hidden="true"
+          className="rounded-md border border-[var(--shell-key-line)] bg-[var(--shell-key-bg)] px-[7px] py-0.5 font-sans text-xs font-bold text-[var(--shell-muted)]"
+        >
+          /
+        </kbd>
+      )}
     </div>
   );
 }
