@@ -174,3 +174,16 @@ export interface DeleteQuoteData {
   }
 }
 
+
+/** The selected passage at the top of Discussion, with its responses. */
+export interface PassageSummary {
+  text: string
+  agree: number
+  disagree: number
+  responses: number
+}
+
+export interface SelectedPassageSummaryProps {
+  summary: PassageSummary
+  onClear: () => void
+}
