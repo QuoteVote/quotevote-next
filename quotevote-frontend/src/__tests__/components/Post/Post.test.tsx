@@ -205,7 +205,12 @@ describe("Post Component", () => {
   });
 
   describe("Post metadata", () => {
-    it("renders community, source, and timestamp in a metadata row", () => {
+    it("links back to the quotes", () => {
+      const { getByRole } = render(<Post {...mockProps} />);
+      expect(getByRole("link", { name: "Back to quotes" })).toHaveAttribute("href", "/");
+    });
+
+    it("puts the topic and source together and the time on the author line", () => {
       mockUseQuery.mockImplementation(() => ({
         data: { tag: { _id: "g1", title: "community-planning" } },
         loading: false,
@@ -220,7 +225,9 @@ describe("Post Component", () => {
       const meta = getByTestId("post-metadata");
       expect(meta).toHaveTextContent("community-planning");
       expect(meta).toHaveTextContent("Source: example.com");
-      expect(meta.querySelector("time")).toBeInTheDocument();
+      const time = document.querySelector("time");
+      expect(time).toBeInTheDocument();
+      expect(meta.contains(time)).toBe(false);
     });
   });
 
@@ -325,7 +332,7 @@ describe("Post Component", () => {
         }),
       ]);
       expect(getByTestId("passage-activity-hint")).toHaveTextContent(
-        "Underlined passages already have votes or comments."
+        "Highlighted passages already have votes or comments."
       );
     });
 

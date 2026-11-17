@@ -9,6 +9,7 @@ import { PaginatedList } from '@/components/common/PaginatedList'
 import { Button } from '@/components/ui/button'
 import PostCard from './PostCard'
 import PostSkeleton from './PostSkeleton'
+import { groupByDay as groupPostsByDay } from '@/lib/utils/postDayGroups'
 import { GET_TOP_POSTS } from '@/graphql/queries'
 import { createGraphQLVariables, extractPaginationData } from '@/lib/utils/pagination'
 import { usePaginationWithFilters } from '@/hooks/usePagination'
@@ -46,6 +47,7 @@ export default function PaginatedPostsList({
   contentClassName,
   paginationClassName,
   compact = false,
+  groupByDay = false,
   query,
   dataKey = 'posts',
 }: PaginatedPostsListProps & { query?: DocumentNode; dataKey?: string }) {
@@ -203,6 +205,7 @@ export default function PaginatedPostsList({
     : false
 
   // Render individual post
+  const showDays = groupByDay && !interactions
   const renderPost = (post: Post & { rank?: number }) => (
     <PostCard
       key={post._id}
@@ -224,7 +227,27 @@ export default function PaginatedPostsList({
       attribution={post.attribution || undefined}
       searchKey={searchKey}
       compact={compact}
+      upvotes={post.upvotes}
+      downvotes={post.downvotes}
+      timeOnly={showDays}
     />
+  )
+
+  // One list for both modes. Newest-first feeds get a heading per day.
+  const renderPostList = () => (
+    <div className="flex flex-col gap-4 px-4 py-4" data-post-list>
+      {showDays
+        ? groupPostsByDay(processedPosts).map((group) => [
+            <h2
+              key={`day-${group.label}-${group.posts[0]._id}`}
+              className="font-redesign mt-1 flex items-center gap-3 text-[11.5px]! leading-normal! font-extrabold! tracking-[0.09em]! text-[var(--shell-muted)] uppercase after:h-px after:flex-1 after:bg-[var(--shell-line)] after:content-['']"
+            >
+              {group.label}
+            </h2>,
+            ...group.posts.map(renderPost),
+          ])
+        : processedPosts.map(renderPost)}
+    </div>
   )
 
   // Render empty state: say why the list is empty and offer a way out (#528)
@@ -311,9 +334,7 @@ export default function PaginatedPostsList({
     return (
       <div className={className}>
         <div className={contentClassName}>
-          <div className="flex flex-col gap-4 px-4 py-4">
-            {processedPosts.map(renderPost)}
-          </div>
+          {renderPostList()}
 
           {/* Load More button + skeleton loaders */}
           {hasMore && (
@@ -369,9 +390,7 @@ export default function PaginatedPostsList({
       contentClassName={contentClassName}
       paginationClassName={paginationClassName}
     >
-      <div className="flex flex-col gap-4 px-4 py-4">
-        {processedPosts.map(renderPost)}
-      </div>
+      {renderPostList()}
     </PaginatedList>
   )
 }

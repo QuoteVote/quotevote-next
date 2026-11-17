@@ -116,7 +116,7 @@ describe("JSON-LD builders", () => {
         },
       });
       expect(String((data.mainEntity as { image?: string }).image)).toMatch(
-        /^https:\/\/avataaars\.io\/\?/
+        /^https:\/\/beta\.quote\.vote\/api\/avatar\?avatarStyle=Circle&/
       );
     });
 

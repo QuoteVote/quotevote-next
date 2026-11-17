@@ -4,6 +4,22 @@ import { isLive, unique, whenAny } from '~/data/resolvers/utils/batchLoad';
 
 type ChatRoomsPrisma = Pick<PrismaClient, 'user' | 'post' | 'message' | 'comment'>;
 
+type RoomIdsPrisma = Pick<PrismaClient, 'messageRoom'>;
+
+/**
+ * Ids of the rooms `userId` belongs to, leaving out rooms with an empty member. Before
+ * #713 the current API saved some first direct messages as `users: [sender, null]`.
+ * Prisma can't read a null in `userIds`, so loading one of those would fail the whole
+ * list; the switch checks list them for cleanup instead.
+ */
+export async function listRoomIdsForUser(prisma: RoomIdsPrisma, userId: string): Promise<string[]> {
+  const rows = (await prisma.messageRoom.findRaw({
+    filter: { $and: [{ users: { $oid: userId } }, { users: { $ne: null } }] },
+    options: { projection: { _id: 1 } },
+  })) as unknown as { _id?: { $oid?: unknown } }[];
+  return rows.map((row) => row._id?.$oid).filter((id): id is string => typeof id === 'string');
+}
+
 /**
  * Room columns safe to read from legacy rooms, which have no createdAt/updatedAt.
  * Reading the whole record fails on them.

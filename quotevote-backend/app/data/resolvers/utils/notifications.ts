@@ -50,15 +50,21 @@ export const toNotificationEntity = (record: NotificationRecord): Notification =
 });
 
 /** Post columns a notification links to; deleted posts are kept so the UI can say so. */
-export const NOTIFICATION_POST_SELECT = { id: true, url: true, deleted: true } as const;
+export const NOTIFICATION_POST_SELECT = { id: true, title: true, url: true, deleted: true } as const;
 
 type NotificationRelationsPrisma = Pick<PrismaClient, 'user' | 'post'>;
 
 const toNotificationPost = (post: {
   id: string;
+  title: string | null;
   url: string | null;
   deleted: boolean;
-}): NotificationPost => ({ _id: post.id, url: post.url, deleted: post.deleted });
+}): NotificationPost => ({
+  _id: post.id,
+  title: post.title,
+  url: post.url,
+  deleted: post.deleted,
+});
 
 /**
  * Add who sent each notification and the post it points to, with two queries for
@@ -119,6 +125,22 @@ export interface AddNotificationInput {
   label: string;
   postId?: string;
 }
+
+/**
+ * Whether `userIdBy` already has a notification of this type to `userId` on the post that's
+ * still in their list (status `new`, not cleared), so a run of messages in a busy discussion
+ * notifies the author once until they clear it.
+ */
+export const hasUnreadNotification = async (
+  prisma: NotificationsPrisma,
+  input: Pick<AddNotificationInput, 'userId' | 'userIdBy' | 'notificationType' | 'postId'>
+): Promise<boolean> => {
+  const existing = await prisma.notification.findFirst({
+    where: { ...input, status: 'new' },
+    select: { id: true },
+  });
+  return existing !== null;
+};
 
 /**
  * Create a notification and publish it via PubSub for real-time delivery.

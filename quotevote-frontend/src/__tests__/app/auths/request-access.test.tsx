@@ -3,6 +3,7 @@
  */
 
 import { renderToString } from "react-dom/server.node";
+import { GraphQLError } from "graphql";
 import { ApolloProvider } from "@apollo/client/react";
 import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor, createMockApolloClient } from "../../utils/test-utils";
@@ -108,6 +109,32 @@ describe("RequestAccessPageContent", () => {
         },
       ]);
       expect(await screen.findByRole("alert")).toHaveTextContent(/couldn’t send your request/i);
+      expect(screen.queryByRole("heading", { name: "Request received" })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("When an invite to the address is still open (#691)", () => {
+    it("tells the person to check their inbox instead of confirming a request", async () => {
+      await submit([
+        duplicateCheck(),
+        {
+          request: {
+            query: REQUEST_USER_ACCESS_MUTATION,
+            variables: { requestUserAccessInput: { email: EMAIL } },
+          },
+          result: {
+            errors: [
+              new GraphQLError(
+                "An invite was already sent to this email. Check your inbox for the signup link.",
+                { extensions: { code: "BAD_USER_INPUT" } }
+              ),
+            ],
+          },
+        },
+      ]);
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "An invite was already sent to this email. Check your inbox for the signup link."
+      );
       expect(screen.queryByRole("heading", { name: "Request received" })).not.toBeInTheDocument();
     });
   });

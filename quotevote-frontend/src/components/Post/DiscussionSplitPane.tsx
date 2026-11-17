@@ -134,7 +134,7 @@ export default function DiscussionSplitPane({
       <div
         id={contentId}
         data-post-detail-pane="content"
-        className="min-w-0 shrink-0 overflow-y-auto"
+        className="min-w-0 shrink-0 overflow-y-auto bg-[var(--shell-surface)]"
         style={{ width: `${shown * 100}%` }}
       >
         {contentPane}

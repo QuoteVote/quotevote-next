@@ -59,8 +59,14 @@ jest.mock('@/components/Chat/MessageItemList', () => ({
 
 jest.mock('@/components/Chat/MessageSend', () => ({
   __esModule: true,
-  default: ({ messageRoomId }: { messageRoomId?: string | null }) => (
-    <div data-testid="message-send">
+  default: ({
+    messageRoomId,
+    componentId,
+  }: {
+    messageRoomId?: string | null
+    componentId?: string | null
+  }) => (
+    <div data-testid="message-send" data-component-id={componentId ?? ''}>
       Message send for room: {messageRoomId || 'none'}
     </div>
   ),
@@ -217,6 +223,7 @@ describe('MessageBox', () => {
             avatar: null,
             messageType: 'USER',
             users: ['user1', 'user3'],
+            recipientId: 'user3',
             username: 'staged user',
           },
           buddyList: [],
@@ -277,6 +284,45 @@ describe('MessageBox', () => {
     fireEvent.click(backButton)
 
     expect(setSelectedChatRoom).toHaveBeenCalledWith(null)
+  })
+
+  it('sends the first message of a staged room to the other member (#713)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({
+        user: { data: mockCurrentUser },
+        chat: {
+          selectedRoom: {
+            _id: null,
+            title: 'Staged DM',
+            avatar: null,
+            messageType: 'USER',
+            users: ['user1', 'user3'],
+            recipientId: 'user3',
+            username: 'staged user',
+          },
+          buddyList: [],
+          presenceMap: {},
+        },
+        setSelectedChatRoom: jest.fn(),
+        setChatOpen: jest.fn(),
+        setSnackbar: jest.fn(),
+      })
+    )
+
+    render(<MessageBox />)
+
+    const send = await screen.findByTestId('message-send')
+    expect(send).toHaveTextContent('Message send for room: none')
+    expect(send).toHaveAttribute('data-component-id', 'user3')
+  })
+
+  it('sends no componentId in an existing room', async () => {
+    render(<MessageBox />)
+
+    const send = await screen.findByTestId('message-send')
+    expect(send).not.toHaveTextContent('room: none')
+    expect(send).toHaveAttribute('data-component-id', '')
   })
 
   it('renders MessageItemList and MessageSend components when room is selected', async () => {
