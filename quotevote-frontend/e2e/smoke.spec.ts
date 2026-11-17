@@ -166,8 +166,7 @@ test.describe.serial("SMOKE-001: staging smoke test (#182)", () => {
   });
 
   test("sends the author a direct message", async () => {
-    // A first message from a profile is sent without the recipient, so it never arrives.
-    test.fixme(true, "First direct message from a profile is sent without a recipient (#713)");
+    // The first message from a profile starts the conversation with the author (#713).
     const { page } = b;
     const text = `Thanks for posting this. Want to bring it to the council? (${stamp})`;
     await page
@@ -178,15 +177,15 @@ test.describe.serial("SMOKE-001: staging smoke test (#182)", () => {
     await page.getByRole("button", { name: "Send message" }).click();
     await expect(page.getByText(text).first()).toBeVisible();
 
-    // The author sees the conversation in their Messages panel.
+    // The author gets the conversation in their Messages panel, and the message in it.
     await a.page.goto("/");
     await a.page.getByTestId("desktop-messages-button").click();
-    await expect(a.page.getByTestId("chat-page").locator("visible=true")).toContainText(
-      "Thanks for posting this"
-    );
+    const chat = a.page.getByTestId("chat-page").locator("visible=true");
+    await chat.getByText("Direct message").first().click();
+    await expect(a.page.getByText(text).first()).toBeVisible();
   });
 
-  // Discussion messages and quotes do not notify the post author (same as the current API).
+  // Checks the vote and the follow; the comment and quote notifications (#725) aren't part of this run.
   test("shows the author notifications for the vote and follow", async () => {
     const { page } = a;
     await page.goto("/");
