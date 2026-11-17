@@ -1,13 +1,16 @@
 import { TextEncoder } from 'util';
 global.TextEncoder = TextEncoder;
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import BuddyItemList from '@/components/BuddyList/BuddyItemList';
 import { BuddyItem } from '@/types/buddylist';
 
+const mockGetChatRoom = jest.fn();
+const mockSetSelectedChatRoom = jest.fn();
+
 // Mock Apollo hooks directly
 jest.mock('@apollo/client/react', () => ({
-    useLazyQuery: jest.fn(() => [jest.fn(), { loading: false, data: undefined }]),
+    useLazyQuery: jest.fn(() => [mockGetChatRoom, { loading: false, data: undefined }]),
     useQuery: jest.fn(() => ({ loading: false, error: undefined, data: undefined })),
 }));
 
@@ -15,7 +18,7 @@ jest.mock('@apollo/client/react', () => ({
 jest.mock('@/store', () => ({
     useAppStore: (selector: (state: unknown) => unknown) => selector({
         user: { data: { _id: 'me' } },
-        setSelectedChatRoom: jest.fn(),
+        setSelectedChatRoom: mockSetSelectedChatRoom,
     }),
 }));
 
@@ -83,6 +86,30 @@ describe('BuddyItemList', () => {
         const buttons = screen.getAllByRole('button');
         expect(buttons.length).toBeGreaterThan(0);
         expect(buttons[0]).toHaveAttribute('tabindex', '0');
+    });
+
+    it('stages a new conversation with the buddy as its recipient (#713)', async () => {
+        mockGetChatRoom.mockResolvedValue({ data: { messageRoom: null } });
+        const buddy = {
+            _id: 'b1',
+            Text: 'Bea',
+            type: 'USER',
+            user: { _id: 'bea-id', name: 'Bea', username: 'bea' },
+        } as unknown as BuddyItem;
+
+        render(<BuddyItemList buddyList={[buddy]} />);
+        fireEvent.click(screen.getAllByRole('button')[0]);
+
+        await waitFor(() =>
+            expect(mockSetSelectedChatRoom).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    _id: null,
+                    messageType: 'USER',
+                    users: ['me', 'bea-id'],
+                    recipientId: 'bea-id',
+                })
+            )
+        );
     });
 
     it('buddy items respond to Enter key', () => {
