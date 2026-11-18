@@ -2,8 +2,8 @@ import { GraphQLError } from 'graphql'
 import { toast } from 'sonner'
 import { redirect } from 'next/navigation'
 import { render, screen, fireEvent, waitFor } from '../../utils/test-utils'
-import SignupPage from '@/app/auths/(card)/signup/page'
-import SignupPageContent from '@/app/auths/(card)/signup/PageContent'
+import SignupPage from '@/app/auths/(split)/signup/page'
+import SignupPageContent from '@/app/auths/(split)/signup/PageContent'
 import { VERIFY_INVITE_SIGNUP_TOKEN } from '@/graphql/queries'
 import { COMPLETE_SIGNUP } from '@/graphql/mutations'
 import { CURRENT_TERMS_VERSION } from '@/lib/constants/terms'
@@ -124,7 +124,7 @@ describe('SignupPageContent invite signup (#592, #636)', () => {
     const email = await screen.findByLabelText(/email/i)
     await waitFor(() => expect(email).toHaveValue('invited@example.com'))
     expect(email).toHaveAttribute('readonly')
-    expect(email).toHaveAccessibleDescription(/invite was sent to this address/i)
+    expect(email).toHaveAccessibleDescription(/this invite is for this address/i)
   })
 
   it('finishes the invite with completeSignup and the current Terms version, then sends the user to sign in', async () => {

@@ -23,7 +23,7 @@ export async function loginAsAuthorUser(page: Page): Promise<void> {
   await page.locator('#tos').click();
   await page.locator('#coc').click();
 
-  const loginButton = page.getByRole('button', { name: /^login$/i });
+  const loginButton = page.getByRole('button', { name: /^log in$/i });
   await loginButton.click();
 
   await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30_000 });

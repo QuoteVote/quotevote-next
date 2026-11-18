@@ -96,7 +96,7 @@ export function Sidebar({
       client.resetStore();
       logout();
     }
-    router.push('/login');
+    router.push('/auths/login');
   };
 
   // Check if route is active
@@ -162,10 +162,10 @@ export function Sidebar({
         </Link>
 
         <Link
-          href="/login"
+          href="/auths/login"
           className={cn(
             "flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors",
-            isActiveRoute('/login') && "bg-accent"
+            isActiveRoute('/auths/login') && "bg-accent"
           )}
           onClick={() => handleDrawerToggle(false)}
         >
@@ -296,7 +296,7 @@ export function Sidebar({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  router.push('/login');
+                  router.push('/auths/login');
                 }}
               >
                 Login
