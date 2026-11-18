@@ -73,6 +73,7 @@ export interface PrismaUserRecord {
   emailVerified?: boolean;
   isAdmin?: boolean;
   isModerator?: boolean;
+  isInviteApprover?: boolean;
   botReports?: number;
   lastBotReportDate?: Date | string | null;
   upvotes?: number;
@@ -138,6 +139,7 @@ export function toPublicUser(u: PrismaUserRecord): Common.User {
     admin: u.isAdmin ?? false,
     emailVerified: u.emailVerified ?? false,
     isModerator: u.isModerator ?? false,
+    isInviteApprover: u.isInviteApprover ?? false,
     contributorBadge: u.contributorBadge ?? false,
     _followingId: toStringArray(u.followingIds),
     _followersId: toStringArray(u.followerIds),

@@ -1,18 +1,24 @@
+// Must stay first: sets up error tracking before anything else loads (#183).
+import './instrument';
 import express from 'express';
 import { expressMiddleware } from '@as-integrations/express5';
 import cors from 'cors';
 import http from 'http';
 import mongoose from 'mongoose';
+import { Prisma } from '@prisma/client';
 import dotenv from 'dotenv';
 import { schema } from './data/schema';
 import { createApolloServer } from './apolloServer';
 import { createHttpContext } from './context';
 import { disconnectPrisma, prisma } from './lib/prisma';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
-import { mongooseConnectOptions } from './data/utils/databaseConnection';
+import { createMissingUniqueIndexes } from './data/utils/uniqueIndexes';
+import type { UniqueIndexModel } from './types/uniqueIndexes';
+import { buildsIndexesAtStartup, mongooseConnectOptions } from './data/utils/databaseConnection';
 import * as auth from './data/utils/authentication';
 import { parseTrustProxy } from './data/utils/trustProxy';
 import { createSubscriptionServer } from './subscriptions';
+import { flushErrorTracking, reportError, shouldReportHttpError } from '~/lib/errorTracking';
 
 // Load environment variables
 dotenv.config();
@@ -34,6 +40,17 @@ async function startServer() {
   } catch (err) {
     console.error('❌ MongoDB Connection Error:', err);
     process.exit(1);
+  }
+
+  // Unique indexes the schema relies on for duplicate protection (#694). Only adds the
+  // missing ones, and never stops the server from starting. Not in production: starting
+  // the backend never changes indexes there (#716); `pnpm db:unique-indexes --apply`
+  // builds them on purpose before the switch.
+  if (buildsIndexesAtStartup(process.env.NODE_ENV)) {
+    await createMissingUniqueIndexes(
+      (command) => prisma.$runCommandRaw(command as Prisma.InputJsonObject),
+      Prisma.dmmf.datamodel.models as unknown as UniqueIndexModel[]
+    );
   }
 
   // Start Presence Cleanup Job
@@ -80,6 +97,14 @@ async function startServer() {
     })
   );
 
+  // Unexpected errors from the REST routes are reported, then Express answers as before.
+  app.use(
+    (error: unknown, req: express.Request, _res: express.Response, next: express.NextFunction) => {
+      if (shouldReportHttpError(error)) reportError(error, { source: 'http', route: req.path });
+      next(error);
+    }
+  );
+
   // 4. Start Server
   await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
   console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
@@ -109,6 +134,7 @@ async function startServer() {
     // Disconnect database clients in parallel — allSettled ensures one
     // failure does not prevent the other from disconnecting.
     await Promise.allSettled([disconnectPrisma(), mongoose.disconnect()]);
+    await flushErrorTracking();
 
     process.exit(0);
   };

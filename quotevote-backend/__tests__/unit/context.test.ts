@@ -170,6 +170,8 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
           avatar: true,
           bio: true,
           isAdmin: true,
+          isModerator: true,
+          isInviteApprover: true,
           accountStatus: true,
           followingIds: true,
           followerIds: true,
@@ -180,6 +182,33 @@ describe('GraphQL Context Factory (createHttpContext)', () => {
       expect(context.user?._id).toBe('user-123');
       expect(context.user?.username).toBe('testuser');
       expect(context.userId).toBe('user-123');
+    });
+
+    it('carries staff roles from the database record, and reads missing ones as false (#616)', async () => {
+      (auth.verifyToken as jest.Mock).mockResolvedValue({ userId: 'user-123' });
+      (defaultPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockPrismaUser,
+        isModerator: true,
+        isInviteApprover: true,
+      });
+
+      const staff = await createHttpContext({
+        req: mockReq({ headers: { authorization: 'Bearer valid-jwt-token' } }),
+        res: mockRes(),
+      });
+      expect(staff.user).toEqual(
+        expect.objectContaining({ admin: false, isModerator: true, isInviteApprover: true })
+      );
+
+      // An older record without the fields.
+      (defaultPrisma.user.findUnique as jest.Mock).mockResolvedValue(mockPrismaUser);
+      const member = await createHttpContext({
+        req: mockReq({ headers: { authorization: 'Bearer valid-jwt-token' } }),
+        res: mockRes(),
+      });
+      expect(member.user).toEqual(
+        expect.objectContaining({ admin: false, isModerator: false, isInviteApprover: false })
+      );
     });
 
     it('sets user to null and userId to null when no token is provided', async () => {

@@ -15,6 +15,7 @@ import type { useServer as UseServer } from 'graphql-ws/dist/use/ws';
 import { createWsContext } from './context';
 import { requireAuth } from './data/utils/requireAuth';
 import type { WsGraphQLContext } from './types/graphql';
+import { reportError, reportGraphQLErrors } from '~/lib/errorTracking';
 
 const requireGraphqlWs = createRequire(__filename);
 const { useServer } = requireGraphqlWs('graphql-ws/use/ws') as { useServer: typeof UseServer };
@@ -70,9 +71,15 @@ export function createSubscriptionServer(
         }
 
         const connectionParams = ctx.connectionParams ?? undefined;
-        const contextValue = options.contextFactory
-          ? await options.contextFactory(connectionParams)
-          : await createWsContext(connectionParams);
+        let contextValue: WsGraphQLContext;
+        try {
+          contextValue = options.contextFactory
+            ? await options.contextFactory(connectionParams)
+            : await createWsContext(connectionParams);
+        } catch (error) {
+          reportError(error, { source: 'subscription', operationName: operation.name?.value });
+          throw error;
+        }
 
         if (!contextValue.user && requireAuth(payload.query)) {
           return [
@@ -89,6 +96,22 @@ export function createSubscriptionServer(
           variableValues: payload.variables,
           contextValue,
         };
+      },
+      // Unexpected errors are reported (#183). Refusals from onSubscribe carry a code or no
+      // original error, so they aren't. Returning nothing keeps what the client receives.
+      onError: (_ctx, _id, payload, errors) => {
+        reportGraphQLErrors(errors, {
+          source: 'subscription',
+          operationName: payload.operationName ?? undefined,
+        });
+      },
+      onNext: (_ctx, _id, payload, _args, result) => {
+        if (result.errors) {
+          reportGraphQLErrors(result.errors, {
+            source: 'subscription',
+            operationName: payload.operationName ?? undefined,
+          });
+        }
       },
     },
     wsServer
