@@ -49,6 +49,9 @@ export type RosterStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 
 export type AccountStatus = 'active' | 'disabled' | 'suspended' | 'pending';
 
+/** Staff roles (#616). A user may hold several; admins can do everything. */
+export type StaffRole = 'admin' | 'moderator' | 'inviteApprover';
+
 export type VoteOption = '#true' | '#agree' | '#like' | '#false' | '#disagree' | '#dislike';
 
 export type TagPrivacy = 'public' | 'private' | 'restricted';
@@ -104,6 +107,7 @@ export interface User {
   admin?: boolean;
   emailVerified?: boolean;
   isModerator?: boolean;
+  isInviteApprover?: boolean;
   _followingId?: string[];
   _followersId?: string[];
   blockedUserIds?: string[];

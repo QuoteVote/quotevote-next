@@ -48,6 +48,16 @@ const VOTE_ROWS: [VoteResponseOption, VoteResponseOption][] = [
 
 const VOTE_PANEL_ID = "selection-popup-vote-options";
 
+const MODE_CLASS = cn(
+  "flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px]",
+  "text-[16px] font-bold text-[var(--shell-ink)] transition-colors sm:min-h-[84px] sm:text-[17px]",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--shell-blue)]",
+  "[.neo-brutalism_&]:rounded-[4px]"
+);
+const MODE_ON =
+  "border-[var(--shell-blue)] bg-[var(--shell-blue-soft)] [.neo-brutalism_&]:border-[var(--shell-line)] [.neo-brutalism_&]:border-[2.5px]";
+const MODE_OFF = "border-transparent bg-[var(--shell-field)] hover:bg-[var(--shell-hover)]";
+
 /**
  * VotingPopup component
  * Selection popup with two mutually exclusive modes: Quote (send the passage to the
@@ -60,7 +70,9 @@ export default function VotingPopup({
   userVotes,
   onRemoveVote,
   onDismiss,
+  variant = "popover",
 }: VotingPopupProps) {
+  const sheet = variant === "sheet";
   const [mode, setMode] = useState<SelectionPopupMode | null>(null);
   // Tag whose vote request is in flight, so a double tap can't cast it twice.
   const [pendingTag, setPendingTag] = useState<VoteResponseOption["tags"] | null>(null);
@@ -102,27 +114,42 @@ export default function VotingPopup({
       // Keep the text selection alive while pressing popup buttons with a mouse.
       onMouseDown={(event) => event.preventDefault()}
       className={cn(
-        "w-[min(20rem,calc(100vw-1.25rem))] rounded-2xl border border-border",
-        "bg-popover p-2 text-popover-foreground shadow-xl",
-        "animate-in fade-in-0 zoom-in-95"
+        "font-redesign bg-[var(--shell-surface)] text-[var(--shell-ink)]",
+        sheet
+          ? "w-full rounded-t-[22px] px-[18px] pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] [.neo-brutalism_&]:rounded-t-[6px] [.neo-brutalism_&]:border-t-[2.5px] [.neo-brutalism_&]:border-[var(--shell-line)]"
+          : cn(
+              "w-[min(28.5rem,calc(100vw-1.25rem))] rounded-[18px] border border-[var(--shell-line)] p-[18px]",
+              "shadow-[0_24px_48px_-16px_rgba(15,23,42,0.28)] animate-in fade-in-0 zoom-in-95",
+              "[.neo-brutalism_&]:rounded-[4px] [.neo-brutalism_&]:border-[2.5px] [.neo-brutalism_&]:shadow-[var(--shell-card-shadow)]"
+            )
       )}
     >
-      <div className="grid grid-cols-2 gap-2">
+      {sheet && (
+        <>
+          <span
+            aria-hidden="true"
+            className="mx-auto mb-3.5 block h-1 w-10 rounded-full bg-[var(--shell-muted)] opacity-30"
+          />
+          <p className="mb-3.5 flex items-start gap-2.5 rounded-[12px] bg-[var(--shell-blue-soft)] px-3 py-2.5 text-[15px]! leading-[1.4]! font-bold [.neo-brutalism_&]:rounded-[4px] [.neo-brutalism_&]:border-2 [.neo-brutalism_&]:border-[var(--shell-line)]">
+            <span
+              aria-hidden="true"
+              className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-[var(--shell-surface)] pt-1 font-serif text-[15px] leading-none text-[var(--shell-blue)]"
+            >
+              “
+            </span>
+            <span className="line-clamp-2">{selectedText.text}</span>
+          </p>
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
           data-testid="highlight-quote-button"
           aria-pressed={mode === "quote"}
           onClick={handleQuote}
-          className={cn(
-            "flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border",
-            "text-sm font-medium transition-colors",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            mode === "quote"
-              ? "border-info bg-info/15 font-semibold"
-              : "border-transparent bg-muted hover:bg-accent"
-          )}
+          className={cn(MODE_CLASS, mode === "quote" ? MODE_ON : MODE_OFF)}
         >
-          <Quote className="size-5" aria-hidden="true" />
+          <Quote className="size-[22px]" strokeWidth={2.2} aria-hidden="true" />
           Quote
         </button>
         <button
@@ -132,16 +159,9 @@ export default function VotingPopup({
           aria-expanded={mode === "vote"}
           aria-controls={VOTE_PANEL_ID}
           onClick={handleVoteMode}
-          className={cn(
-            "flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border",
-            "text-sm font-medium transition-colors",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            mode === "vote"
-              ? "border-info bg-info/15 font-semibold"
-              : "border-transparent bg-muted hover:bg-accent"
-          )}
+          className={cn(MODE_CLASS, mode === "vote" ? MODE_ON : MODE_OFF)}
         >
-          <Vote className="size-5" aria-hidden="true" />
+          <Vote className="size-[22px]" strokeWidth={2.2} aria-hidden="true" />
           Vote
         </button>
       </div>
@@ -150,9 +170,13 @@ export default function VotingPopup({
         <div
           id={VOTE_PANEL_ID}
           data-testid="highlight-vote-options"
-          className="mt-2 border-t border-border pt-2 animate-in fade-in-0 slide-in-from-top-1"
+          className={cn(
+            "animate-in fade-in-0 slide-in-from-top-1",
+            // The phone sheet has no divider, as in the design.
+            sheet ? "mt-3" : "mt-4 border-t border-[var(--shell-divider)] pt-4"
+          )}
         >
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {VOTE_ROWS.flat().map((option) => {
               const active = Boolean(findVote(option));
               const positive = option.type === "up";
@@ -170,25 +194,25 @@ export default function VotingPopup({
                   aria-busy={pendingTag === option.tags}
                   onClick={() => handleResponse(option)}
                   className={cn(
-                    "flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-medium",
-                    "text-foreground transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    "disabled:cursor-not-allowed disabled:opacity-50",
-                    positive
-                      ? "bg-upvote/10 hover:bg-upvote/20"
-                      : "bg-downvote/10 hover:bg-downvote/20",
+                    "flex min-h-[52px] items-center gap-3 rounded-[12px] border-2 px-4 sm:min-h-[54px] sm:px-5",
+                    "text-[16px] font-bold text-[var(--shell-ink)] transition-[filter,border-color] sm:text-[17px]",
+                    "hover:brightness-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--shell-blue)]",
+                    "disabled:cursor-not-allowed disabled:opacity-50 [.neo-brutalism_&]:rounded-[4px]",
+                    positive ? "bg-[var(--shell-green-soft)]" : "bg-[var(--shell-down-soft)]",
                     active
-                      ? positive
-                        ? "border-upvote bg-upvote/25 font-semibold"
-                        : "border-downvote bg-downvote/25 font-semibold"
+                      ? cn(
+                          positive ? "border-[var(--shell-green)]" : "border-[var(--shell-down)]",
+                          "shadow-[0_0_0_3px_var(--shell-surface)_inset] [.neo-brutalism_&]:border-[var(--shell-line)] [.neo-brutalism_&]:shadow-[var(--shell-shadow)]"
+                        )
                       : "border-transparent"
                   )}
                 >
                   <Icon
                     aria-hidden="true"
+                    strokeWidth={2.2}
                     className={cn(
-                      "size-5 shrink-0",
-                      positive ? "text-upvote" : "text-downvote",
+                      "size-[22px] shrink-0",
+                      positive ? "text-[var(--shell-green)]" : "text-[var(--shell-down)]",
                       option.filledIcon && "fill-current"
                     )}
                   />
@@ -197,6 +221,9 @@ export default function VotingPopup({
               );
             })}
           </div>
+          <p className="mt-3 text-[12.5px]! leading-normal! font-semibold text-[var(--shell-muted)]">
+            Your vote is outlined. {sheet ? "Tap" : "Press"} it again to remove it.
+          </p>
         </div>
       )}
     </div>

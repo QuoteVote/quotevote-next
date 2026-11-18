@@ -35,6 +35,7 @@ import {
 } from '~/data/utils/userPrismaMapper';
 import { logger } from '~/data/utils/logger';
 import { checkRateLimit } from '~/data/utils/rateLimiter';
+import { requireRole } from '~/data/utils/requireRole';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -583,16 +584,7 @@ export const userInviteResolver = {
       args: { userId: string; inviteStatus: string },
       context: GraphQLContext
     ): Promise<{ code: string; message: string; inviteToken?: string }> => {
-      if (!context.user?._id) {
-        throw new GraphQLError('Authentication required', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-      if (context.user.admin !== true) {
-        throw new GraphQLError('Admin authentication required', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+      requireRole(context, 'inviteApprover');
 
       if (!args.userId || !isObjectId(args.userId)) {
         throw new GraphQLError('Valid userId is required', {
@@ -613,14 +605,19 @@ export const userInviteResolver = {
 
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
       const mailTo = invitedUser.email;
+      const approving = isApprovedInviteStatus(args.inviteStatus);
+      const declining = isDeclinedInviteStatus(args.inviteStatus);
 
-      if (isApprovedInviteStatus(args.inviteStatus)) {
-        if (invitedUser.password) {
-          throw new GraphQLError('User has already completed signup', {
-            extensions: { code: 'BAD_USER_INPUT' },
-          });
-        }
+      // Only access requests and unfinished invites can be decided. A finished
+      // account (any member, moderator or admin) is never approved or declined,
+      // so an invite approver can't touch accounts outside the request queue (#616).
+      if ((approving || declining) && invitedUser.password) {
+        throw new GraphQLError('User has already completed signup', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
 
+      if (approving) {
         // Select only id: Prisma reads the record back after the update, and
         // legacy accounts have no createdAt, which would fail that read.
         await context.prisma.user.update({
@@ -671,7 +668,7 @@ export const userInviteResolver = {
         };
       }
 
-      if (isDeclinedInviteStatus(args.inviteStatus)) {
+      if (declining) {
         await context.prisma.user.update({
           where: { id: invitedUser.id },
           data: { status: INVITE_STATUS_DECLINED },

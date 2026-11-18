@@ -90,6 +90,10 @@ export interface EnvironmentVariables {
 
   // Monitoring & Analytics
   SENTRY_DSN?: string;
+  /** Environment name on error reports. Defaults to NODE_ENV. */
+  SENTRY_ENVIRONMENT?: string;
+  /** Release name on error reports, such as the commit SHA. */
+  SENTRY_RELEASE?: string;
   GOOGLE_ANALYTICS_ID?: string;
 
   // Misc

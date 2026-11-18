@@ -1,4 +1,6 @@
+import { randomBytes } from 'crypto';
 import { GraphQLError } from 'graphql';
+import type { Prisma } from '@prisma/client';
 import { ActivityEventTypeValues, VOTE_TAGS } from '~/data/utils/constants';
 import { checkRateLimit } from '~/data/utils/rateLimiter';
 import { logActivity } from '~/data/resolvers/utils/activities';
@@ -32,6 +34,19 @@ interface PassageVoteRow {
   tags?: unknown;
 }
 
+interface RemainingVoteRow {
+  type?: unknown;
+}
+
+/** The client inside an interactive transaction. */
+type VoteTx = Prisma.TransactionClient;
+
+/** How a write moves the post's up and down totals. */
+interface CountChange {
+  up: number;
+  down: number;
+}
+
 function isObjectId(id: string): boolean {
   return OBJECT_ID_PATTERN.test(id);
 }
@@ -59,6 +74,116 @@ const tagOf = (tags: unknown): string | null => {
   return null;
 };
 
+/** Attempts for a vote write that MongoDB aborts because another write touched the same post. */
+const MAX_WRITE_ATTEMPTS = 5;
+
+const isWriteConflict = (err: unknown): boolean =>
+  typeof err === 'object' && err !== null && (err as { code?: unknown }).code === 'P2034';
+
+/**
+ * Votes on one post all update that post, so concurrent votes abort each other's transaction
+ * with a write conflict (P2034). Nothing from an aborted attempt is kept, and each attempt
+ * reads the votes again inside its transaction, so it runs again.
+ */
+const retryOnWriteConflict = async <T>(write: () => Promise<T>): Promise<T> => {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await write();
+    } catch (err) {
+      if (!isWriteConflict(err) || attempt >= MAX_WRITE_ATTEMPTS) throw err;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 10 + Math.random() * 20));
+    }
+  }
+};
+
+/** A new ObjectId, so the vote can be inserted raw and referenced in the same transaction. */
+const newObjectId = (): string =>
+  Math.floor(Date.now() / 1000)
+    .toString(16)
+    .padStart(8, '0') + randomBytes(8).toString('hex');
+
+const countChange = (type: Common.VoteType, by: number): CountChange =>
+  type === 'up' ? { up: by, down: 0 } : { up: 0, down: by };
+
+const addChanges = (...changes: CountChange[]): CountChange =>
+  changes.reduce((sum, c) => ({ up: sum.up + c.up, down: sum.down + c.down }), { up: 0, down: 0 });
+
+const otherSide = (type: Common.VoteType): Common.VoteType => (type === 'up' ? 'down' : 'up');
+
+/**
+ * Soft-deletes the live votes among `ids` and returns how many it changed. Votes already
+ * deleted, by a concurrent request for example, aren't counted, so the post's totals only
+ * move for votes this write really removed. Raw, because Prisma's filters skip legacy votes
+ * that never received `deleted`.
+ */
+const softDeleteVotes = async (tx: VoteTx, ids: string[]): Promise<number> => {
+  if (ids.length === 0) return 0;
+  const result = (await tx.$runCommandRaw({
+    update: 'votes',
+    updates: [
+      {
+        q: { _id: { $in: ids.map((id) => ({ $oid: id })) }, deleted: { $ne: true } },
+        u: { $set: { deleted: true }, $currentDate: { updatedAt: true } },
+        multi: true,
+      },
+    ],
+  })) as { nModified?: unknown };
+  return typeof result.nModified === 'number' ? result.nModified : 0;
+};
+
+/**
+ * Keeps the post's `upvotes`, `downvotes` and `votedBy` in step with its live passage votes,
+ * the way the current API does (`updateScore.js`), so content lists and a rollback read the
+ * right totals. One pipeline update on the post, relative to what's stored, so concurrent
+ * votes can't overwrite each other. `votedBy` holds one `{ type, userId }` entry per member
+ * with a live vote, typed by their latest one, or drops the member when `votedByType` is null.
+ * Legacy posts may hold plain ids in `votedBy`, so both shapes are matched.
+ */
+const updatePostCounts = (
+  tx: VoteTx,
+  postId: string,
+  userId: string,
+  change: CountChange,
+  votedByType: Common.VoteType | null
+) => {
+  const total = (field: string, by: number) => ({
+    $max: [0, { $add: [{ $ifNull: [`$${field}`, 0] }, by] }],
+  });
+  const entryUserId = {
+    $toString: { $cond: [{ $eq: [{ $type: '$$this' }, 'object'] }, '$$this.userId', '$$this'] },
+  };
+  const otherMembers = {
+    $filter: {
+      input: { $cond: [{ $isArray: '$votedBy' }, '$votedBy', []] },
+      cond: { $ne: [entryUserId, userId] },
+    },
+  };
+  return tx.$runCommandRaw({
+    update: 'posts',
+    updates: [
+      {
+        q: { _id: { $oid: postId } },
+        u: [
+          {
+            $set: {
+              upvotes: total('upvotes', change.up),
+              downvotes: total('downvotes', change.down),
+              votedBy: votedByType
+                ? {
+                    $concatArrays: [
+                      otherMembers,
+                      [{ type: votedByType, userId: { $oid: userId } }],
+                    ],
+                  }
+                : otherMembers,
+            },
+          },
+        ],
+      },
+    ],
+  });
+};
+
 const toVote = (record: VoteRecord, tag: Common.VoteTag): Common.Vote => ({
   _id: record.id,
   userId: record.userId,
@@ -78,7 +203,8 @@ export const voteResolver = {
      * Passage voting (#542). Agree/Disagree, True/False and Like/Dislike are independent
      * pairs: a member holds at most one response per pair on a passage, choosing the other
      * side replaces it, and votes on other passages or pairs are left alone. Passage votes
-     * don't change the post's score, which only Approve and Reject do.
+     * don't change the post's score, which only Approve and Reject do; they move the post's
+     * passage vote totals (`upvotes`, `downvotes`, `votedBy`).
      */
     addVote: async (
       _parent: unknown,
@@ -146,10 +272,20 @@ export const voteResolver = {
       if (held) {
         // Already holds this response: keep it, and clear any other side left over.
         if (replacedIds.length > 0) {
-          await context.prisma.vote.updateMany({
-            where: { id: { in: replacedIds } },
-            data: { deleted: true },
-          });
+          await retryOnWriteConflict(() =>
+            context.prisma.$transaction(async (tx) => {
+              const replaced = await softDeleteVotes(tx, replacedIds);
+              if (replaced > 0) {
+                await updatePostCounts(
+                  tx,
+                  post.id,
+                  userId,
+                  countChange(otherSide(type), -replaced),
+                  type
+                );
+              }
+            })
+          );
         }
         const existing = await context.prisma.vote.findUnique({
           where: { id: held._id.$oid },
@@ -168,32 +304,54 @@ export const voteResolver = {
 
       // The stored passage comes from the post, not from the client.
       const content = post.text.slice(start, end);
-      const createVote = context.prisma.vote.create({
-        data: {
-          userId,
-          postId: post.id,
-          type,
-          tags: [tag],
-          startWordIndex: start,
-          endWordIndex: end,
-          content,
-          created: new Date(),
-        },
-        select: VOTE_RECORD_SELECT,
-      });
-      // Replacing the other side of the pair and adding the new response happen together.
-      const created =
-        replacedIds.length > 0
-          ? (
-              await context.prisma.$transaction([
-                context.prisma.vote.updateMany({
-                  where: { id: { in: replacedIds } },
-                  data: { deleted: true },
-                }),
-                createVote,
-              ])
-            )[1]
-          : await createVote;
+      const now = new Date();
+      const created: VoteRecord = {
+        id: newObjectId(),
+        userId,
+        postId: post.id,
+        type,
+        startWordIndex: start,
+        endWordIndex: end,
+        deleted: false,
+        created: now,
+        content,
+      };
+      // Inserted raw so `tags` is the string the current API reads; Prisma's `String[]` can
+      // only write a list. The collection name is the Vote model's `@@map`.
+      //
+      // Replacing the other side of the pair, adding the new response and moving the post's
+      // totals happen together.
+      await retryOnWriteConflict(() =>
+        context.prisma.$transaction(async (tx) => {
+          const replaced = await softDeleteVotes(tx, replacedIds);
+          await tx.$runCommandRaw({
+            insert: 'votes',
+            documents: [
+              {
+                _id: { $oid: created.id },
+                userId: { $oid: userId },
+                postId: { $oid: post.id },
+                type,
+                tags: tag,
+                startWordIndex: start,
+                endWordIndex: end,
+                content,
+                deleted: false,
+                created: { $date: now.toISOString() },
+                createdAt: { $date: now.toISOString() },
+                updatedAt: { $date: now.toISOString() },
+              },
+            ],
+          });
+          await updatePostCounts(
+            tx,
+            post.id,
+            userId,
+            addChanges(countChange(type, 1), countChange(otherSide(type), -replaced)),
+            type
+          );
+        })
+      );
 
       await logActivity(
         context.prisma,
@@ -228,7 +386,7 @@ export const voteResolver = {
 
       const existing = await context.prisma.vote.findUnique({
         where: { id: args.voteId },
-        select: { id: true, userId: true, deleted: true },
+        select: { id: true, userId: true, postId: true, type: true, deleted: true },
       });
       if (!existing) {
         return { _id: args.voteId };
@@ -241,11 +399,32 @@ export const voteResolver = {
       }
 
       if (!existing.deleted) {
-        await context.prisma.vote.update({
-          where: { id: args.voteId },
-          data: { deleted: true },
-          select: { id: true },
-        });
+        await retryOnWriteConflict(() =>
+          context.prisma.$transaction(async (tx) => {
+            // Only the request that really deletes the vote takes it off the totals.
+            if ((await softDeleteVotes(tx, [existing.id])) === 0) return;
+
+            // The member's latest other live vote on the post keeps them in `votedBy`.
+            const [remaining] = (await tx.vote.findRaw({
+              filter: {
+                postId: { $oid: existing.postId },
+                userId: { $oid: existing.userId },
+                deleted: { $ne: true },
+              },
+              options: { projection: { type: 1 }, sort: { created: -1 }, limit: 1 },
+            })) as unknown as RemainingVoteRow[];
+            const remainingType =
+              remaining?.type === 'up' || remaining?.type === 'down' ? remaining.type : null;
+
+            await updatePostCounts(
+              tx,
+              existing.postId,
+              existing.userId,
+              countChange(existing.type, -1),
+              remainingType
+            );
+          })
+        );
       }
 
       return { _id: args.voteId };

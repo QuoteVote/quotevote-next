@@ -160,6 +160,7 @@ pnpm build
 | `pnpm prisma:generate` / `pnpm prisma:validate` | Generate Prisma Client or validate schema |
 | `pnpm prisma:health` / `pnpm prisma:test` | Local Prisma connectivity and CRUD checks |
 | `pnpm roster:audit` | Read-only legacy relationship audit |
+| `pnpm data:check` | Read-only record and index check of a database copy (#183) |
 | `pnpm roster:backfill` | Legacy Roster-to-Prisma backfill; defaults to dry run |
 
 See the actual [scripts in package.json](package.json) for the complete list and command behavior.

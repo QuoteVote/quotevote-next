@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { scrollLinkedPassageIntoView } from "@/lib/utils/discussionSplit";
 import { describePassageActivity, passageActivityTotal } from "@/lib/utils/passageActivity";
 import SelectionPopover from "./SelectionPopover";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type {
   PassageActivitySegment,
   VotingBoardProps,
@@ -40,7 +41,9 @@ const RETAINED_PASSAGE_CLASS = "qv-mark qv-mark-retained";
 const ACTIVITY_PASSAGE_CLASS = "qv-mark qv-mark-activity cursor-pointer";
 
 /** Which way a passage's votes lean, for its highlight colour. */
-export function passageTone(segment: PassageActivitySegment | undefined): "up" | "down" | "neutral" {
+export function passageTone(
+  segment: PassageActivitySegment | undefined
+): "up" | "down" | "neutral" {
   if (!segment) return "neutral";
   if (segment.upvotes > segment.downvotes) return "up";
   if (segment.downvotes > segment.upvotes) return "down";
@@ -48,6 +51,8 @@ export function passageTone(segment: PassageActivitySegment | undefined): "up" |
 }
 
 const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
+/** Below this width the passage popup is a bottom sheet (the phone design). */
+const SHEET_MEDIA_QUERY = "(max-width: 639px)";
 
 const NO_ACTIVITY: PassageActivitySegment[] = [];
 
@@ -133,8 +138,8 @@ function makeActivityPassageMark(segments: PassageActivitySegment[]) {
   };
 }
 
-function SelectionPopupContent({ render, selection, dismiss }: SelectionPopupContentProps) {
-  return <>{render(selection, { dismiss })}</>;
+function SelectionPopupContent({ render, selection, dismiss, sheet }: SelectionPopupContentProps) {
+  return <>{render(selection, { dismiss, sheet })}</>;
 }
 
 function isCoarseTouchEnvironment(): boolean {
@@ -715,6 +720,7 @@ export default function VotingBoard({
     clearNativeSelection();
     resetToIdle();
   }, [clearNativeSelection, resetToIdle]);
+  const sheet = useMediaQuery(SHEET_MEDIA_QUERY);
 
   const renderRetained = () => (
     <Highlighter
@@ -805,9 +811,16 @@ export default function VotingBoard({
         topOffset={topOffset}
         resolveAnchorRect={resolveAnchorRect}
         popoverRef={popoverRef}
+        sheet={sheet}
+        onDismiss={dismissPopover}
       >
         {children && (
-          <SelectionPopupContent render={children} selection={selection} dismiss={dismissPopover} />
+          <SelectionPopupContent
+            render={children}
+            selection={selection}
+            dismiss={dismissPopover}
+            sheet={sheet}
+          />
         )}
       </SelectionPopover>
     </div>
