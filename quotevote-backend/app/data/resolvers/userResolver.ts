@@ -23,6 +23,7 @@ import {
 import { uniqueArrayObjects } from '~/data/resolvers/utils/common';
 import { addNotification } from '~/data/resolvers/utils/notifications';
 import { calculateUserReputation, loadUserReputation } from '~/data/resolvers/utils/reputation';
+import { requireRole } from '~/data/utils/requireRole';
 import type * as Common from '~/types/common';
 import type { FollowInfoEntry, GraphQLContext } from '~/types/graphql';
 
@@ -277,16 +278,7 @@ export const userResolver = {
       args: { userId: string; status?: string | null },
       context: GraphQLContext
     ): Promise<UserReportResult[]> => {
-      if (!context.user?._id) {
-        throw new GraphQLError('Authentication required', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-      if (context.user?.admin !== true) {
-        throw new GraphQLError('Admin access required', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+      requireRole(context, 'moderator');
       if (!isObjectId(args.userId)) {
         throw new GraphQLError('Invalid ID format', {
           extensions: { code: 'BAD_USER_INPUT' },
@@ -341,16 +333,7 @@ export const userResolver = {
       args: { sortBy?: string | null; limit?: number | null },
       context: GraphQLContext
     ): Promise<Common.User[]> => {
-      if (!context.user?._id) {
-        throw new GraphQLError('Authentication required', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-      if (context.user.admin !== true) {
-        throw new GraphQLError('Admin access required', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+      requireRole(context, 'moderator');
 
       const sortBy = args.sortBy ?? 'botReports';
       if (!isBotReportSortBy(sortBy)) {

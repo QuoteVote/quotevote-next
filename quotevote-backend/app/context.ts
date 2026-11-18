@@ -53,6 +53,8 @@ async function loadUserFromToken(
         avatar: true,
         bio: true,
         isAdmin: true,
+        isModerator: true,
+        isInviteApprover: true,
         accountStatus: true,
         followingIds: true,
         followerIds: true,

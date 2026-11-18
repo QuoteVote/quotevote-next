@@ -24,6 +24,7 @@ const UserSchema = new Schema<UserDocument, UserModel>(
         admin: { type: Boolean, default: false },
         emailVerified: { type: Boolean, default: false },
         isModerator: { type: Boolean, default: false },
+        isInviteApprover: { type: Boolean, default: false },
         _followingId: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         _followersId: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         blockedUserIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],

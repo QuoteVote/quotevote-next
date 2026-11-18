@@ -25,6 +25,7 @@ model User {
   emailVerified     Boolean       @default(false)
   isAdmin           Boolean       @default(false) @map("admin")
   isModerator       Boolean       @default(false)
+  isInviteApprover  Boolean       @default(false)
   botReports        Int           @default(0)
   lastBotReportDate DateTime?
   upvotes           Int           @default(0)
