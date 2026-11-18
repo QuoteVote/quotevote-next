@@ -605,14 +605,19 @@ export const userInviteResolver = {
 
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
       const mailTo = invitedUser.email;
+      const approving = isApprovedInviteStatus(args.inviteStatus);
+      const declining = isDeclinedInviteStatus(args.inviteStatus);
 
-      if (isApprovedInviteStatus(args.inviteStatus)) {
-        if (invitedUser.password) {
-          throw new GraphQLError('User has already completed signup', {
-            extensions: { code: 'BAD_USER_INPUT' },
-          });
-        }
+      // Only access requests and unfinished invites can be decided. A finished
+      // account (any member, moderator or admin) is never approved or declined,
+      // so an invite approver can't touch accounts outside the request queue (#616).
+      if ((approving || declining) && invitedUser.password) {
+        throw new GraphQLError('User has already completed signup', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
 
+      if (approving) {
         // Select only id: Prisma reads the record back after the update, and
         // legacy accounts have no createdAt, which would fail that read.
         await context.prisma.user.update({
@@ -663,7 +668,7 @@ export const userInviteResolver = {
         };
       }
 
-      if (isDeclinedInviteStatus(args.inviteStatus)) {
+      if (declining) {
         await context.prisma.user.update({
           where: { id: invitedUser.id },
           data: { status: INVITE_STATUS_DECLINED },

@@ -29,6 +29,8 @@ Roles are always read from `context.user`, which `app/context.ts` loads from the
 | `getUserReports`, `getBotReportedUsers`                                          | moderator                                          |
 | `userInviteRequests`, `users`, `disableUser`, `enableUser`, `updateFeaturedSlot` | admin only for now; moved to their roles in part 3 |
 
+`sendUserInviteApproval` only decides access requests and unfinished invites: approving or declining an account that finished signup (member, moderator or admin) is refused with "User has already completed signup", so an invite approver can't touch accounts outside the request queue.
+
 `__tests__/unit/adminPermissions.test.ts` (#690) covers guests, members and admins for these operations, and `__tests__/unit/staffRoles.test.ts` covers moderators and invite approvers.
 
 ## Still to come

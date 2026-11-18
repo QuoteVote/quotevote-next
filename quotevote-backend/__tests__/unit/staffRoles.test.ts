@@ -51,8 +51,7 @@ function buildPrisma() {
 
 type Prisma = ReturnType<typeof buildPrisma>;
 
-async function run(source: string, user: TestUser) {
-  const prisma = buildPrisma();
+async function run(source: string, user: TestUser, prisma: Prisma = buildPrisma()) {
   const result = await graphql({
     schema,
     source,
@@ -152,5 +151,55 @@ describe('staff role matrix (#616)', () => {
       expect(result.data?.result ?? null).toBeNull();
       op.guarded(prisma).forEach((fn) => expect(fn).not.toHaveBeenCalled());
     }
+  });
+});
+
+describe('invite approvers stay inside the request queue', () => {
+  const decide = (status: string) =>
+    `mutation { r: sendUserInviteApproval(userId: "${targetUserId}", inviteStatus: "${status}") }`;
+
+  it.each([
+    ['a member', { isAdmin: false }],
+    ['a moderator', { isAdmin: false, isModerator: true }],
+    ['an admin', { isAdmin: true }],
+  ])('refuses to approve or decline %s who finished signup', async (_label, account) => {
+    for (const status of ['approved', 'declined']) {
+      const prisma = buildPrisma();
+      prisma.user.findUnique.mockResolvedValue({
+        id: targetUserId,
+        email: 'done@example.com',
+        username: 'done',
+        password: 'hash',
+        status: null,
+        ...account,
+      });
+
+      const { result } = await run(decide(status), STAFF.inviteApprover, prisma);
+
+      expect(result.errors?.[0]?.extensions?.code).toBe('BAD_USER_INPUT');
+      expect(result.errors?.[0]?.message).toBe('User has already completed signup');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    }
+  });
+
+  it('declines an access request', async () => {
+    const prisma = buildPrisma();
+    prisma.user.findUnique.mockResolvedValue({
+      id: targetUserId,
+      email: 'asker@example.com',
+      username: 'asker@example.com',
+      password: null,
+      status: 1,
+    });
+    prisma.user.update.mockResolvedValue({ id: targetUserId });
+
+    const { result } = await run(decide('declined'), STAFF.inviteApprover, prisma);
+
+    expect(result.errors).toBeUndefined();
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: targetUserId },
+      data: { status: 2 },
+      select: { id: true },
+    });
   });
 });
