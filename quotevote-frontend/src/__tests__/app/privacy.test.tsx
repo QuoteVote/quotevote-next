@@ -5,7 +5,7 @@ describe('Privacy Notice', () => {
   it('publishes the approved notice with all sections and a contact', () => {
     render(<PrivacyPage />)
     expect(screen.getByRole('heading', { level: 1, name: 'Quote.Vote Privacy Notice' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: '17. Contact' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: '19. Contact' })).toBeInTheDocument()
     expect(screen.getByText(/Railway/)).toBeInTheDocument()
     expect(screen.getByText(/Netlify/)).toBeInTheDocument()
     expect(screen.getByText(/MongoDB/)).toBeInTheDocument()
