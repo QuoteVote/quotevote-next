@@ -173,7 +173,7 @@ export function LoginForm({ onSubmit, loading, loginError }: LoginFormProps) {
           {
             name: 'tos' as const,
             label: 'Terms of Service',
-            href: 'https://github.com/QuoteVote/quotevote-monorepo/blob/main/quote_vote_terms_of_service.md',
+            href: '/terms',
           },
           {
             name: 'coc' as const,
