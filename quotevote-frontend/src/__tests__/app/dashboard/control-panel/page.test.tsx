@@ -123,10 +123,13 @@ describe('Control Panel Page', () => {
     const invitesButtons = screen.getAllByText('Invites')
     fireEvent.click(invitesButtons[0]!)
 
-    await waitFor(() => {
-      // Content renders in both mobile and desktop layouts
-      const matches = screen.getAllByText('2 total requests')
-      expect(matches.length).toBeGreaterThan(0)
-    })
+    // The tab content renders once, for every screen size.
+    expect(await screen.findByRole('heading', { name: 'Invitation Requests' })).toBeInTheDocument()
+    expect(screen.getAllByText('invited@example.com')).toHaveLength(1)
+    expect(screen.getByText('Pending 1')).toBeInTheDocument()
+    expect(screen.getByText('Accepted 1')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Invitation pages' })).toHaveTextContent(
+      'Showing 1–2 of 2'
+    )
   })
 })

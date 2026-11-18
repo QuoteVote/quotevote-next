@@ -384,9 +384,11 @@ export function DashboardShell({
             )}
             style={{
               // Home lays out its own columns (left filters, feed, highlights).
-              // Home and the post page lay out their own full-width columns.
+              // Home and the post page lay out their own full-width columns, and
+              // Manage Invites has its table and summary columns.
               maxWidth:
                 pathname.startsWith('/control-panel') ||
+                pathname.startsWith('/manage-invites') ||
                 pathname === '/' ||
                 pathname.startsWith('/post/')
                   ? 'none'
