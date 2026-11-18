@@ -17,8 +17,9 @@ import { useAppStore } from '@/store';
 import { toast } from 'sonner';
 import { UPDATE_PRESENCE } from '@/graphql/mutations';
 import { cn } from '@/lib/utils';
-
-type PresenceStatus = 'online' | 'away' | 'dnd' | 'invisible';
+import { PRESENCE_STATUS_OPTIONS, STATUS_MESSAGE_MAX_LENGTH } from '@/lib/constants/presence';
+import { toDeclaredStatus } from '@/lib/utils/presence';
+import type { DeclaredPresenceStatus } from '@/types/chat';
 
 interface StatusEditorProps {
   open: boolean;
@@ -27,29 +28,19 @@ interface StatusEditorProps {
 
 interface UpdatePresenceVariables {
   presence: {
-    status: PresenceStatus;
+    status: DeclaredPresenceStatus;
     statusMessage?: string;
   };
 }
-
-const statusOptions: Array<{
-  value: PresenceStatus;
-  label: string;
-  icon: string;
-}> = [
-    { value: 'online', label: 'Online', icon: '🟢' },
-    { value: 'away', label: 'Away', icon: '🟡' },
-    { value: 'dnd', label: 'Do Not Disturb', icon: '🔴' },
-    { value: 'invisible', label: 'Invisible', icon: '⚫' },
-  ];
 
 const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
   const chatState = useAppStore((state) => state.chat);
   const setUserStatus = useAppStore((state) => state.setUserStatus);
 
-  // Initialize state from chatState - reset when dialog opens using key prop
-  const [status, setStatus] = useState<PresenceStatus>(
-    () => (chatState.userStatus as PresenceStatus) || 'online'
+  // Initialize state from chatState - reset when dialog opens using key prop.
+  // No status chosen yet means Invisible (#468).
+  const [status, setStatus] = useState<DeclaredPresenceStatus>(() =>
+    toDeclaredStatus(chatState.userStatus)
   );
   const [statusMessage, setStatusMessage] = useState(
     () => chatState.userStatusMessage || ''
@@ -59,7 +50,7 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
   useEffect(() => {
     if (open) {
       const timeoutId = setTimeout(() => {
-        setStatus((chatState.userStatus as PresenceStatus) || 'online');
+        setStatus(toDeclaredStatus(chatState.userStatus));
         setStatusMessage(chatState.userStatusMessage || '');
       }, 0);
       return () => clearTimeout(timeoutId);
@@ -72,15 +63,21 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
     UpdatePresenceVariables
   >(UPDATE_PRESENCE);
 
+  // Invisible has no public message: the field is disabled, and nothing is
+  // saved, so an old message cannot be read from the API either (#468).
+  const isInvisible = status === 'invisible';
+
   const handleSave = async () => {
+    const message = isInvisible ? '' : statusMessage.trim();
+
     try {
       await updatePresence({
         variables: {
-          presence: { status, statusMessage },
+          presence: { status, statusMessage: message },
         },
       });
 
-      setUserStatus(status, statusMessage);
+      setUserStatus(status, message);
       onClose();
     } catch (error) {
       console.error('Failed to update status:', error);
@@ -115,14 +112,14 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
                 id="status-select"
                 value={status}
                 onChange={(e) =>
-                  setStatus(e.target.value as PresenceStatus)
+                  setStatus(toDeclaredStatus(e.target.value))
                 }
                 className={cn(
                   'h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none',
                   'focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40'
                 )}
               >
-                {statusOptions.map((option) => (
+                {PRESENCE_STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {`${option.icon} ${option.label}`}
                   </option>
@@ -140,16 +137,28 @@ const StatusEditor: FC<StatusEditorProps> = ({ open, onClose }) => {
             </label>
             <Textarea
               id="status-message"
-              value={statusMessage}
+              value={isInvisible ? '' : statusMessage}
               onChange={(e) =>
-                setStatusMessage(e.target.value.slice(0, 200))
+                setStatusMessage(e.target.value.slice(0, STATUS_MESSAGE_MAX_LENGTH))
               }
-              placeholder="What are you up to?"
+              disabled={isInvisible}
+              aria-describedby="status-message-help"
+              placeholder={isInvisible ? 'Hidden while you are Invisible' : 'What are you up to?'}
               className="min-h-[80px] resize-none"
             />
-            <div className="flex justify-end text-xs text-muted-foreground">
-              {charCount}/200 characters
-            </div>
+            {isInvisible ? (
+              <p id="status-message-help" className="text-xs text-muted-foreground">
+                Nobody sees your status or message while you are Invisible. Pick Available,
+                Away or Do Not Disturb to add a message.
+              </p>
+            ) : (
+              <div
+                id="status-message-help"
+                className="flex justify-end text-xs text-muted-foreground"
+              >
+                {charCount}/{STATUS_MESSAGE_MAX_LENGTH} characters
+              </div>
+            )}
           </div>
         </div>
 

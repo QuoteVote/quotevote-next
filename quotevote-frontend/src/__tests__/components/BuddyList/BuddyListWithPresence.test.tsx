@@ -53,8 +53,11 @@ jest.mock('@/hooks/useRosterManagement', () => ({
 // Mock BuddyItemList
 jest.mock('@/components/BuddyList/BuddyItemList', () => ({
   __esModule: true,
-  default: ({ buddyList }: { buddyList: unknown[] }) => (
-    <div data-testid="buddy-item-list">
+  default: ({ buddyList }: { buddyList: Array<{ statusMessage?: string }> }) => (
+    <div
+      data-testid="buddy-item-list"
+      data-messages={buddyList.map((buddy) => buddy.statusMessage ?? '').join('|')}
+    >
       {buddyList.length} buddies
     </div>
   ),
@@ -245,9 +248,11 @@ describe('BuddyListWithPresence', () => {
       expect(buddyLists.length).toBeGreaterThan(0)
     })
 
-    // Should show presence sections - the component renders status labels like "online (1)" or "away (1)"
-    expect(screen.getByText(/online/i)).toBeInTheDocument()
+    // Should show presence sections - the component renders status labels like "Available (1)" or "Away (1)"
+    expect(screen.getByText(/available/i)).toBeInTheDocument()
     expect(screen.getByText(/away/i)).toBeInTheDocument()
+    // "Online" was renamed "Available" everywhere (#468)
+    expect(screen.queryByText(/online/i)).not.toBeInTheDocument()
   })
 
   it('renders pending requests section when requests exist', async () => {
@@ -411,10 +416,38 @@ describe('BuddyListWithPresence', () => {
 
     expect(await screen.findByText('1 buddies')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Away (1)' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: /online/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /available/i })).not.toBeInTheDocument()
 
     rerender(<BuddyListWithPresence search="buddy one" />)
-    expect(await screen.findByRole('heading', { name: 'Online (1)' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Available (1)' })).toBeInTheDocument()
+  })
+
+  it('lists an Invisible buddy as Offline, with no status message (#468)', async () => {
+    // Invisible is the default status, so it must not drop the buddy from the list.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) => {
+      const state = {
+        user: { data: mockCurrentUser },
+        chat: {
+          presenceMap: {
+            user2: { status: 'invisible', statusMessage: 'Secret plans', lastSeen: null },
+            user3: { status: 'away', statusMessage: '', lastSeen: null },
+          },
+        },
+        setBuddyList: jest.fn(),
+        setSnackbar: jest.fn(),
+      }
+      return selector(state)
+    })
+
+    render(<BuddyListWithPresence />)
+
+    expect(await screen.findByRole('heading', { name: 'Offline (1)' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Away (1)' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /invisible/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /available/i })).not.toBeInTheDocument()
+    const messages = screen.getAllByTestId('buddy-item-list').map((el) => el.dataset.messages)
+    expect(messages.join('|')).not.toContain('Secret plans')
   })
 
   it('says so when no buddy matches the search', async () => {
