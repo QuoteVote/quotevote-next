@@ -49,10 +49,6 @@ export default function PrivacyPage() {
         <p className="leading-7">{"Certain communication features also process online presence, typing indicators, message delivery status, and read receipts."}</p>
         <h3 className="pt-3 text-lg font-semibold">{"Account standing information"}</h3>
         <p className="leading-7">{"We calculate and store indicators about each account, such as participation, conduct, and invitation-network scores, and the number of reports other participants have made about the account. We use these indicators to help manage invitations, limit abuse, and identify automated accounts."}</p>
-        <h3 className="pt-3 text-lg font-semibold">{"Payment information"}</h3>
-        <p className="leading-7">{"If you purchase a plan or make a payment, the payment is processed by Stripe. We receive and store your plan and a Stripe customer identifier. We do not receive or store your full payment card number."}</p>
-        <h3 className="pt-3 text-lg font-semibold">{"Solid Pod information"}</h3>
-        <p className="leading-7">{"If you choose to connect a Solid Pod, we store the address of your Pod and the access credentials needed to read from and write to it, in encrypted form. We use them only to copy the profile, preference, and activity information you choose to sync between Quote.Vote and your Pod. You can disconnect your Pod at any time."}</p>
         <h3 className="pt-3 text-lg font-semibold">{"Technical and operational information"}</h3>
         <p className="leading-7">{"When you access the service, Quote.Vote and its infrastructure providers may process:"}</p>
         <ul className="ml-6 list-disc space-y-2">
@@ -71,8 +67,6 @@ export default function PrivacyPage() {
         <li className="pl-1">{"Process quotations, votes, comments, messages, and other interactions."}</li>
         <li className="pl-1">{"Manage invitations, notifications, and account communications."}</li>
         <li className="pl-1">{"Support real-time discussion features."}</li>
-        <li className="pl-1">{"Process payments and manage plans."}</li>
-        <li className="pl-1">{"Sync information with a Solid Pod when you ask us to."}</li>
         <li className="pl-1">{"Respond to requests, complaints, and reports."}</li>
         <li className="pl-1">{"Investigate potential violations of our "}<a href="/terms" className="underline underline-offset-2">{"Terms of Service"}</a>{" and any community guidelines we publish."}</li>
         <li className="pl-1">{"Calculate account standing indicators and detect abuse and automated accounts."}</li>
@@ -110,7 +104,6 @@ export default function PrivacyPage() {
         <li className="pl-1">{"Temporary application information needed for navigation and functionality."}</li>
         </ul>
         <p className="leading-7">{"These mechanisms help provide the features participants request."}</p>
-        <p className="leading-7">{"When you use payment features, a script from Stripe is loaded in your browser and Stripe may set its own cookies, subject to Stripe's privacy policy."}</p>
         <p className="leading-7">{"You can clear or restrict browser storage through your browser settings. Doing so may sign you out or affect your saved preferences."}</p>
         <p className="leading-7">{"Quote.Vote does not currently display third-party advertising and does not use third-party analytics or advertising trackers. We do not track participants across other websites over time."}</p>
         <p className="leading-7"><strong>{"Do Not Track:"}</strong>{" Some browsers send a \"Do Not Track\" signal. Because we do not track participants across third-party websites, we do not change our practices in response to that signal."}</p>
@@ -122,17 +115,15 @@ export default function PrivacyPage() {
         <li className="pl-1"><strong>{"Railway"}</strong>{" — Backend application hosting."}</li>
         <li className="pl-1"><strong>{"MongoDB"}</strong>{" — Database storage and related services."}</li>
         <li className="pl-1"><strong>{"SendGrid"}</strong>{" — Transactional email delivery, including invitations, account-related communications, and password resets."}</li>
-        <li className="pl-1"><strong>{"Stripe"}</strong>{" — Payment processing for plans and payments."}</li>
         </ul>
         <p className="leading-7">{"These providers may process personal or technical information as necessary to provide services to Quote.Vote."}</p>
-        <p className="leading-7">{"Their processing may include infrastructure operations, application requests, database storage, email delivery, payment processing, system diagnostics, and security-related functions."}</p>
-        <p className="leading-7">{"If you connect a Solid Pod, your Pod is hosted by a provider you choose, and that provider's own privacy practices apply to information stored in your Pod."}</p>
+        <p className="leading-7">{"Their processing may include infrastructure operations, application requests, database storage, email delivery, system diagnostics, and security-related functions."}</p>
         <p className="leading-7">{"We may change service providers as the platform evolves. We will update this Notice to reflect changes in the providers that process personal information."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"8. Sharing and Disclosure"}</h2>
         <p className="leading-7">{"We may share or disclose information in the following circumstances:"}</p>
         <p className="leading-7"><strong>{"Public participation:"}</strong>{" Information you choose to make public may be available to other participants and visitors."}</p>
-        <p className="leading-7"><strong>{"Service providers:"}</strong>{" Providers may process information necessary to deliver hosting, storage, communications, payments, security, and other operational services."}</p>
-        <p className="leading-7"><strong>{"Your instructions:"}</strong>{" We share information with a Solid Pod or other service when you ask us to."}</p>
+        <p className="leading-7"><strong>{"Service providers:"}</strong>{" Providers may process information necessary to deliver hosting, storage, communications, security, and other operational services."}</p>
+        <p className="leading-7"><strong>{"Your instructions:"}</strong>{" We share information with another service when you ask us to."}</p>
         <p className="leading-7"><strong>{"Legal obligations:"}</strong>{" We may respond to valid legal process, as described in Section 9."}</p>
         <p className="leading-7"><strong>{"Security and enforcement:"}</strong>{" Information may be used or disclosed where reasonably necessary to investigate abuse, protect participants, secure the service, or enforce applicable agreements."}</p>
         <p className="leading-7"><strong>{"Organizational changes:"}</strong>{" Information may be transferred as part of a merger, acquisition, restructuring, or transfer of responsibility for operating the service. Any successor will be required to honor this Notice for information collected under it, or to give you notice and a choice before materially changing how that information is used."}</p>
@@ -153,7 +144,7 @@ export default function PrivacyPage() {
         <li className="pl-1"><strong>{"Operational and security logs:"}</strong>{" up to [90 days], unless needed to investigate a specific security incident."}</li>
         <li className="pl-1"><strong>{"Declined or expired invitation and access requests:"}</strong>{" up to [12 months]."}</li>
         <li className="pl-1"><strong>{"Moderation reports and enforcement records:"}</strong>{" up to [3 years] after the report is resolved."}</li>
-        <li className="pl-1"><strong>{"Terms acceptance and payment records:"}</strong>{" for as long as needed to show acceptance or meet tax and accounting requirements, generally up to [7 years]."}</li>
+        <li className="pl-1"><strong>{"Terms acceptance records:"}</strong>{" for as long as needed to show acceptance, generally up to [7 years]."}</li>
         <li className="pl-1"><strong>{"Backups:"}</strong>{" overwritten on a rolling basis within [35 days]."}</li>
         </ul>
         <p className="leading-7">{"Certain records may need to be preserved longer for security, legal compliance, dispute resolution, or other lawful purposes."}</p>
@@ -162,12 +153,12 @@ export default function PrivacyPage() {
         <p className="leading-7"><strong>{"Deactivation:"}</strong>{" A deactivated account can no longer be used to sign in. Deactivation alone does not delete your information."}</p>
         <p className="leading-7"><strong>{"Deletion:"}</strong>{" After verifying a deletion request, we will, within 45 days:"}</p>
         <ul className="ml-6 list-disc space-y-2">
-        <li className="pl-1">{"Delete your email address, profile information, authentication information, Solid Pod connection, and account settings."}</li>
+        <li className="pl-1">{"Delete your email address, profile information, authentication information, and account settings."}</li>
         <li className="pl-1">{"Delete, or remove from public view and then permanently delete, the posts, comments, quotations, and direct messages you authored."}</li>
         <li className="pl-1">{"Remove your account's association with your votes and reactions. Vote totals may continue to reflect votes in a form that no longer identifies you."}</li>
         </ul>
         <p className="leading-7">{"Other participants' independently authored contributions may remain, including passages they quoted from your content. On request, we will remove attribution to your account from those quotations where technically feasible."}</p>
-        <p className="leading-7">{"We may keep a limited record of your terms acceptance, moderation history, payment records, and any information we must retain by law, in a form that identifies you only where necessary. Information in backups is deleted when the backups are overwritten, as described in Section 10."}</p>
+        <p className="leading-7">{"We may keep a limited record of your terms acceptance, moderation history, and any information we must retain by law, in a form that identifies you only where necessary. Information in backups is deleted when the backups are overwritten, as described in Section 10."}</p>
         <p className="leading-7">{"Information previously copied or shared outside Quote.Vote may remain beyond our control."}</p>
         <p className="leading-7">{"We will tell you if any part of your request cannot be fulfilled and why."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"12. Your Privacy Rights and Choices"}</h2>
@@ -187,7 +178,7 @@ export default function PrivacyPage() {
         <p className="leading-7">{"We do not discriminate against participants for exercising privacy rights."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"13. Information Security"}</h2>
         <p className="leading-7">{"We use technical and organizational practices intended to protect information against unauthorized access, alteration, disclosure, and loss."}</p>
-        <p className="leading-7">{"These practices include account authentication, password hashing, encryption of stored Solid Pod credentials, and access restrictions."}</p>
+        <p className="leading-7">{"These practices include account authentication, password hashing, and access restrictions."}</p>
         <p className="leading-7">{"We continue to evaluate and improve security as the platform develops."}</p>
         <p className="leading-7">{"No internet-based service can guarantee absolute security."}</p>
         <p className="leading-7">{"If we learn of a security incident affecting your personal information, we will notify you and any applicable authorities as required by law."}</p>
@@ -205,8 +196,8 @@ export default function PrivacyPage() {
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"16. Open Source, Solid Pods, and Data Portability"}</h2>
         <p className="leading-7">{"Quote.Vote is developed as an open-source project."}</p>
         <p className="leading-7">{"The availability of our source code does not make private account records, personal information, or restricted communications publicly available."}</p>
-        <p className="leading-7">{"Quote.Vote supports optional connection to a Solid Pod, which lets you keep a copy of your profile, preferences, and activity in storage you control. Using this feature is your choice, and you can disconnect at any time."}</p>
-        <p className="leading-7">{"We are continuing to develop portability and user-controlled storage features. New capabilities will be described in this Notice when available."}</p>
+        <p className="leading-7">{"An optional Solid Pod integration is planned for the 2.0.0 release."}</p>
+        <p className="leading-7">{"We will update this Notice to describe the integration's data handling practices when it becomes operational."}</p>
         <h2 className="pt-6 text-xl font-semibold tracking-tight">{"17. Other Quote.Vote Deployments"}</h2>
         <p className="leading-7">{"Because Quote.Vote is open-source software, other people and organizations may run their own copies of it. This Notice does not apply to those deployments. The operator of each deployment decides how it collects and uses personal information and is responsible for its own privacy practices."}</p>
         <p className="leading-7">{"Where Quote Dot Vote, PBC hosts a deployment for a customer organization, we process personal information in that deployment on the customer's behalf and according to its instructions and our agreement with it. Questions about such a deployment should first be directed to the organization that operates it."}</p>
