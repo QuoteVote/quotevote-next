@@ -163,25 +163,33 @@ describe('legacy user queries (#623)', () => {
       );
     });
 
-    it('lists requested and declined users with the status as a string', async () => {
+    it('lists requested, declined and accepted users with the status as a string', async () => {
       const ctx = asAdmin();
       const joined = new Date('2026-10-16T13:51:48.795Z');
+      const acceptedId = '507f1f77bcf86cd799439013';
+      const memberDoneId = '507f1f77bcf86cd799439014';
       (ctx.prisma.user.findMany as jest.Mock).mockResolvedValue([
-        { id: memberId, email: 'new@example.com', status: 1, joined },
-        { id: adminId, email: 'no@example.com', status: 2, joined },
+        { id: memberId, email: 'new@example.com', status: 1, joined, password: null },
+        { id: adminId, email: 'no@example.com', status: 2, joined, password: null },
+        { id: acceptedId, email: 'yes@example.com', status: 4, joined, password: null },
+        { id: memberDoneId, email: 'done@example.com', status: 4, joined, password: '$2a$hash' },
       ]);
 
       const result = await userInviteResolver.Query.userInviteRequests(null, {}, ctx);
 
       expect(ctx.prisma.user.findMany).toHaveBeenCalledWith({
-        where: { status: { in: [1, 2] } },
+        where: { status: { in: [1, 2, 4] } },
         orderBy: { joined: 'desc' },
-        select: { id: true, email: true, status: true, joined: true },
+        select: { id: true, email: true, status: true, joined: true, password: true },
       });
+      // The password hash is only read to say whether signup is done; it is never returned.
       expect(result).toEqual([
-        { _id: memberId, email: 'new@example.com', status: '1', joined },
-        { _id: adminId, email: 'no@example.com', status: '2', joined },
+        { _id: memberId, email: 'new@example.com', status: '1', joined, signedUp: false },
+        { _id: adminId, email: 'no@example.com', status: '2', joined, signedUp: false },
+        { _id: acceptedId, email: 'yes@example.com', status: '4', joined, signedUp: false },
+        { _id: memberDoneId, email: 'done@example.com', status: '4', joined, signedUp: true },
       ]);
+      expect(JSON.stringify(result)).not.toContain('$2a$hash');
     });
   });
 });
