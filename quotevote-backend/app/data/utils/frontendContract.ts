@@ -16,28 +16,7 @@ import type { ContractProblem, ContractReport, FrontendDocument } from '~/types/
  * validate or has no resolver, on an entry here that starts passing, and on an
  * entry whose document no longer exists.
  */
-export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {
-  // Group names (#539)
-  GROUPS_QUERY: '#539',
-  GET_GROUP: '#539',
-  CREATE_GROUP: '#539',
-  GET_POST: '#539',
-  GET_POST_GROUP_ID: '#539',
-  GET_TOP_POSTS: '#539',
-  GET_PAGINATED_POSTS: '#539',
-  GET_FEATURED_POSTS: '#539',
-  SEARCH: '#539',
-  // Buddy mutations still use the Roster arguments (#582)
-  ADD_BUDDY: '#582',
-  ACCEPT_BUDDY: '#582',
-  DECLINE_BUDDY: '#582',
-  BLOCK_BUDDY: '#582',
-  UNBLOCK_BUDDY: '#582',
-  REMOVE_BUDDY: '#582',
-  // Mutations with no resolver yet (#633)
-  VOTE: '#633',
-  DELETE_VOTE: '#633',
-};
+export const KNOWN_CONTRACT_GAPS: Readonly<Record<string, string>> = {};
 
 const DOCUMENT_PATTERN = /export const (\w+) = gql`([\s\S]*?)`/g;
 

@@ -18,7 +18,7 @@ import {
   createPostViaApi,
   deleteMessageViaApi,
   deletePostViaApi,
-  findGroupIdByTitle,
+  findTagIdByTitle,
   findUserByUsernameViaApi,
   loginViaApi,
   type SearchUserResult,
@@ -68,10 +68,10 @@ test.describe('E2E-CHAT-008: Chat Search', () => {
       dmMessageId = dm._id;
     }
 
-    const groupId = await findGroupIdByTitle(authToken, PUBLIC_TAG_NAME);
+    const tagId = await findTagIdByTitle(authToken, PUBLIC_TAG_NAME);
     const post = await createPostViaApi(authToken, {
       userId: authorUserId,
-      groupId,
+      tagId,
       title: postTitle,
       text: `Discussion body for chat search ${unique}.`,
     });

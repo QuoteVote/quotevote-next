@@ -17,7 +17,7 @@ const room: ChatRoom = {
 const context: ConversationSearchContext = {
   messages: ["Vacancy data from the 2025 survey would help here."],
   people: [{ username: "alice", name: "Alice Local" }],
-  tag: { groupId: "g1", title: "Local Housing" },
+  tag: { tagId: "g1", title: "Local Housing" },
 };
 
 const matches = (q: string, ctx: ConversationSearchContext = context) =>

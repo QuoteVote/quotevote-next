@@ -13,6 +13,7 @@ import { chatResolver } from './resolvers/chatResolver';
 import { rosterResolver } from './resolvers/rosterResolver';
 import { buddyResolver } from './resolvers/buddyResolver';
 import { quoteResolver } from './resolvers/quoteResolver';
+import { voteResolver } from './resolvers/voteResolver';
 import { commentResolver } from './resolvers/commentResolver';
 import { notificationResolver } from './resolvers/notificationResolver';
 import { activityResolver } from './resolvers/activityResolver';
@@ -45,6 +46,7 @@ export const schema = makeExecutableSchema({
     rosterResolver,
     buddyResolver,
     quoteResolver,
+    voteResolver,
     commentResolver,
     notificationResolver,
     activityResolver,

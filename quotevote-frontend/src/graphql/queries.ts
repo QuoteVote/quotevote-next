@@ -47,22 +47,39 @@ export const GET_ROOM_MESSAGES = gql`
   `
 
 /**
- * Get roster query (includes pending requests and blocked users)
+ * Get pending buddy requests (incoming and outgoing)
  */
-export const GET_ROSTER = gql`
-  query GetRoster {
-    getRoster {
+export const GET_BUDDY_REQUESTS = gql`
+  query GetBuddyRequests {
+    buddyRequests {
       _id
-      userId
-      buddyId
       status
-      initiatedBy
-      buddy {
+      createdAt
+      requester {
         _id
         name
         username
         avatar
       }
+      recipient {
+        _id
+        name
+        username
+        avatar
+      }
+    }
+  }
+`
+
+/**
+ * Get block status between the current user and another user
+ */
+export const GET_USER_BLOCK_STATUS = gql`
+  query GetUserBlockStatus($userId: String!) {
+    userBlockStatus(userId: $userId) {
+      userId
+      blockedByMe
+      blockedMe
     }
   }
 `
@@ -77,11 +94,20 @@ export const VERIFY_PASSWORD_RESET_TOKEN = gql`
 `
 
 /**
- * Get groups query for post creation
+ * Verify an invite signup link (new backend). Returns the approved, unfinished invite or null.
  */
-export const GROUPS_QUERY = gql`
-  query groups($limit: Int!) {
-    groups(limit: $limit) {
+export const VERIFY_INVITE_SIGNUP_TOKEN = gql`
+  query VerifyInviteSignupToken($token: String!) {
+    verifyInviteSignupToken(token: $token)
+  }
+`
+
+/**
+ * Get tags, for post creation and the topic filter. Leave out `limit` to get every tag.
+ */
+export const TAGS_QUERY = gql`
+  query tags($limit: Int) {
+    tags(limit: $limit) {
       _id
       creatorId
       adminIds
@@ -95,11 +121,11 @@ export const GROUPS_QUERY = gql`
 `
 
 /**
- * Get a single group by ID
+ * Get a single tag by ID
  */
-export const GET_GROUP = gql`
-  query getGroup($groupId: String!) {
-    group(groupId: $groupId) {
+export const GET_TAG = gql`
+  query getTag($tagId: String!) {
+    tag(tagId: $tagId) {
       _id
       title
     }
@@ -129,7 +155,7 @@ export const GET_POST = gql`
       _id
       userId
       created
-      groupId
+      tagId
       title
       text
       url
@@ -221,7 +247,7 @@ export const GET_TOP_POSTS = gql`
     $interactions: Boolean
     $userId: String
     $sortOrder: String
-    $groupId: String
+    $tagId: String
   ) {
     posts(
       limit: $limit
@@ -233,12 +259,12 @@ export const GET_TOP_POSTS = gql`
       interactions: $interactions
       userId: $userId
       sortOrder: $sortOrder
-      groupId: $groupId
+      tagId: $tagId
     ) {
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
@@ -316,7 +342,7 @@ export const GET_PAGINATED_POSTS = gql`
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
@@ -443,7 +469,7 @@ export const GET_FEATURED_POSTS = gql`
     $startDateRange: String
     $endDateRange: String
     $friendsOnly: Boolean
-    $groupId: String
+    $tagId: String
     $userId: String
     $approved: Boolean
     $deleted: Boolean
@@ -457,7 +483,7 @@ export const GET_FEATURED_POSTS = gql`
       startDateRange: $startDateRange
       endDateRange: $endDateRange
       friendsOnly: $friendsOnly
-      groupId: $groupId
+      tagId: $tagId
       userId: $userId
       approved: $approved
       deleted: $deleted
@@ -467,11 +493,13 @@ export const GET_FEATURED_POSTS = gql`
       entities {
         _id
         userId
-        groupId
+        tagId
         title
         text
         upvotes
         downvotes
+        approvedBy
+        rejectedBy
         bookmarkedBy
         created
         url
@@ -625,7 +653,7 @@ export const GET_CHAT_ROOMS = gql`
 `
 
 /**
- * Message text and authors for each room, used by the Messages search (#531).
+ * Message authors for each room, used by the Messages search for @person (#531).
  * Fetched only while the user is searching, not with the polled room list.
  */
 export const GET_CHAT_ROOM_SEARCH_DATA = gql`
@@ -634,7 +662,6 @@ export const GET_CHAT_ROOM_SEARCH_DATA = gql`
       _id
       messages {
         _id
-        text
         userId
         user {
           _id
@@ -647,13 +674,30 @@ export const GET_CHAT_ROOM_SEARCH_DATA = gql`
 `
 
 /**
- * The tag (group) of a discussion's post, shown on its Messages card (#531)
+ * Messages matching a search across the signed-in user's conversations (#601)
  */
-export const GET_POST_GROUP_ID = gql`
-  query getPostGroupId($postId: String!) {
+export const SEARCH_MESSAGES = gql`
+  query searchMessages($text: String!, $limit: Int, $cursor: String) {
+    searchMessages(text: $text, limit: $limit, cursor: $cursor) {
+      results {
+        _id
+        messageRoomId
+        created
+        snippet
+      }
+      nextCursor
+    }
+  }
+`
+
+/**
+ * The tag of a discussion's post, shown on its Messages card (#531)
+ */
+export const GET_POST_TAG_ID = gql`
+  query getPostTagId($postId: String!) {
     post(postId: $postId) {
       _id
-      groupId
+      tagId
     }
   }
 `
@@ -685,7 +729,7 @@ export const SEARCH = gql`
         title
         text
         url
-        groupId
+        tagId
         creator {
           _id
           name
@@ -845,6 +889,39 @@ export const GET_USER_ACTIVITY = gql`
 export const GET_NOTIFICATIONS = gql`
   query notifications {
     notifications {
+      _id
+      userId
+      userIdBy
+      userBy {
+        _id
+        name
+        avatar
+        username
+        contributorBadge
+      }
+      label
+      status
+      created
+      notificationType
+      post {
+        _id
+        title
+        url
+        deleted
+      }
+    }
+  }
+`
+
+/** Default page size for notification history (#464). */
+export const NOTIFICATION_HISTORY_LIMIT = 50;
+
+/**
+ * Cleared notifications for Notification History (#464).
+ */
+export const GET_NOTIFICATION_HISTORY = gql`
+  query notificationHistory($limit: Int) {
+    notificationHistory(limit: $limit) {
       _id
       userId
       userIdBy

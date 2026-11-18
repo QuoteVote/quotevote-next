@@ -104,23 +104,26 @@ function mockTouch(isTouch: boolean) {
 }
 
 function mockTouchWithChangeListener() {
-  let changeListener: (() => void) | null = null;
+  const TOUCH_QUERY = "(hover: none) and (pointer: coarse)";
+  // One listener per query: the board also watches the phone-width query for the sheet.
+  const changeListeners = new Map<string, () => void>();
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: jest.fn().mockImplementation((query: string) => ({
-      matches: query === "(hover: none) and (pointer: coarse)",
+      matches: query === TOUCH_QUERY,
       media: query,
       onchange: null,
       addListener: jest.fn(),
       removeListener: jest.fn(),
       addEventListener: jest.fn((type: string, listener: () => void) => {
-        if (type === "change") changeListener = listener;
+        if (type === "change") changeListeners.set(query, listener);
       }),
       removeEventListener: jest.fn(),
       dispatchEvent: jest.fn(),
     })),
   });
   return () => {
+    const changeListener = changeListeners.get(TOUCH_QUERY);
     if (!changeListener) throw new Error("matchMedia change listener not registered");
     changeListener();
   };
@@ -311,6 +314,62 @@ describe("VotingBoard — state machine", () => {
 
     await waitFor(() => expect(onDeselect).toHaveBeenCalledTimes(1));
     expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
+  });
+
+  it("desktop: new passage marks wait until the popup closes, so a vote keeps it open", async () => {
+    mockTouch(false);
+    const activity = [
+      {
+        start: 0,
+        end: 5,
+        upvotes: 1,
+        downvotes: 0,
+        quotes: 0,
+        comments: 0,
+        actionIds: ["v1"],
+      },
+    ];
+    const board = (segments: typeof activity) => (
+      <VotingBoard content={CONTENT} highlights activity={segments}>
+        {() => <div>toolbar</div>}
+      </VotingBoard>
+    );
+    const { container, rerender } = render(board([]));
+
+    setSelectionForSubstring(container, "unique");
+    await commitDesktopSelection(container);
+    await waitFor(() => {
+      expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
+    });
+
+    rerender(board(activity));
+    expect(screen.getByTestId("selection-popover").dataset.show).toBe("true");
+    expect(screen.queryByTestId("passage-activity")).not.toBeInTheDocument();
+
+    window.getSelection()?.removeAllRanges();
+    await act(async () => {
+      document.dispatchEvent(new Event("selectionchange"));
+    });
+    expect(screen.getByTestId("selection-popover").dataset.show).toBe("false");
+    expect(screen.getByTestId("passage-activity")).toBeInTheDocument();
+  });
+
+  it("shows new passage marks straight away when no selection is open", () => {
+    mockTouch(false);
+    const segment = {
+      start: 0,
+      end: 5,
+      upvotes: 1,
+      downvotes: 0,
+      quotes: 0,
+      comments: 0,
+      actionIds: ["v1"],
+    };
+    const { rerender } = render(<VotingBoard content={CONTENT} highlights activity={[]} />);
+    expect(screen.queryByTestId("passage-activity")).not.toBeInTheDocument();
+
+    rerender(<VotingBoard content={CONTENT} highlights activity={[segment]} />);
+    expect(screen.getByTestId("passage-activity")).toBeInTheDocument();
   });
 
   it("touch: valid selection enters native before first tap", async () => {

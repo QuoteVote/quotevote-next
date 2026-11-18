@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { scrollLinkedPassageIntoView } from "@/lib/utils/discussionSplit";
 import { describePassageActivity, passageActivityTotal } from "@/lib/utils/passageActivity";
 import SelectionPopover from "./SelectionPopover";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type {
   PassageActivitySegment,
   VotingBoardProps,
@@ -24,22 +25,36 @@ import type {
   SelectionPopupContentProps,
 } from "@/types/voting";
 
-const LINKED_PASSAGE_CLASS =
-  "bg-[#52b274]/20 text-foreground rounded-sm box-decoration-clone cursor-pointer px-0.5";
+/** The passage linked to the selected Discussion item: tint plus a ring (globals.css). */
+const LINKED_PASSAGE_CLASS = "qv-mark qv-mark-linked cursor-pointer";
 
-const RETAINED_PASSAGE_CLASS =
-  "bg-[#52b274]/20 text-foreground rounded-sm box-decoration-clone px-0.5";
+/** The words just selected, kept while the vote popover is open. */
+const RETAINED_PASSAGE_CLASS = "qv-mark qv-mark-retained";
 
 /**
- * Passages with existing votes, quotes or comments (#548): a light tint plus a
- * dotted underline and a small count, so colour isn't the only signal. The
- * count is CSS generated content, so it never becomes part of the selectable
- * text and can't shift the offsets of a new selection.
+ * Passages with existing votes, quotes or comments (#548): a tint and a bottom
+ * edge (green when votes lean up, red when they lean down, grey otherwise) and
+ * a count pill, so colour isn't the only signal. The count is CSS generated
+ * content, so it never becomes part of the selectable text and can't shift the
+ * offsets of a new selection. Styles live in globals.css (`.qv-mark`).
  */
-const ACTIVITY_PASSAGE_CLASS =
-  "bg-[#52b274]/10 text-inherit rounded-sm box-decoration-clone cursor-pointer underline decoration-dotted decoration-2 decoration-[#2f7a4c] underline-offset-4 transition-colors hover:bg-[#52b274]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7a4c] dark:decoration-[#7fdc9c]/80 dark:focus-visible:ring-[#7fdc9c] after:ml-0.5 after:align-super after:text-[0.65em] after:font-semibold after:text-[#2f6f4a] after:content-[attr(data-count)] dark:after:text-[#7fdc9c]";
+const ACTIVITY_PASSAGE_CLASS = "qv-mark qv-mark-activity cursor-pointer";
+
+/** Which way a passage's votes lean, for its highlight colour. */
+export function passageTone(
+  segment: PassageActivitySegment | undefined
+): "up" | "down" | "neutral" {
+  if (!segment) return "neutral";
+  if (segment.upvotes > segment.downvotes) return "up";
+  if (segment.downvotes > segment.upvotes) return "down";
+  return "neutral";
+}
 
 const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
+/** Below this width the passage popup is a bottom sheet (the phone design). */
+const SHEET_MEDIA_QUERY = "(max-width: 639px)";
+
+const NO_ACTIVITY: PassageActivitySegment[] = [];
 
 function LinkedPassageMark({
   children,
@@ -103,6 +118,7 @@ function makeActivityPassageMark(segments: PassageActivitySegment[]) {
         data-passage-activity="true"
         data-activity-index={highlightIndex}
         data-count={segment ? passageActivityTotal(segment) : undefined}
+        data-tone={passageTone(segment)}
         data-testid="passage-activity"
         className={cn(className, ACTIVITY_PASSAGE_CLASS)}
         role="button"
@@ -122,8 +138,8 @@ function makeActivityPassageMark(segments: PassageActivitySegment[]) {
   };
 }
 
-function SelectionPopupContent({ render, selection, dismiss }: SelectionPopupContentProps) {
-  return <>{render(selection, { dismiss })}</>;
+function SelectionPopupContent({ render, selection, dismiss, sheet }: SelectionPopupContentProps) {
+  return <>{render(selection, { dismiss, sheet })}</>;
 }
 
 function isCoarseTouchEnvironment(): boolean {
@@ -147,7 +163,7 @@ export default function VotingBoard({
   style,
   focusedComment,
   onHighlightClick,
-  activity = [],
+  activity = NO_ACTIVITY,
   onActivityClick,
 }: VotingBoardProps) {
   void votes;
@@ -236,6 +252,13 @@ export default function VotingBoard({
     },
     [clearSuppress, resetToIdle]
   );
+
+  // Marks wait while a selection is open. Re-rendering the passage would replace the text
+  // nodes the browser selection sits in, collapse it and close the voting popup.
+  const [renderedActivity, setRenderedActivity] = useState(activity);
+  if (phase === "idle" && renderedActivity !== activity) {
+    setRenderedActivity(activity);
+  }
 
   const commentData = focusedComment || null;
   const startWordIndex = commentData?.startWordIndex ?? 0;
@@ -632,10 +655,13 @@ export default function VotingBoard({
     }
   }, []);
 
-  const ActivityPassageMark = useMemo(() => makeActivityPassageMark(activity), [activity]);
+  const ActivityPassageMark = useMemo(
+    () => makeActivityPassageMark(renderedActivity),
+    [renderedActivity]
+  );
   const findActivityChunks = useCallback(
-    () => activity.map((segment) => ({ start: segment.start, end: segment.end })),
-    [activity]
+    () => renderedActivity.map((segment) => ({ start: segment.start, end: segment.end })),
+    [renderedActivity]
   );
 
   const handlePassageClick = useCallback(
@@ -651,14 +677,14 @@ export default function VotingBoard({
         // Finishing a text selection over a marked passage shouldn't open Discussion.
         const sel = typeof window !== "undefined" ? window.getSelection() : null;
         if (sel && !sel.isCollapsed && sel.toString().trim()) return;
-        const segment = activity[Number(activityMark.dataset.activityIndex)];
+        const segment = renderedActivity[Number(activityMark.dataset.activityIndex)];
         if (segment) {
           e.preventDefault();
           onActivityClick(segment);
         }
       }
     },
-    [activity, onActivityClick, onHighlightClick]
+    [renderedActivity, onActivityClick, onHighlightClick]
   );
 
   const resolveAnchorRect = useCallback((): DOMRect | null => {
@@ -694,6 +720,7 @@ export default function VotingBoard({
     clearNativeSelection();
     resetToIdle();
   }, [clearNativeSelection, resetToIdle]);
+  const sheet = useMediaQuery(SHEET_MEDIA_QUERY);
 
   const renderRetained = () => (
     <Highlighter
@@ -729,7 +756,7 @@ export default function VotingBoard({
         );
       }
 
-      if (activity.length > 0) {
+      if (renderedActivity.length > 0) {
         return (
           <Highlighter
             style={{ whiteSpace: "pre-line" }}
@@ -784,9 +811,16 @@ export default function VotingBoard({
         topOffset={topOffset}
         resolveAnchorRect={resolveAnchorRect}
         popoverRef={popoverRef}
+        sheet={sheet}
+        onDismiss={dismissPopover}
       >
         {children && (
-          <SelectionPopupContent render={children} selection={selection} dismiss={dismissPopover} />
+          <SelectionPopupContent
+            render={children}
+            selection={selection}
+            dismiss={dismissPopover}
+            sheet={sheet}
+          />
         )}
       </SelectionPopover>
     </div>

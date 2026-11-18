@@ -63,7 +63,7 @@ export default function PostActionList({
       )}
 
       {!isEmpty(sortedActions) ? (
-        <div className="flex flex-col gap-2 px-3 py-3">
+        <div className="flex flex-col gap-3 px-4 pt-1 pb-4 lg:px-6">
           {sortedActions.map((action) => (
             <div key={action._id} id={action._id}>
               <PostActionCard

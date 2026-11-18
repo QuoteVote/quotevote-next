@@ -4,6 +4,8 @@ import { isObjectId } from '~/data/resolvers/utils/common';
 import { MESSAGE_ROOM_SELECT, type MessageRoomRecord } from '~/data/resolvers/utils/chatRooms';
 import { addUserToPostRoom } from '~/data/resolvers/utils/messages';
 import { assertNoBlockBetween } from '~/data/utils/userBlock';
+import { logger } from '~/data/utils/logger';
+import { addNotification, hasUnreadNotification } from '~/data/resolvers/utils/notifications';
 
 type Prisma = GraphQLContext['prisma'];
 
@@ -137,4 +139,41 @@ export function validEmoji(raw: string | null | undefined): string {
   const emoji = raw?.trim() ?? '';
   if (!emoji || emoji.length > MAX_REACTION_LENGTH) throw badInput('Invalid emoji');
   return emoji;
+}
+
+/**
+ * Tell the post's author about a message in its discussion, as a COMMENTED notification
+ * (legacy never notified on these). Nothing for your own post, and nothing more while the
+ * last one from this member on this post is still in the author's list (not cleared). A failure here is logged
+ * and never fails the message, which is already saved and sent.
+ */
+export async function notifyPostAuthorOfMessage(
+  prisma: Prisma,
+  room: Pick<MessageRoomRecord, 'messageType' | 'postId'>,
+  userId: string,
+  text: string
+): Promise<void> {
+  if (room.messageType !== 'POST' || !room.postId) return;
+  const postId = room.postId;
+  try {
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { userId: true, deleted: true },
+    });
+    if (!post?.userId || post.deleted || post.userId === userId) return;
+    const notification = {
+      userId: post.userId,
+      userIdBy: userId,
+      notificationType: 'COMMENTED' as const,
+      postId,
+    };
+    if (await hasUnreadNotification(prisma, notification)) return;
+    await addNotification(prisma, { ...notification, label: text });
+  } catch (err) {
+    logger.warn('createMessage: failed to notify the post author', {
+      postId,
+      userId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }

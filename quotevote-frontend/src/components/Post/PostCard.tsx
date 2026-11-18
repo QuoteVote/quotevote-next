@@ -5,11 +5,20 @@ import { useRouter } from 'next/navigation'
 import { isEmpty } from 'lodash'
 import moment from 'moment'
 import { useQuery, useMutation } from '@apollo/client/react'
-import { ArrowRight, Bookmark, ExternalLink, Hash, MessagesSquare, Share2 } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  Bookmark,
+  ExternalLink,
+  Hash,
+  MessagesSquare,
+  Share2,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getDomain, toAppPostUrl, toAbsolutePostUrl } from '@/lib/utils/sanitizeUrl'
 import { useAppStore } from '@/store'
-import { GET_GROUP } from '@/graphql/queries'
+import { GET_TAG } from '@/graphql/queries'
 import { UPDATE_POST_BOOKMARK } from '@/graphql/mutations'
 import { toast } from 'sonner'
 import getTopPostsVoteHighlights from '@/lib/utils/getTopPostsVoteHighlights'
@@ -29,6 +38,25 @@ function stringLimit(text: string, limit: number): string {
   return text.slice(0, limit) + '...'
 }
 
+/** Up and down vote totals: the stored counts, or a count of `votes` when they are missing. */
+function countVotes(
+  votes: PostCardProps['votes'],
+  upvotes: number | null | undefined,
+  downvotes: number | null | undefined
+): { up: number; down: number } {
+  if (typeof upvotes === 'number' && typeof downvotes === 'number') {
+    return { up: upvotes, down: downvotes }
+  }
+  let up = 0
+  let down = 0
+  for (const v of votes ?? []) {
+    const type = v.type?.toUpperCase()
+    if (type === 'UP' || type === 'UPVOTE') up += 1
+    else if (type === 'DOWN' || type === 'DOWNVOTE') down += 1
+  }
+  return { up: upvotes ?? up, down: downvotes ?? down }
+}
+
 function PostCardComponent({
   _id,
   text,
@@ -45,11 +73,14 @@ function PostCardComponent({
   comments = [],
   quotes = [],
   messageRoom,
-  groupId,
+  tagId,
   citationUrl,
   attribution,
   searchKey,
   compact = false,
+  upvotes,
+  downvotes,
+  timeOnly = false,
 }: PostCardProps) {
   const router = useRouter()
   const setSelectedPost = useAppStore((state) => state.setSelectedPost)
@@ -124,9 +155,9 @@ function PostCardComponent({
     quotes.length +
     messages.length
 
-  const { data: groupData } = useQuery<{ group?: { _id: string; title: string } }>(GET_GROUP, {
-    variables: { groupId: groupId || '' },
-    skip: !groupId,
+  const { data: tagData } = useQuery<{ tag?: { _id: string; title: string } | null }>(GET_TAG, {
+    variables: { tagId: tagId || '' },
+    skip: !tagId,
     errorPolicy: 'all',
     fetchPolicy: 'cache-first',
   })
@@ -154,33 +185,38 @@ function PostCardComponent({
   // (display name, falling back to username) so an unset avatar looks
   // identical across the post card, profile and messages.
   const avatarSeed = creator?.name || username
-  const tagTitle = groupId && groupData?.group ? groupData.group.title : null
+  const tagTitle = tagId && tagData?.tag ? tagData.tag.title : null
 
   // Opens the home results with this tag applied, keeping the current search,
   // date, sort and Following filters when already on the home page.
   const handleTagClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!groupId) return
+    if (!tagId) return
     const params = new URLSearchParams(
       window.location.pathname === '/' ? window.location.search : ''
     )
-    params.set('group', groupId)
+    params.set('tag', tagId)
+    params.delete('group')
     params.delete('page')
     router.push(`/?${params.toString()}`)
   }
 
-  const formattedDate = useMemo(
-    () =>
-      moment(created).calendar(null, {
-        sameDay: '[Today]',
-        nextDay: '[Tomorrow]',
-        nextWeek: 'dddd',
-        lastDay: '[Yesterday]',
-        lastWeek: '[Last] dddd',
-        sameElse: 'MMM DD, YYYY',
-      }) + ` @ ${moment(created).format('h:mm A')}`,
-    [created]
-  )
+  const formattedDate = useMemo(() => {
+    const time = moment(created).format('h:mm A')
+    if (timeOnly) return time
+    const day = moment(created).calendar(null, {
+      sameDay: '[Today]',
+      nextDay: '[Tomorrow]',
+      nextWeek: 'dddd',
+      lastDay: '[Yesterday]',
+      lastWeek: '[Last] dddd',
+      sameElse: 'MMM DD, YYYY',
+    })
+    return `${day} @ ${time}`
+  }, [created, timeOnly])
+
+  const { up, down } = countVotes(votes, upvotes, downvotes)
+  const displayName = creator?.name?.trim() || username
 
   return (
     <article
@@ -188,7 +224,7 @@ function PostCardComponent({
       data-post-title={title || ''}
       data-compact={compact ? 'true' : undefined}
       className={cn(
-        'group/card rounded-[7px] cursor-pointer overflow-hidden bg-card',
+        'group/card font-redesign rounded-[7px] cursor-pointer overflow-hidden bg-card',
         // An outline, not a ring: the card's inline box-shadow would hide a ring.
         'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#52b274]'
       )}
@@ -218,54 +254,60 @@ function PostCardComponent({
       aria-label={title || 'Post'}
       data-sentiment="neutral"
     >
-      <div className={cn('px-4 pt-3', compact ? 'pb-2' : 'pb-3')}>
-        {/* ── Tag + source on the left, save/share on the right (#528) ── */}
-        {tagTitle || citationUrl || !compact ? (
-          <div className="mb-2 flex items-start justify-between gap-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-              {tagTitle && (
-                <button
-                  type="button"
-                  data-testid="post-card-tag"
-                  aria-label={`Show posts tagged #${tagTitle}`}
-                  title={`Show posts tagged #${tagTitle}`}
-                  onClick={handleTagClick}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  className="inline-flex min-h-6 items-center gap-0.5 rounded-full border border-[rgba(82,178,116,0.4)] bg-[rgba(82,178,116,0.12)] px-2.5 py-1 text-xs font-semibold leading-none text-[#2f6f4a] transition-colors hover:bg-[rgba(82,178,116,0.24)] active:bg-[rgba(82,178,116,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-1 dark:text-[#7fdc9c]"
-                >
-                  <Hash className="size-3" aria-hidden="true" />
-                  {tagTitle}
-                </button>
-              )}
-              {citationUrl && (
-                <a
-                  href={citationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  aria-label={`Source: ${getDomain(citationUrl)} (opens in a new tab)`}
-                  className="inline-flex min-h-6 items-center gap-1 rounded-full border border-[rgba(25,118,210,0.25)] bg-[rgba(25,118,210,0.08)] px-2.5 py-1 text-[11px] font-medium leading-none text-[#1565c0] transition-colors hover:bg-[rgba(25,118,210,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976d2] focus-visible:ring-offset-1 dark:text-[#64b5f6]"
-                >
-                  <span>Source: {getDomain(citationUrl)}</span>
-                  <ExternalLink className="size-3 shrink-0" aria-hidden="true" />
-                </a>
-              )}
-            </div>
+      <div className="flex flex-col gap-2.5 p-4 sm:gap-3 sm:px-[22px] sm:pt-5 sm:pb-[18px]">
+        {/* ── Author and time, then the topic and (full cards) save/share ── */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            className="group/author flex min-w-0 items-center gap-2.5 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-1"
+            onClick={handleProfileClick}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <DisplayAvatar
+              avatar={creator?.avatar as string | Record<string, unknown> | undefined}
+              username={avatarSeed}
+              size={36}
+              className="size-8 flex-shrink-0 sm:size-9"
+            />
+            <span className="flex min-w-0 flex-col">
+              <b className="truncate text-[13px] text-[var(--shell-ink)] group-hover/author:underline sm:text-sm">
+                {displayName}
+              </b>
+              <span className="truncate text-xs text-[var(--shell-muted)] sm:text-[13px]">
+                {creator?.username ? `@${creator.username} · ` : ''}
+                <time suppressHydrationWarning>{formattedDate}</time>
+              </span>
+            </span>
+          </button>
 
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            {tagTitle && (
+              <button
+                type="button"
+                data-testid="post-card-tag"
+                aria-label={`Show posts tagged #${tagTitle}`}
+                title={`Show posts tagged #${tagTitle}`}
+                onClick={handleTagClick}
+                onKeyDown={(e) => e.stopPropagation()}
+                className="inline-flex h-6 max-w-[11rem] items-center gap-0.5 rounded-full bg-[var(--shell-green-soft)] px-2.5 text-[11px] font-bold text-[var(--shell-green)] transition-colors hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-1 sm:h-7 sm:px-[11px] sm:text-[12.5px]"
+              >
+                <Hash className="size-3 shrink-0" aria-hidden="true" />
+                <span className="truncate">{tagTitle}</span>
+              </button>
+            )}
             {!compact && (
               <div
-                className="-mr-1.5 -mt-1 flex shrink-0 items-center gap-0.5"
+                className="flex items-center gap-0.5"
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
               >
                 <button
                   type="button"
                   className={cn(
-                    'p-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]',
+                    'rounded p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]',
                     isBookmarked
                       ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10'
+                      : 'text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600'
                   )}
                   onClick={handleBookmark}
                   aria-label={isBookmarked ? 'Remove saved post' : 'Save post'}
@@ -275,7 +317,7 @@ function PostCardComponent({
                 </button>
                 <button
                   type="button"
-                  className="p-1.5 rounded text-muted-foreground hover:text-[#2f6f4a] hover:bg-[#52b274]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] dark:hover:text-[#7fdc9c]"
+                  className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-[#52b274]/10 hover:text-[#2f6f4a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] dark:hover:text-[#7fdc9c]"
                   onClick={handleShare}
                   aria-label="Share"
                 >
@@ -284,73 +326,63 @@ function PostCardComponent({
               </div>
             )}
           </div>
-        ) : null}
+        </div>
 
-        {/* ── Title and preview open the post ── */}
-        <h3
-          className={cn(
-            'font-bold text-foreground leading-snug mb-1.5 break-words decoration-[#52b274]/60 underline-offset-4 transition-colors group-hover/card:text-[#52b274] group-hover/card:underline',
-            compact ? 'text-lg' : 'text-xl'
-          )}
-        >
+        {/* ── Title and quote open the post ── */}
+        <h3 className="text-xl! leading-[1.25]! font-extrabold! tracking-[-0.02em]! break-words text-[var(--shell-ink)] decoration-[#52b274]/60 underline-offset-4 group-hover/card:underline sm:text-[23px]!">
           <HighlightText text={title || 'Untitled'} highlightTerms={searchKey || ''} />
         </h3>
 
-        {compact && attribution ? (
-          <p className="mb-1 text-xs italic text-muted-foreground">— {attribution}</p>
-        ) : null}
-
-        {/* Body preview: 3 lines / ~150 chars, no Show More (#474). */}
-        <div
-          className={cn(
-            'text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-3',
-            compact ? 'text-sm' : 'text-base'
-          )}
-        >
+        {/* Body preview: 3 lines / ~150 chars, no Show More (#474). Quote marks come from CSS. */}
+        <div className="line-clamp-3 text-[14.5px] leading-[1.6] whitespace-pre-line text-[var(--shell-ink-2)] before:content-['\201C'] after:content-['\201D'] sm:text-base sm:leading-[1.65]">
           {displayText}
         </div>
-      </div>
 
-      {/* ── Footer: author and time, then activity and the way into the post ── */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 border-t border-border/30 bg-muted/10">
-        <button
-          type="button"
-          className="flex items-center gap-2 group/author min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-1"
-          onClick={handleProfileClick}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          <DisplayAvatar
-            avatar={creator?.avatar as string | Record<string, unknown> | undefined}
-            username={avatarSeed}
-            size={28}
-          />
-          <span className="text-sm font-bold text-[#2f7a4c] group-hover/author:underline truncate dark:text-[#6fcf8f]">
-            {username}
+        {attribution || citationUrl ? (
+          <p className="-mt-1 text-[13px]! leading-normal! font-semibold text-[var(--shell-muted)]">
+            {attribution ? <span>— {attribution}</span> : null}
+            {attribution && citationUrl ? <span aria-hidden="true"> · </span> : null}
+            {citationUrl ? (
+              <a
+                href={citationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                aria-label={`Source: ${getDomain(citationUrl)} (opens in a new tab)`}
+                className="inline-flex items-center gap-1 text-[var(--shell-blue)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976d2]"
+              >
+                {getDomain(citationUrl)}
+                <ExternalLink className="size-3 shrink-0" aria-hidden="true" />
+              </a>
+            ) : null}
+          </p>
+        ) : null}
+
+        {/* ── Votes, activity and the way into the post ── */}
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-[var(--shell-divider)] pt-2.5 text-[12.5px] font-bold text-[var(--shell-ink-2)] sm:gap-x-[18px] sm:pt-3 sm:text-[13.5px]">
+          <span className="inline-flex items-center gap-1 text-[var(--shell-green)]" data-testid="post-card-upvotes">
+            <ArrowUp className="size-4" aria-hidden="true" />
+            <span className="sr-only">Up votes:</span>
+            {up}
           </span>
-        </button>
-        <span className="text-muted-foreground/40 flex-shrink-0" aria-hidden="true">
-          ·
-        </span>
-        <time className="text-xs text-muted-foreground flex-shrink-0" suppressHydrationWarning>
-          {formattedDate}
-        </time>
-
-        <span className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-          <span
-            className="inline-flex items-center gap-1"
-            data-testid="post-card-interactions"
-          >
-            <MessagesSquare className="size-3.5" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1 text-[var(--shell-down)]" data-testid="post-card-downvotes">
+            <ArrowDown className="size-4" aria-hidden="true" />
+            <span className="sr-only">Down votes:</span>
+            {down}
+          </span>
+          <span className="inline-flex items-center gap-1.5" data-testid="post-card-interactions">
+            <MessagesSquare className="size-4" aria-hidden="true" />
             {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}
           </span>
           <span
-            className="hidden items-center gap-0.5 font-semibold text-[#2f6f4a] transition-transform group-hover/card:translate-x-0.5 sm:inline-flex dark:text-[#7fdc9c]"
+            className="ml-auto hidden items-center gap-1 text-[var(--shell-blue)] transition-transform group-hover/card:translate-x-0.5 sm:inline-flex"
             aria-hidden="true"
           >
             Open post
             <ArrowRight className="size-3.5" />
           </span>
-        </span>
+        </div>
       </div>
     </article>
   )

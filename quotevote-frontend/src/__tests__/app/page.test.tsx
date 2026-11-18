@@ -27,7 +27,7 @@ jest.mock('@apollo/client/react', () => ({
   useQuery: jest.fn(() => ({
     data: {
       posts: { entities: [], pagination: { total_count: 0, limit: 20, offset: 0 } },
-      groups: [],
+      tags: [],
     },
     loading: false,
     error: undefined,
@@ -116,7 +116,7 @@ describe('Public directory (`/`)', () => {
           ],
           pagination: { total_count: 1, limit: 20, offset: 0 },
         },
-        groups: [],
+        tags: [],
       },
       loading: false,
       error: undefined,

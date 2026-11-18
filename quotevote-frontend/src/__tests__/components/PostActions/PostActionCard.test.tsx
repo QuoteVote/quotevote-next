@@ -10,7 +10,7 @@
  * - User permissions and ownership
  */
 
-import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
+import { render, screen, fireEvent, waitFor, cleanup } from '@/__tests__/utils/test-utils'
 import PostActionCard from '@/components/PostActions/PostActionCard'
 import type { PostAction } from '@/types/postActions'
 import * as storeModule from '@/store'
@@ -625,7 +625,9 @@ describe('PostActionCard', () => {
 
       const card = document.querySelector('[data-selected="true"]')
       expect(card).toBeInTheDocument()
-      expect(card?.className).toContain('border-l-[#52b274]')
+      // The card keeps its type colour (a comment is yellow) and lifts when selected.
+      expect(card?.className).toContain('qv-lit')
+      expect(card).toHaveAttribute('data-light', 'comment')
       expect(card?.className).toContain('items-start')
     })
 
@@ -838,10 +840,80 @@ describe('PostActionCard', () => {
 
       const badges = screen.getAllByTestId('activity-label-button')
       expect(badges.length).toBeGreaterThan(0)
-      expect(badges[0]).toHaveTextContent('❝ Quote')
+      expect(badges[0]).toHaveTextContent('“ Quote')
       expect(screen.getByText(/Quoted highlight snippet/i)).toBeInTheDocument()
     })
   })
+
+  describe('Card colour (redesign)', () => {
+    it.each([
+      ['Vote', { type: 'up' }, 'up'],
+      ['Vote', { type: 'down' }, 'down'],
+      ['Quote', { quote: 'q' }, 'quote'],
+      ['Comment', { content: 'c' }, 'comment'],
+    ])('colours a %s card %s', (typename, extra, light) => {
+      const action = {
+        _id: `a-${light}`,
+        __typename: typename,
+        created: new Date().toISOString(),
+        content: '',
+        user: { _id: 'user1', username: 'user1', name: 'User One' },
+        ...extra,
+      } as unknown as PostAction
+      render(<PostActionCard postAction={action} postUrl="/post/123" />)
+      expect(document.querySelector('[data-post-action="true"]')).toHaveAttribute(
+        'data-light',
+        light
+      )
+    })
+
+    it('shows Copy link without hovering', () => {
+      const comment = {
+        _id: 'comment-visible',
+        __typename: 'Comment',
+        content: 'A comment',
+        created: new Date().toISOString(),
+        user: { _id: 'user1', username: 'user1', name: 'User One' },
+      } as unknown as PostAction
+      render(<PostActionCard postAction={comment} postUrl="/post/123" />)
+      expect(screen.getByRole('button', { name: 'Copy link' })).toHaveTextContent('Copy link')
+    })
+  })
+
+  describe('Vote response badge', () => {
+    const renderVote = (type: 'up' | 'down', tags?: unknown) => {
+      const voteAction = {
+        _id: 'vote-response',
+        __typename: 'Vote',
+        content: 'A passage',
+        created: new Date().toISOString(),
+        type,
+        tags,
+        user: { _id: 'user1', username: 'user1', name: 'User One' },
+      } as PostAction
+      render(<PostActionCard postAction={voteAction} postUrl="/post/123" />)
+      return screen.getByTestId('activity-label-button')
+    }
+
+    it.each([
+      ['up', '#agree', '↑ Agree'],
+      ['down', '#disagree', '↓ Disagree'],
+      ['up', '#true', '↑ True'],
+      ['down', '#false', '↓ False'],
+      ['up', '#like', '↑ Like'],
+      ['down', '#dislike', '↓ Dislike'],
+    ] as const)('labels a %s vote tagged %s as "%s"', (type, tags, label) => {
+      expect(renderVote(type, tags)).toHaveTextContent(label)
+    })
+
+    it('reads the response from older votes that store tags as an array', () => {
+      expect(renderVote('up', ['#like'])).toHaveTextContent('↑ Like')
+    })
+
+    it('falls back to Agree or Disagree when the vote has no known response', () => {
+      expect(renderVote('up')).toHaveTextContent('↑ Agree')
+      cleanup()
+      expect(renderVote('down', 'legacy')).toHaveTextContent('↓ Disagree')
+    })
+  })
 })
-
-

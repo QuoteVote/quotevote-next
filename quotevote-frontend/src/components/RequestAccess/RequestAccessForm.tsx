@@ -18,6 +18,10 @@ import { Label } from '@/components/ui/label';
 import { REQUEST_USER_ACCESS_MUTATION } from '@/graphql/mutations';
 import { GET_CHECK_DUPLICATE_EMAIL } from '@/graphql/queries';
 import { parseRequestAccessEmail } from '@/lib/validation/requestAccessSchema';
+import {
+  INVITE_ALREADY_SENT_MESSAGE,
+  isInviteAlreadySentError,
+} from '@/lib/utils/inviteAlreadySent';
 import type { RequestAccessFormProps } from '@/types/components';
 import { RequestAccessSuccess } from './RequestAccessSuccess';
 
@@ -62,6 +66,8 @@ export function RequestAccessForm({ onSuccess }: RequestAccessFormProps) {
       const error = err as Error;
       if (error.message.includes('email: Path `email` is required.')) {
         setErrorMessage('Email is required');
+      } else if (isInviteAlreadySentError(err)) {
+        setErrorMessage(INVITE_ALREADY_SENT_MESSAGE);
       } else {
         setErrorMessage('An unexpected error occurred. Please try again later.');
         toast.error('Failed to submit request');

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { Hash, MessageCircle, SearchX } from 'lucide-react';
 
 import { GET_BUDDY_LIST, GET_CHAT_ROOMS, GET_CHAT_ROOM_SEARCH_DATA } from '@/graphql/queries';
 import { useConversationTags } from '@/hooks/useConversationTags';
+import { useMessageSearch } from '@/hooks/useMessageSearch';
 import { conversationMatches, hasSearchTerms, tagToken } from '@/lib/utils/conversationSearch';
 import { parseSearchQuery } from '@/utils/parseSearchQuery';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ import type {
   ConversationPerson,
   ConversationTag,
   GetChatRoomSearchData,
+  MessageSearchMatch,
 } from '@/types/chat';
 import type { GetBuddyListData } from '@/types/buddylist';
 
@@ -38,13 +40,11 @@ interface ChatListProps {
 const isDirectMessage = (room: ChatRoom) =>
   room.messageType === 'USER' && (room.users?.length ?? 0) === 2;
 
-const snippet = (text: string, word: string): string => {
-  const at = text.toLowerCase().indexOf(word.toLowerCase());
-  if (at <= 30) return text.length > 80 ? `${text.slice(0, 80)}…` : text;
-  const start = text.lastIndexOf(' ', at - 20) + 1;
-  const body = text.slice(start, start + 80);
-  return `…${body}${start + 80 < text.length ? '…' : ''}`;
-};
+const activityTime = (room: ChatRoom): number =>
+  new Date(room.lastMessageTime || room.lastActivity || room.created).getTime();
+
+const footerButtonClass =
+  'inline-flex min-h-9 items-center rounded-md border border-[#8a8a93] px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] disabled:opacity-60 dark:border-[#6e7681]';
 
 const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchChange }) => {
   const selectedRoomId = useAppStore((state) => state.chat.selectedRoom);
@@ -59,11 +59,14 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
     pollInterval: 10000,
   });
 
-  // Message text and authors are only needed while searching, so they stay out
-  // of the polled room list.
+  // Message text is searched on the server, a page at a time (#601).
+  const messageSearch = useMessageSearch(query.keywords.length > 0 ? query.textQuery : '');
+  const { hasMore, loadingMore, loadMoreFailed, loadMore } = messageSearch;
+
+  // Authors are only needed to find a person, so they stay out of the polled room list.
   const { data: searchData } = useQuery<GetChatRoomSearchData>(GET_CHAT_ROOM_SEARCH_DATA, {
     fetchPolicy: 'cache-and-network',
-    skip: !searching || (query.keywords.length === 0 && query.usernames.length === 0),
+    skip: !searching || query.usernames.length === 0,
   });
   const { data: buddyData } = useQuery<GetBuddyListData>(GET_BUDDY_LIST, {
     fetchPolicy: 'cache-first',
@@ -73,6 +76,28 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  // Next page when "Load more" nears the view. A page whose matches are all in the
+  // other tab adds no rows, so this keeps going until the button leaves the view.
+  const [loadMoreButton, setLoadMoreButton] = useState<HTMLButtonElement | null>(null);
+  const [nearEnd, setNearEnd] = useState(false);
+
+  useEffect(() => {
+    if (!loadMoreButton) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setNearEnd(entry.isIntersecting),
+      { root: loadMoreButton.closest('[data-testid="discussion-list"]'), rootMargin: '200px' }
+    );
+    observer.observe(loadMoreButton);
+    return () => {
+      observer.disconnect();
+      setNearEnd(false);
+    };
+  }, [loadMoreButton]);
+
+  useEffect(() => {
+    if (nearEnd && hasMore && !loadingMore && !loadMoreFailed) void loadMore();
+  }, [nearEnd, hasMore, loadingMore, loadMoreFailed, loadMore]);
 
   const rooms: ChatRoom[] = useMemo(() => data?.messageRooms ?? [], [data]);
 
@@ -94,6 +119,14 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
   );
   const tagFor = (room: ChatRoom): ConversationTag | null =>
     room.postDetails?._id ? tags[room.postDetails._id] ?? null : null;
+
+  const matchesByRoom = useMemo(() => {
+    const map = new Map<string, MessageSearchMatch[]>();
+    messageSearch.matches.forEach((match) => {
+      map.set(match.messageRoomId, [...(map.get(match.messageRoomId) ?? []), match]);
+    });
+    return map;
+  }, [messageSearch.matches]);
 
   const messagesByRoom = useMemo(() => {
     const map = new Map<string, ChatRoomSearchMessage[]>();
@@ -126,41 +159,33 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
   };
 
   // Filter by search: text in the title, post or messages, @person and #tag (#531)
-  const matchedMessage = new Map<string, string>();
-  const searchFiltered = searching
-    ? filteredRooms.filter((room) => {
-      const messages = messagesByRoom.get(room._id) ?? [];
-      const texts = messages.map((m) => m.text || '').filter(Boolean);
-      const matches = conversationMatches(room, query, {
-        messages: texts,
-        people: peopleIn(room, messages),
-        tag: tagFor(room),
-      });
-      if (matches && query.keywords.length > 0) {
-        const word = query.keywords[0];
-        const hit = texts.find((t) => t.toLowerCase().includes(word.toLowerCase()));
-        if (hit) matchedMessage.set(room._id, snippet(hit, word));
-      }
-      return matches;
-    })
+  const matchesSearch = (room: ChatRoom, snippets: string[]): boolean =>
+    conversationMatches(room, query, {
+      messages: snippets,
+      people: peopleIn(room, messagesByRoom.get(room._id) ?? []),
+      tag: tagFor(room),
+    });
+
+  const foundWithoutMessages = searching
+    ? filteredRooms.filter((room) => matchesSearch(room, []))
     : filteredRooms;
 
   if (loading && !data) return <LoadingSpinner size={50} />;
 
-  // Sort by last message time (most recent first), fallback to lastActivity, then created
-  const sortedRooms = [...searchFiltered].sort((a, b) => {
-    const aTime = a.lastMessageTime
-      ? new Date(a.lastMessageTime).getTime()
-      : a.lastActivity
-        ? new Date(a.lastActivity).getTime()
-        : new Date(a.created).getTime();
-    const bTime = b.lastMessageTime
-      ? new Date(b.lastMessageTime).getTime()
-      : b.lastActivity
-        ? new Date(b.lastActivity).getTime()
-        : new Date(b.created).getTime();
-    return bTime - aTime;
+  // Most recent first. Conversations found only through a message follow, in the
+  // server's order, so each new page adds to the end instead of moving the list.
+  const foundIds = new Set(foundWithoutMessages.map((room) => room._id));
+  const roomsById = new Map(filteredRooms.map((room) => [room._id, room]));
+  const foundThroughMessages = [...matchesByRoom.entries()].flatMap(([roomId, matches]) => {
+    const room = roomsById.get(roomId);
+    return room && !foundIds.has(roomId) && matchesSearch(room, matches.map((m) => m.snippet))
+      ? [room]
+      : [];
   });
+  const sortedRooms = [
+    ...[...foundWithoutMessages].sort((a, b) => activityTime(b) - activityTime(a)),
+    ...foundThroughMessages,
+  ];
 
   const handleRoomClick = (room: ChatRoom) => {
     setSelectedChatRoom(room._id);
@@ -196,7 +221,9 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
 
   const noun = filterType === 'chats' ? 'chats' : 'discussions';
 
-  if (sortedRooms.length === 0) {
+  const stillLooking = messageSearch.pending || messageSearch.failed || hasMore;
+
+  if (sortedRooms.length === 0 && !stillLooking) {
     return (
       <div
         className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center text-muted-foreground"
@@ -232,7 +259,9 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
     <div className="flex-1 overflow-y-auto py-2 pr-1" data-testid="discussion-list">
       {searching && (
         <p className="sr-only" role="status">
-          {`${sortedRooms.length} ${sortedRooms.length === 1 ? noun.replace(/s$/, '') : noun} found`}
+          {messageSearch.pending
+            ? 'Searching messages'
+            : `${sortedRooms.length} ${sortedRooms.length === 1 ? noun.replace(/s$/, '') : noun} found`}
         </p>
       )}
       <ul className="flex flex-col gap-2 px-2">
@@ -241,7 +270,8 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
           const isSelected = typeof selectedRoomId === 'string' && selectedRoomId === room._id;
           const tag = tagFor(room);
           const unread = room.unreadMessages ?? 0;
-          const subtitle = matchedMessage.get(room._id) ?? displayInfo.subtitle;
+          const matches = matchesByRoom.get(room._id) ?? [];
+          const subtitle = matches[0]?.snippet ?? displayInfo.subtitle;
 
           return (
             <li key={room._id} data-testid={searching ? "chat-search-result" : undefined}>
@@ -272,6 +302,11 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
                     <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                       {subtitle}
                     </p>
+                    {matches.length > 1 && (
+                      <p className="mt-0.5 text-xs font-medium text-muted-foreground" data-testid="chat-search-more-matches">
+                        {`+${matches.length - 1} more ${matches.length === 2 ? 'match' : 'matches'}`}
+                      </p>
+                    )}
                   </div>
 
                   {unread > 0 && (
@@ -303,6 +338,44 @@ const ChatList: React.FC<ChatListProps> = ({ search = '', filterType, onSearchCh
           );
         })}
       </ul>
+
+      {messageSearch.pending && (
+        <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground" data-testid="chat-search-pending">
+          <LoadingSpinner size={20} />
+          Searching messages…
+        </div>
+      )}
+
+      {messageSearch.failed && (
+        <div className="flex flex-col items-center gap-2 px-4 py-4 text-center" data-testid="chat-search-error">
+          <p className="text-sm text-muted-foreground" role="alert">
+            Couldn&apos;t search message text.
+          </p>
+          <button type="button" onClick={messageSearch.retry} className={footerButtonClass}>
+            Try again
+          </button>
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="flex flex-col items-center gap-2 px-4 py-4 text-center">
+          {loadMoreFailed && (
+            <p className="text-sm text-muted-foreground" role="alert">
+              Couldn&apos;t load more results.
+            </p>
+          )}
+          <button
+            ref={setLoadMoreButton}
+            type="button"
+            onClick={() => void loadMore()}
+            disabled={loadingMore}
+            data-testid="chat-search-load-more"
+            className={footerButtonClass}
+          >
+            {loadingMore ? 'Loading…' : loadMoreFailed ? 'Try again' : 'Load more results'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

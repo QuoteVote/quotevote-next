@@ -25,6 +25,7 @@ export type NotificationType =
   | 'COMMENT'
   | 'COMMENTED'
   | 'QUOTE'
+  | 'QUOTED'
   | 'MESSAGE'
   | 'MENTION'
   | 'SYSTEM'
@@ -36,11 +37,20 @@ export type StoredNotificationType = NotificationType;
 
 export type VoteType = 'up' | 'down';
 
+/** The six passage responses a member can give, as stored in a vote's `tags`. */
+export type VoteTag = '#agree' | '#disagree' | '#true' | '#false' | '#like' | '#dislike';
+
+/** The pair a response belongs to. A member holds at most one response per pair on a passage. */
+export type VoteAxis = 'agreement' | 'truth' | 'liking';
+
 export type MessageType = 'USER' | 'POST' | 'SYSTEM';
 
 export type RosterStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 
 export type AccountStatus = 'active' | 'disabled' | 'suspended' | 'pending';
+
+/** Staff roles (#616). A user may hold several; admins can do everything. */
+export type StaffRole = 'admin' | 'moderator' | 'inviteApprover';
 
 export type VoteOption = '#true' | '#agree' | '#like' | '#false' | '#disagree' | '#dislike';
 
@@ -97,6 +107,7 @@ export interface User {
   admin?: boolean;
   emailVerified?: boolean;
   isModerator?: boolean;
+  isInviteApprover?: boolean;
   _followingId?: string[];
   _followersId?: string[];
   blockedUserIds?: string[];
@@ -300,6 +311,7 @@ export interface Notification {
 /** The post a notification points to; deleted posts are kept so the UI can say so. */
 export interface NotificationPost {
   _id: string;
+  title: string | null;
   url: string | null;
   deleted: boolean;
 }
@@ -558,14 +570,17 @@ export interface CommentInput {
   reaction?: string;
 }
 
+/** `addVote` input, as the GraphQL `VoteInput` sends it: one response as a string. */
 export interface VoteInput {
-  userId: string;
+  /** Must be the signed-in member when sent; the resolver votes as the signed-in member. */
+  userId?: string | null;
   postId: string;
   type: VoteType;
-  startWordIndex?: number;
-  endWordIndex?: number;
-  tags?: string[];
-  content?: string;
+  tags: string;
+  startWordIndex: number;
+  endWordIndex: number;
+  /** Ignored: the resolver stores the passage text from the post itself. */
+  content?: string | null;
 }
 
 export interface QuoteInput {

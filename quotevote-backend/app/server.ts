@@ -1,19 +1,24 @@
+// Must stay first: sets up error tracking before anything else loads (#183).
+import './instrument';
 import express from 'express';
-import { ApolloServer } from '@apollo/server';
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { expressMiddleware } from '@as-integrations/express5';
 import cors from 'cors';
 import http from 'http';
 import mongoose from 'mongoose';
+import { Prisma } from '@prisma/client';
 import dotenv from 'dotenv';
 import { schema } from './data/schema';
-import type { GraphQLContext } from './types/graphql';
+import { createApolloServer } from './apolloServer';
 import { createHttpContext } from './context';
 import { disconnectPrisma, prisma } from './lib/prisma';
 import { startPresenceCleanup } from './data/utils/presence/cleanupStalePresence';
+import { createMissingUniqueIndexes } from './data/utils/uniqueIndexes';
+import type { UniqueIndexModel } from './types/uniqueIndexes';
+import { buildsIndexesAtStartup, mongooseConnectOptions } from './data/utils/databaseConnection';
 import * as auth from './data/utils/authentication';
 import { parseTrustProxy } from './data/utils/trustProxy';
 import { createSubscriptionServer } from './subscriptions';
+import { flushErrorTracking, reportError, shouldReportHttpError } from '~/lib/errorTracking';
 
 // Load environment variables
 dotenv.config();
@@ -30,25 +35,29 @@ const SHUTDOWN_TIMEOUT_MS = 10000;
 async function startServer() {
   // 1. Database Connection (Mongoose v9)
   try {
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(MONGO_URI, mongooseConnectOptions(process.env.NODE_ENV));
     console.log('✅ Connected to MongoDB');
   } catch (err) {
     console.error('❌ MongoDB Connection Error:', err);
     process.exit(1);
   }
 
+  // Unique indexes the schema relies on for duplicate protection (#694). Only adds the
+  // missing ones, and never stops the server from starting. Not in production: starting
+  // the backend never changes indexes there (#716); `pnpm db:unique-indexes --apply`
+  // builds them on purpose before the switch.
+  if (buildsIndexesAtStartup(process.env.NODE_ENV)) {
+    await createMissingUniqueIndexes(
+      (command) => prisma.$runCommandRaw(command as Prisma.InputJsonObject),
+      Prisma.dmmf.datamodel.models as unknown as UniqueIndexModel[]
+    );
+  }
+
   // Start Presence Cleanup Job
   startPresenceCleanup(prisma);
 
   // 2. Apollo Server Setup (v4/v5 Syntax)
-  const server = new ApolloServer<GraphQLContext>({
-    schema,
-    // stop() closes the HTTP server and waits for in-flight requests.
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-    // Signals are handled below. Apollo's own handler also called stop() and kept the
-    // process alive after SIGTERM.
-    stopOnTerminationSignals: false,
-  });
+  const server = createApolloServer(schema, httpServer);
 
   await server.start();
   const subscriptionServer = createSubscriptionServer(httpServer, { schema });
@@ -75,7 +84,7 @@ async function startServer() {
     res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'unavailable' });
   });
 
-  // Auth Routes — guest registration removed (#573: no consentless accounts)
+  // Auth Routes — guest registration removed (#573); /auth/register always refuses (#665)
   app.post('/auth/register', auth.register);
   app.post('/auth/login', auth.login);
   app.post('/auth/refresh', auth.refresh);
@@ -86,6 +95,14 @@ async function startServer() {
     expressMiddleware(server, {
       context: async ({ req, res }) => createHttpContext({ req, res }),
     })
+  );
+
+  // Unexpected errors from the REST routes are reported, then Express answers as before.
+  app.use(
+    (error: unknown, req: express.Request, _res: express.Response, next: express.NextFunction) => {
+      if (shouldReportHttpError(error)) reportError(error, { source: 'http', route: req.path });
+      next(error);
+    }
   );
 
   // 4. Start Server
@@ -117,6 +134,7 @@ async function startServer() {
     // Disconnect database clients in parallel — allSettled ensures one
     // failure does not prevent the other from disconnecting.
     await Promise.allSettled([disconnectPrisma(), mongoose.disconnect()]);
+    await flushErrorTracking();
 
     process.exit(0);
   };

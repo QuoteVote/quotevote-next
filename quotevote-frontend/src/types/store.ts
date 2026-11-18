@@ -75,8 +75,6 @@ export interface ChatState {
   typingUsers: Record<string, string[]>;
   userStatus: string;
   userStatusMessage: string;
-  pendingBuddyRequests: unknown[];
-  blockedUsers: string[];
   statusEditorOpen: boolean;
 }
 

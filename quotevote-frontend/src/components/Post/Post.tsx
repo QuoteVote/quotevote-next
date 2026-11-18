@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, lazy, Suspense } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { includes } from "lodash";
 import moment from "moment";
@@ -13,6 +14,7 @@ import {
   ExternalLink,
   Ban,
   Trash2,
+  ChevronLeft,
   Hash,
   MoreHorizontal,
   MessageCircle,
@@ -37,9 +39,9 @@ import {
   DELETE_POST,
   DELETE_VOTE,
 } from "@/graphql/mutations";
-import { GET_GROUP, GET_POST, GET_TOP_POSTS, GET_USERS } from "@/graphql/queries";
+import { GET_POST, GET_TAG, GET_TOP_POSTS, GET_USERS } from "@/graphql/queries";
 import useGuestGuard from "@/hooks/useGuestGuard";
-import { POST_ACTION_PILL_CLASS } from "@/lib/constants/postActions";
+import { POST_ACTION_NEUTRAL_CLASS, POST_ACTION_PILL_CLASS } from "@/lib/constants/postActions";
 import { VOTE_AXIS, VOTE_LABELS } from "@/lib/constants/voteAxes";
 import { cn } from "@/lib/utils";
 import { scrollActionIntoDiscussion } from "@/lib/utils/discussionSplit";
@@ -133,11 +135,11 @@ export default function Post({
     errorPolicy: "all",
   });
 
-  // Post has no nested `group` field; cache-first reuses GET_GROUP (also used by PostCard)
-  // so the same groupId does not refetch on re-render or return visits in this session.
-  const { data: groupData } = useQuery<{ group?: { _id: string; title: string } }>(GET_GROUP, {
-    variables: { groupId: post.groupId || "" },
-    skip: !post.groupId,
+  // Post has no nested tag field; cache-first reuses GET_TAG (also used by PostCard)
+  // so the same tag does not refetch on re-render or return visits in this session.
+  const { data: tagData } = useQuery<{ tag?: { _id: string; title: string } | null }>(GET_TAG, {
+    variables: { tagId: post.tagId || "" },
+    skip: !post.tagId,
     errorPolicy: "all",
     fetchPolicy: "cache-first",
   });
@@ -444,18 +446,31 @@ export default function Post({
   const discussionCount = post.comments?.length || 0;
   const citationHref = post.citationUrl ? sanitizeUrl(post.citationUrl) : null;
   const citationDomain = citationHref ? getDomain(citationHref) : null;
-  const communityTitle = groupData?.group?.title;
+  const communityTitle = tagData?.tag?.title;
 
   return (
-    <div className="flex flex-col" role="article" aria-label={title || "Post"}>
-      {/* ── Non-sticky header area ──────────────────────────────────────── */}
-      <div className="px-4 sm:px-6 pt-5 pb-2">
+    <div
+      className="flex min-h-full flex-col bg-[var(--shell-surface)]"
+      role="article"
+      aria-label={title || "Post"}
+    >
+      {/* ── Header: back link, author, topic and source, title ── */}
+      <div className="font-redesign flex flex-col gap-4 px-4 pt-5 pb-1 sm:px-6 lg:pt-8 lg:pr-14 lg:pl-[88px]">
+        <Link
+          href="/"
+          className="hidden items-center gap-1.5 self-start text-[13.5px] font-bold text-[var(--shell-muted)] hover:text-[var(--shell-ink)] md:inline-flex"
+        >
+          <ChevronLeft className="size-4" aria-hidden="true" />
+          Back to quotes
+        </Link>
+
         {/* Author row */}
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
           <button
             type="button"
             onClick={() => username && router.push(`/profile/${username}`)}
             className="shrink-0 rounded-full overflow-hidden"
+            aria-label={name || username ? `${name || username}'s profile` : "Author profile"}
           >
             <DisplayAvatar
               avatar={avatar as string | Record<string, unknown> | undefined}
@@ -463,84 +478,71 @@ export default function Post({
                  use (display name, falling back to username) so an unset
                  avatar looks identical across the post, profile and messages. */
               username={name || username || undefined}
-              size={56}
+              size={44}
+              className="size-11"
             />
           </button>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <button
-                type="button"
-                onClick={() => username && router.push(`/profile/${username}`)}
-                className="text-lg font-bold text-foreground leading-none hover:underline"
-              >
-                {name || username}
-              </button>
-              {!isOwner && (
-                <FollowButton
-                  isFollowing={isFollowing}
-                  profileUserId={userId}
-                  username={username || ""}
-                  className="h-8 rounded-full px-4 text-sm font-semibold"
-                />
-              )}
-            </div>
-            {username ? (
-              <p className="mt-1 text-sm text-muted-foreground truncate">@{username}</p>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Post metadata: community, source, timestamp */}
-        <div data-testid="post-metadata" className="flex items-center gap-2.5 flex-wrap mb-5">
-          {communityTitle ? (
+          <div className="flex min-w-0 flex-1 flex-col md:flex-none">
             <button
               type="button"
-              aria-label={`Filter by #${communityTitle}`}
-              onClick={() => router.push(`/?group=${post.groupId}`)}
-              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 transition-colors cursor-pointer"
+              onClick={() => username && router.push(`/profile/${username}`)}
+              className="truncate text-left text-[15.5px] font-extrabold leading-tight text-[var(--shell-ink)] hover:underline"
             >
-              <Hash className="size-3.5 stroke-[2.5]" />
-              {communityTitle}
+              {name || username}
             </button>
-          ) : null}
-          {communityTitle && citationDomain ? (
-            <span className="text-border select-none" aria-hidden>
-              |
+            <span className="truncate text-[13px] font-semibold text-[var(--shell-muted)]">
+              {username ? `@${username} · ` : ""}
+              <time dateTime={created} suppressHydrationWarning>
+                {moment(created).format("MMM D, YYYY · h:mm A")}
+              </time>
             </span>
-          ) : null}
-          {citationHref && citationDomain ? (
-            <a
-              href={citationHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Source: ${citationDomain} (opens in a new tab)`}
-              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors dark:text-blue-400 dark:bg-blue-950/40 dark:hover:bg-blue-950/70"
-            >
-              <span>Source: {citationDomain}</span>
-              <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
-            </a>
-          ) : null}
-          <div className="ml-auto flex items-center gap-2.5 shrink-0">
-            {(communityTitle || citationDomain) && (
-              <span className="text-border select-none" aria-hidden>
-                |
-              </span>
-            )}
-            <time
-              className="text-right text-[13px] text-muted-foreground leading-tight"
-              dateTime={created}
-              suppressHydrationWarning
-            >
-              <span className="block">{moment(created).format("MMM D, YYYY")}</span>
-              <span className="block">{moment(created).format("h:mm A")}</span>
-            </time>
           </div>
+          {!isOwner && (
+            <FollowButton
+              isFollowing={isFollowing}
+              profileUserId={userId}
+              username={username || ""}
+              className="h-9 shrink-0 rounded-[10px] px-[13px] text-[13px] font-bold md:ml-1"
+            />
+          )}
+
+          {/* Topic and source */}
+          {communityTitle || (citationHref && citationDomain) ? (
+            <div
+              data-testid="post-metadata"
+              className="flex basis-full flex-wrap items-center gap-1.5 md:ml-auto md:basis-auto"
+            >
+              {communityTitle ? (
+                <button
+                  type="button"
+                  aria-label={`Filter by #${communityTitle}`}
+                  onClick={() => router.push(`/?tag=${post.tagId}`)}
+                  className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full bg-[var(--shell-green-soft)] px-[11px] text-[12.5px] font-bold text-[var(--shell-green)] transition-colors hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50"
+                >
+                  <Hash className="size-3.5 stroke-[2.5]" aria-hidden="true" />
+                  {communityTitle}
+                </button>
+              ) : null}
+              {citationHref && citationDomain ? (
+                <a
+                  href={citationHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Source: ${citationDomain} (opens in a new tab)`}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-[var(--shell-key-line)] bg-[var(--shell-surface)] px-[11px] text-[12.5px] font-semibold text-[var(--shell-ink-2)] transition-colors hover:bg-[var(--shell-hover)]"
+                >
+                  <span>Source: {citationDomain}</span>
+                  <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
+                </a>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {/* Title */}
         <h1
           data-testid="post-detail-title"
-          className="text-[1.75rem] sm:text-[2rem] font-extrabold text-foreground leading-[1.15] tracking-[-0.02em] mb-1"
+          className="max-w-[720px] text-[32px]! leading-[1.08]! font-extrabold! tracking-[-0.03em]! text-[var(--shell-ink)] md:text-[46px]!"
         >
           {title}
         </h1>
@@ -549,14 +551,16 @@ export default function Post({
       {/* ── Action bar ── */}
       <div
         className={cn(
-          "flex items-center gap-2 px-4 sm:px-6 pt-4 pb-4",
-          mobileDiscussionOpen ? "relative bg-background" : "sticky top-0 z-10 bg-background"
+          "flex items-center gap-2 px-4 pt-4 pb-3 sm:px-6 lg:pr-14 lg:pl-[88px]",
+          mobileDiscussionOpen
+            ? "relative bg-[var(--shell-surface)]"
+            : "sticky top-0 z-10 bg-[var(--shell-surface)]"
         )}
         role="toolbar"
         aria-label="Post actions"
       >
         {/* Wraps instead of scrolling with a hidden scrollbar, so More options is never cut off in a narrow post pane (#516). */}
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2">
+        <div className="flex flex-wrap items-center gap-2">
           <RejectButton
             selected={hasRejected}
             count={rejectCount}
@@ -570,9 +574,10 @@ export default function Post({
             aria-label={hasApproved ? "Remove approval" : "Approve this post"}
           />
 
-          <span className="text-border px-0.5 select-none" aria-hidden>
-            |
-          </span>
+          <span
+            className="mx-1 hidden h-7 w-px bg-[var(--shell-key-line)] sm:block"
+            aria-hidden="true"
+          />
 
           <BookmarkIconButton
             post={{ _id: post._id, bookmarkedBy: post.bookmarkedBy || undefined }}
@@ -584,9 +589,11 @@ export default function Post({
             <button
               type="button"
               onClick={onOpenDiscussion}
+              // Phones open Discussion from the bar at the bottom instead.
               className={cn(
                 POST_ACTION_PILL_CLASS,
-                "inline-flex items-center gap-1 border border-border bg-background text-muted-foreground hover:bg-muted/70 transition-colors shrink-0"
+                POST_ACTION_NEUTRAL_CLASS,
+                "hidden items-center gap-2 transition-colors shrink-0 sm:inline-flex"
               )}
               aria-label={`${discussionCount} comment${discussionCount !== 1 ? "s" : ""}`}
               data-testid="post-comment-count"
@@ -598,7 +605,8 @@ export default function Post({
             <span
               className={cn(
                 POST_ACTION_PILL_CLASS,
-                "inline-flex items-center gap-1 border border-border bg-background text-muted-foreground shrink-0"
+                POST_ACTION_NEUTRAL_CLASS,
+                "inline-flex items-center gap-2 shrink-0"
               )}
               aria-label={`${discussionCount} comment${discussionCount !== 1 ? "s" : ""}`}
               data-testid="post-comment-count"
@@ -613,7 +621,11 @@ export default function Post({
               <Button
                 variant="outline"
                 size="icon"
-                className="size-8 rounded-full text-muted-foreground border-border bg-background shadow-none shrink-0"
+                className={cn(
+                  POST_ACTION_PILL_CLASS,
+                  POST_ACTION_NEUTRAL_CLASS,
+                  "w-10 shrink-0 px-0 sm:w-11 sm:px-0"
+                )}
                 aria-label="More options"
               >
                 <MoreHorizontal className="size-4" />
@@ -643,21 +655,22 @@ export default function Post({
       </div>
 
       {/* ── Post body ───────────────────────────────────────────────────── */}
-      <div className="px-4 sm:px-6 py-4">
+      <div className="font-redesign px-4 py-4 sm:px-6 lg:pr-14 lg:pl-[88px]">
         {/* Selectable post text + floating VotingPopup */}
         {passageActivity.length > 0 && (
-          <p data-testid="passage-activity-hint" className="mb-2 text-xs text-foreground/70">
-            <span className="underline decoration-dotted decoration-2 decoration-[#2f7a4c] underline-offset-4 dark:decoration-[#7fdc9c]/80">
-              Underlined
-            </span>{" "}
-            passages already have votes or comments. Select one to see them in Discussion.
+          <p
+            data-testid="passage-activity-hint"
+            className="mb-4 max-w-[700px] text-[13px]! leading-normal! font-semibold text-[var(--shell-muted)] sm:text-[13.5px]!"
+          >
+            Highlighted passages already have votes or comments. Select one to see them in
+            Discussion, or select any words to respond.
           </p>
         )}
 
         <div
           data-testid="post-detail-body"
           className={cn(
-            "text-[16px] leading-[1.7] text-foreground/85",
+            "max-w-[700px] text-[19px] leading-[1.75] font-medium text-[var(--shell-ink)] md:text-[22px] md:leading-[1.85]",
             postHeight && postHeight >= 742 && "max-h-[60vh] overflow-y-auto"
           )}
         >
@@ -670,9 +683,10 @@ export default function Post({
             activity={passageActivity}
             onActivityClick={handleActivityClick}
           >
-            {(selection, { dismiss }) => (
+            {(selection, { dismiss, sheet }) => (
               <Suspense fallback={null}>
                 <VotingPopup
+                  variant={sheet ? "sheet" : "popover"}
                   onVote={(vote) => handleVoting(vote, selection)}
                   onQuote={handleQuote}
                   selectedText={selection}

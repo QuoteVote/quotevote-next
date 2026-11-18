@@ -240,7 +240,7 @@ export function AvatarEditor({
       </div>
 
       {/* Phone action bar, above the app's bottom navigation */}
-      <div className="fixed inset-x-0 bottom-[56px] z-[55] flex gap-2.5 border-t border-[var(--ae-line)] bg-[var(--ae-surface)] px-4 pt-3 pb-3 md:bottom-0 lg:hidden">
+      <div className="fixed inset-x-0 bottom-[var(--app-tabbar-h)] z-[55] flex gap-2.5 border-t border-[var(--ae-line)] bg-[var(--ae-surface)] px-4 pt-3 pb-3 md:bottom-0 lg:hidden">
         <button
           type="button"
           className={cn(SECONDARY, "h-12 flex-1")}

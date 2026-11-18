@@ -42,53 +42,32 @@ describe('Auth Integration (Mocked DB)', () => {
   });
 
   describe('POST /auth/register', () => {
-    it('should register a new user', async () => {
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
-      (prisma.user.create as jest.Mock).mockResolvedValue({
-        id: 'mockId',
-        username: 'test',
-        email: 'test@test.com',
-        name: 'Test',
-      });
+    const validRegistration = {
+      username: 'test',
+      password: 'password',
+      email: 'test@test.com',
+      name: 'Test',
+    };
 
-      const res = await request(app).post('/auth/register').send({
-        username: 'test',
-        password: 'password',
-        email: 'test@test.com',
-        name: 'Test',
-        acceptedTermsVersion: CURRENT_TERMS_VERSION,
-      });
+    it.each([
+      ['with the current Terms version', { acceptedTermsVersion: CURRENT_TERMS_VERSION }],
+      ['without a Terms version', {}],
+    ])('refuses direct registration %s and creates no account', async (_label, extra) => {
+      const res = await request(app)
+        .post('/auth/register')
+        .send({ ...validRegistration, ...extra });
 
-      expect(res.status).toBe(201);
-      expect(res.body).toHaveProperty('user');
-      expect(prisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            termsAcceptances: {
-              create: expect.objectContaining({
-                termsVersion: CURRENT_TERMS_VERSION,
-                source: 'direct_registration',
-              }),
-            },
-          }),
-        })
-      );
+      expect(res.status).toBe(403);
+      expect(res.body.error_message).toMatch(/invitation-only/);
+      expect(res.body).not.toHaveProperty('user');
+      expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
-    it('should fail if Terms version is missing', async () => {
-      const res = await request(app).post('/auth/register').send({
-        username: 'test',
-        password: 'password',
-        email: 'test@test.com',
-        name: 'Test',
-      });
-      expect(res.status).toBe(400);
-      expect(res.body.error_message).toMatch(/Terms of Service/);
-    });
+    it('refuses an empty request', async () => {
+      const res = await request(app).post('/auth/register').send({});
 
-    it('should fail if fields are missing', async () => {
-      const res = await request(app).post('/auth/register').send({ username: 'test' });
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(403);
+      expect(prisma.user.create).not.toHaveBeenCalled();
     });
   });
 

@@ -1,5 +1,11 @@
 import { getLoginToken, postLogin } from '../../src/lib/auth/restLogin';
 
+/**
+ * Route pattern for mocking GraphQL in specs. It matches whichever backend the
+ * frontend under test calls, so mocks work against any local or test API.
+ */
+export const GRAPHQL_ROUTE = '**/graphql';
+
 const DEFAULT_API_URL = 'http://localhost:4000';
 
 export function getApiUrl(): string {
@@ -49,60 +55,27 @@ export async function loginViaApi(
   return { token, user: data.user as AuthSession['user'] };
 }
 
-export async function registerAuthorUser(input: {
-  username: string;
-  password: string;
-  name: string;
-  email: string;
-}): Promise<void> {
-  const baseUrl = getApiUrl();
-  const paths = ['/auth/register', '/register'];
-
-  for (const path of paths) {
-    const response = await fetch(`${baseUrl}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-
-    if (response.status === 409) {
-      return;
-    }
-
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.includes('application/json')) {
-      continue;
-    }
-
-    if (response.ok) {
-      return;
-    }
-
-    const data = (await response.json()) as { error_message?: string; message?: string };
-    throw new Error(
-      data.error_message ?? data.message ?? `Registration failed with status ${response.status}`
-    );
-  }
-
-  throw new Error('Registration failed: no register endpoint responded with JSON');
-}
-
 interface GraphQLPayload<T> {
   data?: T;
   errors?: Array<{ message: string }>;
 }
 
-async function graphqlRequest<T>(
-  token: string,
+/** GraphQL POST against the E2E API. Pass `token` when the operation needs auth. */
+export async function graphqlRequest<T>(
   query: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
+  token?: string | null
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${getApiUrl()}/graphql`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: JSON.stringify({ query, variables }),
   });
 
@@ -126,7 +99,6 @@ async function graphqlRequest<T>(
 export async function deletePostViaApi(postId: string, token: string): Promise<void> {
   try {
     await graphqlRequest<{ deletePost?: { _id: string } }>(
-      token,
       `
         mutation deletePost($postId: String!) {
           deletePost(postId: $postId) {
@@ -134,7 +106,8 @@ export async function deletePostViaApi(postId: string, token: string): Promise<v
           }
         }
       `,
-      { postId }
+      { postId },
+      token
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -142,29 +115,28 @@ export async function deletePostViaApi(postId: string, token: string): Promise<v
   }
 }
 
-export async function findGroupIdByTitle(token: string, title: string): Promise<string> {
+export async function findTagIdByTitle(token: string, title: string): Promise<string> {
+  // No limit: the new backend reads `limit: 0` as none, and the composer asks the same way.
   const data = await graphqlRequest<{
-    groups: Array<{ _id: string; title: string; privacy?: string | null }>;
+    tags: Array<{ _id: string; title: string; privacy?: string | null }>;
   }>(
-    token,
     `
-      query groups($limit: Int!) {
-        groups(limit: $limit) {
+      query tags {
+        tags {
           _id
           title
           privacy
         }
       }
     `,
-    { limit: 200 }
+    undefined,
+    token
   );
 
-  const match = data.groups.find(
-    (group) => group.title.toLowerCase() === title.toLowerCase()
-  );
+  const match = data.tags.find((tag) => tag.title.toLowerCase() === title.toLowerCase());
 
   if (!match?._id) {
-    throw new Error(`No group/tag found with title "${title}"`);
+    throw new Error(`No tag found with title "${title}"`);
   }
 
   return match._id;
@@ -174,7 +146,7 @@ export async function createPostViaApi(
   token: string,
   input: {
     userId: string;
-    groupId: string;
+    tagId: string;
     title: string;
     text: string;
   }
@@ -182,7 +154,6 @@ export async function createPostViaApi(
   const data = await graphqlRequest<{
     addPost: { _id: string; url?: string | null };
   }>(
-    token,
     `
       mutation addPost($post: PostInput!) {
         addPost(post: $post) {
@@ -194,11 +165,12 @@ export async function createPostViaApi(
     {
       post: {
         userId: input.userId,
-        groupId: input.groupId,
+        tagId: input.tagId,
         title: input.title,
         text: input.text,
       },
-    }
+    },
+    token
   );
 
   if (!data.addPost?._id) {
@@ -219,7 +191,6 @@ export async function searchUsersViaApi(
   query: string
 ): Promise<SearchUserResult[]> {
   const data = await graphqlRequest<{ searchUser: SearchUserResult[] }>(
-    token,
     `
       query searchUsernames($query: String!) {
         searchUser(queryName: $query) {
@@ -229,7 +200,8 @@ export async function searchUsersViaApi(
         }
       }
     `,
-    { query }
+    { query },
+    token
   );
 
   return data.searchUser ?? [];
@@ -265,7 +237,6 @@ export async function createMessageViaApi(
   const data = await graphqlRequest<{
     createMessage: { _id: string; messageRoomId: string; text: string };
   }>(
-    token,
     `
       mutation chat($message: MessageInput!) {
         createMessage(message: $message) {
@@ -275,7 +246,8 @@ export async function createMessageViaApi(
         }
       }
     `,
-    { message }
+    { message },
+    token
   );
 
   if (!data.createMessage?._id || !data.createMessage.messageRoomId) {
@@ -288,7 +260,6 @@ export async function createMessageViaApi(
 export async function deleteMessageViaApi(messageId: string, token: string): Promise<void> {
   try {
     await graphqlRequest<{ deleteMessage?: { _id: string } }>(
-      token,
       `
         mutation deleteMessage($messageId: String!) {
           deleteMessage(messageId: $messageId) {
@@ -296,10 +267,97 @@ export async function deleteMessageViaApi(messageId: string, token: string): Pro
           }
         }
       `,
-      { messageId }
+      { messageId },
+      token
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(`deleteMessage cleanup warning: ${message}`);
   }
+}
+
+/** #498 — password reset email (public mutation). */
+export async function sendPasswordResetEmailViaApi(email: string): Promise<boolean> {
+  const data = await graphqlRequest<{ sendPasswordResetEmail: boolean }>(
+    `
+      mutation sendPasswordResetEmail($email: String!) {
+        sendPasswordResetEmail(email: $email)
+      }
+    `,
+    { email }
+  );
+  return data.sendPasswordResetEmail === true;
+}
+
+/** #498 — guest access request; returns the pending user id. */
+export async function requestUserAccessViaApi(
+  email: string
+): Promise<{ _id: string; email: string }> {
+  const data = await graphqlRequest<{
+    requestUserAccess: { _id: string; email: string };
+  }>(
+    `
+      mutation requestUserAccess($requestUserAccessInput: RequestUserAccessInput!) {
+        requestUserAccess(requestUserAccessInput: $requestUserAccessInput) {
+          _id
+          email
+        }
+      }
+    `,
+    { requestUserAccessInput: { email } }
+  );
+
+  if (!data.requestUserAccess?._id) {
+    throw new Error('requestUserAccess did not return a user id');
+  }
+  return data.requestUserAccess;
+}
+
+/** #498 — admin approve / resend / decline (`inviteStatus` "4" | "2" | "1"). */
+export async function sendUserInviteApprovalViaApi(
+  token: string,
+  userId: string,
+  inviteStatus: string
+): Promise<{ code?: string; message?: string }> {
+  const data = await graphqlRequest<{
+    sendUserInviteApproval: { code?: string; message?: string } | null;
+  }>(
+    `
+      mutation sendUserInviteApproval($userId: String!, $inviteStatus: String!) {
+        sendUserInviteApproval(userId: $userId, inviteStatus: $inviteStatus)
+      }
+    `,
+    { userId, inviteStatus },
+    token
+  );
+
+  const result = data.sendUserInviteApproval;
+  if (!result) {
+    throw new Error('sendUserInviteApproval returned an empty result');
+  }
+  return result;
+}
+
+/** A member invites someone by email (#672); the invite email carries the signup link (#697). */
+export async function sendUserInviteViaApi(
+  token: string,
+  email: string
+): Promise<{ code?: string; message?: string }> {
+  const data = await graphqlRequest<{
+    sendUserInvite: { code?: string; message?: string } | null;
+  }>(
+    `
+      mutation sendUserInvite($email: String!) {
+        sendUserInvite(email: $email)
+      }
+    `,
+    { email },
+    token
+  );
+
+  const result = data.sendUserInvite;
+  if (!result) {
+    throw new Error('sendUserInvite returned an empty result');
+  }
+  return result;
 }

@@ -307,6 +307,26 @@ describe('RequestInviteDialog', () => {
     console.error = originalError;
   });
 
+  it('tells the person to check their inbox when an invite is still open (#691)', async () => {
+    const user = userEvent.setup({ delay: null });
+    mockMutation.mockRejectedValue(
+      new Error('An invite was already sent to this email. Check your inbox for the signup link.')
+    );
+
+    render(<RequestInviteDialog {...defaultProps} />);
+
+    await user.type(screen.getByPlaceholderText(/enter your email address/i), 'test@example.com');
+    await user.click(screen.getByRole('button', { name: /^Request Invite$/ }));
+
+    expect(
+      await screen.findByText(
+        'An invite was already sent to this email. Check your inbox for the signup link.'
+      )
+    ).toBeInTheDocument();
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
   it('submits on Enter key press', async () => {
     const user = userEvent.setup({ delay: null });
     render(<RequestInviteDialog {...defaultProps} />);

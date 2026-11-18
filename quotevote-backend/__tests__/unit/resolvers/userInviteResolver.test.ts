@@ -5,6 +5,7 @@ import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import { userInviteResolver } from '~/data/resolvers/userInviteResolver';
 import * as auth from '~/data/utils/authentication';
+import sendGridEmail from '~/data/utils/send-grid-mail';
 import { CURRENT_TERMS_VERSION } from '~/data/utils/termsPolicy';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -37,6 +38,13 @@ function mockContext(overrides: Partial<GraphQLContext> = {}): GraphQLContext {
         findUnique: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
+      },
+      userInvite: {
+        findUnique: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
+        create: jest.fn().mockResolvedValue({ id: '507f1f77bcf86cd799439033' }),
+        updateMany: jest.fn(),
       },
     },
     user: { _id: userId, admin: true },
@@ -163,6 +171,9 @@ describe('userInviteResolver', () => {
         })
       );
       expect(result).toMatchObject({ _id: userId, username: 'newuser' });
+      // An admin-approval link has no invite row, so that path is unchanged.
+      expect(ctx.prisma.userInvite.findUnique).not.toHaveBeenCalled();
+      expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
     });
 
     it('rejects when TermsAcceptance write fails (unique constraint)', async () => {
@@ -212,6 +223,40 @@ describe('userInviteResolver', () => {
           ctx
         )
       ).rejects.toThrow(/Invalid invite signup token/);
+    });
+
+    it('rejects a missing token', async () => {
+      const ctx = mockContext();
+      await expect(
+        userInviteResolver.Mutation.completeSignup(
+          null,
+          {
+            token: '',
+            username: 'newuser',
+            password: 'Password1',
+            acceptedTermsVersion: CURRENT_TERMS_VERSION,
+          },
+          ctx
+        )
+      ).rejects.toThrow(/token, username, and password are required/);
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects an expired invite token', async () => {
+      const ctx = mockContext();
+      await expect(
+        userInviteResolver.Mutation.completeSignup(
+          null,
+          {
+            token: auth.generateInviteSignupToken(userId, -60),
+            username: 'newuser',
+            password: 'Password1',
+            acceptedTermsVersion: CURRENT_TERMS_VERSION,
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Invite signup token has expired/);
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
     });
   });
 
@@ -335,25 +380,154 @@ describe('userInviteResolver', () => {
         })
       );
     });
+  });
 
-    it('does not reset an approved invite (status 4) back to requested', async () => {
+  describe('access request after an unused invite (#691)', () => {
+    const invitee = 'invited@example.com';
+    const lapsed = new Date(Date.now() - 60_000);
+    const open = new Date(Date.now() + 60 * 60_000);
+
+    function setUp(
+      invites: Array<{ id: string; expiresAt: Date | null }>,
+      account: Record<string, unknown> = {}
+    ): GraphQLContext {
       const ctx = mockContext({ user: null });
       (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue({
         id: userId,
-        email: 'approved@example.com',
-        username: 'approved@example.com',
+        email: invitee,
+        username: invitee,
         status: 4,
         accountStatus: 'active',
         password: null,
+        ...account,
       });
+      (ctx.prisma.userInvite.findMany as jest.Mock).mockResolvedValue(invites);
+      (ctx.prisma.userInvite.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (ctx.prisma.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      return ctx;
+    }
 
-      const result = await userInviteResolver.Mutation.requestUserAccess(
+    const request = (ctx: GraphQLContext) =>
+      userInviteResolver.Mutation.requestUserAccess(
         null,
-        { requestUserAccessInput: { email: 'approved@example.com' } },
+        { requestUserAccessInput: { email: invitee } },
         ctx
       );
 
+    it('points the person at an invite that is still open', async () => {
+      const ctx = setUp([{ id: 'inv-open', expiresAt: open }]);
+
+      await expect(request(ctx)).rejects.toThrow(
+        'An invite was already sent to this email. Check your inbox for the signup link.'
+      );
+      expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
+      expect(sendGridEmail).not.toHaveBeenCalled();
+    });
+
+    it('puts the account back in the admin queue once its invite has lapsed', async () => {
+      const ctx = setUp([{ id: 'inv-1', expiresAt: lapsed }]);
+
+      const result = await request(ctx);
+
+      expect(ctx.prisma.userInvite.findMany).toHaveBeenCalledWith({
+        where: { email: invitee, status: 'pending' },
+        select: { id: true, expiresAt: true },
+      });
+      expect(ctx.prisma.userInvite.updateMany).toHaveBeenCalledWith({
+        where: { id: 'inv-1', status: 'pending', expiresAt: lapsed },
+        data: { status: 'expired' },
+      });
+      expect(ctx.prisma.user.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: userId,
+          status: 4,
+          OR: [{ password: null }, { password: { isSet: false } }],
+        },
+        data: { status: 1 },
+      });
+      expect(sendGridEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: invitee, templateId: 'tpl-confirm' })
+      );
+      expect(result._id).toBe(userId);
+    });
+
+    it('closes every lapsed invite, member and admin alike', async () => {
+      const ctx = setUp([
+        { id: 'inv-member', expiresAt: lapsed },
+        { id: 'inv-admin', expiresAt: new Date(Date.now() - 86_400_000) },
+      ]);
+
+      await request(ctx);
+
+      expect(ctx.prisma.userInvite.updateMany).toHaveBeenCalledTimes(2);
+      expect(ctx.prisma.user.updateMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('re-queues an approval made before approvals were recorded', async () => {
+      const ctx = setUp([]);
+
+      await request(ctx);
+
+      expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { status: 1 } })
+      );
+    });
+
+    it('stops when a member renews the invite at the same moment', async () => {
+      const ctx = setUp([{ id: 'inv-1', expiresAt: lapsed }]);
+      (ctx.prisma.userInvite.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      (ctx.prisma.userInvite.findUnique as jest.Mock).mockResolvedValue({ status: 'pending' });
+
+      await expect(request(ctx)).rejects.toThrow('An invite was already sent to this email');
+      expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
+      expect(sendGridEmail).not.toHaveBeenCalled();
+    });
+
+    it('lets two requests at once both go through', async () => {
+      // The other request closed the invite and moved the account first.
+      const ctx = setUp([{ id: 'inv-1', expiresAt: lapsed }]);
+      (ctx.prisma.userInvite.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      (ctx.prisma.userInvite.findUnique as jest.Mock).mockResolvedValue({ status: 'expired' });
+      (ctx.prisma.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({ status: 1, password: null });
+
+      const result = await request(ctx);
+
+      expect(result._id).toBe(userId);
+      expect(sendGridEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops when the person finishes signup at the same moment', async () => {
+      const ctx = setUp([{ id: 'inv-1', expiresAt: lapsed }]);
+      (ctx.prisma.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({ status: 4, password: 'hash' });
+
+      await expect(request(ctx)).rejects.toThrow('Email already exists');
+      expect(sendGridEmail).not.toHaveBeenCalled();
+    });
+
+    it('refuses a finished account whatever its moderation status', async () => {
+      for (const accountStatus of ['active', 'suspended', 'disabled']) {
+        const ctx = setUp([], { password: 'hash', accountStatus });
+
+        await expect(request(ctx)).rejects.toThrow('Email already exists');
+        expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
+      }
+      expect(sendGridEmail).not.toHaveBeenCalled();
+    });
+
+    it('leaves a pending request alone when it is sent again', async () => {
+      const ctx = setUp([], { status: 1 });
+
+      const result = await request(ctx);
+
+      expect(ctx.prisma.user.create).not.toHaveBeenCalled();
       expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
+      expect(ctx.prisma.userInvite.findMany).not.toHaveBeenCalled();
+      expect(sendGridEmail).toHaveBeenCalledTimes(1);
       expect(result._id).toBe(userId);
     });
   });
@@ -386,6 +560,45 @@ describe('userInviteResolver', () => {
       expect(result.inviteToken).toBeDefined();
     });
 
+    it('records the approval and binds its link to it (#691)', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        email: 'Invitee@Example.com',
+        username: 'invitee',
+        password: null,
+        status: 1,
+      });
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({});
+      const before = Date.now();
+
+      const result = await userInviteResolver.Mutation.sendUserInviteApproval(
+        null,
+        { userId, inviteStatus: 'approved' },
+        ctx
+      );
+
+      const { data } = (ctx.prisma.userInvite.create as jest.Mock).mock.calls[0][0];
+      expect(data).toEqual({
+        email: 'invitee@example.com',
+        status: 'pending',
+        expiresAt: expect.any(Date),
+      });
+      const lifetime = data.expiresAt.getTime() - before;
+      expect(lifetime).toBeGreaterThanOrEqual(auth.ADMIN_INVITE_TTL_SECONDS * 1000 - 1000);
+      expect(lifetime).toBeLessThanOrEqual(auth.ADMIN_INVITE_TTL_SECONDS * 1000 + 1000);
+
+      // Same claim as a member link: the record decides whether it still works.
+      const payload = auth.verifyInviteSignupToken(result.inviteToken as string);
+      expect(payload).toEqual(
+        expect.objectContaining({
+          userId,
+          inviteId: '507f1f77bcf86cd799439033',
+          email: 'invitee@example.com',
+        })
+      );
+    });
+
     it('sets status 2 on decline without disabling the account', async () => {
       const ctx = mockContext();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
@@ -410,6 +623,160 @@ describe('userInviteResolver', () => {
         select: { id: true },
       });
       expect(result.message).toMatch(/declined/);
+    });
+  });
+
+  describe('member invite links (#672)', () => {
+    const inviteId = '507f1f77bcf86cd799439022';
+    const invitee = 'friend@example.com';
+    const HOUR_MS = 60 * 60 * 1000;
+
+    const memberToken = (email = invitee) =>
+      auth.generateInviteSignupToken(userId, auth.MEMBER_INVITE_TTL_SECONDS, { inviteId, email });
+
+    /**
+     * An approved, unfinished account and its member invite, open for another hour.
+     * `invite` overrides the invite's fields, or is null when the row is gone.
+     */
+    const setUp = (invite: Readonly<Record<string, unknown>> | null = {}) => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        email: invitee,
+        username: invitee,
+        password: null,
+        status: 4,
+        accountStatus: 'active',
+      });
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
+        id: userId,
+        username: 'newmember',
+        accountStatus: 'active',
+      });
+      (ctx.prisma.userInvite.findUnique as jest.Mock).mockResolvedValue(
+        invite && {
+          email: invitee,
+          status: 'pending',
+          expiresAt: new Date(Date.now() + HOUR_MS),
+          ...invite,
+        }
+      );
+      (ctx.prisma.userInvite.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      return ctx;
+    };
+
+    const complete = (ctx: GraphQLContext, token = memberToken()) =>
+      userInviteResolver.Mutation.completeSignup(
+        null,
+        {
+          token,
+          username: 'newmember',
+          password: 'Password1',
+          acceptedTermsVersion: CURRENT_TERMS_VERSION,
+        },
+        ctx
+      );
+
+    const verify = (ctx: GraphQLContext, token = memberToken()) =>
+      userInviteResolver.Query.verifyInviteSignupToken(null, { token }, ctx);
+
+    const unusable = [
+      ['used', { status: 'accepted' }],
+      ['expired', { expiresAt: new Date(Date.now() - HOUR_MS) }],
+      ['sent to another address', { email: 'someone.else@example.com' }],
+      ['missing', null],
+    ] as const;
+
+    it('claims the invite once, then activates the account', async () => {
+      const ctx = setUp();
+
+      await expect(complete(ctx)).resolves.toMatchObject({ _id: userId });
+
+      expect(ctx.prisma.userInvite.updateMany).toHaveBeenCalledWith({
+        where: { id: inviteId, status: 'pending', expiresAt: { gt: expect.any(Date) } },
+        data: { status: 'accepted' },
+      });
+      expect(ctx.prisma.user.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('lets only one of two simultaneous requests through', async () => {
+      const ctx = setUp();
+      (ctx.prisma.userInvite.updateMany as jest.Mock)
+        .mockResolvedValueOnce({ count: 1 })
+        .mockResolvedValueOnce({ count: 0 });
+
+      const results = await Promise.allSettled([complete(ctx), complete(ctx)]);
+
+      expect(results.map((r) => r.status).sort()).toEqual(['fulfilled', 'rejected']);
+      expect(results.find((r) => r.status === 'rejected')).toMatchObject({
+        reason: expect.objectContaining({
+          message: 'This invite link has expired or has already been used',
+        }),
+      });
+      expect(ctx.prisma.user.update).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(unusable)('refuses a link whose invite is %s', async (_label, invite) => {
+      const ctx = setUp(invite);
+
+      await expect(complete(ctx)).rejects.toThrow(
+        'This invite link has expired or has already been used'
+      );
+      expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('refuses a link whose token names another address', async () => {
+      const ctx = setUp();
+
+      await expect(complete(ctx, memberToken('someone.else@example.com'))).rejects.toThrow(
+        'This invite link has expired or has already been used'
+      );
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('checks the username before claiming the invite', async () => {
+      const ctx = setUp();
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 'someone' });
+
+      await expect(complete(ctx)).rejects.toThrow('Username already exists!');
+      expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('puts the invite back to pending when the final update hits a duplicate', async () => {
+      const ctx = setUp();
+      (ctx.prisma.user.update as jest.Mock).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('duplicate', {
+          code: 'P2002',
+          clientVersion: 'test',
+        })
+      );
+
+      await expect(complete(ctx)).rejects.toThrow(/Username already exists/);
+      expect(ctx.prisma.userInvite.updateMany).toHaveBeenLastCalledWith({
+        where: { id: inviteId, status: 'accepted' },
+        data: { status: 'pending' },
+      });
+    });
+
+    it('shows a usable link on the signup page', async () => {
+      await expect(verify(setUp())).resolves.toEqual({
+        _id: userId,
+        email: invitee,
+        username: invitee,
+      });
+    });
+
+    it.each(unusable)(
+      'shows a link whose invite is %s as invalid straight away',
+      async (_label, invite) => {
+        await expect(verify(setUp(invite))).resolves.toBeNull();
+      }
+    );
+
+    it('shows a link whose token names another address as invalid', async () => {
+      await expect(verify(setUp(), memberToken('someone.else@example.com'))).resolves.toBeNull();
     });
   });
 });

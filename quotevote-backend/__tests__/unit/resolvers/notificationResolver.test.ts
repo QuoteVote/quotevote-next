@@ -18,6 +18,7 @@ function mockContext(user: GraphQLContext['user'] = null): GraphQLContext {
         findMany: jest.fn().mockResolvedValue([]),
         findUnique: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       },
       user: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -222,7 +223,7 @@ describe('notificationResolver', () => {
         { id: senderId, username: 'bob', name: 'Bob', avatar: 'bob.png', contributorBadge: true },
       ]);
       (ctx.prisma.post.findMany as jest.Mock).mockResolvedValue([
-        { id: postId, url: '/post/a/b/' + postId, deleted: true },
+        { id: postId, title: 'Night buses', url: '/post/a/b/' + postId, deleted: true },
       ]);
 
       const result = await notificationResolver.Query.notifications(null, {}, ctx);
@@ -245,7 +246,12 @@ describe('notificationResolver', () => {
         contributorBadge: true,
         email: '',
       });
-      expect(result[1].post).toEqual({ _id: postId, url: '/post/a/b/' + postId, deleted: true });
+      expect(result[1].post).toEqual({
+        _id: postId,
+        title: 'Night buses',
+        url: '/post/a/b/' + postId,
+        deleted: true,
+      });
       // An unknown sender and a notification with no post come back as null.
       expect(result[2].userBy).toBeNull();
       expect(result[2].post).toBeNull();
@@ -285,6 +291,7 @@ describe('notificationResolver', () => {
       });
       (ctx.prisma.post.findUnique as jest.Mock).mockResolvedValue({
         id: '60d5ec49ad414d7a8d5464a2',
+        title: 'Park and ride',
         url: '/post/x',
         deleted: false,
       });
@@ -295,6 +302,7 @@ describe('notificationResolver', () => {
       });
       await expect(notificationResolver.Notification.post(base, {}, ctx)).resolves.toEqual({
         _id: '60d5ec49ad414d7a8d5464a2',
+        title: 'Park and ride',
         url: '/post/x',
         deleted: false,
       });
@@ -316,6 +324,77 @@ describe('notificationResolver', () => {
       await expect(notificationResolver.Notification.post(bare, {}, ctx)).resolves.toBeNull();
       expect(ctx.prisma.user.findUnique).not.toHaveBeenCalled();
       expect(ctx.prisma.post.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Query.notificationHistory', () => {
+    it('requires authentication', async () => {
+      const ctx = mockContext(null);
+
+      await expect(
+        notificationResolver.Query.notificationHistory(null, {}, ctx)
+      ).rejects.toMatchObject({
+        message: 'Authentication required',
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
+      expect(ctx.prisma.notification.findMany).not.toHaveBeenCalled();
+    });
+
+    it('queries deleted notifications for the user, newest first', async () => {
+      const ctx = authedContext();
+
+      const result = await notificationResolver.Query.notificationHistory(null, {}, ctx);
+
+      expect(ctx.prisma.notification.findMany).toHaveBeenCalledWith({
+        where: { userId, status: 'deleted' },
+        orderBy: { created: 'desc' },
+        take: 50,
+        select: NOTIFICATION_SELECT,
+      });
+      expect(result).toEqual([]);
+    });
+
+    it('clamps limit to a maximum of 100', async () => {
+      const ctx = authedContext();
+
+      await notificationResolver.Query.notificationHistory(null, { limit: 500 }, ctx);
+
+      expect(ctx.prisma.notification.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 100 })
+      );
+    });
+  });
+
+  describe('Mutation.clearAllNotifications', () => {
+    it('requires authentication', async () => {
+      await expect(
+        notificationResolver.Mutation.clearAllNotifications(null, {}, mockContext(null))
+      ).rejects.toMatchObject({
+        message: 'Authentication required',
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
+    });
+
+    it('soft-deletes all new notifications for the signed-in user', async () => {
+      const ctx = authedContext();
+      (ctx.prisma.notification.updateMany as jest.Mock).mockResolvedValue({ count: 3 });
+
+      const result = await notificationResolver.Mutation.clearAllNotifications(null, {}, ctx);
+
+      expect(ctx.prisma.notification.updateMany).toHaveBeenCalledWith({
+        where: { userId, status: 'new' },
+        data: { status: 'deleted' },
+      });
+      expect(result).toBe(3);
+    });
+
+    it('returns zero when there is nothing to clear', async () => {
+      const ctx = authedContext();
+      (ctx.prisma.notification.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+      await expect(
+        notificationResolver.Mutation.clearAllNotifications(null, {}, ctx)
+      ).resolves.toBe(0);
     });
   });
 
@@ -349,11 +428,7 @@ describe('notificationResolver', () => {
       const ctx = authedContext();
 
       await expect(
-        notificationResolver.Mutation.removeNotification(
-          null,
-          { notificationId: 'not-an-id' },
-          ctx
-        )
+        notificationResolver.Mutation.removeNotification(null, { notificationId: 'not-an-id' }, ctx)
       ).rejects.toMatchObject({
         message: 'Invalid notificationId',
         extensions: { code: 'BAD_USER_INPUT' },

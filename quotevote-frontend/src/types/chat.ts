@@ -64,7 +64,7 @@ export interface ChatMessage {
 export type ChatMessageHandler = (message: ChatMessage) => void | Promise<void>
 
 /**
- * Handler used when adding a buddy from search or roster UIs
+ * Handler used when adding a buddy from search or buddy UIs
  */
 export type AddBuddyHandler = (userId: string) => Promise<void>
 
@@ -211,10 +211,10 @@ export interface PresenceIconProps {
 }
 
 /**
- * The tag (group) a discussion's post belongs to, shown on its card as #title (#531)
+ * The tag a discussion's post belongs to, shown on its card as #title (#531)
  */
 export interface ConversationTag {
-  groupId: string;
+  tagId: string;
   title: string;
 }
 
@@ -234,16 +234,40 @@ export interface ConversationSearchContext {
   tag?: ConversationTag | null;
 }
 
-/** Message text and authors per room, fetched only while searching */
+/** Message authors per room, fetched only while searching by @person */
 export interface ChatRoomSearchMessage {
   _id: string;
-  text?: string | null;
   userId?: string | null;
   user?: { _id: string; username?: string | null; name?: string | null } | null;
 }
 
 export interface GetChatRoomSearchData {
   messageRooms: Array<{ _id: string; messages?: ChatRoomSearchMessage[] | null } | null> | null;
+}
+
+/** One message matching a server-side search (#601) */
+export interface MessageSearchMatch {
+  _id: string;
+  messageRoomId: string;
+  created: string;
+  snippet: string;
+}
+
+export interface SearchMessagesData {
+  searchMessages: { results: MessageSearchMatch[]; nextCursor?: string | null } | null;
+}
+
+export interface MessageSearchState {
+  /** Matches loaded so far for the current text, newest first */
+  matches: MessageSearchMatch[];
+  /** The current text has no results yet: still typing, or the first page is loading */
+  pending: boolean;
+  hasMore: boolean;
+  loadingMore: boolean;
+  failed: boolean;
+  loadMoreFailed: boolean;
+  loadMore: () => Promise<void>;
+  retry: () => void;
 }
 
 export interface ChatSearchInputProps {

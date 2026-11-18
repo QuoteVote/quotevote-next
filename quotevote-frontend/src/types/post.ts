@@ -72,7 +72,7 @@ export interface Post {
   _id: string
   userId: string
   created: string
-  groupId?: string | null
+  tagId?: string | null
   title?: string | null
   text?: string | null
   url?: string | null
@@ -141,10 +141,15 @@ export interface PostCardProps {
   comments?: PostComment[]
   quotes?: PostQuote[]
   messageRoom?: PostMessageRoom
-  groupId?: string | null
+  tagId?: string | null
   searchKey?: string
   /** Directory cards center metadata and hide bookmark/share (#454). Body preview still shows (#474). */
   compact?: boolean
+  /** Stored vote totals; the card counts `votes` when they are missing. */
+  upvotes?: number | null
+  downvotes?: number | null
+  /** The list already shows a day heading, so the card shows only the time. */
+  timeOnly?: boolean
 }
 
 /**
@@ -228,7 +233,7 @@ export interface PaginatedPostsListProps {
   interactions?: boolean
   userId?: string
   sortOrder?: string
-  groupId?: string
+  tagId?: string
   approved?: number
   
   // Component props
@@ -256,5 +261,7 @@ export interface PaginatedPostsListProps {
   paginationClassName?: string
   /** Directory card chrome: centered metadata, no bookmark/share. Body preview still shows. */
   compact?: boolean
+  /** Newest-first feeds: "Today", "Yesterday"… headings between the posts. */
+  groupByDay?: boolean
 }
 

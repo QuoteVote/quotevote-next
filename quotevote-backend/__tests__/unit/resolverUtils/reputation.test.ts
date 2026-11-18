@@ -36,24 +36,21 @@ function mockPrisma() {
       count: jest.fn().mockResolvedValue(0),
     },
     vote: {
-      count: jest.fn().mockResolvedValue(0),
+      aggregateRaw: jest.fn().mockResolvedValue([]),
     },
   } as unknown as Pick<PrismaClient, 'user' | 'post' | 'comment' | 'vote'>;
 }
 
-/** Mock vote.count to return up/down/total based on the where.type filter. */
+/** Mock the live vote counts, grouped by type the way the aggregation returns them. */
 function mockVoteCounts(
   prisma: Pick<PrismaClient, 'vote'>,
   upvoteCount: number,
   downvoteCount: number
 ): void {
-  (prisma.vote.count as jest.Mock).mockImplementation(
-    ({ where }: { where: { type?: string } }) => {
-      if (where.type === 'up') return Promise.resolve(upvoteCount);
-      if (where.type === 'down') return Promise.resolve(downvoteCount);
-      return Promise.resolve(upvoteCount + downvoteCount);
-    }
-  );
+  (prisma.vote.aggregateRaw as jest.Mock).mockResolvedValue([
+    { _id: 'up', count: upvoteCount },
+    { _id: 'down', count: downvoteCount },
+  ]);
 }
 
 describe('reputation resolver utilities', () => {
@@ -192,6 +189,33 @@ describe('reputation resolver utilities', () => {
         totalPosts: 2,
         totalComments: 1,
       });
+    });
+
+    it('counts only live votes, so switching a passage response does not add up', async () => {
+      const prisma = mockPrisma();
+      mockVoteCounts(prisma, 1, 0);
+
+      await getDetailedMetrics(prisma, '60d5ec49ad414d7a8d5464a0');
+
+      expect(prisma.vote.aggregateRaw).toHaveBeenCalledWith({
+        pipeline: [
+          {
+            $match: {
+              userId: { $oid: '60d5ec49ad414d7a8d5464a0' },
+              deleted: { $ne: true },
+            },
+          },
+          { $group: { _id: '$type', count: { $sum: 1 } } },
+        ],
+      });
+    });
+
+    it('reads a member with no votes as zero', async () => {
+      const prisma = mockPrisma();
+
+      const result = await getDetailedMetrics(prisma, 'user1');
+
+      expect(result).toMatchObject({ totalUpvotes: 0, totalDownvotes: 0 });
     });
   });
 

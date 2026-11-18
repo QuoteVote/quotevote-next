@@ -8,6 +8,7 @@ import {
   MESSAGE_ROOM_SELECT,
   byLatestMessage,
   filterListedRooms,
+  listRoomIdsForUser,
   loadRoomViews,
 } from '~/data/resolvers/utils/chatRooms';
 import {
@@ -25,6 +26,7 @@ import {
   findRoom,
   forbidden,
   notFound,
+  notifyPostAuthorOfMessage,
   requireUserId,
   resolveRoomForMessage,
   validEmoji,
@@ -71,12 +73,13 @@ function visibleMessages(
   );
 }
 
-/** The message and its room, when the caller may change it. */
-async function loadWritableMessage(
-  context: GraphQLContext,
-  messageId: string,
-  userId: string
-): Promise<{ message: MessageRecord; room: NonNullable<Awaited<ReturnType<typeof findRoom>>> }> {
+type LoadedMessage = {
+  message: MessageRecord;
+  room: NonNullable<Awaited<ReturnType<typeof findRoom>>>;
+};
+
+/** A live message and its room. */
+async function loadMessage(context: GraphQLContext, messageId: string): Promise<LoadedMessage> {
   const message = isObjectId(messageId)
     ? await context.prisma.message.findUnique({
         where: { id: messageId },
@@ -85,8 +88,18 @@ async function loadWritableMessage(
     : null;
   const room = message ? await findRoom(context.prisma, message.messageRoomId) : null;
   if (!message || !room || !isLive(message)) throw notFound('Message not found');
-  await assertCanWrite(context.prisma, room, userId);
   return { message, room };
+}
+
+/** The message and its room, when the caller may write in that room. */
+async function loadWritableMessage(
+  context: GraphQLContext,
+  messageId: string,
+  userId: string
+): Promise<LoadedMessage> {
+  const loaded = await loadMessage(context, messageId);
+  await assertCanWrite(context.prisma, loaded.room, userId);
+  return loaded;
 }
 
 export const chatResolver = {
@@ -117,8 +130,10 @@ export const chatResolver = {
       context: GraphQLContext
     ): Promise<Common.MessageRoomView[]> => {
       if (!context.userId) return [];
+      const roomIds = await listRoomIdsForUser(context.prisma, context.userId);
+      if (roomIds.length === 0) return [];
       const rooms = await context.prisma.messageRoom.findMany({
-        where: { userIds: { has: context.userId } },
+        where: { id: { in: roomIds } },
         select: MESSAGE_ROOM_SELECT,
       });
       const listed = await filterListedRooms(context.prisma, rooms, context.userId);
@@ -308,6 +323,7 @@ export const chatResolver = {
       // Legacy marks new-message events with mutation_type 'CREATED'.
       const event = { ...message, mutation_type: 'CREATED' };
       await context.pubsub.publish(SUBSCRIPTION_EVENTS.MESSAGE_CREATED, { message: event });
+      await notifyPostAuthorOfMessage(context.prisma, room, userId, text);
       return event;
     },
 
@@ -317,7 +333,9 @@ export const chatResolver = {
       context: GraphQLContext
     ): Promise<{ _id: string }> => {
       const userId = requireUserId(context);
-      const { message, room } = await loadWritableMessage(context, args.messageId, userId);
+      // Not loadWritableMessage: a deleted post closes its chat to new messages, but authors
+      // can still delete what they wrote there (#576 D4, #664).
+      const { message, room } = await loadMessage(context, args.messageId);
       if (room.messageType !== 'POST') throw forbidden("Direct messages can't be deleted");
       if (message.userId !== userId) throw forbidden('Only the author can delete this message');
 

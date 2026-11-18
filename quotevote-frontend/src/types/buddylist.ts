@@ -61,15 +61,15 @@ export interface GetBuddyListData {
     }>;
 }
 
-export interface RosterEntry {
+export interface BuddyRequest {
     _id: string;
-    userId: string;
-    buddyId: string;
-    status: string;
-    initiatedBy: string;
-    buddy?: BuddyUser;
+    status: 'pending' | 'accepted';
+    requester: BuddyUser;
+    recipient: BuddyUser;
+    createdAt?: string;
+    acceptedAt?: string | null;
 }
 
-export interface GetRosterData {
-    getRoster: RosterEntry[];
+export interface GetBuddyRequestsData {
+    buddyRequests: BuddyRequest[];
 }

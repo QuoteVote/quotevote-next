@@ -2,24 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useApolloClient } from "@apollo/client/react";
-import { GET_GROUP, GET_POST_GROUP_ID } from "@/graphql/queries";
+import { GET_POST_TAG_ID, GET_TAG } from "@/graphql/queries";
 import type { ConversationTag } from "@/types/chat";
 
-interface PostGroupIdData {
-  post?: { _id: string; groupId?: string | null } | null;
+interface PostTagIdData {
+  post?: { _id: string; tagId?: string | null } | null;
 }
 
-interface GroupData {
-  group?: { _id: string; title: string } | null;
+interface TagData {
+  tag?: { _id: string; title: string } | null;
 }
 
 /**
  * The tag of each discussion's post, keyed by post id (#531).
  *
- * The live API's room list has no group on `postDetails`, so this looks up each
- * post's `groupId` and then each distinct group's title. Both come from the
- * Apollo cache after the first load, so the 10-second room poll adds no requests.
- * A post or group that can't be loaded simply has no tag.
+ * The room list has no tag on `postDetails`, so this looks up each post's
+ * `tagId` and then each distinct tag's title. Both come from the Apollo cache
+ * after the first load, so the 10-second room poll adds no requests.
+ * A post or tag that can't be loaded simply has no tag.
  */
 export function useConversationTags(postIds: string[]): Record<string, ConversationTag> {
   const client = useApolloClient();
@@ -37,8 +37,8 @@ export function useConversationTags(postIds: string[]): Record<string, Conversat
       const posts = await Promise.all(
         ids.map((postId) =>
           client
-            .query<PostGroupIdData>({
-              query: GET_POST_GROUP_ID,
+            .query<PostTagIdData>({
+              query: GET_POST_TAG_ID,
               variables: { postId },
               fetchPolicy: "cache-first",
             })
@@ -47,18 +47,18 @@ export function useConversationTags(postIds: string[]): Record<string, Conversat
         )
       );
 
-      const groupIds = Array.from(
-        new Set(posts.map((post) => post?.groupId).filter((id): id is string => Boolean(id)))
+      const tagIds = Array.from(
+        new Set(posts.map((post) => post?.tagId).filter((id): id is string => Boolean(id)))
       );
       const groups = await Promise.all(
-        groupIds.map((groupId) =>
+        tagIds.map((tagId) =>
           client
-            .query<GroupData>({
-              query: GET_GROUP,
-              variables: { groupId },
+            .query<TagData>({
+              query: GET_TAG,
+              variables: { tagId },
               fetchPolicy: "cache-first",
             })
-            .then((result) => result.data?.group ?? null)
+            .then((result) => result.data?.tag ?? null)
             .catch(() => null)
         )
       );
@@ -70,9 +70,9 @@ export function useConversationTags(postIds: string[]): Record<string, Conversat
 
       const next: Record<string, ConversationTag> = {};
       ids.forEach((postId, i) => {
-        const groupId = posts[i]?.groupId;
-        const title = groupId ? titles.get(groupId) : undefined;
-        if (groupId && title) next[postId] = { groupId, title };
+        const tagId = posts[i]?.tagId;
+        const title = tagId ? titles.get(tagId) : undefined;
+        if (tagId && title) next[postId] = { tagId, title };
       });
       if (!cancelled) setTags(next);
     };

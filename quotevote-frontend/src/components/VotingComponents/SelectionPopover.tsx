@@ -10,6 +10,8 @@ export default function SelectionPopover({
   resolveAnchorRect,
   popoverRef,
   style,
+  sheet = false,
+  onDismiss,
   children,
 }: SelectionPopoverProps) {
   const [mounted, setMounted] = useState(false);
@@ -93,7 +95,44 @@ export default function SelectionPopover({
     return undefined;
   }, [showPopover, mounted, computePopoverBox, popoverRef]);
 
+  // Escape closes the popup, in both layouts.
+  useEffect(() => {
+    if (!showPopover || !onDismiss) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onDismiss();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showPopover, onDismiss]);
+
   if (!mounted) return null;
+
+  if (sheet) {
+    // Phone: a bottom sheet over the dimmed page, no anchoring to the selection. Above the
+    // phone tab bar (z-60), as in the design.
+    return createPortal(
+      showPopover ? (
+        <>
+          <div
+            aria-hidden="true"
+            data-testid="selection-sheet-backdrop"
+            className="fixed inset-0 z-[70] bg-slate-900/35 backdrop-blur-[3px] animate-in fade-in-0"
+            onClick={onDismiss}
+          />
+          <div
+            id="selectionPopover"
+            data-testid="highlight-popup"
+            ref={popoverRef}
+            className="fixed inset-x-0 bottom-0 z-[71] animate-in slide-in-from-bottom-4"
+            style={style}
+          >
+            {children}
+          </div>
+        </>
+      ) : null,
+      document.body
+    );
+  }
 
   const visible = showPopover && positioned;
   const visibility = visible ? "visible" : "hidden";
