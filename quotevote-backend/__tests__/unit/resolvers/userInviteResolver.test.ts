@@ -46,6 +46,7 @@ function mockContext(overrides: Partial<GraphQLContext> = {}): GraphQLContext {
         create: jest.fn().mockResolvedValue({ id: '507f1f77bcf86cd799439033' }),
         updateMany: jest.fn(),
       },
+      staffAction: { create: jest.fn().mockResolvedValue({ id: 'log' }) },
     },
     user: { _id: userId, admin: true },
     ...overrides,
@@ -558,6 +559,11 @@ describe('userInviteResolver', () => {
       });
       expect(result.code).toBe('SUCCESS');
       expect(result.inviteToken).toBeDefined();
+      // Logged under the approving admin (#616).
+      expect(ctx.prisma.staffAction.create).toHaveBeenCalledWith({
+        data: { actorId: userId, action: 'invite_approved', targetId: userId, detail: null },
+        select: { id: true },
+      });
     });
 
     it('records the approval and binds its link to it (#691)', async () => {

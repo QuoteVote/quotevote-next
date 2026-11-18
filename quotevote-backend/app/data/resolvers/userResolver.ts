@@ -24,6 +24,7 @@ import { uniqueArrayObjects } from '~/data/resolvers/utils/common';
 import { addNotification } from '~/data/resolvers/utils/notifications';
 import { calculateUserReputation, loadUserReputation } from '~/data/resolvers/utils/reputation';
 import { requireRole } from '~/data/utils/requireRole';
+import { recordStaffAction } from '~/data/utils/staffActions';
 import type * as Common from '~/types/common';
 import type { FollowInfoEntry, GraphQLContext } from '~/types/graphql';
 
@@ -1214,6 +1215,7 @@ export const userResolver = {
         data: { accountStatus: 'disabled' },
         select: ADMIN_USER_STATUS_SELECT,
       });
+      await recordStaffAction(context, 'user_disabled', args.userId);
       return toPublicUser(updated as PrismaUserRecord);
     },
 
@@ -1253,6 +1255,7 @@ export const userResolver = {
         data: { accountStatus: 'active' },
         select: ADMIN_USER_STATUS_SELECT,
       });
+      await recordStaffAction(context, 'user_enabled', args.userId);
       return toPublicUser(updated as PrismaUserRecord);
     },
   },

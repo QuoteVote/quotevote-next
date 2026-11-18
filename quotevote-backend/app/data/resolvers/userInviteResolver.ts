@@ -36,6 +36,7 @@ import {
 import { logger } from '~/data/utils/logger';
 import { checkRateLimit } from '~/data/utils/rateLimiter';
 import { requireRole } from '~/data/utils/requireRole';
+import { recordStaffAction } from '~/data/utils/staffActions';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
 
@@ -732,6 +733,8 @@ export const userInviteResolver = {
           });
         }
 
+        await recordStaffAction(context, 'invite_approved', invitedUser.id);
+
         return {
           code: 'SUCCESS',
           message: `User sign-up invite sent successfully to ${mailTo}.`,
@@ -746,6 +749,7 @@ export const userInviteResolver = {
           data: { status: INVITE_STATUS_DECLINED },
           select: { id: true },
         });
+        await recordStaffAction(context, 'invite_declined', invitedUser.id);
 
         try {
           await sendGridEmail({

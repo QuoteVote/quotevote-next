@@ -141,6 +141,9 @@ export const Mutation = `type Mutation {
   " Disable a user account (admin only) "
   disableUser(userId: String!): User
 
+  " Set a user's staff roles: admin, moderator, inviteApprover (admin only) "
+  setUserRoles(userId: String!, roles: [String!]!): User
+
   " Enable a user account (admin only) "
   enableUser(userId: String!): User
 

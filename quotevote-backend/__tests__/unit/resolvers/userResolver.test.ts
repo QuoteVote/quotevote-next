@@ -1068,8 +1068,10 @@ describe('userResolver', () => {
       ).rejects.toThrow(/Admin access required/);
     });
 
-    it('disables and enables a user', async () => {
+    it('disables and enables a user, logging both (#616)', async () => {
       const ctx = mockContext({ admin: true });
+      const logStaffAction = jest.fn().mockResolvedValue({ id: 'log' });
+      Object.assign(ctx.prisma, { staffAction: { create: logStaffAction } });
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: otherId,
         isAdmin: false,
@@ -1095,6 +1097,10 @@ describe('userResolver', () => {
       });
       const enabled = await userResolver.Mutation.enableUser(null, { userId: otherId }, ctx);
       expect(enabled.accountStatus).toBe('active');
+      expect(logStaffAction.mock.calls.map((c) => [c[0].data.action, c[0].data.targetId])).toEqual([
+        ['user_disabled', otherId],
+        ['user_enabled', otherId],
+      ]);
     });
 
     it('refuses to disable an admin account', async () => {

@@ -93,3 +93,14 @@ enum TermsAcceptanceSource {
   direct_registration
   invite_completion
 }
+
+// What a staff member did (#616), recorded in StaffAction.
+enum StaffActionKind {
+  role_granted
+  role_revoked
+  invite_approved
+  invite_declined
+  user_disabled
+  user_enabled
+  content_removed
+}

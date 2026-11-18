@@ -27,16 +27,45 @@ Roles are always read from `context.user`, which `app/context.ts` loads from the
 | -------------------------------------------------------------------------------- | -------------------------------------------------- |
 | `sendUserInviteApproval`                                                         | invite approver                                    |
 | `getUserReports`, `getBotReportedUsers`                                          | moderator                                          |
+| `setUserRoles`, `staffActions`                                                   | admin                                              |
 | `userInviteRequests`, `users`, `disableUser`, `enableUser`, `updateFeaturedSlot` | admin only for now; moved to their roles in part 3 |
 
 `sendUserInviteApproval` only decides access requests and unfinished invites: approving or declining an account that finished signup (member, moderator or admin) is refused with "User has already completed signup", so an invite approver can't touch accounts outside the request queue.
 
 `__tests__/unit/adminPermissions.test.ts` (#690) covers guests, members and admins for these operations, and `__tests__/unit/staffRoles.test.ts` covers moderators and invite approvers.
 
+## Seeing roles
+
+- **Login:** the `/auth/login` response's `user` carries `admin`, `isModerator` and `isInviteApprover`, so the frontend knows which tabs to show. The token itself carries no new role claims.
+- **GraphQL:** `User.isModerator` and `User.isInviteApprover` are shown to the user themselves and to admins, and are `null` for anyone else, so who holds a staff role isn't public. (`User.admin` is unchanged.)
+
+## Managing roles
+
+`setUserRoles(userId, roles)` (admin only) sets a user's roles to exactly the list given, any of `admin`, `moderator` and `inviteApprover`; an empty list removes them all. It returns the user with their roles.
+
+- Roles only go to accounts that finished signup ("Roles can only be given to accounts that finished signup").
+- An admin can't remove their own admin role ("You can't remove your own admin role"), and the last admin can't be removed ("The last admin can't be removed").
+- The change runs in one transaction that also writes the acting admin's own record. Two role changes involving the same admins (for example, two admins removing each other at once) therefore conflict: one goes through and the other gets `CONFLICT` ("Roles were changed by someone else at the same time. Please try again."), so the site can't end up with no admin. Prisma transactions need MongoDB running as a replica set; local development already runs one.
+- Asking for the roles a user already has changes and logs nothing.
+
+## Staff log
+
+`StaffAction` (`staff_actions` collection, Prisma only) records each staff decision: `actorId`, `action`, `targetId`, an optional `detail` and `createdAt`. It's append-only, with no relation to `User`, so user records are untouched.
+
+| `action`                             | Written by                                      | `detail` |
+| ------------------------------------ | ----------------------------------------------- | -------- |
+| `role_granted`, `role_revoked`       | `setUserRoles`, one entry per role changed      | the role |
+| `invite_approved`, `invite_declined` | `sendUserInviteApproval`                        |          |
+| `user_disabled`, `user_enabled`      | `disableUser`, `enableUser`                     |          |
+| `content_removed`                    | reserved for removing reported content (part 3) |          |
+
+Each mutation records its decision in one line after the change has gone through: `await recordStaffAction(context, 'invite_approved', userId)` from `app/data/utils/staffActions.ts`. A failed log write is reported to the server log and doesn't fail the mutation, since the change already happened.
+
+`staffActions(limit, offset)` (admin only) lists entries newest first, 50 by default and at most 100, with `actor` and `target` users filled in (`target` is null when the target isn't a user). The legacy backend doesn't write this log, so it starts at the switch to the new backend.
+
 ## Still to come
 
 Following the plan on #616:
 
-- **Part 2:** role management and the log: `setUserRoles`, a `StaffAction` record of who did what, and the role flags on the current user.
 - **Part 3:** the remaining admin operations behind their roles.
 - **Parts 4 and 5, after the switch to the new backend:** the control panel per role, then end-to-end tests.

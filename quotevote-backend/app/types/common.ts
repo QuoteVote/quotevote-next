@@ -52,6 +52,28 @@ export type AccountStatus = 'active' | 'disabled' | 'suspended' | 'pending';
 /** Staff roles (#616). A user may hold several; admins can do everything. */
 export type StaffRole = 'admin' | 'moderator' | 'inviteApprover';
 
+/** What a staff member did (#616). Mirrors the Prisma `StaffActionKind` enum. */
+export type StaffActionKind =
+  | 'role_granted'
+  | 'role_revoked'
+  | 'invite_approved'
+  | 'invite_declined'
+  | 'user_disabled'
+  | 'user_enabled'
+  | 'content_removed';
+
+/** One entry in the staff log, as the `staffActions` query returns it. */
+export interface StaffAction {
+  _id: string;
+  action: StaffActionKind;
+  actorId: string;
+  actor: User | null;
+  targetId: string | null;
+  target: User | null;
+  detail: string | null;
+  createdAt: Date;
+}
+
 export type VoteOption = '#true' | '#agree' | '#like' | '#false' | '#disagree' | '#dislike';
 
 export type TagPrivacy = 'public' | 'private' | 'restricted';

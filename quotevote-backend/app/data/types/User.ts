@@ -64,6 +64,14 @@ export const UserType: GraphQLObjectType<Common.User, GraphQLContext> = new Grap
       resolve: (u) => (Array.isArray(u.favorited) ? u.favorited.length : 0),
     },
     admin: { type: GraphQLBoolean },
+    isModerator: {
+      type: GraphQLBoolean,
+      description: 'Staff role (#616). Shown to the user themselves and to admins, otherwise null.',
+    },
+    isInviteApprover: {
+      type: GraphQLBoolean,
+      description: 'Staff role (#616). Shown to the user themselves and to admins, otherwise null.',
+    },
     upvotes: { type: GraphQLInt },
     downvotes: { type: GraphQLInt },
     contributorBadge: { type: GraphQLBoolean },

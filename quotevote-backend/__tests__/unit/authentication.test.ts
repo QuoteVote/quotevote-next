@@ -221,6 +221,38 @@ describe('Authentication Utils', () => {
     });
   });
 
+  describe('login staff roles (#616)', () => {
+    it('sends the role flags with the user, but keeps them out of the token', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+        id: 'mockId',
+        username: 'mod',
+        name: 'Mod',
+        email: 'mod@example.com',
+        password: 'hashed',
+        isAdmin: false,
+        isModerator: true,
+        isInviteApprover: false,
+        accountStatus: 'active',
+      });
+      req.body = { username: 'mod', password: 'password123' };
+
+      await auth.login(req as Request, res as Response);
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: expect.objectContaining({
+            admin: false,
+            isModerator: true,
+            isInviteApprover: false,
+          }),
+        })
+      );
+      const payload = (jwt.sign as jest.Mock).mock.calls[0][0];
+      expect(payload).not.toHaveProperty('isModerator');
+      expect(payload).not.toHaveProperty('isInviteApprover');
+    });
+  });
+
   describe('authenticate', () => {
     it('should return 400 if username missing', async () => {
       const req = { body: { password: 'pwd' } } as Request;
@@ -468,6 +500,8 @@ describe('Authentication Utils', () => {
           email: true,
           username: true,
           isAdmin: true,
+          isModerator: true,
+          isInviteApprover: true,
           accountStatus: true,
           name: true,
           avatar: true,
@@ -504,6 +538,8 @@ describe('Authentication Utils', () => {
           email: true,
           username: true,
           isAdmin: true,
+          isModerator: true,
+          isInviteApprover: true,
           accountStatus: true,
           name: true,
           avatar: true,
