@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { mongooseConnectOptions } from '~/data/utils/databaseConnection';
+import { buildsIndexesAtStartup, mongooseConnectOptions } from '~/data/utils/databaseConnection';
 import Typing from '~/data/models/Typing';
 
 describe('mongooseConnectOptions (#716)', () => {
@@ -11,6 +11,15 @@ describe('mongooseConnectOptions (#716)', () => {
     expect(mongooseConnectOptions('development')).toEqual({});
     expect(mongooseConnectOptions('test')).toEqual({});
     expect(mongooseConnectOptions(undefined)).toEqual({});
+  });
+});
+
+describe('buildsIndexesAtStartup (#716, #694)', () => {
+  it('lets the backend build indexes at startup everywhere but production', () => {
+    expect(buildsIndexesAtStartup('production')).toBe(false);
+    expect(buildsIndexesAtStartup('development')).toBe(true);
+    expect(buildsIndexesAtStartup('test')).toBe(true);
+    expect(buildsIndexesAtStartup(undefined)).toBe(true);
   });
 });
 

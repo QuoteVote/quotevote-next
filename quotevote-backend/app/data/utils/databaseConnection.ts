@@ -8,5 +8,14 @@ import type { ConnectOptions } from 'mongoose';
  * the defaults.
  */
 export function mongooseConnectOptions(nodeEnv: string | undefined): ConnectOptions {
-  return nodeEnv === 'production' ? { autoIndex: false, autoCreate: false } : {};
+  return buildsIndexesAtStartup(nodeEnv) ? {} : { autoIndex: false, autoCreate: false };
+}
+
+/**
+ * Whether starting the backend may build indexes (#716): everywhere but production.
+ * In production the switch steps build them on purpose (`pnpm db:model-indexes` and
+ * `pnpm db:unique-indexes`).
+ */
+export function buildsIndexesAtStartup(nodeEnv: string | undefined): boolean {
+  return nodeEnv !== 'production';
 }
