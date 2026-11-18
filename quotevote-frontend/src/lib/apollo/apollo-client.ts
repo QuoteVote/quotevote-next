@@ -17,7 +17,6 @@ import { setSocketConnected } from "@/lib/apollo/socketStatus";
 import { map, Observable } from "rxjs";
 import { toast } from "sonner";
 import { env } from "@/config/env";
-import { getGraphqlWsServerUrl, areGraphqlSubscriptionsEnabled } from "@/lib/utils/getServerUrl";
 import { serializeObjectIds } from "@/lib/utils/objectIdSerializer";
 import { getToken, removeToken } from "@/lib/auth";
 import { triggerAuthGate } from "@/lib/auth-gate";
@@ -90,11 +89,6 @@ function createWsLink(): GraphQLWsLink | null {
     return null;
   }
 
-  // Local and hosted backends both expose the GraphQL WebSocket transport.
-  if (!areGraphqlSubscriptionsEnabled()) {
-    return null;
-  }
-
   // Track retry attempts to prevent infinite loops
   let retryCount = 0;
   let retryResetTimeout: NodeJS.Timeout | null = null;
@@ -116,7 +110,7 @@ function createWsLink(): GraphQLWsLink | null {
 
   return new GraphQLWsLink(
     createClient({
-      url: getGraphqlWsServerUrl(),
+      url: env.graphqlWsEndpoint,
       connectionParams: () => {
         const token = getToken();
         const authToken = token
