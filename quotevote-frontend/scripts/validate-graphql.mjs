@@ -6,7 +6,7 @@
  * the server rejects it at runtime with HTTP 400 / GRAPHQL_VALIDATION_FAILED.
  * This script catches that at CI time instead. It needs no network access.
  *
- * Refresh the snapshot after a backend deploy with: pnpm schema:update
+ * Refresh the snapshot from quotevote-backend with: pnpm --dir ../quotevote-backend schema:print
  */
 
 import fs from "node:fs";
