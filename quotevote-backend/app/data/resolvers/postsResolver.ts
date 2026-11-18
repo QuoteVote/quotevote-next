@@ -11,6 +11,7 @@ import { addUserToPostRoom } from './utils/messages';
 import { logActivity } from './utils/activities';
 import { validateAddPostContent } from './utils/postInput';
 import { logger } from '~/data/utils/logger';
+import { slugify } from '~/data/utils/urlSlug';
 import type * as Common from '~/types/common';
 
 function requireUserId(context: GraphQLContext): string {
@@ -46,7 +47,7 @@ function toggleUserOnList(list: string[], userId: string, remove?: boolean | nul
 }
 
 function buildPostUrl(tagUrl: string | null | undefined, title: string, postId: string): string {
-  const slug = title.replace(/ /g, '-').toLowerCase();
+  const slug = slugify(title, 'post');
   return `/post${tagUrl ?? ''}/${slug}/${postId}`;
 }
 

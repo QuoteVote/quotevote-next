@@ -18,6 +18,7 @@ import type { GraphQLContext } from '~/types/graphql';
 import type * as Common from '~/types/common';
 import { isObjectId, toCommonTag, TAG_RECORD_SELECT } from '~/data/utils/tagPrismaMapper';
 import { checkRateLimit } from '~/data/utils/rateLimiter';
+import { slugify } from '~/data/utils/urlSlug';
 
 const TAG_PRIVACY_VALUES: ReadonlySet<Common.TagPrivacy> = new Set([
   'public',
@@ -53,9 +54,9 @@ function requireUserId(context: GraphQLContext): string {
   return context.user._id.toString();
 }
 
-/** Legacy createGroup URL: `/{title-with-spaces-as-dashes}`. */
+/** `/{slug}`, the first segment of the tag's post links. */
 function tagUrlFromTitle(title: string): string {
-  return `/${title.replace(/ /g, '-').toLowerCase()}`;
+  return `/${slugify(title, 'tag')}`;
 }
 
 function isTagPrivacy(value: string): value is Common.TagPrivacy {
