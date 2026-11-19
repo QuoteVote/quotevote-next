@@ -42,29 +42,36 @@ describe('ReputationDisplay', () => {
       expect(screen.getByRole('img', { name: '750 of 1000' })).toBeInTheDocument();
     });
 
-    it('shows the three part scores', () => {
+    it('shows the Invite Network and Activity scores, without Conduct', () => {
       render(<ReputationDisplay reputation={mockReputation} />);
       expect(screen.getByText('Invite Network')).toBeInTheDocument();
-      expect(screen.getByText('Conduct')).toBeInTheDocument();
       expect(screen.getByText('Activity')).toBeInTheDocument();
       expect(screen.getByText('200')).toBeInTheDocument();
-      expect(screen.getByText('250')).toBeInTheDocument();
       expect(screen.getByText('300')).toBeInTheDocument();
+      expect(screen.queryByText('Conduct')).not.toBeInTheDocument();
+      expect(screen.queryByText('250')).not.toBeInTheDocument();
     });
 
     it('lists the figures behind the score, rounded', () => {
       render(<ReputationDisplay reputation={mockReputation} />);
       const figures: [string, string][] = [
-        ['Invites Sent', '10'],
-        ['Invites Accepted', '8'],
+        ['Invited', '8'],
+        ['Avg Invitee Rep', '651'],
         ['Posts Created', '20'],
         ['Comments Made', '30'],
-        ['Upvotes Given', '50'],
-        ['Avg Invitee Rep', '651'],
       ];
       for (const [label, value] of figures) {
         const term = screen.getByText(label);
         expect(term.nextElementSibling).toHaveTextContent(value);
+      }
+      for (const removed of [
+        'Invites Sent',
+        'Invites Accepted',
+        'Upvotes Given',
+        'Reports Received',
+        'Reports Resolved',
+      ]) {
+        expect(screen.queryByText(removed)).not.toBeInTheDocument();
       }
     });
 

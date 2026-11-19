@@ -180,3 +180,60 @@ export interface DocsLayoutProps {
   intro: string;
   sections: DocsSection[];
 }
+
+/** One line on a scene's board: a proposal with its up and down votes. */
+export interface SceneRow {
+  text: string;
+  up: number;
+  down: number;
+}
+
+/** Position of a scene element, as CSS lengths relative to the scene (e.g. "7%"). */
+export interface ScenePlacement {
+  left: string;
+  top: string;
+  width: string;
+}
+
+export interface SceneBoard extends ScenePlacement {
+  title: string;
+  rows: SceneRow[];
+}
+
+export interface SceneBubble extends ScenePlacement {
+  text: string;
+  /** Which side the speech tail sits on. */
+  tail: "left" | "right" | "center";
+}
+
+/** An Avataaars person from /assets/redesign/av, e.g. "d" or "a-glad". */
+export interface ScenePerson {
+  name: string;
+  left: string;
+  bottom: string;
+  width: string;
+  flip?: boolean;
+  /** Stacking order among the people (the middle one can sit in front). */
+  z?: number;
+}
+
+export interface SceneProps {
+  /** Accessible description; leave out for a purely decorative scene. */
+  label?: string;
+  background: string;
+  board?: SceneBoard;
+  bubbles?: SceneBubble[];
+  people?: ScenePerson[];
+  /** Text sizes: hero (desktop hero), card (small cards and the phone hero), comic. */
+  size: "hero" | "card" | "comic";
+  /** Comic panel caption, e.g. "1 · The challenge". */
+  panel?: string;
+  className?: string;
+}
+
+/** A four-panel comic strip on the landing page. */
+export interface ComicStripProps {
+  episode: number;
+  caption: string;
+  panels: Omit<SceneProps, "size">[];
+}

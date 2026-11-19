@@ -11,21 +11,22 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(mockSearch),
 }));
 
-const post = (id: string, title: string, approved: number, rejected: number) => ({
+const post = (id: string, title: string, upvotes: number, downvotes: number) => ({
   _id: id,
   userId: "u1",
   tagId: "t1",
   title,
   text: `Body of ${title}`,
-  upvotes: 0,
-  downvotes: 0,
+  upvotes,
+  downvotes,
+  comments: id === "p1" ? [{ _id: "c1" }, { _id: "c2" }] : [],
   bookmarkedBy: [],
   created: "2026-11-18T10:00:00.000Z",
   url: `/post/housing/${id}/${id}`,
   citationUrl: id === "p1" ? "https://planning.gov/report" : null,
   attribution: null,
-  rejectedBy: Array.from({ length: rejected }, (_, i) => `r${i}`),
-  approvedBy: Array.from({ length: approved }, (_, i) => `a${i}`),
+  rejectedBy: [],
+  approvedBy: [],
   enable_voting: true,
   featuredSlot: null,
   creator: { _id: "u1", name: "Sam Brooks", username: "sambrooks", avatar: null },
@@ -71,7 +72,7 @@ const mocks = (searchKey = "") => [
     },
   },
   postsMock(searchKey, [
-    post("p1", "Turning empty offices into homes", 7, 2),
+    post("p1", "Turning empty offices into homes", 46, 13),
     post("p2", "Four-day school weeks", 0, 0),
   ]),
   {
@@ -126,12 +127,38 @@ describe("Landing page (guests at /)", () => {
     expect(screen.getByRole("contentinfo", { name: /site footer/i })).toBeInTheDocument();
   });
 
-  it("lists the latest posts with their approval and source", async () => {
+  it("puts Latest quotes right under the hero (updated design)", () => {
+    render(<LandingPage />, { mocks: mocks() });
+    const sections = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(sections[0]).toMatch(/latest quotes/i);
+    expect(screen.getAllByRole("link", { name: /request an invite/i })[0]).toHaveAttribute(
+      "href",
+      "/auths/request-access"
+    );
+  });
+
+  it("shows plain up and down votes and the new labels, no agree bars", () => {
+    render(<LandingPage />, { mocks: mocks() });
+    expect(screen.getAllByText("No engagement algorithms")).toHaveLength(2);
+    expect(screen.queryByText("No algorithms")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Teams & Enterprise" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Government" })).toBeInTheDocument();
+    expect(screen.queryByText(/% agree/i)).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("img", { name: "Neighbors discussing a quote on a shared board" })
+    ).toHaveLength(2);
+    expect(screen.getAllByText("QUOTE.VOTE COMIC")).toHaveLength(2);
+  });
+
+  it("lists the latest posts with their votes, comments and source", async () => {
     render(<LandingPage />, { mocks: mocks() });
     const first = (
       await screen.findByRole("link", { name: "Turning empty offices into homes" })
     ).closest("article") as HTMLElement;
-    expect(within(first).getByText("78%")).toBeInTheDocument();
+    expect(first).toHaveClass("qv-postcard");
+    expect(first).toHaveTextContent("Up votes:46");
+    expect(first).toHaveTextContent("Down votes:13");
+    expect(first).toHaveTextContent("2 comments");
     expect(within(first).getByRole("link", { name: /source: planning\.gov/i })).toHaveAttribute(
       "href",
       "https://planning.gov/report"
@@ -139,7 +166,8 @@ describe("Landing page (guests at /)", () => {
     const second = (await screen.findByRole("link", { name: "Four-day school weeks" })).closest(
       "article"
     ) as HTMLElement;
-    expect(within(second).getByText("No votes yet")).toBeInTheDocument();
+    expect(second).toHaveTextContent("Up votes:0");
+    expect(second).toHaveTextContent("0 comments");
   });
 
   it("starts the search from ?q=, as the 404 search sends it", () => {

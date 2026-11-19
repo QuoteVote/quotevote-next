@@ -44,7 +44,7 @@ const FEATURES = [
   },
   {
     title: "Build common ground",
-    text: "Different views. Shared future. No ads, no algorithms.",
+    text: "Different views. Shared future. No ads, no engagement algorithms.",
     tint: "bg-[var(--ra-tint-yellow)]",
     icon: (
       <span className="qv-auth-ic bg-[var(--ra-ic-yellow)] text-[var(--ra-ic-yellow-ink)]">

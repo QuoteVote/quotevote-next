@@ -6,8 +6,9 @@ import { GET_TAG } from "@/graphql/queries";
 import { parseApiDate } from "@/lib/utils/apiDate";
 import type { ProfileActivityCardProps } from "@/types/profile";
 
-/* One activity item on a profile, from the approved design (Profile): a card lit in
-   the colour of what happened, a tag, the date, and the words it was about. */
+/* One activity item on a profile, from the updated design (Profile): a card lit in
+   the colour of what happened, a tag, the date, and the words it was about. Posts use
+   the live app's post card shape and show plain up and down votes. */
 
 const KINDS: Record<
   string,
@@ -61,16 +62,15 @@ export function ProfileActivityCard({
     errorPolicy: "all",
   });
   const tag = data?.tag?.title;
-  const approved = post.approvedBy?.length ?? 0;
-  const rejected = post.rejectedBy?.length ?? 0;
-  const pct = approved + rejected > 0 ? Math.round((approved / (approved + rejected)) * 100) : null;
+  const up = post.upvotes ?? 0;
+  const down = post.downvotes ?? 0;
   const comments = post.comments?.length ?? 0;
   const title = post.title || "this post";
 
   return (
     <article
       aria-label={`${type.toLowerCase()}: ${post.title || passage || "activity"}`}
-      className="qv-lit flex flex-col gap-1.5 px-3.5 py-3 font-redesign lg:gap-2 lg:px-5 lg:py-4"
+      className={`${isPost ? "qv-postcard" : "qv-lit"} flex flex-col gap-1.5 px-3.5 py-3 font-redesign lg:gap-2 lg:px-5 lg:py-4`}
       data-light={kind.light === "post" ? undefined : kind.light}
       data-fill={kind.fill || undefined}
       data-profile-activity="true"
@@ -96,17 +96,18 @@ export function ProfileActivityCard({
           >
             {post.title || post.text}
           </Link>
-          <div className="flex items-center gap-2 lg:gap-3">
-            <span className="qv-pub-bar flex-1" aria-hidden="true">
-              {pct !== null && <span style={{ width: `${pct}%`, background: "#16a06a" }} />}
+          <div className="flex items-center gap-3 text-[12.5px] font-extrabold lg:gap-3.5 lg:text-[13px]">
+            <span className="text-[#0e8a5a]">
+              <span aria-hidden="true">↑</span>
+              <span className="sr-only">Up votes:</span> {up}
             </span>
-            <b className="text-[11.5px] lg:text-[12.5px]">
-              {pct === null ? "No votes yet" : `${pct}%`}
-              <span className="max-lg:hidden">
-                {pct === null ? "" : " approve"} · {comments}{" "}
-                {comments === 1 ? "comment" : "comments"}
-              </span>
-            </b>
+            <span className="text-[#c42b2b]">
+              <span aria-hidden="true">↓</span>
+              <span className="sr-only">Down votes:</span> {down}
+            </span>
+            <span className="text-[var(--shell-ink-2)]">
+              {comments} {comments === 1 ? "comment" : "comments"}
+            </span>
           </div>
         </>
       ) : !KINDS[type] || type === "VOTED" ? (

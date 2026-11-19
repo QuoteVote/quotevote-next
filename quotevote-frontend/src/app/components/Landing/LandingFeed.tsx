@@ -14,11 +14,6 @@ import type { LandingPagerProps, LandingPostCardProps, LandingSort } from "@/typ
 
 const PAGE_SIZE = 20;
 const TAG_COLORS = ["green", "blue", "purple"] as const;
-const BAR_COLORS: Record<(typeof TAG_COLORS)[number], string> = {
-  green: "#16a06a",
-  blue: "#2f66f0",
-  purple: "#7c4ddb",
-};
 
 /** A tag keeps the same colour everywhere: green, blue or purple. */
 function tagColor(title: string): (typeof TAG_COLORS)[number] {
@@ -56,16 +51,15 @@ function LandingPostCard({ post }: LandingPostCardProps) {
   });
   const tag = data?.tag?.title ?? null;
   const color = tag ? tagColor(tag) : "green";
-  const approved = post.approvedBy?.length ?? 0;
-  const rejected = post.rejectedBy?.length ?? 0;
-  const total = approved + rejected;
-  const pct = total > 0 ? Math.round((approved / total) * 100) : null;
+  const up = post.upvotes ?? 0;
+  const down = post.downvotes ?? 0;
+  const comments = post.comments?.length ?? 0;
   const href = post.url || `/post/x/x/${post._id}`;
   const domain = post.citationUrl ? sourceDomain(post.citationUrl) : "";
   const creator = post.creator;
 
   return (
-    <article className="qv-lit flex flex-col gap-3 px-4 pt-4 pb-3.5 lg:px-[22px] lg:pt-5 lg:pb-[18px]">
+    <article className="qv-postcard flex flex-col gap-2 p-3.5 lg:gap-3 lg:px-[22px] lg:pt-5 lg:pb-[18px]">
       <div className="flex items-center gap-2.5 text-[13px] text-[var(--auth-muted)]">
         <DisplayAvatar
           avatar={creator?.avatar as string | Record<string, unknown> | undefined}
@@ -95,7 +89,7 @@ function LandingPostCard({ post }: LandingPostCardProps) {
           )}
         </span>
       </div>
-      <h3 className="qv-auth-display m-0 text-[18px]! tracking-[-0.02em]! lg:text-[23px]!">
+      <h3 className="qv-auth-display m-0 text-[17px]! tracking-[-0.02em]! lg:text-[23px]!">
         <Link href={href} className="text-[var(--auth-ink)] no-underline hover:underline">
           {post.title}
         </Link>
@@ -105,22 +99,61 @@ function LandingPostCard({ post }: LandingPostCardProps) {
           “{post.text}”
         </p>
       )}
-      <div className="flex items-center gap-3">
-        <span className="qv-pub-bar flex-1" aria-hidden="true">
-          {pct !== null && <span style={{ width: `${pct}%`, background: BAR_COLORS[color] }} />}
+      <div className="flex items-center gap-3 text-[12px] font-extrabold text-[var(--auth-ink-2)] lg:gap-[18px] lg:border-t lg:border-[var(--pub-line)] lg:pt-3 lg:text-[13.5px] lg:font-bold">
+        <span className="inline-flex items-center gap-1.5 text-[#0e8a5a]">
+          <span className="lg:hidden" aria-hidden="true">
+            ↑
+          </span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+            className="max-lg:hidden"
+          >
+            <path d="M7 10v11H4V10zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2.3l-1.3 7A2 2 0 0 1 17.7 21H7" />
+          </svg>
+          <span className="sr-only">Up votes:</span>
+          {up}
         </span>
-        <b className="text-[13px] whitespace-nowrap">
-          {pct === null ? (
-            "No votes yet"
-          ) : (
-            <>
-              {pct}%<span className="hidden lg:inline"> approve</span>
-            </>
-          )}
-        </b>
+        <span className="inline-flex items-center gap-1.5 text-[#c42b2b]">
+          <span className="lg:hidden" aria-hidden="true">
+            ↓
+          </span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+            className="max-lg:hidden"
+          >
+            <path d="M17 14V3h3v11zM17 14l-4 7a2 2 0 0 1-3-2l1-5H5a2 2 0 0 1-2-2.3l1.3-7A2 2 0 0 1 6.3 3H17" />
+          </svg>
+          <span className="sr-only">Down votes:</span>
+          {down}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+            className="max-lg:hidden"
+          >
+            <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" />
+          </svg>
+          {comments} comment{comments === 1 ? "" : "s"}
+        </span>
         <Link
           href={href}
-          className="qv-auth-link ml-2 hidden text-[13.5px] font-extrabold lg:inline"
+          className="qv-auth-link ml-auto hidden text-[13.5px] font-extrabold lg:inline"
         >
           Open post →
         </Link>
@@ -295,16 +328,27 @@ export function LandingFeed() {
   return (
     <section
       id="feed"
-      className="mx-auto flex w-full max-w-[880px] scroll-mt-20 flex-col gap-3 px-4 pt-14 sm:px-8 lg:gap-4 lg:px-0 lg:pt-24"
+      className="mx-auto flex w-full max-w-[880px] scroll-mt-20 flex-col gap-3 px-4 pt-[124px] sm:px-8 lg:gap-4 lg:px-0 lg:pt-24"
     >
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-col gap-3">
           <span className="qv-pub-kicker">Explore</span>
-          <h2 className="qv-auth-display m-0 text-[30px]! lg:text-[40px]!">Latest quotes</h2>
+          <h2 className="qv-auth-display m-0 text-[28px]! lg:text-[40px]!">Latest quotes</h2>
         </div>
-        <span className="qv-auth-muted hidden text-[13px] font-bold lg:inline">
-          Newest first · no ranking
-        </span>
+        <p className="qv-auth-muted -mt-1 mb-0 text-[13px] font-semibold lg:mt-0 lg:text-right lg:font-bold">
+          <span className="lg:hidden">Newest first. </span>
+          <span className="hidden lg:inline">
+            Newest first · no ranking
+            <br />
+            <span className="font-semibold">Read freely. </span>
+          </span>
+          <span className="font-semibold">
+            <Link href="/auths/request-access" className="qv-auth-link font-extrabold">
+              Request an invite
+            </Link>{" "}
+            to vote and comment.
+          </span>
+        </p>
       </div>
 
       <form

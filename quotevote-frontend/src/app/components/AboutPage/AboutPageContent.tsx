@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/AppShell/Wordmark";
 import { NewsletterForm } from "@/components/Public/NewsletterForm";
+import { Scene } from "@/components/Public/Scene";
+import { COMMUNITIES } from "@/app/components/Landing/LandingSections";
 
-/* The About page from the approved design (About, 1440 wide). Phones stack the
+/* The About page from the updated design (About, 1440 wide: plain up and down votes,
+   Avataaars people). Phones stack the
    same sections, as the landing page does. */
 
 const GITHUB_URL = "https://github.com/QuoteVote/quotevote-next";
@@ -14,55 +17,35 @@ const RESULTS = [
     text: "Bike lanes improve safety and reduce traffic for everyone.",
     up: 56,
     down: 12,
-    pct: 82,
-    color: "#16a06a",
   },
   {
     text: "This works best when paired with better public transit.",
     up: 23,
     down: 5,
-    pct: 82,
-    color: "#2f66f0",
   },
   {
     text: "Parking is essential for small businesses to thrive.",
     up: 18,
     down: 41,
-    pct: 30,
-    color: "#f6c343",
   },
 ];
 
 const VALUES = [
   { title: "No ads", text: "Your attention belongs to you.", color: "#0e8a5a" },
-  { title: "No algorithms", text: "Chronological and transparent.", color: "#6d3fd1" },
+  { title: "No engagement algorithms", text: "Chronological and transparent.", color: "#6d3fd1" },
   { title: "Open source", text: "Built in the open for the public good.", color: "#2457e6" },
   { title: "Everyone welcome", text: "Diverse views. Shared future.", color: "#0e8e9c" },
 ];
 
+/* Same three audiences and scenes as the landing page, with About's shorter copy. */
 const TILES = [
+  { title: "Schools & universities", text: "Students lead. Ideas move. Change happens." },
+  { title: "Teams & Enterprise", text: "Everyone’s voice. One game plan." },
   {
-    title: "Schools & universities",
-    text: "Students lead. Ideas move. Change happens.",
-    image: "scene-students",
-    position: "-10px -230px",
-    alt: "Students discussing activity fees",
-  },
-  {
-    title: "Teams & projects",
-    text: "Everyone’s voice. One game plan.",
-    image: "scene-team",
-    position: "-10px -220px",
-    alt: "A sports team planning a tournament",
-  },
-  {
-    title: "Organizations & local government",
+    title: "Organizations & government",
     text: "Stronger dialogue. Better decisions for everyone.",
-    image: "scene-dialogue",
-    position: "-10px -250px",
-    alt: "A group reviewing quotes on a shared screen",
   },
-];
+].map((t, i) => ({ ...t, scene: COMMUNITIES[i].scene }));
 
 function AboutHeader() {
   return (
@@ -224,15 +207,9 @@ export function AboutPageContent() {
                   <div className="flex justify-between gap-4">
                     <span className="text-[14.5px] font-semibold">“{r.text}”</span>
                     <span className="flex gap-2.5 text-[13px] font-extrabold">
-                      <span className="text-[#11683d]">+{r.up}</span>
-                      <span className="text-[#a12424]">−{r.down}</span>
+                      <span className="text-[#11683d]">↑ {r.up}</span>
+                      <span className="text-[#a12424]">↓ {r.down}</span>
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="qv-pub-bar flex-1">
-                      <span style={{ width: `${r.pct}%`, background: r.color }} />
-                    </span>
-                    <b className="text-[12.5px]">{r.pct}% agree</b>
                   </div>
                 </div>
               ))}
@@ -266,16 +243,9 @@ export function AboutPageContent() {
           <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-3">
             {TILES.map((t) => (
               <div key={t.title} className="qv-pub-card flex flex-col rounded-[20px]!">
-                <div
-                  role="img"
-                  aria-label={t.alt}
-                  className="h-[220px] bg-no-repeat"
-                  style={{
-                    backgroundImage: `url('/assets/redesign/${t.image}.jpg')`,
-                    backgroundSize: "400px auto",
-                    backgroundPosition: t.position,
-                  }}
-                />
+                <div className="h-[220px]">
+                  <Scene {...t.scene} size="card" />
+                </div>
                 <h3 className="m-0 px-[18px] pt-4 pb-1 text-[17px]! leading-normal! font-bold">
                   {t.title}
                 </h3>

@@ -22,12 +22,12 @@ export function LandingPage() {
       <PublicHeader />
       <main>
         <LandingHero />
+        <LandingFeed />
         <LandingValues />
         <LandingHowItWorks />
         <LandingInAction />
         <LandingCommunities />
         <LandingStories />
-        <LandingFeed />
         <LandingFaq />
         <LandingJoin />
       </main>
