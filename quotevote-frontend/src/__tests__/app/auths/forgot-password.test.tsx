@@ -11,13 +11,13 @@ jest.mock('sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }))
 describe('ForgotPasswordPageContent', () => {
   it('renders email form initially', () => {
     render(<ForgotPasswordPageContent />)
-    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^send$/i })).toBeInTheDocument()
   })
 
   it('shows validation error for invalid email', async () => {
     const { container } = render(<ForgotPasswordPageContent />)
-    const emailInput = screen.getByPlaceholderText(/email/i)
+    const emailInput = screen.getByLabelText(/^email$/i)
     fireEvent.change(emailInput, { target: { value: 'notanemail' } })
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() => {
@@ -36,7 +36,7 @@ describe('ForgotPasswordPageContent', () => {
       },
     ]
     render(<ForgotPasswordPageContent />, { mocks })
-    fireEvent.change(screen.getByPlaceholderText(/email/i), {
+    fireEvent.change(screen.getByLabelText(/^email$/i), {
       target: { value: 'test@example.com' },
     })
     fireEvent.click(screen.getByRole('button', { name: /^send$/i }))
@@ -47,6 +47,8 @@ describe('ForgotPasswordPageContent', () => {
 
   it('renders back to login link', () => {
     render(<ForgotPasswordPageContent />)
-    expect(screen.getByRole('link', { name: /^login$/i })).toBeInTheDocument()
+    for (const link of screen.getAllByRole('link', { name: /^log in$/i })) {
+      expect(link).toHaveAttribute('href', '/auths/login')
+    }
   })
 })

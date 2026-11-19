@@ -256,7 +256,7 @@ export default function SettingsContent({ setOpen }: SettingsContentProps) {
                 if (setOpen) setOpen(false)
                 localStorage.removeItem('token')
                 useAppStore.getState().logout()
-                router.push('/login')
+                router.push('/auths/login')
               }}
               disabled={loading}
             >

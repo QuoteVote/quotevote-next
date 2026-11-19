@@ -15,3 +15,15 @@ export const wordmarkFont = Montserrat({
   variable: "--font-wordmark",
   display: "swap",
 });
+
+/**
+ * The italic accent line of the access pages' headlines. The design loads only the
+ * 500 italic and lets the browser embolden it, so this does the same.
+ */
+export const redesignItalicFont = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["500"],
+  style: ["italic"],
+  variable: "--font-redesign-italic",
+  display: "swap",
+});

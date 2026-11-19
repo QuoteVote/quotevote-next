@@ -298,7 +298,7 @@ describe('SettingsContent', () => {
       await user.click(logoutButton)
 
       expect(setOpen).toHaveBeenCalledWith(false)
-      expect(mockPush).toHaveBeenCalledWith('/login')
+      expect(mockPush).toHaveBeenCalledWith('/auths/login')
     })
   })
 
