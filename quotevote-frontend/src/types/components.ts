@@ -685,29 +685,6 @@ export interface SubmitPostFormProps {
   setOpen: (open: boolean) => void;
 }
 
-export interface SubmitPostAlertProps {
-  /**
-   * Callback to hide the alert
-   */
-  hideAlert: () => void;
-  /**
-   * Shareable link URL for the created post
-   */
-  shareableLink?: string;
-  /**
-   * Error object if post creation failed
-   */
-  error?: Error | { message?: string; toString?: () => string } | null;
-  /**
-   * Callback to set alert visibility
-   */
-  setShowAlert: (show: boolean) => void;
-  /**
-   * Callback to close the submit post dialog/modal
-   */
-  setOpen: (open: boolean) => void;
-}
-
 export interface SubmitPostFormValues {
   title: string;
   text: string;
