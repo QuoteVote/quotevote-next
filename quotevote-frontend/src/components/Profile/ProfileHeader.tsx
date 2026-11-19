@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { MessageCircle, Flag, MoreHorizontal, Pencil } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
 import type { ProfileUser, ReportBotResult } from '@/types/profile';
@@ -28,18 +27,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { ProfileBadge, ProfileBadgeContainer } from './ProfileBadge';
-import { ProfileBio } from './ProfileBio';
 import { cn } from '@/lib/utils';
-import { FOCUS_RING_CLASS } from '@/lib/constants/formControls';
 import useGuestGuard from '@/hooks/useGuestGuard';
 import { useUserBlock } from '@/hooks/useUserBlock';
-import { useProfileBackground } from '@/hooks/useProfileBackground';
-import {
-  getProfileBackgroundStyle,
-  DEFAULT_PROFILE_BG_COLOR,
-  DEFAULT_PROFILE_BG_PATTERN,
-} from '@/lib/utils/profileBackground';
 
 interface ProfileHeaderProps {
   profileUser: ProfileUser;
@@ -52,12 +42,11 @@ function getStatusLabel(status: string): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function getStatusDotClass(status: string): string {
-  if (status === 'online') return 'bg-[#52b274]';
-  if (status === 'away') return 'bg-amber-400';
-  if (status === 'dnd') return 'bg-red-500';
-  return 'bg-zinc-400';
-}
+const STATUS_DOT: Record<string, string> = {
+  online: '#22c38e',
+  away: '#f6c343',
+  dnd: '#e5484d',
+};
 
 export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const router = useRouter();
@@ -68,7 +57,7 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   const setChatOpen = useAppStore((state) => state.setChatOpen);
   const userStatus = useAppStore((state) => state.chat.userStatus || 'online');
   const userStatusMessage = useAppStore((state) => state.chat.userStatusMessage || '');
-  const { color: profileBgColor, pattern: profileBgPattern } = useProfileBackground();
+  const presenceMap = useAppStore((state) => state.chat.presenceMap);
   const loggedInUserIdString = typeof loggedInUserId === 'string' ? loggedInUserId : String(loggedInUserId || '');
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const ensureAuth = useGuestGuard();
@@ -182,141 +171,156 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
 
   const followersCount = _followersId?.length || 0;
   const followingCount = _followingId?.length || 0;
+  // Own status from the status editor; others' from the presence feed.
+  const presence = sameUser
+    ? { status: userStatus, message: userStatusMessage }
+    : (() => {
+        const p = _id ? presenceMap?.[String(_id)] : undefined;
+        return p ? { status: p.status, message: p.statusMessage } : null;
+      })();
+  const showStatus = presence && presence.status && presence.status !== 'invisible' && presence.status !== 'offline';
+  const statusText = presence ? presence.message || getStatusLabel(presence.status) : '';
+  const dot = presence ? STATUS_DOT[presence.status] : undefined;
+  const score = profileUser.reputation ? Math.round(profileUser.reputation.overallScore) : null;
+
+  const stat =
+    'flex flex-col rounded-[12px] p-2.5 text-[var(--shell-ink)] no-underline lg:flex-row lg:items-baseline lg:gap-1 lg:rounded-none lg:bg-transparent! lg:p-0 lg:text-sm lg:font-semibold lg:text-[var(--auth-ink-2)] lg:hover:underline [.neo-brutalism_&]:max-lg:rounded-[4px] [.neo-brutalism_&]:max-lg:border-2 [.neo-brutalism_&]:max-lg:border-[var(--inv-panel-line)]';
+  const statNum = 'text-[17px] font-bold text-[var(--shell-ink)]';
+  const statLabel = 'text-[12.5px] font-bold text-[var(--auth-muted)] lg:text-sm lg:font-semibold lg:text-[var(--auth-ink-2)]';
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm">
-      {/* Cover banner — customizable color + pattern on your own profile;
-          other users default to the brand green zigzag. */}
-      <div className="h-28 relative overflow-hidden z-0">
-        <div
-          className="absolute inset-0"
-          style={
-            sameUser
-              ? getProfileBackgroundStyle(profileBgColor, profileBgPattern)
-              : getProfileBackgroundStyle(
-                  DEFAULT_PROFILE_BG_COLOR,
-                  DEFAULT_PROFILE_BG_PATTERN
-                )
-          }
-          data-testid="profile-cover"
-        />
+    <section
+      data-testid="profile-header"
+      aria-label={`${name || username}'s profile`}
+      className={cn(
+        'qv-auth relative grid grid-cols-[auto_1fr] gap-3 px-4 font-redesign [grid-template-areas:"avatar_actions"_"name_name"_"bio_bio"_"stats_stats"]',
+        'lg:grid-cols-1 lg:gap-3.5 lg:rounded-[18px] lg:border lg:border-[var(--inv-panel-line)] lg:bg-[var(--auth-surface)] lg:p-6 lg:shadow-[0_18px_40px_-24px_rgba(15,23,42,0.35)] lg:[grid-template-areas:"avatar"_"name"_"bio"_"stats"_"actions"]',
+        '[.neo-brutalism_&]:lg:rounded-[4px] [.neo-brutalism_&]:lg:border-2 [.neo-brutalism_&]:lg:shadow-[var(--inv-panel-shadow)]'
+      )}
+    >
+      <div className="relative -mt-[43px] w-fit [grid-area:avatar] lg:-mt-[70px]">
+        <div className="rounded-full border-4 border-[var(--inv-ground)] shadow-[0_6px_16px_-6px_rgba(15,23,42,0.3)] lg:border-[5px] lg:border-[var(--auth-surface)]">
+          <DisplayAvatar
+            avatar={avatar as string | Record<string, unknown> | undefined}
+            /* Same seed as the chat header, so an unset avatar matches everywhere. */
+            username={name || username}
+            size={108}
+            className="size-[78px] lg:size-[98px]"
+          />
+        </div>
+        {showStatus && dot && (
+          <span
+            aria-hidden="true"
+            className="absolute right-0.5 bottom-0.5 size-[18px] rounded-full border-[3px] border-[var(--auth-surface)] lg:right-1 lg:bottom-1 lg:size-[22px] lg:border-4"
+            style={{ background: dot }}
+          />
+        )}
       </div>
 
-      {/* Profile info section */}
-      <div className="px-5 pb-4 relative z-10">
-        {/* Avatar overlapping banner */}
-        {/* The actions wrap under the avatar on phones too narrow to fit both. */}
-        <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-3 -mt-10 mb-3">
-          <div className="ring-4 ring-card rounded-full shrink-0">
-            <DisplayAvatar
-              avatar={avatar as string | Record<string, unknown> | undefined}
-              /* Seed the default avatar with the same value the chat/message
-                 header uses (the room title = the user's display name), so an
-                 unset avatar looks identical in the profile and in messages. */
-              username={name || username}
-              size={96}
+      <div className="relative flex items-end justify-end gap-1.5 [grid-area:actions] lg:justify-start lg:gap-2">
+        {sameUser ? (
+          <Link
+            href={`/profile/${username}/edit`}
+            data-testid="edit-profile-button"
+            className="qv-auth-btn max-lg:h-9! max-lg:px-3! max-lg:text-[13px]! lg:flex-1"
+          >
+            Edit Profile
+          </Link>
+        ) : (
+          <>
+            <FollowButton
+              design
+              isFollowing={isFollowing}
+              profileUserId={_id}
+              username={username}
+              className="order-2 max-lg:h-9! max-lg:px-3! lg:order-1 lg:flex-1"
             />
-          </div>
-
-          {/* Action buttons */}
-          <div className="ml-auto flex items-center gap-2 sm:pt-14">
-            {sameUser ? (
-              <Button variant="outline" asChild className={FOCUS_RING_CLASS}>
-                <Link href={`/profile/${username}/edit`} data-testid="edit-profile-button">
-                  <Pencil className="h-4 w-4" aria-hidden="true" />
-                  Edit Profile
-                </Link>
-              </Button>
-            ) : (
-              <>
-                <FollowButton
-                  isFollowing={isFollowing}
-                  profileUserId={_id}
-                  username={username}
-                />
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handleMessageUser}
+            <button
+              type="button"
+              onClick={handleMessageUser}
+              className="qv-auth-btn order-1 max-lg:h-9! max-lg:px-3! lg:order-2 lg:flex-1"
+            >
+              Message
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="More options"
+                  className="qv-auth-btn order-3 w-9 px-0! max-lg:h-9! lg:w-11"
                 >
-                  <MessageCircle className="h-4 w-4 sm:mr-2" aria-hidden="true" />
-                  {/* Icon-only on phones so Following, Message and More fit next to the avatar. */}
-                  <span className="max-sm:sr-only">Message</span>
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" aria-label="More options">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      className="text-destructive cursor-pointer"
-                      onClick={() => setReportDialogOpen(true)}
-                    >
-                      <Flag className="mr-2 h-4 w-4" />
-                      Report Bot
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            )}
-          </div>
-        </div>
+                  ⋯
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="qv-auth qv-inv-popover w-[190px] p-1.5">
+                <DropdownMenuItem
+                  className="h-11 cursor-pointer rounded-[12px] bg-[#fdecec] px-3 text-sm font-bold text-[#a12424] focus:bg-[#fbdcdc] focus:text-[#a12424] [.dark_&]:bg-[#3a1a1e] [.dark_&]:text-[#ff9a9a]"
+                  onClick={() => setReportDialogOpen(true)}
+                >
+                  Report Bot
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        )}
+      </div>
 
-        {/* Display name + handle */}
-        <div className="space-y-0.5 mb-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-foreground">{name || username}</h2>
-            {contributorBadge && (
-              <ProfileBadgeContainer>
-                <ProfileBadge type="contributor" />
-              </ProfileBadgeContainer>
-            )}
-          </div>
-          <p className="text-muted-foreground text-sm">@{username}</p>
-          <ProfileBio bio={profileUser.bio} />
-          {sameUser && (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs">
-              <span
-                className={cn('h-2 w-2 rounded-full', getStatusDotClass(userStatus))}
-                aria-hidden="true"
-              />
-              <span
-                className="text-foreground/80 truncate max-w-[260px]"
-                title={userStatusMessage || getStatusLabel(userStatus)}
-              >
-                {userStatusMessage || getStatusLabel(userStatus)}
-              </span>
-            </div>
+      <div className="[grid-area:name]">
+        <h1 className="qv-auth-display m-0 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-2xl! tracking-[-0.02em]! lg:text-[30px]!">
+          {name || username}
+          {contributorBadge && (
+            <span className="qv-auth-tag bg-[#ece5fd]! text-[#5530a8]!" title="Founder Badge">
+              ✦ Contributor
+            </span>
           )}
-        </div>
+        </h1>
+        <p className="m-0 mt-0.5 text-[13px] font-semibold text-[var(--auth-muted)] lg:mt-1 lg:text-sm">
+          @{username}
+          {showStatus && (
+            <>
+              {' · '}
+              <span
+                className={presence?.status === 'online' ? 'text-[#11683d] [.dark_&]:text-[#7fdcb0]' : undefined}
+                title={statusText}
+              >
+                {statusText}
+              </span>
+            </>
+          )}
+        </p>
+      </div>
 
-        {/* Stats row */}
-        <div className="flex items-center gap-6">
-          <button
-            type="button"
-            onClick={() => router.push(`/profile/${username}/followers`)}
-            className={cn(
-              'min-h-8 cursor-pointer rounded-md text-sm text-foreground hover:underline',
-              FOCUS_RING_CLASS
-            )}
-          >
-            <span className="font-extrabold text-base">{followersCount}</span>{' '}
-            <span className="text-muted-foreground">Followers</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push(`/profile/${username}/following`)}
-            className={cn(
-              'min-h-8 cursor-pointer rounded-md text-sm text-foreground hover:underline',
-              FOCUS_RING_CLASS
-            )}
-          >
-            <span className="font-extrabold text-base">{followingCount}</span>{' '}
-            <span className="text-muted-foreground">Following</span>
-          </button>
-        </div>
+      {profileUser.bio ? (
+        <p className="m-0 text-sm leading-[1.55]! text-[var(--auth-ink-2)] [grid-area:bio] lg:text-[15px] lg:leading-[1.6]!">
+          {profileUser.bio}
+        </p>
+      ) : (
+        <span className="hidden" />
+      )}
+
+      <div className="grid grid-cols-3 gap-2 [grid-area:stats] lg:flex lg:gap-[22px]">
+        <button
+          type="button"
+          onClick={() => router.push(`/profile/${username}/followers`)}
+          className={cn(stat, 'qv-pub-tint-blue cursor-pointer border-0 text-left')}
+        >
+          <b className={statNum}>{followersCount}</b>
+          <span className={statLabel}>Followers</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push(`/profile/${username}/following`)}
+          className={cn(stat, 'qv-pub-tint-green cursor-pointer border-0 text-left')}
+        >
+          <b className={statNum}>{followingCount}</b>
+          <span className={statLabel}>Following</span>
+        </button>
+        {score !== null && (
+          <div className={cn(stat, 'qv-pub-tint-yellow lg:hidden')}>
+            <b className={statNum}>{score}</b>
+            <span className={statLabel}>Reputation</span>
+          </div>
+        )}
       </div>
 
       {/* Report Bot Confirmation Dialog */}
@@ -347,6 +351,6 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </section>
   );
 }

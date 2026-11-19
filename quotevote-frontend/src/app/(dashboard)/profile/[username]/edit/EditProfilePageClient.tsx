@@ -3,27 +3,14 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { ArrowLeft, Loader2, Palette } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { AccessField } from "@/components/Access/AccessField";
 import { DisplayAvatar } from "@/components/DisplayAvatar";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ProfileBackgroundPicker } from "@/components/Profile/ProfileBackgroundPicker";
@@ -32,15 +19,8 @@ import { GET_USER, GET_USER_BIO } from "@/graphql/queries";
 import { replaceGqlError } from "@/lib/utils/replaceGqlError";
 import { useAppStore } from "@/store/useAppStore";
 import { useProfileBackground } from "@/hooks/useProfileBackground";
-import { cn } from "@/lib/utils";
+import { getProfileBackgroundStyle } from "@/lib/utils/profileBackground";
 import { PROFILE_BIO_HTML_PATTERN, PROFILE_BIO_MAX_LENGTH } from "@/lib/constants/profile";
-import {
-  FOCUS_RING_CLASS,
-  FORM_ERROR_TEXT_CLASS,
-  FORM_FIELD_CLASS,
-  FORM_LABEL_CLASS,
-  PRIMARY_ACTION_CLASS,
-} from "@/lib/constants/formControls";
 import type { ProfileBackgroundPattern } from "@/types/profile";
 import type { SettingsUserData } from "@/types/settings";
 import type { UpdateUserResponse } from "@/types/test";
@@ -145,6 +125,7 @@ export default function EditProfilePageClient({
   });
 
   const isDirty = form.formState.isDirty || bannerDirty;
+  const watched = useWatch({ control: form.control });
 
   const onSubmit = async (values: EditProfileValues) => {
     const saveBanner = () => {
@@ -203,164 +184,187 @@ export default function EditProfilePageClient({
   if (!storeHydrated || !isOwnProfile) return <LoadingSpinner />;
 
   const profileHref = `/profile/${username}`;
+  const errors = form.formState.errors;
+  const bioLength = watched.bio?.length ?? 0;
+  const section =
+    "flex flex-col gap-4 rounded-[18px] border border-[var(--inv-panel-line)] bg-[var(--auth-surface)] p-6 shadow-[var(--inv-panel-shadow)] [.neo-brutalism_&]:rounded-[4px] [.neo-brutalism_&]:border-2";
+  const h2 = "m-0 text-base! leading-normal! font-bold tracking-normal!";
 
   return (
-    <div className="space-y-4 py-6" data-testid="edit-profile-page">
-      <div>
+    <div
+      className="qv-auth qv-pub min-h-[calc(100dvh-var(--app-header-h))] bg-[var(--inv-ground)]! font-redesign"
+      data-testid="edit-profile-page"
+    >
+      <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-[18px] px-4 pt-8 pb-12 xl:px-0">
         <Link
           href={profileHref}
-          className={cn(
-            "mb-3 -ml-1 inline-flex min-h-8 items-center gap-1.5 rounded-md px-1 text-sm font-medium text-foreground/80 hover:text-foreground",
-            FOCUS_RING_CLASS
-          )}
+          className="inline-flex w-fit items-center gap-1.5 rounded-md text-sm font-bold text-[#2a3530] no-underline hover:underline [.dark_&]:text-[var(--auth-ink-2)]"
         >
-          <ArrowLeft className="size-4" aria-hidden="true" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            aria-hidden="true"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
           Back to profile
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight">Edit profile</h1>
-        <p className="mt-1 text-sm text-foreground/75">
-          This is what other people see on your profile.
-        </p>
-      </div>
+        <h1 className="qv-auth-display m-0 text-[34px]! lg:text-[44px]!">Edit profile</h1>
 
-      <Card>
-        <CardContent>
-          <h2 className="mb-4 text-base font-semibold">Photo</h2>
-          <div className="flex flex-wrap items-center gap-4">
-            <DisplayAvatar
-              avatar={userData?.avatar as string | Record<string, unknown> | undefined}
-              username={name || username}
-              size={80}
-              className="ring-2 ring-border"
-            />
-            <Button variant="outline" asChild className={FOCUS_RING_CLASS}>
-              <Link href={`/profile/${username}/avatar`} data-testid="change-photo">
-                <Palette className="size-4" aria-hidden="true" />
-                Customize avatar
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" noValidate>
-              <h2 className="text-base font-semibold">Details</h2>
-
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={FORM_LABEL_CLASS}>Display name</FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="name"
-                        maxLength={50}
-                        placeholder="Your display name"
-                        className={FORM_FIELD_CLASS}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage className={FORM_ERROR_TEXT_CLASS} />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={FORM_LABEL_CLASS}>Username</FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="username"
-                        autoCapitalize="none"
-                        spellCheck={false}
-                        maxLength={50}
-                        placeholder="username"
-                        className={FORM_FIELD_CLASS}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-foreground/75">
-                      Your profile address: /profile/{field.value || "username"}
-                    </FormDescription>
-                    <FormMessage className={FORM_ERROR_TEXT_CLASS} />
-                  </FormItem>
-                )}
-              />
-
-              {bioSupported && (
-                <FormField
-                  control={form.control}
-                  name="bio"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className={FORM_LABEL_CLASS}>About</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="A short, plain-text introduction"
-                          rows={4}
-                          maxLength={PROFILE_BIO_MAX_LENGTH}
-                          className={FORM_FIELD_CLASS}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-foreground/75 tabular-nums">
-                        {field.value?.length ?? 0}/{PROFILE_BIO_MAX_LENGTH} characters
-                      </FormDescription>
-                      <FormMessage className={FORM_ERROR_TEXT_CLASS} />
-                    </FormItem>
-                  )}
+        <div className="flex flex-col-reverse gap-7 lg:flex-row lg:items-start">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex min-w-0 flex-1 flex-col gap-4"
+            noValidate
+          >
+            <section className={section} aria-labelledby="edit-photo">
+              <h2 id="edit-photo" className={h2}>
+                Photo
+              </h2>
+              <div className="flex items-center gap-[18px]">
+                <DisplayAvatar
+                  avatar={userData?.avatar as string | Record<string, unknown> | undefined}
+                  username={name || username}
+                  size={84}
                 />
-              )}
-
-              <Separator />
-
-              <div className="space-y-3">
-                <div className="space-y-0.5">
-                  <h2 className="text-base font-semibold">Banner</h2>
-                  <p className="text-sm text-foreground/75">
-                    The color and pattern behind your photo. Saved on this device.
-                  </p>
-                </div>
-                <ProfileBackgroundPicker
-                  color={bannerColor}
-                  pattern={bannerPattern}
-                  onColorChange={setBannerColor}
-                  onPatternChange={setBannerPattern}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                <Button variant="outline" asChild className={FOCUS_RING_CLASS}>
-                  <Link href={profileHref}>Cancel</Link>
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={!isDirty || saving}
-                  className={cn(PRIMARY_ACTION_CLASS, FOCUS_RING_CLASS)}
+                <Link
+                  href={`/profile/${username}/avatar`}
+                  data-testid="change-photo"
+                  className="qv-auth-btn"
                 >
-                  {saving ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                      Saving…
-                    </>
-                  ) : (
-                    "Save changes"
-                  )}
-                </Button>
+                  Change photo
+                </Link>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </section>
+
+            <section className={section} aria-labelledby="edit-details">
+              <h2 id="edit-details" className={h2}>
+                Details
+              </h2>
+              <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                <AccessField
+                  id="edit-name"
+                  label="Display name"
+                  autoComplete="name"
+                  maxLength={50}
+                  error={errors.name?.message}
+                  {...form.register("name")}
+                />
+                <AccessField
+                  id="edit-username"
+                  label="Username"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={50}
+                  error={errors.username?.message}
+                  {...form.register("username")}
+                />
+              </div>
+              {bioSupported && (
+                <div className="qv-auth-field">
+                  <div className="flex justify-between">
+                    <label htmlFor="edit-bio" className="qv-auth-label">
+                      About
+                    </label>
+                    <span className="qv-auth-hint tabular-nums" aria-live="polite">
+                      {bioLength} / {PROFILE_BIO_MAX_LENGTH}
+                    </span>
+                  </div>
+                  <textarea
+                    id="edit-bio"
+                    rows={3}
+                    maxLength={PROFILE_BIO_MAX_LENGTH}
+                    aria-invalid={errors.bio ? true : undefined}
+                    aria-describedby={errors.bio ? "edit-bio-error" : undefined}
+                    className="qv-auth-input h-auto! resize-none py-3 leading-[1.55]"
+                    {...form.register("bio")}
+                  />
+                  {errors.bio && (
+                    <p id="edit-bio-error" role="alert" className="qv-auth-err">
+                      {errors.bio.message}
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section className={section} aria-labelledby="edit-banner">
+              <div className="flex items-baseline justify-between">
+                <h2 id="edit-banner" className={h2}>
+                  Banner
+                </h2>
+                <span className="qv-auth-hint">Saved on this device</span>
+              </div>
+              <ProfileBackgroundPicker
+                color={bannerColor}
+                pattern={bannerPattern}
+                onColorChange={setBannerColor}
+                onPatternChange={setBannerPattern}
+              />
+            </section>
+
+            <div className="flex justify-end gap-2.5">
+              <Link href={profileHref} className="qv-auth-btn">
+                Cancel
+              </Link>
+              <button
+                type="submit"
+                disabled={!isDirty || saving}
+                className="qv-auth-btn qv-auth-btn-primary px-[26px]!"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    Saving…
+                  </>
+                ) : (
+                  "Save changes"
+                )}
+              </button>
+            </div>
+          </form>
+
+          <aside
+            aria-label="Live preview"
+            className="w-full shrink-0 lg:sticky lg:top-[calc(var(--app-header-h)+24px)] lg:w-[380px]"
+          >
+            <span className="qv-auth-eyebrow">Live preview</span>
+            <div className="mt-2.5 overflow-hidden rounded-[18px] border border-[var(--inv-panel-line)] bg-[var(--auth-surface)] shadow-[0_20px_40px_-24px_rgba(22,32,27,0.4)] [.neo-brutalism_&]:rounded-[4px] [.neo-brutalism_&]:border-2">
+              <div
+                role="img"
+                aria-label="Banner preview"
+                className="h-[110px]"
+                style={getProfileBackgroundStyle(bannerColor, bannerPattern, 28)}
+              />
+              <div className="px-5 pb-5">
+                <div className="-mt-[38px] w-fit rounded-full border-4 border-[var(--auth-surface)]">
+                  <DisplayAvatar
+                    avatar={userData?.avatar as string | Record<string, unknown> | undefined}
+                    username={name || username}
+                    size={68}
+                  />
+                </div>
+                <p className="qv-auth-display mt-2 mb-0 text-[26px]!">
+                  {watched.name || name || username}
+                </p>
+                <p className="mt-0.5 mb-2 text-[13px] text-[var(--auth-muted)]">
+                  @{watched.username || username}
+                </p>
+                {bioSupported && (watched.bio || "") && (
+                  <p className="m-0 text-sm leading-[1.55]! text-[var(--auth-ink)]">
+                    {watched.bio}
+                  </p>
+                )}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }

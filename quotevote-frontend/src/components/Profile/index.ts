@@ -11,7 +11,6 @@ export { ProfileHeader } from './ProfileHeader';
 export { ProfileView } from './ProfileView';
 export { ProfileController } from './ProfileController';
 export { FollowInfo } from './FollowInfo';
-export { UserFollowDisplay } from './UserFollowDisplay';
 export { NoFollowers } from './NoFollowers';
 export { ReportUserDialog } from './ReportUserDialog';
 export { SendInviteDialog } from './SendInviteDialog';

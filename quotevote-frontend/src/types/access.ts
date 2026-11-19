@@ -44,6 +44,9 @@ export interface AccessFieldProps extends InputHTMLAttributes<HTMLInputElement> 
   hint?: string;
   /** Adds the show/hide button to a password field. */
   revealable?: boolean;
+  /** Controlled show/hide, so one button can reveal several fields. */
+  revealed?: boolean;
+  onRevealChange?: (revealed: boolean) => void;
   /** Shows the lock icon of a read-only field. */
   locked?: boolean;
 }

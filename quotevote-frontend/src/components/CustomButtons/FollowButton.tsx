@@ -29,6 +29,8 @@ export function FollowButton({
   username,
   profileUserId,
   showIcon = false,
+  design = false,
+  small = false,
   className,
 }: FollowButtonProps) {
   const ensureAuth = useGuestGuard();
@@ -80,6 +82,44 @@ export function FollowButton({
       >
         {isFollowing ? <Check className="size-5" /> : <UserPlus className="size-5" />}
       </Button>
+    );
+  }
+
+  if (design) {
+    const size = small ? "qv-auth-btn-sm" : "";
+    if (isFollowing) {
+      return (
+        <button
+          type="button"
+          onClick={handleClick}
+          title={`Unfollow ${who}`}
+          aria-busy={loading}
+          className={cn(
+            "qv-auth-btn group",
+            size,
+            "border-[#bfd0fa] bg-[#e9f0ff] text-[#1a44c0] hover:border-[#f3c4c4]! hover:bg-[var(--auth-surface)]! hover:text-[var(--auth-danger)]! [.dark_&]:border-[#24496b] [.dark_&]:bg-[#13324a] [.dark_&]:text-[#8cc8ff]",
+            className
+          )}
+        >
+          <span className="group-hover:hidden" aria-hidden="true">
+            Following
+          </span>
+          <span className="hidden group-hover:inline" aria-hidden="true">
+            Unfollow
+          </span>
+          <span className="sr-only">Following, select to unfollow</span>
+        </button>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-busy={loading}
+        className={cn("qv-auth-btn qv-auth-btn-primary", size, className)}
+      >
+        Follow
+      </button>
     );
   }
 

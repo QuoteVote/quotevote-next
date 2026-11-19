@@ -116,12 +116,12 @@ describe("ChangePasswordDialog", () => {
   it("shows and hides both passwords with one toggle", () => {
     render(<ChangePasswordDialog userId="user-1" username="testuser" />);
     open();
-    const toggle = screen.getByRole("button", { name: "Show passwords" });
+    const toggle = screen.getByRole("button", { name: "Show password" });
     expect(toggle).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(toggle);
     expect(screen.getByLabelText("New password")).toHaveAttribute("type", "text");
     expect(screen.getByLabelText("Confirm new password")).toHaveAttribute("type", "text");
-    expect(screen.getByRole("button", { name: "Hide passwords" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Hide password" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );

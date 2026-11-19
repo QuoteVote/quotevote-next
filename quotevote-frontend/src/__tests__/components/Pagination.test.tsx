@@ -63,13 +63,13 @@ describe('Pagination Component', () => {
     it('shows page info when showPageInfo is true', () => {
       render(<Pagination {...defaultProps} showPageInfo={true} />)
 
-      expect(screen.getByText(/1–10 of 100/)).toBeInTheDocument()
+      expect(screen.getByTestId('pagination-range')).toHaveTextContent('1–10 of 100')
     })
 
     it('hides page info when showPageInfo is false', () => {
       render(<Pagination {...defaultProps} showPageInfo={false} />)
 
-      expect(screen.queryByText(/1–10 of 100/)).not.toBeInTheDocument()
+      expect(screen.queryByTestId('pagination-range')).not.toBeInTheDocument()
     })
   })
 
@@ -291,19 +291,19 @@ describe('Pagination Component', () => {
     it('calculates page info correctly for first page', () => {
       render(<Pagination {...defaultProps} currentPage={1} />)
 
-      expect(screen.getByText(/1–10 of 100/)).toBeInTheDocument()
+      expect(screen.getByTestId('pagination-range')).toHaveTextContent('1–10 of 100')
     })
 
     it('calculates page info correctly for middle page', () => {
       render(<Pagination {...defaultProps} currentPage={5} />)
 
-      expect(screen.getByText(/41–50 of 100/)).toBeInTheDocument()
+      expect(screen.getByTestId('pagination-range')).toHaveTextContent('41–50 of 100')
     })
 
     it('calculates page info correctly for last page', () => {
       render(<Pagination {...defaultProps} currentPage={10} />)
 
-      expect(screen.getByText(/91–100 of 100/)).toBeInTheDocument()
+      expect(screen.getByTestId('pagination-range')).toHaveTextContent('91–100 of 100')
     })
   })
 
@@ -429,11 +429,11 @@ describe('Pagination Component', () => {
   })
 
   describe('Contrast and focus (#528)', () => {
-    it('marks the current page with the accessible green, not the brand green', () => {
+    it('marks the current page with the design chip (ink on white), never white on brand green', () => {
       render(<Pagination {...defaultProps} currentPage={3} />)
       const current = screen.getByRole('button', { name: 'Page 3' })
       expect(current).toHaveAttribute('aria-current', 'page')
-      expect(current.className).toContain('bg-[#2f7a4c]')
+      expect(current).toHaveClass('qv-pub-pg')
       expect(current.className).not.toContain('bg-[#52b274]')
     })
 

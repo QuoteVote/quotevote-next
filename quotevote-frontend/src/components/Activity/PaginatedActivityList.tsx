@@ -2,27 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useQuery, useMutation } from '@apollo/client/react'
+import { useQuery } from '@apollo/client/react'
 import { PaginatedList } from '@/components/common/PaginatedList'
-import { ActivityCard } from '@/components/ui/ActivityCard'
+import { ProfileActivityCard } from './ProfileActivityCard'
 import { GET_USER_ACTIVITY } from '@/graphql/queries'
 import { pageToOffset, extractPaginationData } from '@/lib/utils/pagination'
 import { usePaginationWithFilters } from '@/hooks/usePagination'
 import { useWidth } from '@/hooks/useResponsive'
-import getCardBackgroundColor from '@/lib/utils/getCardBackgroundColor'
 import { getActivityContent } from '@/lib/utils/getActivityContent'
-import { CREATE_POST_MESSAGE_ROOM, UPDATE_POST_BOOKMARK } from '@/graphql/mutations'
-import {
-  GET_CHAT_ROOMS,
-  GET_POST,
-  GET_TOP_POSTS,
-} from '@/graphql/queries'
+import { GET_TOP_POSTS } from '@/graphql/queries'
 import { useAppStore } from '@/store'
-import useGuestGuard from '@/hooks/useGuestGuard'
-import { announceBookmarkChange } from '@/lib/utils/bookmarkFeedback'
-import { useRouter } from 'next/navigation'
 import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
-import { isPostedActivityType } from '@/lib/constants/postCardTheme'
 import { postToActivity } from '@/lib/utils/postToActivity'
 import { isSignInRequiredError } from '@/lib/utils/isSignInRequiredError'
 import { useAuthModal } from '@/context/AuthModalContext'
@@ -34,56 +24,22 @@ import type { PaginatedActivityListProps, ActivityEntity } from '@/types/activit
 import type { Post } from '@/types/post'
 
 function LoadActivityCard({
-  width,
   activity,
 }: {
   width: 'lg' | 'md' | 'sm' | 'xl' | 'xs'
   activity: ActivityEntity
 }) {
-  const router = useRouter()
-  const {
-    post,
-    user,
-    quote,
-    comment,
-    vote,
-    created,
-    activityType,
-  } = activity
-
-  // Hooks must be called unconditionally before any early returns
-  const currentUser = useAppStore((state) => state.user.data)
-  const [createPostMessageRoom] = useMutation(CREATE_POST_MESSAGE_ROOM)
-  const [updatePostBookmark] = useMutation(UPDATE_POST_BOOKMARK)
-  const ensureAuth = useGuestGuard()
-  const setSelectedPost = useAppStore((state) => state.setSelectedPost)
-
+  const { post, quote, comment, vote, created, activityType } = activity
   if (!post) {
     return null
   }
 
-  const {
-    url,
-    bookmarkedBy = [],
-    upvotes = 0,
-    downvotes = 0,
-    comments = [],
-    votes = [],
-    quotes = [],
-    messageRoom,
-  } = post
-
-  const messages = messageRoom?.messages || []
-  const postId = post._id
-  const { username, avatar, name } = user
-  const limit = 5
-
   const type =
     activityType === 'VOTED' && vote
-      ? `${vote.type}${activityType}`
-      : activityType
+      ? `${vote.type}${activityType}`.toUpperCase()
+      : String(activityType).toUpperCase()
 
-  const content = getActivityContent(
+  const passage = getActivityContent(
     type,
     post as unknown as { text: string; [key: string]: unknown },
     quote as unknown as { startWordIndex: number; endWordIndex: number; [key: string]: unknown } | undefined,
@@ -91,95 +47,15 @@ function LoadActivityCard({
     comment as unknown as { startWordIndex: number; endWordIndex: number; [key: string]: unknown } | undefined
   )
 
-  const handleLike = async () => {
-    if (!ensureAuth() || !currentUser?._id) return
-
-    // GraphQL errors are already shown by the global Apollo error link.
-    try {
-      await updatePostBookmark({
-        variables: { postId, userId: currentUser._id },
-      })
-    } catch {
-      return
-    }
-    announceBookmarkChange(Boolean(isLiked))
-
-    await createPostMessageRoom({
-      variables: { postId },
-      refetchQueries: [
-        {
-          query: GET_CHAT_ROOMS,
-        },
-        {
-          query: GET_POST,
-          variables: {
-            postId,
-          },
-        },
-        {
-          query: GET_USER_ACTIVITY,
-          variables: {
-            user_id: currentUser._id,
-            limit,
-            offset: 0,
-            searchKey: '',
-            activityEvent: [],
-          },
-        },
-        {
-          query: GET_TOP_POSTS,
-          variables: { limit, offset: 0, searchKey: '', interactions: false },
-        },
-      ],
-    })
-  }
-
-  const handleRedirectToProfile = (profileUsername: string) => {
-    router.push(`/profile/${profileUsername}`)
-  }
-
-  const isLiked = currentUser?._id && typeof currentUser._id === 'string' ? bookmarkedBy.includes(currentUser._id) : false
-
-  const handleCardClick = () => {
-    setSelectedPost(postId)
-    router.push(toAppPostUrl(url.replace(/\?/g, '')))
-  }
-
-  // POSTED cards own blue PostCard chrome (#380); skip competing wrapper border.
-  const isPosted = isPostedActivityType(type)
-
   return (
-    <div
-      className={cn(
-        'mb-2 w-full max-w-full overflow-x-hidden box-border',
-        // The keyboard focus outline sits here: this wrapper's overflow would clip one on the card.
-        'has-[>[role=article]:focus-visible]:outline-3 has-[>[role=article]:focus-visible]:outline-offset-2 has-[>[role=article]:focus-visible]:outline-[#52b274]',
-        !isPosted && 'rounded-lg shadow-lg border'
-      )}
-      style={{ borderRadius: 7 }}
-    >
-      <ActivityCard
-        avatar={avatar}
-        cardColor={getCardBackgroundColor(type)}
-        name={name}
-        username={username}
-        date={created}
-        upvotes={upvotes}
-        downvotes={downvotes}
-        comments={comments}
-        messages={messages}
-        votes={votes}
-        quotes={quotes}
-        liked={isLiked}
-        post={post ? { ...post, created: typeof post.created === 'number' ? String(post.created) : post.created, title: post.title ?? null } as Partial<import('@/types/post').Post> : undefined}
-        content={content}
-        width={width}
-        onLike={handleLike}
-        handleRedirectToProfile={handleRedirectToProfile}
-        onCardClick={handleCardClick}
-        activityType={type}
-      />
-    </div>
+    <ProfileActivityCard
+      type={type}
+      post={post}
+      created={created}
+      passage={passage}
+      commentText={comment?.content}
+      href={toAppPostUrl((post.url || '').replace(/\?/g, ''))}
+    />
   )
 }
 
@@ -402,6 +278,7 @@ export function PaginatedActivityList(props: PaginatedActivityListProps) {
     onClearFilters,
     publicFallback = false,
     onMembersOnlyChange,
+    onRangeChange,
     className,
     contentClassName,
     paginationClassName,
@@ -464,13 +341,23 @@ export function PaginatedActivityList(props: PaginatedActivityListProps) {
     }
   }, [showPublicPosts, pagination.currentPage, data, refetch])
 
-  if (showPublicPosts) return <PublicPostActivityList {...props} />
-
   // Extract and process data
   const { data: entities, pagination: paginationData } = extractPaginationData(
     data as Record<string, unknown>,
     'activities'
   )
+
+  // "1–15 of 113" beside the heading. Worked out before the guest early return so
+  // the hook order never changes; guests' public-post list sends no range.
+  const total = paginationData?.total ?? 0
+  const rangeStart = total === 0 ? 0 : (pagination.currentPage - 1) * pagination.pageSize + 1
+  const rangeEnd = Math.min(pagination.currentPage * pagination.pageSize, total)
+  const rangeText = data && !showPublicPosts ? `${rangeStart}–${rangeEnd} of ${total.toLocaleString()}` : ''
+  useEffect(() => {
+    onRangeChange?.(rangeText)
+  }, [onRangeChange, rangeText])
+
+  if (showPublicPosts) return <PublicPostActivityList {...props} />
 
   // Filter out hidden posts
   const processedActivities = (entities as ActivityEntity[]).filter(
@@ -495,6 +382,7 @@ export function PaginatedActivityList(props: PaginatedActivityListProps) {
       showPageInfo={showPageInfo}
       showFirstLast={showFirstLast}
       maxVisiblePages={maxVisiblePages}
+      itemLabel=""
       renderItem={renderActivity}
       renderEmpty={() => (
         <ActivityEmpty
@@ -516,7 +404,7 @@ export function PaginatedActivityList(props: PaginatedActivityListProps) {
       contentClassName={contentClassName}
       paginationClassName={paginationClassName}
     >
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3 lg:gap-3.5">
         {processedActivities.map(renderActivity)}
       </div>
     </PaginatedList>

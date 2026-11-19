@@ -18,6 +18,7 @@ const users = [
   {
     id: followerA,
     username: 'anna',
+    name: 'Anna Lee',
     avatar: { url: 'a.png' },
     followerIds: [profileId, profileId],
     followingIds: [profileId],
@@ -81,6 +82,7 @@ describe('userResolver Query.getUserFollowInfo', () => {
       {
         id: followerA,
         username: 'anna',
+        name: 'Anna Lee',
         avatar: { url: 'a.png' },
         numFollowers: 1,
         numFollowing: 1,
@@ -89,6 +91,7 @@ describe('userResolver Query.getUserFollowInfo', () => {
       {
         id: followerB,
         username: 'ben',
+        name: null,
         avatar: null,
         numFollowers: 0,
         numFollowing: 2,
@@ -127,7 +130,7 @@ describe('userResolver Query.getUserFollowInfo', () => {
     const { select, where } = (ctx.prisma.user.findMany as jest.Mock).mock.calls[0][0];
     expect(where).toEqual({ id: { in: [followerA, followerB, disabledD] } });
     expect(Object.keys(select).sort()).toEqual(
-      ['accountStatus', 'avatar', 'followerIds', 'followingIds', 'id', 'username'].sort()
+      ['accountStatus', 'avatar', 'followerIds', 'followingIds', 'id', 'name', 'username'].sort()
     );
   });
 

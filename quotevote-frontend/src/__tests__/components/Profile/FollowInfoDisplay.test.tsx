@@ -7,7 +7,7 @@
  * no MockedProvider) and verify the list actually displays.
  */
 
-import { render, screen } from '../../utils/test-utils';
+import { render, screen, within } from '../../utils/test-utils';
 import { FollowInfo } from '../../../components/Profile/FollowInfo';
 
 const mockUseQuery = jest.fn();
@@ -21,7 +21,12 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
 }));
 
-const mockState = { user: { data: { _id: 'me', _followingId: ['u2'] } } };
+const mockState = {
+  user: { data: { _id: 'me', username: 'me', _followingId: ['u2'] } },
+  chat: { presenceMap: {} },
+  setSelectedChatRoom: jest.fn(),
+  setChatOpen: jest.fn(),
+};
 jest.mock('@/store', () => ({
   useAppStore: (selector: (s: typeof mockState) => unknown) => selector(mockState),
 }));
@@ -30,13 +35,15 @@ jest.mock('@/components/LoadingSpinner', () => ({
   LoadingSpinner: () => <div data-testid="loading" />,
 }));
 
-jest.mock('../../../components/Profile/UserFollowDisplay', () => ({
-  UserFollowDisplay: ({ username, isFollowing }: { username: string; isFollowing: boolean }) => (
-    <div data-testid="follow-row" data-following={isFollowing}>
-      {username}
-    </div>
+jest.mock('@/components/CustomButtons/FollowButton', () => ({
+  FollowButton: ({ username, isFollowing }: { username: string; isFollowing: boolean }) => (
+    <button type="button" data-testid="follow-row" data-following={isFollowing}>
+      {isFollowing ? 'Following' : 'Follow'} {username}
+    </button>
   ),
 }));
+
+jest.mock('@/components/DisplayAvatar', () => ({ DisplayAvatar: () => <span /> }));
 
 jest.mock('../../../components/Profile/NoFollowers', () => ({
   NoFollowers: ({ filter }: { filter: string }) => (
@@ -63,24 +70,30 @@ describe('FollowInfo — JSON scalar list display', () => {
       error: undefined,
       data: {
         getUserFollowInfo: [
-          { id: 'u1', username: 'bob', avatar: null, numFollowers: 1, numFollowing: 2 },
+          { id: 'u1', username: 'bob', name: 'Bob Stone', avatar: null, numFollowers: 1, numFollowing: 2 },
           { id: 'u2', username: 'carol', avatar: null, numFollowers: 3, numFollowing: 4 },
+          { id: 'me', username: 'me', avatar: null, numFollowers: 0, numFollowing: 0 },
         ],
       },
     });
 
     render(<FollowInfo filter="followers" />);
 
-    const rows = screen.getAllByTestId('follow-row');
-    expect(rows).toHaveLength(2);
-    expect(screen.getByText('bob')).toBeInTheDocument();
-    expect(screen.getByText('carol')).toBeInTheDocument();
-    expect(screen.getByText('2 Followers')).toBeInTheDocument();
-    // viewer follows u2 (carol) per mocked _followingId
-    expect(screen.getByText('carol').closest('[data-testid="follow-row"]'))
-      .toHaveAttribute('data-following', 'true');
-    expect(screen.getByText('bob').closest('[data-testid="follow-row"]'))
-      .toHaveAttribute('data-following', 'false');
+    expect(screen.getAllByTestId('user-follow-display')).toHaveLength(3);
+    // The display name leads, with the username under it; no name falls back to the username.
+    expect(screen.getByRole('link', { name: 'Bob Stone' })).toHaveAttribute('href', '/profile/bob');
+    expect(screen.getByText('@bob')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'carol' })).toHaveAttribute('href', '/profile/carol');
+    expect(screen.getByRole('heading', { level: 1, name: '3 Followers' })).toBeInTheDocument();
+    // Viewer follows u2 (carol) per the mocked _followingId; no Follow button on your own row.
+    const buttons = screen.getAllByTestId('follow-row');
+    expect(buttons).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Following carol' })).toHaveAttribute('data-following', 'true');
+    expect(screen.getByRole('button', { name: 'Follow bob' })).toHaveAttribute('data-following', 'false');
+    // Tabs between the two lists, the current one marked.
+    const tabs = screen.getByRole('navigation', { name: 'Followers and following' });
+    expect(within(tabs).getByRole('link', { name: /^Followers/ })).toHaveAttribute('aria-current', 'page');
+    expect(within(tabs).getByRole('link', { name: /^Following/ })).toHaveAttribute('href', '/profile/alice/following');
   });
 
   it('renders the empty state when the array is empty', () => {
@@ -93,6 +106,6 @@ describe('FollowInfo — JSON scalar list display', () => {
     render(<FollowInfo filter="following" />);
 
     expect(screen.getByTestId('no-followers')).toHaveTextContent('following');
-    expect(screen.getByText('0 Following')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: '0 Following' })).toBeInTheDocument();
   });
 });

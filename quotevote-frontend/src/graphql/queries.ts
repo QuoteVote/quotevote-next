@@ -814,6 +814,9 @@ export const GET_USER_ACTIVITY = gql`
         content
         post {
           _id
+          tagId
+          approvedBy
+          rejectedBy
           title
           text
           url
