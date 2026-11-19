@@ -27,7 +27,7 @@ function DeclineConfirm({ email, disabled, onConfirm }: InviteDeclineConfirmProp
         align="end"
         role="alertdialog"
         aria-labelledby="decline-invite-title"
-        className="qv-auth qv-inv-popover flex w-[340px] flex-col gap-3 p-5"
+        className="qv-auth qv-inv-popover flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-3 p-5"
       >
         <h2 id="decline-invite-title" className="m-0 text-[17px]! leading-snug! font-bold">
           Decline invitation?

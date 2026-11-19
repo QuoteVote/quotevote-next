@@ -4,7 +4,6 @@ import type {
   AccessConsentProps,
   AccessFootnoteProps,
   AccessFormHeaderProps,
-  AccessNoticeProps,
 } from "@/types/access";
 
 const CONSENT_DOCS = {
@@ -72,19 +71,5 @@ export function AccessFootnote({ text, link }: AccessFootnoteProps) {
         {link.label}
       </Link>
     </p>
-  );
-}
-
-/** A full-panel message in place of a form: invalid link, email sent, expired invite. */
-export function AccessNotice({ title, message, action }: AccessNoticeProps) {
-  return (
-    <div className="flex flex-col gap-[18px]" role="status">
-      <AccessFormHeader title={title} subtitle={message} />
-      {action && (
-        <Link href={action.href} className="qv-auth-btn qv-auth-btn-primary qv-auth-btn-lg w-full">
-          {action.label}
-        </Link>
-      )}
-    </div>
   );
 }

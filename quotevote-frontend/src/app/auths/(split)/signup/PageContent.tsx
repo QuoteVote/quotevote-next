@@ -15,12 +15,8 @@ import type { CompleteSignupData, VerifyInviteSignupTokenData } from "@/types/si
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccessSplitLayout } from "@/components/Access/AccessSplitLayout";
 import { AccessField } from "@/components/Access/AccessField";
-import {
-  AccessConsent,
-  AccessFootnote,
-  AccessFormHeader,
-  AccessNotice,
-} from "@/components/Access/AccessParts";
+import { AccessConsent, AccessFootnote, AccessFormHeader } from "@/components/Access/AccessParts";
+import { NoticePage } from "@/components/Public/Notice";
 import type { AccessChip } from "@/types/access";
 
 const signupSchema = z
@@ -127,6 +123,8 @@ export default function SignupPageContent() {
   const loading = Boolean(token) && tokenLoading;
   const invalid = !token || (!tokenLoading && (!verifiedUser || Boolean(tokenError)));
 
+  if (invalid) return <NoticePage kind="invalidInvite" />;
+
   return (
     <AccessSplitLayout
       lines={["You’re invited.", "Join the conversation,"]}
@@ -143,12 +141,6 @@ export default function SignupPageContent() {
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />
         </div>
-      ) : invalid ? (
-        <AccessNotice
-          title="Invalid Invite"
-          message="This invite link is invalid or has expired."
-          action={{ href: "/auths/request-access", label: "Request a new invite" }}
-        />
       ) : (
         <form
           onSubmit={handleSubmit(onSubmit)}

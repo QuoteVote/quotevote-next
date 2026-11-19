@@ -63,12 +63,6 @@ export interface AccessFormHeaderProps {
   subtitleDesktopOnly?: boolean;
 }
 
-export interface AccessNoticeProps {
-  title: string;
-  message: string;
-  action?: AccessLink;
-}
-
 export interface AccessFootnoteProps {
   text: string;
   link: AccessLink;
@@ -82,4 +76,104 @@ export interface AccessHeadlineProps {
 
 export interface AccessChipCardsProps {
   chips: AccessChip[];
+}
+
+export interface PublicHeaderLink {
+  href: string;
+  label: string;
+}
+
+export interface PublicHeaderProps {
+  /** Section links before Log in, e.g. Explore, How It Works. */
+  links?: PublicHeaderLink[];
+}
+
+export interface PublicFooterProps {
+  /** Where Explore Discussions and Explore point. */
+  exploreHref?: string;
+}
+
+export interface LandingStepExampleProps {
+  n: number;
+}
+
+export interface LandingPostCardProps {
+  post: import("@/types/post").Post;
+}
+
+export interface LandingPagerProps {
+  page: number;
+  totalPages: number;
+  total: number;
+  pageSize: number;
+  onPage: (page: number) => void;
+}
+
+export type LandingSort = "desc" | "asc" | "popular";
+
+export interface NewsletterFormProps {
+  id: string;
+  /** Phones use a plain button, desktop the blue one. */
+  variant: "phone" | "desktop";
+}
+
+export type NoticeKind =
+  | "invalidLink"
+  | "invalidInvite"
+  | "sessionExpired"
+  | "error"
+  | "postDeleted"
+  | "signingOut"
+  | "inTouch"
+  | "noPosts"
+  | "emailSent"
+  | "linkExpired"
+  | "linkIncomplete";
+
+export interface NoticeAction {
+  label: string;
+  /** A link, or an action when `onClick` is given. */
+  href?: string;
+  onClick?: () => void;
+  primary?: boolean;
+}
+
+export interface NoticeCardProps {
+  kind: NoticeKind;
+  /** Overrides the standard message, e.g. to name the email address. */
+  message?: string;
+  /** Overrides the standard buttons. */
+  actions?: NoticeAction[];
+}
+
+export interface NoticeActionButtonProps {
+  action: NoticeAction;
+}
+
+export interface NoticeDefinition {
+  title: string;
+  message: string;
+  tone: "yellow" | "blue" | "red" | "green" | "purple";
+  icon: ReactNode;
+  strokeWidth?: number;
+  actions: NoticeAction[];
+}
+
+export type DocsPageId = "terms" | "conduct" | "contributing";
+
+export interface DocsSection {
+  id: string;
+  title: string;
+  body: ReactNode;
+  /** Plain-language summary shown in the "In short" box. */
+  short?: string;
+}
+
+export interface DocsLayoutProps {
+  current: DocsPageId;
+  title: string;
+  /** e.g. "Last updated November 19, 2026". */
+  eyebrow?: string;
+  intro: string;
+  sections: DocsSection[];
 }

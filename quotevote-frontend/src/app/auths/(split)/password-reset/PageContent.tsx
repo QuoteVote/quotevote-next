@@ -13,7 +13,8 @@ import { UPDATE_USER_PASSWORD } from "@/graphql/mutations";
 import { replaceGqlError } from "@/lib/utils/replaceGqlError";
 import { AccessSplitLayout } from "@/components/Access/AccessSplitLayout";
 import { AccessField } from "@/components/Access/AccessField";
-import { AccessFootnote, AccessFormHeader, AccessNotice } from "@/components/Access/AccessParts";
+import { AccessFootnote, AccessFormHeader } from "@/components/Access/AccessParts";
+import { NoticePage } from "@/components/Public/Notice";
 import type { AccessChip } from "@/types/access";
 
 const schema = z
@@ -69,18 +70,15 @@ export default function PasswordResetPageContent() {
     }
   };
 
+  if (!token) return <NoticePage kind="linkIncomplete" />;
+  if (!loading && !isValidToken) return <NoticePage kind="linkExpired" />;
+
   let content: ReactNode;
-  if (!token) {
-    content = <AccessNotice title="Invalid Link" message="No reset token found." action={NEW_LINK} />;
-  } else if (loading) {
+  if (loading) {
     content = (
       <div className="flex justify-center py-8" aria-busy="true">
         <Loader2 className="size-6 animate-spin text-[var(--auth-primary)]" aria-label="Checking your link" />
       </div>
-    );
-  } else if (!isValidToken) {
-    content = (
-      <AccessNotice title="Link Expired" message="This reset link is invalid or expired." action={NEW_LINK} />
     );
   } else {
     content = (
