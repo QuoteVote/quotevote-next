@@ -25,8 +25,8 @@ describe('LoginPageContent', () => {
 
   it('renders username/email and password fields', () => {
     render(<LoginPageContent />)
-    expect(screen.getByPlaceholderText(/email\/username/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument()
   })
 
   it('shows validation errors on empty submit', async () => {
@@ -52,10 +52,10 @@ describe('LoginPageContent', () => {
     })
 
     const { container } = render(<LoginPageContent />)
-    fireEvent.change(screen.getByPlaceholderText(/email\/username/i), {
+    fireEvent.change(screen.getByLabelText(/email or username/i), {
       target: { value: 'test@example.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText(/password/i), {
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
       target: { value: 'password123' },
     })
     fireEvent.submit(container.querySelector('form')!)
@@ -73,10 +73,10 @@ describe('LoginPageContent', () => {
     })
 
     const { container } = render(<LoginPageContent />)
-    fireEvent.change(screen.getByPlaceholderText(/email\/username/i), {
+    fireEvent.change(screen.getByLabelText(/email or username/i), {
       target: { value: 'bad@example.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText(/password/i), {
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
       target: { value: 'wrongpass' },
     })
     fireEvent.submit(container.querySelector('form')!)
@@ -90,8 +90,35 @@ describe('LoginPageContent', () => {
     expect(screen.getByText(/forgot password/i)).toBeInTheDocument()
   })
 
-  it('renders request access link', () => {
+  it('renders request access links', () => {
     render(<LoginPageContent />)
-    expect(screen.getByText(/request access/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /request an invite/i })).toHaveAttribute(
+      'href',
+      '/auths/request-access'
+    )
+    // Top right on desktop and in the header on phones
+    for (const link of screen.getAllByRole('link', { name: /^request invite$/i })) {
+      expect(link).toHaveAttribute('href', '/auths/request-access')
+    }
+  })
+
+  it('keeps Log in disabled until both agreements are ticked', () => {
+    render(<LoginPageContent />)
+    const submit = screen.getByRole('button', { name: /^log in$/i })
+    expect(submit).toBeDisabled()
+    fireEvent.click(screen.getByLabelText(/terms of service/i))
+    expect(submit).toBeDisabled()
+    fireEvent.click(screen.getByLabelText(/code of conduct/i))
+    expect(submit).toBeEnabled()
+  })
+
+  it('shows and hides the password', () => {
+    render(<LoginPageContent />)
+    const password = screen.getByLabelText(/^password$/i)
+    expect(password).toHaveAttribute('type', 'password')
+    fireEvent.click(screen.getByRole('button', { name: /show password/i }))
+    expect(password).toHaveAttribute('type', 'text')
+    fireEvent.click(screen.getByRole('button', { name: /hide password/i }))
+    expect(password).toHaveAttribute('type', 'password')
   })
 })

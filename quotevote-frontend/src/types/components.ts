@@ -141,6 +141,8 @@ export interface LoaderProps {
 }
 
 export interface PaginationProps {
+  /** Word after the total, e.g. "posts"; empty for mixed lists. */
+  itemLabel?: string;
   /**
    * Current page number (1-indexed)
    */
@@ -199,6 +201,8 @@ export interface StickyPaginationWrapperProps {
 }
 
 export interface PaginatedListProps<T = unknown> {
+  /** Word after the total in the pager; defaults to "posts". */
+  itemLabel?: string;
   // Data props
   /**
    * Array of data items to paginate
@@ -455,6 +459,10 @@ export interface SettingsSaveButtonProps extends React.ComponentProps<'button'> 
 }
 
 export interface FollowButtonProps {
+  /** Redesign look: green Follow; Following in blue that turns into a red Unfollow on hover. */
+  design?: boolean;
+  /** Small size, as in lists. */
+  small?: boolean;
   /**
    * Whether the user is currently following
    */
@@ -671,29 +679,6 @@ export interface SubmitPostFormProps {
     _id: string;
     [key: string]: unknown;
   };
-  /**
-   * Callback to close the submit post dialog/modal
-   */
-  setOpen: (open: boolean) => void;
-}
-
-export interface SubmitPostAlertProps {
-  /**
-   * Callback to hide the alert
-   */
-  hideAlert: () => void;
-  /**
-   * Shareable link URL for the created post
-   */
-  shareableLink?: string;
-  /**
-   * Error object if post creation failed
-   */
-  error?: Error | { message?: string; toString?: () => string } | null;
-  /**
-   * Callback to set alert visibility
-   */
-  setShowAlert: (show: boolean) => void;
   /**
    * Callback to close the submit post dialog/modal
    */

@@ -3,7 +3,7 @@
  */
 
 import { render, screen, fireEvent, waitFor, type MockedResponse } from '../../utils/test-utils'
-import PasswordResetPageContent from '@/app/auths/(card)/password-reset/PageContent'
+import PasswordResetPageContent from '@/app/auths/(split)/password-reset/PageContent'
 import { VERIFY_PASSWORD_RESET_TOKEN } from '@/graphql/queries'
 import { UPDATE_USER_PASSWORD } from '@/graphql/mutations'
 
@@ -35,7 +35,7 @@ describe('PasswordResetPageContent', () => {
         get: () => '',
       })
       render(<PasswordResetPageContent />)
-      expect(screen.getByText(/request a new link/i)).toBeInTheDocument()
+      expect(screen.getAllByRole('link', { name: /request a new link/i })[0]).toHaveAttribute('href', '/auths/forgot-password')
     })
   })
 
@@ -143,8 +143,7 @@ describe('PasswordResetPageContent', () => {
       fireEvent.click(screen.getByRole('button', { name: /update password/i }))
       await waitFor(() => {
         // Zod min(8) error or regex error both indicate invalid password
-        const errors = document.querySelectorAll('.text-destructive')
-        expect(errors.length).toBeGreaterThan(0)
+        expect(screen.getAllByRole('alert').length).toBeGreaterThan(0)
       })
     })
   })

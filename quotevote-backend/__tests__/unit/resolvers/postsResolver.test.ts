@@ -853,6 +853,35 @@ describe('postsResolver', () => {
       expect(result.url).toBe(`/post/general/hello-world/${postId}`);
     });
 
+    it('keeps punctuation from the title out of the post URL', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+      (ctx.prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: tagId,
+        creatorId: userId,
+        title: 'General',
+        url: '/general',
+        adminIds: [],
+        allowedUserIds: [],
+        privacy: 'public',
+        created: new Date(),
+      });
+      (ctx.prisma.post.create as jest.Mock).mockResolvedValue({ id: postId });
+      (ctx.prisma.post.update as jest.Mock).mockResolvedValue({ id: postId });
+      stubReturnedPost(ctx, { url: `/post/general/is-transit-free/${postId}` });
+
+      await postsResolver.Mutation.addPost(
+        null,
+        { post: { userId, groupId: tagId, title: 'Is transit free?', text: 'Body text' } },
+        ctx
+      );
+
+      expect(ctx.prisma.post.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ url: `/post/general/is-transit-free/${postId}` }),
+        })
+      );
+    });
+
     it('rejects creating a post as another user', async () => {
       const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
 

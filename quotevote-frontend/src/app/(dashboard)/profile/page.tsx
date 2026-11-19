@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { buildPageMetadata, pageTitle } from '@/lib/seo/metadata';
-import { SubHeader } from '@/components/SubHeader';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ProfileController } from '@/components/Profile/ProfileController';
 
@@ -27,11 +26,8 @@ export const dynamic = 'force-dynamic';
  */
 export default function ProfilePage() {
   return (
-    <div className="space-y-4">
-      <SubHeader headerName="Profile" />
-      <Suspense fallback={<LoadingSpinner />}>
-        <ProfileController />
-      </Suspense>
-    </div>
+    <Suspense fallback={<LoadingSpinner />}>
+      <ProfileController />
+    </Suspense>
   );
 }

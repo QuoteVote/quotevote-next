@@ -353,6 +353,23 @@ describe('tagResolver', () => {
       expect(ctx.prisma.tag.create).not.toHaveBeenCalled();
     });
 
+    it('keeps punctuation from the title out of the tag url', async () => {
+      const ctx = mockContext(creatorId);
+      (ctx.prisma.tag.findFirst as jest.Mock).mockResolvedValue({ id: tagId });
+
+      await expect(
+        tagResolver.Mutation.createTag(
+          null,
+          { tag: { ...validTagInput, title: 'Q&A / Help?' } },
+          ctx
+        )
+      ).rejects.toThrow(/Tag name already exist/);
+      expect(ctx.prisma.tag.findFirst).toHaveBeenCalledWith({
+        where: { OR: [{ title: 'Q&A / Help?' }, { url: '/q-a-help' }] },
+        select: { id: true },
+      });
+    });
+
     it('creates a tag with creator as admin/member and a title-derived url', async () => {
       const ctx = mockContext(creatorId);
       const createdAt = new Date('2026-02-01T00:00:00Z');

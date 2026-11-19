@@ -4,5 +4,5 @@ export { BusinessForm } from './BusinessForm';
 export { PaymentMethod } from './PaymentMethod';
 export { CreditCardInput } from './CreditCardInput';
 export { Plans } from './Plans';
-export { InfoSections } from './InfoSections';
+export { RequestAccessFeatures } from './RequestAccessFeatures';
 

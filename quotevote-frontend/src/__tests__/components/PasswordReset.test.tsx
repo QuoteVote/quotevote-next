@@ -77,7 +77,7 @@ describe('PasswordReset Component', () => {
       const loginButton = screen.getByRole('button', { name: /login/i });
       await user.click(loginButton);
 
-      expect(mockPush).toHaveBeenCalledWith('/login');
+      expect(mockPush).toHaveBeenCalledWith('/auths/login');
     });
   });
 

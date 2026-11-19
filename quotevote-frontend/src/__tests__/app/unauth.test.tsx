@@ -38,9 +38,10 @@ describe('UnauthPage', () => {
     expect(wrapper).toBeInTheDocument()
   })
 
-  it('renders card container', () => {
-    const { container } = render(<UnauthPage />)
-    const card = container.querySelector('.bg-card')
-    expect(card).toBeInTheDocument()
+  it('shows the message as a notice with a heading and a way home', () => {
+    render(<UnauthPage />)
+    expect(screen.getByRole('status')).toHaveTextContent(/your session has expired/i)
+    expect(screen.getByRole('heading', { name: /your session has expired/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /go to home/i })).toHaveAttribute('href', '/')
   })
 })

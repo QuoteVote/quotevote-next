@@ -16,6 +16,7 @@ export function Pagination({
   showFirstLast = true,
   maxVisiblePages = 5,
   disabled = false,
+  itemLabel = 'posts',
 }: PaginationProps) {
   const isMobile = useIsMobile();
   const pageWindow = isMobile ? Math.min(maxVisiblePages, 3) : maxVisiblePages;
@@ -51,35 +52,44 @@ export function Pagination({
 
   if (totalPages <= 1) return null;
 
-  const btnBase =
-    'flex items-center justify-center rounded-lg border border-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-2 focus-visible:ring-offset-background';
-  const btnMd = cn(btnBase, 'size-8 sm:size-9 shrink-0');
+  // The design's pager (redesign): range and progress on the left, controls on the right.
+  const iconBtn = 'qv-pub-pg-icon focus-visible:ring-2 focus-visible:ring-[var(--shell-blue)]';
+  const navBtn =
+    'qv-auth-btn h-10! rounded-[12px] px-2.5! focus-visible:ring-2 focus-visible:ring-[var(--shell-blue)] disabled:opacity-40';
+  const pageBtn = 'qv-pub-pg focus-visible:ring-2 focus-visible:ring-[var(--shell-blue)]';
+  const progress = totalCount > 0 ? Math.max(2, Math.min(100, (endItem / totalCount) * 100)) : 0;
 
   return (
     <nav
       aria-label="Pagination"
       data-testid="pagination"
-      className="flex flex-col items-center gap-4 w-full min-w-0 max-w-full overflow-x-hidden px-4 pt-6 pb-8 sm:pt-7 sm:pb-10"
+      className="qv-auth qv-pub qv-pub-pager mx-4 my-4 min-w-0 max-w-full flex-wrap overflow-x-hidden bg-[var(--shell-surface)]! font-redesign sm:mx-0"
     >
       {showPageInfo && (
-        <p className="text-xs text-foreground/75 tabular-nums text-center">
-          {startItem}–{endItem} of {totalCount.toLocaleString()} posts
-        </p>
+        <span className="flex min-w-[96px] flex-col gap-[7px] text-[13px] font-semibold text-[var(--shell-muted)] sm:min-w-[170px]">
+          <span className="tabular-nums" data-testid="pagination-range">
+            <b className="text-[var(--shell-ink)]">
+              {startItem}–{endItem}
+            </b>{' '}
+            of {totalCount.toLocaleString()}
+            {itemLabel ? ` ${itemLabel}` : ''}
+          </span>
+          <span className="qv-inv-track hidden sm:block" aria-hidden="true">
+            <span style={{ width: `${progress}%` }} />
+          </span>
+        </span>
       )}
 
-      <div
-        data-testid="pagination-controls"
-        className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap max-w-full"
-      >
+      <div data-testid="pagination-controls" className="ml-auto flex max-w-full flex-wrap items-center gap-1.5">
         {showFirstLast && (
           <button
             type="button"
             onClick={() => go(1)}
             disabled={currentPage === 1 || disabled}
             aria-label="First page"
-            className={btnMd}
+            className={cn(iconBtn, 'max-sm:hidden!')}
           >
-            <ChevronsLeft className="size-4" />
+            <ChevronsLeft className="size-[18px]" aria-hidden="true" />
           </button>
         )}
 
@@ -88,70 +98,67 @@ export function Pagination({
           onClick={() => go(currentPage - 1)}
           disabled={currentPage === 1 || disabled}
           aria-label="Previous page"
-          className={cn(btnMd, !showStartEllipsis && 'mr-1.5 sm:mr-2')}
+          className={navBtn}
         >
-          <ChevronLeft className="size-4" />
+          <ChevronLeft className="size-4" aria-hidden="true" />
         </button>
 
-        {showStartEllipsis && (
-          <>
-            {showEdgePageNumbers && (
-              <button type="button" onClick={() => go(1)} disabled={disabled} className={btnMd}>
-                1
-              </button>
-            )}
-            <span className="flex items-center justify-center w-6 sm:size-9 text-xs text-muted-foreground select-none">
-              …
-            </span>
-          </>
-        )}
+        <div className="qv-pub-pg-nums">
+          {showStartEllipsis && (
+            <>
+              {showEdgePageNumbers && (
+                <button type="button" onClick={() => go(1)} disabled={disabled} className={pageBtn} aria-label="Page 1">
+                  1
+                </button>
+              )}
+              <span className="qv-pub-pg-gap select-none" aria-hidden="true">
+                …
+              </span>
+            </>
+          )}
 
-        {visiblePages.map((page) => (
-          <button
-            key={page}
-            type="button"
-            onClick={() => go(page)}
-            disabled={disabled}
-            aria-label={`Page ${page}`}
-            aria-current={page === currentPage ? 'page' : undefined}
-            className={cn(
-              btnMd,
-              page === currentPage
-                ? // White on the brand green is 2.6:1; this darker green keeps the number readable (5.2:1).
-                  'bg-[#2f7a4c] border-[#2f7a4c] text-white hover:bg-[#276640] hover:border-[#276640]'
-                : 'hover:bg-muted'
-            )}
-          >
-            {page}
-          </button>
-        ))}
+          {visiblePages.map((page) => (
+            <button
+              key={page}
+              type="button"
+              onClick={() => go(page)}
+              disabled={disabled}
+              aria-label={`Page ${page}`}
+              aria-current={page === currentPage ? 'page' : undefined}
+              className={pageBtn}
+            >
+              {page}
+            </button>
+          ))}
 
-        {showEndEllipsis && (
-          <>
-            <span className="flex items-center justify-center w-6 sm:size-9 text-xs text-muted-foreground select-none">
-              …
-            </span>
-            {showEdgePageNumbers && (
-              <button
-                type="button"
-                onClick={() => go(totalPages)}
-                disabled={disabled}
-                className={btnMd}
-              >
-                {totalPages}
-              </button>
-            )}
-          </>
-        )}
+          {showEndEllipsis && (
+            <>
+              <span className="qv-pub-pg-gap select-none" aria-hidden="true">
+                …
+              </span>
+              {showEdgePageNumbers && (
+                <button
+                  type="button"
+                  onClick={() => go(totalPages)}
+                  disabled={disabled}
+                  className={pageBtn}
+                  aria-label={`Page ${totalPages}`}
+                >
+                  {totalPages}
+                </button>
+              )}
+            </>
+          )}
+        </div>
 
         <button
           type="button"
           onClick={() => go(currentPage + 1)}
           disabled={currentPage === totalPages || disabled}
           aria-label="Next page"
-          className={cn(btnMd, !showEndEllipsis && 'ml-1.5 sm:ml-2')}
+          className={navBtn}
         >
-          <ChevronRight className="size-4" />
+          <ChevronRight className="size-4" aria-hidden="true" />
         </button>
 
         {showFirstLast && (
@@ -160,16 +167,12 @@ export function Pagination({
             onClick={() => go(totalPages)}
             disabled={currentPage === totalPages || disabled}
             aria-label="Last page"
-            className={btnMd}
+            className={cn(iconBtn, 'max-sm:hidden!')}
           >
-            <ChevronsRight className="size-4" />
+            <ChevronsRight className="size-[18px]" aria-hidden="true" />
           </button>
         )}
       </div>
-
-      <p className="sm:hidden text-xs text-foreground/75 pt-1">
-        Page {currentPage} of {totalPages}
-      </p>
     </nav>
   );
 }

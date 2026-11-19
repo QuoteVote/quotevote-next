@@ -88,18 +88,6 @@ export interface ProfileAvatarProps {
   className?: string;
 }
 
-export interface UserFollowDisplayProps {
-  avatar?: string | {
-    url?: string;
-    [key: string]: unknown;
-  };
-  username: string;
-  numFollowers: number;
-  numFollowing: number;
-  id: string;
-  isFollowing: boolean;
-}
-
 export interface FollowInfoProps {
   filter: 'followers' | 'following';
 }
@@ -199,4 +187,48 @@ export interface ProfileBackgroundPickerProps {
   pattern: ProfileBackgroundPattern;
   onColorChange: (color: string) => void;
   onPatternChange: (pattern: ProfileBackgroundPattern) => void;
+}
+
+export interface ProfileActivityCardProps {
+  /** UPVOTED, DOWNVOTED, POSTED, COMMENTED, QUOTED or LIKED. */
+  type: string;
+  post: import('@/types/activity').ActivityPost;
+  created: string | number;
+  /** The words voted on, quoted or commented on, or the comment itself. */
+  passage: string;
+  commentText?: string;
+  href: string;
+}
+
+export interface ProfileBannerProps {
+  /** Your own banner uses your saved colour and pattern; others get the default. */
+  own: boolean;
+}
+
+export interface FollowInfoEntryData {
+  id: string;
+  username: string;
+  name?: string | null;
+  avatar?: string | { url?: string; [key: string]: unknown } | null;
+  numFollowers: number;
+  numFollowing: number;
+}
+
+export interface FollowRowProps {
+  entry: FollowInfoEntryData;
+  isFollowing: boolean;
+  isSelf: boolean;
+}
+
+export interface PresenceDotProps {
+  status?: string;
+  size?: number;
+}
+
+export interface ProfileMiniCardProps {
+  user: ProfileUser;
+}
+
+export interface YourActivityProps {
+  username: string;
 }

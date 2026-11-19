@@ -50,6 +50,7 @@ export interface ActivityQuote {
 // Activity post
 export interface ActivityPost {
   _id: string
+  tagId?: string | null
   title?: string
   text: string
   url: string
@@ -131,6 +132,8 @@ export interface ActivityListProps {
 }
 
 export interface PaginatedActivityListProps {
+  /** Gets "1–15 of 113" whenever the shown range changes. */
+  onRangeChange?: (range: string) => void
   // Pagination props
   defaultPageSize?: number
   pageParam?: string

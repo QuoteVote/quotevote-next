@@ -4,6 +4,7 @@ import { logActivity } from '~/data/resolvers/utils/activities';
 import { updateTrending } from '~/data/resolvers/utils/posts';
 import { addNotification } from '~/data/resolvers/utils/notifications';
 import { whenAny } from '~/data/resolvers/utils/batchLoad';
+import { logger } from '~/data/utils/logger';
 import {
   QUOTE_SELECT,
   attachAuthors,
@@ -108,15 +109,26 @@ export const quoteResolver = {
         `Quoted on '${post.title}' post.`
       );
       // Legacy never notified on quotes; the author now hears about them like comments and
-      // votes. No notification for quoting your own post.
+      // votes. No notification for quoting your own post. The quote is already saved, so a
+      // failed notification is logged and skipped: reporting an error here would invite a
+      // retry and a duplicate quote (#732).
       if (post.userId !== userId) {
-        await addNotification(context.prisma, {
-          userId: post.userId,
-          userIdBy: userId,
-          notificationType: 'QUOTED',
-          label: created.quote,
-          postId,
-        });
+        try {
+          await addNotification(context.prisma, {
+            userId: post.userId,
+            userIdBy: userId,
+            notificationType: 'QUOTED',
+            label: created.quote,
+            postId,
+          });
+        } catch (err) {
+          logger.warn('addQuote: failed to notify the post author', {
+            postId,
+            quoteId: created.id,
+            userId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
       }
 
       return toQuote(created);

@@ -151,8 +151,9 @@ describe("RequestAccessPageContent", () => {
         "/auths/login"
       );
       expect(screen.getByRole("link", { name: "Explore Quote.Vote" })).toHaveAttribute("href", "/");
-      expect(screen.queryByText(/plan/i)).not.toBeInTheDocument();
-      expect(screen.queryByRole("img", { name: /plan/i })).not.toBeInTheDocument();
+      // Not the old Personal Plan screen (#613)
+      expect(screen.queryByText(/personal plan/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/thank you for joining us/i)).not.toBeInTheDocument();
       expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
     });
 

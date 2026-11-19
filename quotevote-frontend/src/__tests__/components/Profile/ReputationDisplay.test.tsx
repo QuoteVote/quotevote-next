@@ -35,72 +35,75 @@ const mockReputation: Reputation = {
 
 describe('ReputationDisplay', () => {
   describe('With Reputation Data', () => {
-    it('renders reputation score', () => {
+    it('shows the score out of 1000 under a Reputation heading', () => {
       render(<ReputationDisplay reputation={mockReputation} />);
-      expect(screen.getByText('Reputation Score')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Reputation' })).toBeInTheDocument();
       expect(screen.getByText('750')).toBeInTheDocument();
+      expect(screen.getByRole('img', { name: '750 of 1000' })).toBeInTheDocument();
     });
 
-    it('displays score breakdown', () => {
+    it('shows the Invite Network and Activity scores, without Conduct', () => {
       render(<ReputationDisplay reputation={mockReputation} />);
-      expect(screen.getByText('Score Breakdown')).toBeInTheDocument();
-      expect(screen.getByText('200')).toBeInTheDocument(); // inviteNetworkScore
-      expect(screen.getByText('250')).toBeInTheDocument(); // conductScore
-      expect(screen.getByText('300')).toBeInTheDocument(); // activityScore
+      expect(screen.getByText('Invite Network')).toBeInTheDocument();
+      expect(screen.getByText('Activity')).toBeInTheDocument();
+      expect(screen.getByText('200')).toBeInTheDocument();
+      expect(screen.getByText('300')).toBeInTheDocument();
+      expect(screen.queryByText('Conduct')).not.toBeInTheDocument();
+      expect(screen.queryByText('250')).not.toBeInTheDocument();
     });
 
-    it('displays detailed metrics', () => {
+    it('lists the figures behind the score, rounded', () => {
       render(<ReputationDisplay reputation={mockReputation} />);
-      expect(screen.getByText('Detailed Metrics')).toBeInTheDocument();
-      expect(screen.getByText('10')).toBeInTheDocument(); // totalInvitesSent
-      expect(screen.getByText('20')).toBeInTheDocument(); // totalPosts
-      expect(screen.getByText('30')).toBeInTheDocument(); // totalComments
+      const figures: [string, string][] = [
+        ['Invited', '8'],
+        ['Avg Invitee Rep', '651'],
+        ['Posts Created', '20'],
+        ['Comments Made', '30'],
+      ];
+      for (const [label, value] of figures) {
+        const term = screen.getByText(label);
+        expect(term.nextElementSibling).toHaveTextContent(value);
+      }
+      for (const removed of [
+        'Invites Sent',
+        'Invites Accepted',
+        'Upvotes Given',
+        'Reports Received',
+        'Reports Resolved',
+      ]) {
+        expect(screen.queryByText(removed)).not.toBeInTheDocument();
+      }
     });
 
-    it('displays last calculated date', () => {
+    it('shows when the score was last calculated', () => {
       render(<ReputationDisplay reputation={mockReputation} />);
-      expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
-      expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
+      expect(screen.getByText(/^Updated \d{1,2}\/\d{1,2}\/2024$/)).toBeInTheDocument();
     });
 
-    it('shows Not available when lastCalculated is invalid', () => {
-      const badReputation: Reputation = {
-        ...mockReputation,
-        lastCalculated: 'not-a-date',
-      };
-      render(<ReputationDisplay reputation={badReputation} />);
-      expect(screen.getByText(/Last updated: Not available/)).toBeInTheDocument();
+    it('says it has not been updated when lastCalculated is invalid', () => {
+      render(<ReputationDisplay reputation={{ ...mockReputation, lastCalculated: 'not-a-date' }} />);
+      expect(screen.getByText('Not updated yet')).toBeInTheDocument();
     });
 
     it('parses digit-only epoch strings defensively for lastCalculated', () => {
-      // GraphQL returns ISO strings; this covers older/non-GraphQL payloads.
-      const stamped: Reputation = {
-        ...mockReputation,
-        lastCalculated: String(Date.UTC(2024, 0, 15)),
-      };
-      render(<ReputationDisplay reputation={stamped} />);
-      expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
-      expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
+      const epoch = String(Date.UTC(2024, 5, 15, 12));
+      render(<ReputationDisplay reputation={{ ...mockReputation, lastCalculated: epoch }} />);
+      expect(screen.getByText(/^Updated 6\/15\/2024$/)).toBeInTheDocument();
     });
 
     it('calls onRefresh when refresh button is clicked', () => {
       const onRefresh = jest.fn();
       render(<ReputationDisplay reputation={mockReputation} onRefresh={onRefresh} />);
-      
-      // Find button by aria-label or tooltip trigger
-      const refreshButton = screen.getByRole('button');
+      const refreshButton = screen.getByRole('button', { name: 'Refresh reputation' });
       fireEvent.click(refreshButton);
-      
       expect(onRefresh).toHaveBeenCalledTimes(1);
       // #536: called with no arguments, so the click event never reaches a refetch.
       expect(onRefresh).toHaveBeenCalledWith();
-      expect(refreshButton).toHaveAccessibleName('Refresh reputation');
     });
 
-    it('shows loading state on refresh button when loading', () => {
-      render(<ReputationDisplay reputation={mockReputation} loading={true} />);
-      const refreshButton = screen.getByRole('button');
-      expect(refreshButton).toBeDisabled();
+    it('disables refresh while loading', () => {
+      render(<ReputationDisplay reputation={mockReputation} onRefresh={jest.fn()} loading={true} />);
+      expect(screen.getByRole('button', { name: 'Refresh reputation' })).toBeDisabled();
     });
   });
 

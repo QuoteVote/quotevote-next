@@ -295,7 +295,7 @@ export function PasswordReset({
                       You can now log in with your new password.
                     </p>
                     <Button
-                      onClick={() => router.push('/login')}
+                      onClick={() => router.push('/auths/login')}
                       className={cn(
                         "w-full h-10 text-base font-semibold",
                         "bg-[var(--color-primary)] hover:opacity-90",

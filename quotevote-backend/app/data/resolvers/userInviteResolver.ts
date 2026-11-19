@@ -46,6 +46,14 @@ const INVITE_STATUS_REQUESTED = 1;
 const INVITE_STATUS_DECLINED = 2;
 const INVITE_STATUS_APPROVED = 4;
 
+/** Statuses of an invite record (UserInvite.status). */
+const INVITE_RECORD_STATUSES: ReadonlySet<string> = new Set([
+  'pending',
+  'accepted',
+  'declined',
+  'expired',
+]);
+
 function isObjectId(id: string): boolean {
   return OBJECT_ID_PATTERN.test(id);
 }
@@ -288,6 +296,11 @@ function isDeclinedInviteStatus(inviteStatus: string): boolean {
   return normalized === 'declined' || normalized === '2';
 }
 
+function isResetInviteStatus(inviteStatus: string): boolean {
+  const normalized = inviteStatus.trim().toLowerCase();
+  return normalized === 'pending' || normalized === 'reset' || normalized === '1';
+}
+
 export const userInviteResolver = {
   Query: {
     userInviteRequests: async (
@@ -306,12 +319,16 @@ export const userInviteResolver = {
         });
       }
 
-      // Requested and declined access requests, newest first. Legacy user records
-      // have no createdAt, so this selects and sorts on `joined` only.
+      // Requested, declined and accepted access requests, newest first. Legacy user
+      // records have no createdAt, so this selects and sorts on `joined` only.
+      // `signedUp` tells the admin screens whether an accepted request still has an
+      // open signup to resend or reset; the password itself is never returned.
       const users = await context.prisma.user.findMany({
-        where: { status: { in: [INVITE_STATUS_REQUESTED, INVITE_STATUS_DECLINED] } },
+        where: {
+          status: { in: [INVITE_STATUS_REQUESTED, INVITE_STATUS_DECLINED, INVITE_STATUS_APPROVED] },
+        },
         orderBy: { joined: 'desc' },
-        select: { id: true, email: true, status: true, joined: true },
+        select: { id: true, email: true, status: true, joined: true, password: true },
       });
 
       return users.map((u) => ({
@@ -319,6 +336,61 @@ export const userInviteResolver = {
         email: u.email,
         status: String(u.status),
         joined: u.joined ?? null,
+        signedUp: Boolean(u.password),
+      }));
+    },
+
+    /**
+     * Invites a member sent from the app (sendUserInvite), newest first, as legacy
+     * served it: members see their own, admins can look up anyone's.
+     */
+    getUserInvites: async (
+      _parent: unknown,
+      args: { userId: string; status?: string | null },
+      context: GraphQLContext
+    ): Promise<Common.SentUserInvite[]> => {
+      const viewerId = context.user?._id?.toString();
+      if (!viewerId) {
+        throw new GraphQLError('Authentication required', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+      if (!args.userId || !isObjectId(args.userId)) {
+        throw new GraphQLError('Valid userId is required', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      if (args.userId !== viewerId && context.user?.admin !== true) {
+        throw new GraphQLError('You can only view your own invites', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      const status = args.status?.trim().toLowerCase();
+      if (status && !INVITE_RECORD_STATUSES.has(status)) {
+        throw new GraphQLError('Invalid invite status', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const invites = await context.prisma.userInvite.findMany({
+        where: {
+          invitedById: args.userId,
+          ...(status ? { status: status as Common.InviteStatus } : {}),
+        },
+        orderBy: { created: 'desc' },
+        take: 200,
+        select: { id: true, email: true, status: true, created: true, expiresAt: true },
+      });
+
+      // `joined` is the UserInvite field the screens read for the sent date.
+      return invites.map((invite) => ({
+        _id: invite.id,
+        email: invite.email,
+        status: invite.status,
+        created: invite.created,
+        joined: invite.created,
+        expiresAt: invite.expiresAt ?? undefined,
       }));
     },
 
@@ -693,10 +765,43 @@ export const userInviteResolver = {
         };
       }
 
-      return {
-        code: 'SUCCESS',
-        message: 'User Invite reset',
-      };
+      if (isResetInviteStatus(args.inviteStatus)) {
+        if (invitedUser.password) {
+          throw new GraphQLError('User has already completed signup', {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
+        }
+        // Back to pending so an admin can decide again. Only declined or accepted
+        // requests move; a request that is already pending stays as it is.
+        const moved = await context.prisma.user.updateMany({
+          where: {
+            id: invitedUser.id,
+            status: { in: [INVITE_STATUS_DECLINED, INVITE_STATUS_APPROVED] },
+            OR: [{ password: null }, { password: { isSet: false } }],
+          },
+          data: { status: INVITE_STATUS_REQUESTED },
+        });
+        // An accepted request's signup link stops working once it is reset.
+        if (moved.count === 1) {
+          await context.prisma.userInvite.updateMany({
+            where: {
+              email: invitedUser.email.trim().toLowerCase(),
+              status: 'pending',
+              // Admin approvals; invites members sent stay as they are.
+              OR: [{ invitedById: null }, { invitedById: { isSet: false } }],
+            },
+            data: { status: 'expired' },
+          });
+        }
+        return {
+          code: 'SUCCESS',
+          message: `User invite reset for ${mailTo}.`,
+        };
+      }
+
+      throw new GraphQLError('Invalid invite status', {
+        extensions: { code: 'BAD_USER_INPUT' },
+      });
     },
 
     completeSignup: async (

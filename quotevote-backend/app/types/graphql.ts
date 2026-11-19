@@ -578,6 +578,8 @@ export type PostDetail = Omit<GraphQLPost, 'votes' | 'comments' | 'quotes' | 'me
 export interface FollowInfoEntry {
   id: string;
   username: string;
+  /** Display name, when set. */
+  name: string | null;
   avatar: unknown;
   numFollowers: number;
   numFollowing: number;

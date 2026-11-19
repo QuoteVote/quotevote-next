@@ -1,22 +1,48 @@
-'use client';
+"use client";
 
-import {
-  Users,
-  Shield,
-  TrendingUp,
-  RefreshCw,
-  Info,
-} from 'lucide-react';
-import type { ReputationDisplayProps } from '@/types/profile';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import type { ReputationDisplayProps } from "@/types/profile";
+
+/* Reputation panel from the updated design (Profile): the score out of 1000 with its
+   label and bar, the two part scores, and the figures behind them (updated design). */
+
+const LEVELS = [
+  {
+    min: 800,
+    label: "Excellent",
+    tag: "qv-auth-tag-up",
+    bar: "linear-gradient(90deg, #52b274, #16a06a)",
+  },
+  {
+    min: 600,
+    label: "Good",
+    tag: "qv-auth-tag-amber",
+    bar: "linear-gradient(90deg, #f6c343, #e89b12)",
+  },
+  {
+    min: 400,
+    label: "Fair",
+    tag: "qv-auth-tag-amber",
+    bar: "linear-gradient(90deg, #f6c343, #e5484d)",
+  },
+  {
+    min: -Infinity,
+    label: "Poor",
+    tag: "qv-auth-tag-down",
+    bar: "linear-gradient(90deg, #ff6060, #c42b2b)",
+  },
+];
+
+/** GraphQL sends ISO strings; older payloads send epoch milliseconds as text. */
+function formatDate(value: string | Date | null | undefined): string | null {
+  if (value == null || value === "") return null;
+  const date =
+    value instanceof Date
+      ? value
+      : /^\d+$/.test(value.trim())
+        ? new Date(Number(value))
+        : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString("en-US");
+}
 
 export function ReputationDisplay({
   reputation,
@@ -25,224 +51,102 @@ export function ReputationDisplay({
 }: ReputationDisplayProps) {
   if (!reputation) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-muted-foreground">No reputation data available</p>
-        </CardContent>
-      </Card>
+      <section className="qv-inv-panel p-5 font-redesign">
+        <p className="m-0 text-sm text-[var(--shell-muted)]">No reputation data available</p>
+      </section>
     );
   }
 
-  const getScoreColor = (score: number): string => {
-    if (score >= 800) return '#4caf50'; // Green
-    if (score >= 600) return '#ff9800'; // Orange
-    if (score >= 400) return '#ff5722'; // Red-Orange
-    return '#f44336'; // Red
-  };
-
-  const getScoreLabel = (score: number): string => {
-    if (score >= 800) return 'Excellent';
-    if (score >= 600) return 'Good';
-    if (score >= 400) return 'Fair';
-    return 'Poor';
-  };
-
-  /**
-   * GraphQL returns ISO-8601 strings for lastCalculated. Keep light defensive
-   * parsing for Date instances and digit-only epoch strings from older payloads.
-   */
-  const formatDate = (dateValue: string | Date | null | undefined): string => {
-    if (dateValue == null || dateValue === '') return 'Not available';
-
-    const date =
-      dateValue instanceof Date
-        ? dateValue
-        : /^\d+$/.test(dateValue.trim())
-          ? new Date(Number(dateValue))
-          : new Date(dateValue);
-
-    if (Number.isNaN(date.getTime())) return 'Not available';
-    return date.toLocaleDateString();
-  };
-
-  const scoreColor = getScoreColor(reputation.overallScore);
-  const scoreLabel = getScoreLabel(reputation.overallScore);
-  const progressPercentage = (reputation.overallScore / 1000) * 100;
+  const score = Math.round(reputation.overallScore);
+  const level = LEVELS.find((l) => score >= l.min)!;
+  const updated = formatDate(reputation.lastCalculated);
+  const m = reputation.metrics ?? ({} as NonNullable<typeof reputation.metrics>);
+  const parts = [
+    { value: reputation.inviteNetworkScore, label: "Invite Network", tint: "qv-pub-tint-blue" },
+    { value: reputation.activityScore, label: "Activity", tint: "qv-pub-tint-purple" },
+  ];
+  const figures: [string, number | undefined][] = [
+    ["Invited", m.totalInvitesAccepted],
+    ["Avg Invitee Rep", m.averageInviteeReputation],
+    ["Posts Created", m.totalPosts],
+    ["Comments Made", m.totalComments],
+  ];
 
   return (
-    <div className="space-y-4">
-      {/* Main Reputation Card */}
-      <Card
-        className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
-      >
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-2">Reputation Score</h3>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-3xl font-bold">{reputation.overallScore}</span>
-                <span
-                  className="px-2 py-1 rounded text-sm font-medium text-white"
-                  style={{ backgroundColor: scoreColor }}
-                >
-                  {scoreLabel}
-                </span>
-              </div>
-              <div className="w-full bg-white/30 rounded-full h-2 mb-2">
-                <div
-                  className="h-2 rounded-full transition-all"
-                  style={{
-                    width: `${progressPercentage}%`,
-                    backgroundColor: '#4caf50',
-                  }}
-                />
-              </div>
-              <p className="text-sm opacity-80">
-                Last updated: {formatDate(reputation.lastCalculated)}
-              </p>
-            </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onRefresh?.()}
-                    disabled={loading}
-                    aria-label="Refresh reputation"
-                    className="text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white"
-                  >
-                    <RefreshCw
-                      className={cn('h-5 w-5', loading && 'animate-spin')}
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Refresh reputation</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </CardContent>
-      </Card>
+    <section
+      data-testid="reputation-display"
+      aria-labelledby="reputation-title"
+      className="qv-auth qv-inv-panel flex flex-col gap-3.5 p-5 font-redesign"
+    >
+      <div className="flex items-center justify-between">
+        <h2 id="reputation-title" className="m-0 text-[15px]! leading-normal! font-extrabold">
+          Reputation
+        </h2>
+        {onRefresh && (
+          <button
+            type="button"
+            className="qv-auth-icon-btn static! size-[34px]!"
+            aria-label="Refresh reputation"
+            onClick={() => onRefresh()}
+            disabled={loading}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5" />
+            </svg>
+          </button>
+        )}
+      </div>
 
-      {/* Score Breakdown */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Score Breakdown</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="text-center">
-              <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-xl font-bold text-primary">
-                {reputation.inviteNetworkScore}
-              </p>
-              <p className="text-sm text-muted-foreground">Invite Network</p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 mx-auto mt-1 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Based on quality of invited users and acceptance rate</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="text-center">
-              <Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-xl font-bold text-primary">
-                {reputation.conductScore}
-              </p>
-              <p className="text-sm text-muted-foreground">Conduct</p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 mx-auto mt-1 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Based on reports received and voting behavior</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="text-center">
-              <TrendingUp className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-xl font-bold text-primary">
-                {reputation.activityScore}
-              </p>
-              <p className="text-sm text-muted-foreground">Activity</p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 mx-auto mt-1 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Based on content creation and platform engagement</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+      <div className="flex items-center gap-4">
+        <b className="qv-auth-display text-[44px]!">{score}</b>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <span className={`qv-auth-tag ${level.tag}`}>{level.label}</span>
+            <span className="qv-auth-hint">
+              {updated ? `Updated ${updated}` : "Not updated yet"}
+            </span>
           </div>
-        </CardContent>
-      </Card>
+          <span className="qv-pub-bar" role="img" aria-label={`${score} of 1000`}>
+            <span
+              style={{ width: `${Math.max(0, Math.min(100, score / 10))}%`, background: level.bar }}
+            />
+          </span>
+        </div>
+      </div>
 
-      {/* Detailed Metrics */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Detailed Metrics</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalInvitesSent}
-              </p>
-              <p className="text-sm text-muted-foreground">Invites Sent</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalInvitesAccepted}
-              </p>
-              <p className="text-sm text-muted-foreground">Invites Accepted</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalPosts}
-              </p>
-              <p className="text-sm text-muted-foreground">Posts Created</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalComments}
-              </p>
-              <p className="text-sm text-muted-foreground">Comments Made</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalUpvotes}
-              </p>
-              <p className="text-sm text-muted-foreground">Upvotes Given</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalReportsReceived}
-              </p>
-              <p className="text-sm text-muted-foreground">Reports Received</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.averageInviteeReputation.toFixed(1)}
-              </p>
-              <p className="text-sm text-muted-foreground">Avg Invitee Rep</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-primary">
-                {reputation.metrics.totalReportsResolved}
-              </p>
-              <p className="text-sm text-muted-foreground">Reports Resolved</p>
-            </div>
+      <div className="grid grid-cols-2 gap-2">
+        {parts.map((p) => (
+          <div
+            key={p.label}
+            className={`${p.tint} flex flex-col gap-1.5 rounded-[14px] p-3 [.neo-brutalism_&]:rounded-[4px] [.neo-brutalism_&]:border-2 [.neo-brutalism_&]:border-[var(--inv-panel-line)]`}
+          >
+            <b className="text-xl">{Math.round(p.value ?? 0)}</b>
+            <span className="text-xs leading-tight font-bold text-[var(--auth-muted)]">
+              {p.label}
+            </span>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        ))}
+      </div>
+
+      <dl className="m-0 grid grid-cols-2 gap-x-[18px]">
+        {figures.map(([label, value], i) => (
+          <div
+            key={label}
+            className={`flex justify-between py-2 text-[13.5px] ${i < figures.length - 2 ? "border-b border-[var(--inv-row-line)]" : ""}`}
+          >
+            <dt className="font-semibold text-[var(--auth-muted)]">{label}</dt>
+            <dd className="m-0 font-bold">{Math.round(value ?? 0)}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
-
