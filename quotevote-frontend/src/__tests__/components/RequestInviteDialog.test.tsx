@@ -239,9 +239,7 @@ describe('RequestInviteDialog', () => {
     });
 
     expect(
-      screen.getByText(
-        /when an account becomes available, an invite will be sent to the email provided/i
-      )
+      screen.getByText(/we’ll email test@example.com when your request is approved/i)
     ).toBeInTheDocument();
   });
 
@@ -383,9 +381,9 @@ describe('RequestInviteDialog', () => {
     mockPathname.mockReturnValue('/current-page');
     mockSearchParams.toString.mockReturnValue('param=value');
 
-    render(<RequestInviteDialog {...defaultProps} />);
+    render(<RequestInviteDialog {...defaultProps} view="login" />);
 
-    const loginLink = screen.getByRole('link', { name: /open full login page/i });
+    const loginLink = screen.getByRole('link', { name: /open the full login page/i });
     expect(loginLink).toHaveAttribute(
       'href',
       expect.stringContaining('/auths/login?callbackUrl=')
@@ -398,7 +396,7 @@ describe('RequestInviteDialog', () => {
     const missionLink = screen.getByRole('link', {
       name: /learn more about our mission/i,
     });
-    expect(missionLink).toHaveAttribute('href', '/auths/request-access#mission');
+    expect(missionLink).toHaveAttribute('href', '/about');
   });
 
   it('cleans up timeout on unmount', async () => {

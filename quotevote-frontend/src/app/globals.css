@@ -2909,3 +2909,146 @@ p { line-height: 1.625; }
 }
 .qv-auth-hero-btn:hover { background: rgba(255, 255, 255, 0.06); border-color: #4a5a52; }
 .neo-brutalism .qv-auth-hero-btn { border-color: #f6f5f1; }
+
+/* Request access page (redesign) */
+.qv-auth {
+  --ra-header-line: #eef1f6;
+  --ra-blue: #2457e6;
+  --ra-blue-line: #1d47c2;
+  --ra-body: #273246;
+  --ra-tint-blue: #eff4ff;
+  --ra-tint-green: #eef9f3;
+  --ra-tint-yellow: #fff9e6;
+  --ra-ic-blue: #dce7ff;
+  --ra-ic-green: #d3f0e0;
+  --ra-ic-yellow: #fcebb6;
+  --ra-ic-blue-ink: #2457e6;
+  --ra-ic-green-ink: #0e8a5a;
+  --ra-ic-yellow-ink: #875a0e;
+  --ra-donate: linear-gradient(120deg, #e6f6ee, #e9f0ff);
+  --ra-card-radius: 20px;
+  --ra-band-radius: 24px;
+  --ra-art-radius: 28px;
+  --ra-card-line: transparent;
+  --ra-card-border-w: 0px;
+  --ra-card-shadow: none;
+  --ra-note-bg: #0f172a;
+}
+.dark .qv-auth {
+  --ra-header-line: #1b2640;
+  --ra-blue: #3b6ff0;
+  --ra-blue-line: #2457e6;
+  --ra-body: #c6d0de;
+  --ra-tint-blue: #111d36;
+  --ra-tint-green: #0f2219;
+  --ra-tint-yellow: #241f0e;
+  --ra-ic-blue: #13324a;
+  --ra-ic-green: #12382a;
+  --ra-ic-yellow: #3a3012;
+  --ra-ic-blue-ink: #8cc8ff;
+  --ra-ic-green-ink: #3fbf87;
+  --ra-ic-yellow-ink: #f6c343;
+  --ra-donate: linear-gradient(120deg, #0f2219, #111d36);
+  --ra-note-bg: #e8edf5;
+}
+.neo-brutalism .qv-auth {
+  --ra-header-line: #070b14;
+  --ra-blue: #0b5fd6;
+  --ra-blue-line: #070b14;
+  --ra-tint-blue: #8fe4ff;
+  --ra-tint-green: #9af5c5;
+  --ra-tint-yellow: #ffe533;
+  --ra-ic-blue: #ffffff;
+  --ra-ic-green: #ffffff;
+  --ra-ic-yellow: #ffffff;
+  --ra-ic-blue-ink: #070b14;
+  --ra-ic-green-ink: #070b14;
+  --ra-ic-yellow-ink: #070b14;
+  --ra-donate: #ffb3d9;
+  --ra-card-radius: 4px;
+  --ra-band-radius: 4px;
+  --ra-art-radius: 4px;
+  --ra-card-line: #070b14;
+  --ra-card-border-w: 2px;
+  --ra-card-shadow: 5px 5px 0 #070b14;
+}
+.neo-brutalism.dark .qv-auth,
+.dark.neo-brutalism .qv-auth {
+  --ra-header-line: #f2f7f3;
+  --ra-tint-blue: #13324a;
+  --ra-tint-green: #12382a;
+  --ra-tint-yellow: #3a3012;
+  --ra-ic-blue: #0d1526;
+  --ra-ic-green: #0d1526;
+  --ra-ic-yellow: #0d1526;
+  --ra-ic-blue-ink: #8fe4ff;
+  --ra-ic-green-ink: #20c45f;
+  --ra-ic-yellow-ink: #ffe533;
+  --ra-donate: #3a1a2e;
+  --ra-card-line: #f2f7f3;
+  --ra-card-shadow: 5px 5px 0 #f2f7f3;
+}
+.qv-auth-label-yellow {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: #f6c343;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.neo-brutalism .qv-auth-label-yellow { border: 2px solid #070b14; border-radius: 4px; background: #ffe533; color: #070b14; }
+.qv-auth-grad { color: var(--ra-blue); }
+.qv-auth-btn-blue {
+  background: var(--ra-blue);
+  border-color: var(--ra-blue-line);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.14),
+    0 6px 14px -8px rgba(36, 87, 230, 0.7);
+}
+.qv-auth-btn-blue:hover { background: #1d47c2; border-color: var(--ra-blue-line); color: #ffffff; }
+.neo-brutalism .qv-auth-btn-blue { box-shadow: 3px 3px 0 var(--ra-blue-line); }
+.qv-auth-feat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+  border-radius: var(--ra-card-radius);
+  border: var(--ra-card-border-w) solid var(--ra-card-line);
+  box-shadow: var(--ra-card-shadow);
+}
+.qv-auth-feat .qv-auth-ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.neo-brutalism .qv-auth-feat .qv-auth-ic { border: 2px solid var(--ra-card-line); border-radius: 4px; }
+.qv-auth-donate {
+  background: var(--ra-donate);
+  border-radius: var(--ra-band-radius);
+  border: var(--ra-card-border-w) solid var(--ra-card-line);
+  box-shadow: var(--ra-card-shadow);
+}
+.qv-auth-art {
+  border-radius: var(--ra-art-radius);
+  border: var(--ra-card-border-w) solid var(--ra-card-line);
+  box-shadow: var(--ra-card-shadow);
+}
+.qv-auth-received.qv-lit { background: var(--auth-surface); }
+.neo-brutalism .qv-auth-received.qv-lit {
+  border: 2px solid var(--ra-card-line);
+  border-radius: 4px;
+  box-shadow: 5px 5px 0 #52b274;
+}
+.qv-auth-btn-ghost { background: transparent; border-color: transparent; color: var(--auth-ink-2); box-shadow: none; }
+.qv-auth-btn-ghost:hover { background: var(--auth-hover); border-color: transparent; }

@@ -48,11 +48,11 @@ export function AccessFormHeader({ title, subtitle, eyebrow, subtitleDesktopOnly
   return (
     <div>
       {eyebrow && <p className="qv-auth-eyebrow">{eyebrow}</p>}
-      <h1 className="qv-auth-display text-[28px] lg:text-[42px]">{title}</h1>
+      <h1 className="qv-auth-display text-[28px]! lg:text-[42px]!">{title}</h1>
       {subtitle && (
         <p
           className={cn(
-            "qv-auth-muted mt-2 mb-0 leading-[1.55] font-semibold",
+            "qv-auth-muted mt-2 mb-0 leading-[1.55]! font-semibold",
             subtitleDesktopOnly && "hidden lg:block"
           )}
         >
@@ -66,7 +66,7 @@ export function AccessFormHeader({ title, subtitle, eyebrow, subtitleDesktopOnly
 /** The line under a form, e.g. "No account? Request an invite". */
 export function AccessFootnote({ text, link }: AccessFootnoteProps) {
   return (
-    <p className="qv-auth-muted m-0 text-center text-sm font-semibold">
+    <p className="qv-auth-muted m-0 text-center text-sm leading-normal! font-semibold">
       {text}{" "}
       <Link href={link.href} className="qv-auth-link font-extrabold">
         {link.label}

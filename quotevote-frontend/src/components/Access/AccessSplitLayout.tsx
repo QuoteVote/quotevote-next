@@ -70,7 +70,7 @@ export function AccessSplitLayout({
           <Headline lines={lines} accent={accent} className="text-[54px]" />
           <ChipCards chips={chips} />
         </div>
-        <p className="relative m-0 text-[13px] font-semibold text-[#8fa197]">
+        <p className="relative m-0 text-[13px] leading-normal! font-semibold text-[#8fa197]">
           No ads, no algorithms · Open source, non-profit
         </p>
       </section>
