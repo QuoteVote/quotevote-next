@@ -358,14 +358,15 @@ describe('ProfileView', () => {
       expect(mainContainer).toBeInTheDocument();
     });
 
-    it('has vertical spacing', async () => {
-      let container: HTMLElement;
+    it('puts the banner first, then the member column and the activity', async () => {
       await act(async () => {
-        const result = render(<ProfileView profileUser={mockProfileUser} />);
-        container = result.container;
+        render(<ProfileView profileUser={mockProfileUser} />);
       });
-      const contentContainer = container!.querySelector('.pb-8');
-      expect(contentContainer).toBeInTheDocument();
+      const banner = screen.getByRole('region', { name: 'Profile banner' });
+      const member = screen.getByRole('complementary', { name: 'About this member' });
+      expect(banner.compareDocumentPosition(member) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(member).toContainElement(screen.getByTestId('profile-header'));
+      expect(screen.getByRole('main')).toContainElement(screen.getByTestId('profile-activity-section'));
     });
   });
 
@@ -422,14 +423,12 @@ describe('ProfileView', () => {
       });
     });
 
-    it('maintains proper spacing between components', async () => {
-      let container: HTMLElement;
+    it('keeps reputation in the member column, under the profile card', async () => {
       await act(async () => {
-        const result = render(<ProfileView profileUser={mockProfileUser} />);
-        container = result.container;
+        render(<ProfileView profileUser={mockProfileUser} />);
       });
-      const spaceYContainer = container!.querySelector('.pb-8');
-      expect(spaceYContainer).toBeInTheDocument();
+      const member = screen.getByRole('complementary', { name: 'About this member' });
+      expect(member).toContainElement(screen.getByTestId('profile-reputation-section'));
     });
   });
 
@@ -460,8 +459,9 @@ describe('ProfileView', () => {
       expect(voted).toHaveAttribute('aria-pressed', 'true');
       expect(quoted).toHaveAttribute('aria-pressed', 'true');
       expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false');
-      // Brand-green text (#52b274) is 2.6:1 on white; the active chip uses the darker green.
-      expect(voted.className).toContain('text-[#2f6f4a]');
+      // The design's active chip: ink fill with surface-coloured text, never brand-green text.
+      expect(voted.className).toContain('bg-[var(--shell-ink)]');
+      expect(voted.className).not.toContain('text-[#52b274]');
 
       await user.click(screen.getByRole('button', { name: 'Clear' }));
       expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');

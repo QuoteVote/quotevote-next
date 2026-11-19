@@ -6,39 +6,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation } from "@apollo/client/react";
-import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { AccessField } from "@/components/Access/AccessField";
 import { UPDATE_USER } from "@/graphql/mutations";
 import { replaceGqlError } from "@/lib/utils/replaceGqlError";
-import { cn } from "@/lib/utils";
-import {
-  FOCUS_RING_CLASS,
-  FORM_ERROR_TEXT_CLASS,
-  FORM_FIELD_CLASS,
-  FORM_LABEL_CLASS,
-  PRIMARY_ACTION_CLASS,
-} from "@/lib/constants/formControls";
 import type { ChangePasswordDialogProps } from "@/types/settings";
 import type { UpdateUserResponse } from "@/types/test";
 
@@ -66,7 +47,7 @@ const EMPTY: ChangePasswordValues = { password: "", confirmPassword: "" };
  * the password never saves the email or theme, and vice versa. The live API's
  * `updateUser` hashes `password` and leaves every field it isn't sent alone.
  */
-export default function ChangePasswordDialog({ userId, username }: ChangePasswordDialogProps) {
+export default function ChangePasswordDialog({ userId }: ChangePasswordDialogProps) {
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [updateUser, { loading }] = useMutation<UpdateUserResponse>(UPDATE_USER);
@@ -107,134 +88,62 @@ export default function ChangePasswordDialog({ userId, username }: ChangePasswor
     void form.handleSubmit(onSubmit)(event);
   };
 
-  const ToggleIcon = showPassword ? EyeOff : Eye;
+  const errors = form.formState.errors;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-0.5">
-          <p className="text-sm font-medium leading-none">Password</p>
-          <p className="text-sm text-foreground/75">Change the password you sign in with.</p>
-        </div>
-        {/* A real trigger, so closing the dialog returns focus to this button. */}
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            data-testid="change-password-button"
-            disabled={!userId}
-            className={cn("shrink-0 border-[#8a8a93] dark:border-[#6e7681]", FOCUS_RING_CLASS)}
-          >
-            <KeyRound className="size-4" aria-hidden="true" />
-            Change password
-          </Button>
-        </DialogTrigger>
-      </div>
-
+      <DialogTrigger asChild>
+        <button type="button" className="qv-auth-btn" data-testid="change-password-button" disabled={!userId}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="8" cy="15" r="4" />
+            <path d="m10.8 12.2 9.2-9.2M17 6l3 3M15 8l2 2" />
+          </svg>
+          Change password
+        </button>
+      </DialogTrigger>
       <DialogContent
-        className="sm:max-w-md"
         showCloseButton={false}
         data-testid="change-password-dialog"
+        className="qv-auth qv-inv-popover gap-4 p-6 font-redesign sm:max-w-[380px]"
       >
-        <DialogHeader>
-          <DialogTitle>Change password</DialogTitle>
-          <DialogDescription>Choose a new password for signing in to Quote.Vote.</DialogDescription>
+        <DialogHeader className="text-left">
+          <DialogTitle className="qv-auth-display text-[22px]! tracking-[-0.02em]!">Change password</DialogTitle>
+          <DialogDescription className="sr-only">
+            Choose a new password for signing in to Quote.Vote.
+          </DialogDescription>
         </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            {/* Lets password managers save the new password for the right account. */}
-            <input
-              type="text"
-              name="username"
-              autoComplete="username"
-              value={username}
-              readOnly
-              hidden
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={FORM_LABEL_CLASS}>New password</FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="new-password"
-                        autoCapitalize="none"
-                        spellCheck={false}
-                        className={cn("pr-11", FORM_FIELD_CLASS)}
-                        {...field}
-                      />
-                    </FormControl>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      aria-label={showPassword ? "Hide passwords" : "Show passwords"}
-                      aria-pressed={showPassword}
-                      className={cn(
-                        "absolute right-1 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
-                        FOCUS_RING_CLASS
-                      )}
-                    >
-                      <ToggleIcon className="size-4" aria-hidden="true" />
-                    </button>
-                  </div>
-                  <FormDescription>At least {PASSWORD_MIN_LENGTH} characters.</FormDescription>
-                  <FormMessage className={FORM_ERROR_TEXT_CLASS} />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={FORM_LABEL_CLASS}>Confirm new password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      className={FORM_FIELD_CLASS}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className={FORM_ERROR_TEXT_CLASS} />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter className="gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-                disabled={loading}
-                className={cn("border-[#8a8a93] dark:border-[#6e7681]", FOCUS_RING_CLASS)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-                className={cn(PRIMARY_ACTION_CLASS, FOCUS_RING_CLASS)}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                    Changing…
-                  </>
-                ) : (
-                  "Change password"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+          <AccessField
+            id="new-password"
+            type="password"
+            label="New password"
+            autoComplete="new-password"
+            revealable
+            revealed={showPassword}
+            onRevealChange={setShowPassword}
+            hint={errors.password ? undefined : `At least ${PASSWORD_MIN_LENGTH} characters`}
+            error={errors.password?.message}
+            {...form.register("password")}
+          />
+          <AccessField
+            id="confirm-new-password"
+            type="password"
+            label="Confirm new password"
+            autoComplete="new-password"
+            revealed={showPassword}
+            error={errors.confirmPassword?.message}
+            {...form.register("confirmPassword")}
+          />
+          <div className="flex justify-end gap-2.5">
+            <button type="button" className="qv-auth-btn" onClick={() => handleOpenChange(false)} disabled={loading}>
+              Cancel
+            </button>
+            <button type="submit" className="qv-auth-btn qv-auth-btn-primary" disabled={loading}>
+              {loading && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              Change password
+            </button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

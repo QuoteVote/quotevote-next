@@ -14,12 +14,19 @@ export function AccessField({
   error,
   hint,
   revealable = false,
+  revealed: revealedProp,
+  onRevealChange,
   locked = false,
   type = "text",
   className,
   ...inputProps
 }: AccessFieldProps) {
-  const [revealed, setRevealed] = useState(false);
+  const [revealedState, setRevealedState] = useState(false);
+  const revealed = revealedProp ?? revealedState;
+  const setRevealed = (next: boolean) => {
+    if (onRevealChange) onRevealChange(next);
+    else setRevealedState(next);
+  };
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
   const describedBy = [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(" ");
@@ -41,7 +48,7 @@ export function AccessField({
         <input
           {...inputProps}
           id={id}
-          type={revealable && revealed ? "text" : type}
+          type={type === "password" && revealed ? "text" : type}
           readOnly={locked || inputProps.readOnly}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
@@ -55,7 +62,7 @@ export function AccessField({
             aria-label={revealed ? "Hide password" : "Show password"}
             aria-pressed={revealed}
             aria-controls={id}
-            onClick={() => setRevealed((value) => !value)}
+            onClick={() => setRevealed(!revealed)}
           >
             {revealed ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
           </button>

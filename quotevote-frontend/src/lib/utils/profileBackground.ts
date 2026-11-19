@@ -12,20 +12,28 @@ import type {
   ProfileBackgroundPatternOption,
 } from '@/types/profile';
 
-export const DEFAULT_PROFILE_BG_COLOR = '#52b274'; // brand green
+export const DEFAULT_PROFILE_BG_COLOR = '#0f7d56'; // brand green, as in the design
 export const DEFAULT_PROFILE_BG_PATTERN: ProfileBackgroundPattern = 'zigzag';
 
-/** Curated preset swatches (brand green first). */
+/** Preset swatches from the approved design (Edit profile), green first. */
 export const PROFILE_BG_COLORS: readonly string[] = [
-  '#52b274', // brand green
-  '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#ec4899', // pink
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#14b8a6', // teal
-  '#0f172a', // slate
+  '#0f7d56', // green
+  '#2c5c9e', // blue
+  '#6b3a78', // plum
+  '#b4530a', // rust
+  '#16201b', // ink
+  '#c9b48a', // sand
 ] as const;
+
+/** Names for the swatches, for screen readers. */
+export const PROFILE_BG_COLOR_NAMES: Readonly<Record<string, string>> = {
+  '#0f7d56': 'Green',
+  '#2c5c9e': 'Blue',
+  '#6b3a78': 'Plum',
+  '#b4530a': 'Rust',
+  '#16201b': 'Ink',
+  '#c9b48a': 'Sand',
+};
 
 export const PROFILE_BG_PATTERNS: readonly ProfileBackgroundPatternOption[] = [
   { value: 'none', label: 'Solid' },
@@ -58,42 +66,47 @@ export function normalizeProfileBgPattern(
  */
 export function getProfileBackgroundStyle(
   color: string,
-  pattern: ProfileBackgroundPattern
+  pattern: ProfileBackgroundPattern,
+  /** Pattern tile size: 36 on the profile banner, 28 on cards, 16 in the swatches. */
+  size = 28
 ): CSSProperties {
   const safeColor = normalizeProfileBgColor(color);
-  const overlay = 'rgba(255, 255, 255, 0.22)';
   const base: CSSProperties = { backgroundColor: safeColor };
 
   switch (normalizeProfileBgPattern(pattern)) {
-    case 'zigzag':
+    case 'zigzag': {
+      const overlay = 'rgba(255, 255, 255, 0.1)';
       return {
         ...base,
         backgroundImage: [
           `linear-gradient(135deg, ${overlay} 25%, transparent 25%)`,
           `linear-gradient(225deg, ${overlay} 25%, transparent 25%)`,
-          `linear-gradient(45deg, ${overlay} 25%, transparent 25%)`,
-          `linear-gradient(315deg, ${overlay} 25%, transparent 25%)`,
         ].join(', '),
-        backgroundPosition: '14px 0, 14px 0, 0 0, 0 0',
-        backgroundSize: '28px 28px',
+        backgroundSize: `${size}px ${size}px`,
         backgroundRepeat: 'repeat',
       };
-    case 'dots':
+    }
+    case 'dots': {
+      const dot = Math.max(2, Math.round(size / 6));
       return {
         ...base,
-        backgroundImage: `radial-gradient(${overlay} 2px, transparent 2px)`,
-        backgroundSize: '18px 18px',
+        backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.25) ${dot}px, transparent ${dot + 0.5}px)`,
+        backgroundSize: `${Math.round(size * 0.75)}px ${Math.round(size * 0.75)}px`,
       };
-    case 'stripes':
+    }
+    case 'stripes': {
+      const band = Math.round(size * 0.375);
       return {
         ...base,
-        backgroundImage: `repeating-linear-gradient(45deg, ${overlay} 0, ${overlay} 8px, transparent 8px, transparent 16px)`,
+        backgroundImage: `repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 ${band}px, transparent ${band}px ${Math.round(size * 0.875)}px)`,
       };
+    }
     case 'grid':
       return {
         ...base,
-        backgroundImage: `linear-gradient(${overlay} 1px, transparent 1px), linear-gradient(90deg, ${overlay} 1px, transparent 1px)`,
-        backgroundSize: '22px 22px',
+        backgroundImage:
+          'linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px)',
+        backgroundSize: `${Math.round(size * 0.75)}px ${Math.round(size * 0.75)}px`,
       };
     case 'none':
     default:

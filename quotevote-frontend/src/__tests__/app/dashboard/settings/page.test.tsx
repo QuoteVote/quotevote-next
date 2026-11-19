@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
+import { render, screen, fireEvent, waitFor, within } from '@/__tests__/utils/test-utils'
 import { resetStore } from '@/__tests__/utils/test-utils'
 import { useAppStore } from '@/store/useAppStore'
 import { UPDATE_USER } from '@/graphql/mutations'
@@ -126,9 +126,24 @@ describe('Settings Page (#536: account and app preferences only)', () => {
     )
   })
 
-  it('has no Sign out (it lives in the account menu)', () => {
+  it('has the section nav from the design, ending in Sign out', () => {
     render(<SettingsPageClient />, { mocks: [getUserMock] })
+    const nav = screen.getByRole('complementary', { name: 'Settings sections' })
+    expect(within(nav).getByRole('link', { name: 'Account' })).toHaveAttribute('aria-current', 'true')
+    expect(within(nav).getByRole('link', { name: 'Appearance' })).toHaveAttribute('href', '#appearance')
+    expect(within(nav).getByRole('link', { name: 'Edit profile' })).toHaveAttribute('href', '/profile/testuser/edit')
+    expect(within(nav).getByRole('link', { name: 'Avatar' })).toHaveAttribute('href', '/profile/testuser/avatar')
+    // A link to the sign-out page, not a button that saves or submits anything here.
+    expect(within(nav).getByRole('link', { name: 'Sign out' })).toHaveAttribute('href', '/logout')
     expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument()
+  })
+
+  it('marks the section you jump to', () => {
+    render(<SettingsPageClient />, { mocks: [getUserMock] })
+    const nav = screen.getByRole('complementary', { name: 'Settings sections' })
+    fireEvent.click(within(nav).getByRole('link', { name: 'Appearance' }))
+    expect(within(nav).getByRole('link', { name: 'Appearance' })).toHaveAttribute('aria-current', 'true')
+    expect(within(nav).getByRole('link', { name: 'Account' })).not.toHaveAttribute('aria-current')
   })
 
   it('shows the account email and the appearance switches', () => {

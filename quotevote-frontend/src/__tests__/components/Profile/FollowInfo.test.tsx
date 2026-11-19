@@ -16,12 +16,6 @@ import { useAppStore } from '@/store';
 import { MockedProvider } from '@apollo/client/testing';
 
 // Mock child components
-jest.mock('../../../components/Profile/UserFollowDisplay', () => ({
-  UserFollowDisplay: ({ username }: { username: string }) => (
-    <div data-testid="user-follow-display">{username}</div>
-  ),
-}));
-
 jest.mock('../../../components/Profile/NoFollowers', () => ({
   NoFollowers: ({ filter }: { filter: string }) => (
     <div data-testid="no-followers">{filter}</div>

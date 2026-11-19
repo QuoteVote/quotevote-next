@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { Check, ListFilter } from 'lucide-react';
 import Link from 'next/link';
 import type { ProfileViewProps } from '@/types/profile';
 import { ProfileHeader } from './ProfileHeader';
 import { ReputationDisplay } from './ReputationDisplay';
+import { ProfileBanner } from './ProfileBanner';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { PaginatedActivityList } from '@/components/Activity/PaginatedActivityList';
@@ -45,12 +45,13 @@ export const ALL_ACTIVITY_TYPES: ProfileActivityType[] = [
 
 const NO_ACTIVITY_FILTER: ProfileActivityType[] = [];
 
+// The design's filter chips: outlined pills, the chosen one filled in ink.
 const FILTER_CHIP_CLASS =
-  'inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7a4c] focus-visible:ring-offset-2 focus-visible:ring-offset-card dark:focus-visible:ring-[#7fdc9c]';
+  'inline-flex h-9 shrink-0 items-center gap-[7px] rounded-full border px-[13px] text-[13px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--shell-blue)] lg:h-[38px] lg:gap-2 lg:px-3.5 lg:text-[13.5px] [.neo-brutalism_&]:rounded-[4px] [.neo-brutalism_&]:border-2';
 const FILTER_CHIP_ACTIVE_CLASS =
-  'border-[#2f7a4c] bg-[#2f7a4c]/10 text-[#2f6f4a] dark:border-[#7fdc9c] dark:bg-[#7fdc9c]/10 dark:text-[#7fdc9c]';
+  'border-[var(--shell-ink)] bg-[var(--shell-ink)] text-[var(--shell-surface)]';
 const FILTER_CHIP_IDLE_CLASS =
-  'border-border text-foreground/80 hover:bg-muted hover:text-foreground';
+  'border-[#d3d9e4] bg-[var(--shell-surface)] text-[var(--shell-ink-2)] hover:border-[#b8c2d3] [.dark_&]:border-[#24304a] [.neo-brutalism_&]:border-[var(--shell-line)]';
 
 export function ProfileView({
   profileUser,
@@ -61,10 +62,12 @@ export function ProfileView({
   // Activity is public. While the live API still keeps the activity list for members,
   // guests see the person's posts in the same list, with a note about the rest.
   const [showingPostsOnly, setShowingPostsOnly] = useState(false);
+  const [activityRange, setActivityRange] = useState('');
   // The session lives in the browser, so decide after mount to keep the server and
   // client HTML the same (#606).
   const hasMounted = useHasMounted();
   const sessionUserId = useAppStore((state) => state.user.data._id || state.user.data.id);
+  const sessionUsername = useAppStore((state) => state.user.data.username);
   const signedIn = hasMounted && (Boolean(sessionUserId) || isAuthenticated());
 
   const handleSelectAll = useCallback(() => {
@@ -124,111 +127,116 @@ export function ProfileView({
     );
   }
 
+  const own =
+    Boolean(sessionUserId && String(sessionUserId) === String(profileUser._id)) ||
+    Boolean(
+      typeof sessionUsername === 'string' &&
+        sessionUsername.toLowerCase() === profileUser.username?.toLowerCase()
+    );
+
   return (
-    <div className="w-full pb-8">
-      <ProfileHeader profileUser={profileUser} />
+    <div className="qv-auth qv-pub min-h-[calc(100dvh-var(--app-header-h))] w-full bg-[var(--inv-ground)]! pb-10 font-redesign">
+      <ProfileBanner own={own} />
 
-      <div className="w-full mt-3">
-        {!hasMounted ? (
-          <div
-            role="status"
-            aria-busy="true"
-            data-testid="activity-loading"
-            className="flex items-center justify-center p-8 text-sm text-foreground/75"
-          >
-            Loading activity…
-          </div>
-        ) : (
-          <>
-          {!signedIn && showingPostsOnly && (
-            <div className="mb-3">
-              <ProfileActivitySignIn displayName={profileUser.name || profileUser.username} />
+      <div className="relative mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-4 lg:-mt-20 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-8 lg:px-8 xl:px-0">
+        <aside className="flex min-w-0 flex-col gap-4" aria-label="About this member">
+          <ProfileHeader profileUser={profileUser} />
+          {profileUser.reputation ? (
+            <div className="max-lg:hidden" data-testid="profile-reputation-section">
+              <ReputationDisplay
+                reputation={profileUser.reputation}
+                onRefresh={() => window.location.reload()}
+              />
             </div>
-          )}
-          {/* A filter, not tabs (#536): labelled chips that can be combined. */}
-          <div
-            role="group"
-            aria-labelledby="profile-activity-filter-label"
-            data-testid="profile-activity-filters"
-            className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5"
-          >
-            <span
-              id="profile-activity-filter-label"
-              className="mr-1 inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80"
-            >
-              <ListFilter className="size-4" aria-hidden="true" />
-              Show
-            </span>
-            <button
-              type="button"
-              aria-pressed={isAllActive}
-              data-state={isAllActive ? 'active' : 'inactive'}
-              onClick={handleSelectAll}
-              className={cn(FILTER_CHIP_CLASS, isAllActive ? FILTER_CHIP_ACTIVE_CLASS : FILTER_CHIP_IDLE_CLASS)}
-            >
-              {isAllActive && <Check className="size-3.5" aria-hidden="true" />}
-              All
-            </button>
+          ) : null}
+        </aside>
 
-            {ACTIVITY_FILTERS.map(({ id, label }) => {
-              const isActive = !isAllActive && selectedFilters.includes(id);
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={isActive}
-                  data-state={isActive ? 'active' : 'inactive'}
-                  onClick={() => handleToggleFilter(id)}
-                  className={cn(FILTER_CHIP_CLASS, isActive ? FILTER_CHIP_ACTIVE_CLASS : FILTER_CHIP_IDLE_CLASS)}
-                >
-                  {isActive ? (
-                    <Check className="size-3.5" aria-hidden="true" />
-                  ) : (
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ backgroundColor: ACTIVITY_FILTER_DOT_COLORS[id] }}
-                      aria-hidden="true"
-                    />
-                  )}
-                  {label}
-                </button>
-              );
-            })}
-
-            {!isAllActive && (
-              <button
-                type="button"
-                onClick={handleSelectAll}
-                className="ml-auto inline-flex min-h-8 items-center rounded-md px-2 text-sm font-medium text-[#2f6f4a] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7a4c] dark:text-[#7fdc9c] dark:focus-visible:ring-[#7fdc9c]"
-              >
-                Clear
-              </button>
+        <main className="flex min-w-0 flex-col gap-3 px-4 lg:gap-3.5 lg:px-0 lg:pt-[100px]">
+          <div className="flex items-center justify-between max-lg:hidden">
+            <h2 className="qv-auth-display m-0 text-[30px]!">Activity</h2>
+            {activityRange && (
+              <span className="text-[13px] font-semibold text-[var(--shell-muted)]">{activityRange}</span>
             )}
           </div>
+          {!hasMounted ? (
+            <div
+              role="status"
+              aria-busy="true"
+              data-testid="activity-loading"
+              className="flex items-center justify-center p-8 text-sm text-[var(--shell-muted)]"
+            >
+              Loading activity…
+            </div>
+          ) : (
+            <>
+              {!signedIn && showingPostsOnly && (
+                <ProfileActivitySignIn displayName={profileUser.name || profileUser.username} />
+              )}
+              {/* A filter, not tabs (#536): labelled chips that can be combined. */}
+              <div
+                role="group"
+                aria-label="Show"
+                data-testid="profile-activity-filters"
+                className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:gap-2 lg:px-0"
+              >
+                <button
+                  type="button"
+                  aria-pressed={isAllActive}
+                  data-state={isAllActive ? 'active' : 'inactive'}
+                  onClick={handleSelectAll}
+                  className={cn(FILTER_CHIP_CLASS, isAllActive ? FILTER_CHIP_ACTIVE_CLASS : FILTER_CHIP_IDLE_CLASS)}
+                >
+                  All
+                </button>
+                {ACTIVITY_FILTERS.map(({ id, label }) => {
+                  const isActive = !isAllActive && selectedFilters.includes(id);
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={isActive}
+                      data-state={isActive ? 'active' : 'inactive'}
+                      onClick={() => handleToggleFilter(id)}
+                      className={cn(FILTER_CHIP_CLASS, isActive ? FILTER_CHIP_ACTIVE_CLASS : FILTER_CHIP_IDLE_CLASS)}
+                    >
+                      <span
+                        className="size-2 rounded-full lg:size-[9px]"
+                        style={{
+                          backgroundColor: ACTIVITY_FILTER_DOT_COLORS[id],
+                          boxShadow: `0 0 0 3px color-mix(in srgb, ${ACTIVITY_FILTER_DOT_COLORS[id]} 22%, transparent)`,
+                        }}
+                        aria-hidden="true"
+                      />
+                      {label}
+                    </button>
+                  );
+                })}
+                {!isAllActive && (
+                  <button
+                    type="button"
+                    onClick={handleSelectAll}
+                    className="ml-1 h-9 shrink-0 rounded-md px-2 text-[13px] font-bold text-[var(--shell-blue)] hover:underline focus-visible:outline-2 focus-visible:outline-[var(--shell-blue)]"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
 
-          {/* Content Section */}
-          <div className="mt-4" data-testid="profile-activity-section">
-            <PaginatedActivityList
-              userId={profileUser._id}
-              activityEvent={activityEvent}
-              onClearFilters={isAllActive ? undefined : handleSelectAll}
-              defaultPageSize={15}
-              maxVisiblePages={5}
-              publicFallback={!signedIn}
-              onMembersOnlyChange={setShowingPostsOnly}
-            />
-          </div>
-          </>
-        )}
-
-        {profileUser.reputation ? (
-          <div className="mt-4" data-testid="profile-reputation-section">
-            <ReputationDisplay
-              reputation={profileUser.reputation}
-              onRefresh={() => window.location.reload()}
-            />
-          </div>
-        ) : null}
+              <div data-testid="profile-activity-section">
+                <PaginatedActivityList
+                  userId={profileUser._id}
+                  activityEvent={activityEvent}
+                  onClearFilters={isAllActive ? undefined : handleSelectAll}
+                  defaultPageSize={15}
+                  maxVisiblePages={5}
+                  publicFallback={!signedIn}
+                  onMembersOnlyChange={setShowingPostsOnly}
+                  onRangeChange={setActivityRange}
+                />
+              </div>
+            </>
+          )}
+        </main>
       </div>
     </div>
   );

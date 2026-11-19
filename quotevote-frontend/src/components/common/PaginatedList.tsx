@@ -28,6 +28,7 @@ export function PaginatedList<T = unknown>({
   showPageInfo = true,
   showFirstLast = true,
   maxVisiblePages = 5,
+  itemLabel,
   
   // Render props
   renderItem,
@@ -73,6 +74,7 @@ export function PaginatedList<T = unknown>({
       showPageInfo={showPageInfo}
       showFirstLast={showFirstLast}
       maxVisiblePages={maxVisiblePages}
+      itemLabel={itemLabel}
       disabled={false} // Never disable pagination - let it handle its own loading state
     />
   ) : null;

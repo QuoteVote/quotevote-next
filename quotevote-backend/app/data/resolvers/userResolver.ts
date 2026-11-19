@@ -42,6 +42,7 @@ const SEARCH_USER_LIMIT = 10;
 const FOLLOW_INFO_USER_SELECT = {
   id: true,
   username: true,
+  name: true,
   avatar: true,
   followingIds: true,
   followerIds: true,
@@ -265,6 +266,7 @@ export const userResolver = {
           {
             id: user.id,
             username: user.username,
+            name: user.name ?? null,
             avatar: user.avatar,
             numFollowers: uniqueArrayObjects(user.followerIds).length,
             numFollowing: uniqueArrayObjects(user.followingIds).length,

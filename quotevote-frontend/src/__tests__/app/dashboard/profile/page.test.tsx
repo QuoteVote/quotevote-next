@@ -19,12 +19,9 @@ jest.mock('@/components/Profile/ProfileController', () => ({
 }));
 
 describe('ProfilePage', () => {
-  it('should render the page with SubHeader', () => {
+  it('has no page sub-header: the profile banner leads (redesign)', () => {
     render(<ProfilePage />);
-    
-    const subheader = screen.getByTestId('subheader');
-    expect(subheader).toBeInTheDocument();
-    expect(subheader).toHaveTextContent('Profile');
+    expect(screen.queryByTestId('subheader')).not.toBeInTheDocument();
   });
 
   it('should render ProfileController', () => {
@@ -34,10 +31,8 @@ describe('ProfilePage', () => {
     expect(profileController).toBeInTheDocument();
   });
 
-  it('should have proper structure with space-y-4 class', () => {
+  it('renders only the profile itself', () => {
     const { container } = render(<ProfilePage />);
-    
-    const mainDiv = container.querySelector('.space-y-4');
-    expect(mainDiv).toBeInTheDocument();
+    expect(container.firstElementChild).toHaveAttribute('data-testid', 'profile-controller');
   });
 });

@@ -3651,3 +3651,68 @@ p { line-height: 1.625; }
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12), inset 0 -3px 0 #56b3ff;
 }
 .qv-pub-pg-gap { min-width: 24px; text-align: center; color: var(--auth-muted); font-weight: 800; letter-spacing: 0.1em; }
+
+/* Profile activity (redesign): filled cards for votes, comments, quotes and likes */
+.qv-lit[data-light="like"] { --light: #f16c99; }
+.qv-lit[data-fill="true"] { background: color-mix(in srgb, var(--light) 8%, var(--shell-surface)); }
+.qv-tag-like { background: #fde6ee; color: #9a2350; }
+.dark .qv-tag-like { background: rgba(241, 108, 153, 0.18); color: #f9a8c6; }
+.neo-brutalism .qv-lit[data-profile-activity="true"] {
+  border: 2.5px solid #070b14;
+  border-radius: 4px;
+  box-shadow: 5px 5px 0 var(--light);
+}
+.neo-brutalism.dark .qv-lit[data-profile-activity="true"],
+.dark.neo-brutalism .qv-lit[data-profile-activity="true"] { border-color: #f2f7f3; }
+
+/* Settings switch (redesign) */
+.qv-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 14px;
+  background: #c7cfdc;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.qv-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: left 0.15s;
+}
+.qv-switch[aria-checked="true"] { background: #0e8a5a; }
+.qv-switch[aria-checked="true"]::after { left: 21px; }
+.qv-switch:focus-visible { outline: 2px solid var(--auth-focus-line); outline-offset: 2px; }
+.dark .qv-switch { background: #34425c; }
+.neo-brutalism .qv-switch { border: 2px solid var(--auth-line); }
+.qv-settings-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  color: var(--auth-ink-2);
+  font-weight: 700;
+  font-size: 14.5px;
+  text-decoration: none;
+}
+.qv-settings-nav:hover { background: var(--inv-track); }
+.qv-settings-nav svg { color: var(--auth-muted); flex-shrink: 0; }
+.qv-settings-nav[aria-current="true"] {
+  background: var(--auth-surface);
+  color: var(--auth-ink);
+  box-shadow: 0 0 0 1px var(--inv-panel-line), 0 1px 2px rgba(15, 23, 42, 0.05), inset 3px 0 0 #0f7d56;
+}
+.qv-settings-nav[aria-current="true"] svg { color: #0f7d56; }
+.qv-settings-nav:focus-visible { outline: 2px solid var(--auth-focus-line); outline-offset: 2px; }
+.neo-brutalism .qv-settings-nav { border-radius: 4px; }
