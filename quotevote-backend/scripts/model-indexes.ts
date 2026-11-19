@@ -23,17 +23,23 @@ import {
   planIndexes,
   ttlCommand,
 } from '~/data/utils/modelIndexes';
+import { withPrismaOnlyIndexes } from '~/data/utils/prismaOnlyIndexes';
 import type { ExistingIndex, ModelIndexSource } from '~/types/modelIndexes';
 
-/** Every model the backend registers, with its declared indexes. */
+/**
+ * Every model the backend registers, with its declared indexes, plus the `@@index`es of
+ * the collections only Prisma uses (buddies, blocks, direct messages, Terms acceptances).
+ */
 function modelSources(): ModelIndexSource[] {
-  return mongoose.modelNames().map((name) => {
-    const model = mongoose.model(name);
-    return {
-      collection: model.collection.collectionName,
-      indexes: model.schema.indexes() as ModelIndexSource['indexes'],
-    };
-  });
+  return withPrismaOnlyIndexes(
+    mongoose.modelNames().map((name) => {
+      const model = mongoose.model(name);
+      return {
+        collection: model.collection.collectionName,
+        indexes: model.schema.indexes() as ModelIndexSource['indexes'],
+      };
+    })
+  );
 }
 
 async function existingIndexes(
