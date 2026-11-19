@@ -51,8 +51,6 @@ export interface ActivityQuote {
 export interface ActivityPost {
   _id: string
   tagId?: string | null
-  approvedBy?: string[] | null
-  rejectedBy?: string[] | null
   title?: string
   text: string
   url: string

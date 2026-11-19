@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { NewsletterForm } from "@/components/Public/NewsletterForm";
-import type { LandingStepExampleProps } from "@/types/access";
+import { ComicStrip, Scene } from "@/components/Public/Scene";
+import type { ComicStripProps, LandingStepExampleProps, SceneProps } from "@/types/access";
 
-/* The landing page's static sections, from the approved design (GuestHome and
-   LandingMobile). Sizes follow the design at 1440 wide; phones get the shorter
+/* The landing page's static sections, from the updated design (GuestHome and
+   LandingMobile, after the client's feedback: plain up and down votes, Avataaars people). Sizes follow the design at 1440 wide; phones get the shorter
    copy and stacked layout of the phone design. */
 
 const WRAP = "mx-auto w-full max-w-[1240px] px-4 sm:px-8 xl:px-0";
@@ -23,6 +23,57 @@ function Check() {
     </span>
   );
 }
+
+const HERO_SCENE: Omit<SceneProps, "size"> = {
+  label: "Neighbors discussing a quote on a shared board",
+  background: "linear-gradient(165deg, #E9F0FF 0%, #F1F7FF 45%, #E6F6EE 100%)",
+  board: {
+    title: "Downtown parking plan",
+    left: "7%",
+    top: "9%",
+    width: "52%",
+    rows: [
+      { text: "Free parking after six", up: 12, down: 30 },
+      { text: "Money for bus lanes", up: 41, down: 6 },
+      { text: "Safer school crossings", up: 52, down: 2 },
+    ],
+  },
+  bubbles: [
+    { text: "I agree with the bus lane part.", left: "8%", top: "44%", width: "30%", tail: "left" },
+    { text: "Where is the source?", left: "66%", top: "44%", width: "27%", tail: "right" },
+  ],
+  people: [
+    { name: "d", left: "18%", bottom: "-4%", width: "27%" },
+    { name: "a-glad", left: "35%", bottom: "-4%", width: "26%" },
+    { name: "me", left: "51%", bottom: "-4%", width: "27%" },
+    { name: "k-think", left: "66%", bottom: "-4%", width: "26%", flip: true },
+    { name: "j", left: "80%", bottom: "-4%", width: "25%", flip: true },
+  ],
+};
+
+const HERO_SCENE_PHONE: Omit<SceneProps, "size"> = {
+  label: "Neighbors discussing a quote on a shared board",
+  background: HERO_SCENE.background,
+  board: {
+    title: "Downtown parking plan",
+    left: "6%",
+    top: "7%",
+    width: "70%",
+    rows: [
+      { text: "Money for bus lanes", up: 41, down: 6 },
+      { text: "Safer school crossings", up: 52, down: 2 },
+    ],
+  },
+  bubbles: [
+    { text: "I agree with this part.", left: "52%", top: "34%", width: "44%", tail: "right" },
+  ],
+  people: [
+    { name: "d", left: "-2%", bottom: "-4%", width: "30%" },
+    { name: "a-glad", left: "22%", bottom: "-4%", width: "29%" },
+    { name: "me", left: "45%", bottom: "-4%", width: "29%" },
+    { name: "j", left: "70%", bottom: "-4%", width: "30%", flip: true },
+  ],
+};
 
 export function LandingHero() {
   return (
@@ -49,11 +100,11 @@ export function LandingHero() {
         <p className="m-0 max-w-[500px] text-[16.5px] leading-[1.6]! text-[var(--ra-body)] lg:text-[18.5px]">
           <span className="lg:hidden">
             Vote on the exact words that matter, talk them through and find common ground. No ads.
-            No algorithms.
+            No engagement algorithms.
           </span>
           <span className="hidden lg:inline">
             Quote.Vote is a text-first platform where people vote on the exact words that matter,
-            talk them through, and find common ground. No ads. No algorithms.
+            talk them through, and find common ground. No ads. No engagement algorithms.
           </span>
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -81,26 +132,26 @@ export function LandingHero() {
       </div>
 
       <div className="relative w-full shrink-0 lg:h-[540px] lg:w-[640px]">
-        <div
-          role="img"
-          aria-label="People around a table discussing quotes on a shared screen"
-          className="aspect-[640/540] w-full rounded-[24px] bg-[url('/assets/redesign/scene-dialogue.jpg')] bg-no-repeat [background-position:50%_80%] [background-size:103.125%_auto] lg:h-[540px] lg:rounded-[32px]"
-        />
+        <div className="h-[300px] lg:hidden">
+          <Scene {...HERO_SCENE_PHONE} size="card" className="rounded-[24px]" />
+        </div>
+        <div className="hidden h-[540px] lg:block">
+          <Scene {...HERO_SCENE} size="hero" className="rounded-[32px]" />
+        </div>
         {/* Phone: one short quote card over the picture */}
-        <div className="qv-pub-pop absolute right-3 -bottom-6 left-3 flex flex-col gap-2 p-3.5 lg:hidden">
+        <div className="qv-pub-pop absolute right-3 -bottom-24 left-3 flex flex-col gap-2 p-3.5 lg:hidden">
           <p className="m-0 text-[14.5px] leading-[1.6]!">
             “It’s about <span className="qv-pub-mark">building equitable, livable communities</span>
             .”
           </p>
-          <div className="flex items-center gap-2.5">
-            <span className="qv-pub-bar flex-1">
-              <span style={{ width: "68%", background: "#16a06a" }} />
-            </span>
-            <b className="text-[12.5px]">68% agree</b>
+          <div className="flex gap-3.5 text-[12.5px] font-extrabold">
+            <span className="text-[#0e8a5a]">↑ 128</span>
+            <span className="text-[#c42b2b]">↓ 31</span>
+            <span className="text-[var(--auth-ink-2)]">34 comments</span>
           </div>
         </div>
         {/* Desktop: the post card and Top reactions */}
-        <article className="qv-pub-pop absolute -bottom-[30px] -left-20 hidden w-[416px] flex-col gap-3 p-[18px] lg:flex">
+        <article className="qv-pub-pop absolute -bottom-[30px] -left-20 hidden w-[380px] flex-col gap-3 p-[18px] lg:flex">
           <div className="flex items-center gap-2 text-[12.5px]">
             <span className="qv-pub-av size-6" aria-hidden="true" />
             <b>anareyes</b>
@@ -113,33 +164,26 @@ export function LandingHero() {
             “Public transit is not just about getting from A to B. It’s about{" "}
             <span className="qv-pub-mark">building equitable, livable communities</span>.”
           </p>
-          <div className="flex flex-col gap-1.5">
-            <b className="text-[12.5px]">68% Agree</b>
-            <span className="qv-pub-bar">
-              <span style={{ width: "68%", background: "#16a06a" }} />
-            </span>
-          </div>
           <div className="flex gap-4 text-[13px] font-bold text-[var(--auth-ink-2)]">
             <span className="text-[#0e8a5a]">↑ 128</span>
+            <span className="text-[#c42b2b]">↓ 31</span>
             <span>34 comments</span>
             <span>23 quotes</span>
           </div>
         </article>
         <div
-          className="qv-pub-pop absolute top-10 -right-6 hidden w-[228px] flex-col gap-2.5 p-3.5 lg:flex"
+          className="qv-pub-pop absolute top-10 -right-6 hidden w-[200px] flex-col gap-2.5 p-3.5 lg:flex"
           aria-hidden="true"
         >
           <b className="text-xs text-[var(--auth-muted)]">Top reactions</b>
           {[
-            { tag: "qv-auth-tag-up", label: "Agree", width: "68%", color: "#16a06a" },
-            { tag: "qv-auth-tag-info", label: "True", width: "18%", color: "#2f66f0" },
-            { tag: "qv-tag-quote", label: "Quote", width: "14%", color: "#7c4ddb" },
+            { tag: "qv-auth-tag-up", label: "Agree", count: 87 },
+            { tag: "qv-auth-tag-info", label: "True", count: 23 },
+            { tag: "qv-tag-quote", label: "Quote", count: 19 },
           ].map((r) => (
-            <span key={r.label} className="flex items-center gap-2">
+            <span key={r.label} className="flex items-center justify-between gap-2">
               <span className={`qv-auth-tag ${r.tag} w-16`}>{r.label}</span>
-              <span className="qv-pub-bar flex-1">
-                <span style={{ width: r.width, background: r.color }} />
-              </span>
+              <b className="text-[13px]">{r.count}</b>
             </span>
           ))}
         </div>
@@ -163,7 +207,7 @@ const VALUES = [
     ),
   },
   {
-    title: "No algorithms",
+    title: "No engagement algorithms",
     text: "Chronological and transparent.",
     short: "Chronological.",
     color: "#6d3fd1",
@@ -201,7 +245,7 @@ const VALUES = [
 
 export function LandingValues() {
   return (
-    <section aria-label="What Quote.Vote stands for" className={`${WRAP} mt-14 lg:mt-[72px]`}>
+    <section aria-label="What Quote.Vote stands for" className={`${WRAP} mt-12 lg:mt-[72px]`}>
       {/* Phone: four tinted tiles */}
       <div className="grid grid-cols-2 gap-2.5 lg:hidden">
         {VALUES.map((v) => (
@@ -376,8 +420,6 @@ const RESULTS = [
     short: "Bike lanes improve safety for everyone.",
     up: 56,
     down: 12,
-    pct: 82,
-    color: "#16a06a",
     phone: true,
   },
   {
@@ -385,8 +427,6 @@ const RESULTS = [
     short: "",
     up: 23,
     down: 5,
-    pct: 82,
-    color: "#2f66f0",
     phone: false,
   },
   {
@@ -394,8 +434,6 @@ const RESULTS = [
     short: "Parking is essential for small businesses.",
     up: 18,
     down: 41,
-    pct: 30,
-    color: "#f6c343",
     phone: true,
   },
 ];
@@ -447,23 +485,15 @@ export function LandingInAction() {
                 key={r.text}
                 className={`flex-col gap-2 py-3.5 lg:flex ${r.phone ? "flex" : "hidden"} ${i < RESULTS.length - 1 ? "border-b border-[#eef1f6] [.dark_&]:border-[#1b2640]" : ""}`}
               >
-                <div className="flex justify-between gap-4">
-                  <span className="text-[14.5px] font-semibold">
+                <div className="flex flex-col gap-1.5 lg:flex-row lg:justify-between lg:gap-4">
+                  <span className="text-[13px] font-semibold lg:text-[14.5px]">
                     <span className="lg:hidden">“{r.short}”</span>
                     <span className="hidden lg:inline">“{r.text}”</span>
                   </span>
-                  <span className="hidden gap-2.5 text-[13px] font-extrabold lg:flex">
-                    <span className="text-[#11683d]">+{r.up}</span>
-                    <span className="text-[#a12424]">−{r.down}</span>
+                  <span className="flex gap-3 text-[12px] font-extrabold lg:gap-2.5 lg:text-[13px]">
+                    <span className="text-[#0e8a5a] lg:text-[#11683d]">↑ {r.up}</span>
+                    <span className="text-[#c42b2b] lg:text-[#a12424]">↓ {r.down}</span>
                   </span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="qv-pub-bar flex-1">
-                    <span style={{ width: `${r.pct}%`, background: r.color }} />
-                  </span>
-                  <b className="text-[12.5px]">
-                    {r.pct}%<span className="hidden lg:inline"> agree</span>
-                  </b>
                 </div>
               </div>
             ))}
@@ -492,30 +522,118 @@ export function LandingInAction() {
   );
 }
 
-const COMMUNITIES = [
+export const COMMUNITIES: {
+  title: string;
+  text: string;
+  short: string;
+  scene: Omit<SceneProps, "size">;
+  phone: Omit<SceneProps, "size">;
+}[] = [
   {
     title: "Schools & universities",
     text: "Students lead. Ideas move. Change happens. Weigh in on fees, safety and campus life.",
     short: "Students lead. Ideas move.",
-    image: "scene-students",
-    position: "-12px -240px",
-    alt: "Students discussing activity fees",
+    scene: {
+      label: "Students voting on a class trip",
+      background: "linear-gradient(170deg, #FFF6DA, #FFFBEF)",
+      board: {
+        title: "Class vote: spring trip",
+        left: "5%",
+        top: "6%",
+        width: "62%",
+        rows: [
+          { text: "Science museum", up: 18, down: 3 },
+          { text: "City council visit", up: 14, down: 5 },
+        ],
+      },
+      bubbles: [{ text: "Council visit!", left: "69%", top: "10%", width: "28%", tail: "right" }],
+      people: [
+        { name: "g-glad", left: "4%", bottom: "-12%", width: "30%" },
+        { name: "m", left: "35%", bottom: "-12%", width: "30%" },
+        { name: "l-think", left: "66%", bottom: "-12%", width: "30%", flip: true },
+      ],
+    },
+    phone: {
+      label: "Students",
+      background: "linear-gradient(170deg, #FFF6DA, #FFFBEF)",
+      people: [
+        { name: "g-glad", left: "-6%", bottom: "-18%", width: "52%", z: 2 },
+        { name: "m", left: "24%", bottom: "-18%", width: "52%", z: 3 },
+        { name: "l-think", left: "54%", bottom: "-18%", width: "52%", flip: true, z: 2 },
+      ],
+    },
   },
   {
-    title: "Teams & projects",
+    title: "Teams & Enterprise",
     text: "Everyone’s voice. One game plan. Decide on schedules, priorities and plans together.",
     short: "Everyone’s voice. One game plan.",
-    image: "scene-team",
-    position: "-12px -232px",
-    alt: "A sports team planning a tournament",
+    scene: {
+      label: "A team deciding priorities together",
+      background: "linear-gradient(170deg, #E9F0FF, #F4F8FF)",
+      board: {
+        title: "Next quarter priorities",
+        left: "5%",
+        top: "6%",
+        width: "62%",
+        rows: [
+          { text: "Ship the mobile app", up: 9, down: 1 },
+          { text: "Fix onboarding first", up: 11, down: 2 },
+        ],
+      },
+      bubbles: [
+        { text: "Onboarding first.", left: "69%", top: "10%", width: "28%", tail: "right" },
+      ],
+      people: [
+        { name: "e", left: "4%", bottom: "-12%", width: "30%" },
+        { name: "f-think", left: "35%", bottom: "-12%", width: "30%" },
+        { name: "b-glad", left: "66%", bottom: "-12%", width: "30%", flip: true },
+      ],
+    },
+    phone: {
+      label: "A team",
+      background: "linear-gradient(170deg, #E9F0FF, #F4F8FF)",
+      people: [
+        { name: "e", left: "-6%", bottom: "-18%", width: "52%", z: 2 },
+        { name: "f-think", left: "24%", bottom: "-18%", width: "52%", z: 3 },
+        { name: "b-glad", left: "54%", bottom: "-18%", width: "52%", flip: true, z: 2 },
+      ],
+    },
   },
   {
-    title: "Local government",
+    title: "Government",
     text: "Stronger dialogue. Better decisions for everyone, from budgets to bike lanes.",
     short: "Better decisions for everyone.",
-    image: "scene-dialogue",
-    position: "-12px -262px",
-    alt: "A group reviewing quotes on a shared screen",
+    scene: {
+      label: "Residents weighing in on a city budget",
+      background: "linear-gradient(170deg, #E6F6EE, #F3FBF6)",
+      board: {
+        title: "Budget hearing: parks levy",
+        left: "5%",
+        top: "6%",
+        width: "62%",
+        rows: [
+          { text: "Fix the playgrounds", up: 64, down: 8 },
+          { text: "Extend library hours", up: 47, down: 12 },
+        ],
+      },
+      bubbles: [
+        { text: "Playgrounds, please.", left: "69%", top: "10%", width: "28%", tail: "right" },
+      ],
+      people: [
+        { name: "i", left: "4%", bottom: "-12%", width: "30%" },
+        { name: "h-glad", left: "35%", bottom: "-12%", width: "30%" },
+        { name: "k", left: "66%", bottom: "-12%", width: "30%", flip: true },
+      ],
+    },
+    phone: {
+      label: "Residents",
+      background: "linear-gradient(170deg, #E6F6EE, #F3FBF6)",
+      people: [
+        { name: "i", left: "-6%", bottom: "-18%", width: "52%", z: 2 },
+        { name: "h-glad", left: "24%", bottom: "-18%", width: "52%", z: 3 },
+        { name: "k", left: "54%", bottom: "-18%", width: "52%", flip: true, z: 2 },
+      ],
+    },
   },
 ];
 
@@ -571,16 +689,12 @@ export function LandingCommunities() {
             key={c.title}
             className="qv-pub-card flex items-center gap-3 p-2.5 lg:flex-col lg:items-stretch lg:gap-0 lg:p-0"
           >
-            <div
-              role="img"
-              aria-label={c.alt}
-              className="size-24 shrink-0 rounded-[12px] bg-no-repeat lg:h-[250px] lg:w-full lg:rounded-none"
-              style={{
-                backgroundImage: `url('/assets/redesign/${c.image}.jpg')`,
-                backgroundSize: "420px auto",
-                backgroundPosition: c.position,
-              }}
-            />
+            <div className="size-24 shrink-0 lg:hidden">
+              <Scene {...c.phone} size="card" className="rounded-[12px]" />
+            </div>
+            <div className="hidden h-[250px] w-full lg:block">
+              <Scene {...c.scene} size="card" />
+            </div>
             <div className="flex flex-col">
               <h3 className="m-0 text-base! leading-normal! font-bold lg:px-5 lg:pt-[18px] lg:pb-1 lg:text-lg!">
                 {c.title}
@@ -628,6 +742,147 @@ export function LandingCommunities() {
   );
 }
 
+const COMICS: ComicStripProps[] = [
+  {
+    episode: 6,
+    caption: "Parents. Together, we make daycare better.",
+    panels: [
+      {
+        panel: "1 · The challenge",
+        background: "#FFF1F1",
+        bubbles: [
+          { text: "Daycare closes at five!", left: "4%", top: "16%", width: "44%", tail: "left" },
+          {
+            text: "We all want something different.",
+            left: "52%",
+            top: "30%",
+            width: "44%",
+            tail: "right",
+          },
+        ],
+        people: [
+          { name: "c-upset", left: "-2%", bottom: "-10%", width: "40%" },
+          { name: "b-think", left: "30%", bottom: "-10%", width: "40%" },
+          { name: "h-think", left: "60%", bottom: "-10%", width: "40%", flip: true },
+        ],
+      },
+      {
+        panel: "2 · The idea",
+        background: "#E9F0FF",
+        bubbles: [
+          {
+            text: "Let’s post it on Quote.Vote and vote on each line.",
+            left: "36%",
+            top: "16%",
+            width: "60%",
+            tail: "left",
+          },
+        ],
+        people: [{ name: "a-glad", left: "2%", bottom: "-10%", width: "46%" }],
+      },
+      {
+        panel: "3 · The vote",
+        background: "#F6F8FB",
+        board: {
+          title: "Daycare wish list",
+          left: "6%",
+          top: "18%",
+          width: "88%",
+          rows: [
+            { text: "Open until 6:30", up: 14, down: 1 },
+            { text: "Healthier lunches", up: 9, down: 3 },
+            { text: "More outdoor time", up: 11, down: 0 },
+          ],
+        },
+      },
+      {
+        panel: "4 · The result",
+        background: "#E6F6EE",
+        bubbles: [
+          {
+            text: "One clear list for the director.",
+            left: "20%",
+            top: "14%",
+            width: "60%",
+            tail: "center",
+          },
+        ],
+        people: [
+          { name: "c-glad", left: "-2%", bottom: "-10%", width: "40%" },
+          { name: "b-glad", left: "30%", bottom: "-10%", width: "40%" },
+          { name: "h-glad", left: "60%", bottom: "-10%", width: "40%", flip: true },
+        ],
+      },
+    ],
+  },
+  {
+    episode: 3,
+    caption: "From shouting threads to a community proposal.",
+    panels: [
+      {
+        panel: "1 · Friday evening",
+        background: "#FFF1F1",
+        bubbles: [
+          {
+            text: "Another comment war about the bus route…",
+            left: "34%",
+            top: "16%",
+            width: "62%",
+            tail: "left",
+          },
+        ],
+        people: [{ name: "l-upset", left: "0%", bottom: "-10%", width: "46%" }],
+      },
+      {
+        panel: "2 · A friend’s tip",
+        background: "#FFF6DA",
+        bubbles: [
+          {
+            text: "Try Quote.Vote. You vote on the exact words.",
+            left: "4%",
+            top: "16%",
+            width: "58%",
+            tail: "right",
+          },
+        ],
+        people: [{ name: "j-glad", left: "56%", bottom: "-10%", width: "46%", flip: true }],
+      },
+      {
+        panel: "3 · Later that night",
+        background: "#F6F8FB",
+        board: {
+          title: "Bus route 12 changes",
+          left: "6%",
+          top: "18%",
+          width: "88%",
+          rows: [
+            { text: "Keep the Elm St stop", up: 22, down: 4 },
+            { text: "Run every 15 minutes", up: 31, down: 2 },
+          ],
+        },
+      },
+      {
+        panel: "4 · A few days later",
+        background: "#E6F6EE",
+        bubbles: [
+          {
+            text: "The council heard our proposal.",
+            left: "20%",
+            top: "14%",
+            width: "60%",
+            tail: "center",
+          },
+        ],
+        people: [
+          { name: "l-glad", left: "-2%", bottom: "-10%", width: "40%" },
+          { name: "i-glad", left: "30%", bottom: "-10%", width: "40%" },
+          { name: "f-glad", left: "60%", bottom: "-10%", width: "40%", flip: true },
+        ],
+      },
+    ],
+  },
+];
+
 export function LandingStories() {
   return (
     <section className={`${SECTION} hidden flex-col items-center gap-3.5 lg:flex`}>
@@ -636,33 +891,10 @@ export function LandingStories() {
         Different views, <span className="text-[var(--pub-blue)]">stronger together.</span>
       </h2>
       <p className={LEAD}>How people turn conversation into clear priorities.</p>
-      <div className="grid w-full grid-cols-[1.12fr_1fr] items-start gap-6">
-        <figure className="qv-pub-card m-0">
-          <Image
-            src="/assets/redesign/comic-parents.jpg"
-            alt="Comic: three parents use Quote.Vote to agree on daycare priorities and present them together"
-            width={1402}
-            height={1122}
-            sizes="(min-width: 1240px) 655px, 50vw"
-            className="block h-auto w-full"
-          />
-          <figcaption className="px-[18px] py-3.5 text-sm font-bold">
-            Parents. Together, we make daycare better.
-          </figcaption>
-        </figure>
-        <figure className="qv-pub-card m-0">
-          <Image
-            src="/assets/redesign/comic-friday.jpg"
-            alt="Comic: a frustrated reader finds Quote.Vote and helps turn ideas into a proposal the city council hears"
-            width={1254}
-            height={1254}
-            sizes="(min-width: 1240px) 585px, 50vw"
-            className="block h-auto w-full"
-          />
-          <figcaption className="px-[18px] py-3.5 text-sm font-bold">
-            From shouting threads to a community proposal.
-          </figcaption>
-        </figure>
+      <div className="grid w-full grid-cols-2 items-start gap-6">
+        {COMICS.map((c) => (
+          <ComicStrip key={c.episode} {...c} />
+        ))}
       </div>
     </section>
   );

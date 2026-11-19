@@ -3566,17 +3566,22 @@ p { line-height: 1.625; }
 .neo-brutalism .qv-pub-pill { border-radius: 4px; }
 .qv-pub-av {
   border-radius: 50%;
-  background: #ece5fd url('/assets/redesign/scene-dialogue.jpg') no-repeat;
-  background-size: 787.7% auto;
-  background-position: 91.72% 53.34%;
+  background: #e9f0ff url('/assets/redesign/av/a.webp') no-repeat;
+  background-size: 150% auto;
+  background-position: 50% 10%;
   box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
   flex-shrink: 0;
   display: inline-block;
 }
-.qv-pub-av-b { background-color: #dfeaff; background-position: 74.05% 48.01%; }
-.qv-pub-av-c { background-color: #fde6ee; background-position: 95.08% 70.42%; }
-.qv-pub-av-d { background-color: #fff1c9; background-position: 77.74% 69.35%; }
-.qv-pub-av-e { background-color: #e6f6ee; background-position: 19.57% 65.44%; }
+.qv-pub-av-b { background-color: #e6f6ee; background-image: url('/assets/redesign/av/b.webp'); }
+.qv-pub-av-c { background-color: #fde6ee; background-image: url('/assets/redesign/av/c.webp'); }
+.qv-pub-av-d { background-color: #fff1c9; background-image: url('/assets/redesign/av/d.webp'); }
+.qv-pub-av-e { background-color: #ece5fd; background-image: url('/assets/redesign/av/e.webp'); }
+.qv-pub-av-me { background-color: #ffe9da; background-image: url('/assets/redesign/av/me.webp'); }
+.qv-pub-comic { border-radius: 22px; overflow: hidden; border: 1px solid var(--pub-line); background: #ffffff; color: #0f172a; }
+.neo-brutalism .qv-pub-comic { border-radius: 4px; border: 2px solid var(--pub-line); box-shadow: var(--pub-panel-shadow); }
+/* Post cards: the live app's card shape (STANDARD_POST_CARD_THEME), as in the updated design */
+.qv-postcard { background: var(--auth-surface, var(--shell-surface)); border: 2px solid #56b3ff; border-bottom-width: 8px; border-radius: 7px; box-shadow: 4px 4px 0 rgba(86, 179, 255, 0.45); }
 .qv-pub-btn-outline-blue { border: 1.5px solid var(--pub-blue); color: var(--pub-blue); background: var(--auth-surface); box-shadow: none; }
 .qv-pub-btn-outline-blue:hover { background: var(--pub-kicker-bg); border-color: var(--pub-blue); color: var(--pub-blue); }
 .qv-pub-nav a:not(.qv-auth-btn) { color: var(--auth-ink-2); font-weight: 700; font-size: 14px; text-decoration: none; border-radius: 6px; }

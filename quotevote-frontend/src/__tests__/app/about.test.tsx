@@ -27,14 +27,19 @@ describe("About page", () => {
     expect(
       screen.getByRole("heading", { name: /structured dialogue\. better decisions\./i })
     ).toBeInTheDocument();
-    expect(screen.getAllByText("82% agree")).toHaveLength(2);
-    for (const value of ["No ads", "No algorithms", "Open source", "Everyone welcome"]) {
+    // Plain up and down votes, no agree bars or percentages (updated design).
+    expect(screen.getByText("↑ 56")).toBeInTheDocument();
+    expect(screen.getByText("↓ 41")).toBeInTheDocument();
+    expect(screen.queryByText(/% agree/)).not.toBeInTheDocument();
+    for (const value of ["No ads", "No engagement algorithms", "Open source", "Everyone welcome"]) {
       expect(screen.getByText(value)).toBeInTheDocument();
     }
     expect(screen.getByRole("heading", { name: /built for every community/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Schools & universities" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Organizations & government" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Teams & Enterprise" })).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Organizations & local government" })
+      screen.getByRole("img", { name: "Students voting on a class trip" })
     ).toBeInTheDocument();
   });
 

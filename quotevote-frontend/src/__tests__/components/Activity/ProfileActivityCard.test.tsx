@@ -9,11 +9,9 @@ const post: ActivityPost = {
   title: "Should the city price downtown parking?",
   text: "Downtown parking is free after six.",
   url: "/post/transport/should/p1",
-  upvotes: 0,
-  downvotes: 0,
+  upvotes: 24,
+  downvotes: 5,
   comments: Array.from({ length: 11 }, (_, i) => ({ _id: `c${i}` })),
-  approvedBy: Array.from({ length: 5 }, (_, i) => `a${i}`),
-  rejectedBy: ["r1"],
   bookmarkedBy: [],
   created: "2026-11-10T10:00:00.000Z",
 };
@@ -37,7 +35,7 @@ const card = (type: string, extra: Partial<Parameters<typeof ProfileActivityCard
   );
 
 describe("ProfileActivityCard (redesign)", () => {
-  it("shows a post with its topic, approval and comments", async () => {
+  it("shows a post as a post card with its topic, up and down votes and comments", async () => {
     card("POSTED");
     const article = screen.getByRole("article", {
       name: "posted: Should the city price downtown parking?",
@@ -49,7 +47,11 @@ describe("ProfileActivityCard (redesign)", () => {
     expect(
       screen.getByRole("link", { name: "Should the city price downtown parking?" })
     ).toHaveAttribute("href", "/post/p1");
-    expect(article).toHaveTextContent("83% approve · 11 comments");
+    expect(article).toHaveClass("qv-postcard");
+    expect(article).toHaveTextContent("Up votes: 24");
+    expect(article).toHaveTextContent("Down votes: 5");
+    expect(article).toHaveTextContent("11 comments");
+    expect(article).not.toHaveTextContent("%");
   });
 
   it.each([
@@ -77,9 +79,16 @@ describe("ProfileActivityCard (redesign)", () => {
     expect(article).toHaveTextContent("on Should the city price downtown parking?");
   });
 
-  it("says a post has no votes yet instead of 0%", () => {
-    card("POSTED", { post: { ...post, approvedBy: [], rejectedBy: [] } });
-    expect(screen.getByRole("article")).toHaveTextContent("No votes yet");
+  it("shows zero votes as 0, not a percentage", () => {
+    card("POSTED", { post: { ...post, upvotes: 0, downvotes: 0 } });
+    const article = screen.getByRole("article");
+    expect(article).toHaveTextContent("Up votes: 0");
+    expect(article).toHaveTextContent("Down votes: 0");
+  });
+
+  it("keeps the lit card for the other kinds", () => {
+    card("UPVOTED");
+    expect(screen.getByRole("article")).toHaveClass("qv-lit");
   });
 
   it("dates items Today, Yesterday, then by day", () => {

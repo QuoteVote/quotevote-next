@@ -2,8 +2,8 @@
 
 import type { ReputationDisplayProps } from "@/types/profile";
 
-/* Reputation panel from the approved design (Profile): the score out of 1000 with its
-   label and bar, the three part scores, and the figures behind them. */
+/* Reputation panel from the updated design (Profile): the score out of 1000 with its
+   label and bar, the two part scores, and the figures behind them (updated design). */
 
 const LEVELS = [
   {
@@ -63,18 +63,13 @@ export function ReputationDisplay({
   const m = reputation.metrics ?? ({} as NonNullable<typeof reputation.metrics>);
   const parts = [
     { value: reputation.inviteNetworkScore, label: "Invite Network", tint: "qv-pub-tint-blue" },
-    { value: reputation.conductScore, label: "Conduct", tint: "qv-pub-tint-green" },
     { value: reputation.activityScore, label: "Activity", tint: "qv-pub-tint-purple" },
   ];
   const figures: [string, number | undefined][] = [
-    ["Invites Sent", m.totalInvitesSent],
-    ["Invites Accepted", m.totalInvitesAccepted],
+    ["Invited", m.totalInvitesAccepted],
+    ["Avg Invitee Rep", m.averageInviteeReputation],
     ["Posts Created", m.totalPosts],
     ["Comments Made", m.totalComments],
-    ["Upvotes Given", m.totalUpvotes],
-    ["Reports Received", m.totalReportsReceived],
-    ["Avg Invitee Rep", m.averageInviteeReputation],
-    ["Reports Resolved", m.totalReportsResolved],
   ];
 
   return (
@@ -127,7 +122,7 @@ export function ReputationDisplay({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {parts.map((p) => (
           <div
             key={p.label}

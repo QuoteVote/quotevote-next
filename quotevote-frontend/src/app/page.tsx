@@ -9,7 +9,7 @@ import { buildWebSiteJsonLd } from '@/lib/seo/jsonLd'
 export const metadata: Metadata = buildPageMetadata({
   title: 'Quote.Vote – Share Ideas. Vote on What Matters.',
   description:
-    'An open-source, text-first platform for thoughtful dialogue. Quote, vote, and engage — no ads, no algorithms, no noise.',
+    'An open-source, text-first platform for thoughtful dialogue. Quote, vote, and engage: no ads, no engagement algorithms, no noise.',
   path: '/',
 })
 
