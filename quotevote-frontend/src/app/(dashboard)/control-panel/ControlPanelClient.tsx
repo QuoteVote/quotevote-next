@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
+import { DisplayAvatar } from '@/components/DisplayAvatar'
 import { cn } from '@/lib/utils'
 import { USER_INVITE_REQUESTS } from '@/graphql/queries'
 import { useAppStore } from '@/store/useAppStore'
@@ -35,14 +35,16 @@ const NAV_ITEMS: {
   id: TabId
   label: string
   icon: React.ComponentType<{ className?: string }>
+  /** The design's glyph in the desktop sidebar tile. */
+  glyph: string
   description: string
 }[] = [
-  { id: 'statistics', label: 'Statistics', icon: BarChart3, description: 'Platform overview & metrics' },
-  { id: 'invites', label: 'Invites', icon: Mail, description: 'Manage invitation requests' },
-  { id: 'featured', label: 'Featured', icon: Star, description: 'Manage featured posts' },
-  { id: 'users', label: 'Users', icon: Users, description: 'Manage user accounts' },
-  { id: 'moderation', label: 'Moderation', icon: FileText, description: 'Review pending posts' },
-  { id: 'bots', label: 'Reports', icon: Bot, description: 'Bot-flagged accounts' },
+  { id: 'statistics', label: 'Statistics', icon: BarChart3, glyph: '▥', description: 'Platform overview & metrics' },
+  { id: 'invites', label: 'Invites', icon: Mail, glyph: '✉', description: 'Manage invitation requests' },
+  { id: 'featured', label: 'Featured', icon: Star, glyph: '★', description: 'Manage featured posts' },
+  { id: 'users', label: 'Users', icon: Users, glyph: '◎', description: 'Manage user accounts' },
+  { id: 'moderation', label: 'Moderation', icon: FileText, glyph: '⚑', description: 'Review pending posts' },
+  { id: 'bots', label: 'Reports', icon: Bot, glyph: '⚠', description: 'Bot-flagged accounts' },
 ]
 
 function TabSkeleton() {
@@ -164,77 +166,80 @@ export default function ControlPanelClient() {
         </div>
       </div>
 
-      {/* ── Desktop: sidebar layout ── */}
-      <div className="hidden lg:flex">
+      {/* Sidebar on desktop, the tab content once for every screen size */}
+      <div className="lg:flex">
         {/* Sidebar */}
-        <aside className="w-64 xl:w-72 shrink-0 border-r border-border bg-card min-h-[calc(100vh-var(--app-header-h))] sticky top-[var(--app-header-h)] self-start flex flex-col">
-          {/* Brand */}
-          <div className="px-5 py-5 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-gradient-to-br from-[#52b274] to-[#3d9659] flex items-center justify-center shadow">
-                <ShieldCheck className="size-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold leading-none">Control Panel</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Admin Dashboard</p>
-              </div>
+        <aside
+          className="qv-admin-nav font-sans hidden lg:flex sticky top-[var(--app-header-h)] min-h-[calc(100vh-var(--app-header-h))] w-[280px] shrink-0 flex-col gap-1.5 self-start px-4 py-[22px]"
+          aria-label="Control panel"
+        >
+          <div className="mb-2 flex items-center gap-3 border-b border-[var(--anav-divider)] px-2 pb-[18px]">
+            <span
+              className="flex size-[42px] items-center justify-center rounded-xl bg-gradient-to-br from-[#52b274] to-[#1f7a4d] text-white shadow-[0_8px_18px_-8px_#1f7a4d] [.neo-brutalism_&]:rounded-[4px]"
+              aria-hidden="true"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </span>
+            <div className="leading-tight">
+              <b className="text-base">Control Panel</b>
+              <br />
+              <span className="text-[12.5px] text-[var(--anav-desc)]">Admin Dashboard</span>
             </div>
           </div>
 
-          {/* Nav */}
-          <nav className="flex-1 px-3 py-3 space-y-0.5">
-            {NAV_ITEMS.map(({ id, label, icon: Icon, description }) => {
+          <nav className="flex flex-col gap-1.5" aria-label="Admin sections">
+            {NAV_ITEMS.map(({ id, label, glyph, description }) => {
               const isActive = activeTab === id
-              const hasBadge = id === 'invites' && pendingInvites > 0
+              const badge = id === 'invites' && pendingInvites > 0 ? pendingInvites : null
               return (
                 <button
                   key={id}
                   type="button"
                   onClick={() => setActiveTab(id)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all group relative',
-                    isActive
-                      ? 'bg-[#52b274] text-white shadow-sm'
-                      : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-                  )}
+                  className="qv-anav"
+                  aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon className={cn('size-4 shrink-0 transition-colors', isActive ? 'text-white' : 'text-muted-foreground/70 group-hover:text-foreground')} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium">{label}</span>
-                      {hasBadge && (
-                        <Badge
-                          className={cn(
-                            'text-[10px] h-5 min-w-5 px-1.5 rounded-full font-bold',
-                            isActive ? 'bg-white/25 text-white hover:bg-white/30' : 'bg-red-500 text-white hover:bg-red-600'
-                          )}
-                        >
-                          {pendingInvites}
-                        </Badge>
-                      )}
-                      {isActive && !hasBadge && <ChevronRight className="size-3.5 text-white/60 shrink-0" />}
-                    </div>
-                    {!isActive && (
-                      <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">{description}</p>
-                    )}
-                  </div>
+                  <span className="qv-anav-ic text-sm font-bold" aria-hidden="true">
+                    {glyph}
+                  </span>
+                  <span className="flex flex-1 flex-col">
+                    <b className="text-[14.5px]">{label}</b>
+                    <span className="qv-anav-desc">{description}</span>
+                  </span>
+                  {badge !== null && (
+                    <span className="flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#e5484d] px-1.5 text-[11px] font-bold text-white">
+                      {badge}
+                      <span className="sr-only"> pending</span>
+                    </span>
+                  )}
                 </button>
               )
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="px-5 py-4 border-t border-border">
-            <p className="text-[11px] text-muted-foreground">
-              Logged in as <span className="font-semibold text-foreground">{userData?.username || 'Admin'}</span>
-            </p>
+          <div className="mt-auto flex items-center gap-2.5 border-t border-[var(--anav-divider)] px-2 pt-3.5 text-[13px]">
+            <DisplayAvatar
+              avatar={userData?.avatar as string | Record<string, unknown> | undefined}
+              username={userData?.username || 'admin'}
+              size={32}
+              className="size-8"
+            />
+            <span className="leading-snug">
+              Logged in as <b>{userData?.username || 'admin'}</b>
+              <br />
+              <span className="text-[12.5px] text-[var(--anav-desc)]">Admin</span>
+            </span>
           </div>
         </aside>
 
         {/* Main content */}
         <main className="flex-1 min-w-0">
-          {/* Breadcrumb bar */}
-          <div className="px-6 py-3.5 border-b border-border bg-background/80 backdrop-blur sticky top-[var(--app-header-h)] z-10">
+          {/* Breadcrumb bar (the Invites tab has its own heading) */}
+          {activeTab !== 'invites' && (
+          <div className="hidden lg:block px-6 py-3.5 border-b border-border bg-background/80 backdrop-blur sticky top-[var(--app-header-h)] z-10">
             <div className="flex items-center gap-1.5 text-sm">
               <ShieldCheck className="size-3.5 text-muted-foreground" />
               <span className="text-muted-foreground">Admin</span>
@@ -243,16 +248,12 @@ export default function ControlPanelClient() {
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">{activeItem.description}</p>
           </div>
+          )}
 
-          <div className="p-6">
+          <div className={activeTab === 'invites' ? 'p-4 lg:px-9 lg:py-7' : 'p-4 lg:p-6'}>
             {renderContent()}
           </div>
         </main>
-      </div>
-
-      {/* Mobile content */}
-      <div className="lg:hidden p-4">
-        {renderContent()}
       </div>
     </div>
   )

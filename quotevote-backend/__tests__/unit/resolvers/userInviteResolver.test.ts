@@ -624,6 +624,193 @@ describe('userInviteResolver', () => {
       });
       expect(result.message).toMatch(/declined/);
     });
+
+    describe('reset', () => {
+      const approvedLink = {
+        email: 'invitee@example.com',
+        status: 'pending',
+        OR: [{ invitedById: null }, { invitedById: { isSet: false } }],
+      };
+
+      function resetContext(status: number, password: string | null = null) {
+        const ctx = mockContext();
+        (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+          id: userId,
+          email: 'Invitee@example.com',
+          username: 'invitee',
+          password,
+          status,
+        });
+        return ctx;
+      }
+
+      it('puts a declined request back to pending', async () => {
+        const ctx = resetContext(2);
+        (ctx.prisma.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+        const result = await userInviteResolver.Mutation.sendUserInviteApproval(
+          null,
+          { userId, inviteStatus: '1' },
+          ctx
+        );
+
+        expect(ctx.prisma.user.updateMany).toHaveBeenCalledWith({
+          where: {
+            id: userId,
+            status: { in: [2, 4] },
+            OR: [{ password: null }, { password: { isSet: false } }],
+          },
+          data: { status: 1 },
+        });
+        expect(result).toEqual({
+          code: 'SUCCESS',
+          message: 'User invite reset for Invitee@example.com.',
+        });
+        expect(sendGridEmail).not.toHaveBeenCalled();
+      });
+
+      it('closes the signup link of an accepted request it resets', async () => {
+        const ctx = resetContext(4);
+        (ctx.prisma.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+        await userInviteResolver.Mutation.sendUserInviteApproval(
+          null,
+          { userId, inviteStatus: 'reset' },
+          ctx
+        );
+
+        // Only the admin approval's link; invites members sent stay as they are.
+        expect(ctx.prisma.userInvite.updateMany).toHaveBeenCalledWith({
+          where: approvedLink,
+          data: { status: 'expired' },
+        });
+      });
+
+      it('leaves a pending request and its links alone', async () => {
+        const ctx = resetContext(1);
+        (ctx.prisma.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+        const result = await userInviteResolver.Mutation.sendUserInviteApproval(
+          null,
+          { userId, inviteStatus: 'pending' },
+          ctx
+        );
+
+        expect(result.code).toBe('SUCCESS');
+        expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+      });
+
+      it('refuses an account that already finished signup', async () => {
+        const ctx = resetContext(4, '$2a$hash');
+
+        await expect(
+          userInviteResolver.Mutation.sendUserInviteApproval(
+            null,
+            { userId, inviteStatus: '1' },
+            ctx
+          )
+        ).rejects.toThrow('User has already completed signup');
+        expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
+      });
+
+      it('rejects a status it does not know instead of reporting success', async () => {
+        const ctx = resetContext(1);
+
+        await expect(
+          userInviteResolver.Mutation.sendUserInviteApproval(
+            null,
+            { userId, inviteStatus: '7' },
+            ctx
+          )
+        ).rejects.toThrow('Invalid invite status');
+        expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
+        expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('getUserInvites', () => {
+    const memberId = '507f1f77bcf86cd799439012';
+    const created = new Date('2026-11-10T09:00:00.000Z');
+    const expiresAt = new Date('2026-11-17T09:00:00.000Z');
+
+    async function expectCode(promise: Promise<unknown>, code: string) {
+      await expect(promise).rejects.toMatchObject({ extensions: { code } });
+    }
+
+    it('requires a signed-in member', async () => {
+      const ctx = mockContext({ user: undefined });
+      await expectCode(
+        userInviteResolver.Query.getUserInvites(null, { userId: memberId }, ctx),
+        'UNAUTHENTICATED'
+      );
+    });
+
+    it('lets a member see only their own invites', async () => {
+      const ctx = mockContext({ user: { _id: memberId, admin: false } as GraphQLContext['user'] });
+      await expectCode(userInviteResolver.Query.getUserInvites(null, { userId }, ctx), 'FORBIDDEN');
+      expect(ctx.prisma.userInvite.findMany).not.toHaveBeenCalled();
+    });
+
+    it('lists the member’s invites, newest first', async () => {
+      const ctx = mockContext({ user: { _id: memberId, admin: false } as GraphQLContext['user'] });
+      (ctx.prisma.userInvite.findMany as jest.Mock).mockResolvedValue([
+        { id: 'inv-1', email: 'friend@example.org', status: 'pending', created, expiresAt },
+        { id: 'inv-2', email: 'old@example.org', status: 'expired', created, expiresAt: null },
+      ]);
+
+      const result = await userInviteResolver.Query.getUserInvites(null, { userId: memberId }, ctx);
+
+      expect(ctx.prisma.userInvite.findMany).toHaveBeenCalledWith({
+        where: { invitedById: memberId },
+        orderBy: { created: 'desc' },
+        take: 200,
+        select: { id: true, email: true, status: true, created: true, expiresAt: true },
+      });
+      expect(result).toEqual([
+        {
+          _id: 'inv-1',
+          email: 'friend@example.org',
+          status: 'pending',
+          created,
+          joined: created,
+          expiresAt,
+        },
+        {
+          _id: 'inv-2',
+          email: 'old@example.org',
+          status: 'expired',
+          created,
+          joined: created,
+          expiresAt: undefined,
+        },
+      ]);
+    });
+
+    it('lets an admin look up anyone and filter by status', async () => {
+      const ctx = mockContext();
+      await userInviteResolver.Query.getUserInvites(
+        null,
+        { userId: memberId, status: 'Accepted' },
+        ctx
+      );
+      expect(ctx.prisma.userInvite.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { invitedById: memberId, status: 'accepted' } })
+      );
+    });
+
+    it('rejects a bad user id or status before querying', async () => {
+      const ctx = mockContext();
+      await expectCode(
+        userInviteResolver.Query.getUserInvites(null, { userId: 'nope' }, ctx),
+        'BAD_USER_INPUT'
+      );
+      await expectCode(
+        userInviteResolver.Query.getUserInvites(null, { userId, status: 'whatever' }, ctx),
+        'BAD_USER_INPUT'
+      );
+      expect(ctx.prisma.userInvite.findMany).not.toHaveBeenCalled();
+    });
   });
 
   describe('member invite links (#672)', () => {

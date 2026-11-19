@@ -964,7 +964,23 @@ export const USER_INVITE_REQUESTS = gql`
       joined
       email
       status
+      signedUp
       _id
+    }
+  }
+`
+
+/**
+ * Invites a member emailed from the app, newest first.
+ */
+export const USER_SENT_INVITES = gql`
+  query getUserInvites($userId: String!) {
+    getUserInvites(userId: $userId) {
+      _id
+      email
+      status
+      joined
+      expiresAt
     }
   }
 `

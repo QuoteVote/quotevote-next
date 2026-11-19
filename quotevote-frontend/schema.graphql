@@ -162,6 +162,10 @@ type UserInvite {
   status: String
   _userId: String
   joined: Date
+  expiresAt: Date
+
+  """Access requests only: whether an accepted request has finished signup."""
+  signedUp: Boolean
 }
 
 """

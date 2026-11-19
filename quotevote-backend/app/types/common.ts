@@ -443,13 +443,21 @@ export interface UserInvite {
   expiresAt?: Date | string;
 }
 
+/** An invite a member sent, as `getUserInvites` returns it. */
+export interface SentUserInvite extends UserInvite {
+  /** Same as `created`: the field name the UserInvite type exposes. */
+  joined: Date | string;
+}
+
 /** An access request as the admin screens list it (legacy `userInviteRequests`). */
 export interface UserInviteRequest {
   _id: string;
   email: string;
-  /** Legacy invite code as a string: "1" requested, "2" declined. */
+  /** Legacy invite code as a string: "1" requested, "2" declined, "4" accepted. */
   status: string;
   joined: Date | null;
+  /** True once an accepted request has finished signup. */
+  signedUp: boolean;
 }
 
 export type ReportReason =
