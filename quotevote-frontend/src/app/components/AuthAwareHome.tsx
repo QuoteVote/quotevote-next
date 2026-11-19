@@ -4,7 +4,7 @@ import { type ReactElement } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAppStore } from '@/store'
 import { DashboardShell } from '@/components/DashboardShell'
-import { PublicDirectoryContent } from './PublicDirectory/PublicDirectoryContent'
+import { LandingPage } from './Landing/LandingPage'
 import { DirectoryToolbar } from './PublicDirectory/DirectoryToolbar'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
 import { getTagIdParam } from '@/lib/utils/tagParam'
@@ -17,7 +17,7 @@ export function AuthAwareHome(): ReactElement {
   const loggedIn = !!(user?.id || user?._id)
 
   if (!loggedIn) {
-    return <PublicDirectoryContent />
+    return <LandingPage />
   }
 
   return <AuthenticatedFeed />

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { DocsLayout } from '@/components/Public/DocsLayout';
 
 export const metadata: Metadata = {
   title: 'Terms of Service - Quote.Vote',
@@ -6,9 +7,11 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-3xl font-bold mb-4">Terms of Service</h1>
-      <p className="text-gray-500">Full content coming soon.</p>
-    </main>
+    <DocsLayout
+      current="terms"
+      title="Terms of Service"
+      intro="The full Terms of Service are being finalized and will be published here. Until then, the Code of Conduct sets out how to take part."
+      sections={[]}
+    />
   );
 }

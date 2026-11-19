@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApolloClient } from '@apollo/client/react'
-import { Loader2 } from 'lucide-react'
+import { NoticePage } from '@/components/Public/Notice'
 import { removeToken } from '@/lib/auth'
 import { useAppStore } from '@/store/useAppStore'
 
@@ -31,10 +31,5 @@ export function LogoutPage() {
     performLogout()
   }, [client, resetStore, router])
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-      <Loader2 className="animate-spin h-8 w-8 text-primary" />
-      <p className="text-foreground font-medium">Signing you out…</p>
-    </div>
-  )
+  return <NoticePage kind="signingOut" />
 }

@@ -171,9 +171,9 @@ export function RequestInviteDialog({ open, onClose, view = "invite" }: RequestI
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent
         className={cn(
-          "qv-auth gap-0 rounded-[24px] border-0 bg-[var(--auth-surface)] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)] sm:max-w-[520px]",
+          "qv-auth gap-0 rounded-[24px] border-0 bg-[var(--auth-surface)] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)] sm:max-w-[584px]",
           "[.neo-brutalism_&]:rounded-[4px] [.neo-brutalism_&]:border-2 [.neo-brutalism_&]:border-[var(--auth-line)] [.neo-brutalism_&]:shadow-[6px_6px_0_var(--auth-line)]",
-          submitted ? "p-7 sm:max-w-[380px]" : "p-6 sm:p-8"
+          submitted ? "p-7 sm:max-w-[436px]" : "p-6 sm:p-8"
         )}
       >
         {submitted ? (

@@ -11,7 +11,8 @@ import { SEND_PASSWORD_RESET_EMAIL } from "@/graphql/mutations";
 import { replaceGqlError } from "@/lib/utils/replaceGqlError";
 import { AccessSplitLayout } from "@/components/Access/AccessSplitLayout";
 import { AccessField } from "@/components/Access/AccessField";
-import { AccessFootnote, AccessFormHeader, AccessNotice } from "@/components/Access/AccessParts";
+import { AccessFootnote, AccessFormHeader } from "@/components/Access/AccessParts";
+import { NoticePage } from "@/components/Public/Notice";
 import type { AccessChip } from "@/types/access";
 
 const schema = z.object({ email: z.string().email("Invalid email address") });
@@ -46,6 +47,12 @@ export default function ForgotPasswordPageContent() {
     }
   };
 
+  if (sentEmail) {
+    return (
+      <NoticePage kind="emailSent" message={`Check ${sentEmail} for a link to reset your password.`} />
+    );
+  }
+
   return (
     <AccessSplitLayout
       lines={["Locked out?", "We’ll get you back"]}
@@ -54,13 +61,6 @@ export default function ForgotPasswordPageContent() {
       prompt="Remembered it?"
       action={{ href: "/auths/login", label: "Log in" }}
     >
-      {sentEmail ? (
-        <AccessNotice
-          title="Email Sent"
-          message={`If ${sentEmail} has an account, we’ve sent it a link to set a new password. Check your inbox and spam folder.`}
-          action={{ href: "/auths/login", label: "Go to Login" }}
-        />
-      ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 lg:gap-[18px]" noValidate>
           <AccessFormHeader
             title="Forgot password?"
@@ -87,7 +87,6 @@ export default function ForgotPasswordPageContent() {
             link={{ href: "/auths/request-access", label: "Request Access" }}
           />
         </form>
-      )}
     </AccessSplitLayout>
   );
 }

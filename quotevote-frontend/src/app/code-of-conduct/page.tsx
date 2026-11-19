@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { buildPageMetadata, pageTitle } from '@/lib/seo/metadata';
+import { DocsLayout } from '@/components/Public/DocsLayout';
 
 export const metadata: Metadata = buildPageMetadata({
   title: pageTitle('Code of Conduct'),
@@ -9,9 +10,11 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function CodeOfConductPage() {
   return (
-    <main className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-3xl font-bold mb-4">Code of Conduct</h1>
-      <p className="text-gray-500">Full content coming soon.</p>
-    </main>
+    <DocsLayout
+      current="conduct"
+      title="Code of Conduct"
+      intro="The full Code of Conduct is being finalized and will be published here. In the meantime: respond to what was said, not to the person who said it."
+      sections={[]}
+    />
   );
 }

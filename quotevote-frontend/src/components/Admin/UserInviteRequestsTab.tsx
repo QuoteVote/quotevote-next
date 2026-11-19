@@ -95,7 +95,7 @@ export default function UserInviteRequestsTab({ data, onRefresh }: UserInviteReq
         </div>
       </div>
 
-      <div className="qv-inv-search w-full max-w-[380px]">
+      <div className="qv-inv-search w-full max-w-[408px]">
         <svg
           width="16"
           height="16"
