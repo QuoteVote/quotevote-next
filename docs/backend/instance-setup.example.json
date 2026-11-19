@@ -1,0 +1,19 @@
+{
+  "tags": [
+    {
+      "title": "Public Policy",
+      "description": "Policy questions the group is deliberating."
+    },
+    {
+      "title": "Campus Life",
+      "description": "Everyday questions about life on campus."
+    }
+  ],
+  "posts": [
+    {
+      "tag": "Public Policy",
+      "title": "Should the city make public transit free for students?",
+      "text": "Several cities now offer free or reduced transit passes to students, paid for through fees or the city budget. Supporters say it lowers the cost of getting to class and work, and takes cars off crowded streets. Critics say the money would do more good spent on more frequent and reliable service for everyone. Highlight a sentence to vote on it or quote it, and say what you think in the discussion below."
+    }
+  ]
+}
