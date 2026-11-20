@@ -37,6 +37,10 @@ export interface ComboboxProps {
   startIcon?: React.ReactNode
   /** Id of an external label; the trigger is then named by that label plus its current value. */
   ariaLabelledBy?: string
+  /** Renders the chosen value instead of plain text (e.g. as a chip). */
+  renderValue?: (label: string) => React.ReactNode
+  /** Hides the up/down chevron on the trigger. */
+  hideIndicator?: boolean
 }
 
 export function Combobox({
@@ -57,6 +61,8 @@ export function Combobox({
   triggerClassName,
   startIcon,
   ariaLabelledBy,
+  renderValue,
+  hideIndicator = false,
 }: ComboboxProps) {
   const valueId = React.useId()
   const [open, setOpen] = React.useState(false)
@@ -172,9 +178,15 @@ export function Combobox({
                   {startIcon}
                 </span>
               )}
-              <span id={valueId} className="truncate">{displayValue || placeholder}</span>
+              {displayValue && renderValue ? (
+                <span id={valueId} className="flex min-w-0 items-center gap-2">
+                  {renderValue(displayValue)}
+                </span>
+              ) : (
+                <span id={valueId} className="truncate">{displayValue || placeholder}</span>
+              )}
             </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            {!hideIndicator && <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
           </Button>
         </PopoverTrigger>
 

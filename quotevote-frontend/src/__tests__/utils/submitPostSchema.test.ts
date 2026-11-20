@@ -52,7 +52,7 @@ describe('submitPostSchema - Citation URL validation', () => {
       expect(result.success).toBe(false)
       if (!result.success) {
         const citationUrlError = result.error.issues.find(i => i.path.includes('citationUrl'))
-        expect(citationUrlError?.message).toContain('Invalid URL format')
+        expect(citationUrlError?.message).toBe('Enter a full link starting with https://')
       }
     })
 

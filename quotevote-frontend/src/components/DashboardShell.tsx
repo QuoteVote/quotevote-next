@@ -23,7 +23,7 @@ import type { ChatRoom } from '@/types/chat';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS, SUBMIT_POST_OVERLAY_CLASS } from '@/components/SubmitPost';
 import { NotificationsPanel } from '@/components/Notifications/NotificationsPanel';
 import { AppHeader } from '@/components/AppShell/AppHeader';
 import { MobileTopBar } from '@/components/AppShell/MobileTopBar';
@@ -492,7 +492,8 @@ export function DashboardShell({
       )}
 
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
+        <DialogContent className={SUBMIT_POST_DIALOG_CLASS}
+          overlayClassName={SUBMIT_POST_OVERLAY_CLASS} showCloseButton={false}>
           <DialogTitle className="sr-only">Create Quotes</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>
