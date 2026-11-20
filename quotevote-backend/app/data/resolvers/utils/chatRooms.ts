@@ -70,6 +70,31 @@ const time = (value: Date | string | undefined): number =>
   value ? new Date(value).getTime() : Number.NEGATIVE_INFINITY;
 
 /** Newest message first, then most recent activity, as legacy sorts the chat list. */
+/** A room's newest message as the list shows it; nothing when it was deleted. */
+function toLastMessage(
+  row:
+    | {
+        userId: string;
+        userName: string | null;
+        text: string;
+        created: Date;
+        readBy: string[];
+        deleted: boolean | null;
+      }
+    | undefined,
+  usersById: Map<string, RoomUser>
+): Common.MessageRoomLastMessage | null {
+  if (!row || row.deleted === true) return null;
+  const sender = usersById.get(row.userId);
+  return {
+    text: row.text,
+    userId: row.userId,
+    userName: sender?.name || sender?.username || row.userName || null,
+    created: row.created,
+    readByOther: (row.readBy ?? []).some((id) => id !== row.userId),
+  };
+}
+
 export const byLatestMessage = (a: Common.MessageRoom, b: Common.MessageRoom): number =>
   time(b.lastMessageTime) - time(a.lastMessageTime) || time(b.lastActivity) - time(a.lastActivity);
 
@@ -120,6 +145,7 @@ export async function filterListedRooms(
  * - unreadMessages: live messages from others the viewer hasn't read
  * - lastMessageTime: the newest message, or the room's last activity
  * - postDetails: the room's post
+ * - lastMessage: the newest message with its sender's name, for the preview line
  */
 export async function loadRoomViews(
   prisma: ChatRoomsPrisma,
@@ -149,10 +175,34 @@ export async function loadRoomViews(
     }),
   ]);
 
+  // The newest message of each room, found by the times above: one query for all rooms.
+  const newest = latest.flatMap((row) =>
+    row._max.created ? [{ messageRoomId: row.messageRoomId, created: row._max.created }] : []
+  );
+  const lastRows = newest.length
+    ? await prisma.message.findMany({
+        where: { OR: newest },
+        select: {
+          messageRoomId: true,
+          userId: true,
+          userName: true,
+          text: true,
+          created: true,
+          readBy: true,
+          deleted: true,
+        },
+      })
+    : [];
+  const lastByRoom = new Map<string, (typeof lastRows)[number]>();
+  for (const row of lastRows) {
+    if (!lastByRoom.has(row.messageRoomId)) lastByRoom.set(row.messageRoomId, row);
+  }
+
   const postsById = new Map(posts.map((post) => [post.id, post]));
   const userIds = unique([
     ...rooms.map((room) => otherMember(room, viewerId)),
     ...posts.map((post) => post.userId),
+    ...lastRows.map((row) => row.userId),
   ]);
   const users = await whenAny(userIds, (ids) =>
     prisma.user.findMany({ where: { id: { in: ids } }, select: ROOM_USER_SELECT })
@@ -188,6 +238,7 @@ export async function loadRoomViews(
       avatar,
       unreadMessages: unreadByRoom.get(room.id) ?? 0,
       lastMessageTime: latestByRoom.get(room.id) ?? room.lastActivity ?? undefined,
+      lastMessage: toLastMessage(lastByRoom.get(room.id), usersById),
       postDetails: post
         ? {
             _id: post.id,

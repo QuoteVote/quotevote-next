@@ -181,7 +181,8 @@ test.describe.serial("SMOKE-001: staging smoke test (#182)", () => {
     await a.page.goto("/");
     await a.page.getByTestId("desktop-messages-button").click();
     const chat = a.page.getByTestId("chat-page").locator("visible=true");
-    await chat.getByText("Direct message").first().click();
+    // The chat's preview line is the newest message (updated design).
+    await chat.getByTestId("discussion-thread").filter({ hasText: text }).first().click();
     await expect(a.page.getByText(text).first()).toBeVisible();
   });
 

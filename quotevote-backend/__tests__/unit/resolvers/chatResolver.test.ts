@@ -109,6 +109,69 @@ describe('chatResolver Prisma queries', () => {
     expect(context.prisma.messageRoom.findFirst).not.toHaveBeenCalled();
   });
 
+  it("adds each room's newest message with its sender, in one query", async () => {
+    const context = createContext();
+    context.userId = me;
+    context.prisma.messageRoom.findMany.mockResolvedValue([
+      room({ id: dmId, userIds: [me, bobId], lastActivity: day(2) }),
+      room({ id: quietDmId, userIds: [me, carolId], lastActivity: day(1) }),
+    ]);
+    context.prisma.message.groupBy.mockResolvedValue([
+      { messageRoomId: dmId, _max: { created: day(5) } },
+      { messageRoomId: quietDmId, _max: { created: day(3) } },
+    ]);
+    context.prisma.message.findMany.mockImplementation(({ where }: { where: { OR?: unknown } }) =>
+      Promise.resolve(
+        where.OR
+          ? [
+              {
+                messageRoomId: dmId,
+                userId: me,
+                userName: null,
+                text: 'See you at the hearing',
+                created: day(5),
+                readBy: [me, bobId],
+                deleted: false,
+              },
+              {
+                messageRoomId: quietDmId,
+                userId: carolId,
+                userName: 'carol',
+                text: 'gone',
+                created: day(3),
+                readBy: [],
+                deleted: true,
+              },
+            ]
+          : []
+      )
+    );
+    context.prisma.user.findMany.mockResolvedValue([bob, carol]);
+
+    const rooms = await chatResolver.Query.messageRooms({}, {}, context as never);
+
+    expect(context.prisma.message.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            { messageRoomId: dmId, created: day(5) },
+            { messageRoomId: quietDmId, created: day(3) },
+          ],
+        },
+      })
+    );
+    expect(rooms[0].lastMessage).toEqual({
+      text: 'See you at the hearing',
+      userId: me,
+      userName: null,
+      created: day(5),
+      // Bob read it, so the list shows ✓✓.
+      readByOther: true,
+    });
+    // A deleted newest message shows no preview.
+    expect(rooms[1].lastMessage).toBeNull();
+  });
+
   it('lists rooms with the fields the chat list shows, newest message first', async () => {
     const context = createContext();
     context.userId = me;

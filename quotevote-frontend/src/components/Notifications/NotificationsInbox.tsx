@@ -2,216 +2,217 @@
 
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useSubscription } from "@apollo/client/react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
-import { CLEAR_ALL_NOTIFICATIONS } from "@/graphql/mutations";
-import {
-  GET_NOTIFICATION_HISTORY,
-  GET_NOTIFICATIONS,
-  NOTIFICATION_HISTORY_LIMIT,
-} from "@/graphql/queries";
+import { MARK_ALL_NOTIFICATIONS_READ } from "@/graphql/mutations";
+import { GET_NOTIFICATIONS } from "@/graphql/queries";
 import { NEW_NOTIFICATION_SUBSCRIPTION } from "@/graphql/subscriptions";
 import { NotificationLists } from "@/components/Notifications/NotificationLists";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/store";
 import { useHasMounted } from "@/hooks/useMediaQuery";
-import type { Notification } from "@/types/notification";
-import { cn } from "@/lib/utils";
+import type {
+  Notification,
+  NotificationFilter,
+  NotificationsInboxProps,
+} from "@/types/notification";
 
-type InboxView = "active" | "history";
+/** The design's filters, and the kinds each one shows. */
+export const NOTIFICATION_FILTERS: {
+  id: NotificationFilter;
+  label: string;
+  kinds?: Notification["notificationType"][];
+}[] = [
+  { id: "all", label: "All" },
+  { id: "votes", label: "Votes", kinds: ["UPVOTED", "DOWNVOTED"] },
+  { id: "comments", label: "Comments", kinds: ["COMMENTED"] },
+  { id: "quotes", label: "Quotes", kinds: ["QUOTED"] },
+  { id: "follows", label: "Follows", kinds: ["FOLLOW"] },
+];
 
-interface NotificationsInboxProps {
-  pageView?: boolean;
-  /** Called after a notification sends the user somewhere (e.g. to close the panel). */
-  onNavigate?: () => void;
-  className?: string;
+const EMPTY_TEXT: Record<NotificationFilter, string> = {
+  all: "No alerts right now.",
+  votes: "No votes on your posts yet.",
+  comments: "No comments on your posts yet.",
+  quotes: "No quotes from your posts yet.",
+  follows: "No new followers yet.",
+};
+
+export function unreadSummary(unread: number): string {
+  if (unread === 0) return "Nothing new since you last checked";
+  return `${unread} new since you last checked`;
 }
 
-const HISTORY_QUERY_OPTIONS = {
-  query: GET_NOTIFICATION_HISTORY,
-  variables: { limit: NOTIFICATION_HISTORY_LIMIT },
-} as const;
-
 /**
- * Active list + Notification History + Clear All (#464).
- * Soft-deleted rows stay queryable via `notificationHistory`.
+ * Notifications in the updated design: the title with the unread count and Mark all
+ * read, the All / Votes / Comments / Quotes / Follows filters, and the rows grouped by
+ * day. The panel and the /notifications page both use it.
  */
 export function NotificationsInbox({
-  pageView = false,
   onNavigate,
-  className,
+  onClose,
+  initialFilter = "all",
+  TitleAs = "h1",
+  DescriptionAs = "p",
 }: NotificationsInboxProps) {
   const hasMounted = useHasMounted();
   const userId = useAppStore(
     (state) => (state.user.data._id || state.user.data.id) as string | undefined
   );
-  const [view, setView] = useState<InboxView>("active");
-  const activeTabRef = useRef<HTMLButtonElement>(null);
+  const [filter, setFilter] = useState<NotificationFilter>(initialFilter);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  const focusActiveTab = (): void => {
-    activeTabRef.current?.focus();
-  };
-
-  const {
-    loading: activeLoading,
-    data: activeData,
-    refetch: refetchActive,
-    error: activeError,
-  } = useQuery<{ notifications?: Notification[] }>(GET_NOTIFICATIONS, {
-    skip: !userId,
-    fetchPolicy: "cache-and-network",
-  });
-
-  const {
-    loading: historyLoading,
-    data: historyData,
-    refetch: refetchHistory,
-    error: historyError,
-  } = useQuery<{ notificationHistory?: Notification[] }>(GET_NOTIFICATION_HISTORY, {
-    skip: !userId || view !== "history",
-    variables: HISTORY_QUERY_OPTIONS.variables,
-    fetchPolicy: "cache-and-network",
-  });
+  const { loading, data, refetch, error, client } = useQuery<{ notifications?: Notification[] }>(
+    GET_NOTIFICATIONS,
+    { skip: !userId, fetchPolicy: "cache-and-network" }
+  );
 
   useSubscription(NEW_NOTIFICATION_SUBSCRIPTION, {
     variables: { userId: userId || "" },
     skip: !userId,
     onData: async () => {
-      await refetchActive();
-      if (view === "history") {
-        await refetchHistory();
-      }
+      await refetch();
     },
   });
 
-  const [clearAll, { loading: clearing }] = useMutation<{ clearAllNotifications: number }>(
-    CLEAR_ALL_NOTIFICATIONS,
-    {
-      refetchQueries: [{ query: GET_NOTIFICATIONS }, HISTORY_QUERY_OPTIONS],
-    }
+  const [markAllRead, { loading: marking }] = useMutation<{ markAllNotificationsRead: number }>(
+    MARK_ALL_NOTIFICATIONS_READ
   );
 
-  const pendingActive =
-    !hasMounted || activeLoading || (Boolean(userId) && !activeData && !activeError);
-  const pendingHistory =
-    !hasMounted ||
-    historyLoading ||
-    (Boolean(userId) && view === "history" && !historyData && !historyError);
+  const notifications = data?.notifications ?? [];
+  const unread = notifications.filter((n) => n.status === "new").length;
+  const pending = !hasMounted || (loading && !data) || (Boolean(userId) && !data && !error);
+  const kinds = NOTIFICATION_FILTERS.find((f) => f.id === filter)?.kinds;
+  const shown = kinds
+    ? notifications.filter((n) => kinds.includes(n.notificationType))
+    : notifications;
 
-  const activeNotifications = activeData?.notifications ?? [];
-  const historyNotifications = historyData?.notificationHistory ?? [];
-  const notifications = view === "active" ? activeNotifications : historyNotifications;
-  const pending = view === "active" ? pendingActive : pendingHistory;
-  const error = view === "active" ? activeError : historyError;
-
-  const handleClearAll = async (): Promise<void> => {
-    if (activeNotifications.length === 0 || clearing) return;
+  const handleMarkAllRead = async (): Promise<void> => {
+    if (unread === 0 || marking) return;
+    const before = notifications;
+    client.writeQuery({
+      query: GET_NOTIFICATIONS,
+      data: {
+        notifications: before.map((n) => (n.status === "new" ? { ...n, status: "read" } : n)),
+      },
+    });
     try {
-      await clearAll();
-      // Clear all unmounts after refetch; focus Active once that commit lands.
-      queueMicrotask(() => {
-        focusActiveTab();
-      });
+      await markAllRead();
     } catch {
-      toast.error("Couldn't clear your notifications. Please try again.");
+      client.writeQuery({ query: GET_NOTIFICATIONS, data: { notifications: before } });
+      toast.error("Couldn't mark your notifications read. Please try again.");
     }
   };
 
-  const handleRetry = (): void => {
-    if (view === "active") {
-      void refetchActive();
-    } else {
-      void refetchHistory();
-    }
+  /** Arrow keys move between filters, as in a tab list. */
+  const onTabKey = (event: React.KeyboardEvent, index: number) => {
+    const last = NOTIFICATION_FILTERS.length - 1;
+    const next =
+      event.key === "ArrowRight"
+        ? (index + 1) % NOTIFICATION_FILTERS.length
+        : event.key === "ArrowLeft"
+          ? (index - 1 + NOTIFICATION_FILTERS.length) % NOTIFICATION_FILTERS.length
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? last
+              : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    const id = NOTIFICATION_FILTERS[next].id;
+    setFilter(id);
+    tabRefs.current[id]?.focus();
   };
+
+  const focusFilters = () => tabRefs.current[filter]?.focus();
 
   return (
-    <div className={cn("flex flex-col gap-3", className)} data-testid="notifications-inbox">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-1">
-          <Button
-            ref={activeTabRef}
+    <div className="qv-notif" data-testid="notifications-inbox">
+      <div className="qv-notif-head">
+        <div className="qv-notif-titlebar">
+          <div className="qv-notif-titles">
+            <TitleAs className="qv-notif-title">Notifications</TitleAs>
+            <DescriptionAs className="qv-notif-sub">{unreadSummary(unread)}</DescriptionAs>
+          </div>
+          <button
             type="button"
-            variant={view === "active" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8"
-            onClick={() => setView("active")}
-            aria-pressed={view === "active"}
+            className="qv-notif-markall"
+            onClick={() => void handleMarkAllRead()}
+            disabled={unread === 0 || marking}
+            data-testid="mark-all-notifications-read"
           >
-            Active
-            {activeNotifications.length > 0 ? ` (${activeNotifications.length})` : ""}
-          </Button>
-          <Button
-            type="button"
-            variant={view === "history" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8"
-            onClick={() => setView("history")}
-            aria-pressed={view === "history"}
-            data-testid="notification-history-tab"
-          >
-            History
-          </Button>
+            Mark all read
+          </button>
+          {onClose && (
+            <button
+              type="button"
+              className="qv-notif-close"
+              onClick={onClose}
+              aria-label="Close notifications"
+            >
+              <X className="size-5" strokeWidth={2.2} aria-hidden="true" />
+            </button>
+          )}
         </div>
-
-        {view === "active" && activeNotifications.length > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8"
-            disabled={clearing}
-            onClick={() => handleClearAll()}
-            data-testid="clear-all-notifications"
-          >
-            Clear all
-          </Button>
-        )}
-      </div>
-
-      {pending ? (
-        <div className="space-y-3" aria-busy="true" data-testid="notifications-loading">
-          <span className="sr-only">Loading notifications</span>
-          {Array.from({ length: pageView ? 5 : 3 }).map((_, index) => (
-            <div key={`skeleton-${index}`} className="flex items-center gap-3 p-3">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-            </div>
+        <div className="qv-seg qv-notif-filters" role="tablist" aria-label="Filter notifications">
+          {NOTIFICATION_FILTERS.map((f, index) => (
+            <button
+              key={f.id}
+              ref={(el) => {
+                tabRefs.current[f.id] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`notifications-tab-${f.id}`}
+              aria-selected={filter === f.id}
+              aria-controls="notifications-tabpanel"
+              tabIndex={filter === f.id ? 0 : -1}
+              onClick={() => setFilter(f.id)}
+              onKeyDown={(e) => onTabKey(e, index)}
+            >
+              {f.label}
+            </button>
           ))}
         </div>
-      ) : error ? (
-        <div
-          role="alert"
-          className="flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 py-8 text-center"
-        >
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              We couldn&apos;t load your notifications.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Check your connection and try again.
-            </p>
+      </div>
+
+      <div
+        id="notifications-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`notifications-tab-${filter}`}
+        className="qv-notif-body"
+      >
+        {pending ? (
+          <div className="qv-notif-list" aria-busy="true" data-testid="notifications-loading">
+            <span className="sr-only">Loading notifications</span>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="qv-nrow qv-nrow-skeleton">
+                <Skeleton className="size-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={handleRetry}>
-            Try again
-          </Button>
-        </div>
-      ) : (
-        <NotificationLists
-          notifications={notifications}
-          pageView={pageView}
-          mode={view}
-          onNavigate={onNavigate}
-          onActiveListEmptied={focusActiveTab}
-          emptyTitle={view === "history" ? "No cleared notifications yet" : "You're all caught up!"}
-          emptyDescription={
-            view === "history" ? "Cleared alerts will show up here." : "No alerts right now."
-          }
-        />
-      )}
+        ) : error ? (
+          <div role="alert" className="qv-notif-empty">
+            <p className="qv-notif-empty-title">We couldn&apos;t load your notifications.</p>
+            <p className="qv-notif-empty-text">Check your connection and try again.</p>
+            <button type="button" className="qv-notif-markall" onClick={() => void refetch()}>
+              Try again
+            </button>
+          </div>
+        ) : (
+          <NotificationLists
+            notifications={shown}
+            onNavigate={onNavigate}
+            onListEmptied={focusFilters}
+            emptyTitle={filter === "all" ? "You're all caught up!" : "Nothing here"}
+            emptyDescription={EMPTY_TEXT[filter]}
+          />
+        )}
+      </div>
     </div>
   );
 }

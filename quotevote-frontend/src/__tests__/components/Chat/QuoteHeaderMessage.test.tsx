@@ -29,19 +29,24 @@ describe("QuoteHeaderMessage", () => {
     url: "/post/qa/on-reading-slowly/post1",
   };
 
-  it("shows the post and links back to it", () => {
-    render(
+  it("shows the post text in quotes and links back to it", () => {
+    const { container } = render(
       <QuoteHeaderMessage
         postDetails={postDetails}
         postCreator={{ id: "u1", username: "alice", name: "Alice Local" }}
       />
     );
 
-    expect(screen.getByText("On reading slowly")).toBeInTheDocument();
-    expect(screen.getByText("Alice Local", { selector: "div" })).toBeInTheDocument();
+    expect(container.querySelector(".qv-original")).toBeInTheDocument();
+    expect(screen.getByText("Original quote")).toBeInTheDocument();
+    expect(screen.getByText("\u201cRead slowly before you vote.\u201d")).toBeInTheDocument();
+    // The card shows the quote, not who posted it.
+    expect(screen.queryByText("Alice Local")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("avatar")).not.toBeInTheDocument();
 
     const link = screen.getByTestId("quote-header-view-post");
     expect(link).toHaveAttribute("href", "/post/qa/on-reading-slowly/post1");
+    expect(link).toHaveTextContent("View post →");
 
     fireEvent.click(link);
     expect(setChatOpen).toHaveBeenCalledWith(false);
@@ -52,7 +57,15 @@ describe("QuoteHeaderMessage", () => {
 
     expect(screen.queryByText("Unknown User")).not.toBeInTheDocument();
     expect(screen.queryByTestId("avatar")).not.toBeInTheDocument();
-    expect(screen.getByText("Original Quote")).toBeInTheDocument();
+    expect(screen.getByText("Original quote")).toBeInTheDocument();
+  });
+
+  it("falls back to the title when the post has no text", () => {
+    render(
+      <QuoteHeaderMessage postDetails={{ ...postDetails, text: null }} postCreator={null} />
+    );
+
+    expect(screen.getByText("On reading slowly")).toBeInTheDocument();
   });
 
   it("has no link when the post has no in-app path", () => {

@@ -285,8 +285,19 @@ export interface MessageRoomPostDetails {
 }
 
 /** A room with what the chat list shows: title, avatar, unread count and its post. */
+/** The newest message of a room, for the chat list's preview line. */
+export interface MessageRoomLastMessage {
+  text: string;
+  userId: string;
+  userName: string | null;
+  created: Date;
+  /** Someone other than the sender has read it (the ✓✓ in the list). */
+  readByOther: boolean;
+}
+
 export interface MessageRoomView extends MessageRoom {
   postDetails: MessageRoomPostDetails | null;
+  lastMessage: MessageRoomLastMessage | null;
 }
 
 /** @deprecated Use Message instead. Alias for backwards compatibility. */

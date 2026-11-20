@@ -60,43 +60,78 @@ describe('TypingIndicator', () => {
     jest.useRealTimers()
   })
 
+  const typingEvent = (
+    userId: string,
+    name: string | null,
+    isTyping = true,
+    username: string | null = null
+  ) => ({
+    data: {
+      typing: {
+        userId,
+        isTyping,
+        timestamp: new Date().toISOString(),
+        user: { name, username },
+      },
+    },
+    error: null,
+    loading: false,
+  })
+
   it('renders nothing when no messageRoomId is provided', () => {
     const { container } = render(<TypingIndicator messageRoomId={null} />)
 
-    // Should render empty div with min-height
-    expect(container.firstChild).toBeInTheDocument()
+    expect(container).toBeEmptyDOMElement()
     expect(screen.queryByText(/typing/i)).not.toBeInTheDocument()
   })
 
   it('renders nothing when no users are typing', () => {
     const { container } = render(<TypingIndicator messageRoomId="room1" />)
 
-    expect(container.firstChild).toBeInTheDocument()
-    expect(screen.queryByText(/typing/i)).not.toBeInTheDocument()
+    expect(container).toBeEmptyDOMElement()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
-  it('displays single user typing message', async () => {
-    // Note: Testing subscriptions with mocks is complex
-    // This test verifies the component structure and display logic
-    // In a real scenario, you would use a subscription mock or integration test
+  it('skips the subscription without a room', () => {
+    render(<TypingIndicator messageRoomId={null} />)
+
+    expect(mockUseSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ skip: true })
+    )
+  })
+
+  it('displays single user typing message', () => {
+    mockUseSubscription.mockReturnValue(typingEvent('user2', 'Alice'))
 
     render(<TypingIndicator messageRoomId="room1" />)
 
-    // Component should render but show nothing initially
-    expect(screen.queryByText(/typing/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Alice is typing…')
+  })
+
+  it('falls back to the username, then Someone, when there is no name', () => {
+    mockUseSubscription.mockReturnValue(typingEvent('user2', null, true, 'alice'))
+    const { unmount } = render(<TypingIndicator messageRoomId="room1" />)
+    expect(screen.getByText('alice is typing…')).toBeInTheDocument()
+    unmount()
+
+    mockUseSubscription.mockReturnValue(typingEvent('user3', null))
+    render(<TypingIndicator messageRoomId="room1" />)
+    expect(screen.getByText('Someone is typing…')).toBeInTheDocument()
   })
 
   it('does not show typing indicator for current user', () => {
-    // Component should filter out current user's typing events
-    render(<TypingIndicator messageRoomId="room1" />)
+    mockUseSubscription.mockReturnValue(typingEvent('user1', 'Current User'))
 
-    // Current user typing should not be displayed
-    expect(screen.queryByText(/typing/i)).not.toBeInTheDocument()
+    const { container } = render(<TypingIndicator messageRoomId="room1" />)
+
+    expect(container).toBeEmptyDOMElement()
   })
 
-  it('cleans up typing users after timeout', async () => {
-    // Component should remove typing users after 10 seconds
+  it('cleans up typing users after timeout', () => {
+    mockUseSubscription.mockReturnValue(typingEvent('user2', 'Alice'))
     render(<TypingIndicator messageRoomId="room1" />)
+    expect(screen.getByText('Alice is typing…')).toBeInTheDocument()
 
     // Advance time by 11 seconds
     act(() => {
@@ -110,7 +145,7 @@ describe('TypingIndicator', () => {
   it('handles subscription errors gracefully', () => {
     // Component should not crash on subscription errors
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
-    
+
     // Mock useSubscription to return an error
     mockUseSubscription.mockReturnValue({
       data: null,
@@ -126,58 +161,46 @@ describe('TypingIndicator', () => {
     consoleErrorSpy.mockRestore()
   })
 
-  it('renders with correct styling classes', () => {
-    // Ensure useSubscription returns the expected structure
-    mockUseSubscription.mockReturnValue({
-      data: null,
-      error: null,
-      loading: false,
-    })
+  it('renders a status region with three animated dots', () => {
+    mockUseSubscription.mockReturnValue(typingEvent('user2', 'Alice'))
 
-    const { container } = render(<TypingIndicator messageRoomId="room1" />)
-
-    // The component should render a div with min-h-6 px-4 pb-1 when no users are typing
-    // The component returns <div className="min-h-6 px-4 pb-1" />
-    // Search for a div that contains all three classes in its className
-    const allDivs = Array.from(container.querySelectorAll('div'))
-    const indicator = allDivs.find(
-      (div) => {
-        const className = div.className || ''
-        return className.includes('min-h-6') && 
-               className.includes('px-4') && 
-               className.includes('pb-1')
-      }
-    )
-    
-    expect(indicator).toBeTruthy()
-    if (indicator) {
-      expect(indicator).toHaveClass('min-h-6', 'px-4', 'pb-1')
-    }
-  })
-
-  it('updates typing users when subscription data changes', async () => {
-    // This would require a more complex mock setup with subscription observables
-    // For now, we verify the component structure supports updates
     render(<TypingIndicator messageRoomId="room1" />)
 
-    // Component should be ready to receive subscription updates
+    const indicator = screen.getByRole('status')
+    expect(indicator).toHaveClass('qv-typing')
+    const dots = indicator.querySelector('.qv-typing-dots')
+    expect(dots).toHaveAttribute('aria-hidden', 'true')
+    expect(dots?.querySelectorAll('span')).toHaveLength(3)
+  })
+
+  it('removes a user when they stop typing', () => {
+    mockUseSubscription.mockReturnValue(typingEvent('user2', 'Alice'))
+    const { rerender } = render(<TypingIndicator messageRoomId="room1" />)
+    expect(screen.getByText('Alice is typing…')).toBeInTheDocument()
+
+    mockUseSubscription.mockReturnValue(typingEvent('user2', 'Alice', false))
+    rerender(<TypingIndicator messageRoomId="room1" />)
+
     expect(screen.queryByText(/typing/i)).not.toBeInTheDocument()
   })
 
   it('handles multiple typing users correctly', () => {
-    // Component should display appropriate message for multiple users
-    render(<TypingIndicator messageRoomId="room1" />)
+    mockUseSubscription.mockReturnValue(typingEvent('user2', 'Alice'))
+    const { rerender } = render(<TypingIndicator messageRoomId="room1" />)
 
-    // Component structure supports multiple users
-    expect(screen.queryByText(/typing/i)).not.toBeInTheDocument()
+    mockUseSubscription.mockReturnValue(typingEvent('user3', 'Bob'))
+    rerender(<TypingIndicator messageRoomId="room1" />)
+
+    expect(screen.getByRole('status')).toHaveTextContent('2 people are typing…')
   })
 
-  it('displays animated dots when users are typing', () => {
-    // Component should show animated dots
-    const { container } = render(<TypingIndicator messageRoomId="room1" />)
+  it('does not count the same user twice', () => {
+    mockUseSubscription.mockReturnValue(typingEvent('user2', 'Alice'))
+    const { rerender } = render(<TypingIndicator messageRoomId="room1" />)
 
-    // Dots are rendered but hidden when no one is typing
-    expect(container.firstChild).toBeInTheDocument()
+    mockUseSubscription.mockReturnValue(typingEvent('user2', 'Alice'))
+    rerender(<TypingIndicator messageRoomId="room1" />)
+
+    expect(screen.getByText('Alice is typing…')).toBeInTheDocument()
   })
 })
-

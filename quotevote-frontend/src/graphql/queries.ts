@@ -14,6 +14,8 @@ export const GET_BUDDY_LIST = gql`
       }
       presence {
         status
+        statusMessage
+        lastSeen
       }
     }
   }
@@ -642,6 +644,13 @@ export const GET_CHAT_ROOMS = gql`
       lastMessageTime
       lastActivity
       unreadMessages
+      lastMessage {
+        text
+        userId
+        userName
+        created
+        readByOther
+      }
       postDetails {
         _id
         title
@@ -884,8 +893,8 @@ export const GET_USER_ACTIVITY = gql`
 /**
  * Get notifications query
  *
- * The deployed API declares `notifications: [Notification]` with no arguments,
- * so callers that need a subset must slice the result client-side.
+ * Unread (`status: new`) and read notifications, newest first (the backend's default 50).
+ * The panel filters them by kind on the client.
  */
 export const GET_NOTIFICATIONS = gql`
   query notifications {
@@ -907,38 +916,6 @@ export const GET_NOTIFICATIONS = gql`
       post {
         _id
         title
-        url
-        deleted
-      }
-    }
-  }
-`
-
-/** Default page size for notification history (#464). */
-export const NOTIFICATION_HISTORY_LIMIT = 50;
-
-/**
- * Cleared notifications for Notification History (#464).
- */
-export const GET_NOTIFICATION_HISTORY = gql`
-  query notificationHistory($limit: Int) {
-    notificationHistory(limit: $limit) {
-      _id
-      userId
-      userIdBy
-      userBy {
-        _id
-        name
-        avatar
-        username
-        contributorBadge
-      }
-      label
-      status
-      created
-      notificationType
-      post {
-        _id
         url
         deleted
       }

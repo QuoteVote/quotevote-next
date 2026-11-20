@@ -99,6 +99,12 @@ export const Mutation = `type Mutation {
   " Remove user notification "
   removeNotification(notificationId: String!): Notification
 
+  " Mark one of the signed-in user's notifications read; it stays listed "
+  markNotificationRead(notificationId: String!): Notification
+
+  " Mark all of the signed-in user's unread notifications read. Returns how many were marked. "
+  markAllNotificationsRead: Int!
+
   " Soft-delete all active notifications for the signed-in user (#464). Returns how many were cleared."
   clearAllNotifications: Int!
 

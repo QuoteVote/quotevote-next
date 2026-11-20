@@ -62,13 +62,13 @@ describe('notificationResolver', () => {
       expect(ctx.prisma.notification.findMany).not.toHaveBeenCalled();
     });
 
-    it('queries new notifications for the user, newest first, default limit 50', async () => {
+    it('queries unread and read notifications for the user, newest first, default limit 50', async () => {
       const ctx = authedContext();
 
       const result = await notificationResolver.Query.notifications(null, {}, ctx);
 
       expect(ctx.prisma.notification.findMany).toHaveBeenCalledWith({
-        where: { userId, status: 'new' },
+        where: { userId, status: { in: ['new', 'read'] } },
         orderBy: { created: 'desc' },
         take: 50,
         select: NOTIFICATION_SELECT,
@@ -346,7 +346,7 @@ describe('notificationResolver', () => {
       const result = await notificationResolver.Query.notificationHistory(null, {}, ctx);
 
       expect(ctx.prisma.notification.findMany).toHaveBeenCalledWith({
-        where: { userId, status: 'deleted' },
+        where: { userId, status: { in: ['deleted'] } },
         orderBy: { created: 'desc' },
         take: 50,
         select: NOTIFICATION_SELECT,
@@ -375,14 +375,14 @@ describe('notificationResolver', () => {
       });
     });
 
-    it('soft-deletes all new notifications for the signed-in user', async () => {
+    it('soft-deletes all listed (unread and read) notifications for the signed-in user', async () => {
       const ctx = authedContext();
       (ctx.prisma.notification.updateMany as jest.Mock).mockResolvedValue({ count: 3 });
 
       const result = await notificationResolver.Mutation.clearAllNotifications(null, {}, ctx);
 
       expect(ctx.prisma.notification.updateMany).toHaveBeenCalledWith({
-        where: { userId, status: 'new' },
+        where: { userId, status: { in: ['new', 'read'] } },
         data: { status: 'deleted' },
       });
       expect(result).toBe(3);
@@ -395,6 +395,107 @@ describe('notificationResolver', () => {
       await expect(
         notificationResolver.Mutation.clearAllNotifications(null, {}, ctx)
       ).resolves.toBe(0);
+    });
+  });
+
+  describe('Mutation.markNotificationRead', () => {
+    const row = {
+      id: notificationId,
+      userId,
+      userIdBy: otherUserId,
+      label: 'A comment',
+      status: 'new',
+      notificationType: 'COMMENTED',
+      postId: null,
+      created: new Date('2026-01-01T00:00:00.000Z'),
+    };
+
+    it('requires authentication and a valid id', async () => {
+      await expect(
+        notificationResolver.Mutation.markNotificationRead(
+          null,
+          { notificationId },
+          mockContext(null)
+        )
+      ).rejects.toMatchObject({ extensions: { code: 'UNAUTHENTICATED' } });
+      await expect(
+        notificationResolver.Mutation.markNotificationRead(
+          null,
+          { notificationId: 'nope' },
+          authedContext()
+        )
+      ).rejects.toMatchObject({ extensions: { code: 'BAD_USER_INPUT' } });
+    });
+
+    it('marks an unread notification read, keeping it listed', async () => {
+      const ctx = authedContext();
+      (ctx.prisma.notification.findUnique as jest.Mock).mockResolvedValue(row);
+      (ctx.prisma.notification.update as jest.Mock).mockResolvedValue({ ...row, status: 'read' });
+
+      const result = await notificationResolver.Mutation.markNotificationRead(
+        null,
+        { notificationId },
+        ctx
+      );
+
+      expect(ctx.prisma.notification.update).toHaveBeenCalledWith({
+        where: { id: notificationId },
+        data: { status: 'read' },
+        select: NOTIFICATION_SELECT,
+      });
+      expect(result.status).toBe('read');
+    });
+
+    it('leaves read and cleared notifications as they are', async () => {
+      for (const status of ['read', 'deleted']) {
+        const ctx = authedContext();
+        (ctx.prisma.notification.findUnique as jest.Mock).mockResolvedValue({ ...row, status });
+        const result = await notificationResolver.Mutation.markNotificationRead(
+          null,
+          { notificationId },
+          ctx
+        );
+        expect(result.status).toBe(status);
+        expect(ctx.prisma.notification.update).not.toHaveBeenCalled();
+      }
+    });
+
+    it("refuses another user's notification and a missing one", async () => {
+      const ctx = authedContext();
+      (ctx.prisma.notification.findUnique as jest.Mock).mockResolvedValue({
+        ...row,
+        userId: otherUserId,
+      });
+      await expect(
+        notificationResolver.Mutation.markNotificationRead(null, { notificationId }, ctx)
+      ).rejects.toMatchObject({ extensions: { code: 'FORBIDDEN' } });
+
+      (ctx.prisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
+      await expect(
+        notificationResolver.Mutation.markNotificationRead(null, { notificationId }, ctx)
+      ).rejects.toMatchObject({ extensions: { code: 'NOT_FOUND' } });
+      expect(ctx.prisma.notification.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Mutation.markAllNotificationsRead', () => {
+    it('requires authentication', async () => {
+      await expect(
+        notificationResolver.Mutation.markAllNotificationsRead(null, {}, mockContext(null))
+      ).rejects.toMatchObject({ extensions: { code: 'UNAUTHENTICATED' } });
+    });
+
+    it("marks only the signed-in user's unread notifications read and returns the count", async () => {
+      const ctx = authedContext();
+      (ctx.prisma.notification.updateMany as jest.Mock).mockResolvedValue({ count: 12 });
+
+      const count = await notificationResolver.Mutation.markAllNotificationsRead(null, {}, ctx);
+
+      expect(ctx.prisma.notification.updateMany).toHaveBeenCalledWith({
+        where: { userId, status: 'new' },
+        data: { status: 'read' },
+      });
+      expect(count).toBe(12);
     });
   });
 

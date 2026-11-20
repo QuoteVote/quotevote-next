@@ -412,6 +412,7 @@ type MessageRoom {
   postId: String
   messages: [Message]
   postDetails: PostDetails
+  lastMessage: LastMessage
   usersData: [User]
   typingIndicators: [TypingIndicator]
   post: Post
@@ -443,6 +444,14 @@ type PostDetails {
   text: String
   userId: ID
   url: String
+}
+
+type LastMessage {
+  text: String
+  userId: String
+  userName: String
+  created: Date
+  readByOther: Boolean
 }
 
 """Response payload for a soft-deleted Post mutation."""
@@ -767,8 +776,9 @@ type Query {
   """ Verify a limited-purpose invite signup token (not a session)"""
   verifyInviteSignupToken(token: String!): JSON
 
-  """ This will query user notifications"""
-  notifications: [Notification]
+  """ The signed-in user's notifications, unread and read, newest first (50 by default, at most 100) 
+  """
+  notifications(limit: Int): [Notification]
 
   """ Cleared notifications for the signed-in user (status deleted), newest first (#464)
   """
@@ -905,6 +915,13 @@ type Mutation {
 
   """ Remove user notification """
   removeNotification(notificationId: String!): Notification
+
+  """ Mark one of the signed-in user's notifications read; it stays listed """
+  markNotificationRead(notificationId: String!): Notification
+
+  """ Mark all of the signed-in user's unread notifications read. Returns how many were marked. 
+  """
+  markAllNotificationsRead: Int!
 
   """ Soft-delete all active notifications for the signed-in user (#464). Returns how many were cleared.
   """
