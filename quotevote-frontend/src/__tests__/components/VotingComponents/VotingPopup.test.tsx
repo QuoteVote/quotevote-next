@@ -216,6 +216,19 @@ describe("VotingPopup", () => {
       ).toBeInTheDocument();
     });
 
+    it("shows the whole passage in the phone sheet, scrolling instead of cutting it off", () => {
+      const long = `${"Night routes would cost less than the overtime. ".repeat(25)}End, really.`;
+      renderPopup({ variant: "sheet", selectedText: { ...selectedText, text: long } });
+      const passage = screen.getByTestId("selection-sheet-passage");
+      expect(passage).toHaveAccessibleName("Selected passage");
+      expect(passage).toHaveTextContent(long.trim());
+      expect(passage.className).toContain("overflow-y-auto");
+      expect(passage.className).toContain("overscroll-contain");
+      expect(passage.innerHTML).not.toContain("line-clamp");
+      expect(screen.getByTestId("highlight-quote-button")).toBeInTheDocument();
+      expect(screen.getByTestId("highlight-vote-mode-button")).toBeInTheDocument();
+    });
+
     it("keeps the passage out of the desktop popover", () => {
       renderPopup();
       expect(screen.queryByText(selectedText.text)).not.toBeInTheDocument();
