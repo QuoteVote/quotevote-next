@@ -137,30 +137,35 @@ describe('MessageItem', () => {
     })
   })
 
-  it('renders own message with correct styling', () => {
+  it('renders own message as a row marked mine', () => {
     render(<MessageItem message={mockOwnMessage} />)
 
     expect(screen.getByText('My message')).toBeInTheDocument()
-    // Own messages should be right-aligned
-    const messageContainer = screen.getByText('My message').closest('div')
-    // The justify-end class is on the direct parent div
-    expect(messageContainer?.closest('.justify-end')).toBeInTheDocument()
+    const row = screen.getByTestId('message-item-msg1')
+    expect(row).toHaveClass('qv-bubble-row')
+    expect(row).toHaveAttribute('data-mine', 'true')
   })
 
-  it('renders other user message with correct styling', () => {
+  it('renders other user message as a row not marked mine', () => {
     render(<MessageItem message={mockOtherMessage} />)
 
     expect(screen.getByText('Other message')).toBeInTheDocument()
-    // Other messages should be left-aligned
-    const messageContainer = screen.getByText('Other message').closest('div')
-    // The justify-start class is on the direct parent div
-    expect(messageContainer?.closest('.justify-start')).toBeInTheDocument()
+    const row = screen.getByTestId('message-item-msg2')
+    expect(row).toHaveClass('qv-bubble-row')
+    expect(row).not.toHaveAttribute('data-mine')
   })
 
-  it('displays sender name for other user messages', () => {
-    render(<MessageItem message={mockOtherMessage} />)
+  it('displays sender name inside the bubble for other user messages in a post chat', () => {
+    render(<MessageItem message={mockOtherMessage} roomType="POST" />)
 
-    expect(screen.getByText('Other User')).toBeInTheDocument()
+    const name = screen.getByText('Other User')
+    expect(name.closest('.qv-bubble')).toBeInTheDocument()
+  })
+
+  it('does not display sender name in a direct message', () => {
+    render(<MessageItem message={mockOtherMessage} roomType="USER" />)
+
+    expect(screen.queryByText('Other User')).not.toBeInTheDocument()
   })
 
   it('does not display sender name for own messages', () => {
@@ -169,18 +174,18 @@ describe('MessageItem', () => {
     expect(screen.queryByText('Current User')).not.toBeInTheDocument()
   })
 
-  it('displays avatar for other user messages on the left', () => {
+  it('displays a 32px avatar for other user messages', () => {
     render(<MessageItem message={mockOtherMessage} />)
 
-    const avatars = screen.getAllByTestId('avatar')
-    expect(avatars.length).toBeGreaterThan(0)
+    const avatar = screen.getByTestId('avatar')
+    expect(avatar).toHaveAttribute('data-size', '32')
   })
 
-  it('displays avatar for own messages on the right', () => {
+  it('does not display an avatar or profile link for own messages', () => {
     render(<MessageItem message={mockOwnMessage} />)
 
-    const avatars = screen.getAllByTestId('avatar')
-    expect(avatars.length).toBeGreaterThan(0)
+    expect(screen.queryByTestId('avatar')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
   })
 
   it('renders profile link on other user avatar', () => {
@@ -190,13 +195,6 @@ describe('MessageItem', () => {
     expect(profileLink).toHaveAttribute('href', '/profile/otheruser')
   })
 
-  it('renders profile link on own avatar', () => {
-    render(<MessageItem message={mockOwnMessage} />)
-
-    const profileLink = screen.getByRole('link', { name: 'Open currentuser profile' })
-    expect(profileLink).toHaveAttribute('href', '/profile/currentuser')
-  })
-
   it('displays read indicator for own messages when read', () => {
     render(<MessageItem message={mockOwnMessage} />)
 
@@ -204,6 +202,7 @@ describe('MessageItem', () => {
     // SVGs don't have img role by default, so we look for the CheckCheck icon by class or testid
     const checkIcon = document.querySelector('.lucide-check-check')
     expect(checkIcon).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Read' })).toBeInTheDocument()
   })
 
   it('displays unread indicator for own messages when not read', () => {
@@ -214,8 +213,17 @@ describe('MessageItem', () => {
 
     render(<MessageItem message={unreadMessage} />)
 
-    // Should show single check (unread)
+    // Should show single check (sent, not read)
     expect(screen.getByText('My message')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Sent' })).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: 'Read' })).not.toBeInTheDocument()
+  })
+
+  it('shows no time or read state on other user messages', () => {
+    render(<MessageItem message={mockOtherMessage} />)
+
+    expect(screen.queryByRole('img', { name: /Read|Sent/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Just now|m ago/i)).not.toBeInTheDocument()
   })
 
   it('displays timestamp', () => {
@@ -308,13 +316,18 @@ describe('MessageItem', () => {
         roomType="POST"
       />
     )
-    expect(screen.getByText('Message deleted by its author')).toHaveClass('italic')
+    expect(
+      screen.getByText('Message deleted by its author').closest('.qv-bubble')
+    ).toHaveAttribute('data-deleted', 'true')
     expect(screen.queryByLabelText('Delete message')).not.toBeInTheDocument()
   })
 
-  it('shows the delete button on keyboard focus, not only on hover', () => {
+  it('keeps the delete button reachable by keyboard, not only on hover', () => {
     render(<MessageItem message={mockOwnMessage} roomType="POST" />)
-    expect(screen.getByLabelText('Delete message')).toHaveClass('focus-visible:opacity-100')
+    const deleteButton = screen.getByRole('button', { name: 'Delete message' })
+    // The wrap reveals it on :focus-within as well as :hover (globals.css).
+    expect(deleteButton.closest('.qv-bubble-wrap')).toBeInTheDocument()
+    expect(deleteButton).not.toHaveAttribute('tabindex', '-1')
   })
 
   it('does not show delete button for other user messages', () => {
@@ -330,7 +343,7 @@ describe('MessageItem', () => {
       user: undefined,
     }
 
-    render(<MessageItem message={messageWithoutUser} />)
+    render(<MessageItem message={messageWithoutUser} roomType="POST" />)
 
     expect(screen.getByText('Other message')).toBeInTheDocument()
     expect(screen.getByText('Other User')).toBeInTheDocument() // Uses userName

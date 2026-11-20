@@ -14,6 +14,8 @@ export const GET_BUDDY_LIST = gql`
       }
       presence {
         status
+        statusMessage
+        lastSeen
       }
     }
   }
@@ -642,6 +644,13 @@ export const GET_CHAT_ROOMS = gql`
       lastMessageTime
       lastActivity
       unreadMessages
+      lastMessage {
+        text
+        userId
+        userName
+        created
+        readByOther
+      }
       postDetails {
         _id
         title

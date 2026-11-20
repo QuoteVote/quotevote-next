@@ -40,7 +40,7 @@ import { CommentType } from './Comment';
 import { ChatRoomType } from './ChatRooms';
 import { TagType } from './Tag';
 import { MessageType, ReadByDetailedEntryType } from './Message';
-import { MessageRoomType, PostDetailsType } from './MessageRoom';
+import { LastMessageType, MessageRoomType, PostDetailsType } from './MessageRoom';
 import { MessageSearchHitType, MessageSearchResultType } from './MessageSearch';
 import { NotificationType } from './Notification';
 import { PostType } from './Post';
@@ -152,6 +152,7 @@ export const domainTypes: readonly GraphQLNamedType[] = [
   MessageSearchHitType,
   MessageSearchResultType,
   PostDetailsType,
+  LastMessageType,
   // Soft-delete payloads
   DeletedPostType,
   DeletedQuoteType,

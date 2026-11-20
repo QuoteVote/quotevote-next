@@ -1,4 +1,5 @@
 import {
+  GraphQLBoolean,
   GraphQLID,
   GraphQLInt,
   GraphQLList,
@@ -47,6 +48,18 @@ interface MessageRoomShape extends Common.MessageRoom {
   postDetails?: PostDetailsShape;
 }
 
+/** The newest message of a room, for the chat list's preview line. */
+export const LastMessageType = new GraphQLObjectType<Common.MessageRoomLastMessage, GraphQLContext>({
+  name: 'LastMessage',
+  fields: {
+    text: { type: GraphQLString },
+    userId: { type: GraphQLString },
+    userName: { type: GraphQLString },
+    created: { type: DateScalar },
+    readByOther: { type: GraphQLBoolean },
+  },
+});
+
 export const MessageRoomType: GraphQLObjectType<MessageRoomShape, GraphQLContext> =
   new GraphQLObjectType<MessageRoomShape, GraphQLContext>({
     name: 'MessageRoom',
@@ -67,6 +80,7 @@ export const MessageRoomType: GraphQLObjectType<MessageRoomShape, GraphQLContext
         resolve: (r) => r.messages ?? Message.find({ messageRoomId: r._id }).sort({ created: 1 }).lean(),
       },
       postDetails: { type: PostDetailsType },
+      lastMessage: { type: LastMessageType },
       usersData: {
         type: new GraphQLList(UserType),
         resolve: (r) => User.find({ _id: { $in: r.users ?? [] } }).lean(),

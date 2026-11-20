@@ -194,24 +194,75 @@ describe('MessageBox', () => {
     expect(screen.getByText('No room selected')).toBeInTheDocument()
   })
 
-  it('renders room header with correct title and avatar', async () => {
-    render(<MessageBox />)
+  it('renders the conversation header with title and presence subtitle, without an avatar', async () => {
+    const { container } = render(<MessageBox />)
 
     await waitFor(() => {
       expect(screen.getByText('Test Chat')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Direct Message')).toBeInTheDocument()
+    const header = container.querySelector('header.qv-convo-head')
+    expect(header).toBeInTheDocument()
+    expect(header).toContainElement(screen.getByText('Test Chat'))
+    // Not in the presence map yet, so the other person reads as offline
+    expect(screen.getByText('Offline · @other-user')).toBeInTheDocument()
+    expect(screen.queryByText('Direct Message')).not.toBeInTheDocument()
+    expect(screen.queryByText('Discussion')).not.toBeInTheDocument()
+    expect(header?.querySelector('img')).toBeNull()
   })
 
-  it('renders avatar as a profile link when DM buddy username is available', async () => {
+  it("shows the other person's live presence from the store", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({
+        user: { data: mockCurrentUser },
+        chat: { selectedRoom: 'room1', buddyList: [], presenceMap: { user2: { status: 'dnd' } } },
+        setSelectedChatRoom: jest.fn(),
+        setChatOpen: jest.fn(),
+      })
+    )
+
     render(<MessageBox />)
 
-    const profileLink = await screen.findByRole('link', { name: 'Open other-user profile' })
-    expect(profileLink).toHaveAttribute('href', '/profile/other-user')
+    expect(await screen.findByText('Do Not Disturb · @other-user')).toBeInTheDocument()
   })
 
-  it('renders avatar as a profile link for staged room username', async () => {
+  it('links a DM to the buddy profile and closes chat on click', async () => {
+    const setChatOpen = jest.fn()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({
+        user: { data: mockCurrentUser },
+        chat: { selectedRoom: 'room1', buddyList: [], presenceMap: {} },
+        setSelectedChatRoom: jest.fn(),
+        setChatOpen,
+      })
+    )
+
+    render(<MessageBox />)
+
+    const profileLink = await screen.findByRole('link', { name: "View other-user's profile" })
+    expect(profileLink).toHaveAttribute('href', '/profile/other-user')
+    expect(profileLink).toHaveTextContent('View profile')
+
+    fireEvent.click(profileLink)
+    expect(setChatOpen).toHaveBeenCalledWith(false)
+  })
+
+  it('has no profile link for a DM when the username is unknown', async () => {
+    mockUseQuery.mockImplementation((query) =>
+      query === GET_BUDDY_LIST
+        ? { data: { getBuddyList: [] }, loading: false }
+        : { data: { messageRooms: [mockRoom] }, loading: false, refetch: jest.fn() }
+    )
+
+    render(<MessageBox />)
+
+    expect(await screen.findByText('Offline')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /View .* profile/ })).not.toBeInTheDocument()
+  })
+
+  it('links to the profile for a staged room username', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
@@ -238,11 +289,11 @@ describe('MessageBox', () => {
 
     render(<MessageBox />)
 
-    const profileLink = await screen.findByRole('link', { name: 'Open staged user profile' })
+    const profileLink = await screen.findByRole('link', { name: "View staged user's profile" })
     expect(profileLink).toHaveAttribute('href', '/profile/staged%20user')
   })
 
-  it('does not render avatar as profile link for non-user rooms', async () => {
+  it('shows a discussion subtitle and no profile link for non-user rooms', async () => {
     const groupRoom: ChatRoom = {
       _id: 'group-room-1',
       title: 'Group Chat',
@@ -257,7 +308,8 @@ describe('MessageBox', () => {
       expect(screen.getByText('Group Chat')).toBeInTheDocument()
     })
 
-    expect(screen.queryByRole('link', { name: /Open .* profile/ })).not.toBeInTheDocument()
+    expect(screen.getByText('3 people · discussion')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /View .* profile/ })).not.toBeInTheDocument()
   })
 
   it('renders back button and calls setSelectedChatRoom when clicked', async () => {
@@ -381,6 +433,7 @@ describe('MessageBox', () => {
     const link = await screen.findByTestId('discussion-view-post')
     expect(link).toHaveAttribute('href', '/post/qa/a-post-title/post1')
     expect(link).toHaveAccessibleName('View post: A post title')
+    expect(link).toHaveTextContent('View post')
 
     fireEvent.click(link)
     expect(setChatOpen).toHaveBeenCalledWith(false)
@@ -403,6 +456,7 @@ describe('MessageBox', () => {
     render(<MessageBox roomOverride={offSiteRoom} />)
     await screen.findByText('Off-site')
     expect(screen.queryByTestId('discussion-view-post')).not.toBeInTheDocument()
+    expect(screen.getByText('1 person · discussion')).toBeInTheDocument()
   })
 
   it('calls block for the other user when not blocked', async () => {

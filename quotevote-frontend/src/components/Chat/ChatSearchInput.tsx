@@ -48,14 +48,14 @@ const ChatSearchInput: FC<ChatSearchInputProps> = ({
       <form
         role="search"
         onSubmit={handleSubmit}
-        className="flex min-h-10 items-center rounded-xl border border-[#8a8a93] bg-background px-2.5 text-sm shadow-sm transition-colors focus-within:border-[#2f7a4c] focus-within:ring-2 focus-within:ring-[#52b274]/40 dark:border-[#6e7681] dark:focus-within:border-[#7fdc9c]"
+        className="qv-msg-search"
       >
-        <Search className="mr-1.5 h-4 w-4 flex-shrink-0 text-muted-foreground" aria-hidden="true" />
+        <Search className="size-4 flex-shrink-0" aria-hidden="true" />
 
         <Input
           ref={inputRef}
           type="search"
-          className="h-9 flex-1 border-0 bg-transparent px-1 py-0 text-base shadow-none focus-visible:ring-0 md:text-sm dark:bg-transparent [&::-webkit-search-cancel-button]:hidden"
+          className="qv-msg-search-input"
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
