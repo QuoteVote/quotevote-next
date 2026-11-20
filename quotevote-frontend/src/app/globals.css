@@ -3938,6 +3938,12 @@ p { line-height: 1.625; }
   padding: 18px 18px 18px;
 }
 .qv-compose-sub { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--auth-muted); }
+/* Once the fields scroll, the top of the column fades out instead of cutting a field off
+   under the heading. */
+.qv-compose-body[data-scrolled] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 18px);
+}
 
 @media (min-width: 640px) {
   .qv-compose-main { padding: 36px 40px; gap: 20px; }
@@ -4015,9 +4021,7 @@ p { line-height: 1.625; }
 }
 .neo-brutalism .qv-compose-chip { font-weight: 800; }
 .qv-compose-chip-in { height: 26px; }
-.qv-compose-placeholder { color: var(--auth-muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 639px) {
-  .qv-compose-placeholder { font-size: 14px; }
 }
 
 /* Post content: Newsreader 18px over six rows on desktop, the body font on phones */
@@ -4028,8 +4032,13 @@ p { line-height: 1.625; }
   resize: none;
   font-size: 15.5px;
 }
+.qv-compose .qv-compose-text { font-family: var(--font-quote), Georgia, serif; font-size: 17px; }
+/* Phones: 16px fields, so iOS Safari doesn't zoom the page when one is focused. */
+@media (max-width: 639px) {
+  .qv-compose .qv-auth-input { font-size: 16px; }
+}
 @media (min-width: 640px) {
-  .qv-compose .qv-compose-text { font-family: var(--font-quote), Georgia, serif; font-size: 18px; }
+  .qv-compose .qv-compose-text { font-size: 18px; }
 }
 .qv-compose-alert {
   display: flex;
