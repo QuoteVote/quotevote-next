@@ -84,8 +84,8 @@ type Query {
   " Verify a limited-purpose invite signup token (not a session)"
   verifyInviteSignupToken(token: String!): JSON
   
-  " This will query user notifications"
-  notifications: [Notification]
+  " The signed-in user's notifications, unread and read, newest first (50 by default, at most 100) "
+  notifications(limit: Int): [Notification]
 
   " Cleared notifications for the signed-in user (status deleted), newest first (#464)"
   notificationHistory(limit: Int): [Notification]

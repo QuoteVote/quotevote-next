@@ -30,14 +30,17 @@ function clampNotificationLimit(limit?: number | null): number {
   return Math.min(Math.max(requested, 1), MAX_NOTIFICATION_LIMIT);
 }
 
+/** `new` is unread; `read` stays listed after it's opened or after Mark all read. */
+type NotificationStatus = 'new' | 'read' | 'deleted';
+
 async function listNotificationsForStatus(
   context: GraphQLContext,
   userId: string,
-  status: 'new' | 'deleted',
+  statuses: NotificationStatus[],
   limit?: number | null
 ): Promise<Common.NotificationWithRelations[]> {
   const notifications = await context.prisma.notification.findMany({
-    where: { userId, status },
+    where: { userId, status: { in: statuses } },
     orderBy: { created: 'desc' },
     take: clampNotificationLimit(limit),
     select: NOTIFICATION_SELECT,
@@ -49,9 +52,8 @@ async function listNotificationsForStatus(
 export const notificationResolver = {
   Query: {
     /**
-     * Returns unread notifications for the authenticated user.
-     * Matches legacy getNotifications behavior (status: 'new', newest first),
-     * with an optional limit to avoid unbounded reads.
+     * The signed-in user's notifications, unread (`new`) and read, newest first, with an
+     * optional limit (50 by default, at most 100). Cleared ones are in the history.
      */
     notifications: async (
       _parent: unknown,
@@ -59,7 +61,7 @@ export const notificationResolver = {
       context: GraphQLContext
     ): Promise<Common.NotificationWithRelations[]> => {
       const userId = requireUserId(context);
-      return listNotificationsForStatus(context, userId, 'new', args.limit);
+      return listNotificationsForStatus(context, userId, ['new', 'read'], args.limit);
     },
 
     /**
@@ -71,7 +73,7 @@ export const notificationResolver = {
       context: GraphQLContext
     ): Promise<Common.NotificationWithRelations[]> => {
       const userId = requireUserId(context);
-      return listNotificationsForStatus(context, userId, 'deleted', args.limit);
+      return listNotificationsForStatus(context, userId, ['deleted'], args.limit);
     },
   },
   Mutation: {
@@ -122,7 +124,67 @@ export const notificationResolver = {
     },
 
     /**
-     * Soft-deletes every active (`new`) notification for the signed-in user (#464).
+     * Marks one notification read (`new` → `read`); it stays listed. Only the recipient
+     * may mark their own. A read or cleared notification is returned unchanged.
+     */
+    markNotificationRead: async (
+      _parent: unknown,
+      args: { notificationId: string },
+      context: GraphQLContext
+    ): Promise<Common.Notification> => {
+      const userId = requireUserId(context);
+
+      if (!args.notificationId || !isObjectId(args.notificationId)) {
+        throw new GraphQLError('Invalid notificationId', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      const existing = await context.prisma.notification.findUnique({
+        where: { id: args.notificationId },
+        select: NOTIFICATION_SELECT,
+      });
+      if (!existing) {
+        throw new GraphQLError('Notification not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+      if (existing.userId !== userId) {
+        throw new GraphQLError('Not authorized to update this notification', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+      if (existing.status !== 'new') {
+        return toNotificationEntity(existing);
+      }
+
+      const updated = await context.prisma.notification.update({
+        where: { id: args.notificationId },
+        data: { status: 'read' },
+        select: NOTIFICATION_SELECT,
+      });
+      return toNotificationEntity(updated);
+    },
+
+    /**
+     * Marks every unread notification of the signed-in user read. They stay listed.
+     * Returns how many were marked.
+     */
+    markAllNotificationsRead: async (
+      _parent: unknown,
+      _args: unknown,
+      context: GraphQLContext
+    ): Promise<number> => {
+      const userId = requireUserId(context);
+      const result = await context.prisma.notification.updateMany({
+        where: { userId, status: 'new' },
+        data: { status: 'read' },
+      });
+      return result.count;
+    },
+
+    /**
+     * Soft-deletes every listed (unread or read) notification for the signed-in user (#464).
      * Returns how many rows were updated.
      */
     clearAllNotifications: async (
@@ -133,7 +195,7 @@ export const notificationResolver = {
       const userId = requireUserId(context);
 
       const result = await context.prisma.notification.updateMany({
-        where: { userId, status: 'new' },
+        where: { userId, status: { in: ['new', 'read'] } },
         data: { status: 'deleted' },
       });
 

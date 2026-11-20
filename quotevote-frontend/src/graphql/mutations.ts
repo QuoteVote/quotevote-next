@@ -531,11 +531,23 @@ export const DELETE_NOTIFICATION = gql`
 `
 
 /**
- * Soft-delete every active notification for the signed-in user (#464).
+ * Mark one notification read; it stays listed.
  */
-export const CLEAR_ALL_NOTIFICATIONS = gql`
-  mutation clearAllNotifications {
-    clearAllNotifications
+export const MARK_NOTIFICATION_READ = gql`
+  mutation markNotificationRead($notificationId: String!) {
+    markNotificationRead(notificationId: $notificationId) {
+      _id
+      status
+    }
+  }
+`
+
+/**
+ * Mark every unread notification of the signed-in user read. Returns how many.
+ */
+export const MARK_ALL_NOTIFICATIONS_READ = gql`
+  mutation markAllNotificationsRead {
+    markAllNotificationsRead
   }
 `
 

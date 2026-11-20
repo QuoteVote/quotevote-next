@@ -75,7 +75,6 @@ export function Notification({
         {!loading && (
           <NotificationLists
             notifications={notifications}
-            pageView={pageView}
             onNavigate={onNavigate}
           />
         )}
