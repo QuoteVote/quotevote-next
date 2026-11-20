@@ -882,6 +882,26 @@ describe('postsResolver', () => {
       );
     });
 
+    it('refuses a title over 120 characters and content over 2,000, creating nothing', async () => {
+      const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
+
+      await expect(
+        postsResolver.Mutation.addPost(
+          null,
+          { post: { userId, groupId: tagId, title: 'T'.repeat(121), text: 'Body text' } },
+          ctx
+        )
+      ).rejects.toThrow('Title can be at most 120 characters');
+      await expect(
+        postsResolver.Mutation.addPost(
+          null,
+          { post: { userId, groupId: tagId, title: 'Hello', text: 'x'.repeat(2001) } },
+          ctx
+        )
+      ).rejects.toThrow('Post content can be at most 2,000 characters');
+      expect(ctx.prisma.post.create).not.toHaveBeenCalled();
+    });
+
     it('rejects creating a post as another user', async () => {
       const ctx = mockContext({ _id: userId } as NonNullable<GraphQLContext['user']>);
 

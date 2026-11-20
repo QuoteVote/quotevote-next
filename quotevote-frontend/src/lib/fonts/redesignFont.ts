@@ -1,4 +1,4 @@
-import { Montserrat, Plus_Jakarta_Sans } from "next/font/google";
+import { Montserrat, Newsreader, Plus_Jakarta_Sans } from "next/font/google";
 
 /** Body font of the approved redesign (app shell and redesigned pages). */
 export const redesignFont = Plus_Jakarta_Sans({
@@ -25,5 +25,13 @@ export const redesignItalicFont = Plus_Jakarta_Sans({
   weight: ["500"],
   style: ["italic"],
   variable: "--font-redesign-italic",
+  display: "swap",
+});
+
+/** The quote text the composer's post content field is written in (Create quote). */
+export const quoteFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["500"],
+  variable: "--font-quote",
   display: "swap",
 });

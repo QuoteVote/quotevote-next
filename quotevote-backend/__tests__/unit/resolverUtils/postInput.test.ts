@@ -1,5 +1,6 @@
 import {
   ATTRIBUTION_MAX_LENGTH,
+  POST_TEXT_MAX_LENGTH,
   containsUrl,
   sanitizeUrl,
   validateAddPostContent,
@@ -29,6 +30,14 @@ describe('containsUrl', () => {
 });
 
 describe('validateAddPostContent', () => {
+  it('accepts content at the 2,000 character limit and refuses one more', () => {
+    const atLimit = 'x'.repeat(POST_TEXT_MAX_LENGTH);
+    expect(validateAddPostContent({ text: atLimit }).text).toBe(atLimit);
+    expect(() => validateAddPostContent({ text: `${atLimit}x` })).toThrow(
+      'Post content can be at most 2,000 characters'
+    );
+  });
+
   it('returns trimmed text and a sanitized citation', () => {
     expect(
       validateAddPostContent({

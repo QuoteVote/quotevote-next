@@ -9,7 +9,7 @@ import type { GraphQLContext, PostDetail, PostQueryArgs } from '~/types/graphql'
 import { attachPostDetail, attachPostRelations, updateTrending } from './utils/posts';
 import { addUserToPostRoom } from './utils/messages';
 import { logActivity } from './utils/activities';
-import { validateAddPostContent } from './utils/postInput';
+import { POST_TITLE_MAX_LENGTH, validateAddPostContent } from './utils/postInput';
 import { logger } from '~/data/utils/logger';
 import { slugify } from '~/data/utils/urlSlug';
 import type * as Common from '~/types/common';
@@ -328,8 +328,13 @@ export const postsResolver = {
         });
       }
 
-      // Legacy addPost checks: body links, citation URL, attribution length.
+      // addPost checks: title and content length, body links, citation URL, attribution length.
       const title = post.title.trim();
+      if (title.length > POST_TITLE_MAX_LENGTH) {
+        throw new GraphQLError(`Title can be at most ${POST_TITLE_MAX_LENGTH} characters`, {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
       const { text, citationUrl, attribution } = validateAddPostContent({
         text: post.text,
         citationUrl: post.citationUrl,

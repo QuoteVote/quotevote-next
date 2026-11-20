@@ -3721,3 +3721,511 @@ p { line-height: 1.625; }
 .qv-settings-nav[aria-current="true"] svg { color: #0f7d56; }
 .qv-settings-nav:focus-visible { outline: 2px solid var(--auth-focus-line); outline-offset: 2px; }
 .neo-brutalism .qv-settings-nav { border-radius: 4px; }
+
+/* ============================================================ */
+/* Create quote (redesign): the composer dialog, in all four      */
+/* themes. Desktop is the design's 1120×880 two-column dialog;    */
+/* phones get the full-screen composer.                           */
+/* ============================================================ */
+
+:root {
+  /* Interaction colours of the redesign (qv.css), shared by the redesigned pages. */
+  --l-post: #56b3ff;
+  --l-comment: #fdd835;
+  --l-up: #52b274;
+  --l-down: #ff6060;
+  --l-like: #f16c99;
+  --l-quote: #e36dfa;
+}
+.neo-brutalism {
+  --l-post: #00afff;
+  --l-comment: #ffe533;
+  --l-up: #20c45f;
+  --l-down: #ff646f;
+  --l-quote: #b37bff;
+}
+
+.qv-compose {
+  --cq-ground: #f6f5f1;
+  --cq-surface: #ffffff;
+  --cq-line: #e4e2da;
+  --cq-rule: #efede6;
+  --cq-preview: linear-gradient(180deg, #efeee8, #f6f5f1);
+  --cq-amber: #8a5a10;
+  --cq-check: #0e8a5a;
+  --cq-required: #c2362f;
+  --cq-body: #2a3530;
+  --cq-source: #56615b;
+  --cq-link: #2457e6;
+  --cq-chip-bg: #e6f6ee;
+  --cq-chip-ink: #0a6b46;
+  --cq-chip-border: 0;
+  --cq-hover: #eef2f7;
+  --cq-panel-line: #e4e8f0;
+  --cq-panel-radius: 18px;
+  --cq-panel-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -18px rgba(15, 23, 42, 0.18);
+  --cq-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.55);
+  --cq-radius: 24px;
+  --cq-details-radius: 14px;
+  --cq-field-shadow: none;
+  --cq-alert-bg: #fdecec;
+  --cq-alert-line: #f3c9c9;
+}
+.dark .qv-compose,
+.qv-compose.dark {
+  --cq-ground: #0b1120;
+  --cq-surface: #0d1526;
+  --cq-line: #24304a;
+  --cq-rule: #1b2640;
+  --cq-preview: linear-gradient(180deg, #111a2e, #0b1120);
+  --cq-amber: #e7b453;
+  --cq-check: #3fbf87;
+  --cq-required: #ff7a7a;
+  --cq-body: #c6d0de;
+  --cq-source: #94a3b8;
+  --cq-link: #8cc8ff;
+  --cq-chip-bg: #12382a;
+  --cq-chip-ink: #7fdcb0;
+  --cq-hover: #1b2640;
+  --cq-panel-line: #1b2640;
+  --cq-panel-shadow: none;
+  --cq-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.8);
+  --cq-alert-bg: #3a1a1e;
+  --cq-alert-line: #6b2a31;
+}
+.neo-brutalism .qv-compose {
+  --cq-ground: #fcf9ea;
+  --cq-line: #070b14;
+  --cq-rule: #070b14;
+  --cq-chip-bg: #9af5c5;
+  --cq-chip-ink: #070b14;
+  --cq-chip-border: 2px solid #070b14;
+  --cq-hover: #ffe533;
+  --cq-panel-line: #070b14;
+  --cq-panel-radius: 4px;
+  --cq-panel-shadow: 5px 5px 0 #070b14;
+  --cq-shadow: 5px 5px 0 #070b14;
+  --cq-radius: 4px;
+  --cq-details-radius: 4px;
+  --cq-field-shadow: 2px 2px 0 #070b14;
+  --auth-border-w: 2.5px;
+  --auth-focus-line: #070b14;
+  --auth-focus-ring: 3px 3px 0 #20c45f;
+  --cq-alert-line: #070b14;
+}
+.neo-brutalism.dark .qv-compose,
+.dark.neo-brutalism .qv-compose {
+  --cq-ground: #0b1120;
+  --cq-line: #f2f7f3;
+  --cq-rule: #f2f7f3;
+  --cq-chip-bg: #12382a;
+  --cq-chip-ink: #f2f7f3;
+  --cq-chip-border: 2px solid #f2f7f3;
+  --cq-hover: #1b2640;
+  --cq-panel-line: #f2f7f3;
+  --cq-panel-shadow: 5px 5px 0 #f2f7f3;
+  --cq-shadow: 5px 5px 0 #f2f7f3;
+  --cq-field-shadow: 2px 2px 0 #f2f7f3;
+  --auth-focus-line: #f2f7f3;
+  --auth-focus-ring: 3px 3px 0 #20c45f;
+  --cq-alert-line: #f2f7f3;
+}
+
+/* Dialog: full screen on phones, centred 1120×880 from 640px up */
+.qv-compose[data-slot="dialog-content"] {
+  position: fixed;
+  inset: 0;
+  transform: none;
+  translate: none;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--cq-surface);
+  box-shadow: none;
+  color: var(--auth-ink);
+}
+@media (min-width: 640px) {
+  .qv-compose[data-slot="dialog-content"] {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(720px, calc(100vw - 48px));
+    height: min(880px, calc(100dvh - 48px));
+    border-radius: var(--cq-radius);
+    background: var(--cq-ground);
+    box-shadow: var(--cq-shadow);
+  }
+}
+@media (min-width: 1024px) {
+  .qv-compose[data-slot="dialog-content"] { width: min(1120px, calc(100vw - 48px)); }
+}
+.neo-brutalism .qv-compose[data-slot="dialog-content"] {
+  border: 0;
+  box-shadow: none;
+}
+@media (min-width: 640px) {
+  .neo-brutalism .qv-compose[data-slot="dialog-content"] {
+    border-radius: var(--cq-radius);
+    box-shadow: var(--cq-shadow);
+  }
+}
+.qv-compose-scrim[data-slot="dialog-overlay"] {
+  background: rgba(15, 23, 42, 0.36);
+  backdrop-filter: blur(3px);
+}
+.neo-brutalism .qv-compose-scrim[data-slot="dialog-overlay"] {
+  background-color: rgba(7, 11, 20, 0.5) !important;
+  backdrop-filter: none !important;
+}
+
+.qv-compose-form { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+@media (min-width: 1024px) {
+  .qv-compose-form { flex-direction: row; }
+}
+.qv-compose-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--cq-surface);
+}
+
+/* Header: a 60px bar with the close button first on phones, the large title from 640px */
+.qv-compose-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 60px;
+  flex-shrink: 0;
+  padding: 0 8px 0 4px;
+  border-bottom: var(--auth-border-w) solid var(--shell-line, #e4e8f0);
+}
+.qv-compose-title { order: 2; margin: 0 0 0 4px; font-size: 16px; font-weight: 700; color: var(--auth-ink); }
+.qv-compose-close {
+  order: 1;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--auth-ink-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.qv-compose-close:hover { background: var(--cq-hover); }
+.qv-compose-close:focus-visible { outline: none; box-shadow: var(--auth-btn-focus); }
+.neo-brutalism .qv-compose-close { border-radius: 4px; }
+
+.qv-compose-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 18px 18px;
+}
+.qv-compose-sub { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--auth-muted); }
+
+@media (min-width: 640px) {
+  .qv-compose-main { padding: 36px 40px; gap: 20px; }
+  .qv-compose-head {
+    position: relative;
+    z-index: 1;
+    height: 37px;
+    margin-bottom: -14px;
+    padding: 0;
+    border: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .qv-compose-title {
+    order: 1;
+    margin: 0;
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+  }
+  .qv-compose-close { order: 2; }
+  /* The fields scroll inside the column; the 4px inset keeps focus rings visible. */
+  .qv-compose-body { gap: 20px; margin: -4px; padding: 4px; }
+  .qv-compose-sub { margin: 0; font-size: 15px; font-weight: 400; }
+}
+.neo-brutalism .qv-compose-title { font-weight: 900; letter-spacing: -0.02em; }
+
+.qv-compose-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.qv-compose-required { margin-left: 3px; color: var(--cq-required); }
+.qv-compose-count { font-size: 12.5px; color: var(--auth-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qv-compose-count[data-warn] { color: var(--cq-amber); font-weight: 800; }
+.qv-compose-count[data-over] { color: var(--auth-danger); font-weight: 800; }
+@media (min-width: 640px) {
+  .qv-compose-slash { padding: 0 0.28em; }
+  .qv-compose-count[data-warn],
+  .qv-compose-count[data-over] { font-weight: 700; }
+}
+.qv-compose-hint { font-weight: 600; }
+@media (min-width: 640px) {
+  .qv-compose-hint { font-weight: 400; }
+}
+.qv-compose .qv-auth-input { box-shadow: var(--cq-field-shadow); }
+.qv-compose .qv-auth-input:focus,
+.qv-compose .qv-auth-input:focus-visible { box-shadow: var(--auth-focus-ring); }
+.qv-compose .qv-auth-input[aria-invalid="true"] { box-shadow: var(--auth-error-ring); }
+
+/* Tag: an input-looking trigger with the chosen tag as a chip inside */
+.qv-compose-tag {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  text-align: left;
+  font-weight: 400;
+  cursor: pointer;
+}
+.qv-compose-tag:hover { background: var(--auth-input-bg); }
+.qv-compose-tag:focus { box-shadow: var(--cq-field-shadow); border-color: var(--auth-input-line); }
+.qv-compose-tag:focus-visible { border-color: var(--auth-focus-line); box-shadow: var(--auth-focus-ring); }
+.qv-compose-tag > span:first-child { color: var(--auth-muted); }
+.qv-compose-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: var(--cq-chip-border);
+  background: var(--cq-chip-bg);
+  color: var(--cq-chip-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.neo-brutalism .qv-compose-chip { font-weight: 800; }
+.qv-compose-chip-in { height: 26px; }
+.qv-compose-placeholder { color: var(--auth-muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 639px) {
+  .qv-compose-placeholder { font-size: 14px; }
+}
+
+/* Post content: Newsreader 18px over six rows on desktop, the body font on phones */
+.qv-compose .qv-compose-text {
+  height: auto;
+  padding: 12px 14px;
+  line-height: 1.55;
+  resize: none;
+  font-size: 15.5px;
+}
+@media (min-width: 640px) {
+  .qv-compose .qv-compose-text { font-family: var(--font-quote), Georgia, serif; font-size: 18px; }
+}
+.qv-compose-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: var(--auth-border-w) solid var(--cq-alert-line);
+  background: var(--cq-alert-bg);
+  color: var(--auth-danger);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.qv-compose-alert p { margin: 0; }
+.neo-brutalism .qv-compose-alert { border-radius: 4px; }
+.qv-compose-status { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; font-weight: 600; color: var(--cq-check); }
+
+/* Add details: open by default */
+.qv-compose-details {
+  flex-shrink: 0;
+  border: var(--auth-border-w) solid var(--cq-line);
+  border-radius: var(--cq-details-radius);
+  padding: 2px 14px 14px;
+}
+.qv-compose-details summary {
+  display: flex;
+  align-items: center;
+  height: 46px;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.qv-compose-details summary::-webkit-details-marker { display: none; }
+.qv-compose-details summary:focus-visible { outline: 2px solid var(--auth-focus-line); outline-offset: 2px; }
+.qv-compose-optional { margin-left: 6px; font-weight: 600; color: var(--auth-muted); }
+.qv-compose-details-grid { display: flex; flex-direction: column; gap: 12px; }
+@media (min-width: 640px) {
+  .qv-compose-details { padding: 4px 16px 16px; }
+  .qv-compose-details summary { height: 44px; font-weight: 700; }
+  .qv-compose-optional { font-weight: 500; }
+  .qv-compose-details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+}
+.qv-compose-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: var(--auth-radius);
+  border: var(--auth-border-w) solid var(--auth-input-line);
+  background: var(--auth-input-bg);
+  box-shadow: var(--cq-field-shadow);
+  box-sizing: border-box;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.qv-compose-field:focus-within { border-color: var(--auth-focus-line); box-shadow: var(--auth-focus-ring); }
+.qv-compose-field[data-invalid] { border-color: var(--auth-danger); box-shadow: var(--auth-error-ring); }
+.qv-compose-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--auth-ink);
+  font: 15px var(--font-redesign), system-ui, sans-serif;
+}
+.qv-compose-field input::placeholder { color: var(--auth-muted); opacity: 0.8; }
+.qv-compose-field-icon { width: 17px; height: 17px; flex-shrink: 0; color: var(--auth-muted); }
+.qv-compose-check { width: 18px; height: 18px; flex-shrink: 0; color: var(--cq-check); }
+
+/* Footer: Draft saved, then Cancel (desktop) and Post */
+.qv-compose-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 12px 18px max(28px, env(safe-area-inset-bottom));
+  border-top: var(--auth-border-w) solid var(--shell-line, #e4e8f0);
+  background: var(--cq-surface);
+}
+.qv-compose-saved { flex: 1; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.qv-compose-actions { display: flex; gap: 10px; }
+.qv-compose-cancel { display: none; }
+@media (min-width: 640px) {
+  .qv-compose-foot { padding: 0; border: 0; justify-content: space-between; }
+  .qv-compose-saved { flex: none; font-weight: 400; }
+  .qv-compose-cancel { display: inline-flex; }
+  .qv-compose-post { padding: 0 28px; }
+}
+.neo-brutalism .qv-compose-head,
+.neo-brutalism .qv-compose-foot { border-color: var(--cq-line); }
+.neo-brutalism .qv-compose .qv-auth-btn { font-weight: 800; }
+
+/* Preview (desktop, from 1024px) */
+.qv-compose-preview { display: none; }
+@media (min-width: 1024px) {
+  .qv-compose-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 484px;
+    flex-shrink: 0;
+    padding: 36px 32px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: var(--cq-preview);
+  }
+}
+.qv-compose-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--auth-muted); }
+.qv-compose-card { display: flex; flex-direction: column; gap: 10px; padding: 20px; flex-shrink: 0; }
+.neo-brutalism .qv-compose-card {
+  border: 2.5px solid var(--cq-line);
+  border-radius: 4px;
+  box-shadow: 5px 5px 0 var(--nb-green, #20c45f);
+}
+.qv-compose-card-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  color: var(--auth-ink);
+  overflow-wrap: anywhere;
+}
+.neo-brutalism .qv-compose-card-title { font-weight: 900; letter-spacing: -0.02em; }
+.qv-compose-card-title[data-empty],
+.qv-compose-card-text[data-empty] { color: var(--auth-muted); }
+.qv-compose-card-source { margin: 0; font-style: italic; color: var(--cq-source); overflow-wrap: anywhere; }
+.qv-compose-card-source a {
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cq-link);
+  text-decoration: none;
+  border-radius: 4px;
+}
+.qv-compose-card-source a:hover { text-decoration: underline; }
+.qv-compose-card-source a:focus-visible { outline: 2px solid var(--auth-focus-line); outline-offset: 2px; }
+.qv-compose-card-text { margin: 0; font-size: 14px; line-height: 1.6; color: var(--cq-body); overflow-wrap: anywhere; }
+.qv-compose-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--cq-rule);
+  font-size: 13px;
+  color: var(--auth-ink);
+}
+.neo-brutalism .qv-compose-card-foot { border-top-width: 2px; }
+.qv-compose-muted { color: var(--auth-muted); }
+.qv-compose-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  flex-shrink: 0;
+  border: var(--auth-border-w) solid var(--cq-panel-line);
+  border-radius: var(--cq-panel-radius);
+  background: var(--cq-surface);
+  box-shadow: var(--cq-panel-shadow);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--cq-body);
+}
+.qv-compose-panel b { font-size: 14px; color: var(--auth-ink); }
+.qv-compose-after { display: flex; gap: 10px; }
+.qv-compose-dot {
+  --light: var(--l-post);
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--light);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--light) 22%, transparent);
+}
+.qv-compose-dot[data-light="up"] { --light: var(--l-up); }
+.qv-compose-dot[data-light="quote"] { --light: var(--l-quote); }
+.qv-compose-dot[data-light="comment"] { --light: var(--l-comment); }
+/* The tag trigger is a shadcn button: keep it looking like the composer's inputs in NB. */
+.neo-brutalism .qv-compose [data-slot="button"].qv-compose-tag,
+.neo-brutalism .qv-compose [data-slot="button"].qv-compose-tag:hover,
+.neo-brutalism .qv-compose [data-slot="button"].qv-compose-tag:active {
+  border: var(--auth-border-w) solid var(--auth-input-line);
+  border-radius: var(--auth-radius);
+  background-color: var(--auth-input-bg);
+  color: var(--auth-ink);
+  font-weight: 400;
+  letter-spacing: normal;
+  transform: none;
+  box-shadow: var(--cq-field-shadow);
+}
+.neo-brutalism .qv-compose [data-slot="button"].qv-compose-tag:focus-visible {
+  border-color: var(--auth-focus-line);
+  box-shadow: var(--auth-focus-ring);
+}

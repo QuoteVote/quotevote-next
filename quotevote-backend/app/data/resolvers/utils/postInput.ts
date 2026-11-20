@@ -3,6 +3,10 @@ import { GraphQLError } from 'graphql';
 /** Matches frontend `ATTRIBUTION_MAX_LENGTH` / legacy addPost limit. */
 export const ATTRIBUTION_MAX_LENGTH = 120;
 
+/** Create quote limits, as in the composer (frontend `submitPost.ts`). Existing posts are untouched. */
+export const POST_TITLE_MAX_LENGTH = 120;
+export const POST_TEXT_MAX_LENGTH = 2000;
+
 /** Emoji ranges blocked in citation URLs (same as frontend sanitizeUrl). */
 export const EMOJI_REGEX =
   /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/u;
@@ -55,11 +59,18 @@ export interface ValidatedAddPostContent {
 }
 
 /**
- * Legacy addPost input checks: no links in the body, safe citation URL, and
- * attribution at most 120 characters. Call before creating the post.
+ * addPost input checks: content at most 2,000 characters, no links in the body, safe
+ * citation URL, and attribution at most 120 characters. Call before creating the post.
  */
 export function validateAddPostContent(input: AddPostContentInput): ValidatedAddPostContent {
   const text = input.text.trim();
+
+  if (text.length > POST_TEXT_MAX_LENGTH) {
+    throw new GraphQLError(
+      `Post content can be at most ${POST_TEXT_MAX_LENGTH.toLocaleString('en-US')} characters`,
+      { extensions: { code: 'BAD_USER_INPUT' } }
+    );
+  }
 
   if (containsUrl(text)) {
     throw new GraphQLError('Post body cannot contain links. Please use the Citation field.', {
