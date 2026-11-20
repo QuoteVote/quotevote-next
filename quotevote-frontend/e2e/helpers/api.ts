@@ -361,3 +361,80 @@ export async function sendUserInviteViaApi(
   }
   return result;
 }
+
+/** Votes on a passage of a post, as the member `token` belongs to. */
+export async function voteOnPostViaApi(
+  token: string,
+  input: { postId: string; userId: string; type: 'up' | 'down'; tags: string; words: number }
+): Promise<void> {
+  await graphqlRequest(
+    `
+      mutation addVote($vote: VoteInput!) {
+        addVote(vote: $vote) {
+          _id
+        }
+      }
+    `,
+    {
+      vote: {
+        postId: input.postId,
+        userId: input.userId,
+        type: input.type,
+        tags: input.tags,
+        startWordIndex: 0,
+        endWordIndex: input.words,
+      },
+    },
+    token
+  );
+}
+
+/** Comments on a whole post, as the member `token` belongs to. */
+export async function commentOnPostViaApi(
+  token: string,
+  input: { postId: string; userId: string; content: string }
+): Promise<void> {
+  await graphqlRequest(
+    `
+      mutation addComment($comment: CommentInput!) {
+        addComment(comment: $comment) {
+          _id
+        }
+      }
+    `,
+    {
+      comment: {
+        postId: input.postId,
+        userId: input.userId,
+        content: input.content,
+        startWordIndex: 0,
+        endWordIndex: 0,
+      },
+    },
+    token
+  );
+}
+
+/** Follows or unfollows a member. */
+export async function setFollowViaApi(
+  token: string,
+  userId: string,
+  follow: boolean
+): Promise<void> {
+  await graphqlRequest(
+    `
+      mutation followUser($user_id: String!, $action: String!) {
+        followUser(user_id: $user_id, action: $action) {
+          _id
+        }
+      }
+    `,
+    { user_id: userId, action: follow ? 'follow' : 'un-follow' },
+    token
+  );
+}
+
+/** Marks every notification of the member `token` belongs to as read. */
+export async function markAllNotificationsReadViaApi(token: string): Promise<void> {
+  await graphqlRequest('mutation { markAllNotificationsRead }', undefined, token);
+}

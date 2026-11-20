@@ -120,24 +120,27 @@ test.describe("RC1-004 Directory posts navigate to post detail", () => {
 
   test("clicking each directory card opens the corresponding post page", async ({
     page,
+    isMobile,
   }) => {
     await page.goto("/");
 
-    const cards = page.getByTestId("post-card");
+    // The guest home's feed (updated landing page): one card per post, opened from its title.
+    const cards = page.locator("#feed article");
     await expect(cards).toHaveCount(DIRECTORY_POSTS.length);
 
-    for (const post of DIRECTORY_POSTS) {
+    // Phones show a compact card for the first post only, without the body.
+    const shown = isMobile ? DIRECTORY_POSTS.slice(0, 1) : DIRECTORY_POSTS;
+    for (const post of shown) {
       await page.goto("/");
       await expect(cards).toHaveCount(DIRECTORY_POSTS.length);
 
-      const card = page.getByTestId("post-card").filter({
-        hasText: post.title,
-      });
+      const card = cards.filter({ hasText: post.title });
+      await card.scrollIntoViewIfNeeded();
       await expect(card).toBeVisible();
-      await expect(card).toContainText(post.text);
+      if (!isMobile) await expect(card).toContainText(post.text);
       await expect(card.getByRole("button", { name: "Show More" })).toHaveCount(0);
 
-      await card.click();
+      await card.getByRole("link", { name: post.title }).click();
       await expect(page).toHaveURL((url) => url.pathname === post.url);
 
       await page.goBack();

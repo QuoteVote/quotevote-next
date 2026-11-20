@@ -158,7 +158,10 @@ test.describe('E2E-CHAT-008: Chat Search', () => {
     await expect(chatPage.getByRole('link', { name: `View post: ${postTitle}` })).toBeVisible({
       timeout: 30_000,
     });
-    await expect(chatPage.getByText(messageKeyword, { exact: false }).first()).toBeVisible();
+    // On phones the open conversation covers the list, whose preview line has the same text.
+    await expect(
+      chatPage.getByText(messageKeyword, { exact: false }).locator('visible=true').first()
+    ).toBeVisible();
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 });
