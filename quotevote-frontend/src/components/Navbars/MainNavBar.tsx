@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { NotificationMenu } from '@/components/Notifications/NotificationMenu';
 import ChatMenu from '@/components/Chat/ChatMenu';
-import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS, SUBMIT_POST_OVERLAY_CLASS } from '@/components/SubmitPost';
 import { AdminIconButton } from '../CustomButtons/AdminIconButton';
 import { SettingsIconButton } from '../CustomButtons/SettingsIconButton';
 import type { MainNavBarProps } from '@/types/components';
@@ -333,7 +333,8 @@ export function MainNavBar({}: MainNavBarProps) {
 
       {/* Create Quote Dialog */}
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
+        <DialogContent className={SUBMIT_POST_DIALOG_CLASS}
+          overlayClassName={SUBMIT_POST_OVERLAY_CLASS} showCloseButton={false}>
           <DialogTitle className="sr-only">Create Quotes</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>

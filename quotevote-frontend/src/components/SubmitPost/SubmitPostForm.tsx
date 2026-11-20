@@ -6,16 +6,10 @@ import { toast } from "sonner";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useApolloClient } from "@apollo/client/react";
-import { X, Loader2, AlertTriangle, Hash, Link2, Quote, UserRound } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardFooter, CardAction } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { X, Loader2, AlertTriangle, Check, Link2, UserRound } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { useAppStore } from "@/store";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useAutoResizeTextarea } from "@/hooks/useAutoResizeTextarea";
 import { useResponsive } from "@/hooks/useResponsive";
 import {
   submitPostSchema,
@@ -30,45 +24,44 @@ import {
   formValuesToDraft,
   readSubmitPostDraft,
   resolveDraftTag,
+  isSubmitPostDraftEmpty,
   writeSubmitPostDraft,
 } from "@/lib/utils/submitPostDraft";
 import { ATTRIBUTION_MAX_LENGTH } from "@/lib/constants/attribution";
-import { SUBMIT_POST_TITLE_MAX_LENGTH } from "@/lib/constants/submitPost";
+import {
+  SUBMIT_POST_COUNTER_WARN_RATIO,
+  SUBMIT_POST_TEXT_MAX_LENGTH,
+  SUBMIT_POST_TITLE_MAX_LENGTH,
+} from "@/lib/constants/submitPost";
 import { CREATE_TAG, SUBMIT_POST } from "@/graphql/mutations";
 import { TAGS_QUERY } from "@/graphql/queries";
+import { CITATION_URL_ERROR } from "@/lib/validation/submitPostSchema";
 import type { SubmitPostFormProps } from "@/types/components";
-import { cn } from "@/lib/utils";
+import { SubmitPostPreview } from "./SubmitPostPreview";
 
-function CharacterCount({ current, max }: { current: number; max: number }) {
-  if (current === 0) return null;
+const formatCount = (n: number) => n.toLocaleString("en-US");
 
+/** "58 / 120": amber from 80% of the limit, red at it (the design's counters). */
+function Counter({ current, max }: { current: number; max: number }) {
   const ratio = current / max;
-
   return (
-    <p
-      className={cn(
-        "text-xs tabular-nums text-muted-foreground",
-        ratio >= 1 && "text-destructive",
-        ratio >= 0.8 && ratio < 1 && "text-amber-600"
-      )}
+    <span
+      className="qv-compose-count"
+      data-warn={(ratio >= SUBMIT_POST_COUNTER_WARN_RATIO && ratio < 1) || undefined}
+      data-over={ratio >= 1 || undefined}
       aria-live="polite"
     >
-      {current}/{max}
-    </p>
+      {formatCount(current)}
+      <span className="qv-compose-slash">/</span>
+      {formatCount(max)}
+    </span>
   );
 }
-
-/** One look for every composer field: white surface, soft border, brand focus ring. */
-const FIELD_CLASS =
-  "rounded-lg border border-input bg-card text-base text-foreground shadow-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/70 hover:border-foreground/25 focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/15 md:text-base";
-const FIELD_ERROR_CLASS =
-  "border-destructive hover:border-destructive focus-visible:border-destructive focus-visible:ring-destructive/15";
-const LABEL_CLASS = "text-sm font-medium text-foreground";
 
 function RequiredMark() {
   return (
     <>
-      <span aria-hidden="true" className="ml-0.5 text-destructive">
+      <span aria-hidden="true" className="qv-compose-required">
         *
       </span>
       <span className="sr-only">(required)</span>
@@ -87,8 +80,15 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
   const [newTagName, setNewTagName] = useState("");
   const errorAlertRef = useRef<HTMLDivElement>(null);
   const citationErrorRef = useRef<HTMLParagraphElement>(null);
-  const hasRestoredDraftRef = useRef(false);
   const tagReconciledRef = useRef(false);
+  // A saved draft is the form's starting value, so there is never an empty state that
+  // the draft writer could save over it (closing quickly used to lose the draft).
+  const [initialValues] = useState<SubmitPostFormValues>(() => {
+    const draft = readSubmitPostDraft(user._id);
+    return draft
+      ? draftToFormValues(draft, options)
+      : { title: "", text: "", citationUrl: "", attribution: "" };
+  });
 
   const {
     register,
@@ -103,39 +103,20 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
     resolver: zodResolver(submitPostSchema),
     mode: "onChange",
     reValidateMode: "onChange",
-    defaultValues: {
-      title: "",
-      text: "",
-      citationUrl: "",
-      attribution: "",
-    },
+    defaultValues: initialValues,
   });
 
   const title = watch("title") ?? "";
   const text = watch("text") ?? "";
-  const { ref: bodyAutoResizeRef } = useAutoResizeTextarea(text);
-  const { ref: bodyRegisterRef, ...bodyField } = register("text");
   const attribution = watch("attribution") ?? "";
   const formValues = watch();
   const debouncedFormValues = useDebounce(formValues, 300);
+  const currentDraftKey = JSON.stringify(formValuesToDraft(formValues));
   const canSubmit = isSubmitPostFormReady(formValues);
-  const isMissingRequired = !title.trim() || !text.trim() || !formValues.tag;
+  const [draftSaved, setDraftSaved] = useState(false);
 
   useEffect(() => {
-    if (hasRestoredDraftRef.current) return;
-
-    const draft = readSubmitPostDraft(user._id);
-    if (!draft) {
-      hasRestoredDraftRef.current = true;
-      return;
-    }
-
-    reset(draftToFormValues(draft, options));
-    hasRestoredDraftRef.current = true;
-  }, [user._id, options, reset]);
-
-  useEffect(() => {
-    if (!hasRestoredDraftRef.current || tagReconciledRef.current || options.length === 0) return;
+    if (tagReconciledRef.current || options.length === 0) return;
 
     const draft = readSubmitPostDraft(user._id);
     if (!draft?.tag) {
@@ -152,9 +133,12 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
   }, [options, user._id, setValue]);
 
   useEffect(() => {
-    if (!hasRestoredDraftRef.current) return;
-    writeSubmitPostDraft(user._id, formValuesToDraft(debouncedFormValues));
-  }, [debouncedFormValues, user._id]);
+    const draft = formValuesToDraft(debouncedFormValues);
+    // Save only once the debounce has caught up with the form.
+    if (JSON.stringify(draft) !== currentDraftKey) return;
+    writeSubmitPostDraft(user._id, draft);
+    setDraftSaved(!isSubmitPostDraftEmpty(draft));
+  }, [debouncedFormValues, currentDraftKey, user._id]);
 
   useEffect(() => {
     if (errors.text?.message?.includes("Links are not allowed") && errorAlertRef.current) {
@@ -176,7 +160,7 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
     if (citationUrl?.trim() && !sanitizedCitationUrl) {
       setError("citationUrl", {
         type: "manual",
-        message: "Invalid URL format. Please enter a valid http or https URL.",
+        message: CITATION_URL_ERROR,
       });
       return;
     }
@@ -252,7 +236,8 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
       const { _id, url } = addPostResult || {};
       if (_id) {
         clearSubmitPostDraft(user._id);
-        reset();
+        setDraftSaved(false);
+        reset({ title: "", text: "", citationUrl: "", attribution: "", tag: undefined });
         setSelectedPost(_id);
         apolloClient.cache.evict({ fieldName: "posts" });
         apolloClient.cache.gc();
@@ -278,64 +263,44 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
     }
   };
 
-  const padX = isMobile ? "px-4" : "px-6";
+  const titleId = "create-quote-title";
+  const citation = formValues.citationUrl ?? "";
+  const citationValid =
+    citation.trim().length > 0 && !errors.citationUrl && sanitizeUrl(citation) !== null;
+  const tagValue = formValues.tag;
+  const tagTitle =
+    typeof tagValue === "string" ? tagValue : tagValue && "title" in tagValue ? tagValue.title : "";
+  const busy = loading || loadingTag;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex h-full min-h-0 flex-col">
-      <Card
-        data-testid="post-composer"
-        className={cn(
-          "flex h-full min-h-0 w-full flex-col gap-0 rounded-none border-0 bg-card py-0 shadow-none",
-          !isMobile && "sm:rounded-xl sm:border sm:shadow-lg"
-        )}
-      >
-        <CardHeader
-          className={cn(
-            "flex shrink-0 flex-row items-center justify-between gap-3 border-b border-border/70 py-4",
-            padX
-          )}
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            <span
-              aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
-            >
-              <Quote className="h-4 w-4" />
-            </span>
-            <div className="min-w-0">
-              <CardTitle className="text-lg font-semibold leading-tight text-foreground">
-                Create Quote
-              </CardTitle>
-              <p className="truncate text-sm text-muted-foreground">
-                Share a quote and start the discussion.
-              </p>
-            </div>
-          </div>
-          <CardAction>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(false)}
-              className="rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </CardAction>
-        </CardHeader>
+    <form onSubmit={handleSubmit(onSubmit)} aria-labelledby={titleId} className="qv-compose-form">
+      <div data-testid="post-composer" className="qv-compose-main">
+        <header className="qv-compose-head">
+          <h2 id={titleId} className="qv-compose-title">
+            Create Quote
+          </h2>
+          <button
+            type="button"
+            className="qv-compose-close"
+            onClick={() => setOpen(false)}
+            aria-label="Close"
+          >
+            <X className="size-5" strokeWidth={2.2} aria-hidden="true" />
+          </button>
+        </header>
 
-        {/* Title and tag stay in view while the body scrolls */}
-        <div className={cn("shrink-0 space-y-4 border-b border-border/70 py-4", padX)}>
-          <div className="space-y-1.5">
-            <div className="flex h-5 items-center justify-between gap-2">
-              <Label htmlFor="title" className={LABEL_CLASS}>
+        <div className="qv-compose-body">
+          <p className="qv-compose-sub">Share a quote and start the discussion.</p>
+
+          <div className="qv-auth-field">
+            <div className="qv-compose-label-row">
+              <label htmlFor="title" className="qv-auth-label">
                 Title
                 <RequiredMark />
-              </Label>
-              <CharacterCount current={title.length} max={SUBMIT_POST_TITLE_MAX_LENGTH} />
+              </label>
+              <Counter current={title.length} max={SUBMIT_POST_TITLE_MAX_LENGTH} />
             </div>
-            <Input
+            <input
               id="title"
               data-testid="post-title-input"
               placeholder="Give your quote a clear title"
@@ -343,29 +308,23 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
               aria-invalid={!!errors.title || undefined}
               maxLength={SUBMIT_POST_TITLE_MAX_LENGTH}
               {...register("title")}
-              className={cn(
-                FIELD_CLASS,
-                "h-11 px-3.5 font-medium",
-                errors.title && FIELD_ERROR_CLASS
-              )}
+              className="qv-auth-input"
             />
             {errors.title && (
-              <p className="text-sm text-destructive" data-testid="post-title-error">
+              <p className="qv-auth-err" data-testid="post-title-error">
                 {errors.title.message}
               </p>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <div className="flex h-5 items-center justify-between gap-2">
-              <Label id="post-tag-label" className={LABEL_CLASS}>
-                Tag
-                <RequiredMark />
-              </Label>
-            </div>
+          <div className="qv-auth-field">
+            <span id="post-tag-label" className="qv-auth-label">
+              Tag
+              <RequiredMark />
+            </span>
             {isCreatingTag && (
-              <p className="flex items-center gap-1.5 text-sm text-primary">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              <p className="qv-compose-status" role="status">
+                <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
                 Creating tag &quot;{newTagName}&quot;...
               </p>
             )}
@@ -383,174 +342,184 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
                   error={!!errors.tag}
                   errorMessage={errors.tag?.message}
                   errorTestId="post-tag-error"
-                  disabled={loadingTag || loading}
+                  disabled={busy}
                   allowCreate={true}
                   side={isMobile ? "top" : "bottom"}
                   triggerTestId="post-tag-select"
                   createOptionTestId="post-tag-create"
-                  startIcon={<Hash className="h-4 w-4" />}
                   ariaLabelledBy="post-tag-label"
-                  triggerClassName={cn(
-                    FIELD_CLASS,
-                    "h-11 px-3.5 font-normal hover:bg-card",
-                    errors.tag && FIELD_ERROR_CLASS
+                  hideIndicator
+                  renderValue={(label) => (
+                    <>
+                      <span className="qv-compose-chip qv-compose-chip-in"># {label}</span>
+                      <span className="qv-compose-placeholder" aria-hidden="true">
+                        Select or create a tag
+                      </span>
+                    </>
                   )}
+                  triggerClassName="qv-auth-input qv-compose-tag"
                 />
               )}
             />
           </div>
-        </div>
 
-        {/* Post body and optional details scroll together; the body grows with its content */}
-        <div
-          className={cn(
-            "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain py-4",
-            padX
-          )}
-        >
-          <div className="mb-1.5 flex h-5 items-center justify-between gap-2">
-            <Label htmlFor="text" className={LABEL_CLASS}>
-              Post content
-              <RequiredMark />
-            </Label>
-            <span className="text-xs text-muted-foreground">No links. Add a source below.</span>
-          </div>
-          <Textarea
-            id="text"
-            data-testid="post-body-input"
-            placeholder="What did they say? Paste or type the quote here."
-            aria-required="true"
-            aria-invalid={!!errors.text || undefined}
-            rows={8}
-            {...bodyField}
-            ref={(el) => {
-              bodyRegisterRef(el);
-              bodyAutoResizeRef.current = el;
-            }}
-            className={cn(
-              FIELD_CLASS,
-              "min-h-48 w-full shrink-0 resize-none overflow-hidden px-4 py-3 leading-relaxed sm:min-h-64",
-              errors.text && FIELD_ERROR_CLASS
+          <div className="qv-auth-field">
+            <div className="qv-compose-label-row">
+              <label htmlFor="text" className="qv-auth-label">
+                Post content
+                <RequiredMark />
+              </label>
+              <Counter current={text.length} max={SUBMIT_POST_TEXT_MAX_LENGTH} />
+            </div>
+            <textarea
+              id="text"
+              data-testid="post-body-input"
+              placeholder="What did they say? Paste or type the quote here."
+              aria-required="true"
+              aria-invalid={!!errors.text || undefined}
+              aria-describedby="post-body-hint"
+              rows={6}
+              maxLength={SUBMIT_POST_TEXT_MAX_LENGTH}
+              {...register("text")}
+              className="qv-auth-input qv-compose-text"
+            />
+            <span id="post-body-hint" className="qv-auth-hint qv-compose-hint">
+              No links. Add a source below.
+            </span>
+            {errors.text && (
+              <div ref={errorAlertRef} role="alert" className="qv-compose-alert">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <p data-testid="post-body-error">{errors.text.message}</p>
+              </div>
             )}
-          />
-          {errors.text && (
-            <div
-              ref={errorAlertRef}
-              role="alert"
-              className="mt-2 flex shrink-0 items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5"
-            >
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-              <p className="text-sm font-medium text-destructive" data-testid="post-body-error">
-                {errors.text.message}
-              </p>
-            </div>
-          )}
+          </div>
 
-          {/* Optional details scroll with the body, so they don't take writing space */}
-          <section aria-labelledby="post-details-heading" className="mt-6 shrink-0">
-            <div className="mb-3 flex items-center gap-2">
-              <p id="post-details-heading" className="text-sm font-semibold text-foreground">
-                Add details
-              </p>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                Optional
-              </span>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <div className="flex h-5 items-center justify-between gap-2">
-                  <Label htmlFor="citationUrl" className={LABEL_CLASS}>
-                    Citation link
-                  </Label>
-                </div>
-                <div className="relative">
-                  <Link2
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
+          <details open className="qv-compose-details">
+            <summary>
+              Add details <span className="qv-compose-optional">· Optional</span>
+            </summary>
+            <div className="qv-compose-details-grid">
+              <div className="qv-auth-field">
+                <label htmlFor="citationUrl" className="qv-auth-label">
+                  Citation link
+                </label>
+                <div className="qv-compose-field" data-invalid={!!errors.citationUrl || undefined}>
+                  <Link2 className="qv-compose-field-icon" aria-hidden="true" />
+                  <input
                     id="citationUrl"
                     data-testid="post-citation-input"
                     placeholder="https://example.com/article"
+                    inputMode="url"
                     aria-invalid={!!errors.citationUrl || undefined}
+                    aria-describedby={
+                      errors.citationUrl ? "post-citation-error" : "post-citation-hint"
+                    }
                     {...register("citationUrl")}
-                    className={cn(
-                      FIELD_CLASS,
-                      "h-10 pl-9 pr-3 text-sm md:text-sm",
-                      errors.citationUrl && FIELD_ERROR_CLASS
-                    )}
                   />
+                  {citationValid && (
+                    <Check
+                      className="qv-compose-check"
+                      strokeWidth={2.4}
+                      aria-label="Valid link"
+                      role="img"
+                    />
+                  )}
                 </div>
-                {errors.citationUrl && (
+                {errors.citationUrl ? (
                   <p
+                    id="post-citation-error"
                     ref={citationErrorRef}
-                    className="text-sm text-destructive"
+                    className="qv-auth-err"
                     data-testid="post-citation-error"
                   >
                     {errors.citationUrl.message}
                   </p>
+                ) : (
+                  <span id="post-citation-hint" className="qv-auth-hint">
+                    Where the quote comes from. Shown under the quote.
+                  </span>
                 )}
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex h-5 items-center justify-between gap-2">
-                  <Label htmlFor="attribution" className={LABEL_CLASS}>
+              <div className="qv-auth-field">
+                <div className="qv-compose-label-row">
+                  <label htmlFor="attribution" className="qv-auth-label">
                     Who said this?
-                  </Label>
-                  <CharacterCount current={attribution.length} max={ATTRIBUTION_MAX_LENGTH} />
+                  </label>
+                  {attribution.length >=
+                    ATTRIBUTION_MAX_LENGTH * SUBMIT_POST_COUNTER_WARN_RATIO && (
+                    <Counter current={attribution.length} max={ATTRIBUTION_MAX_LENGTH} />
+                  )}
                 </div>
-                <div className="relative">
-                  <UserRound
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
+                <div className="qv-compose-field">
+                  <UserRound className="qv-compose-field-icon" aria-hidden="true" />
+                  <input
                     id="attribution"
                     data-testid="post-attribution-input"
                     placeholder="Name of the speaker"
                     maxLength={ATTRIBUTION_MAX_LENGTH}
+                    aria-describedby="post-attribution-hint"
                     {...register("attribution")}
-                    className={cn(FIELD_CLASS, "h-10 pl-9 pr-3 text-sm md:text-sm")}
                   />
                 </div>
+                <span id="post-attribution-hint" className="qv-auth-hint">
+                  A person, office or publication.
+                </span>
               </div>
             </div>
-          </section>
+          </details>
         </div>
 
-        <CardFooter
-          className={cn(
-            "flex shrink-0 flex-col gap-2 border-t border-border/70 pt-3",
-            padX,
-            "pb-[max(0.75rem,env(safe-area-inset-bottom))]",
-            !isMobile && "sm:pb-4 sm:pt-4"
-          )}
-        >
-          <Button
-            id="submit-button"
-            data-testid="post-submit-button"
-            type="submit"
-            variant="default"
-            className="h-11 w-full rounded-lg bg-primary text-base font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:bg-primary/40 disabled:opacity-100"
-            disabled={loadingTag || loading || !canSubmit}
-          >
-            {loading || loadingTag ? (
+        <footer className="qv-compose-foot">
+          <span className="qv-auth-hint qv-compose-saved" role="status" aria-live="polite">
+            {draftSaved && (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Posting...
+                <Check
+                  className="qv-compose-check size-[15px]"
+                  strokeWidth={2.4}
+                  aria-hidden="true"
+                />
+                Draft saved
               </>
-            ) : (
-              "Post"
             )}
-          </Button>
-          {isMissingRequired && !loading && !loadingTag && (
-            <p className="text-center text-xs text-muted-foreground">
-              Add a title, a tag and the quote to post.
-            </p>
-          )}
-        </CardFooter>
-      </Card>
+          </span>
+          <div className="qv-compose-actions">
+            <button
+              type="button"
+              className="qv-auth-btn qv-compose-cancel"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              id="submit-button"
+              data-testid="post-submit-button"
+              type="submit"
+              className="qv-auth-btn qv-auth-btn-primary qv-compose-post"
+              disabled={busy || !canSubmit}
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  Posting...
+                </>
+              ) : (
+                "Post"
+              )}
+            </button>
+          </div>
+        </footer>
+      </div>
+
+      <SubmitPostPreview
+        title={title}
+        text={text}
+        tagTitle={tagTitle}
+        citationUrl={citation}
+        attribution={attribution}
+        username={String(user.username ?? user.name ?? "you")}
+        avatar={user.avatar as string | Record<string, unknown> | null | undefined}
+      />
     </form>
   );
 }

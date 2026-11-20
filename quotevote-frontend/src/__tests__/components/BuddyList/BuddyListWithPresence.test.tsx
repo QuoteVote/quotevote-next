@@ -50,13 +50,17 @@ jest.mock('@/hooks/useBuddyManagement', () => ({
   })),
 }))
 
-// Mock BuddyItemList
+// Mock BuddyItemList: one row per buddy, in the order given
 jest.mock('@/components/BuddyList/BuddyItemList', () => ({
   __esModule: true,
-  default: ({ buddyList }: { buddyList: unknown[] }) => (
-    <div data-testid="buddy-item-list">
-      {buddyList.length} buddies
-    </div>
+  default: ({ buddyList }: { buddyList: { Text?: string; presence?: { status?: string } }[] }) => (
+    <ul data-testid="buddy-item-list" data-count={buddyList.length}>
+      {buddyList.map((b) => (
+        <li key={b.Text} data-status={b.presence?.status}>
+          {b.Text}
+        </li>
+      ))}
+    </ul>
   ),
 }))
 
@@ -230,20 +234,81 @@ describe('BuddyListWithPresence', () => {
     })
   })
 
-  it('renders buddy list grouped by presence status', async () => {
-    render(
-      <BuddyListWithPresence />
+  it('renders one flat buddy list in presence order, hiding invisible buddies', async () => {
+    const entry = (id: string, name: string, status: string) => ({
+      user: { _id: id, username: name.toLowerCase(), name },
+      presence: { status },
+    })
+    mockUseQuery.mockImplementation((query) => {
+      if (query === GET_BUDDY_LIST) {
+        return {
+          data: {
+            getBuddyList: [
+              entry('u-off', 'Olive', 'offline'),
+              entry('u-dnd', 'Dana', 'dnd'),
+              entry('u-inv', 'Ivan', 'invisible'),
+              entry('u-away', 'Abe', 'away'),
+              entry('u-on', 'Nina', 'online'),
+            ],
+          },
+          loading: false,
+          refetch: jest.fn(),
+        }
+      }
+      return { data: { buddyRequests: [] }, loading: false, refetch: jest.fn() }
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({
+        user: { data: mockCurrentUser },
+        chat: { presenceMap: {} },
+        setBuddyList: jest.fn(),
+      })
     )
 
-    await waitFor(() => {
-      // There will be multiple buddy-item-list elements (one per presence group)
-      const buddyLists = screen.getAllByTestId('buddy-item-list')
-      expect(buddyLists.length).toBeGreaterThan(0)
-    })
+    render(<BuddyListWithPresence />)
 
-    // Should show presence sections - the component renders status labels like "online (1)" or "away (1)"
-    expect(screen.getByText(/online/i)).toBeInTheDocument()
-    expect(screen.getByText(/away/i)).toBeInTheDocument()
+    expect(await screen.findByTestId('buddy-list-with-presence')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Buddies · 4' })).toBeInTheDocument()
+    const lists = screen.getAllByTestId('buddy-item-list')
+    expect(lists).toHaveLength(1)
+    const rows = Array.from(lists[0].querySelectorAll('li')).map((li) => li.textContent)
+    expect(rows).toEqual(['Nina', 'Abe', 'Dana', 'Olive'])
+    expect(screen.queryByText('Ivan')).not.toBeInTheDocument()
+  })
+
+  it('takes live presence from the store over the list query', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({
+        user: { data: mockCurrentUser },
+        chat: { presenceMap: { user2: { status: 'offline' }, user3: { status: 'online' } } },
+        setBuddyList: jest.fn(),
+      })
+    )
+
+    render(<BuddyListWithPresence />)
+
+    const list = await screen.findByTestId('buddy-item-list')
+    const rows = Array.from(list.querySelectorAll('li')).map((li) => li.textContent)
+    expect(rows).toEqual(['Buddy Two', 'Buddy One'])
+  })
+
+  it('says so when there are no buddies yet', async () => {
+    mockUseQuery.mockImplementation((query) =>
+      query === GET_BUDDY_LIST
+        ? { data: { getBuddyList: [] }, loading: false, refetch: jest.fn() }
+        : { data: { buddyRequests: [] }, loading: false, refetch: jest.fn() }
+    )
+
+    render(<BuddyListWithPresence />)
+
+    expect(
+      await screen.findByText('No buddies yet. Use Add buddy above to find someone.')
+    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Buddies · 0' })).toBeInTheDocument()
+    expect(screen.queryByTestId('buddy-item-list')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Pending requests/)).not.toBeInTheDocument()
   })
 
   it('renders pending requests section when requests exist', async () => {
@@ -269,10 +334,19 @@ describe('BuddyListWithPresence', () => {
 
     render(<BuddyListWithPresence />)
 
-    await waitFor(() => {
-      expect(screen.getByText('Pending Requests')).toBeInTheDocument()
-      expect(screen.getByText('Requester User')).toBeInTheDocument()
-    }, { timeout: 3000 })
+    expect(
+      await screen.findByRole('heading', { name: 'Pending requests · 1' })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Requester User')).toBeInTheDocument()
+    expect(screen.getByText('Wants to be your buddy')).toBeInTheDocument()
+    // My own outgoing request is not something I can accept
+    expect(screen.queryByText('someone')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Accept Requester User' })).toHaveTextContent(
+      'Accept'
+    )
+    expect(screen.getByRole('button', { name: 'Decline Requester User' })).toHaveTextContent(
+      'Decline'
+    )
   })
 
   it('accepts buddy request when accept button is clicked', async () => {
@@ -318,16 +392,12 @@ describe('BuddyListWithPresence', () => {
       expect(screen.getByText('Requester User')).toBeInTheDocument()
     }, { timeout: 3000 })
 
-    // Find accept button (Check icon)
-    const acceptButtons = screen.getAllByTitle('Accept')
-    if (acceptButtons.length > 0) {
-      fireEvent.click(acceptButtons[0])
+    fireEvent.click(screen.getByRole('button', { name: 'Accept Requester User' }))
 
-      await waitFor(() => {
-        expect(mockAcceptBuddy).toHaveBeenCalledWith('req1')
-        expect(toast.success).toHaveBeenCalledWith('Buddy request accepted!')
-      })
-    }
+    await waitFor(() => {
+      expect(mockAcceptBuddy).toHaveBeenCalledWith('req1')
+      expect(toast.success).toHaveBeenCalledWith('Buddy request accepted!')
+    })
   })
 
   it('declines buddy request when decline button is clicked', async () => {
@@ -373,16 +443,12 @@ describe('BuddyListWithPresence', () => {
       expect(screen.getByText('Requester User')).toBeInTheDocument()
     }, { timeout: 3000 })
 
-    // Find decline button (X icon)
-    const declineButtons = screen.getAllByTitle('Decline')
-    if (declineButtons.length > 0) {
-      fireEvent.click(declineButtons[0])
+    fireEvent.click(screen.getByRole('button', { name: 'Decline Requester User' }))
 
-      await waitFor(() => {
-        expect(mockDeclineBuddy).toHaveBeenCalledWith('req1')
-        expect(toast).toHaveBeenCalledWith('Buddy request declined')
-      })
-    }
+    await waitFor(() => {
+      expect(mockDeclineBuddy).toHaveBeenCalledWith('req1')
+      expect(toast).toHaveBeenCalledWith('Buddy request declined')
+    })
   })
 
   it('filters buddies by search query', async () => {
@@ -398,31 +464,27 @@ describe('BuddyListWithPresence', () => {
     })
 
     // Verify that the filtered results are shown
-    const buddyLists = screen.getAllByTestId('buddy-item-list')
-    expect(buddyLists.length).toBeGreaterThan(0)
+    expect(screen.getByTestId('buddy-item-list')).toHaveAttribute('data-count', '2')
+    expect(screen.getByRole('heading', { name: 'Buddies · 2' })).toBeInTheDocument()
   })
 
   it('finds a buddy by @username as well as by name (#531)', async () => {
     const { rerender } = render(<BuddyListWithPresence search="@buddy2" />)
 
-    expect(await screen.findByText('1 buddies')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Away (1)' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: /online/i })).not.toBeInTheDocument()
+    expect(await screen.findByText('Buddy Two')).toBeInTheDocument()
+    expect(screen.queryByText('Buddy One')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Buddies · 1' })).toBeInTheDocument()
 
     rerender(<BuddyListWithPresence search="buddy one" />)
-    expect(await screen.findByRole('heading', { name: 'Online (1)' })).toBeInTheDocument()
+    expect(await screen.findByText('Buddy One')).toBeInTheDocument()
+    expect(screen.queryByText('Buddy Two')).not.toBeInTheDocument()
   })
 
   it('says so when no buddy matches the search', async () => {
     render(<BuddyListWithPresence search="@nobody" />)
     expect(await screen.findByTestId('buddy-empty-search')).toHaveTextContent('No buddies match “@nobody”.')
-  })
-
-  it('marks the Away section with a distinct yellow (#531)', async () => {
-    render(<BuddyListWithPresence />)
-    const heading = await screen.findByRole('heading', { name: 'Away (1)' })
-    expect(heading.className).toContain('text-[#854d0e]')
-    expect(heading.previousElementSibling?.className).toContain('bg-[#facc15]')
+    // The "no buddies yet" hint is only for an empty list, not an empty search
+    expect(screen.queryByText(/No buddies yet/)).not.toBeInTheDocument()
   })
 
   it('uses theme colours, so the list is readable in dark mode', async () => {
@@ -490,14 +552,11 @@ describe('BuddyListWithPresence', () => {
       expect(screen.getByText('Requester User')).toBeInTheDocument()
     }, { timeout: 3000 })
 
-    const acceptButtons = screen.getAllByTitle('Accept')
-    if (acceptButtons.length > 0) {
-      fireEvent.click(acceptButtons[0])
+    fireEvent.click(screen.getByRole('button', { name: 'Accept Requester User' }))
 
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(expect.any(String))
-      })
-    }
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Failed to accept')
+    })
   })
 
   it('syncs buddy list to store when data is loaded', async () => {

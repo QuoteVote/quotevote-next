@@ -685,6 +685,17 @@ export interface SubmitPostFormProps {
   setOpen: (open: boolean) => void;
 }
 
+/** The Create quote preview: the post as it will look, from the form's current values. */
+export interface SubmitPostPreviewProps {
+  title: string;
+  text: string;
+  tagTitle?: string;
+  citationUrl?: string;
+  attribution?: string;
+  username: string;
+  avatar?: string | Record<string, unknown> | null;
+}
+
 export interface SubmitPostFormValues {
   title: string;
   text: string;

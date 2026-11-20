@@ -11,7 +11,6 @@ import { useAppStore } from '@/store';
 import { getApolloClient } from '@/lib/apollo';
 import { removeToken } from '@/lib/auth';
 import { useAuthModal } from '@/context/AuthModalContext';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { toAbsolutePostUrl } from '@/lib/utils/sanitizeUrl';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { useOnTabVisible } from '@/hooks/useOnTabVisible';
@@ -23,7 +22,7 @@ import type { ChatRoom } from '@/types/chat';
 import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { SubmitPost, SUBMIT_POST_DIALOG_CLASS } from '@/components/SubmitPost';
+import { SubmitPost, SUBMIT_POST_DIALOG_CLASS, SUBMIT_POST_OVERLAY_CLASS } from '@/components/SubmitPost';
 import { NotificationsPanel } from '@/components/Notifications/NotificationsPanel';
 import { AppHeader } from '@/components/AppShell/AppHeader';
 import { MobileTopBar } from '@/components/AppShell/MobileTopBar';
@@ -57,28 +56,31 @@ function DashboardClient() {
 function ChatPanel() {
   const chatOpen = useAppStore((s) => s.chat.open);
   const setChatOpen = useAppStore((s) => s.setChatOpen);
-  const isMobile = useMediaQuery('(max-width: 767px)');
 
+  // Updated design: 980px from the right under the top bar over a dimmed page on
+  // desktop; full screen above the tab bar on phones.
   return (
-    <Sheet open={chatOpen} onOpenChange={setChatOpen} modal={false}>
-      <SheetContent
-        side={isMobile ? 'bottom' : 'right'}
-        overlayClassName={isMobile ? 'bottom-[var(--app-tabbar-h)]' : 'bottom-0'}
-        className={cn(
-          'w-full p-0 gap-0 overflow-hidden',
-          isMobile
-            ? 'bottom-[var(--app-tabbar-h)] h-[calc(100dvh-var(--app-header-h)-var(--app-tabbar-h))] max-h-[85dvh] rounded-t-2xl sm:max-w-none'
-            : 'sm:w-[400px] sm:max-w-[400px] inset-y-0 h-full',
-        )}
-        data-testid="messages-panel"
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <SheetTitle className="sr-only">Messages</SheetTitle>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <>
+      {chatOpen && (
+        <div
+          className="qv-panel-scrim"
+          aria-hidden="true"
+          data-testid="messages-scrim"
+          onClick={() => setChatOpen(false)}
+        />
+      )}
+      <Sheet open={chatOpen} onOpenChange={setChatOpen} modal={false}>
+        <SheetContent
+          side="right"
+          className="qv-msg-panel font-redesign"
+          data-testid="messages-panel"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <SheetTitle className="sr-only">Messages</SheetTitle>
           <ChatContent />
-        </div>
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
@@ -492,7 +494,8 @@ export function DashboardShell({
       )}
 
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        <DialogContent className={SUBMIT_POST_DIALOG_CLASS} showCloseButton={false}>
+        <DialogContent className={SUBMIT_POST_DIALOG_CLASS}
+          overlayClassName={SUBMIT_POST_OVERLAY_CLASS} showCloseButton={false}>
           <DialogTitle className="sr-only">Create Quotes</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>

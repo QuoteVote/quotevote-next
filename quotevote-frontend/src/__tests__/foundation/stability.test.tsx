@@ -27,6 +27,9 @@ jest.mock('next/font/google', () => ({
   Montserrat: jest.fn(() => ({
     variable: '--font-wordmark',
   })),
+  Newsreader: jest.fn(() => ({
+    variable: '--font-quote',
+  })),
   Geist: jest.fn(() => ({
     variable: '--font-geist-sans',
   })),

@@ -36,6 +36,7 @@
     "botreport:repair": "tsx scripts/repair-bot-reports.ts",
     "data:check": "tsx scripts/data-check.ts",
     "db:unique-indexes": "tsx scripts/unique-indexes.ts",
+    "setup:instance": "tsx app/setup.ts",
     "sendgrid:mock": "tsx scripts/sendgrid-mock-server.ts",
     "postinstall": "prisma generate --schema=./prisma/schema"
   },

@@ -13,10 +13,12 @@
  * - Sorting by most recent activity
  * - #531: search by message text, @person and #tag; the tag chip in place of "Group"
  * - #601: message text searched on the server, a page at a time
+ * - Rows: quote-mark tile for discussions, avatar + presence for chats, last message preview
  */
 
 import { act, render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
-import ChatList from '@/components/Chat/ChatList'
+import ChatList, { listTime, previewLine, tintFor } from '@/components/Chat/ChatList'
+import type { ChatRoom } from '@/types/chat'
 import { useAppStore } from '@/store'
 import { GET_BUDDY_LIST, GET_CHAT_ROOMS, GET_CHAT_ROOM_SEARCH_DATA, SEARCH_MESSAGES } from '@/graphql/queries'
 
@@ -115,7 +117,7 @@ describe('ChatList', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: { _id: 'user1' } },
-        chat: { selectedRoom: null },
+        chat: { selectedRoom: null, presenceMap: {} },
         setSelectedChatRoom: mockSetSelectedChatRoom,
       }
       return selector(state)
@@ -169,7 +171,101 @@ describe('ChatList', () => {
       expect(screen.getByText('Jane Doe')).toBeInTheDocument()
     })
     expect(screen.queryByText('DM')).not.toBeInTheDocument()
-    expect(screen.getByText('Direct message')).toBeInTheDocument()
+    expect(screen.queryByText('Direct message')).not.toBeInTheDocument()
+    expect(screen.getByText('No messages yet')).toBeInTheDocument()
+  })
+
+  // ── Rows ──────────────────────────────────────────────────────────────────
+
+  it('renders a chat row with avatar, presence dot, time and last message', async () => {
+    const lastMessageTime = new Date().toISOString()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({
+        user: { data: { _id: 'user1' } },
+        chat: { selectedRoom: null, presenceMap: { user2: { status: 'away' } } },
+        setSelectedChatRoom: mockSetSelectedChatRoom,
+      })
+    )
+    mockUseQuery.mockReturnValue({
+      data: {
+        messageRooms: [
+          {
+            ...dmRoom,
+            lastMessageTime,
+            lastMessage: { text: 'See you there', userId: 'user2', userName: 'Jane Doe' },
+          },
+        ],
+      },
+      loading: false,
+      refetch: jest.fn(),
+    })
+
+    render(<ChatList filterType="chats" />)
+
+    const button = await screen.findByTestId('discussion-thread')
+    const row = button.closest('.qv-room')
+    expect(row).toHaveAttribute('data-kind', 'chat')
+    expect(row).not.toHaveAttribute('data-selected')
+    expect(row).not.toHaveAttribute('data-unread')
+    expect(row?.querySelector('.qv-presence-dot')).toHaveAttribute('data-status', 'away')
+    expect(row?.querySelector('.qv-room-tile')).toBeNull()
+    expect(screen.getByTestId('avatar')).toBeInTheDocument()
+    expect(screen.getByText(listTime(lastMessageTime))).toBeInTheDocument()
+    expect(screen.getByText('See you there')).toBeInTheDocument()
+  })
+
+  it.each([
+    [true, '✓✓ You: On my way'],
+    [false, '✓ You: On my way'],
+  ])('marks my own last message in a chat as read=%s', async (readByOther, expected) => {
+    mockUseQuery.mockReturnValue({
+      data: {
+        messageRooms: [
+          { ...dmRoom, lastMessage: { text: 'On my way', userId: 'user1', readByOther } },
+        ],
+      },
+      loading: false,
+      refetch: jest.fn(),
+    })
+
+    render(<ChatList filterType="chats" />)
+
+    expect(await screen.findByText(expected)).toBeInTheDocument()
+  })
+
+  it('renders a discussion row with a tinted quote tile and the last speaker', async () => {
+    mockUseQuery.mockReturnValue({
+      data: {
+        messageRooms: [
+          {
+            ...groupRoom,
+            lastMessage: { text: 'The money is there', userId: 'user3', userName: 'Lena Park' },
+          },
+        ],
+      },
+      loading: false,
+      refetch: jest.fn(),
+    })
+
+    render(<ChatList filterType="groups" />)
+
+    const button = await screen.findByTestId('discussion-thread')
+    const row = button.closest('.qv-room')
+    expect(row).toHaveAttribute('data-kind', 'discussion')
+    expect(row?.querySelector('.qv-room-tile')).toHaveAttribute(
+      'data-tint',
+      tintFor('room-group-1')
+    )
+    expect(row?.querySelector('.qv-presence-dot')).toBeNull()
+    expect(screen.queryByTestId('avatar')).not.toBeInTheDocument()
+    expect(screen.getByText('Lena: The money is there')).toBeInTheDocument()
+  })
+
+  it('shows the post text for a discussion with no messages yet', async () => {
+    render(<ChatList filterType="groups" />)
+
+    expect(await screen.findByText('Some post text here.')).toBeInTheDocument()
   })
 
   // ── Group filter ──────────────────────────────────────────────────────────
@@ -569,7 +665,7 @@ describe('ChatList', () => {
     mockUseAppStore.mockImplementation((selector: any) => {
       const state = {
         user: { data: { _id: 'user1' } },
-        chat: { selectedRoom: 'room-dm-1' },
+        chat: { selectedRoom: 'room-dm-1', presenceMap: {} },
         setSelectedChatRoom: mockSetSelectedChatRoom,
       }
       return selector(state)
@@ -580,7 +676,7 @@ describe('ChatList', () => {
     await waitFor(() => {
       const roomButton = screen.getByTestId('discussion-thread')
       expect(roomButton).toHaveAttribute('aria-current', 'true')
-      expect(roomButton.parentElement?.className).toContain('border-[#2f7a4c]')
+      expect(roomButton.closest('.qv-room')).toHaveAttribute('data-selected', 'true')
     })
   })
 
@@ -599,6 +695,12 @@ describe('ChatList', () => {
     await waitFor(() => {
       expect(screen.getByText('5')).toBeInTheDocument()
     })
+    expect(screen.getByText('5')).toHaveTextContent('5 unread')
+    expect(screen.getByText('unread')).toHaveClass('sr-only')
+    expect(screen.getByTestId('discussion-thread').closest('.qv-room')).toHaveAttribute(
+      'data-unread',
+      'true'
+    )
   })
 
   it('renders "99+" badge when unread count exceeds 99', async () => {
@@ -701,5 +803,62 @@ describe('ChatList', () => {
       GET_CHAT_ROOMS,
       expect.objectContaining({ fetchPolicy: 'cache-and-network' })
     )
+  })
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  describe('helpers', () => {
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('tintFor gives each discussion a steady tint from the set', () => {
+      const ids = ['a', 'b', 'c', 'room-group-1', 'another-room', 'x1y2z3']
+      ids.forEach((id) => {
+        expect(['blue', 'tan', 'purple']).toContain(tintFor(id))
+        expect(tintFor(id)).toBe(tintFor(id))
+      })
+      expect(new Set(['a', 'b', 'c'].map(tintFor)).size).toBe(3)
+    })
+
+    it('listTime shows the time today, then Yesterday, a weekday, then a date', () => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date(2026, 10, 20, 15, 0))
+
+      expect(listTime(new Date(2026, 10, 20, 14, 44).toISOString())).toBe('2:44 PM')
+      expect(listTime(new Date(2026, 10, 19, 9, 0).toISOString())).toBe('Yesterday')
+      expect(listTime(new Date(2026, 10, 16, 9, 0).toISOString())).toBe('Mon')
+      expect(listTime(new Date(2026, 10, 3, 9, 0).toISOString())).toBe('Nov 3')
+      expect(listTime('not a date')).toBe('')
+    })
+
+    it('previewLine covers chats and discussions with and without a last message', () => {
+      const dm = dmRoom as ChatRoom
+      const discussion = groupRoom as ChatRoom
+
+      expect(previewLine(dm, 'user1')).toBe('No messages yet')
+      expect(previewLine({ ...dm, lastMessage: { text: 'Hi', userId: 'user2' } }, 'user1')).toBe('Hi')
+      expect(
+        previewLine({ ...dm, lastMessage: { text: 'Hi', userId: 'user1', readByOther: true } }, 'user1')
+      ).toBe('✓✓ You: Hi')
+      expect(previewLine({ ...dm, lastMessage: { text: 'Hi', userId: 'user1' } }, 'user1')).toBe(
+        '✓ You: Hi'
+      )
+
+      expect(previewLine(discussion, 'user1')).toBe('Some post text here.')
+      expect(previewLine({ ...discussion, postDetails: undefined }, 'user1')).toBe('Discussion')
+      expect(
+        previewLine(
+          { ...discussion, lastMessage: { text: 'Agreed', userId: 'user3', userName: 'Sam Rivera' } },
+          'user1'
+        )
+      ).toBe('Sam: Agreed')
+      expect(
+        previewLine({ ...discussion, lastMessage: { text: 'Agreed', userId: 'user3' } }, 'user1')
+      ).toBe('Agreed')
+      expect(
+        previewLine({ ...discussion, lastMessage: { text: 'Agreed', userId: 'user1' } }, 'user1')
+      ).toBe('You: Agreed')
+    })
   })
 })

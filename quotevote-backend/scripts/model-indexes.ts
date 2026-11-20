@@ -1,7 +1,8 @@
 /// <reference types="node" />
 /**
- * Switch step for #716 and #714: compares the indexes the Mongoose models declare with
- * the database's, and builds the missing ones on purpose instead of at startup.
+ * Switch step for #716 and #714: compares the indexes the Mongoose models declare (plus
+ * the `@@index`es of the collections only Prisma uses) with the database's, and builds
+ * the missing ones on purpose instead of at startup.
  *
  *   pnpm db:model-indexes           report only, changes nothing
  *   pnpm db:model-indexes --apply   build missing indexes one at a time, and add the
@@ -15,42 +16,7 @@ import mongoose from 'mongoose';
 // Loads the models exactly as the server does (through the GraphQL types), so this
 // covers the indexes Mongoose's autoIndex would have built at startup, and no others.
 import '~/data/schema';
-import {
-  createIndexOptions,
-  declaredIndexes,
-  describeConflict,
-  describeIndex,
-  planIndexes,
-  ttlCommand,
-} from '~/data/utils/modelIndexes';
-import type { ExistingIndex, ModelIndexSource } from '~/types/modelIndexes';
-
-/** Every model the backend registers, with its declared indexes. */
-function modelSources(): ModelIndexSource[] {
-  return mongoose.modelNames().map((name) => {
-    const model = mongoose.model(name);
-    return {
-      collection: model.collection.collectionName,
-      indexes: model.schema.indexes() as ModelIndexSource['indexes'],
-    };
-  });
-}
-
-async function existingIndexes(
-  db: mongoose.mongo.Db,
-  collections: string[]
-): Promise<Record<string, ExistingIndex[]>> {
-  const names = new Set(
-    (await db.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name)
-  );
-  const out: Record<string, ExistingIndex[]> = {};
-  for (const name of collections) {
-    out[name] = names.has(name)
-      ? ((await db.collection(name).indexes()) as unknown as ExistingIndex[])
-      : [];
-  }
-  return out;
-}
+import { applyIndexPlan, describePlan, planDatabaseIndexes } from '~/data/utils/modelIndexRun';
 
 async function main(): Promise<void> {
   const apply = process.argv.includes('--apply');
@@ -62,14 +28,8 @@ async function main(): Promise<void> {
   try {
     const db = mongoose.connection.db;
     if (!db) throw new Error('No database connection');
-    const declared = declaredIndexes(modelSources());
-    const collections = [...new Set(declared.map((d) => d.collection))].sort();
-    const plan = planIndexes(declared, await existingIndexes(db, collections));
-
-    console.log(`${plan.present} declared indexes already in place.`);
-    plan.missing.forEach((i) => console.log(`missing: ${describeIndex(i)}`));
-    plan.ttl.forEach((i) => console.log(`needs TTL (collMod): ${describeIndex(i)}`));
-    plan.conflicts.forEach((c) => console.log(`CONFLICT: ${describeConflict(c)}`));
+    const plan = await planDatabaseIndexes(db);
+    describePlan(plan).forEach((line) => console.log(line));
 
     if (plan.conflicts.length > 0) {
       console.log('Stopped: resolve the conflicts above by hand. Nothing was changed.');
@@ -84,18 +44,7 @@ async function main(): Promise<void> {
       console.log('Report only. Run with --apply to make these changes.');
       return;
     }
-
-    for (const index of plan.missing) {
-      const started = Date.now();
-      process.stdout.write(`building ${describeIndex(index)} ... `);
-      await db.collection(index.collection).createIndex(index.fields, createIndexOptions(index));
-      console.log(`done in ${((Date.now() - started) / 1000).toFixed(1)}s`);
-    }
-    for (const index of plan.ttl) {
-      process.stdout.write(`adding TTL to ${describeIndex(index)} ... `);
-      await db.command(ttlCommand(index));
-      console.log('done');
-    }
+    await applyIndexPlan(db, plan, (line) => console.log(line));
   } finally {
     await mongoose.disconnect();
   }

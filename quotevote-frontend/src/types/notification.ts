@@ -2,6 +2,8 @@
  * TypeScript interfaces for notification-related types
  */
 
+import type { ElementType } from 'react';
+
 export interface NotificationUser {
   _id: string;
   name: string;
@@ -25,6 +27,7 @@ export interface Notification {
   /** Legacy rows can omit a sender; UI must tolerate null (#464 / #681). */
   userBy?: NotificationUser | null;
   label: string;
+  /** `new` (unread) or `read`; cleared ones aren't listed. */
   status: string;
   created: string | number | Date;
   notificationType: 'FOLLOW' | 'UPVOTED' | 'DOWNVOTED' | 'COMMENTED' | 'QUOTED';
@@ -44,3 +47,26 @@ export interface NotificationHandler {
   notifyWarning: (message: string, options?: { duration?: number }) => void;
 }
 
+/** The filters of the Notifications panel (updated design). */
+export type NotificationFilter = 'all' | 'votes' | 'comments' | 'quotes' | 'follows';
+
+export interface NotificationListsProps {
+  /** Already filtered; grouped into Today and Earlier here. */
+  notifications: Notification[];
+  /** Called after a notification sends the user somewhere (e.g. to close the panel). */
+  onNavigate?: () => void;
+  /** When × removes the last row, focus moves here (the filters). */
+  onListEmptied?: () => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
+}
+
+export interface NotificationsInboxProps {
+  onNavigate?: () => void;
+  /** Shows the close button (the desktop panel). */
+  onClose?: () => void;
+  initialFilter?: NotificationFilter;
+  /** The title element: an h1 on the page, the sheet's title in the panel. */
+  TitleAs?: ElementType;
+  DescriptionAs?: ElementType;
+}

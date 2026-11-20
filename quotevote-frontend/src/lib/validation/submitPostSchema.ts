@@ -5,8 +5,14 @@
 import { z } from 'zod'
 import { containsUrl, sanitizeUrl } from '@/lib/utils/sanitizeUrl'
 import { ATTRIBUTION_MAX_LENGTH } from '@/lib/constants/attribution'
-import { SUBMIT_POST_TITLE_MAX_LENGTH } from '@/lib/constants/submitPost'
+import {
+  SUBMIT_POST_TEXT_MAX_LENGTH,
+  SUBMIT_POST_TITLE_MAX_LENGTH,
+} from '@/lib/constants/submitPost'
 import { TAG_TITLE_MAX_LENGTH } from '@/lib/constants/tags'
+
+/** Shown under the citation link field, as in the design. */
+export const CITATION_URL_ERROR = 'Enter a full link starting with https://'
 
 export const submitPostSchema = z.object({
   title: z
@@ -16,6 +22,10 @@ export const submitPostSchema = z.object({
   text: z
     .string()
     .min(1, 'Post content is required')
+    .max(
+      SUBMIT_POST_TEXT_MAX_LENGTH,
+      `Post content can be at most ${SUBMIT_POST_TEXT_MAX_LENGTH.toLocaleString('en-US')} characters`
+    )
     .refine(
       (value) => !containsUrl(value),
       {
@@ -28,7 +38,7 @@ export const submitPostSchema = z.object({
     .refine(
       (value) => !value || sanitizeUrl(value) !== null,
       {
-        message: 'Invalid URL format. Please enter a valid http or https URL.',
+        message: CITATION_URL_ERROR,
       }
     ),
   attribution: z

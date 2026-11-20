@@ -1,225 +1,123 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useLazyQuery } from '@apollo/client/react';
-import { MessageSquare, Users } from 'lucide-react';
-import { useAppStore } from '@/store';
-import { GET_CHAT_ROOM } from '@/graphql/queries';
-import { cn } from '@/lib/utils';
-import { PRESENCE_TEXT_CLASS } from '@/lib/constants/presence';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import PresenceIcon from '@/components/Chat/PresenceIcon';
-import StatusMessage from '@/components/Chat/StatusMessage';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { BuddyItem, BuddyItemListProps, PresenceStatus } from '@/types/buddylist';
-import { ChatRoom, StagedChatRoom } from '@/types/chat';
-
-
-
-const emptyData: BuddyItem[] = [
-    { Text: 'Car Shark', type: 'USER', avatar: null },
-    { Text: 'Four Aces', type: 'POST', avatar: null },
-    { Text: 'Peter Parker', type: 'USER', avatar: null },
-    { Text: 'Lebron James', type: 'USER', avatar: null },
-    { Text: 'Twitter', type: 'POST', avatar: null },
-];
-
-const TruncatedText = ({ text, className }: { text: string; className?: string }) => {
-    const textRef = useRef<HTMLDivElement>(null);
-    const [isOverflowing, setIsOverflowing] = useState(false);
-
-    useEffect(() => {
-        const checkOverflow = () => {
-            if (textRef.current) {
-                const element = textRef.current;
-                setIsOverflowing(element.scrollWidth > element.clientWidth);
-            }
-        };
-
-        checkOverflow();
-        window.addEventListener('resize', checkOverflow);
-        return () => window.removeEventListener('resize', checkOverflow);
-    }, [text]);
-
-    const content = (
-        <div ref={textRef} className={cn('truncate', className)}>
-            {text}
-        </div>
-    );
-
-    if (isOverflowing) {
-        return (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>{content}</TooltipTrigger>
-                    <TooltipContent>{text}</TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-        );
-    }
-
-    return content;
-};
+import { useLazyQuery } from "@apollo/client/react";
+import { useAppStore } from "@/store";
+import { GET_CHAT_ROOM } from "@/graphql/queries";
+import { PRESENCE_LABEL, toPresenceStatus } from "@/lib/constants/presence";
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { BuddyItem, BuddyItemListProps } from "@/types/buddylist";
+import { ChatRoom, StagedChatRoom } from "@/types/chat";
 
 export default function BuddyItemList({ buddyList, className }: BuddyItemListProps) {
-    const currentUser = useAppStore((state) => state.user.data);
-    const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
-    const [getChatRoom] = useLazyQuery<{ messageRoom: ChatRoom }>(GET_CHAT_ROOM);
+  const currentUser = useAppStore((state) => state.user.data);
+  const setSelectedChatRoom = useAppStore((state) => state.setSelectedChatRoom);
+  const [getChatRoom] = useLazyQuery<{ messageRoom: ChatRoom }>(GET_CHAT_ROOM);
 
-    const itemList = buddyList && buddyList.length > 0 ? buddyList : emptyData;
-    const isEmptyList = !buddyList || buddyList.length === 0;
+  const itemList = buddyList ?? [];
 
-    const handleClickItem = async (item: BuddyItem) => {
-        if (isEmptyList || !currentUser || !currentUser._id) return;
+  const handleClickItem = async (item: BuddyItem) => {
+    if (!currentUser || !currentUser._id) return;
 
-        // 1. If item has a room object
-        if (item.room && item.room._id) {
-            setSelectedChatRoom(item.room._id);
-            return;
-        }
-
-        // 2. If item is a specific room from messageRooms (mapped in index.jsx has .room)
-        // But sometimes item IS the room (if mapped differently?). 
-        // In index.jsx: map(item => ({ room: item ... })). So item.room is consistent.
-
-        // 3. If item has a user (BuddyListWithPresence) but no room yet
-        if (item.user && item.user._id) {
-            try {
-                // Attempt to find existing room
-                const { data } = await getChatRoom({
-                    variables: { otherUserId: item.user._id },
-                });
-
-                if (data && data.messageRoom && data.messageRoom._id) {
-                    setSelectedChatRoom(data.messageRoom._id);
-                } else {
-                    // No room yet — stage a new DM so MessageBox renders the compose view
-                    const staged: StagedChatRoom = {
-                        _id: null,
-                        title: item.user.name || item.user.username || 'Chat',
-                        avatar: (item.user.avatar as string | Record<string, unknown> | null | undefined) ?? null,
-                        messageType: 'USER',
-                        users: [currentUser._id!.toString(), item.user._id],
-                        recipientId: item.user._id,
-                        username: item.user.username,
-                    };
-                    setSelectedChatRoom(staged);
-                }
-            } catch {
-                // Handle error silently or via toast
-            }
-        }
-    };
-
-    if (isEmptyList) {
-        return (
-            <div className={cn('flex flex-col h-full', className)}>
-                <div className="p-8 text-center text-muted-foreground">
-                    <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                    <h3 className="text-lg font-bold mb-2">No Conversations Yet</h3>
-                    <p className="text-sm">
-                        Start chatting by adding friends!<br />
-                        Follow users to see them here.
-                    </p>
-                </div>
-                <div className="opacity-60 pointer-events-none">
-                    {emptyData.map((item, index) => (
-                        <BuddyItemRow key={index} item={item} onClick={() => { }} />
-                    ))}
-                </div>
-            </div>
-        );
+    // 1. If item has a room object
+    if (item.room && item.room._id) {
+      setSelectedChatRoom(item.room._id);
+      return;
     }
 
-    return (
-        <ul className={cn('flex flex-col w-full overflow-y-auto py-1', className)}>
-            {itemList.map((item, index) => {
-                if (!item) return null;
-                // Key generation logic
-                const itemKey = item.room?._id || item.user?._id || item._id || `item-${index}`;
-                return <BuddyItemRow key={itemKey} item={item} onClick={() => handleClickItem(item)} />;
-            })}
-        </ul>
-    );
+    // 2. If item is a specific room from messageRooms (mapped in index.jsx has .room)
+    // But sometimes item IS the room (if mapped differently?).
+    // In index.jsx: map(item => ({ room: item ... })). So item.room is consistent.
+
+    // 3. If item has a user (BuddyListWithPresence) but no room yet
+    if (item.user && item.user._id) {
+      try {
+        // Attempt to find existing room
+        const { data } = await getChatRoom({
+          variables: { otherUserId: item.user._id },
+        });
+
+        if (data && data.messageRoom && data.messageRoom._id) {
+          setSelectedChatRoom(data.messageRoom._id);
+        } else {
+          // No room yet — stage a new DM so MessageBox renders the compose view
+          const staged: StagedChatRoom = {
+            _id: null,
+            title: item.user.name || item.user.username || "Chat",
+            avatar:
+              (item.user.avatar as string | Record<string, unknown> | null | undefined) ?? null,
+            messageType: "USER",
+            users: [currentUser._id!.toString(), item.user._id],
+            recipientId: item.user._id,
+            username: item.user.username,
+          };
+          setSelectedChatRoom(staged);
+        }
+      } catch {
+        // Handle error silently or via toast
+      }
+    }
+  };
+
+  return (
+    <ul className={["qv-buddy-list", className].filter(Boolean).join(" ")}>
+      {itemList.map((item, index) => {
+        if (!item) return null;
+        // Key generation logic
+        const itemKey = item.room?._id || item.user?._id || item._id || `item-${index}`;
+        return <BuddyItemRow key={itemKey} item={item} onClick={() => handleClickItem(item)} />;
+      })}
+    </ul>
+  );
 }
 
 function BuddyItemRow({ item, onClick }: { item: BuddyItem; onClick: () => void }) {
-    const itemText = item.Text || item.user?.name || item.user?.username || item.room?.title || 'Unknown';
-    // Determine type: 'USER' or 'POST' (group)
-    // Logic from old file: const itemType = item.type || (item.user ? 'USER' : 'POST');
-    // index.jsx maps item.messageType to item.type.
-    const itemType = item.type || item.messageType || (item.user ? 'USER' : 'POST');
+  const itemText =
+    item.Text || item.user?.name || item.user?.username || item.room?.title || "Unknown";
 
-    const rawAvatar = item.avatar || item.user?.avatar || item.room?.avatar;
+  const rawAvatar = item.avatar || item.user?.avatar || item.room?.avatar;
 
-    return (
-        <li
-            className="relative flex items-center gap-3 px-4 py-3 m-1 rounded-xl cursor-pointer hover:bg-muted transition-colors border border-transparent hover:border-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-1"
-            role="button"
-            tabIndex={0}
-            onClick={onClick}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onClick();
-                }
-            }}
-        >
-            <div className="relative">
-                <DisplayAvatar
-                    avatar={rawAvatar as string | Record<string, unknown> | undefined}
-                    username={itemText}
-                    size={40}
-                    className="border-2 border-background shadow-sm"
-                />
-                {item.unreadMessages && item.unreadMessages > 0 ? (
-                    <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 flex items-center justify-center bg-[#2f7a4c] text-white text-[10px] font-bold rounded-full px-1 shadow-sm ring-2 ring-background">
-                        {item.unreadMessages > 99 ? '99+' : item.unreadMessages}
-                    </span>
-                ) : null}
-            </div>
+  const status = toPresenceStatus((item.presence?.status as string) || "offline");
+  const lastSeen = (item.presence as { lastSeen?: string | null } | undefined)?.lastSeen;
+  const detail =
+    status === "offline"
+      ? lastSeen
+        ? `Offline · last seen ${timeAgo(lastSeen)}`
+        : "Offline"
+      : `${PRESENCE_LABEL[status]}${item.statusMessage ? ` · ${item.statusMessage}` : ""}`;
 
-            <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                <div className="flex items-center gap-2 max-w-full">
-                    {/* Presence Icon */}
-                    {item.presence && item.presence.status ? (
-                        <PresenceIcon status={item.presence.status as PresenceStatus} />
-                    ) : null}
+  return (
+    <li className="qv-buddy">
+      <button type="button" className="qv-buddy-main" onClick={onClick}>
+        <span className="qv-room-avatar">
+          <DisplayAvatar
+            avatar={rawAvatar as string | Record<string, unknown> | undefined}
+            username={itemText}
+            size={44}
+          />
+          <span className="qv-presence-dot" data-status={status} aria-hidden="true" />
+        </span>
+        <span className="qv-room-text">
+          <span className="qv-room-name">{itemText}</span>
+          <span className="qv-room-preview">{detail}</span>
+        </span>
+        {item.unreadMessages && item.unreadMessages > 0 ? (
+          <span className="qv-room-unread">
+            {item.unreadMessages > 99 ? "99+" : item.unreadMessages}
+            <span className="sr-only"> unread</span>
+          </span>
+        ) : null}
+      </button>
+    </li>
+  );
+}
 
-                    <TruncatedText text={itemText} className="font-medium text-sm text-foreground flex-1 min-w-0" />
-
-                    {/* Chip/Badge */}
-                    <div
-                        className={cn(
-                            "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-white shrink-0",
-                            itemType === 'USER' ? "bg-[#2f7a4c]" : "bg-blue-700" // map theme.palette.success/secondary
-                        )}
-                    >
-                        {itemType === 'USER' ? (
-                            <MessageSquare className="w-3 h-3" />
-                        ) : (
-                            <Users className="w-3 h-3" />
-                        )}
-                        <span>{itemType === 'USER' ? 'FRIEND' : 'POST'}</span>
-                    </div>
-                </div>
-
-                {/* Secondary Text */}
-                <div className="min-w-0 text-xs text-muted-foreground truncate">
-                    {item.statusMessage ? (
-                        <StatusMessage message={item.statusMessage} />
-                    ) : item.presence?.status === 'away' ? (
-                        <span className={cn('font-medium', PRESENCE_TEXT_CLASS.away)}>Away</span>
-                    ) : item.presence?.status === 'dnd' ? (
-                        <span className={cn('font-medium', PRESENCE_TEXT_CLASS.dnd)}>Do Not Disturb</span>
-                    ) : null}
-                </div>
-            </div>
-        </li>
-    );
+/** "2h ago", "3d ago": how long ago a buddy was last seen. */
+function timeAgo(iso: string): string {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (Number.isNaN(minutes)) return "a while ago";
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
 }

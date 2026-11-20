@@ -1,30 +1,23 @@
 "use client";
 
-import type { FC } from 'react';
-import { useMemo, memo } from 'react';
-import Link from 'next/link';
-import { useMutation } from '@apollo/client/react';
-import { Check, CheckCheck, Trash2 } from 'lucide-react';
+import type { FC } from "react";
+import { useMemo, memo } from "react";
+import Link from "next/link";
+import { useMutation } from "@apollo/client/react";
+import { Check, CheckCheck, Trash2 } from "lucide-react";
 
-import { DisplayAvatar } from '@/components/DisplayAvatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useAppStore } from '@/store';
-import { toast } from 'sonner';
-import { DELETE_MESSAGE } from '@/graphql/mutations';
-import useGuestGuard from '@/hooks/useGuestGuard';
-import type { MessageItemProps } from '@/types/chat';
-import { cn } from '@/lib/utils';
+import { DisplayAvatar } from "@/components/DisplayAvatar";
+import { useAppStore } from "@/store";
+import { toast } from "sonner";
+import { DELETE_MESSAGE } from "@/graphql/mutations";
+import useGuestGuard from "@/hooks/useGuestGuard";
+import type { MessageItemProps } from "@/types/chat";
 
 const normalizeId = (id: unknown): string | null => {
   if (!id) return null;
-  if (typeof id === 'string') return id;
+  if (typeof id === "string") return id;
   const candidate = id as { toString?: () => string };
-  if (typeof candidate.toString === 'function') {
+  if (typeof candidate.toString === "function") {
     try {
       return candidate.toString();
     } catch {
@@ -35,22 +28,22 @@ const normalizeId = (id: unknown): string | null => {
 };
 
 const formatTime = (date?: string | number | Date): string => {
-  if (!date) return '';
+  if (!date) return "";
   const d = new Date(date);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const minutes = Math.floor(diff / 60000);
 
-  if (minutes < 1) return 'Just now';
+  if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes}m ago`;
   if (d.toDateString() === now.toDateString()) {
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
   return d.toLocaleDateString([], {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
@@ -59,17 +52,15 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message, roomType }) => {
   const ensureAuth = useGuestGuard();
 
   const currentUserId = currentUser?._id ? normalizeId(currentUser._id) : null;
-  const isOwnMessage = currentUserId
-    ? normalizeId(message.userId) === currentUserId
-    : false;
+  const isOwnMessage = currentUserId ? normalizeId(message.userId) === currentUserId : false;
   const isDeleted = message.deleted === true;
   // Direct messages can't be deleted (#576); in a post's chat, only by their author.
-  const canDelete = roomType === 'POST' && isOwnMessage && !isDeleted;
+  const canDelete = roomType === "POST" && isOwnMessage && !isDeleted;
   const isDefaultDirection = !isOwnMessage;
 
   // Refetch rather than drop the message: the room shows a note in its place.
   const [deleteMessage] = useMutation(DELETE_MESSAGE, {
-    refetchQueries: ['getRoomMessages'],
+    refetchQueries: ["getRoomMessages"],
   });
 
   const readState = useMemo(() => {
@@ -88,12 +79,10 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message, roomType }) => {
     if (!ensureAuth()) return;
     try {
       await deleteMessage({ variables: { messageId: message._id } });
-      toast.success('Message deleted successfully');
+      toast.success("Message deleted successfully");
     } catch (err) {
       const errorMessage =
-        err instanceof Error && err.message
-          ? err.message
-          : 'Failed to delete message';
+        err instanceof Error && err.message ? err.message : "Failed to delete message";
 
       toast.error(`Delete Error: ${errorMessage}`);
     }
@@ -102,15 +91,11 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message, roomType }) => {
   if (!currentUser) return null;
 
   const senderName =
-    (message.user && (message.user.name || message.user.username)) ||
-    message.userName ||
-    'Unknown';
+    (message.user && (message.user.name || message.user.username)) || message.userName || "Unknown";
 
   const avatarRaw = message.user?.avatar;
   const profileUsername = message.user?.username ?? (isOwnMessage ? currentUser.username : null);
-  const profileHref = profileUsername
-    ? `/profile/${encodeURIComponent(profileUsername)}`
-    : null;
+  const profileHref = profileUsername ? `/profile/${encodeURIComponent(profileUsername)}` : null;
 
   const timeLabel = formatTime(message.created);
 
@@ -118,8 +103,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message, roomType }) => {
     <DisplayAvatar
       avatar={avatarRaw as string | Record<string, unknown> | undefined}
       username={senderName}
-      size={40}
-      className="ring-2 ring-white shadow-sm"
+      size={32}
     />
   );
 
@@ -127,51 +111,41 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message, roomType }) => {
     <Link
       href={profileHref}
       aria-label={`Open ${profileUsername} profile`}
-      className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274] focus-visible:ring-offset-2"
+      className="qv-bubble-avatar-link"
     >
       {avatarNode}
     </Link>
-  ) : avatarNode;
+  ) : (
+    avatarNode
+  );
+
+  // Sender names show in discussions, in a steady colour per person (design).
+  const nameTone = (message.userId ?? senderName).length % 5;
 
   return (
     <div
-      className={cn(
-        'mb-[14px] flex w-full px-2',
-        isDefaultDirection ? 'justify-start' : 'justify-end'
-      )}
+      className="qv-bubble-row"
+      data-mine={isOwnMessage || undefined}
+      data-testid={`message-item-${message._id}`}
     >
-      {isDefaultDirection && (
-        <div className="mr-2.5 flex h-10 w-10 flex-shrink-0 items-center justify-center">
-          {avatarWithLink}
-        </div>
-      )}
+      {isDefaultDirection && <div className="qv-bubble-avatar">{avatarWithLink}</div>}
 
-      <div className="flex min-w-[120px] max-w-[75%] flex-col">
-        {isDefaultDirection && (
-          <div className="mb-[3px] pl-1 text-[0.75rem] font-semibold text-muted-foreground">
-            {senderName}
-          </div>
-        )}
-
-        <div className="relative group">
-          <div
-            className={cn(
-              'relative px-4 py-[10px] text-[0.9375rem] leading-[1.5] transition-shadow duration-200',
-              isDefaultDirection
-                ? 'rounded-[20px_20px_20px_6px] border border-gray-200 bg-white text-foreground shadow-[0_2px_8px_rgba(0,0,0,0.10),0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12),0_2px_4px_rgba(0,0,0,0.10)]'
-                : 'rounded-[20px_20px_6px_20px] bg-gradient-to-br from-[#52b274] to-[#4a9e63] text-white shadow-[0_4px_12px_rgba(82,178,116,0.35),0_2px_4px_rgba(82,178,116,0.20)] hover:shadow-[0_6px_16px_rgba(82,178,116,0.40),0_3px_6px_rgba(82,178,116,0.25)]'
+      <div className="qv-bubble-col">
+        <div className="qv-bubble-wrap group">
+          <div className="qv-bubble" data-deleted={isDeleted || undefined}>
+            {isDefaultDirection && roomType === "POST" && (
+              <b className="qv-bubble-name" data-tone={nameTone}>
+                {senderName}
+              </b>
             )}
-          >
-            <p className={cn('whitespace-pre-wrap break-words', isDeleted && 'italic')}>
-              {message.text}
-            </p>
+            <p>{message.text}</p>
           </div>
 
           {canDelete && (
             <button
               type="button"
               onClick={handleDelete}
-              className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white text-red-600 shadow-[0_3px_10px_rgba(0,0,0,0.2)] opacity-0 transition-all duration-200 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 hover:bg-red-50 hover:scale-110 hover:shadow-[0_4px_14px_rgba(0,0,0,0.25)] [@media(hover:none)]:opacity-100"
+              className="qv-bubble-delete"
               aria-label="Delete message"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -179,39 +153,23 @@ const MessageItemComponent: FC<MessageItemProps> = ({ message, roomType }) => {
           )}
         </div>
 
-        <div
-          className={cn(
-            'mt-1 flex items-center gap-1.5 text-[0.6875rem] font-medium text-muted-foreground',
-            isOwnMessage ? 'justify-end pr-1' : 'justify-start pl-1'
-          )}
-        >
-          {isOwnMessage && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center">
-                    {readState.isRead ? (
-                      <CheckCheck className="mr-0.5 h-3.5 w-3.5 text-[#52b274] drop-shadow-sm" />
-                    ) : (
-                      <Check className="mr-0.5 h-3 w-3 text-muted-foreground" />
-                    )}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  {readState.isRead ? 'Read' : 'Sent'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          <span>{timeLabel}</span>
-        </div>
+        {isOwnMessage && (
+          <div className="qv-bubble-meta">
+            <span>{timeLabel}</span>
+            <span
+              className="qv-bubble-read"
+              aria-label={readState.isRead ? "Read" : "Sent"}
+              role="img"
+            >
+              {readState.isRead ? (
+                <CheckCheck className="size-3.5" aria-hidden="true" />
+              ) : (
+                <Check className="size-3.5" aria-hidden="true" />
+              )}
+            </span>
+          </div>
+        )}
       </div>
-
-      {!isDefaultDirection && (
-        <div className="ml-2.5 flex h-10 w-10 flex-shrink-0 items-center justify-center">
-          {avatarWithLink}
-        </div>
-      )}
     </div>
   );
 };

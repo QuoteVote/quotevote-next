@@ -8,7 +8,12 @@ import { AuthModalProvider } from "@/context/AuthModalContext";
 import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
-import { redesignFont, redesignItalicFont, wordmarkFont } from "@/lib/fonts/redesignFont";
+import {
+  quoteFont,
+  redesignFont,
+  redesignItalicFont,
+  wordmarkFont,
+} from "@/lib/fonts/redesignFont";
 import { DEFAULT_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo/metadata";
 import "./globals.css";
 
@@ -71,6 +76,7 @@ export default function RootLayout({
           redesignFont.variable,
           wordmarkFont.variable,
           redesignItalicFont.variable,
+          quoteFont.variable,
           "font-sans antialiased"
         )}
       >

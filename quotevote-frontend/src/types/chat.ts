@@ -91,6 +91,15 @@ export interface ChatRoom {
     lastActivity?: string | null
     /** Number of unread messages for current user */
     unreadMessages?: number | null
+    /** The newest message, for the list's preview line */
+    lastMessage?: {
+        text?: string | null
+        userId?: string | null
+        userName?: string | null
+        created?: string | null
+        /** Someone other than the sender has read it (✓✓) */
+        readByOther?: boolean | null
+    } | null
     /** Optional post details for POST rooms */
     postDetails?: {
         _id?: string
