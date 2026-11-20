@@ -3851,11 +3851,11 @@ p { line-height: 1.625; }
   color: var(--auth-ink);
 }
 @media (min-width: 640px) {
+  /* Centred with inset + auto margins, not a transform: the open animation sets its own
+     transform, which used to drop the centring so the dialog opened half off screen. */
   .qv-compose[data-slot="dialog-content"] {
-    inset: auto;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    inset: 0;
+    margin: auto;
     width: min(720px, calc(100vw - 48px));
     height: min(880px, calc(100dvh - 48px));
     border-radius: var(--cq-radius);
