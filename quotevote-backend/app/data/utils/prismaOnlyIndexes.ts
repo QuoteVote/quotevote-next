@@ -26,6 +26,10 @@ export const PRISMA_ONLY_INDEXES: ModelIndexSource[] = [
     ],
   },
   {
+    collection: 'staff_actions',
+    indexes: [[{ createdAt: 1 }, { name: 'StaffAction_createdAt_idx' }]],
+  },
+  {
     collection: 'terms_acceptances',
     indexes: [[{ userId: 1 }, { name: 'TermsAcceptance_userId_idx' }]],
   },

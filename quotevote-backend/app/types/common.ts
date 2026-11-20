@@ -58,6 +58,7 @@ export type StaffActionKind =
   | 'role_revoked'
   | 'invite_approved'
   | 'invite_declined'
+  | 'invite_reset'
   | 'user_disabled'
   | 'user_enabled'
   | 'content_removed';

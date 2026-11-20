@@ -673,6 +673,11 @@ describe('userInviteResolver', () => {
           message: 'User invite reset for Invitee@example.com.',
         });
         expect(sendGridEmail).not.toHaveBeenCalled();
+        // Logged under the admin who reset it (#616).
+        expect(ctx.prisma.staffAction.create).toHaveBeenCalledWith({
+          data: { actorId: userId, action: 'invite_reset', targetId: userId, detail: null },
+          select: { id: true },
+        });
       });
 
       it('closes the signup link of an accepted request it resets', async () => {
@@ -704,6 +709,8 @@ describe('userInviteResolver', () => {
 
         expect(result.code).toBe('SUCCESS');
         expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+        // Nothing changed, so nothing is logged.
+        expect(ctx.prisma.staffAction.create).not.toHaveBeenCalled();
       });
 
       it('refuses an account that already finished signup', async () => {

@@ -796,6 +796,7 @@ export const userInviteResolver = {
             },
             data: { status: 'expired' },
           });
+          await recordStaffAction(context, 'invite_reset', invitedUser.id);
         }
         return {
           code: 'SUCCESS',

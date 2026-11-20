@@ -12,6 +12,7 @@ import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import { hasRole, requireRole } from '~/data/utils/requireRole';
 import { recordStaffAction } from '~/data/utils/staffActions';
+import { loadStaffRoles } from '~/data/utils/staffRoleLoader';
 import {
   PUBLIC_USER_SELECT,
   toPublicUser,
@@ -72,7 +73,8 @@ function rolesOf(
 
 /**
  * A role flag on `User`, or null when the viewer may not see it. The viewer's own
- * roles come from `context.user`, loaded from the database for this request.
+ * roles come from `context.user`, loaded from the database for this request; an
+ * admin sees anyone else's through the batched loader.
  */
 async function visibleRole(
   parent: Common.User,
@@ -84,11 +86,9 @@ async function visibleRole(
   if (String(viewer._id) === String(parent._id)) return viewer[field] === true;
   if (!hasRole(viewer, 'admin')) return null;
 
-  const record = await context.prisma.user.findUnique({
-    where: { id: String(parent._id) },
-    select: { [field]: true } as Record<typeof field, true>,
-  });
-  return record ? (record as Record<string, unknown>)[field] === true : null;
+  // Batched per request, so a list of users costs one query for both fields.
+  const roles = await loadStaffRoles(context, String(parent._id));
+  return roles ? roles[field] : null;
 }
 
 export const staffResolver = {

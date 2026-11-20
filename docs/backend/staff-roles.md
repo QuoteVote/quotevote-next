@@ -37,7 +37,7 @@ Roles are always read from `context.user`, which `app/context.ts` loads from the
 ## Seeing roles
 
 - **Login:** the `/auth/login` response's `user` carries `admin`, `isModerator` and `isInviteApprover`, so the frontend knows which tabs to show. The token itself carries no new role claims.
-- **GraphQL:** `User.isModerator` and `User.isInviteApprover` are shown to the user themselves and to admins, and are `null` for anyone else, so who holds a staff role isn't public. (`User.admin` is unchanged.)
+- **GraphQL:** `User.isModerator` and `User.isInviteApprover` are shown to the user themselves and to admins, and are `null` for anyone else, so who holds a staff role isn't public. (`User.admin` is unchanged.) An admin's view of other users goes through a per-request loader (`app/data/utils/staffRoleLoader.ts`) that reads both flags for every user in the response with one query.
 
 ## Managing roles
 
@@ -52,12 +52,12 @@ Roles are always read from `context.user`, which `app/context.ts` loads from the
 
 `StaffAction` (`staff_actions` collection, Prisma only) records each staff decision: `actorId`, `action`, `targetId`, an optional `detail` and `createdAt`. It's append-only, with no relation to `User`, so user records are untouched.
 
-| `action`                             | Written by                                      | `detail` |
-| ------------------------------------ | ----------------------------------------------- | -------- |
-| `role_granted`, `role_revoked`       | `setUserRoles`, one entry per role changed      | the role |
-| `invite_approved`, `invite_declined` | `sendUserInviteApproval`                        |          |
-| `user_disabled`, `user_enabled`      | `disableUser`, `enableUser`                     |          |
-| `content_removed`                    | reserved for removing reported content (part 3) |          |
+| `action`                                             | Written by                                                                        | `detail` |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- | -------- |
+| `role_granted`, `role_revoked`                       | `setUserRoles`, one entry per role changed                                        | the role |
+| `invite_approved`, `invite_declined`, `invite_reset` | `sendUserInviteApproval` (a reset only when it moved the request back to pending) |          |
+| `user_disabled`, `user_enabled`                      | `disableUser`, `enableUser`                                                       |          |
+| `content_removed`                                    | reserved for removing reported content (part 3)                                   |          |
 
 Each mutation records its decision in one line after the change has gone through: `await recordStaffAction(context, 'invite_approved', userId)` from `app/data/utils/staffActions.ts`. A failed log write is reported to the server log and doesn't fail the mutation, since the change already happened.
 

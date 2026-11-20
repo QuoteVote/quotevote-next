@@ -355,13 +355,65 @@ describe('staffResolver (#616 part 2)', () => {
 
     it("shows an admin another user's roles from the database", async () => {
       const { context, prisma } = buildContext(ADMIN);
-      prisma.user.findUnique.mockResolvedValue({ isModerator: true });
+      prisma.user.findMany.mockResolvedValue([
+        { id: targetId, isModerator: true, isInviteApprover: false },
+      ]);
 
       await expect(staffResolver.User.isModerator(profile, {}, context)).resolves.toBe(true);
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: targetId },
-        select: { isModerator: true },
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: { id: { in: [targetId] } },
+        select: { id: true, isModerator: true, isInviteApprover: true },
       });
+    });
+
+    it('reads both fields for a whole list of users with one query', async () => {
+      const { context, prisma } = buildContext(ADMIN);
+      const ids = [targetId, otherAdminId, '507f1f77bcf86cd799439014'];
+      prisma.user.findMany.mockResolvedValue([
+        { id: ids[0], isModerator: true, isInviteApprover: false },
+        { id: ids[1], isModerator: false, isInviteApprover: true },
+        // ids[2] is gone, so its fields read null.
+      ]);
+      const users = ids.map((id) => ({ ...profile, _id: id }));
+
+      const values = await Promise.all(
+        users.flatMap((u) => [
+          staffResolver.User.isModerator(u, {}, context),
+          staffResolver.User.isInviteApprover(u, {}, context),
+        ])
+      );
+
+      expect(values).toEqual([true, false, false, true, null, null]);
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.user.findMany.mock.calls[0][0].where.id.in).toEqual(ids);
+    });
+
+    it('reuses roles already read in the same request', async () => {
+      const { context, prisma } = buildContext(ADMIN);
+      prisma.user.findMany.mockResolvedValue([
+        { id: targetId, isModerator: true, isInviteApprover: false },
+      ]);
+
+      await staffResolver.User.isModerator(profile, {}, context);
+      await expect(staffResolver.User.isInviteApprover(profile, {}, context)).resolves.toBe(false);
+
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps requests apart: a new request reads again', async () => {
+      const first = buildContext(ADMIN);
+      const second = buildContext(ADMIN);
+      for (const { prisma } of [first, second]) {
+        prisma.user.findMany.mockResolvedValue([
+          { id: targetId, isModerator: true, isInviteApprover: false },
+        ]);
+      }
+
+      await staffResolver.User.isModerator(profile, {}, first.context);
+      await staffResolver.User.isModerator(profile, {}, second.context);
+
+      expect(first.prisma.user.findMany).toHaveBeenCalledTimes(1);
+      expect(second.prisma.user.findMany).toHaveBeenCalledTimes(1);
     });
 
     it("hides other users' roles from members, staff without admin and guests", async () => {
@@ -370,6 +422,7 @@ describe('staffResolver (#616 part 2)', () => {
         await expect(staffResolver.User.isModerator(profile, {}, context)).resolves.toBeNull();
         await expect(staffResolver.User.isInviteApprover(profile, {}, context)).resolves.toBeNull();
         expect(prisma.user.findUnique).not.toHaveBeenCalled();
+        expect(prisma.user.findMany).not.toHaveBeenCalled();
       }
     });
   });
