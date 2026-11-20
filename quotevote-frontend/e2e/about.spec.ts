@@ -1,5 +1,5 @@
 /**
- * About page (#350) — Zeplin marketing page at /about.
+ * About page (#350): the public page at /about (updated design).
  * Guest-only: the public About route should render without auth.
  */
 import { test, expect } from "@playwright/test";
@@ -7,20 +7,22 @@ import { test, expect } from "@playwright/test";
 test.describe("About page", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test("renders the Zeplin about page without horizontal scroll", async ({ page }) => {
+  test("renders the about page without horizontal scroll", async ({ page }) => {
     await page.goto("/about");
 
     await expect(page.getByTestId("about-page")).toBeVisible();
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: /better conversations build stronger communities/i,
+        name: /better conversations start with specific ideas/i,
       })
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: /request an invite/i }).first()).toHaveAttribute(
-      "href",
-      "/auths/request-access"
-    );
+    await expect(
+      page
+        .getByRole("main")
+        .getByRole("link", { name: /request invite/i })
+        .first()
+    ).toHaveAttribute("href", "/auths/request-access");
     await expect(page.getByRole("link", { name: /explore discussions/i })).toBeVisible();
 
     const hasHorizontalOverflow = await page.evaluate(() => {
