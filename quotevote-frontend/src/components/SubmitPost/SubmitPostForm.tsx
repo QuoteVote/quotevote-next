@@ -114,6 +114,8 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
   const currentDraftKey = JSON.stringify(formValuesToDraft(formValues));
   const canSubmit = isSubmitPostFormReady(formValues);
   const [draftSaved, setDraftSaved] = useState(false);
+  // The top of the fields fades once they scroll under the heading.
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     if (tagReconciledRef.current || options.length === 0) return;
@@ -289,7 +291,11 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
           </button>
         </header>
 
-        <div className="qv-compose-body">
+        <div
+          className="qv-compose-body"
+          data-scrolled={scrolled || undefined}
+          onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
+        >
           <p className="qv-compose-sub">Share a quote and start the discussion.</p>
 
           <div className="qv-auth-field">
@@ -317,7 +323,16 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
             )}
           </div>
 
-          <div className="qv-auth-field">
+          <div
+            className="qv-auth-field"
+            // Phones: bring the field to the top of the form before the list opens below it,
+            // so the list covers neither the Title nor (with the keyboard up) itself.
+            onClickCapture={
+              isMobile
+                ? (event) => event.currentTarget.scrollIntoView({ block: "start" })
+                : undefined
+            }
+          >
             <span id="post-tag-label" className="qv-auth-label">
               Tag
               <RequiredMark />
@@ -344,18 +359,13 @@ export function SubmitPostForm({ options = [], user, setOpen }: SubmitPostFormPr
                   errorTestId="post-tag-error"
                   disabled={busy}
                   allowCreate={true}
-                  side={isMobile ? "top" : "bottom"}
+                  side="bottom"
                   triggerTestId="post-tag-select"
                   createOptionTestId="post-tag-create"
                   ariaLabelledBy="post-tag-label"
                   hideIndicator
                   renderValue={(label) => (
-                    <>
-                      <span className="qv-compose-chip qv-compose-chip-in"># {label}</span>
-                      <span className="qv-compose-placeholder" aria-hidden="true">
-                        Select or create a tag
-                      </span>
-                    </>
+                    <span className="qv-compose-chip qv-compose-chip-in"># {label}</span>
                   )}
                   triggerClassName="qv-auth-input qv-compose-tag"
                 />

@@ -208,7 +208,7 @@ export function Combobox({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="h-8 border-0 p-0 text-sm shadow-none focus-visible:ring-0"
+              className="h-8 border-0 p-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
             />
           </div>
 
