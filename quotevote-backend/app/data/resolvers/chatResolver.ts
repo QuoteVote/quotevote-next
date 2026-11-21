@@ -377,10 +377,16 @@ export const chatResolver = {
       const unread = messages.filter(
         (message) => message.userId !== userId && !(message.readBy ?? []).includes(userId)
       );
+      // When it was read goes next to who read it (`readByDetailed`, the legacy field), so a
+      // conversation can say "Seen" with the time. Earlier entries stay as they are.
+      const readAt = new Date();
       if (unread.length > 0) {
         await context.prisma.message.updateMany({
           where: { id: { in: unread.map((message) => message.id) } },
-          data: { readBy: { push: userId } },
+          data: {
+            readBy: { push: userId },
+            readByDetailed: { push: { userId, readAt } },
+          },
         });
       }
 
@@ -415,10 +421,14 @@ export const chatResolver = {
         });
       }
 
-      return unread.map((message) => ({
-        ...toMessageEntity(message),
-        readBy: [...(message.readBy ?? []), userId],
-      }));
+      return unread.map((message) => {
+        const entity = toMessageEntity(message);
+        return {
+          ...entity,
+          readBy: [...(message.readBy ?? []), userId],
+          readByDetailed: [...(entity.readByDetailed ?? []), { userId, readAt }],
+        };
+      });
     },
 
     addMessageReaction: async (

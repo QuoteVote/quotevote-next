@@ -11,7 +11,7 @@
 
 import { act, render, screen, waitFor } from '@/__tests__/utils/test-utils'
 import MessageItemList from '@/components/Chat/MessageItemList'
-import { GET_ROOM_MESSAGES, GET_POST } from '@/graphql/queries'
+import { GET_ROOM_MESSAGES, GET_ROOM_READ_TIMES, GET_POST } from '@/graphql/queries'
 import type { ChatRoom, ChatMessage } from '@/types/chat'
 
 // Mock react-scrollable-feed
@@ -243,6 +243,98 @@ describe('MessageItemList', () => {
 
     await waitFor(() => {
       expect(screen.queryByTestId('quote-header-message')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Seen in direct conversations', () => {
+    const withMessages = (messages: ChatMessage[]) =>
+      mockUseQuery.mockImplementation((query) =>
+        query === GET_ROOM_MESSAGES
+          ? { data: { messages }, loading: false, error: undefined, refetch: jest.fn() }
+          : { data: undefined, loading: false, error: undefined, refetch: jest.fn() }
+      )
+
+    it('says when the other member saw my latest message, from the read times query', async () => {
+      const readAt = new Date()
+      readAt.setHours(14, 51, 0, 0)
+      mockUseQuery.mockImplementation((query) => {
+        if (query === GET_ROOM_MESSAGES) {
+          return {
+            data: { messages: [{ ...mockMessages[0], readBy: ['user2'] }, mockMessages[1]] },
+            loading: false,
+            error: undefined,
+            refetch: jest.fn(),
+          }
+        }
+        if (query === GET_ROOM_READ_TIMES) {
+          return {
+            data: {
+              messages: [
+                { _id: 'msg1', readByDetailed: [{ userId: 'user2', readAt: readAt.toISOString() }] },
+              ],
+            },
+            refetch: jest.fn(),
+          }
+        }
+        return { data: undefined, loading: false, error: undefined, refetch: jest.fn() }
+      })
+      render(<MessageItemList room={mockRoom} />)
+
+      expect(await screen.findByTestId('message-seen')).toHaveTextContent('Seen 2:51 PM')
+    })
+
+    it('still loads, with Seen but no time, when the API has no read times (legacy)', async () => {
+      mockUseQuery.mockImplementation((query) => {
+        if (query === GET_ROOM_MESSAGES) {
+          return {
+            data: { messages: [{ ...mockMessages[0], readBy: ['user2'] }] },
+            loading: false,
+            error: undefined,
+            refetch: jest.fn(),
+          }
+        }
+        if (query === GET_ROOM_READ_TIMES) {
+          return {
+            data: undefined,
+            error: new Error('Cannot query field "readByDetailed" on type "Message".'),
+            refetch: jest.fn(),
+          }
+        }
+        return { data: undefined, loading: false, error: undefined, refetch: jest.fn() }
+      })
+      render(<MessageItemList room={mockRoom} />)
+
+      expect(await screen.findByTestId('message-item-msg1')).toBeInTheDocument()
+      expect(screen.getByTestId('message-seen')).toHaveTextContent(/^Seen$/)
+    })
+
+    it("asks for read times only in direct conversations", () => {
+      render(<MessageItemList room={mockPostRoom} />)
+      const call = mockUseQuery.mock.calls.find(([query]) => query === GET_ROOM_READ_TIMES)
+      expect(call?.[1]).toMatchObject({ skip: true, errorPolicy: 'all' })
+    })
+
+    it('says Seen without a time for a message read before read times were kept', async () => {
+      withMessages([{ ...mockMessages[0], readBy: ['user2'] }])
+      render(<MessageItemList room={mockRoom} />)
+
+      expect(await screen.findByTestId('message-seen')).toHaveTextContent(/^Seen$/)
+    })
+
+    it('shows nothing while my latest message is unread', async () => {
+      withMessages(mockMessages)
+      render(<MessageItemList room={mockRoom} />)
+
+      await screen.findByTestId('message-item-msg1')
+      expect(screen.queryByTestId('message-seen')).not.toBeInTheDocument()
+    })
+
+    it("doesn't show Seen in a post's discussion", async () => {
+      withMessages([{ ...mockMessages[0], readBy: ['user2'] }])
+      render(<MessageItemList room={mockPostRoom} />)
+
+      await screen.findByTestId('message-item-msg1')
+      expect(screen.queryByTestId('message-seen')).not.toBeInTheDocument()
     })
   })
 
