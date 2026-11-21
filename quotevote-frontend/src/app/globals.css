@@ -5255,6 +5255,8 @@ p { line-height: 1.625; }
 .dark .qv-bubble-name { filter: brightness(1.8); }
 .qv-bubble-meta { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 12px; color: var(--ms-read); }
 .qv-bubble-read { display: inline-flex; color: var(--ms-read); }
+/* "Seen 2:51 PM" at the end of a direct conversation (design). */
+.qv-seen { align-self: flex-end; margin: -6px 28px 14px; font-size: 12px; color: var(--ms-muted); }
 .qv-bubble-delete {
   position: absolute;
   top: -8px;
@@ -5281,6 +5283,7 @@ p { line-height: 1.625; }
 @media (max-width: 767px) {
   .qv-original { margin: 14px 14px 4px; }
   .qv-bubble-row { margin: 0 14px 12px; }
+  .qv-seen { margin: -4px 14px 12px; }
 }
 
 /* Nothing open yet (desktop) */

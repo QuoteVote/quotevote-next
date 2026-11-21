@@ -60,6 +60,9 @@ type Query {
   " Get user reports "
   getUserReports(userId: String!, status: String): [UserReport]
 
+  " Staff decisions, newest first (admin only) "
+  staffActions(limit: Int, offset: Int): [StaffAction]
+
   " Get users reported as bots (admin only) "
   getBotReportedUsers(sortBy: String, limit: Int): [User]
 

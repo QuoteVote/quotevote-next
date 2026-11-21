@@ -4,7 +4,7 @@ import ScrollableFeed from 'react-scrollable-feed'
 
 import MessageItem from './MessageItem'
 import QuoteHeaderMessage from './QuoteHeaderMessage'
-import { GET_ROOM_MESSAGES, GET_POST } from '@/graphql/queries'
+import { GET_ROOM_MESSAGES, GET_ROOM_READ_TIMES, GET_POST } from '@/graphql/queries'
 import { READ_MESSAGES } from '@/graphql/mutations'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
 import type { ChatRoom, ChatMessage, ChatParticipant } from '@/types/chat'
@@ -13,6 +13,8 @@ import type { MessageSubscriptionResult } from '@/types/hooks'
 import { useAppStore } from '@/store'
 import useSocketConnected from '@/hooks/useSocketConnected'
 import useOnTabVisible from '@/hooks/useOnTabVisible'
+import { useHasMounted } from '@/hooks/useMediaQuery'
+import { seenLabel, seenReceipt } from '@/lib/utils/seenReceipt'
 
 interface MessageItemListProps {
   room: ChatRoom | null
@@ -25,6 +27,8 @@ export default function MessageItemList({ room }: MessageItemListProps) {
   const postId = postDetails?._id ?? null
   const currentUserId = useAppStore((state) => state.user.data?._id)
   const socketConnected = useSocketConnected()
+  // Read times show in the viewer's time zone, so only once the page runs in the browser.
+  const hasMounted = useHasMounted()
 
   const {
     error,
@@ -35,6 +39,16 @@ export default function MessageItemList({ room }: MessageItemListProps) {
     skip: !messageRoomId,
     // New messages arrive over the subscription. Poll only while it's down (#625).
     pollInterval: messageRoomId && !socketConnected ? 3000 : 0,
+    fetchPolicy: 'cache-and-network',
+  })
+
+  // Read times come separately, so an API without them (legacy) still loads the conversation.
+  const { data: readTimesData, refetch: refetchReadTimes } = useQuery<{
+    messages?: Array<Pick<ChatMessage, '_id' | 'readByDetailed'>> | null
+  }>(GET_ROOM_READ_TIMES, {
+    variables: { messageRoomId },
+    skip: !messageRoomId || messageType !== 'USER',
+    errorPolicy: 'all',
     fetchPolicy: 'cache-and-network',
   })
 
@@ -54,8 +68,9 @@ export default function MessageItemList({ room }: MessageItemListProps) {
   useEffect(() => {
     if (subscriptionData?.message) {
       refetch().catch(() => undefined)
+      if (messageType === 'USER') refetchReadTimes().catch(() => undefined)
     }
-  }, [subscriptionData, refetch])
+  }, [subscriptionData, refetch, refetchReadTimes, messageType])
 
   useEffect(() => {
     if (subscriptionError) {
@@ -172,6 +187,20 @@ export default function MessageItemList({ room }: MessageItemListProps) {
 
   const quoteData = post || postDetails
   const showQuoteHeader = messageType === 'POST' && !!quoteData
+  // Direct conversations say when the other member saw my latest message (design).
+  const readTimes = new Map(
+    (readTimesData?.messages ?? []).map((entry) => [entry._id, entry.readByDetailed])
+  )
+  const seen =
+    messageType === 'USER' && hasMounted
+      ? seenReceipt(
+          messageData.map((message) => ({
+            ...message,
+            readByDetailed: readTimes.get(message._id) ?? message.readByDetailed,
+          })),
+          currentUserId
+        )
+      : null
 
   return (
     <div className="relative h-full w-full bg-transparent">
@@ -183,6 +212,11 @@ export default function MessageItemList({ room }: MessageItemListProps) {
           {messageData.map((message) => (
             <MessageItem key={message._id} message={message} roomType={messageType} />
           ))}
+          {seen && (
+            <p className="qv-seen" data-testid="message-seen">
+              {seenLabel(seen)}
+            </p>
+          )}
         </div>
       </ScrollableFeed>
     </div>

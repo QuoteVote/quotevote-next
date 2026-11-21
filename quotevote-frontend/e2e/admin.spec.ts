@@ -1,256 +1,178 @@
+/**
+ * E2E-AUTH-010: Admin invitation requests on Manage Invites (updated design)
+ *
+ * Actors: an admin (E2E_ADMIN_*, signed in by global setup) and a regular member (the author)
+ * Viewports: Desktop, Mobile (playwright.config.ts projects)
+ *
+ * The admin's request list and its Accept / Decline replies are mocked, so the specs don't
+ * depend on pending requests in the database or send invitation emails. Who may list the
+ * requests is checked against the real API.
+ */
 import { test, expect, type Page } from "@playwright/test";
 import fs from "fs";
-import { GRAPHQL_ROUTE } from "./helpers/api";
+import { GRAPHQL_ROUTE, graphqlRequest, loginViaApi } from "./helpers/api";
+import { AUTHOR_PASSWORD, AUTHOR_USERNAME } from "./helpers/auth";
 import { ADMIN_STORAGE_PATH } from "./helpers/storage-state";
 
 // The proxy verifies the session token, so these specs sign in for real: the
 // admin through E2E_ADMIN_* in global setup, the regular user as the author.
 const hasAdminSession = fs.existsSync(ADMIN_STORAGE_PATH);
 
-async function mockGraphQLOperation(
+type InviteStatus = "1" | "2" | "4"; // pending, declined, accepted
+
+/**
+ * Serves one invitation request with `status()`; Accept / Decline change it through
+ * `onDecision`, so the page's refetch and a reload show the new status.
+ */
+async function mockInviteRequests(
   page: Page,
-  operationName: string,
-  responseData: object | null,
-  errorData?: object[]
-) {
+  email: string,
+  status: () => InviteStatus,
+  onDecision?: (next: InviteStatus) => void
+): Promise<void> {
   await page.route(GRAPHQL_ROUTE, async (route) => {
-    let body: { operationName?: string } = {};
+    let body: { operationName?: string; variables?: { inviteStatus?: string } } = {};
     try {
-      body = route.request().postDataJSON() as { operationName?: string };
+      body = route.request().postDataJSON() as typeof body;
     } catch {
       await route.fallback();
       return;
     }
-    if (body?.operationName !== operationName) {
-      await route.fallback();
+
+    if (body?.operationName === "userInviteRequests") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            userInviteRequests: [
+              {
+                _id: "mock-invite-1",
+                email,
+                joined: new Date().toISOString(),
+                status: status(),
+                signedUp: false,
+              },
+            ],
+          },
+        }),
+      });
       return;
     }
-    const payload: { data?: object; errors?: object[] } = {};
-    if (responseData !== null) payload.data = responseData;
-    if (errorData) payload.errors = errorData;
 
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(payload),
-    });
+    if (body?.operationName === "sendUserInviteApproval" && onDecision) {
+      onDecision(body.variables?.inviteStatus as InviteStatus);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: { sendUserInviteApproval: { code: "SUCCESS", message: "ok" } },
+        }),
+      });
+      return;
+    }
+
+    await route.fallback();
   });
 }
 
 test.describe("Admin Invitation Request Approval and Rejection (E2E-AUTH-010)", () => {
-  test.skip(!hasAdminSession, "Set E2E_ADMIN_USERNAME and E2E_ADMIN_PASSWORD to run the admin specs.");
+  test.skip(
+    !hasAdminSession,
+    "Set E2E_ADMIN_USERNAME and E2E_ADMIN_PASSWORD to run the admin specs."
+  );
   test.use({ storageState: hasAdminSession ? ADMIN_STORAGE_PATH : undefined });
 
   const visitorEmail = `e2e-pending-${Date.now()}@example.com`;
 
-  test.beforeEach(async ({ page }) => {
-    await mockGraphQLOperation(page, "userInviteRequests", {
-      userInviteRequests: [
-        {
-          _id: "mock-invite-1",
-          email: visitorEmail,
-          joined: new Date().toISOString(),
-          status: "1" // 1 = Pending
-        }
-      ]
-    });
-    await mockGraphQLOperation(page, "Heartbeat", {
-      heartbeat: { success: true, timestamp: new Date().toISOString() }
-    });
-    await mockGraphQLOperation(page, "getChatRooms", { messageRooms: [] });
-    await mockGraphQLOperation(page, "notifications", { notifications: [] });
-  });
+  /** The request's row in the Received Requests table. */
+  const requestRow = (page: Page) => page.getByRole("row").filter({ hasText: visitorEmail });
 
   test("Administrator can view pending invitation requests", async ({ page }) => {
-    await page.goto("/dashboard/manage-invites");
+    await mockInviteRequests(page, visitorEmail, () => "1");
+    await page.goto("/manage-invites");
 
-    await expect(page.getByRole("heading", { name: "Manage Invites" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Manage Invites" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: /Received Requests/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
 
-    const receivedTab = page.getByRole('tab', { name: /Received Requests/i });
-    await expect(receivedTab).toBeVisible();
-
-    const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
-    
-    if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText(visitorEmail)).toBeVisible();
-      await expect(page.locator('.md\\:hidden').getByText("Pending", { exact: true })).toBeVisible();
-    } else {
-      await expect(page.locator('.hidden.md\\:block').getByText(visitorEmail)).toBeVisible();
-      await expect(page.locator('.hidden.md\\:block').getByText("Pending", { exact: true })).toBeVisible();
-    }
-
-    const acceptButton = page.locator('button', { hasText: 'Accept' }).and(page.locator(':visible'));
-    const declineButton = page.locator('button', { hasText: 'Decline' }).and(page.locator(':visible'));
-    await expect(acceptButton).toBeVisible();
-    await expect(declineButton).toBeVisible();
+    const row = requestRow(page);
+    await expect(row).toBeVisible();
+    await expect(row.getByText("Pending", { exact: true })).toBeVisible();
+    await expect(row.getByRole("button", { name: "Accept" })).toBeVisible();
+    await expect(row.getByRole("button", { name: "Decline" })).toBeVisible();
   });
 
   test("Administrator can approve a pending invitation request", async ({ page }) => {
-    let currentStatus = "1"; // 1 = Pending
-
-    await page.route(GRAPHQL_ROUTE, async (route) => {
-      let body: { operationName?: string } = {};
-      try {
-        body = route.request().postDataJSON() as { operationName?: string };
-      } catch {
-        await route.fallback();
-        return;
+    let status: InviteStatus = "1";
+    await mockInviteRequests(
+      page,
+      visitorEmail,
+      () => status,
+      (next) => {
+        status = next;
       }
+    );
+    await page.goto("/manage-invites");
 
-      if (body?.operationName === "userInviteRequests") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: {
-              userInviteRequests: [
-                {
-                  _id: "mock-invite-1",
-                  email: visitorEmail,
-                  joined: new Date().toISOString(),
-                  status: currentStatus
-                }
-              ]
-            }
-          })
-        });
-        return;
-      } else if (body?.operationName === "sendUserInviteApproval") {
-        currentStatus = "4"; // 4 = Accepted
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: {
-              sendUserInviteApproval: { _id: "mock-invite-1", status: "4" }
-            }
-          })
-        });
-        return;
-      }
-      await route.fallback();
-    });
-
-    await page.goto("/dashboard/manage-invites");
-
-    const acceptButton = page.locator('button', { hasText: 'Accept' }).and(page.locator(':visible'));
-    await acceptButton.click();
-
+    await requestRow(page).getByRole("button", { name: "Accept" }).click();
     await expect(page.getByText("Invitation accepted")).toBeVisible();
+    expect(status).toBe("4");
 
-    const sentTab = page.getByRole('tab', { name: /Sent Invites/i });
-    await sentTab.click();
+    // An accepted request stays in the list, with Resend and Reset instead.
+    const row = requestRow(page);
+    await expect(row.getByText("Accepted", { exact: true })).toBeVisible();
+    await expect(row.getByRole("button", { name: "Resend" })).toBeVisible();
 
-    const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
-    if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText(visitorEmail)).toBeVisible();
-      await expect(page.locator('.md\\:hidden').getByText("Accepted")).toBeVisible();
-    } else {
-      await expect(page.locator('.hidden.md\\:block').getByText(visitorEmail)).toBeVisible();
-      await expect(page.locator('.hidden.md\\:block').getByText("Accepted")).toBeVisible();
-    }
-
-    // Verify persistence after reload
     await page.reload();
-    await page.getByRole('tab', { name: /Sent Invites/i }).click();
-
-    if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText("Accepted")).toBeVisible();
-    } else {
-      await expect(page.locator('.hidden.md\\:block').getByText("Accepted")).toBeVisible();
-    }
+    await expect(requestRow(page).getByText("Accepted", { exact: true })).toBeVisible();
   });
 
   test("Administrator can reject a pending invitation request", async ({ page }) => {
-    let currentStatus = "1"; // 1 = Pending
-
-    await page.route(GRAPHQL_ROUTE, async (route) => {
-      let body: { operationName?: string } = {};
-      try {
-        body = route.request().postDataJSON() as { operationName?: string };
-      } catch {
-        await route.fallback();
-        return;
+    let status: InviteStatus = "1";
+    await mockInviteRequests(
+      page,
+      visitorEmail,
+      () => status,
+      (next) => {
+        status = next;
       }
+    );
+    await page.goto("/manage-invites");
 
-      if (body?.operationName === "userInviteRequests") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: {
-              userInviteRequests: [
-                {
-                  _id: "mock-invite-1",
-                  email: visitorEmail,
-                  joined: new Date().toISOString(),
-                  status: currentStatus
-                }
-              ]
-            }
-          })
-        });
-        return;
-      } else if (body?.operationName === "sendUserInviteApproval") {
-        currentStatus = "2"; // 2 = Declined
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: {
-              sendUserInviteApproval: { _id: "mock-invite-1", status: "2" }
-            }
-          })
-        });
-        return;
-      }
-      await route.fallback();
-    });
-
-    await page.goto("/dashboard/manage-invites");
-
-    const declineButton = page.locator('button', { hasText: 'Decline' }).and(page.locator(':visible')).first();
-    await declineButton.click();
-
-    const confirmButton = page.getByRole('alertdialog').locator('button', { hasText: 'Decline' });
-    await confirmButton.click();
-
+    // Decline asks first, in a small confirmation next to the button.
+    await requestRow(page).getByRole("button", { name: "Decline" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Decline" }).click();
     await expect(page.getByText("Invitation declined")).toBeVisible();
+    expect(status).toBe("2");
 
-    const isMobile = (page.viewportSize()?.width ?? 1024) < 768;
-    if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText("Declined")).toBeVisible();
-    } else {
-      await expect(page.locator('.hidden.md\\:block').getByText("Declined")).toBeVisible();
-    }
+    await expect(requestRow(page).getByText("Declined", { exact: true })).toBeVisible();
 
-    // Verify persistence after reload
     await page.reload();
-
-    if (isMobile) {
-      await expect(page.locator('.md\\:hidden').getByText("Declined")).toBeVisible();
-    } else {
-      await expect(page.locator('.hidden.md\\:block').getByText("Declined")).toBeVisible();
-    }
+    await expect(requestRow(page).getByText("Declined", { exact: true })).toBeVisible();
   });
 });
 
 test.describe("Admin Invitation Request Authorization Validation", () => {
-  test("Regular authenticated users receive authorization error", async ({ page }) => {
-    await mockGraphQLOperation(page, "userInviteRequests", null, [
-      { message: "Not Authorized" }
-    ]);
+  test.skip(!AUTHOR_PASSWORD, "E2E_AUTHOR_PASSWORD is required");
 
-    await mockGraphQLOperation(page, "Heartbeat", {
-      heartbeat: { success: true, timestamp: new Date().toISOString() }
-    });
-    await mockGraphQLOperation(page, "getChatRooms", { messageRooms: [] });
-    await mockGraphQLOperation(page, "notifications", { notifications: [] });
+  test("Regular members only see their sent invites", async ({ page }) => {
+    await page.goto("/manage-invites");
 
-    await page.goto("/dashboard/manage-invites");
+    await expect(page.getByRole("heading", { level: 1, name: "Manage Invites" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: /Sent Invites/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    await expect(page.getByRole("tab", { name: /Received Requests/i })).toHaveCount(0);
+  });
 
-    await expect(page.getByRole('alert').getByText("Not Authorized")).toBeVisible();
-    
-    await expect(page.getByRole('tab', { name: /Received Requests/i })).not.toBeVisible();
+  test("The API refuses the request list to a regular member", async () => {
+    const { token } = await loginViaApi(AUTHOR_USERNAME, AUTHOR_PASSWORD);
+    await expect(
+      graphqlRequest("query userInviteRequests { userInviteRequests { _id } }", undefined, token)
+    ).rejects.toThrow("Admin access required");
   });
 });

@@ -41,6 +41,10 @@ function buildPrisma() {
       update: jest.fn(),
     },
     userReport: { findMany: jest.fn().mockResolvedValue([]) },
+    staffAction: {
+      create: jest.fn().mockResolvedValue({ id: 'log' }),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     post: {
       findUnique: jest.fn().mockResolvedValue(null),
       update: jest.fn(),
@@ -123,6 +127,20 @@ const operations: Operation[] = [
     allowed: [],
   },
   {
+    name: 'setUserRoles',
+    source: `mutation { result: setUserRoles(userId: "${targetUserId}", roles: ["moderator"]) { _id } }`,
+    guarded: (p) => [p.user.findUnique, p.user.update],
+    passed: { errorCode: 'NOT_FOUND' },
+    allowed: [],
+  },
+  {
+    name: 'staffActions',
+    source: `query { result: staffActions { _id } }`,
+    guarded: (p) => [p.staffAction.findMany],
+    passed: { data: { result: [] } },
+    allowed: [],
+  },
+  {
     name: 'updateFeaturedSlot',
     source: `mutation { result: updateFeaturedSlot(postId: "${targetPostId}", featuredSlot: 1) { _id } }`,
     guarded: (p) => [p.post.findUnique, p.post.updateMany, p.post.update],
@@ -179,6 +197,7 @@ describe('invite approvers stay inside the request queue', () => {
       expect(result.errors?.[0]?.extensions?.code).toBe('BAD_USER_INPUT');
       expect(result.errors?.[0]?.message).toBe('User has already completed signup');
       expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.staffAction.create).not.toHaveBeenCalled();
     }
   });
 
@@ -199,6 +218,16 @@ describe('invite approvers stay inside the request queue', () => {
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: targetUserId },
       data: { status: 2 },
+      select: { id: true },
+    });
+    // The decision is logged under the approver's name (#616 part 2).
+    expect(prisma.staffAction.create).toHaveBeenCalledWith({
+      data: {
+        actorId: STAFF.inviteApprover._id,
+        action: 'invite_declined',
+        targetId: targetUserId,
+        detail: null,
+      },
       select: { id: true },
     });
   });

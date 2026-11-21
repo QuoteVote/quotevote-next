@@ -61,4 +61,19 @@ export const CommonDefinitions = `
     messageRoomId: String!
     isTyping: Boolean!
   }
+
+  " A staff decision: who did what, to whom, and when (#616) "
+  type StaffAction {
+    _id: String!
+    " role_granted, role_revoked, invite_approved, invite_declined, invite_reset, user_disabled, user_enabled or content_removed "
+    action: String!
+    actorId: String!
+    actor: User
+    targetId: String
+    " The user acted on, when the target is a user "
+    target: User
+    " Extra context, such as the role granted or revoked "
+    detail: String
+    createdAt: DateTime
+  }
 `;

@@ -33,6 +33,17 @@ export interface BuddySearchResult extends ChatParticipant {
 /**
  * Message structure for chat rooms, aligned with NEW_MESSAGE_SUBSCRIPTION
  */
+/** One member's read of a message (the API's ReadByDetailedEntry). */
+export interface ReadByDetailedEntry {
+    userId?: string | null
+    readAt?: string | null
+}
+
+/** Whether the other member has seen my latest direct message, and when (if known). */
+export interface SeenReceipt {
+    readAt: Date | null
+}
+
 export interface ChatMessage {
     /** Unique message identifier */
     _id: string
@@ -54,6 +65,8 @@ export interface ChatMessage {
     deleted?: boolean | null
     /** Mutation type (e.g., created/updated/deleted) */
     mutation_type?: string
+    /** Who read it and when; messages read before read times were kept have no entries */
+    readByDetailed?: Array<ReadByDetailedEntry | null> | null
     /** Additional backend fields */
     [key: string]: unknown
 }

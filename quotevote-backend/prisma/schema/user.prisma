@@ -93,3 +93,18 @@ model TermsAcceptance {
   @@index([userId])
   @@map("terms_acceptances")
 }
+
+// Append-only record of staff decisions (#616): who did what, to whom, and when.
+// No relation to User, so the user model and its existing records are untouched.
+model StaffAction {
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
+  actorId   String          @db.ObjectId
+  action    StaffActionKind
+  targetId  String?         @db.ObjectId
+  // Extra context, such as the role granted or revoked.
+  detail    String?
+  createdAt DateTime        @default(now())
+
+  @@index([createdAt])
+  @@map("staff_actions")
+}
