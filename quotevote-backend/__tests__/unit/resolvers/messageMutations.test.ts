@@ -472,7 +472,10 @@ describe('updateMessageReadBy', () => {
     ]);
     expect(context.prisma.message.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ['legacy', 'new'] } },
-      data: { readBy: { push: me } },
+      data: {
+        readBy: { push: me },
+        readByDetailed: { push: { userId: me, readAt: expect.any(Date) } },
+      },
     });
     const command = context.prisma.$runCommandRaw.mock.calls[0][0] as {
       update: string;
@@ -480,6 +483,29 @@ describe('updateMessageReadBy', () => {
     };
     expect(command.update).toBe('messagerooms');
     expect(JSON.stringify(command.updates[0].u)).toContain(`{"${me}":{"$oid":"new"}}`);
+  });
+
+  it('records when each message was read, next to who read it, keeping earlier entries', async () => {
+    const context = createContext();
+    context.prisma.messageRoom.findUnique.mockResolvedValue(room());
+    const earlier = { userId: bobId, readAt: new Date('2026-11-01T10:00:00Z') };
+    context.prisma.message.findMany.mockResolvedValue([
+      record({ id: 'new', userId: bobId, readByDetailed: [earlier] }),
+      record({ id: 'legacy', userId: bobId, readBy: undefined, readByDetailed: undefined }),
+    ]);
+    const before = Date.now();
+
+    const result = await read(context);
+
+    const [{ data }] = context.prisma.message.updateMany.mock.calls[0] as [
+      { data: { readByDetailed: { push: { userId: string; readAt: Date } } } },
+    ];
+    const { readAt } = data.readByDetailed.push;
+    expect(readAt.getTime()).toBeGreaterThanOrEqual(before);
+    expect(result.map((m) => [m._id, m.readByDetailed])).toEqual([
+      ['new', [earlier, { userId: me, readAt }]],
+      ['legacy', [{ userId: me, readAt }]],
+    ]);
   });
 
   it('records the last message as seen when nothing is unread', async () => {

@@ -432,7 +432,10 @@ describe('Room membership authorization (executable schema)', () => {
       expect(result.data).toEqual({ read: [{ _id: dmMessageId }] });
       expect(prisma.message.updateMany).toHaveBeenCalledWith({
         where: { id: { in: [dmMessageId] } },
-        data: { readBy: { push: memberId } },
+        data: {
+          readBy: { push: memberId },
+          readByDetailed: { push: { userId: memberId, readAt: expect.any(Date) } },
+        },
       });
     });
   });

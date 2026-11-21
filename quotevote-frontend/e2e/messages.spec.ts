@@ -7,7 +7,7 @@
  *
  * One member messages the other from their profile. The other finds the conversation in
  * Messages, reads it and replies, and the reply reaches the first member live, without a
- * reload. Runs against the real API and WebSocket, no mocks.
+ * reload. The first member then sees when their message was read ("Seen 2:51 PM"). Runs against the real API and WebSocket, no mocks.
  *
  * Both members are created for each run with `pnpm seed:e2e-user`, so every run starts a
  * new conversation. It runs only against a local API with DATABASE_URL set, like the
@@ -107,5 +107,20 @@ test.describe("E2E-CHAT-010: A conversation between two members", () => {
   test("E2E-CHAT-010c: the reply arrives live, without a reload", async () => {
     // The sender's conversation is still open from 010a; no navigation in between.
     await expect(sender.page.getByText(reply).locator("visible=true").first()).toBeVisible();
+  });
+
+  test("E2E-CHAT-010d: the sender sees when their message was read", async ({ isMobile }) => {
+    // The recipient opened the conversation in 010b, which marks it read with the time.
+    const { page } = sender;
+    await page.goto("/");
+    await expect(async () => {
+      await openMessagesPanel(page, isMobile);
+    }).toPass({ timeout: 20_000 });
+    await selectMessagesTab(page, "Chats");
+    const chat = page.getByTestId("chat-page").locator("visible=true");
+    await chat.getByTestId("discussion-thread").filter({ hasText: reply }).first().click();
+    await expect(page.getByTestId("message-seen").locator("visible=true")).toHaveText(
+      /^Seen \d{1,2}:\d{2} (AM|PM)$/
+    );
   });
 });

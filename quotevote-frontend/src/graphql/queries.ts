@@ -22,6 +22,23 @@ export const GET_BUDDY_LIST = gql`
 `
 
 /**
+ * When each message of a room was read (the new backend's `readByDetailed`), for "Seen 2:51 PM".
+ * Separate from GET_ROOM_MESSAGES on purpose: the legacy API has no such field, so there this
+ * query fails on its own and the conversation still loads, showing "Seen" without a time.
+ */
+export const GET_ROOM_READ_TIMES = gql`
+    query getRoomReadTimes($messageRoomId: String!) {
+      messages(messageRoomId: $messageRoomId) {
+        _id
+        readByDetailed {
+          userId
+          readAt
+        }
+      }
+    }
+  `
+
+/**
  * Get all messages for a chat room
  * Used by the conversation view (MessageItemList) and Discussion tab
  */
