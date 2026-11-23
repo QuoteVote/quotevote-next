@@ -6,23 +6,46 @@ import { getLoginToken, postLogin } from '../../src/lib/auth/restLogin';
  */
 export const GRAPHQL_ROUTE = '**/graphql';
 
-const DEFAULT_API_URL = 'http://localhost:4000';
+/** Production APIs the specs must never use: they create accounts, posts and votes. */
+export const PRODUCTION_API_HOSTS = ['api.quote.vote'];
 
+/**
+ * The API the specs talk to: E2E_API_URL, else E2E_GRAPHQL_ENDPOINT, else the frontend's own
+ * NEXT_PUBLIC_GRAPHQL_ENDPOINT or NEXT_PUBLIC_SERVER_URL. There is no default, so a run with
+ * nothing set stops instead of reaching a hosted API, and a production API is refused.
+ */
 export function getApiUrl(): string {
+  // `||`, not `??`: CI passes an unset secret as an empty string.
   const graphqlEndpoint =
-    process.env.E2E_GRAPHQL_ENDPOINT ??
-    process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ??
-    'https://api.quote.vote/graphql';
+    process.env.E2E_GRAPHQL_ENDPOINT || process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT;
 
+  let apiUrl: string;
   if (process.env.E2E_API_URL) {
-    return process.env.E2E_API_URL.replace(/\/$/, '');
+    apiUrl = process.env.E2E_API_URL;
+  } else if (graphqlEndpoint) {
+    apiUrl = graphqlEndpoint.replace(/\/graphql\/?$/, '');
+  } else if (process.env.NEXT_PUBLIC_SERVER_URL) {
+    apiUrl = process.env.NEXT_PUBLIC_SERVER_URL;
+  } else {
+    throw new Error(
+      '[e2e] No API address. Set E2E_API_URL to a test backend (for example ' +
+        'http://localhost:4000), or NEXT_PUBLIC_SERVER_URL in .env.local.'
+    );
   }
+  apiUrl = apiUrl.replace(/\/$/, '');
 
-  if (graphqlEndpoint.includes('/graphql')) {
-    return graphqlEndpoint.replace(/\/graphql\/?$/, '');
+  let hostname: string;
+  try {
+    hostname = new URL(apiUrl).hostname;
+  } catch {
+    throw new Error(`[e2e] The API address is not a valid URL: "${apiUrl}"`);
   }
-
-  return DEFAULT_API_URL;
+  if (PRODUCTION_API_HOSTS.includes(hostname)) {
+    throw new Error(
+      `[e2e] Refusing to run against the production API (${hostname}). Use a test backend.`
+    );
+  }
+  return apiUrl;
 }
 
 export interface AuthSession {
