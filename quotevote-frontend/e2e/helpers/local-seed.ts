@@ -14,9 +14,9 @@ const BACKEND_DIR = path.resolve(__dirname, "../../../quotevote-backend");
 const LOCAL_HOSTNAMES = ["localhost", "127.0.0.1", "[::1]"];
 
 /**
- * True only when the API under test is explicitly a local one. getApiUrl() falls back to the
- * hosted API when nothing is configured, so an unset environment is "not local" and the specs
- * that write test accounts skip instead of touching a shared server.
+ * True only when the API under test is explicitly a local one, so the specs that write test
+ * accounts skip instead of touching a shared test server. getApiUrl() has no default and
+ * refuses a production API, so an unset or production address is never "local".
  */
 export function isLocalApi(): boolean {
   try {
