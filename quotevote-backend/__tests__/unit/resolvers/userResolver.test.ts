@@ -1057,15 +1057,15 @@ describe('userResolver', () => {
   });
 
   describe('Mutation.disableUser / enableUser', () => {
-    it('requires admin for disable and enable', async () => {
+    it('requires a moderator (or admin) for disable and enable (#616)', async () => {
       const ctx = mockContext({ admin: false });
 
       await expect(
         userResolver.Mutation.disableUser(null, { userId: otherId }, ctx)
-      ).rejects.toThrow(/Admin access required/);
+      ).rejects.toThrow(/Moderator access required/);
       await expect(
         userResolver.Mutation.enableUser(null, { userId: otherId }, ctx)
-      ).rejects.toThrow(/Admin access required/);
+      ).rejects.toThrow(/Moderator access required/);
     });
 
     it('disables and enables a user, logging both (#616)', async () => {

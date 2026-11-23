@@ -12,7 +12,7 @@ import { GraphQLError } from 'graphql';
 import { Prisma } from '@prisma/client';
 import { hasRole, requireRole } from '~/data/utils/requireRole';
 import { recordStaffAction } from '~/data/utils/staffActions';
-import { loadStaffRoles } from '~/data/utils/staffRoleLoader';
+import { forgetStaffRoles, loadStaffRoles } from '~/data/utils/staffRoleLoader';
 import {
   PUBLIC_USER_SELECT,
   toPublicUser,
@@ -229,6 +229,9 @@ export const staffResolver = {
             await pause(10 + Math.random() * 40 * attempt);
           }
         }
+
+        // A later role field in this request must read the new flags.
+        forgetStaffRoles(context, target.id);
 
         for (const role of changes) {
           await recordStaffAction(
