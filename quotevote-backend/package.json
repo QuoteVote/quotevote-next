@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/app/start.js",
     "test": "jest --passWithNoTests",
-    "test:prisma": "tsx scripts/check-replica-set.ts && jest --testPathPattern='prisma-.*\\.test\\.ts$' --testPathIgnorePatterns='[]'",
+    "test:prisma": "tsx scripts/check-replica-set.ts && jest --runInBand --coverage=false --testPathPatterns='prisma-.*\\.test\\.ts$' --testPathIgnorePatterns='[]'",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

@@ -50,6 +50,26 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test -- --coverage --coverageReporters=text --coverageReporters=lcov
 
+      # The Prisma integration tests (votes, unique indexes, models) need real transactions,
+      # so they run against a throwaway single-node replica set, one file at a time (#747).
+      - name: Start MongoDB for the integration tests
+        run: |
+          docker run -d --name mongo-it -p 27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do
+            docker exec mongo-it mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' && break
+            sleep 1
+          done
+          docker exec mongo-it mongosh --quiet --eval 'rs.initiate()'
+          for i in $(seq 1 30); do
+            docker exec mongo-it mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true && break
+            sleep 1
+          done
+
+      - name: Run the Prisma integration tests
+        env:
+          DATABASE_URL: mongodb://localhost:27017/quotevote_ci_test?replicaSet=rs0&directConnection=true
+        run: pnpm test:prisma
+
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         if: always()

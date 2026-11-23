@@ -39,9 +39,9 @@ function mockContext(user: GraphQLContext['user'] = null) {
     activity: {
       create: jest.fn().mockResolvedValue({ id: 'activity-1' }),
     },
-    // Soft-deletes report each vote they changed, unless a test says otherwise.
-    $runCommandRaw: jest.fn((command: Record<string, unknown>) =>
-      Promise.resolve(command.update === 'votes' ? { ok: 1, n: 1, nModified: 1 } : { ok: 1 })
+    // Every write reports the documents it matched and changed, as MongoDB does.
+    $runCommandRaw: jest.fn<Promise<Record<string, unknown>>, [Record<string, unknown>]>(() =>
+      Promise.resolve({ ok: 1, n: 1, nModified: 1 })
     ),
     // Interactive transactions run against the same mock client.
     $transaction: jest.fn(),
@@ -111,7 +111,9 @@ const liveVotes = (...ids: string[]) => ({
 });
 const noneModified = (ctx: Ctx) =>
   ctx.prisma.$runCommandRaw.mockImplementation((command: Record<string, unknown>) =>
-    Promise.resolve(command.update === 'votes' ? { ok: 1, n: 0, nModified: 0 } : { ok: 1 })
+    Promise.resolve(
+      command.update === 'votes' ? { ok: 1, n: 0, nModified: 0 } : { ok: 1, n: 1, nModified: 1 }
+    )
   );
 const writeConflict = () => Object.assign(new Error('write conflict'), { code: 'P2034' });
 
@@ -357,6 +359,95 @@ describe('voteResolver', () => {
 
       expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(2);
       expect(ctx.prisma.activity.create).toHaveBeenCalledTimes(1);
+    });
+
+    it("reads the member's votes inside the transaction, so a retry sees a concurrent vote (#747)", async () => {
+      const ctx = mockContext(authedUser());
+      // First attempt: nothing held yet, and it loses a write conflict. The retry then finds
+      // the vote the other request saved, and keeps it instead of adding a second one.
+      ctx.prisma.vote.findRaw
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValue([{ _id: { $oid: oldVoteId }, tags: '#agree' }]);
+      ctx.prisma.vote.findUnique.mockResolvedValue(voteRecord(oldVoteId, 'up'));
+      ctx.prisma.$transaction.mockImplementationOnce(
+        async (run: (tx: unknown) => Promise<unknown>) => {
+          await run(ctx.prisma);
+          throw writeConflict();
+        }
+      );
+      ctx.prisma.$runCommandRaw.mockClear();
+
+      const result = await addVote(ctx, voteInput());
+
+      expect(result._id).toBe(oldVoteId);
+      expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(ctx.prisma.vote.findRaw).toHaveBeenCalledTimes(3);
+      expect(ctx.prisma.activity.create).not.toHaveBeenCalled();
+    });
+
+    it('takes a duplicate of the same response off its own side (#747)', async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.vote.findRaw.mockResolvedValue([
+        { _id: { $oid: oldVoteId }, tags: '#agree' },
+        { _id: { $oid: '60d5ec49ad414d7a8d5464b3' }, tags: '#agree' },
+      ]);
+      ctx.prisma.vote.findUnique.mockResolvedValue(voteRecord(oldVoteId, 'up'));
+
+      await addVote(ctx, voteInput());
+
+      expect(softDelete(ctx)?.q).toEqual(liveVotes('60d5ec49ad414d7a8d5464b3'));
+      expect(insertedVote(ctx)).toBeUndefined();
+      const { set } = postCountsSet(ctx);
+      expect(totalBy(set, 'upvotes')).toBe(-1);
+      expect(totalBy(set, 'downvotes')).toBe(0);
+    });
+
+    it('stops the vote when saving it reports a write error (#747)', async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.$runCommandRaw.mockImplementation((command: Record<string, unknown>) =>
+        Promise.resolve(
+          command.insert === 'votes'
+            ? { ok: 1, n: 0, writeErrors: [{ code: 11000, errmsg: 'duplicate key' }] }
+            : { ok: 1, n: 1, nModified: 1 }
+        )
+      );
+
+      await expect(addVote(ctx, voteInput())).rejects.toThrow('Saving the vote failed');
+      expect(rawCommands(ctx).some((c) => c.update === 'posts')).toBe(false);
+      expect(addNotification).not.toHaveBeenCalled();
+    });
+
+    it("stops the vote when the post's totals aren't updated (#747)", async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.$runCommandRaw.mockImplementation((command: Record<string, unknown>) =>
+        Promise.resolve(command.update === 'posts' ? { ok: 1, n: 0 } : { ok: 1, n: 1 })
+      );
+
+      await expect(addVote(ctx, voteInput())).rejects.toThrow("Updating the post's vote totals");
+      expect(addNotification).not.toHaveBeenCalled();
+    });
+
+    it('retries a write conflict that a raw write reports instead of throwing (#747)', async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.$runCommandRaw.mockImplementationOnce(() =>
+        Promise.resolve({ ok: 1, n: 0, writeErrors: [{ code: 112, errmsg: 'WriteConflict' }] })
+      );
+
+      await addVote(ctx, voteInput());
+
+      expect(ctx.prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(ctx.prisma.activity.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps a saved vote when notifying the author fails (#747)', async () => {
+      const ctx = mockContext(authedUser());
+      (addNotification as jest.Mock).mockRejectedValueOnce(new Error('notifications down'));
+
+      const result = await addVote(ctx, voteInput());
+
+      expect(result.type).toBe('up');
+      expect(insertedVote(ctx)).toBeDefined();
     });
 
     it("doesn't retry other failures", async () => {
