@@ -216,3 +216,142 @@ describe('passage votes keep the post totals in step (#693)', () => {
     expect(post.votedBy).toHaveLength(2 + crowdIds.length);
   });
 });
+
+/**
+ * The vote integrity review (#747): a vote sent twice at the same time is counted once, and
+ * a member's duplicate response corrects the side it was counted on.
+ */
+describe('a vote is counted once (#747)', () => {
+  const racePostId = hex(0x747000001);
+  const raceAuthorId = hex(0x747000002);
+  const memberId = hex(0x747000003);
+  const duplicateMemberId = hex(0x747000004);
+  const crowd = Array.from({ length: 10 }, (_, i) => hex(0x747000100 + i));
+
+  const votesOn = (id: string, overrides: Partial<Common.VoteInput>) =>
+    vote(id, { postId: racePostId, ...overrides });
+
+  const readRacePost = async (): Promise<StoredPost> => {
+    const [post] = (await prisma.post.findRaw({
+      filter: { _id: { $oid: racePostId } },
+      options: { projection: { upvotes: 1, downvotes: 1, votedBy: 1 } },
+    })) as unknown as StoredPost[];
+    return post;
+  };
+
+  const liveVotes = async (id: string): Promise<{ tags?: unknown }[]> =>
+    (await prisma.vote.findRaw({
+      filter: { postId: { $oid: racePostId }, userId: { $oid: id }, deleted: { $ne: true } },
+      options: { projection: { tags: 1 } },
+    })) as unknown as { tags?: unknown }[];
+
+  const insertVote = (id: string, tags: string, type: 'up' | 'down') =>
+    prisma.$runCommandRaw({
+      insert: 'votes',
+      documents: [
+        {
+          userId: { $oid: id },
+          postId: { $oid: racePostId },
+          type,
+          tags,
+          startWordIndex: 4,
+          endWordIndex: 15,
+          content: postText.slice(4, 15),
+          deleted: false,
+          created: { $date: new Date().toISOString() },
+        },
+      ],
+    });
+
+  const cleanRace = () =>
+    Promise.all([
+      prisma.$runCommandRaw({
+        delete: 'votes',
+        deletes: [{ q: { postId: { $oid: racePostId } }, limit: 0 }],
+      }),
+      prisma.$runCommandRaw({
+        delete: 'posts',
+        deletes: [{ q: { _id: { $oid: racePostId } }, limit: 0 }],
+      }),
+    ]);
+
+  beforeEach(async () => {
+    await cleanRace();
+    await prisma.$runCommandRaw({
+      insert: 'posts',
+      documents: [
+        {
+          _id: { $oid: racePostId },
+          userId: { $oid: raceAuthorId },
+          title: 'Vote integrity',
+          text: postText,
+          upvotes: 0,
+          downvotes: 0,
+          votedBy: [],
+          deleted: false,
+          created: { $date: new Date().toISOString() },
+        },
+      ],
+    });
+  });
+
+  afterAll(async () => {
+    await cleanRace();
+  });
+
+  it('saves a vote sent twice at the same time once', async () => {
+    const [first, second] = await Promise.all([
+      votesOn(memberId, { tags: '#agree', type: 'up' }),
+      votesOn(memberId, { tags: '#agree', type: 'up' }),
+    ]);
+
+    expect(first._id).toBe(second._id);
+    expect(await liveVotes(memberId)).toHaveLength(1);
+    expect(await readRacePost()).toMatchObject({ upvotes: 1, downvotes: 0 });
+  });
+
+  it('keeps one vote per member when a crowd votes twice each at the same time', async () => {
+    await Promise.all(
+      crowd.flatMap((id) => [
+        votesOn(id, { tags: '#like', type: 'up' }),
+        votesOn(id, { tags: '#like', type: 'up' }),
+      ])
+    );
+
+    const post = await readRacePost();
+    expect(post).toMatchObject({ upvotes: crowd.length, downvotes: 0 });
+    expect(post.votedBy).toHaveLength(crowd.length);
+    for (const id of crowd) expect(await liveVotes(id)).toHaveLength(1);
+  });
+
+  it('takes a duplicate of the same response off its own side', async () => {
+    // The state the race above used to leave: two live #agree votes, both counted.
+    await insertVote(duplicateMemberId, '#agree', 'up');
+    await insertVote(duplicateMemberId, '#agree', 'up');
+    await prisma.$runCommandRaw({
+      update: 'posts',
+      updates: [{ q: { _id: { $oid: racePostId } }, u: { $set: { upvotes: 2, downvotes: 0 } } }],
+    });
+
+    await votesOn(duplicateMemberId, { tags: '#agree', type: 'up' });
+
+    expect(await liveVotes(duplicateMemberId)).toHaveLength(1);
+    expect(await readRacePost()).toMatchObject({ upvotes: 1, downvotes: 0 });
+  });
+
+  it('takes the other side and a duplicate off their own sides in one vote', async () => {
+    await insertVote(duplicateMemberId, '#agree', 'up');
+    await insertVote(duplicateMemberId, '#agree', 'up');
+    await insertVote(duplicateMemberId, '#disagree', 'down');
+    await prisma.$runCommandRaw({
+      update: 'posts',
+      updates: [{ q: { _id: { $oid: racePostId } }, u: { $set: { upvotes: 2, downvotes: 1 } } }],
+    });
+
+    await votesOn(duplicateMemberId, { tags: '#agree', type: 'up' });
+
+    const live = await liveVotes(duplicateMemberId);
+    expect(live.map((row) => row.tags)).toEqual(['#agree']);
+    expect(await readRacePost()).toMatchObject({ upvotes: 1, downvotes: 0 });
+  });
+});

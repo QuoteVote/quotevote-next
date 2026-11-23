@@ -50,6 +50,26 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test -- --coverage --coverageReporters=text --coverageReporters=lcov
 
+      # The Prisma integration tests (votes, unique indexes, models) need real transactions,
+      # so they run against a throwaway single-node replica set, one file at a time (#747).
+      - name: Start MongoDB for the integration tests
+        run: |
+          docker run -d --name mongo-it -p 27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do
+            docker exec mongo-it mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' && break
+            sleep 1
+          done
+          docker exec mongo-it mongosh --quiet --eval 'rs.initiate()'
+          for i in $(seq 1 30); do
+            docker exec mongo-it mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true && break
+            sleep 1
+          done
+
+      - name: Run the Prisma integration tests
+        env:
+          DATABASE_URL: mongodb://localhost:27017/quotevote_ci_test?replicaSet=rs0&directConnection=true
+        run: pnpm test:prisma
+
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         if: always()
@@ -195,18 +215,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Run at repo root — quotevote-frontend/ does not exist until after checkout
-      - name: Check E2E credentials
+      # Run at repo root — quotevote-frontend/ does not exist until after checkout.
+      # The specs create accounts, posts and votes, so they only run against a test backend:
+      # E2E_API_URL must be set, and the production API is refused.
+      - name: Check E2E credentials and test backend
         id: e2e_gate
         env:
           E2E_AUTHOR_PASSWORD: ${{ secrets.E2E_AUTHOR_PASSWORD }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
         run: |
-          if [ -n "$E2E_AUTHOR_PASSWORD" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
+          if [ -z "$E2E_AUTHOR_PASSWORD" ] || [ -z "$E2E_API_URL" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::E2E skipped — configure E2E_AUTHOR_PASSWORD repository secret to enable"
+            echo "::notice::E2E skipped — set the E2E_AUTHOR_PASSWORD and E2E_API_URL (a test backend) repository secrets to enable"
+            exit 0
           fi
+          host=$(node -e 'console.log(new URL(process.argv[1]).hostname)' "$E2E_API_URL")
+          if [ "$host" = "api.quote.vote" ]; then
+            echo "::error::E2E_API_URL points at the production API. Use a test backend."
+            exit 1
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
 
       - name: Checkout code
         if: steps.e2e_gate.outputs.enabled == 'true'
@@ -240,8 +268,9 @@ jobs:
         if: steps.e2e_gate.outputs.enabled == 'true'
         working-directory: ./quotevote-frontend
         env:
-          NEXT_PUBLIC_SERVER_URL: ${{ secrets.E2E_API_URL || 'https://api.quote.vote' }}
-          NEXT_PUBLIC_GRAPHQL_ENDPOINT: ${{ secrets.E2E_GRAPHQL_ENDPOINT || 'https://api.quote.vote/graphql' }}
+          # The test backend checked above; no fallback.
+          NEXT_PUBLIC_SERVER_URL: ${{ secrets.E2E_API_URL }}
+          NEXT_PUBLIC_GRAPHQL_ENDPOINT: ${{ secrets.E2E_GRAPHQL_ENDPOINT }}
         run: pnpm build
 
       - name: Run Playwright tests
@@ -253,6 +282,9 @@ jobs:
           E2E_AUTHOR_PASSWORD: ${{ secrets.E2E_AUTHOR_PASSWORD }}
           E2E_PEER_USERNAME: ${{ secrets.E2E_PEER_USERNAME }}
           E2E_PUBLIC_GROUP_NAME: ${{ secrets.E2E_PUBLIC_GROUP_NAME || 'QA' }}
+          # The specs talk to the same test backend as the build.
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+          E2E_GRAPHQL_ENDPOINT: ${{ secrets.E2E_GRAPHQL_ENDPOINT }}
           PLAYWRIGHT_BASE_URL: http://localhost:3000
           PLAYWRIGHT_SKIP_WEBSERVER: true
         run: |
