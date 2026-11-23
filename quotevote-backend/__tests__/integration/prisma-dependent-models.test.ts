@@ -9,7 +9,9 @@
  * Run: npx jest __tests__/integration/prisma-dependent-models.test.ts
  */
 
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { ensureUniqueIndexes } from '~/data/utils/uniqueIndexes';
+import type { UniqueIndexModel } from '~/types/uniqueIndexes';
 
 const prisma = new PrismaClient();
 
@@ -93,6 +95,16 @@ async function createTestPost(userId: string, tagId: string) {
 // Replica-set guard — Prisma requires MongoDB replica sets for create/update/delete
 // (transactions). Detect a non-replica-set mongod up front and fail fast with a
 // readable error instead of a cryptic mid-suite P2031.
+// The unique-constraint tests need the schema's unique indexes, which the backend no longer
+// builds when it starts (#730). Build them the way the switch does (`pnpm db:unique-indexes`),
+// so the file works on a fresh database such as CI's.
+beforeAll(async () => {
+  await ensureUniqueIndexes({
+    run: (command) => prisma.$runCommandRaw(command as Prisma.InputJsonObject),
+    models: Prisma.dmmf.datamodel.models as unknown as UniqueIndexModel[],
+  });
+});
+
 beforeAll(async () => {
   await prisma.$connect();
 
