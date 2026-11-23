@@ -93,6 +93,7 @@ For detailed backend documentation, see the [Backend README](./quotevote-backend
 
 - **[Frontend Documentation](./quotevote-frontend/README.md)** - Complete guide for the Next.js frontend
 - **[Backend Documentation](./quotevote-backend/README.md)** - Complete guide for the Express backend
+- **[Deployment](./docs/deployment.md)** - Building, configuring, deploying and rolling back 2.0
 - **[Migration Rules](./docs/Migration-Rules.md)** - Detailed migration guidelines and best practices
 
 ## 🔄 Legacy Codebase

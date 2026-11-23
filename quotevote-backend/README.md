@@ -186,11 +186,12 @@ The Prisma models in `prisma/schema/` deliberately map to existing MongoDB colle
 
 ## Contributing and references
 
-Read the repository [contribution guide](../CONTRIBUTING.md) before taking on an issue or submitting a pull request. Coordinate 2.0 changes against `staging`, especially when the frontend depends on the new GraphQL contract. Include tests for changed behavior and follow the issue's acceptance criteria.
+Read the repository [contribution guide](../CONTRIBUTING.md) before taking on an issue or submitting a pull request. Open 2.0 pull requests against `main`, which is the 2.0 line since #734. Include tests for changed behavior and follow the issue's acceptance criteria.
 
 - [2.0 release roadmap — #637](https://github.com/QuoteVote/quotevote-next/issues/637)
 - [Mongoose removal — #169](https://github.com/QuoteVote/quotevote-next/issues/169)
 - [Backend documentation — #175](https://github.com/QuoteVote/quotevote-next/issues/175)
+- [Deploying 2.0](../docs/deployment.md): build, environment, a new instance, the switch and rollback
 - [Migration rules](../docs/Migration-Rules.md)
 - [Backend testing guide](../docs/backend/testing_guide.md)
 - [Express](https://expressjs.com/), [Apollo Server](https://www.apollographql.com/docs/apollo-server/), [Prisma](https://www.prisma.io/docs/), [Jest](https://jestjs.io/)

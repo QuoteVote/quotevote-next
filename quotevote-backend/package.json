@@ -43,10 +43,6 @@
   "prisma": {
     "schema": "./prisma/schema"
   },
-  "_legacy_scripts_TODO_remove_after_stable": {
-    "dev": "babel-node src/index.js",
-    "build": "babel src -d dist"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
