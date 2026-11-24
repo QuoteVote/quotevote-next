@@ -3,6 +3,7 @@ import { MESSAGE_ROOM_SELECT } from '~/data/resolvers/utils/chatRooms';
 import { MESSAGE_RECORD_SELECT } from '~/data/resolvers/utils/commentsQuotes';
 import { PUBLIC_USER_SELECT } from '~/data/utils/userPrismaMapper';
 
+const MESSAGE_OID = '64b000000000000000000001';
 const date = new Date('2026-01-01T00:00:00.000Z');
 
 const createContext = () => ({
@@ -18,6 +19,7 @@ const createContext = () => ({
     },
     message: {
       findMany: jest.fn().mockResolvedValue([]),
+      findUnique: jest.fn().mockResolvedValue(null),
       groupBy: jest.fn().mockResolvedValue([]),
       create: jest.fn(),
     },
@@ -349,9 +351,10 @@ describe('chatResolver Prisma queries', () => {
       { messageRoomId: 'room-1' },
       context as never
     );
+    context.prisma.message.findUnique.mockResolvedValue({ messageRoomId: 'room-1' });
     const reactions = await chatResolver.Query.messageReactions(
       {},
-      { messageId: 'message-1' },
+      { messageId: MESSAGE_OID },
       context as never
     );
 
@@ -370,6 +373,59 @@ describe('chatResolver Prisma queries', () => {
       _id: 'reaction-1',
       messageId: 'message-1',
       emoji: '👍',
+    });
+  });
+
+  describe('messageReactions (#749)', () => {
+    it('returns nothing for a direct message the caller is not a member of', async () => {
+      const context = createContext();
+      context.prisma.message.findUnique.mockResolvedValue({ messageRoomId: 'room-1' });
+      context.prisma.messageRoom.findUnique.mockResolvedValue({
+        messageType: 'USER',
+        userIds: ['someone-else', 'another'],
+      });
+
+      await expect(
+        chatResolver.Query.messageReactions({}, { messageId: MESSAGE_OID }, context as never)
+      ).resolves.toEqual([]);
+      expect(context.prisma.reaction.findMany).not.toHaveBeenCalled();
+    });
+
+    it('returns nothing to a signed-out visitor for a direct message', async () => {
+      const context = createContext();
+      context.userId = null as never;
+      context.prisma.message.findUnique.mockResolvedValue({ messageRoomId: 'room-1' });
+      context.prisma.messageRoom.findUnique.mockResolvedValue({
+        messageType: 'USER',
+        userIds: ['user-1', 'user-2'],
+      });
+
+      await expect(
+        chatResolver.Query.messageReactions({}, { messageId: MESSAGE_OID }, context as never)
+      ).resolves.toEqual([]);
+    });
+
+    it("reads a post chat's reactions for anyone, as its messages are", async () => {
+      const context = createContext();
+      context.userId = null as never;
+      context.prisma.message.findUnique.mockResolvedValue({ messageRoomId: 'room-1' });
+      context.prisma.messageRoom.findUnique.mockResolvedValue({ messageType: 'POST', userIds: [] });
+      context.prisma.reaction.findMany.mockResolvedValue([]);
+
+      await chatResolver.Query.messageReactions({}, { messageId: MESSAGE_OID }, context as never);
+
+      expect(context.prisma.reaction.findMany).toHaveBeenCalled();
+    });
+
+    it('returns nothing for an invalid or unknown message id', async () => {
+      const context = createContext();
+      await expect(
+        chatResolver.Query.messageReactions({}, { messageId: 'not-an-id' }, context as never)
+      ).resolves.toEqual([]);
+      await expect(
+        chatResolver.Query.messageReactions({}, { messageId: MESSAGE_OID }, context as never)
+      ).resolves.toEqual([]);
+      expect(context.prisma.reaction.findMany).not.toHaveBeenCalled();
     });
   });
 

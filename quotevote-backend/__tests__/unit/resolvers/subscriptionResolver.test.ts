@@ -122,6 +122,70 @@ describe('subscriptionResolver', () => {
     });
   });
 
+  describe('presence events (#749)', () => {
+    const presenceSource = (...events: object[]) => {
+      const next = jest.fn();
+      for (const value of events) next.mockResolvedValueOnce({ done: false, value });
+      next.mockResolvedValue({ done: true, value: undefined });
+      return { next, return: jest.fn() };
+    };
+    const withBlocks = (blocks: { blockerId: string }[]) =>
+      createContext({
+        prisma: {
+          userBlock: { findMany: jest.fn().mockResolvedValue(blocks) },
+        } as unknown as GraphQLContext['prisma'],
+      });
+
+    it.each([
+      ['the subscriber blocked them', 'user-1'],
+      ['they blocked the subscriber', 'user-2'],
+    ])('skips a member whose presence is hidden because %s', async (_label, blockerId) => {
+      const context = withBlocks([{ blockerId }]);
+      (context.pubsub.asyncIterableIterator as jest.Mock).mockReturnValue(
+        presenceSource({ presence: { userId: 'user-2', status: 'online' } })
+      );
+
+      const iterator = subscriptionResolver.Subscription.presence.subscribe(
+        null,
+        { userId: 'user-2' },
+        context
+      );
+
+      await expect(iterator.next()).resolves.toMatchObject({ done: true });
+    });
+
+    it('passes a member with no block between them', async () => {
+      const context = withBlocks([]);
+      const event = { presence: { userId: 'user-2', status: 'online' } };
+      (context.pubsub.asyncIterableIterator as jest.Mock).mockReturnValue(presenceSource(event));
+
+      const iterator = subscriptionResolver.Subscription.presence.subscribe(null, {}, context);
+
+      await expect(iterator.next()).resolves.toEqual({ done: false, value: event });
+    });
+
+    it('shows an invisible member as offline with no status message to others', () => {
+      const context = createContext();
+      const resolve = subscriptionResolver.Subscription.presence.resolve;
+      const presence = { userId: 'user-2', status: 'invisible' as const, statusMessage: 'away' };
+
+      expect(resolve({ presence }, {}, context)).toEqual({
+        userId: 'user-2',
+        status: 'offline',
+        statusMessage: '',
+      });
+    });
+
+    it('shows a member their own invisible status', () => {
+      const context = createContext();
+      const presence = { userId: 'user-1', status: 'invisible' as const, statusMessage: 'busy' };
+
+      expect(subscriptionResolver.Subscription.presence.resolve({ presence }, {}, context)).toEqual(
+        presence
+      );
+    });
+  });
+
   it('rejects notification subscriptions for another user', () => {
     const context = createContext();
 

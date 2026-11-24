@@ -44,6 +44,7 @@ function mockContext(overrides: Partial<GraphQLContext['user']> = {}): GraphQLCo
         findFirst: jest.fn(),
         create: jest.fn(),
       },
+      userBlock: { findFirst: jest.fn().mockResolvedValue(null) },
       notification: {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue({

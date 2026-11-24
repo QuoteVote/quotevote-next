@@ -16,6 +16,7 @@ import type {
 } from '~/types/common';
 
 type NotificationsPrisma = Pick<PrismaClient, 'notification'>;
+type AddNotificationPrisma = Pick<PrismaClient, 'notification' | 'userBlock'>;
 
 /**
  * Fields read for a notification. Selected explicitly because legacy documents
@@ -50,7 +51,12 @@ export const toNotificationEntity = (record: NotificationRecord): Notification =
 });
 
 /** Post columns a notification links to; deleted posts are kept so the UI can say so. */
-export const NOTIFICATION_POST_SELECT = { id: true, title: true, url: true, deleted: true } as const;
+export const NOTIFICATION_POST_SELECT = {
+  id: true,
+  title: true,
+  url: true,
+  deleted: true,
+} as const;
 
 type NotificationRelationsPrisma = Pick<PrismaClient, 'user' | 'post'>;
 
@@ -143,13 +149,25 @@ export const hasUnreadNotification = async (
 };
 
 /**
- * Create a notification and publish it via PubSub for real-time delivery.
+ * Create a notification and publish it via PubSub for real-time delivery. Nothing is created
+ * while either member blocks the other (#749): a blocked member's votes, comments, quotes,
+ * follows and messages don't reach the member who blocked them. Returns null then.
  */
 export const addNotification = async (
-  prisma: NotificationsPrisma,
+  prisma: AddNotificationPrisma,
   input: AddNotificationInput
-): Promise<Notification> => {
+): Promise<Notification | null> => {
   const { userId, userIdBy, notificationType, label, postId } = input;
+  const blocked = await prisma.userBlock.findFirst({
+    where: {
+      OR: [
+        { blockerId: userId, blockedUserId: userIdBy },
+        { blockerId: userIdBy, blockedUserId: userId },
+      ],
+    },
+    select: { id: true },
+  });
+  if (blocked) return null;
 
   const record = await prisma.notification.create({
     data: {

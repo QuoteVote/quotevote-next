@@ -9,6 +9,7 @@ import {
 import type { RoomAccessInput } from '~/types/roomAccess';
 import { assertRoomAccess } from '~/data/utils/roomAccess';
 import { toGraphQLError } from '~/data/utils/graphqlErrors';
+import { assertNoBlockBetween } from '~/data/utils/userBlock';
 const TYPING_EXPIRATION_MS = 10_000;
 
 type UpdateTypingArgs = {
@@ -79,11 +80,18 @@ export const typingResolver = {
 
       const { messageRoomId, isTyping } = args.typing;
 
+      let room: RoomAccessInput | null;
       try {
-        const room = await loadRoomAccessInput(context, messageRoomId);
+        room = await loadRoomAccessInput(context, messageRoomId);
         assertRoomAccess(room, userId);
       } catch (error) {
         throw toGraphQLError(error);
+      }
+      // A direct room is closed while either member blocks the other, for typing as for
+      // messages (#749). Stopping is still allowed, so a stale indicator can be cleared.
+      if (isTyping && room?.messageType === 'USER') {
+        const other = room.userIds.find((id) => id !== userId);
+        if (other) await assertNoBlockBetween(context.prisma, userId, other);
       }
 
       const now = new Date();

@@ -167,6 +167,18 @@ export const chatResolver = {
       args: { messageId: string },
       context: GraphQLContext
     ): Promise<Common.Reaction[]> => {
+      // Only where the caller may read the message: a post's chat is public, a direct
+      // conversation needs membership (#749).
+      const message = isObjectId(args.messageId)
+        ? await context.prisma.message.findUnique({
+            where: { id: args.messageId },
+            select: { messageRoomId: true },
+          })
+        : null;
+      const room = message
+        ? await getReadableMessageRoom(context.prisma, message.messageRoomId, context.userId)
+        : null;
+      if (!room) return [];
       // Legacy reactions have no createdAt/updatedAt, so select the safe fields.
       const reactions = await context.prisma.reaction.findMany({
         where: { messageId: args.messageId },
