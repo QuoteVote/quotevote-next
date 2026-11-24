@@ -87,10 +87,16 @@ function requireUserId(context: GraphQLContext): string {
 const badInput = (message: string): GraphQLError =>
   new GraphQLError(message, { extensions: { code: 'BAD_USER_INPUT' } });
 
-/** Legacy stores a vote's response as one string, Prisma writes it as a list. */
+/**
+ * A vote's response as one string. Legacy stores it as a string, Prisma writes a list.
+ * A list is joined whole, the same way the `Vote.tags` field reads it, so a list with more
+ * than one item is never taken for its first response (#747).
+ */
 const tagOf = (tags: unknown): string | null => {
   if (typeof tags === 'string') return tags;
-  if (Array.isArray(tags) && typeof tags[0] === 'string') return tags[0];
+  if (Array.isArray(tags) && tags.length > 0 && tags.every((t) => typeof t === 'string')) {
+    return tags.join(',');
+  }
   return null;
 };
 
@@ -499,14 +505,16 @@ export const voteResolver = {
             // Only the request that really deletes the vote takes it off the totals.
             if ((await softDeleteVotes(tx, [existing.id])) === 0) return;
 
-            // The member's latest other live vote on the post keeps them in `votedBy`.
+            // The member's latest other live vote on the post keeps them in `votedBy`. Ordered
+            // by `_id`, which every vote has and which grows with time, since older votes
+            // can lack `created` (#747).
             const [remaining] = (await tx.vote.findRaw({
               filter: {
                 postId: { $oid: existing.postId },
                 userId: { $oid: existing.userId },
                 deleted: { $ne: true },
               },
-              options: { projection: { type: 1 }, sort: { created: -1 }, limit: 1 },
+              options: { projection: { type: 1 }, sort: { _id: -1 }, limit: 1 },
             })) as unknown as RemainingVoteRow[];
             const remainingType =
               remaining?.type === 'up' || remaining?.type === 'down' ? remaining.type : null;

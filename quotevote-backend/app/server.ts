@@ -42,17 +42,6 @@ async function startServer() {
     process.exit(1);
   }
 
-  // Unique indexes the schema relies on for duplicate protection (#694). Only adds the
-  // missing ones, and never stops the server from starting. Not in production: starting
-  // the backend never changes indexes there (#716); `pnpm db:unique-indexes --apply`
-  // builds them on purpose before the switch.
-  if (buildsIndexesAtStartup(process.env.NODE_ENV)) {
-    await createMissingUniqueIndexes(
-      (command) => prisma.$runCommandRaw(command as Prisma.InputJsonObject),
-      Prisma.dmmf.datamodel.models as unknown as UniqueIndexModel[]
-    );
-  }
-
   // Start Presence Cleanup Job
   startPresenceCleanup(prisma);
 
@@ -108,6 +97,18 @@ async function startServer() {
   // 4. Start Server
   await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
   console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+
+  // Unique indexes the schema relies on for duplicate protection (#694), only in
+  // development and tests (#716). It runs after the server is listening, so a large
+  // database can't hold up the health check (#747). It only adds the missing ones and
+  // logs anything it can't create. Elsewhere `pnpm db:unique-indexes --apply` builds
+  // them on purpose.
+  if (buildsIndexesAtStartup(process.env.NODE_ENV)) {
+    void createMissingUniqueIndexes(
+      (command) => prisma.$runCommandRaw(command as Prisma.InputJsonObject),
+      Prisma.dmmf.datamodel.models as unknown as UniqueIndexModel[]
+    );
+  }
 
   // 5. Graceful Shutdown
   // Guard flag prevents the handler from running twice when the process

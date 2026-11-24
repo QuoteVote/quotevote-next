@@ -18,10 +18,10 @@ Separately, `typings.expiresAt_1` exists without its TTL, because the model decl
 
 ## What changed
 
-- With `NODE_ENV=production`, the backend connects with `autoIndex: false` and `autoCreate: false`, so starting it never changes indexes. Development and tests keep Mongoose's defaults.
+- Unless `NODE_ENV` is `development` or `test`, the backend connects with `autoIndex: false` and `autoCreate: false`, so starting it never changes indexes. That includes a missing or misspelled value (#747). Development and tests keep Mongoose's defaults, and also build the schema's missing unique indexes once the server is listening.
 - `Typing` declares `expiresAt` once, as the TTL index.
 - `pnpm db:model-indexes` compares the indexes of every model the backend loads with the database's.
-- It also covers the collections only Prisma uses, which have no Mongoose model: `buddyrelationships`, `directmessages`, `terms_acceptances` and `userblocks`. Their `@@index`es are listed in `app/data/utils/prismaOnlyIndexes.ts`, named the way Prisma names them, because Prisma's runtime doesn't expose them and the deployed backend has no schema files. A test fails when the list and `prisma/schema` disagree, so a new `@@index` on such a collection goes in the list in the same PR. Their unique indexes stay with `pnpm db:unique-indexes` (#702).
+- It also covers the collections only Prisma uses, which have no Mongoose model: `buddyrelationships`, `directmessages`, `terms_acceptances` and `userblocks`. Their `@@index`es are listed in `app/data/utils/prismaOnlyIndexes.ts`, named the way Prisma names them, because Prisma's runtime doesn't expose them and the deployed backend has no schema files. A test fails when the list and `prisma/schema` disagree, so a new `@@index` on such a collection goes in the list in the same PR. Their unique indexes stay with `pnpm db:unique-indexes` (#702). That script names a missing unique index the way Prisma does: the schema's `map:` name, listed in `app/data/utils/uniqueIndexNames.ts` for the same reason and checked by a test, otherwise `<collection>_<stored fields>_key` (#747).
 
 ## The switch step
 

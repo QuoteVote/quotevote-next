@@ -51,3 +51,9 @@ export interface EnsureUniqueIndexesOptions {
   /** Report what would be created without creating anything. */
   dryRun?: boolean;
 }
+
+/**
+ * Index names the schema sets with `map:` on a unique index, by model and then by the
+ * comma-joined Prisma field names, e.g. `{ BotReport: { 'reporterId,userId': '...' } }`.
+ */
+export type UniqueIndexMapNames = Readonly<Record<string, Readonly<Record<string, string>>>>;

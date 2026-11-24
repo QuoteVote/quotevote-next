@@ -1,9 +1,9 @@
 /// <reference types="node" />
 /**
  * Creates the unique indexes the Prisma schema declares that are missing from the database
- * at DATABASE_URL (#694). It never drops or changes an index. Outside production the
- * backend also runs this at startup; in production starting it never changes indexes
- * (#716), so this is the switch step that builds them.
+ * at DATABASE_URL (#694). It never drops or changes an index. In development and tests the
+ * backend also runs this once it is listening; anywhere else starting it never changes
+ * indexes (#716, #747), so this is the switch step that builds them.
  *
  * Usage (same shape as `pnpm db:model-indexes`):
  *   pnpm db:unique-indexes           lists what would be created, changes nothing

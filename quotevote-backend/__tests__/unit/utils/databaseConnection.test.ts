@@ -10,16 +10,30 @@ describe('mongooseConnectOptions (#716)', () => {
   it('keeps the defaults in development and tests', () => {
     expect(mongooseConnectOptions('development')).toEqual({});
     expect(mongooseConnectOptions('test')).toEqual({});
-    expect(mongooseConnectOptions(undefined)).toEqual({});
+  });
+
+  it('builds nothing when NODE_ENV is missing or anything else (#747)', () => {
+    const off = { autoIndex: false, autoCreate: false };
+    expect(mongooseConnectOptions(undefined)).toEqual(off);
+    expect(mongooseConnectOptions('')).toEqual(off);
+    expect(mongooseConnectOptions('prod')).toEqual(off);
+    expect(mongooseConnectOptions('staging')).toEqual(off);
   });
 });
 
-describe('buildsIndexesAtStartup (#716, #694)', () => {
-  it('lets the backend build indexes at startup everywhere but production', () => {
-    expect(buildsIndexesAtStartup('production')).toBe(false);
+describe('buildsIndexesAtStartup (#716, #694, #747)', () => {
+  it('lets the backend build indexes at startup only in development and tests', () => {
     expect(buildsIndexesAtStartup('development')).toBe(true);
     expect(buildsIndexesAtStartup('test')).toBe(true);
-    expect(buildsIndexesAtStartup(undefined)).toBe(true);
+  });
+
+  it('builds nothing in production, or when NODE_ENV is missing or misspelled', () => {
+    expect(buildsIndexesAtStartup('production')).toBe(false);
+    expect(buildsIndexesAtStartup(undefined)).toBe(false);
+    expect(buildsIndexesAtStartup('')).toBe(false);
+    expect(buildsIndexesAtStartup('prod')).toBe(false);
+    expect(buildsIndexesAtStartup('Development')).toBe(false);
+    expect(buildsIndexesAtStartup('staging')).toBe(false);
   });
 });
 
