@@ -280,6 +280,32 @@ describe('voteResolver', () => {
       expect(totalBy(set, 'downvotes')).toBe(0);
     });
 
+    it('reads a response list whole, never as its first item (#747)', async () => {
+      const ctx = mockContext(authedUser());
+      // A list with more than one item isn't one response, so it isn't held or replaced.
+      ctx.prisma.vote.findRaw.mockResolvedValue([
+        { _id: { $oid: oldVoteId }, tags: ['#agree', '#like'] },
+      ]);
+
+      await addVote(ctx, voteInput());
+
+      expect(softDelete(ctx)).toBeUndefined();
+      expect(insertedVote(ctx)).toBeDefined();
+      const { set } = postCountsSet(ctx);
+      expect(totalBy(set, 'upvotes')).toBe(1);
+    });
+
+    it('still reads a one-item list as its response', async () => {
+      const ctx = mockContext(authedUser());
+      ctx.prisma.vote.findRaw.mockResolvedValue([
+        { _id: { $oid: oldVoteId }, tags: ['#disagree'] },
+      ]);
+
+      await addVote(ctx, voteInput());
+
+      expect(softDelete(ctx)).toEqual(expect.objectContaining({ q: liveVotes(oldVoteId) }));
+    });
+
     it('replaces the other side of the pair in one transaction', async () => {
       const ctx = mockContext(authedUser());
       ctx.prisma.vote.findRaw.mockResolvedValue([
@@ -534,7 +560,8 @@ describe('voteResolver', () => {
           userId: { $oid: userId },
           deleted: { $ne: true },
         },
-        options: { projection: { type: 1 }, sort: { created: -1 }, limit: 1 },
+        // `_id`, since older votes can lack `created` (#747).
+        options: { projection: { type: 1 }, sort: { _id: -1 }, limit: 1 },
       });
       const { q, set } = postCountsSet(ctx);
       expect(q).toEqual({ _id: { $oid: postId } });

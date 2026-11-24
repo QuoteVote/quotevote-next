@@ -6,8 +6,10 @@
  * because it also changes or drops indexes. MongoDB creates a collection on its first write
  * without them. This only ever adds an index:
  *
- * - An existing index with the same keys that is already unique counts as present, whatever
- *   its name, since legacy created several under its own names.
+ * - An existing index on the same fields, in the same order and in either direction, that is
+ *   unique for every record counts as present, whatever its name, since legacy created
+ *   several under its own names. Sparse, partial and collated indexes leave some records
+ *   unprotected or compare them differently, so they're reported instead (#747).
  * - An existing index with the same keys or name in another form is reported, never changed.
  * - Before creating an index the records are checked for shared keys. If any exist, nothing
  *   is created and a few of them are listed, so they can be resolved first. Unique indexes
@@ -22,6 +24,7 @@ import type {
   UniqueIndexRunCommand,
   UniqueIndexSpec,
 } from '~/types/uniqueIndexes';
+import { UNIQUE_INDEX_MAP_NAMES } from '~/data/utils/uniqueIndexNames';
 
 const DUPLICATE_EXAMPLES = 5;
 
@@ -29,31 +32,34 @@ interface ListedIndex {
   name?: unknown;
   key?: unknown;
   unique?: unknown;
+  sparse?: unknown;
   partialFilterExpression?: unknown;
+  collation?: unknown;
 }
 
-/** The unique indexes in the schema: `@unique` fields and `@@unique` lists, in stored names. */
+/**
+ * The unique indexes in the schema: `@unique` fields and `@@unique` lists, in stored names.
+ * Each is named the way Prisma names it (#747): the schema's `map:` name when it sets one,
+ * otherwise `<collection>_<stored fields>_key`.
+ */
 export function uniqueIndexSpecs(models: readonly UniqueIndexModel[]): UniqueIndexSpec[] {
   const specs: UniqueIndexSpec[] = [];
   for (const model of models) {
     const stored = (field: string) => model.fields.find((f) => f.name === field)?.dbName ?? field;
     const collection = model.dbName ?? model.name;
-    for (const field of model.fields.filter((f) => f.isUnique)) {
+    const add = (prismaFields: readonly string[]) => {
+      const fields = prismaFields.map(stored);
       specs.push({
         model: model.name,
         collection,
-        name: `${model.name}_${field.name}_key`,
-        fields: [stored(field.name)],
+        name:
+          UNIQUE_INDEX_MAP_NAMES[model.name]?.[prismaFields.join(',')] ??
+          `${collection}_${fields.join('_')}_key`,
+        fields,
       });
-    }
-    for (const index of model.uniqueIndexes) {
-      specs.push({
-        model: model.name,
-        collection,
-        name: index.name ?? `${model.name}_${index.fields.join('_')}_key`,
-        fields: index.fields.map(stored),
-      });
-    }
+    };
+    for (const field of model.fields.filter((f) => f.isUnique)) add([field.name]);
+    for (const index of model.uniqueIndexes) add(index.fields);
   }
   return specs;
 }
@@ -73,19 +79,40 @@ const toNumber = (value: unknown): number => {
   return Number(value);
 };
 
-/** Index key order matters, so `{ a: 1, b: 1 }` and `{ b: 1, a: 1 }` differ. */
+/**
+ * The same fields in the same order, each ascending or descending. Direction doesn't change
+ * which records a unique index refuses, so `{ a: 1, b: -1 }` protects `(a, b)` as well as
+ * `{ a: 1, b: 1 }` does (#747). Field order still matters for the key, and a text, hashed or
+ * geo index isn't the same index.
+ */
 const sameKey = (key: unknown, fields: string[]): boolean => {
   if (!key || typeof key !== 'object') return false;
   const entries = Object.entries(key as Record<string, unknown>);
   return (
     entries.length === fields.length &&
-    entries.every(([field, direction], i) => field === fields[i] && toNumber(direction) === 1)
+    entries.every(([field, direction], i) => {
+      const n = toNumber(direction);
+      return field === fields[i] && (n === 1 || n === -1);
+    })
   );
 };
 
-/** Unique for every record: a partial index leaves the others unprotected. */
+/** No collation, or the simple one MongoDB uses by default. */
+const comparesExactly = (collation: unknown): boolean =>
+  collation === undefined ||
+  collation === null ||
+  (typeof collation === 'object' && (collation as { locale?: unknown }).locale === 'simple');
+
+/**
+ * Unique for every record, compared exactly (#747). A partial index leaves the other records
+ * unprotected, a sparse one lets every record without the field through, and a collation
+ * changes which values count as equal.
+ */
 const isFullyUnique = (index: ListedIndex): boolean =>
-  index.unique === true && index.partialFilterExpression === undefined;
+  index.unique === true &&
+  index.partialFilterExpression === undefined &&
+  index.sparse !== true &&
+  comparesExactly(index.collation);
 
 const errorText = (err: unknown): string => (err instanceof Error ? err.message : String(err));
 
@@ -162,7 +189,7 @@ async function ensureOne(
       ...spec,
       status: 'conflict',
       existingName,
-      detail: `${existingName} has the same keys but isn't unique for every record`,
+      detail: `${existingName} has the same keys but isn't unique for every record (non-unique, sparse, partial or with a collation)`,
     };
   }
   const sameName = indexes.find((index) => index.name === spec.name);

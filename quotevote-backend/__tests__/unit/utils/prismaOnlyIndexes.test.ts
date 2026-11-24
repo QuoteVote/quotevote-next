@@ -13,7 +13,7 @@ interface SchemaIndex {
   model: string;
   collection: string;
   fields: string[];
-  /** Prisma's name: `map:` when given, otherwise `Model_field_idx`. */
+  /** Prisma's name: `map:` when given, otherwise `<collection>_<stored fields>_idx` (#747). */
   name: string;
   /** Anything besides `map:` (sort order, type, ...), which the list can't express yet. */
   otherOptions: string;
@@ -37,7 +37,7 @@ function schemaIndexes(): SchemaIndex[] {
           model,
           collection,
           fields: fields.map((f) => stored.get(f) ?? f),
-          name: mapName ?? `${model}_${fields.join('_')}_idx`,
+          name: mapName ?? `${collection}_${fields.map((f) => stored.get(f) ?? f).join('_')}_idx`,
           otherOptions: rest.replace(/map:\s*"[^"]*"/, '').replace(/[,\s]/g, ''),
         });
       }
@@ -103,9 +103,9 @@ describe('Prisma-only indexes', () => {
       // Built earlier by `prisma db push` on a dev database: same key, same name.
       userblocks: [
         { name: '_id_', key: { _id: 1 } },
-        { name: 'UserBlock_blockedUserId_idx', key: { blockedUserId: 1 } },
+        { name: 'userblocks_blockedUserId_idx', key: { blockedUserId: 1 } },
         {
-          name: 'UserBlock_blockerId_blockedUserId_key',
+          name: 'userblocks_blockerId_blockedUserId_key',
           key: { blockerId: 1, blockedUserId: 1 },
           unique: true,
         },

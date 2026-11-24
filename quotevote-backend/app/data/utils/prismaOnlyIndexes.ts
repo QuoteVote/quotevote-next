@@ -8,34 +8,34 @@ import type { ModelIndexSource } from '~/types/modelIndexes';
  * Prisma's runtime metadata doesn't include `@@index`, and the deployed backend has no
  * schema files, so they're listed here. `__tests__/unit/utils/prismaOnlyIndexes.test.ts`
  * fails when this list and `prisma/schema` disagree. Names follow Prisma's own
- * (`Model_field_idx`), so Prisma sees them as the indexes it declares.
+ * (`<collection>_<stored fields>_idx`, #747), so Prisma sees them as the indexes it declares.
  */
 export const PRISMA_ONLY_INDEXES: ModelIndexSource[] = [
   {
     collection: 'buddyrelationships',
     indexes: [
-      [{ requesterId: 1, status: 1 }, { name: 'BuddyRelationship_requesterId_status_idx' }],
-      [{ recipientId: 1, status: 1 }, { name: 'BuddyRelationship_recipientId_status_idx' }],
+      [{ requesterId: 1, status: 1 }, { name: 'buddyrelationships_requesterId_status_idx' }],
+      [{ recipientId: 1, status: 1 }, { name: 'buddyrelationships_recipientId_status_idx' }],
     ],
   },
   {
     collection: 'directmessages',
     indexes: [
-      [{ userId: 1 }, { name: 'DirectMessage_userId_idx' }],
-      [{ created: 1 }, { name: 'DirectMessage_created_idx' }],
+      [{ userId: 1 }, { name: 'directmessages_userId_idx' }],
+      [{ created: 1 }, { name: 'directmessages_created_idx' }],
     ],
   },
   {
     collection: 'staff_actions',
-    indexes: [[{ createdAt: 1 }, { name: 'StaffAction_createdAt_idx' }]],
+    indexes: [[{ createdAt: 1 }, { name: 'staff_actions_createdAt_idx' }]],
   },
   {
     collection: 'terms_acceptances',
-    indexes: [[{ userId: 1 }, { name: 'TermsAcceptance_userId_idx' }]],
+    indexes: [[{ userId: 1 }, { name: 'terms_acceptances_userId_idx' }]],
   },
   {
     collection: 'userblocks',
-    indexes: [[{ blockedUserId: 1 }, { name: 'UserBlock_blockedUserId_idx' }]],
+    indexes: [[{ blockedUserId: 1 }, { name: 'userblocks_blockedUserId_idx' }]],
   },
 ];
 
