@@ -51,6 +51,7 @@ function mockContext(owner = postOwnerId) {
         update: jest.fn().mockResolvedValue({}),
       },
       activity: { create: jest.fn().mockResolvedValue({ id: 'activity-1' }) },
+      userBlock: { findFirst: jest.fn().mockResolvedValue(null) },
       notification: {
         create: jest.fn().mockResolvedValue({
           id: 'notification-1',

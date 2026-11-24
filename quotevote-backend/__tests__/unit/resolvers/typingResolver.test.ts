@@ -12,6 +12,7 @@ function mockContext(
     user?: GraphQLContext['user'];
     typing?: Record<string, jest.Mock>;
     messageRoom?: Record<string, jest.Mock>;
+    blocks?: { blockerId: string }[];
   } = {}
 ): GraphQLContext {
   const user =
@@ -27,13 +28,14 @@ function mockContext(
         findMany: jest.fn(),
         ...options.typing,
       },
-        messageRoom: {
+      messageRoom: {
         findUnique: jest.fn().mockResolvedValue({
           messageType: 'USER',
           userIds: [actorId],
         }),
         ...options.messageRoom,
       },
+      userBlock: { findMany: jest.fn().mockResolvedValue(options.blocks ?? []) },
     } as unknown as GraphQLContext['prisma'],
     req: {} as GraphQLContext['req'],
     res: {} as GraphQLContext['res'],
@@ -69,7 +71,7 @@ describe('typingResolver', () => {
       ).rejects.toThrow(GraphQLError);
     });
 
-     it('rejects an unknown room', async () => {
+    it('rejects an unknown room', async () => {
       const context = mockContext({
         messageRoom: { findUnique: jest.fn().mockResolvedValue(null) },
       });
@@ -82,7 +84,7 @@ describe('typingResolver', () => {
       ).rejects.toThrow('Room not found');
     });
 
-     it('rejects a non-member of a USER room', async () => {
+    it('rejects a non-member of a USER room', async () => {
       const context = mockContext({
         messageRoom: {
           findUnique: jest.fn().mockResolvedValue({ messageType: 'USER', userIds: ['other-user'] }),
@@ -113,6 +115,57 @@ describe('typingResolver', () => {
       );
 
       expect(result).toEqual({ success: true, messageRoomId, isTyping: true });
+    });
+
+    describe('in a direct room with a block (#749)', () => {
+      const otherId = '60d5ec49ad414d7a8d5464a1';
+      const directRoom = {
+        findUnique: jest.fn().mockResolvedValue({
+          messageType: 'USER',
+          userIds: [actorId, otherId],
+        }),
+      };
+
+      it.each([
+        ['the actor blocks the other member', actorId],
+        ['the other member blocks the actor', otherId],
+      ])('refuses typing when %s, and publishes nothing', async (_label, blockerId) => {
+        const context = mockContext({ messageRoom: directRoom, blocks: [{ blockerId }] });
+
+        await expect(
+          typingResolver.Mutation.updateTyping(
+            null,
+            { typing: { messageRoomId, isTyping: true } },
+            context
+          )
+        ).rejects.toMatchObject({ extensions: { code: 'FORBIDDEN' } });
+        expect(context.prisma.typing.upsert).not.toHaveBeenCalled();
+        expect(context.pubsub.publish).not.toHaveBeenCalled();
+      });
+
+      it('still lets a member stop typing, so a stale indicator clears', async () => {
+        const context = mockContext({ messageRoom: directRoom, blocks: [{ blockerId: otherId }] });
+
+        await expect(
+          typingResolver.Mutation.updateTyping(
+            null,
+            { typing: { messageRoomId, isTyping: false } },
+            context
+          )
+        ).resolves.toMatchObject({ success: true, isTyping: false });
+      });
+
+      it('allows typing when there is no block', async () => {
+        const context = mockContext({ messageRoom: directRoom });
+
+        await expect(
+          typingResolver.Mutation.updateTyping(
+            null,
+            { typing: { messageRoomId, isTyping: true } },
+            context
+          )
+        ).resolves.toMatchObject({ success: true });
+      });
     });
 
     it('upserts typing state with a ten-second expiration and publishes it', async () => {
@@ -227,7 +280,7 @@ describe('typingResolver', () => {
       });
       expect(result).toEqual(records);
     });
- it('rejects a non-member of a USER room', async () => {
+    it('rejects a non-member of a USER room', async () => {
       const context = mockContext({
         messageRoom: {
           findUnique: jest.fn().mockResolvedValue({ messageType: 'USER', userIds: ['other-user'] }),
