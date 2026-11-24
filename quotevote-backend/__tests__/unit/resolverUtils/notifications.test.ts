@@ -25,7 +25,8 @@ jest.mock('~/data/utils/constants', () => ({
 
 const created = new Date('2026-01-01T00:00:00.000Z');
 
-function mockPrisma() {
+function mockPrisma(blocked = false) {
+  const blockLookup = jest.fn().mockResolvedValue(blocked ? { id: 'block-1' } : null);
   const create = jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({
     id: 'notif-1',
     userId: data.userId,
@@ -36,8 +37,11 @@ function mockPrisma() {
     postId: data.postId ?? null,
     created,
   }));
-  const prisma = { notification: { create } } as unknown as Pick<PrismaClient, 'notification'>;
-  return { prisma, create };
+  const prisma = {
+    notification: { create },
+    userBlock: { findFirst: blockLookup },
+  } as unknown as Pick<PrismaClient, 'notification' | 'userBlock'>;
+  return { prisma, create, blockLookup };
 }
 
 describe('notifications resolver utilities', () => {
@@ -131,7 +135,35 @@ describe('notifications resolver utilities', () => {
           data: expect.objectContaining({ userId: 'user1', postId: undefined }),
         })
       );
-      expect(result.postId).toBeUndefined();
+      expect(result?.postId).toBeUndefined();
+    });
+  });
+
+  describe('addNotification with a block (#749)', () => {
+    const input: AddNotificationInput = {
+      userId: 'author',
+      userIdBy: 'blocked',
+      notificationType: 'UPVOTED',
+      label: 'x',
+      postId: 'post1',
+    };
+
+    it('creates and publishes nothing while either member blocks the other', async () => {
+      const { prisma, create, blockLookup } = mockPrisma(true);
+
+      await expect(addNotification(prisma, input)).resolves.toBeNull();
+
+      expect(blockLookup).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { blockerId: 'author', blockedUserId: 'blocked' },
+            { blockerId: 'blocked', blockedUserId: 'author' },
+          ],
+        },
+        select: { id: true },
+      });
+      expect(create).not.toHaveBeenCalled();
+      expect(mockPublish).not.toHaveBeenCalled();
     });
   });
 

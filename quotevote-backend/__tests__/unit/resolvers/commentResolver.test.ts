@@ -62,6 +62,7 @@ function mockContext(user: GraphQLContext['user'] = null) {
       user: {
         findUnique: jest.fn().mockResolvedValue(null),
       },
+      userBlock: { findFirst: jest.fn().mockResolvedValue(null) },
       notification: {
         create: jest.fn().mockResolvedValue({
           id: 'notif-1',
