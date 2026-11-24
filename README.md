@@ -39,11 +39,11 @@ quotevote-next/
 - **GraphQL Client**: Apollo Client
 
 ### Backend
-- **Runtime**: Node.js 20.x+
-- **Framework**: Express 5.2.1
+- **Runtime**: Node.js 24
+- **Framework**: Express 5
 - **Language**: TypeScript (Strict Mode)
-- **GraphQL**: Apollo Server
-- **Database**: MongoDB with Mongoose
+- **GraphQL**: Apollo Server 5, with subscriptions over WebSocket
+- **Database**: MongoDB (a replica set) with Prisma 6
 
 ## 🎨 Design Resources
 
@@ -52,9 +52,9 @@ quotevote-next/
 
 ## 📋 Prerequisites
 
-- **Node.js**: 20.x or higher
-- **pnpm**: Latest version (install with `npm install -g pnpm`)
-- **MongoDB**: Local instance or connection string (for backend)
+- **Node.js**: 24, as in CI and the backend image
+- **pnpm**: 9, as in CI (`corepack prepare pnpm@9.15.9 --activate`)
+- **MongoDB**: a local replica set (a single node is enough), for the backend
 
 ## 🚀 Getting Started
 
@@ -85,14 +85,13 @@ pnpm install
 pnpm dev
 ```
 
-The backend will be available at [http://localhost:4000](http://localhost:4000).
-
-For detailed backend documentation, see the [Backend README](./quotevote-backend/README.md).
+The backend will be available at [http://localhost:4000](http://localhost:4000). It needs a `.env` with its database and `JWT_SECRET`, and the frontend needs the backend's address in `.env.local`. The [Backend README](./quotevote-backend/README.md) covers both, the first account and the GraphQL playground.
 
 ## 📚 Documentation
 
 - **[Frontend Documentation](./quotevote-frontend/README.md)** - Complete guide for the Next.js frontend
 - **[Backend Documentation](./quotevote-backend/README.md)** - Complete guide for the Express backend
+- **[Backend architecture](./docs/backend/architecture.md)** - Requests, sign-in, staff roles, live updates and the data model
 - **[Deployment](./docs/deployment.md)** - Building, configuring, deploying and rolling back 2.0
 - **[Migration Rules](./docs/Migration-Rules.md)** - Detailed migration guidelines and best practices
 

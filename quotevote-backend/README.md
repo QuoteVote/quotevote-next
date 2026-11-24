@@ -2,7 +2,9 @@
 
 The Quote.Vote backend serves the platform's GraphQL API, real-time subscriptions, and authentication endpoints. It is an Express 5 application written in strict TypeScript, using Apollo Server, Prisma, and MongoDB.
 
-> **Migration status (2.0 staging):** The TypeScript/Apollo/Prisma architecture is implemented, while some legacy Mongoose paths remain during the migration. The `staging` branch is the integration branch for the 2.0 backend cutover; `main` continues to support the current beta until the coordinated switch. See [#637](https://github.com/QuoteVote/quotevote-next/issues/637), [#169](https://github.com/QuoteVote/quotevote-next/issues/169), and [#182](https://github.com/QuoteVote/quotevote-next/issues/182) for current release status.
+> **Migration status:** `main` is the 2.0 line since #734, and 2.0 pull requests go there. The hosted beta still runs the legacy API until the switch ([#183](https://github.com/QuoteVote/quotevote-next/issues/183)). Every GraphQL resolver uses Prisma; Mongoose is still connected for `/health`, the index steps and Solid until [#169](https://github.com/QuoteVote/quotevote-next/issues/169). See [#637](https://github.com/QuoteVote/quotevote-next/issues/637) for what's left before 2.0.
+
+How the backend works (requests, sign-in, staff roles, live updates, and how the Prisma models map to the existing collections) is in [docs/backend/architecture.md](../docs/backend/architecture.md).
 
 ## Technology
 
@@ -83,7 +85,9 @@ JWT_SECRET=replace-with-a-long-random-local-development-secret
 CLIENT_URL=http://localhost:3000
 ```
 
-The example assumes a local replica set named `rs0`; use the actual hostname, replica-set name, and connection options of your MongoDB installation. **`MONGO_URI`** is used by the remaining Mongoose connection, while **`DATABASE_URL`** is used by Prisma. Point both at the same intended development database for migration testing.
+The example assumes a local replica set named `rs0`; use the actual hostname, replica-set name, and connection options of your MongoDB installation. A single-node replica set is enough: votes and other multi-document writes use transactions, which need one. If the member advertises a different address than the one you connect to (common with Docker), add `directConnection=true`. **`MONGO_URI`** is used by the remaining Mongoose connection, while **`DATABASE_URL`** is used by Prisma. Point both at the same development database.
+
+Keep `NODE_ENV=development`: only `development` and `test` build missing indexes when the server starts. With any other value, or none, it builds nothing (#747).
 
 Other configuration depends on the feature being exercised:
 
@@ -108,7 +112,47 @@ By default, the API listens at **http://localhost:4000** and serves GraphQL at *
 curl -i http://localhost:4000/health
 ```
 
-Run the frontend separately from `quotevote-frontend/` and configure its backend URL as documented in the [frontend README](../quotevote-frontend/README.md).
+### First account
+
+Accounts are invite-only, so an empty database has no one to sign in as. Create the first administrator with:
+
+```bash
+DATABASE_URL='<the DATABASE_URL from your .env>' pnpm setup:instance admin
+```
+
+It doesn't read `.env`, so pass the database address as above (or export it). It asks for the email, username, display name and password. Further accounts come through the app: request access, approve it as the admin, then follow the signup link. See [instance-setup.md](../docs/backend/instance-setup.md), which also covers starting tags and posts.
+
+### Running the frontend against it
+
+In `quotevote-frontend/.env.local`:
+
+```dotenv
+NEXT_PUBLIC_SERVER_URL=http://localhost:4000
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:4000/graphql
+# Optional, and only the same value as the backend's JWT_SECRET:
+# JWT_SECRET=replace-with-a-long-random-local-development-secret
+```
+
+Then start it from `quotevote-frontend/` with `pnpm dev` (http://localhost:3000). The backend's `CLIENT_URL` must be the frontend's address, or the browser's requests are refused by CORS.
+
+The frontend's `JWT_SECRET` lets its middleware check the sign-in token before showing member and admin pages. Leave it unset or give it the backend's value: a different value makes every token look invalid, so you get signed out.
+
+### GraphQL playground
+
+With `NODE_ENV` other than `production`, opening http://localhost:4000/graphql in a browser shows Apollo Sandbox, with the schema loaded from introspection. In production, introspection is off. `GRAPHQL_PLAYGROUND_ENABLED` is read but has no effect.
+
+Most operations need a signed-in member. To send a token from Sandbox:
+
+1. Get one from the login route:
+   ```bash
+   curl -s -X POST http://localhost:4000/auth/login \
+     -H 'Content-Type: application/json' \
+     -d '{"username":"your-username","password":"your-password"}'
+   ```
+   Copy `accessToken` from the response. It lasts 15 minutes; `POST /auth/refresh` with `{"refreshToken": "..."}` returns a new one.
+2. In Sandbox, open **Headers** and add `Authorization` with the value `Bearer <accessToken>`.
+
+For subscriptions, Sandbox connects over WebSocket on the same path. Put the token in the connection parameters as `{"authToken": "<accessToken>"}`.
 
 ## Build and run
 
@@ -174,7 +218,7 @@ The Prisma models in `prisma/schema/` deliberately map to existing MongoDB colle
 - **Do not run `pnpm prisma:push`, `pnpm prisma:sync`, or `prisma db push` against a shared staging or production database.** These commands can change indexes on existing collections. Follow the reviewed index and cutover process instead ([#694](https://github.com/QuoteVote/quotevote-next/issues/694)).
 - The Roster-to-Buddy/UserBlock backfill supports a dry run; `--apply` writes data and requires deliberate coordination.
 - Staging must use a **separate database restored from a recent production backup**, followed by documented data checks and smoke tests ([#182](https://github.com/QuoteVote/quotevote-next/issues/182), [#183](https://github.com/QuoteVote/quotevote-next/issues/183)).
-- **Solid remains under integration:** the current staging code still contains legacy Solid/Mongoose paths and an incomplete authorization callback. PR [#571](https://github.com/QuoteVote/quotevote-next/pull/571) proposes the Prisma-backed Solid-OIDC implementation and member experience. Its end-to-end provider interoperability must be verified before release.
+- **Solid remains under integration:** the current code still contains legacy Solid/Mongoose paths and an incomplete authorization callback. PR [#571](https://github.com/QuoteVote/quotevote-next/pull/571) proposes the Prisma-backed Solid-OIDC implementation and member experience. Its end-to-end provider interoperability must be verified before release.
 
 ## Security and operations
 
@@ -191,6 +235,7 @@ Read the repository [contribution guide](../CONTRIBUTING.md) before taking on an
 - [2.0 release roadmap — #637](https://github.com/QuoteVote/quotevote-next/issues/637)
 - [Mongoose removal — #169](https://github.com/QuoteVote/quotevote-next/issues/169)
 - [Backend documentation — #175](https://github.com/QuoteVote/quotevote-next/issues/175)
+- [Backend architecture](../docs/backend/architecture.md): requests, sign-in, staff roles, live updates, and the Prisma models on the existing collections
 - [Deploying 2.0](../docs/deployment.md): build, environment, a new instance, the switch and rollback
 - [Migration rules](../docs/Migration-Rules.md)
 - [Backend testing guide](../docs/backend/testing_guide.md)
