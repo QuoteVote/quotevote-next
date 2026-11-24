@@ -400,6 +400,21 @@ describe('staffResolver (#616 part 2)', () => {
       expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
     });
 
+    it('reads the new flags after setUserRoles in the same request', async () => {
+      // e.g. one document: a: setUserRoles(...) { isModerator } b: setUserRoles(...) { isModerator }
+      const { context, prisma } = buildContext(ADMIN);
+      prisma.user.findMany
+        .mockResolvedValueOnce([{ id: targetId, isModerator: false, isInviteApprover: false }])
+        .mockResolvedValueOnce([{ id: targetId, isModerator: true, isInviteApprover: false }]);
+      await expect(staffResolver.User.isModerator(profile, {}, context)).resolves.toBe(false);
+
+      withTarget(prisma, account(targetId), { isModerator: true });
+      await setRoles(context, ['moderator']);
+
+      await expect(staffResolver.User.isModerator(profile, {}, context)).resolves.toBe(true);
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(2);
+    });
+
     it('keeps requests apart: a new request reads again', async () => {
       const first = buildContext(ADMIN);
       const second = buildContext(ADMIN);

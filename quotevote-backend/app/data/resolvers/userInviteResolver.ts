@@ -309,16 +309,7 @@ export const userInviteResolver = {
       _args: unknown,
       context: GraphQLContext
     ): Promise<Common.UserInviteRequest[]> => {
-      if (!context.user?._id) {
-        throw new GraphQLError('Authentication required', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-      if (context.user.admin !== true) {
-        throw new GraphQLError('Admin access required', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+      requireRole(context, 'inviteApprover');
 
       // Requested, declined and accepted access requests, newest first. Legacy user
       // records have no createdAt, so this selects and sorts on `joined` only.

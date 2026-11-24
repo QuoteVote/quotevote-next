@@ -23,21 +23,23 @@ Roles are always read from `context.user`, which `app/context.ts` loads from the
 
 ## Who can do what
 
-| Operation                                                                        | Role                                               |
-| -------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `sendUserInviteApproval`                                                         | invite approver                                    |
-| `getUserReports`, `getBotReportedUsers`                                          | moderator                                          |
-| `setUserRoles`, `staffActions`                                                   | admin                                              |
-| `userInviteRequests`, `users`, `disableUser`, `enableUser`, `updateFeaturedSlot` | admin only for now; moved to their roles in part 3 |
+| Operation                                                            | Role                                                                     |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `userInviteRequests`, `sendUserInviteApproval`                       | invite approver                                                          |
+| `getUserReports`, `getBotReportedUsers`, `disableUser`, `enableUser` | moderator                                                                |
+| `deletePost` on someone else's post                                  | moderator, for a reported post whose author isn't staff; admin, any post |
+| `users`, `updateFeaturedSlot`, `setUserRoles`, `staffActions`        | admin                                                                    |
 
 `sendUserInviteApproval` only decides access requests and unfinished invites: approving or declining an account that finished signup (member, moderator or admin) is refused with "User has already completed signup", so an invite approver can't touch accounts outside the request queue.
+
+Moderators act on members only. `disableUser` and `enableUser` refuse another staff account (moderator or invite approver) unless the caller is an admin ("Only admins can disable or enable staff accounts"), and admins still can't be disabled ("Cannot disable admin accounts"). A post counts as reported when it has a report (`reportedBy` or the legacy `reported` count); removing someone else's post is logged as `content_removed`, while an author deleting their own post isn't a staff action and isn't logged. Comments and quotes have no reports, so removing other people's stays with admins.
 
 `__tests__/unit/adminPermissions.test.ts` (#690) covers guests, members and admins for these operations, and `__tests__/unit/staffRoles.test.ts` covers moderators and invite approvers.
 
 ## Seeing roles
 
 - **Login:** the `/auth/login` response's `user` carries `admin`, `isModerator` and `isInviteApprover`, so the frontend knows which tabs to show. The token itself carries no new role claims.
-- **GraphQL:** `User.isModerator` and `User.isInviteApprover` are shown to the user themselves and to admins, and are `null` for anyone else, so who holds a staff role isn't public. (`User.admin` is unchanged.) An admin's view of other users goes through a per-request loader (`app/data/utils/staffRoleLoader.ts`) that reads both flags for every user in the response with one query.
+- **GraphQL:** `User.isModerator` and `User.isInviteApprover` are shown to the user themselves and to admins, and are `null` for anyone else, so who holds a staff role isn't public. (`User.admin` is unchanged.) An admin's view of other users goes through a per-request loader (`app/data/utils/staffRoleLoader.ts`) that reads both flags for every user in the response with one query. `setUserRoles` clears that user's entry after writing, so a later field in the same request reads the new flags. Its types live in `app/types/staffRoles.ts`.
 
 ## Managing roles
 
@@ -57,7 +59,7 @@ Roles are always read from `context.user`, which `app/context.ts` loads from the
 | `role_granted`, `role_revoked`                       | `setUserRoles`, one entry per role changed                                        | the role |
 | `invite_approved`, `invite_declined`, `invite_reset` | `sendUserInviteApproval` (a reset only when it moved the request back to pending) |          |
 | `user_disabled`, `user_enabled`                      | `disableUser`, `enableUser`                                                       |          |
-| `content_removed`                                    | reserved for removing reported content (part 3)                                   |          |
+| `content_removed`                                    | `deletePost` on someone else's post                                               | `post`   |
 
 Each mutation records its decision in one line after the change has gone through: `await recordStaffAction(context, 'invite_approved', userId)` from `app/data/utils/staffActions.ts`. A failed log write is reported to the server log and doesn't fail the mutation, since the change already happened.
 
@@ -67,5 +69,4 @@ Each mutation records its decision in one line after the change has gone through
 
 Following the plan on #616:
 
-- **Part 3:** the remaining admin operations behind their roles.
 - **Parts 4 and 5, after the switch to the new backend:** the control panel per role, then end-to-end tests.

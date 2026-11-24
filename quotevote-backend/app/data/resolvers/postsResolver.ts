@@ -11,6 +11,8 @@ import { addUserToPostRoom } from './utils/messages';
 import { logActivity } from './utils/activities';
 import { POST_TITLE_MAX_LENGTH, validateAddPostContent } from './utils/postInput';
 import { logger } from '~/data/utils/logger';
+import { hasRole, requireRole } from '~/data/utils/requireRole';
+import { recordStaffAction } from '~/data/utils/staffActions';
 import { slugify } from '~/data/utils/urlSlug';
 import type * as Common from '~/types/common';
 
@@ -23,12 +25,23 @@ function requireUserId(context: GraphQLContext): string {
   return context.user._id.toString();
 }
 
-function requireAdmin(context: GraphQLContext): void {
-  if (context.user?.admin !== true) {
-    throw new GraphQLError('Admin access required', {
-      extensions: { code: 'FORBIDDEN' },
-    });
-  }
+/**
+ * Whether a staff member may remove someone else's post (#616): admins any post,
+ * moderators a post that was reported, unless its author is staff.
+ */
+async function mayRemoveOthersPost(
+  context: GraphQLContext,
+  post: { userId: string; reported: number | null; reportedBy: string[] }
+): Promise<boolean> {
+  if (hasRole(context.user, 'admin')) return true;
+  if (!hasRole(context.user, 'moderator')) return false;
+  if ((post.reported ?? 0) < 1 && post.reportedBy.length === 0) return false;
+
+  const author = await context.prisma.user.findUnique({
+    where: { id: post.userId },
+    select: { isAdmin: true, isModerator: true, isInviteApprover: true },
+  });
+  return !(author?.isAdmin || author?.isModerator || author?.isInviteApprover);
 }
 
 function assertActorMatches(actorId: string, userId: string, action: string): void {
@@ -408,7 +421,6 @@ export const postsResolver = {
       context: GraphQLContext
     ): Promise<{ _id: string }> => {
       const userId = requireUserId(context);
-      const isAdmin = context.user?.admin === true;
 
       if (!isObjectId(args.postId)) {
         return { _id: args.postId };
@@ -416,13 +428,14 @@ export const postsResolver = {
 
       const existing = await context.prisma.post.findUnique({
         where: { id: args.postId },
-        select: { id: true, userId: true, deleted: true },
+        select: { id: true, userId: true, deleted: true, reported: true, reportedBy: true },
       });
       if (!existing) {
         return { _id: args.postId };
       }
 
-      if (existing.userId !== userId && !isAdmin) {
+      const isAuthor = existing.userId === userId;
+      if (!isAuthor && !(await mayRemoveOthersPost(context, existing))) {
         throw new GraphQLError('Not authorized to delete this post', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -434,6 +447,8 @@ export const postsResolver = {
           data: { deleted: true },
           select: { id: true },
         });
+        // Removing someone else's post is a staff decision.
+        if (!isAuthor) await recordStaffAction(context, 'content_removed', args.postId, 'post');
       }
 
       return { _id: args.postId };
@@ -579,8 +594,7 @@ export const postsResolver = {
       args: { postId: string; featuredSlot?: number | null },
       context: GraphQLContext
     ): Promise<Common.Post> => {
-      requireUserId(context);
-      requireAdmin(context);
+      requireRole(context, 'admin');
 
       if (!args.postId || !isObjectId(args.postId)) {
         throw new GraphQLError('Invalid postId', {

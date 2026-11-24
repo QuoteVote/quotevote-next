@@ -23,7 +23,7 @@ import {
 import { uniqueArrayObjects } from '~/data/resolvers/utils/common';
 import { addNotification } from '~/data/resolvers/utils/notifications';
 import { calculateUserReputation, loadUserReputation } from '~/data/resolvers/utils/reputation';
-import { requireRole } from '~/data/utils/requireRole';
+import { hasRole, requireRole } from '~/data/utils/requireRole';
 import { recordStaffAction } from '~/data/utils/staffActions';
 import type * as Common from '~/types/common';
 import type { FollowInfoEntry, GraphQLContext } from '~/types/graphql';
@@ -76,6 +76,30 @@ const ADMIN_USER_STATUS_SELECT = {
   accountStatus: true,
   isAdmin: true,
 } as const satisfies Prisma.UserSelect;
+
+/** The roles a disable or enable target holds (#616). */
+const STAFF_TARGET_SELECT = {
+  id: true,
+  isAdmin: true,
+  isModerator: true,
+  isInviteApprover: true,
+} as const satisfies Prisma.UserSelect;
+
+/**
+ * Moderators act on members only: disabling or enabling another staff account
+ * is for admins (#616).
+ */
+function refuseStaffTargetForModerator(
+  context: GraphQLContext,
+  target: { isAdmin: boolean; isModerator: boolean; isInviteApprover: boolean }
+): void {
+  if (hasRole(context.user, 'admin')) return;
+  if (target.isAdmin || target.isModerator || target.isInviteApprover) {
+    throw new GraphQLError('Only admins can disable or enable staff accounts', {
+      extensions: { code: 'FORBIDDEN' },
+    });
+  }
+}
 
 type UserReportResult = {
   _id: string;
@@ -367,16 +391,7 @@ export const userResolver = {
       args: { limit?: number | null; offset?: number | null },
       context: GraphQLContext
     ): Promise<Common.User[]> => {
-      if (!context.user?._id) {
-        throw new GraphQLError('Authentication required', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-      if (context.user.admin !== true) {
-        throw new GraphQLError('Admin access required', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+      requireRole(context, 'admin');
 
       const limit = Math.min(Math.max(args.limit ?? USERS_DEFAULT_LIMIT, 1), USERS_MAX_LIMIT);
       const offset = Math.max(args.offset ?? 0, 0);
@@ -1179,16 +1194,7 @@ export const userResolver = {
       args: { userId: string },
       context: GraphQLContext
     ): Promise<Common.User> => {
-      if (!context.user?._id) {
-        throw new GraphQLError('Authentication required', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-      if (context.user.admin !== true) {
-        throw new GraphQLError('Admin access required', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+      requireRole(context, 'moderator');
       if (!args.userId || !isObjectId(args.userId)) {
         throw new GraphQLError('Invalid userId', {
           extensions: { code: 'BAD_USER_INPUT' },
@@ -1197,7 +1203,7 @@ export const userResolver = {
 
       const existing = await context.prisma.user.findUnique({
         where: { id: args.userId },
-        select: { id: true, isAdmin: true },
+        select: STAFF_TARGET_SELECT,
       });
       if (!existing) {
         throw new GraphQLError('User not found', {
@@ -1209,6 +1215,7 @@ export const userResolver = {
           extensions: { code: 'FORBIDDEN' },
         });
       }
+      refuseStaffTargetForModerator(context, existing);
 
       const updated = await context.prisma.user.update({
         where: { id: args.userId },
@@ -1224,16 +1231,7 @@ export const userResolver = {
       args: { userId: string },
       context: GraphQLContext
     ): Promise<Common.User> => {
-      if (!context.user?._id) {
-        throw new GraphQLError('Authentication required', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-      if (context.user.admin !== true) {
-        throw new GraphQLError('Admin access required', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+      requireRole(context, 'moderator');
       if (!args.userId || !isObjectId(args.userId)) {
         throw new GraphQLError('Invalid userId', {
           extensions: { code: 'BAD_USER_INPUT' },
@@ -1242,13 +1240,14 @@ export const userResolver = {
 
       const existing = await context.prisma.user.findUnique({
         where: { id: args.userId },
-        select: { id: true },
+        select: STAFF_TARGET_SELECT,
       });
       if (!existing) {
         throw new GraphQLError('User not found', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
+      refuseStaffTargetForModerator(context, existing);
 
       const updated = await context.prisma.user.update({
         where: { id: args.userId },

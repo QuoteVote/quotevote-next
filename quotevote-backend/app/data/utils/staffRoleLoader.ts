@@ -8,30 +8,17 @@
  */
 
 import type { GraphQLContext } from '~/types/graphql';
-
-export interface StaffRoleFlags {
-  isModerator: boolean;
-  isInviteApprover: boolean;
-}
-
-interface Waiting {
-  userId: string;
-  resolve: (flags: StaffRoleFlags | null) => void;
-  reject: (err: unknown) => void;
-}
-
-interface Loader {
-  queue: Waiting[];
-  scheduled: boolean;
-  cache: Map<string, Promise<StaffRoleFlags | null>>;
-}
+import type { StaffRoleFlags, StaffRoleLoader } from '~/types/staffRoles';
 
 const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/;
 
 /** One loader per request context, dropped with the context. */
-const loaders = new WeakMap<object, Loader>();
+const loaders = new WeakMap<object, StaffRoleLoader>();
 
-async function flush(context: Pick<GraphQLContext, 'prisma'>, loader: Loader): Promise<void> {
+async function flush(
+  context: Pick<GraphQLContext, 'prisma'>,
+  loader: StaffRoleLoader
+): Promise<void> {
   const batch = loader.queue;
   loader.queue = [];
   loader.scheduled = false;
@@ -84,4 +71,12 @@ export function loadStaffRoles(
     void Promise.resolve().then(() => process.nextTick(() => void flush(context, active)));
   }
   return promise;
+}
+
+/**
+ * Forget what this request knows about a user's roles, after writing them, so a
+ * later field in the same request reads the new flags.
+ */
+export function forgetStaffRoles(context: Pick<GraphQLContext, 'prisma'>, userId: string): void {
+  loaders.get(context)?.cache.delete(userId);
 }

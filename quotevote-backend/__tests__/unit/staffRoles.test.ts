@@ -18,7 +18,7 @@ jest.mock('~/data/utils/logger', () => ({
   logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
 }));
 
-// #616 part 1: what moderators and invite approvers may do, run against the executable
+// #616: what moderators and invite approvers may do, run against the executable
 // schema. Admins, members and guests are covered by adminPermissions.test.ts.
 
 const targetUserId = '60d5ec49ad414d7a8d5464b1';
@@ -71,7 +71,7 @@ type Operation = {
   guarded: (p: Prisma) => jest.Mock[];
   /** What a caller who passes the role check gets back from empty data. */
   passed: { data: Record<string, unknown> } | { errorCode: 'NOT_FOUND' };
-  /** Staff allowed in. Anything not listed stays admin-only for now (#616 part 3). */
+  /** Staff allowed in. Admins pass every check; an empty list means admin only. */
   allowed: Staff[];
 };
 
@@ -110,21 +110,21 @@ const operations: Operation[] = [
     source: `query { result: userInviteRequests { _id email } }`,
     guarded: (p) => [p.user.findMany],
     passed: { data: { result: [] } },
-    allowed: [],
+    allowed: ['inviteApprover', 'both'],
   },
   {
     name: 'disableUser',
     source: `mutation { result: disableUser(userId: "${targetUserId}") { _id } }`,
     guarded: (p) => [p.user.findUnique, p.user.update],
     passed: { errorCode: 'NOT_FOUND' },
-    allowed: [],
+    allowed: ['moderator', 'both'],
   },
   {
     name: 'enableUser',
     source: `mutation { result: enableUser(userId: "${targetUserId}") { _id } }`,
     guarded: (p) => [p.user.findUnique, p.user.update],
     passed: { errorCode: 'NOT_FOUND' },
-    allowed: [],
+    allowed: ['moderator', 'both'],
   },
   {
     name: 'setUserRoles',
@@ -230,5 +230,156 @@ describe('invite approvers stay inside the request queue', () => {
       },
       select: { id: true },
     });
+  });
+});
+
+describe('moderators act on members only (#616 part 3)', () => {
+  const disable = `mutation { r: disableUser(userId: "${targetUserId}") { _id } }`;
+  const enable = `mutation { r: enableUser(userId: "${targetUserId}") { _id } }`;
+  const roles = (extra: Record<string, boolean> = {}) => ({
+    id: targetUserId,
+    isAdmin: false,
+    isModerator: false,
+    isInviteApprover: false,
+    ...extra,
+  });
+
+  it('disables and enables a member, logging both under the moderator', async () => {
+    for (const [source, action] of [
+      [disable, 'user_disabled'],
+      [enable, 'user_enabled'],
+    ] as const) {
+      const prisma = buildPrisma();
+      prisma.user.findUnique.mockResolvedValue(roles());
+      prisma.user.update.mockResolvedValue({ id: targetUserId, username: 'member' });
+
+      const { result } = await run(source, STAFF.moderator, prisma);
+
+      expect(result.errors).toBeUndefined();
+      expect(prisma.staffAction.create).toHaveBeenCalledWith({
+        data: { actorId: STAFF.moderator._id, action, targetId: targetUserId, detail: null },
+        select: { id: true },
+      });
+    }
+  });
+
+  it.each([
+    ['a moderator', { isModerator: true }],
+    ['an invite approver', { isInviteApprover: true }],
+  ])('refuses to disable or enable %s', async (_label, staffRole) => {
+    for (const source of [disable, enable]) {
+      const prisma = buildPrisma();
+      prisma.user.findUnique.mockResolvedValue(roles(staffRole));
+
+      const { result } = await run(source, STAFF.moderator, prisma);
+
+      expect(result.errors?.[0]?.extensions?.code).toBe('FORBIDDEN');
+      expect(result.errors?.[0]?.message).toBe('Only admins can disable or enable staff accounts');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.staffAction.create).not.toHaveBeenCalled();
+    }
+  });
+
+  it('still refuses to disable an admin, with the existing message', async () => {
+    const prisma = buildPrisma();
+    prisma.user.findUnique.mockResolvedValue(roles({ isAdmin: true }));
+
+    const { result } = await run(disable, STAFF.moderator, prisma);
+
+    expect(result.errors?.[0]?.message).toBe('Cannot disable admin accounts');
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('removing reported posts (#616 part 3)', () => {
+  const remove = `mutation { r: deletePost(postId: "${targetPostId}") { _id } }`;
+  const authorId = '60d5ec49ad414d7a8d5464b3';
+  const post = (extra: Record<string, unknown> = {}) => ({
+    id: targetPostId,
+    userId: authorId,
+    deleted: false,
+    reported: 1,
+    reportedBy: ['reporter-1'],
+    ...extra,
+  });
+  const author = (extra: Record<string, boolean> = {}) => ({
+    isAdmin: false,
+    isModerator: false,
+    isInviteApprover: false,
+    ...extra,
+  });
+
+  it("lets a moderator remove a member's reported post, and logs it", async () => {
+    const prisma = buildPrisma();
+    prisma.post.findUnique.mockResolvedValue(post());
+    prisma.user.findUnique.mockResolvedValue(author());
+
+    const { result } = await run(remove, STAFF.moderator, prisma);
+
+    expect(result.errors).toBeUndefined();
+    expect(prisma.post.update).toHaveBeenCalledWith({
+      where: { id: targetPostId },
+      data: { deleted: true },
+      select: { id: true },
+    });
+    expect(prisma.staffAction.create).toHaveBeenCalledWith({
+      data: {
+        actorId: STAFF.moderator._id,
+        action: 'content_removed',
+        targetId: targetPostId,
+        detail: 'post',
+      },
+      select: { id: true },
+    });
+  });
+
+  it('counts a post reported by count only (legacy) as reported', async () => {
+    const prisma = buildPrisma();
+    prisma.post.findUnique.mockResolvedValue(post({ reported: 2, reportedBy: [] }));
+    prisma.user.findUnique.mockResolvedValue(author());
+
+    const { result } = await run(remove, STAFF.moderator, prisma);
+
+    expect(result.errors).toBeUndefined();
+    expect(prisma.post.update).toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a post nobody reported', post({ reported: 0, reportedBy: [] }), author()],
+    ['a reported post by a moderator', post(), author({ isModerator: true })],
+    ['a reported post by an invite approver', post(), author({ isInviteApprover: true })],
+    ['a reported post by an admin', post(), author({ isAdmin: true })],
+  ])('refuses to let a moderator remove %s', async (_label, found, writer) => {
+    const prisma = buildPrisma();
+    prisma.post.findUnique.mockResolvedValue(found);
+    prisma.user.findUnique.mockResolvedValue(writer);
+
+    const { result } = await run(remove, STAFF.moderator, prisma);
+
+    expect(result.errors?.[0]?.extensions?.code).toBe('FORBIDDEN');
+    expect(prisma.post.update).not.toHaveBeenCalled();
+    expect(prisma.staffAction.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses an invite approver someone else's reported post", async () => {
+    const prisma = buildPrisma();
+    prisma.post.findUnique.mockResolvedValue(post());
+    prisma.user.findUnique.mockResolvedValue(author());
+
+    const { result } = await run(remove, STAFF.inviteApprover, prisma);
+
+    expect(result.errors?.[0]?.extensions?.code).toBe('FORBIDDEN');
+    expect(prisma.post.update).not.toHaveBeenCalled();
+  });
+
+  it('lets an author delete their own post without logging a staff action', async () => {
+    const prisma = buildPrisma();
+    prisma.post.findUnique.mockResolvedValue(post({ userId: STAFF.moderator._id }));
+
+    const { result } = await run(remove, STAFF.moderator, prisma);
+
+    expect(result.errors).toBeUndefined();
+    expect(prisma.post.update).toHaveBeenCalled();
+    expect(prisma.staffAction.create).not.toHaveBeenCalled();
   });
 });
