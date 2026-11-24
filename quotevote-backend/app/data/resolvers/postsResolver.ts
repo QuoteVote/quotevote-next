@@ -447,8 +447,16 @@ export const postsResolver = {
           data: { deleted: true },
           select: { id: true },
         });
-        // Removing someone else's post is a staff decision.
-        if (!isAuthor) await recordStaffAction(context, 'content_removed', args.postId, 'post');
+        // Removing someone else's post is a staff decision. The author is the
+        // target, so the log shows whose post it was; the post id goes in the detail.
+        if (!isAuthor) {
+          await recordStaffAction(
+            context,
+            'content_removed',
+            existing.userId,
+            `post ${args.postId}`
+          );
+        }
       }
 
       return { _id: args.postId };

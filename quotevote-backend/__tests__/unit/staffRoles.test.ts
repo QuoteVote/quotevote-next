@@ -326,8 +326,8 @@ describe('removing reported posts (#616 part 3)', () => {
       data: {
         actorId: STAFF.moderator._id,
         action: 'content_removed',
-        targetId: targetPostId,
-        detail: 'post',
+        targetId: authorId,
+        detail: `post ${targetPostId}`,
       },
       select: { id: true },
     });
