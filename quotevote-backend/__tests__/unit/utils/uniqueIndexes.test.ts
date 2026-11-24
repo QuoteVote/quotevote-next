@@ -17,7 +17,9 @@ interface FakeIndex {
   name: string;
   key: Record<string, unknown>;
   unique?: boolean;
+  sparse?: boolean;
   partialFilterExpression?: Record<string, unknown>;
+  collation?: Record<string, unknown>;
 }
 
 interface FakeCollection {
@@ -100,26 +102,45 @@ describe('unique indexes (#694)', () => {
   });
 
   describe('uniqueIndexSpecs', () => {
-    it('reads @unique fields and @@unique lists in stored names', () => {
+    it('reads @unique fields and @@unique lists in stored names, named the way Prisma names them', () => {
       expect(uniqueIndexSpecs([buddies, blocks, botReports])).toEqual([
         {
           model: 'BuddyRelationship',
           collection: 'buddyrelationships',
-          name: 'BuddyRelationship_pairKey_key',
+          name: 'buddyrelationships_pairKey_key',
           fields: ['pairKey'],
         },
         {
           model: 'UserBlock',
           collection: 'userblocks',
-          name: 'UserBlock_blockerId_blockedUserId_key',
+          name: 'userblocks_blockerId_blockedUserId_key',
           fields: ['blockerId', 'blockedUserId'],
         },
         {
           model: 'BotReport',
           collection: 'botreports',
-          name: 'BotReport_reporterId_userId_key',
+          // The schema's `map:` name, from the checked-in list (#747).
+          name: '_reporterId_1__reportedUserId_1',
           fields: ['_reporterId', '_reportedUserId'],
         },
+      ]);
+    });
+
+    it('names an index without map: from the collection and stored field names (#747)', () => {
+      const reports = model({
+        name: 'Report',
+        dbName: 'reports',
+        fields: [
+          { name: 'reporterId', dbName: '_reporterId', isUnique: false },
+          { name: 'postId', dbName: '_postId', isUnique: false },
+          { name: 'code', dbName: 'short_code', isUnique: true },
+        ],
+        uniqueIndexes: [{ name: null, fields: ['reporterId', 'postId'] }],
+      });
+
+      expect(uniqueIndexSpecs([reports]).map((s) => s.name)).toEqual([
+        'reports_short_code_key',
+        'reports__reporterId__postId_key',
       ]);
     });
 
@@ -174,7 +195,7 @@ describe('unique indexes (#694)', () => {
       expect(db.sent('createIndexes')).toEqual([
         {
           createIndexes: 'buddyrelationships',
-          indexes: [{ key: { pairKey: 1 }, name: 'BuddyRelationship_pairKey_key', unique: true }],
+          indexes: [{ key: { pairKey: 1 }, name: 'buddyrelationships_pairKey_key', unique: true }],
         },
       ]);
     });
@@ -241,7 +262,20 @@ describe('unique indexes (#694)', () => {
           partialFilterExpression: { status: 'accepted' },
         },
       ],
-      ['named the same with other keys', { name: 'BuddyRelationship_pairKey_key', key: { a: 1 } }],
+      [
+        'sparse, so records without the field go through',
+        { name: 'pairKey_1', key: { pairKey: 1 }, unique: true, sparse: true },
+      ],
+      [
+        'compared with a collation',
+        {
+          name: 'pairKey_1',
+          key: { pairKey: 1 },
+          unique: true,
+          collation: { locale: 'en', strength: 2 },
+        },
+      ],
+      ['named the same with other keys', { name: 'buddyrelationships_pairKey_key', key: { a: 1 } }],
     ])('leaves an existing index that is %s alone and reports it', async (_label, index) => {
       const db = fakeDatabase({ buddyrelationships: { indexes: [index] } });
 
@@ -250,6 +284,50 @@ describe('unique indexes (#694)', () => {
       expect(results[0].status).toBe('conflict');
       expect(db.sent('createIndexes')).toHaveLength(0);
       expect(needsAttention(results)).toHaveLength(1);
+    });
+
+    it('counts a unique index on the same fields in another direction as present (#747)', async () => {
+      const db = fakeDatabase({
+        userblocks: {
+          indexes: [{ name: 'desc', key: { blockerId: -1, blockedUserId: 1 }, unique: true }],
+        },
+      });
+
+      const [result] = await ensureUniqueIndexes({ run: db.run, models: [blocks] });
+
+      expect(result).toMatchObject({ status: 'present', existingName: 'desc' });
+      expect(db.sent('createIndexes')).toHaveLength(0);
+    });
+
+    it('counts a unique index with the simple collation as present', async () => {
+      const db = fakeDatabase({
+        buddyrelationships: {
+          indexes: [
+            {
+              name: 'pairKey_1',
+              key: { pairKey: 1 },
+              unique: true,
+              collation: { locale: 'simple' },
+            },
+          ],
+        },
+      });
+
+      const [result] = await ensureUniqueIndexes({ run: db.run, models: [buddies] });
+
+      expect(result.status).toBe('present');
+    });
+
+    it('does not take a hashed or text index on the field for the unique one', async () => {
+      const db = fakeDatabase({
+        buddyrelationships: {
+          indexes: [{ name: 'pairKey_hashed', key: { pairKey: 'hashed' } }],
+        },
+      });
+
+      const [result] = await ensureUniqueIndexes({ run: db.run, models: [buddies] });
+
+      expect(result.status).toBe('created');
     });
 
     it('treats the same fields in another order as a different index', async () => {

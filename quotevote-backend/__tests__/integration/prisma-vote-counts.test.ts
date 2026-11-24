@@ -299,6 +299,55 @@ describe('a vote is counted once (#747)', () => {
     await cleanRace();
   });
 
+  it("keeps the member's newest other vote in votedBy, even one without created", async () => {
+    // Ids grow with time. The newest remaining vote is an older-shape one with no `created`,
+    // which a sort on `created` put last (#747).
+    const olderId = hex(0x747000200);
+    const newerLegacyId = hex(0x747000201);
+    const removedId = hex(0x747000202);
+    const row = (id: string, type: 'up' | 'down', tags: string, start: number) => ({
+      _id: { $oid: id },
+      userId: { $oid: memberId },
+      postId: { $oid: racePostId },
+      type,
+      tags,
+      startWordIndex: start,
+      endWordIndex: start + 5,
+      content: postText.slice(start, start + 5),
+      deleted: false,
+    });
+    const now = { $date: new Date().toISOString() };
+    await prisma.$runCommandRaw({
+      insert: 'votes',
+      documents: [
+        { ...row(olderId, 'up', '#agree', 0), created: now },
+        row(newerLegacyId, 'down', '#disagree', 10),
+        { ...row(removedId, 'up', '#like', 20), created: now },
+      ],
+    });
+    await prisma.$runCommandRaw({
+      update: 'posts',
+      updates: [
+        {
+          q: { _id: { $oid: racePostId } },
+          u: {
+            $set: {
+              upvotes: 2,
+              downvotes: 1,
+              votedBy: [{ type: 'up', userId: { $oid: memberId } }],
+            },
+          },
+        },
+      ],
+    });
+
+    await unvote(memberId, removedId);
+
+    const post = await readRacePost();
+    expect(post).toMatchObject({ upvotes: 1, downvotes: 1 });
+    expect(votedByMap(post)).toEqual({ [memberId]: 'down' });
+  });
+
   it('saves a vote sent twice at the same time once', async () => {
     const [first, second] = await Promise.all([
       votesOn(memberId, { tags: '#agree', type: 'up' }),

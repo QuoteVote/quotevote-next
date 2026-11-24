@@ -31,7 +31,7 @@ The backend reads these settings. The first three are required.
 | `DATABASE_URL` | The database, for Prisma. Must point at a replica set (`?replicaSet=...`). |
 | `MONGO_URI` | The same database, for the older Mongoose models. Use the same value as `DATABASE_URL`. |
 | `JWT_SECRET` | Signs sign-in tokens. The frontend needs the same value (see below). Without it, sign-in is insecure and the server logs an error. |
-| `NODE_ENV` | `production` in the image. Production never builds indexes when the server starts (#730); they're built on purpose with the steps below. |
+| `NODE_ENV` | `production` in the image. The server only builds indexes when it starts with `development` or `test`; with any other value, or none, it never does (#730, #747). Elsewhere they're built on purpose with the steps below. |
 | `PORT` | Port to listen on. Defaults to 4000. |
 | `CLIENT_URL` | The frontend's address, such as `https://example.org`. It's the only origin CORS allows, and links in emails (invite approval, password reset) point at it. |
 | `TRUST_PROXY` | Set when the backend runs behind the hosting platform's proxy, usually `1`, so rate limits see each visitor's address instead of the proxy's. |
