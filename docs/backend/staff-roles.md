@@ -32,7 +32,7 @@ Roles are always read from `context.user`, which `app/context.ts` loads from the
 
 `sendUserInviteApproval` only decides access requests and unfinished invites: approving or declining an account that finished signup (member, moderator or admin) is refused with "User has already completed signup", so an invite approver can't touch accounts outside the request queue.
 
-Moderators act on members only. `disableUser` and `enableUser` refuse another staff account (moderator or invite approver) unless the caller is an admin ("Only admins can disable or enable staff accounts"), and admins still can't be disabled ("Cannot disable admin accounts"). A post counts as reported when it has a report (`reportedBy` or the legacy `reported` count); removing someone else's post is logged as `content_removed`, while an author deleting their own post isn't a staff action and isn't logged. Comments and quotes have no reports, so removing other people's stays with admins.
+Moderators act on members only. `disableUser` and `enableUser` refuse another staff account (moderator or invite approver) unless the caller is an admin ("Only admins can disable or enable staff accounts"), and admins still can't be disabled ("Cannot disable admin accounts"). A post counts as reported when it has a report (`reportedBy` or the legacy `reported` count); removing someone else's post is logged as `content_removed` with the author as the target and `post <post id>` as the detail, while an author deleting their own post isn't a staff action and isn't logged. Comments and quotes have no reports, so removing other people's stays with admins.
 
 `__tests__/unit/adminPermissions.test.ts` (#690) covers guests, members and admins for these operations, and `__tests__/unit/staffRoles.test.ts` covers moderators and invite approvers.
 
@@ -54,12 +54,12 @@ Moderators act on members only. `disableUser` and `enableUser` refuse another st
 
 `StaffAction` (`staff_actions` collection, Prisma only) records each staff decision: `actorId`, `action`, `targetId`, an optional `detail` and `createdAt`. It's append-only, with no relation to `User`, so user records are untouched.
 
-| `action`                                             | Written by                                                                        | `detail` |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------- | -------- |
-| `role_granted`, `role_revoked`                       | `setUserRoles`, one entry per role changed                                        | the role |
-| `invite_approved`, `invite_declined`, `invite_reset` | `sendUserInviteApproval` (a reset only when it moved the request back to pending) |          |
-| `user_disabled`, `user_enabled`                      | `disableUser`, `enableUser`                                                       |          |
-| `content_removed`                                    | `deletePost` on someone else's post                                               | `post`   |
+| `action`                                             | Written by                                                                        | `detail`         |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------- |
+| `role_granted`, `role_revoked`                       | `setUserRoles`, one entry per role changed                                        | the role         |
+| `invite_approved`, `invite_declined`, `invite_reset` | `sendUserInviteApproval` (a reset only when it moved the request back to pending) |                  |
+| `user_disabled`, `user_enabled`                      | `disableUser`, `enableUser`                                                       |                  |
+| `content_removed`                                    | `deletePost` on someone else's post; the target is the post's author              | `post <post id>` |
 
 Each mutation records its decision in one line after the change has gone through: `await recordStaffAction(context, 'invite_approved', userId)` from `app/data/utils/staffActions.ts`. A failed log write is reported to the server log and doesn't fail the mutation, since the change already happened.
 
