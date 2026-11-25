@@ -130,4 +130,75 @@ describe("VotingBoard passage activity", () => {
     render(<VotingBoard content={CONTENT} highlights />);
     expect(screen.queryAllByTestId("passage-activity")).toHaveLength(0);
   });
+
+  it("hides passage activity marks and badges when highlights is false", () => {
+    const { container } = render(
+      <VotingBoard content={CONTENT} highlights={false} activity={ACTIVITY} />
+    );
+    expect(screen.queryAllByTestId("passage-activity")).toHaveLength(0);
+    // Post text remains readable
+    expect(container.textContent).toContain(CONTENT);
+  });
+
+  it("renders visible linked passage when focusedComment is set and highlights is false", () => {
+    const onHighlightClick = jest.fn();
+    render(
+      <VotingBoard
+        content={CONTENT}
+        highlights={false}
+        activity={ACTIVITY}
+        focusedComment={{ actionId: "c1", startWordIndex: 22, endWordIndex: 47 }}
+        onHighlightClick={onHighlightClick}
+      />
+    );
+    // Ambient activity marks and badges remain hidden
+    expect(screen.queryAllByTestId("passage-activity")).toHaveLength(0);
+
+    // The linked passage is a visible mark with the original linked class
+    const linked = screen.getByTestId("linked-passage");
+    expect(linked).toBeInTheDocument();
+    expect(linked.tagName.toLowerCase()).toBe("mark");
+    expect(linked).toHaveClass("qv-mark-linked");
+    expect(linked).toHaveAttribute("role", "button");
+    expect(linked).toHaveAttribute("tabindex", "0");
+    expect(linked).toHaveAttribute("data-linked-passage", "true");
+    expect(linked).toHaveTextContent("raise money for bus lanes");
+
+    // Clicking it invokes onHighlightClick
+    fireEvent.click(linked);
+    expect(onHighlightClick).toHaveBeenCalledTimes(1);
+
+    // Automatic scrolling finds the linked element
+    const scrollTarget = document.querySelector("[data-linked-passage='true']");
+    expect(scrollTarget).toBe(linked);
+  });
+
+  it("preserves visual linked passage and interactions when highlights is true", () => {
+    const onHighlightClick = jest.fn();
+    render(
+      <VotingBoard
+        content={CONTENT}
+        highlights={true}
+        activity={ACTIVITY}
+        focusedComment={{ actionId: "c1", startWordIndex: 22, endWordIndex: 47 }}
+        onHighlightClick={onHighlightClick}
+      />
+    );
+    const linked = screen.getByTestId("linked-passage");
+    expect(linked).toBeInTheDocument();
+    expect(linked.tagName.toLowerCase()).toBe("mark");
+    expect(linked).toHaveClass("qv-mark-linked");
+    expect(linked).toHaveAttribute("role", "button");
+    expect(linked).toHaveAttribute("tabindex", "0");
+
+    // Clicking invokes onHighlightClick
+    fireEvent.click(linked);
+    expect(onHighlightClick).toHaveBeenCalledTimes(1);
+
+    // Keyboard interaction (Enter and Space) invokes onHighlightClick
+    fireEvent.keyDown(linked, { key: "Enter" });
+    expect(onHighlightClick).toHaveBeenCalledTimes(2);
+    fireEvent.keyDown(linked, { key: " " });
+    expect(onHighlightClick).toHaveBeenCalledTimes(3);
+  });
 });
