@@ -140,7 +140,7 @@ describe("VotingBoard passage activity", () => {
     expect(container.textContent).toContain(CONTENT);
   });
 
-  it("renders invisible anchor when focusedComment is set and highlights is false", () => {
+  it("renders visible linked passage when focusedComment is set and highlights is false", () => {
     const onHighlightClick = jest.fn();
     render(
       <VotingBoard
@@ -151,32 +151,29 @@ describe("VotingBoard passage activity", () => {
         onHighlightClick={onHighlightClick}
       />
     );
-    // Activity marks are hidden
+    // Ambient activity marks and badges remain hidden
     expect(screen.queryAllByTestId("passage-activity")).toHaveLength(0);
 
-    // The invisible anchor exists with data-linked-passage="true"
-    const anchor = screen.getByTestId("linked-passage");
-    expect(anchor).toBeInTheDocument();
-    expect(anchor).toHaveAttribute("data-linked-passage", "true");
-    expect(anchor).toHaveTextContent("raise money for bus lanes");
+    // The linked passage is a visible mark with the original linked class
+    const linked = screen.getByTestId("linked-passage");
+    expect(linked).toBeInTheDocument();
+    expect(linked.tagName.toLowerCase()).toBe("mark");
+    expect(linked).toHaveClass("qv-mark-linked");
+    expect(linked).toHaveAttribute("role", "button");
+    expect(linked).toHaveAttribute("tabindex", "0");
+    expect(linked).toHaveAttribute("data-linked-passage", "true");
+    expect(linked).toHaveTextContent("raise money for bus lanes");
 
-    // Has no linked visual highlight class and is rendered as transparent span
-    expect(anchor.tagName.toLowerCase()).toBe("span");
-    expect(anchor).not.toHaveClass("qv-mark-linked");
-    expect(anchor).not.toHaveClass("qv-mark");
-    expect(anchor).toHaveClass("bg-transparent");
-    expect(anchor).not.toHaveAttribute("role", "button");
+    // Clicking it invokes onHighlightClick
+    fireEvent.click(linked);
+    expect(onHighlightClick).toHaveBeenCalledTimes(1);
 
-    // Clicking invisible anchor does not invoke onHighlightClick
-    fireEvent.click(anchor);
-    expect(onHighlightClick).not.toHaveBeenCalled();
-
-    // Automatic scrolling finds the anchor
+    // Automatic scrolling finds the linked element
     const scrollTarget = document.querySelector("[data-linked-passage='true']");
-    expect(scrollTarget).toBe(anchor);
+    expect(scrollTarget).toBe(linked);
   });
 
-  it("restores visual linked passage and interactions when highlights is true", () => {
+  it("preserves visual linked passage and interactions when highlights is true", () => {
     const onHighlightClick = jest.fn();
     render(
       <VotingBoard

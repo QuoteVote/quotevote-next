@@ -83,25 +83,6 @@ function LinkedPassageMark({
   );
 }
 
-function InvisibleLinkedPassageMark({
-  children,
-  className,
-}: {
-  children?: React.ReactNode;
-  className?: string;
-  highlightIndex?: number;
-}) {
-  return (
-    <span
-      data-linked-passage="true"
-      data-testid="linked-passage"
-      className={cn("bg-transparent text-inherit shadow-none", className)}
-    >
-      {children}
-    </span>
-  );
-}
-
 function RetainedPassageMark({
   children,
   className,
@@ -686,7 +667,7 @@ export default function VotingBoard({
   const handlePassageClick = useCallback(
     (e: React.MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (highlights && target.closest('[data-linked-passage="true"]')) {
+      if (target.closest('[data-linked-passage="true"]')) {
         e.preventDefault();
         onHighlightClick?.();
         return;
@@ -703,7 +684,7 @@ export default function VotingBoard({
         }
       }
     },
-    [highlights, renderedActivity, onActivityClick, onHighlightClick]
+    [renderedActivity, onActivityClick, onHighlightClick]
   );
 
   const resolveAnchorRect = useCallback((): DOMRect | null => {
@@ -763,10 +744,8 @@ export default function VotingBoard({
       return (
         <Highlighter
           style={{ whiteSpace: "pre-line" }}
-          highlightClassName={
-            highlights ? LINKED_PASSAGE_CLASS : "bg-transparent text-inherit shadow-none"
-          }
-          highlightTag={highlights ? LinkedPassageMark : InvisibleLinkedPassageMark}
+          highlightClassName={LINKED_PASSAGE_CLASS}
+          highlightTag={LinkedPassageMark}
           textToHighlight={content}
           searchWords={[]}
           findChunks={findChunksAtBeginningOfWords}

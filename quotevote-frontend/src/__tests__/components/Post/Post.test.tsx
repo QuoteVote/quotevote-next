@@ -90,24 +90,14 @@ jest.mock("@/components/VotingComponents/VotingBoard", () => ({
       data-activity={JSON.stringify(activity)}
     >
       {content}
-      {highlights ? (
-        <button
-          type="button"
-          data-testid="linked-passage"
-          data-linked-passage="true"
-          onClick={() => onHighlightClick?.()}
-        >
-          highlight
-        </button>
-      ) : (
-        <span
-          data-testid="linked-passage"
-          data-linked-passage="true"
-          className="bg-transparent text-inherit shadow-none"
-        >
-          highlight
-        </span>
-      )}
+      <button
+        type="button"
+        data-testid="linked-passage"
+        data-linked-passage="true"
+        onClick={() => onHighlightClick?.()}
+      >
+        highlight
+      </button>
       {highlights &&
         activity.map((segment) => (
           <button
@@ -310,35 +300,22 @@ describe("Post Component", () => {
       expect(onOpenDiscussion).toHaveBeenCalledTimes(1);
     });
 
-    it("activates the linked comment when the quote highlight is tapped while highlights are enabled", () => {
+    it("activates the linked comment when the quote highlight is tapped", () => {
       mockUiState.linkedPassage = {
         actionId: "c1",
         startWordIndex: 0,
         endWordIndex: 4,
       };
       const onActivateLinkedComment = jest.fn();
-      const { getByTestId, getByRole } = render(
+      const { getByTestId } = render(
         <Post {...mockProps} onActivateLinkedComment={onActivateLinkedComment} />
       );
 
-      // Anchor exists for scrolling in both states
+      // The linked passage is visible and interactive even when ambient highlights are OFF
       const anchor = getByTestId("linked-passage");
       expect(anchor).toHaveAttribute("data-linked-passage", "true");
-      expect(anchor.tagName).toBe("SPAN");
 
-      // When highlights are OFF, clicking does not trigger highlight interaction
       fireEvent.click(anchor);
-      expect(onActivateLinkedComment).not.toHaveBeenCalled();
-
-      // Enable highlights toggle
-      fireEvent.click(getByRole("button", { name: "Show highlights" }));
-
-      // Re-query the element after toggling
-      const activeAnchor = getByTestId("linked-passage");
-      expect(activeAnchor.tagName).toBe("BUTTON");
-
-      // Now tapping the visible linked passage activates the linked comment
-      fireEvent.click(activeAnchor);
       expect(onActivateLinkedComment).toHaveBeenCalledWith("c1");
     });
   });
