@@ -12,6 +12,7 @@ type PrismaMock = {
     updateMany: jest.Mock;
     update: jest.Mock;
     create: jest.Mock;
+    deleteMany: jest.Mock;
   };
 };
 
@@ -25,6 +26,7 @@ const createPrismaMock = (): PrismaMock => ({
     updateMany: jest.fn(),
     update: jest.fn(),
     create: jest.fn(),
+    deleteMany: jest.fn(),
   },
 });
 
@@ -71,6 +73,7 @@ describe('messages resolver utilities', () => {
     ).resolves.toEqual(room);
     expect(prisma.messageRoom.findFirst).toHaveBeenCalledWith({
       where: { postId: 'post1', messageType: 'POST' },
+      orderBy: { id: 'asc' },
       select: MESSAGE_ROOM_SELECT,
     });
     expect(prisma.messageRoom.create).toHaveBeenCalledWith({
@@ -82,6 +85,36 @@ describe('messages resolver utilities', () => {
       },
       select: MESSAGE_ROOM_SELECT,
     });
+  });
+
+  it('joins the older room when another request created one at the same moment (#790)', async () => {
+    const prisma = createPrismaMock();
+    const older = { id: 'room-older', userIds: ['user2'] };
+    const mine = { id: 'room-mine', userIds: ['user1'] };
+    prisma.messageRoom.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(older);
+    prisma.messageRoom.create.mockResolvedValue(mine);
+    prisma.messageRoom.deleteMany.mockResolvedValue({ count: 1 });
+    prisma.messageRoom.updateMany.mockResolvedValue({ count: 1 });
+
+    const room = await addUserToPostRoom(prisma as unknown as PrismaClient, 'post1', 'user1');
+
+    expect(prisma.messageRoom.deleteMany).toHaveBeenCalledWith({ where: { id: 'room-mine' } });
+    expect(prisma.messageRoom.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'room-older', NOT: { userIds: { has: 'user1' } } } })
+    );
+    expect(room).toMatchObject({ id: 'room-older', userIds: ['user2', 'user1'] });
+  });
+
+  it('keeps its own room when it is the oldest', async () => {
+    const prisma = createPrismaMock();
+    const mine = { id: 'room-mine', userIds: ['user1'] };
+    prisma.messageRoom.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(mine);
+    prisma.messageRoom.create.mockResolvedValue(mine);
+
+    await expect(
+      addUserToPostRoom(prisma as unknown as PrismaClient, 'post1', 'user1')
+    ).resolves.toEqual(mine);
+    expect(prisma.messageRoom.deleteMany).not.toHaveBeenCalled();
   });
 
   it('adds a user and updates activity for an existing room', async () => {

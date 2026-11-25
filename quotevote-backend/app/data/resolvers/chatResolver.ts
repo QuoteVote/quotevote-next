@@ -31,7 +31,7 @@ import {
   resolveRoomForMessage,
   validEmoji,
 } from '~/data/resolvers/utils/messageWrites';
-import { addUserToPostRoom } from '~/data/resolvers/utils/messages';
+import { addUserToPostRoom, findOldestRoom } from '~/data/resolvers/utils/messages';
 import { toMessageRoom } from '~/data/resolvers/utils/chatRooms';
 import { checkRateLimit } from '~/data/utils/rateLimiter';
 import { escapeRegExp, isObjectId } from '~/data/resolvers/utils/common';
@@ -112,12 +112,10 @@ export const chatResolver = {
       if (!context.userId || !isObjectId(args.otherUserId)) return null;
       // Legacy direct rooms are marked by messageType, not isDirect (false on all of them).
       // Legacy also created the room here when missing; that belongs with createMessage (#633).
-      const room = await context.prisma.messageRoom.findFirst({
-        where: {
-          userIds: { hasEvery: [context.userId, args.otherUserId] },
-          messageType: 'USER',
-        },
-        select: MESSAGE_ROOM_SELECT,
+      // The oldest, as when a message is sent, if the pair ever got two (#791).
+      const room = await findOldestRoom(context.prisma, {
+        userIds: { hasEvery: [context.userId, args.otherUserId] },
+        messageType: 'USER',
       });
       if (!room) return null;
       const [view] = await loadRoomViews(context.prisma, [room], context.userId);
@@ -393,12 +391,31 @@ export const chatResolver = {
       // conversation can say "Seen" with the time. Earlier entries stay as they are.
       const readAt = new Date();
       if (unread.length > 0) {
-        await context.prisma.message.updateMany({
-          where: { id: { in: unread.map((message) => message.id) } },
-          data: {
-            readBy: { push: userId },
-            readByDetailed: { push: { userId, readAt } },
-          },
+        // Only messages that don't list the reader yet, so several tabs marking the room read
+        // at once record them once (#792). Raw, because `$ne` also matches messages with no
+        // `readBy` at all, which is every message nobody has read yet; Prisma's list filters
+        // don't match a missing field.
+        await context.prisma.$runCommandRaw({
+          update: 'messages',
+          updates: [
+            {
+              q: {
+                _id: { $in: unread.map((message) => ({ $oid: message.id })) },
+                readBy: { $ne: { $oid: userId } },
+              },
+              u: {
+                $push: {
+                  readBy: { $oid: userId },
+                  readByDetailed: {
+                    userId: { $oid: userId },
+                    readAt: { $date: readAt.toISOString() },
+                  },
+                },
+                $currentDate: { updatedAt: true },
+              },
+              multi: true,
+            },
+          ],
         });
       }
 

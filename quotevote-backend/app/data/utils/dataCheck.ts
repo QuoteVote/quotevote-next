@@ -56,6 +56,9 @@ export const RECORD_COLLECTIONS: Record<string, string> = {
 const FOLLOWS_COLLECTION = 'users';
 const FOLLOWS_FIELD = '_followingId';
 
+/** Discussion and direct rooms, checked for conversations split across two rooms. */
+const ROOMS_COLLECTION = 'messagerooms';
+
 /**
  * A static default (`@default(0)`, `@default(active)`) is filled in when the field is missing
  * or null. Function defaults (`now()`, `auto()`) and `@updatedAt` are not.
@@ -216,6 +219,40 @@ async function countFollows(run: RunCommand): Promise<number> {
   return toNumber(firstBatch(result)[0]?.n);
 }
 
+/**
+ * Posts with more than one discussion room, and pairs of members with more than one direct
+ * room (#790, #791). Each is a conversation split in two. The backend uses the oldest room,
+ * as legacy does, so these are listed to merge, not to fix by hand.
+ */
+async function countDuplicateRooms(
+  run: RunCommand
+): Promise<{ duplicatePostRooms: number; duplicateDirectRooms: number }> {
+  const duplicates = async (match: Record<string, unknown>, key: unknown): Promise<number> => {
+    const result = await run({
+      aggregate: ROOMS_COLLECTION,
+      pipeline: [
+        { $match: match },
+        { $group: { _id: key, n: { $sum: 1 } } },
+        { $match: { n: { $gt: 1 } } },
+        { $count: 'n' },
+      ],
+      cursor: {},
+    });
+    return toNumber(firstBatch(result)[0]?.n);
+  };
+  return {
+    duplicatePostRooms: await duplicates(
+      { messageType: 'POST', postId: { $exists: true, $ne: null } },
+      '$postId'
+    ),
+    // A pair in either order is the same conversation.
+    duplicateDirectRooms: await duplicates(
+      { messageType: 'USER', 'users.1': { $exists: true }, 'users.2': { $exists: false } },
+      { a: { $min: '$users' }, b: { $max: '$users' } }
+    ),
+  };
+}
+
 export async function runDataCheck(options: {
   run: RunCommand;
   database: string;
@@ -245,6 +282,12 @@ export async function runDataCheck(options: {
     records[label] = collections[collection]?.count ?? 0;
   }
   records.follows = existing.includes(FOLLOWS_COLLECTION) ? await countFollows(run) : 0;
+  Object.assign(
+    records,
+    existing.includes(ROOMS_COLLECTION)
+      ? await countDuplicateRooms(run)
+      : { duplicatePostRooms: 0, duplicateDirectRooms: 0 }
+  );
 
   const mapped = [...new Set(models.map((m) => m.dbName ?? m.name))];
   return {

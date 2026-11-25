@@ -202,6 +202,7 @@ describe('createMessage', () => {
 
     expect(context.prisma.messageRoom.findFirst).toHaveBeenCalledWith({
       where: { userIds: { hasEvery: [me, bobId] }, messageType: 'USER' },
+      orderBy: { id: 'asc' },
       select: MESSAGE_ROOM_SELECT,
     });
     expect(context.prisma.messageRoom.create).not.toHaveBeenCalled();
@@ -453,6 +454,12 @@ describe('updateMessageReadBy', () => {
   const read = (context: Context) =>
     Mutation.updateMessageReadBy({}, { messageRoomId: dmId }, context as never);
 
+  /** The raw update sent to `collection`, among the commands the resolver sent. */
+  const rawUpdate = (context: ReturnType<typeof createContext>, collection: string): unknown =>
+    (context.prisma.$runCommandRaw.mock.calls as [{ update?: string }][])
+      .map(([command]) => command)
+      .find((command) => command.update === collection);
+
   it('marks messages from others as read, including legacy ones with no readBy', async () => {
     const context = createContext();
     context.prisma.messageRoom.findUnique.mockResolvedValue(room());
@@ -470,18 +477,24 @@ describe('updateMessageReadBy', () => {
       ['legacy', [me]],
       ['new', [me]],
     ]);
-    expect(context.prisma.message.updateMany).toHaveBeenCalledWith({
-      where: { id: { in: ['legacy', 'new'] } },
-      data: {
-        readBy: { push: me },
-        readByDetailed: { push: { userId: me, readAt: expect.any(Date) } },
-      },
+    // Only messages that don't list the reader yet, including ones with no readBy (#792).
+    expect(rawUpdate(context, 'messages')).toEqual({
+      update: 'messages',
+      updates: [
+        {
+          q: { _id: { $in: [{ $oid: 'legacy' }, { $oid: 'new' }] }, readBy: { $ne: { $oid: me } } },
+          u: {
+            $push: {
+              readBy: { $oid: me },
+              readByDetailed: { userId: { $oid: me }, readAt: { $date: expect.any(String) } },
+            },
+            $currentDate: { updatedAt: true },
+          },
+          multi: true,
+        },
+      ],
     });
-    const command = context.prisma.$runCommandRaw.mock.calls[0][0] as {
-      update: string;
-      updates: { u: unknown }[];
-    };
-    expect(command.update).toBe('messagerooms');
+    const command = rawUpdate(context, 'messagerooms') as { updates: { u: unknown }[] };
     expect(JSON.stringify(command.updates[0].u)).toContain(`{"${me}":{"$oid":"new"}}`);
   });
 
@@ -497,10 +510,10 @@ describe('updateMessageReadBy', () => {
 
     const result = await read(context);
 
-    const [{ data }] = context.prisma.message.updateMany.mock.calls[0] as [
-      { data: { readByDetailed: { push: { userId: string; readAt: Date } } } },
-    ];
-    const { readAt } = data.readByDetailed.push;
+    const command = rawUpdate(context, 'messages') as {
+      updates: { u: { $push: { readByDetailed: { readAt: { $date: string } } } } }[];
+    };
+    const readAt = new Date(command.updates[0].u.$push.readByDetailed.readAt.$date);
     expect(readAt.getTime()).toBeGreaterThanOrEqual(before);
     expect(result.map((m) => [m._id, m.readByDetailed])).toEqual([
       ['new', [earlier, { userId: me, readAt }]],

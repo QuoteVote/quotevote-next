@@ -414,7 +414,9 @@ describe('Room membership authorization (executable schema)', () => {
       const { result, prisma } = await run(source, null, { id: dmRoomId });
 
       expect(codeOf(result)).toBe('UNAUTHENTICATED');
-      expect(prisma.message.updateMany).not.toHaveBeenCalled();
+      expect(prisma.$runCommandRaw).not.toHaveBeenCalledWith(
+        expect.objectContaining({ update: 'messages' })
+      );
     });
 
     it('changes nothing for a non-member', async () => {
@@ -422,7 +424,9 @@ describe('Room membership authorization (executable schema)', () => {
 
       expect(result.data).toEqual({ read: [] });
       expect(prisma.message.findMany).not.toHaveBeenCalled();
-      expect(prisma.message.updateMany).not.toHaveBeenCalled();
+      expect(prisma.$runCommandRaw).not.toHaveBeenCalledWith(
+        expect.objectContaining({ update: 'messages' })
+      );
     });
 
     it('marks the unread messages as read for a member', async () => {
@@ -430,13 +434,16 @@ describe('Room membership authorization (executable schema)', () => {
 
       expect(result.errors).toBeUndefined();
       expect(result.data).toEqual({ read: [{ _id: dmMessageId }] });
-      expect(prisma.message.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: [dmMessageId] } },
-        data: {
-          readBy: { push: memberId },
-          readByDetailed: { push: { userId: memberId, readAt: expect.any(Date) } },
-        },
-      });
+      expect(prisma.$runCommandRaw).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: 'messages',
+          updates: [
+            expect.objectContaining({
+              q: { _id: { $in: [{ $oid: dmMessageId }] }, readBy: { $ne: { $oid: memberId } } },
+            }),
+          ],
+        })
+      );
     });
   });
 

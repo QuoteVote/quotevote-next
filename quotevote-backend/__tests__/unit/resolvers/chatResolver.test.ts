@@ -86,6 +86,7 @@ describe('chatResolver Prisma queries', () => {
     // Legacy direct rooms are marked by messageType; isDirect is false on all of them.
     expect(context.prisma.messageRoom.findFirst).toHaveBeenCalledWith({
       where: { userIds: { hasEvery: [me, bobId] }, messageType: 'USER' },
+      orderBy: { id: 'asc' },
       select: MESSAGE_ROOM_SELECT,
     });
     expect(result).toMatchObject({
