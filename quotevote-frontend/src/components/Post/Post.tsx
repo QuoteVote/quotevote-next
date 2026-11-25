@@ -18,6 +18,7 @@ import {
   Hash,
   MoreHorizontal,
   MessageCircle,
+  Highlighter,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -234,6 +235,12 @@ export default function Post({
   const [localRejectedBy, setLocalRejectedBy] = useState<string[]>(() => post.rejectedBy || []);
   const [prevApprovedBy, setPrevApprovedBy] = useState(post.approvedBy);
   const [prevRejectedBy, setPrevRejectedBy] = useState(post.rejectedBy);
+  const [showHighlights, setShowHighlights] = useState(false);
+  const [prevPostId, setPrevPostId] = useState(post._id);
+  if (prevPostId !== post._id) {
+    setPrevPostId(post._id);
+    setShowHighlights(false);
+  }
   if (prevApprovedBy !== post.approvedBy) {
     setPrevApprovedBy(post.approvedBy);
     setLocalApprovedBy(post.approvedBy || []);
@@ -651,13 +658,33 @@ export default function Post({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setShowHighlights((prev) => !prev)}
+            aria-pressed={showHighlights}
+            aria-label={showHighlights ? "Hide highlights" : "Show highlights"}
+            title={showHighlights ? "Hide highlights" : "Show highlights"}
+            className={cn(
+              POST_ACTION_PILL_CLASS,
+              "w-10 shrink-0 px-0 sm:w-11 sm:px-0 transition-colors",
+              showHighlights
+                ? "border-[var(--shell-primary-line)] bg-[var(--shell-primary)] text-[var(--shell-primary-ink)] hover:bg-[var(--shell-primary-hover)] hover:text-[var(--shell-primary-ink)]"
+                : POST_ACTION_NEUTRAL_CLASS
+            )}
+            data-testid="toggle-highlights"
+          >
+            <Highlighter className="size-4" aria-hidden="true" />
+          </Button>
         </div>
       </div>
 
       {/* ── Post body ───────────────────────────────────────────────────── */}
       <div className="font-redesign px-4 py-4 sm:px-6 lg:pr-14 lg:pl-[88px]">
         {/* Selectable post text + floating VotingPopup */}
-        {passageActivity.length > 0 && (
+        {showHighlights && passageActivity.length > 0 && (
           <p
             data-testid="passage-activity-hint"
             className="mb-4 max-w-[700px] text-[13px]! leading-normal! font-semibold text-[var(--shell-muted)] sm:text-[13.5px]!"
@@ -676,7 +703,7 @@ export default function Post({
         >
           <VotingBoard
             content={post.text || ""}
-            highlights={true}
+            highlights={showHighlights}
             votes={post.votes || []}
             focusedComment={linkedPassage}
             onHighlightClick={handleHighlightClick}

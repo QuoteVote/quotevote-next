@@ -10,6 +10,7 @@
  */
 
 import { render, within, fireEvent } from "../../utils/test-utils";
+import userEvent from "@testing-library/user-event";
 import Post from "../../../components/Post/Post";
 import type { PostProps } from "@/types/post";
 
@@ -72,30 +73,42 @@ jest.mock("@/components/VotingComponents/VotingBoard", () => ({
   __esModule: true,
   default: ({
     content,
+    highlights = false,
     onHighlightClick,
     activity = [],
     onActivityClick,
   }: {
     content: string;
+    highlights?: boolean;
     onHighlightClick?: () => void;
     activity?: Array<{ start: number; end: number; actionIds: string[] }>;
     onActivityClick?: (segment: { start: number; end: number; actionIds: string[] }) => void;
   }) => (
-    <div data-testid="voting-board" data-activity={JSON.stringify(activity)}>
+    <div
+      data-testid="voting-board"
+      data-highlights={String(highlights)}
+      data-activity={JSON.stringify(activity)}
+    >
       {content}
-      <button type="button" data-testid="linked-passage" onClick={() => onHighlightClick?.()}>
+      <button
+        type="button"
+        data-testid="linked-passage"
+        data-linked-passage="true"
+        onClick={() => onHighlightClick?.()}
+      >
         highlight
       </button>
-      {activity.map((segment) => (
-        <button
-          key={segment.start}
-          type="button"
-          data-testid="activity-passage"
-          onClick={() => onActivityClick?.(segment)}
-        >
-          activity
-        </button>
-      ))}
+      {highlights &&
+        activity.map((segment) => (
+          <button
+            key={segment.start}
+            type="button"
+            data-testid="activity-passage"
+            onClick={() => onActivityClick?.(segment)}
+          >
+            activity
+          </button>
+        ))}
     </div>
   ),
 }));
@@ -297,7 +310,12 @@ describe("Post Component", () => {
       const { getByTestId } = render(
         <Post {...mockProps} onActivateLinkedComment={onActivateLinkedComment} />
       );
-      fireEvent.click(getByTestId("linked-passage"));
+
+      // The linked passage is visible and interactive even when ambient highlights are OFF
+      const anchor = getByTestId("linked-passage");
+      expect(anchor).toHaveAttribute("data-linked-passage", "true");
+
+      fireEvent.click(anchor);
       expect(onActivateLinkedComment).toHaveBeenCalledWith("c1");
     });
   });
@@ -319,9 +337,12 @@ describe("Post Component", () => {
       ],
     };
 
-    it("passes passages with votes or comments to the board and explains the marks", () => {
-      const { getByTestId } = render(<Post {...mockProps} post={postWithPassageActivity} />);
-      const activity = JSON.parse(getByTestId("voting-board").dataset.activity ?? "[]");
+    it("passes passages with votes or comments to the board and explains the marks when toggled on", () => {
+      const { getByTestId, getByRole, queryByTestId } = render(
+        <Post {...mockProps} post={postWithPassageActivity} />
+      );
+      const votingBoard = getByTestId("voting-board");
+      const activity = JSON.parse(votingBoard.dataset.activity ?? "[]");
       expect(activity).toEqual([
         expect.objectContaining({
           start: 0,
@@ -331,25 +352,40 @@ describe("Post Component", () => {
           actionIds: ["c1", "v1"],
         }),
       ]);
+      // Highlights and hint are hidden by default
+      expect(votingBoard.dataset.highlights).toBe("false");
+      expect(queryByTestId("passage-activity-hint")).not.toBeInTheDocument();
+
+      // Toggle ON
+      const toggle = getByRole("button", { name: "Show highlights" });
+      fireEvent.click(toggle);
+
+      expect(votingBoard.dataset.highlights).toBe("true");
       expect(getByTestId("passage-activity-hint")).toHaveTextContent(
         "Highlighted passages already have votes or comments."
       );
     });
 
     it("hides the hint when no passage has activity", () => {
-      const { queryByTestId } = render(<Post {...mockProps} />);
+      const { queryByTestId, getByRole } = render(<Post {...mockProps} />);
+      expect(queryByTestId("passage-activity-hint")).not.toBeInTheDocument();
+      // Even if toggled on, no hint if no activity
+      fireEvent.click(getByRole("button", { name: "Show highlights" }));
       expect(queryByTestId("passage-activity-hint")).not.toBeInTheDocument();
     });
 
     it("links the passage and opens its newest activity when a mark is chosen", () => {
       const onActivateLinkedComment = jest.fn();
-      const { getByTestId } = render(
+      const { getByTestId, getByRole } = render(
         <Post
           {...mockProps}
           post={postWithPassageActivity}
           onActivateLinkedComment={onActivateLinkedComment}
         />
       );
+      // Turn on highlights to reveal activity marks
+      fireEvent.click(getByRole("button", { name: "Show highlights" }));
+
       fireEvent.click(getByTestId("activity-passage"));
       expect(mockSetLinkedPassage).toHaveBeenCalledWith({
         actionId: "c1",
@@ -357,6 +393,132 @@ describe("Post Component", () => {
         endWordIndex: 6,
       });
       expect(onActivateLinkedComment).toHaveBeenCalledWith("c1");
+    });
+  });
+
+  describe("Passage highlights toggle (#772)", () => {
+    const postWithPassageActivity = {
+      ...mockPost,
+      votes: [
+        { _id: "v1", startWordIndex: 0, endWordIndex: 4, type: "up", created: "1700000000000" },
+      ],
+      comments: [
+        {
+          _id: "c1",
+          startWordIndex: 2,
+          endWordIndex: 6,
+          created: "1700000100000",
+          userId: "user2",
+        },
+      ],
+    };
+
+    it("hides highlights on initial post load with default state OFF", () => {
+      const { getByTestId, getByRole, queryByTestId } = render(
+        <Post {...mockProps} post={postWithPassageActivity} />
+      );
+      const toggle = getByRole("button", { name: "Show highlights" });
+      expect(toggle).toBeInTheDocument();
+      expect(toggle).toHaveAttribute("aria-pressed", "false");
+      expect(getByTestId("voting-board")).toHaveAttribute("data-highlights", "false");
+      expect(queryByTestId("activity-passage")).not.toBeInTheDocument();
+      expect(queryByTestId("passage-activity-hint")).not.toBeInTheDocument();
+    });
+
+    it("places the toggle button immediately to the right of the overflow menu in the toolbar", () => {
+      const { getByRole } = render(<Post {...mockProps} post={postWithPassageActivity} />);
+      const toolbar = getByRole("toolbar", { name: "Post actions" });
+      const overflowBtn = within(toolbar).getByRole("button", { name: "More options" });
+      const toggleBtn = within(toolbar).getByRole("button", { name: "Show highlights" });
+      expect(overflowBtn).toBeInTheDocument();
+      expect(toggleBtn).toBeInTheDocument();
+      expect(
+        overflowBtn.compareDocumentPosition(toggleBtn) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
+
+    it("enables highlights when clicked and updates accessible name and aria-pressed", () => {
+      const { getByTestId, getByRole } = render(
+        <Post {...mockProps} post={postWithPassageActivity} />
+      );
+      const toggle = getByRole("button", { name: "Show highlights" });
+      fireEvent.click(toggle);
+
+      expect(toggle).toHaveAttribute("aria-pressed", "true");
+      expect(toggle).toHaveAccessibleName("Hide highlights");
+      expect(getByTestId("voting-board")).toHaveAttribute("data-highlights", "true");
+      expect(getByTestId("activity-passage")).toBeInTheDocument();
+      expect(getByTestId("passage-activity-hint")).toBeInTheDocument();
+    });
+
+    it("hides highlights again when toggled off", () => {
+      const { getByTestId, getByRole, queryByTestId } = render(
+        <Post {...mockProps} post={postWithPassageActivity} />
+      );
+      const toggle = getByRole("button", { name: "Show highlights" });
+      // Toggle ON
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-pressed", "true");
+      expect(getByTestId("activity-passage")).toBeInTheDocument();
+
+      // Toggle OFF
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-pressed", "false");
+      expect(toggle).toHaveAccessibleName("Show highlights");
+      expect(getByTestId("voting-board")).toHaveAttribute("data-highlights", "false");
+      expect(queryByTestId("activity-passage")).not.toBeInTheDocument();
+      expect(queryByTestId("passage-activity-hint")).not.toBeInTheDocument();
+    });
+
+    it("does not mutate post data or trigger page refresh when toggling", () => {
+      const initialPost = { ...postWithPassageActivity };
+      const { getByRole } = render(<Post {...mockProps} post={initialPost} />);
+      const toggle = getByRole("button", { name: "Show highlights" });
+
+      fireEvent.click(toggle);
+      fireEvent.click(toggle);
+
+      expect(mockPush).not.toHaveBeenCalled();
+      expect(initialPost.votes).toEqual(postWithPassageActivity.votes);
+      expect(initialPost.comments).toEqual(postWithPassageActivity.comments);
+    });
+
+    it("supports keyboard interaction", async () => {
+      const user = userEvent.setup();
+      const { getByTestId, getByRole } = render(
+        <Post {...mockProps} post={postWithPassageActivity} />
+      );
+      const toggle = getByRole("button", { name: "Show highlights" });
+
+      toggle.focus();
+      expect(toggle).toHaveFocus();
+
+      // Enter key activates the toggle (ON)
+      await user.keyboard("{Enter}");
+      expect(toggle).toHaveAttribute("aria-pressed", "true");
+      expect(getByTestId("voting-board")).toHaveAttribute("data-highlights", "true");
+
+      // Space key activates the toggle (OFF)
+      await user.keyboard(" ");
+      expect(toggle).toHaveAttribute("aria-pressed", "false");
+      expect(getByTestId("voting-board")).toHaveAttribute("data-highlights", "false");
+    });
+
+    it("resets highlights to OFF when viewing a different post", () => {
+      const { getByRole, rerender, getByTestId } = render(
+        <Post {...mockProps} post={postWithPassageActivity} />
+      );
+      const toggle = getByRole("button", { name: "Show highlights" });
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-pressed", "true");
+
+      // Navigate to another post
+      const differentPost = { ...mockPost, _id: "post2", title: "Second Post" };
+      rerender(<Post {...mockProps} post={differentPost} />);
+
+      const newToggle = getByRole("button", { name: "Show highlights" });
+      expect(newToggle).toHaveAttribute("aria-pressed", "false");
+      expect(getByTestId("voting-board")).toHaveAttribute("data-highlights", "false");
     });
   });
 

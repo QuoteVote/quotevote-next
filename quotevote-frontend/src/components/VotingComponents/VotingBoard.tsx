@@ -740,22 +740,22 @@ export default function VotingBoard({
       return renderRetained();
     }
 
-    if (highlights) {
-      if (hasLinkedRange) {
-        return (
-          <Highlighter
-            style={{ whiteSpace: "pre-line" }}
-            highlightClassName={LINKED_PASSAGE_CLASS}
-            highlightTag={LinkedPassageMark}
-            textToHighlight={content}
-            searchWords={[]}
-            findChunks={findChunksAtBeginningOfWords}
-            autoEscape
-            onContextMenu={disableContextMenu}
-          />
-        );
-      }
+    if (hasLinkedRange) {
+      return (
+        <Highlighter
+          style={{ whiteSpace: "pre-line" }}
+          highlightClassName={LINKED_PASSAGE_CLASS}
+          highlightTag={LinkedPassageMark}
+          textToHighlight={content}
+          searchWords={[]}
+          findChunks={findChunksAtBeginningOfWords}
+          autoEscape
+          onContextMenu={disableContextMenu}
+        />
+      );
+    }
 
+    if (highlights) {
       if (renderedActivity.length > 0) {
         return (
           <Highlighter
