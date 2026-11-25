@@ -272,7 +272,15 @@ describe('runDataCheck', () => {
     const report = await runDataCheck({ run, database: 'qv', models, enums: [], now });
 
     expect(report.records).toEqual(
-      expect.objectContaining({ accounts: 3, posts: 1, votes: 0, follows: 3 })
+      expect.objectContaining({
+        accounts: 3,
+        posts: 1,
+        votes: 0,
+        follows: 3,
+        // No rooms collection yet, so nothing can be split (#790, #791).
+        duplicatePostRooms: 0,
+        duplicateDirectRooms: 0,
+      })
     );
     expect(report.missingCollections).toEqual(['votes']);
   });

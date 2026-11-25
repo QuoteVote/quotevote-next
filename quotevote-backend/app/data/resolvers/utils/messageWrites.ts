@@ -1,8 +1,9 @@
+import type { Prisma } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import type { GraphQLContext } from '~/types/graphql';
 import { isObjectId } from '~/data/resolvers/utils/common';
 import { MESSAGE_ROOM_SELECT, type MessageRoomRecord } from '~/data/resolvers/utils/chatRooms';
-import { addUserToPostRoom } from '~/data/resolvers/utils/messages';
+import { addUserToPostRoom, createRoomOnce, findOldestRoom } from '~/data/resolvers/utils/messages';
 import { assertNoBlockBetween } from '~/data/utils/userBlock';
 import { logger } from '~/data/utils/logger';
 import { addNotification, hasUnreadNotification } from '~/data/resolvers/utils/notifications';
@@ -86,21 +87,21 @@ async function findOrCreateDirectRoom(
   await assertNoBlockBetween(prisma, userId, recipient.id);
 
   // Legacy direct rooms are marked by messageType, not isDirect.
-  const existing = await prisma.messageRoom.findFirst({
-    where: { userIds: { hasEvery: [userId, recipient.id] }, messageType: 'USER' },
-    select: MESSAGE_ROOM_SELECT,
-  });
+  const where: Prisma.MessageRoomWhereInput = {
+    userIds: { hasEvery: [userId, recipient.id] },
+    messageType: 'USER',
+  };
+  const existing = await findOldestRoom(prisma, where);
   if (existing) return existing;
 
-  return prisma.messageRoom.create({
-    data: {
-      userIds: [userId, recipient.id],
-      messageType: 'USER',
-      isDirect: true,
-      lastActivity: new Date(),
-    },
-    select: MESSAGE_ROOM_SELECT,
+  // Both members sending a first message at the same moment end up in the same room (#791).
+  const { room } = await createRoomOnce(prisma, where, {
+    userIds: [userId, recipient.id],
+    messageType: 'USER',
+    isDirect: true,
+    lastActivity: new Date(),
   });
+  return room;
 }
 
 /**

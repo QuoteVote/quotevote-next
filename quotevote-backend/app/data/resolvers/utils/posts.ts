@@ -189,9 +189,10 @@ export async function attachPostDetail(
       select: QUOTE_SELECT,
       orderBy: { created: 'asc' },
     }),
-    // Legacy reads a post's room with findOne, so the first one wins.
+    // The first (oldest) room wins, as in legacy's findOne and when someone joins (#790).
     prisma.messageRoom.findFirst({
       where: { postId: post.id },
+      orderBy: { id: 'asc' },
       select: { id: true, postId: true, userIds: true, messageType: true, created: true },
     }),
   ]);
