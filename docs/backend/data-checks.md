@@ -19,6 +19,7 @@ Report files are ignored by git.
 ## What the report holds
 
 - **Records:** accounts, posts, votes, comments, quotes, conversations, messages, follows, buddy relationships, blocks, tags, notifications and invites.
+- **Split conversations:** posts with more than one discussion room, and pairs of members with more than one direct room (#790, #791). The backend reads and writes the oldest room, as legacy does, so these show what's left to merge.
 - **Collections:** for every collection in the database, mapped in Prisma or not, the number of documents and the index list.
 - **Field problems:** for every collection Prisma maps, the number of records with each problem below. The checks are built from the Prisma schema, so they follow it as models change.
 - **Missing collections:** collections in the Prisma schema that don't exist in the database yet.

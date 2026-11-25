@@ -1,4 +1,4 @@
-import type { Message, MessageRoom, PrismaClient } from '@prisma/client';
+import type { Message, MessageRoom, Prisma, PrismaClient } from '@prisma/client';
 import type * as Common from '~/types/common';
 import { unique, whenAny } from '~/data/resolvers/utils/batchLoad';
 import { canAccessRoom } from '~/data/utils/roomAccess';
@@ -86,6 +86,38 @@ export const getUnreadMessages = async (
 };
 
 /**
+ * The oldest room matching `where`. Ids grow with time, so this is the one created first.
+ * Every lookup of a post's room or a pair's direct room goes through this, so when two
+ * rooms exist (created at the same moment here, or by the legacy API, which reads the
+ * first one too) everyone reads and writes the same one (#790, #791).
+ */
+export const findOldestRoom = (
+  prisma: Pick<PrismaClient, 'messageRoom'>,
+  where: Prisma.MessageRoomWhereInput
+): Promise<MessageRoomRecord | null> =>
+  prisma.messageRoom.findFirst({ where, orderBy: { id: 'asc' }, select: MESSAGE_ROOM_SELECT });
+
+/**
+ * Creates a room for `where` and keeps only the oldest one (#790, #791). Two requests that
+ * find no room at the same moment both create one; each then reads the oldest. The one whose
+ * room isn't the oldest deletes its own, which nobody has used yet, and returns the oldest.
+ * A unique index can't do this here: the key is only unique for post rooms (or only for
+ * direct ones), existing data may already hold duplicates, and the legacy API still creates
+ * rooms in the same collection.
+ */
+export async function createRoomOnce(
+  prisma: Pick<PrismaClient, 'messageRoom'>,
+  where: Prisma.MessageRoomWhereInput,
+  data: Prisma.MessageRoomUncheckedCreateInput
+): Promise<{ room: MessageRoomRecord; created: boolean }> {
+  const mine = await prisma.messageRoom.create({ data, select: MESSAGE_ROOM_SELECT });
+  const oldest = await findOldestRoom(prisma, where);
+  if (!oldest || oldest.id === mine.id) return { room: mine, created: true };
+  await prisma.messageRoom.deleteMany({ where: { id: mine.id } });
+  return { room: oldest, created: false };
+}
+
+/**
  * Add a user to a post's message room.
  * Creates the room if it doesn't exist. Idempotent for existing members.
  * Legacy rooms have no createdAt/updatedAt, so every read and write selects.
@@ -95,24 +127,19 @@ export const addUserToPostRoom = async (
   postId: string,
   userId: string
 ): Promise<MessageRoomRecord> => {
-  const existing = await prisma.messageRoom.findFirst({
-    where: {
-      postId,
-      messageType: 'POST',
-    },
-    select: MESSAGE_ROOM_SELECT,
-  });
+  const where: Prisma.MessageRoomWhereInput = { postId, messageType: 'POST' };
+  let existing = await findOldestRoom(prisma, where);
 
   if (!existing) {
-    return prisma.messageRoom.create({
-      data: {
-        userIds: [userId],
-        postId,
-        messageType: 'POST',
-        lastActivity: new Date(),
-      },
-      select: MESSAGE_ROOM_SELECT,
+    const { room, created } = await createRoomOnce(prisma, where, {
+      userIds: [userId],
+      postId,
+      messageType: 'POST',
+      lastActivity: new Date(),
     });
+    // Another request created the post's room first: join that one instead.
+    if (created) return room;
+    existing = room;
   }
 
   const now = new Date();
