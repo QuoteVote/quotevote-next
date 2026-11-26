@@ -15,15 +15,14 @@ function sameEmail(a: string | null | undefined, b: string | null | undefined): 
 
 /**
  * Whether an invite-signup token's invite can still be used by this account.
- * Tokens without `inviteId` are admin approvals sent before #691, and pass as before.
+ * A token without `inviteId` is refused (#704): every link carries one.
  */
 export async function isMemberInviteUsable(
   prisma: GraphQLContext['prisma'],
   payload: InviteSignupTokenPayload,
   accountEmail: string | null | undefined
 ): Promise<boolean> {
-  if (!payload.inviteId) return true;
-  if (!OBJECT_ID_PATTERN.test(payload.inviteId)) return false;
+  if (!payload.inviteId || !OBJECT_ID_PATTERN.test(payload.inviteId)) return false;
 
   const invite = await prisma.userInvite.findUnique({
     where: { id: payload.inviteId },

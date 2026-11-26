@@ -106,7 +106,10 @@ describe('password reset (#623)', () => {
     it('refuses expired, session and invite tokens', () => {
       const expired = generatePasswordResetToken(userId, OLD_HASH, -10);
       const session = jwt.sign({ userId, username: 'alice', email: 'a@b.c' }, SECRET);
-      const invite = generateInviteSignupToken(userId);
+      const invite = generateInviteSignupToken(userId, MEMBER_INVITE_TTL_SECONDS, {
+        inviteId: '507f1f77bcf86cd799439022',
+        email: 'a@b.c',
+      });
 
       expect(() => verifyPasswordResetToken(expired)).toThrow('Password reset link has expired');
       expect(() => verifyPasswordResetToken(session)).toThrow('Invalid password reset link');
@@ -308,7 +311,10 @@ describe('password reset (#623)', () => {
         undefined,
         generatePasswordResetToken(userId, OLD_HASH, -10),
         jwt.sign({ userId, username: 'alice', email: 'a@b.c' }, SECRET),
-        generateInviteSignupToken(userId),
+        generateInviteSignupToken(userId, MEMBER_INVITE_TTL_SECONDS, {
+          inviteId: '507f1f77bcf86cd799439022',
+          email: 'a@b.c',
+        }),
       ];
       for (const token of tokens) {
         const ctx = withUser();
@@ -374,13 +380,28 @@ describe('password reset (#623)', () => {
     });
 
     it('accepts an invite link until the account is set up', async () => {
-      const invite = generateInviteSignupToken(userId);
+      const invite = generateInviteSignupToken(userId, MEMBER_INVITE_TTL_SECONDS, {
+        inviteId: '507f1f77bcf86cd799439022',
+        email: activeUser.email,
+      });
       const pending = { ...activeUser, password: null, status: 4 };
+      const open = {
+        email: activeUser.email,
+        status: 'pending',
+        expiresAt: new Date(Date.now() + 60_000),
+      };
 
-      await expect(verify(invite, pending)).resolves.toEqual(
+      await expect(verify(invite, pending, open)).resolves.toEqual(
         expect.objectContaining({ _id: userId })
       );
-      await expect(verify(invite, activeUser)).resolves.toBeNull();
+      await expect(verify(invite, activeUser, open)).resolves.toBeNull();
+    });
+
+    it('shows an invite link without an invite id as invalid (#704)', async () => {
+      const legacy = jwt.sign({ userId, type: 'invite_signup', purpose: 'completeSignup' }, SECRET);
+      const pending = { ...activeUser, password: null, status: 4 };
+
+      await expect(verify(legacy, pending)).resolves.toBeNull();
     });
 
     it('accepts a member invite link only while its invite is open (#672)', async () => {

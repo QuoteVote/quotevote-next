@@ -93,10 +93,15 @@ describe('Authentication Utils', () => {
         realJwt.verify(token as string, secret as string)
       );
 
-      const token = auth.generateInviteSignupToken('507f1f77bcf86cd799439011');
+      const token = auth.generateInviteSignupToken(
+        '507f1f77bcf86cd799439011',
+        auth.ADMIN_INVITE_TTL_SECONDS,
+        { inviteId: '507f1f77bcf86cd799439022', email: 'invitee@example.com' }
+      );
       const payload = auth.verifyInviteSignupToken(token);
       expect(payload.userId).toBe('507f1f77bcf86cd799439011');
       expect(payload.type).toBe('invite_signup');
+      expect(payload.inviteId).toBe('507f1f77bcf86cd799439022');
     });
 
     it('rejects invite tokens in verifyToken (general session)', async () => {
@@ -108,7 +113,11 @@ describe('Authentication Utils', () => {
         realJwt.verify(token as string, secret as string)
       );
 
-      const inviteToken = auth.generateInviteSignupToken('507f1f77bcf86cd799439011');
+      const inviteToken = auth.generateInviteSignupToken(
+        '507f1f77bcf86cd799439011',
+        auth.ADMIN_INVITE_TTL_SECONDS,
+        { inviteId: '507f1f77bcf86cd799439022', email: 'invitee@example.com' }
+      );
       await expect(auth.verifyToken(inviteToken)).rejects.toThrow(
         /cannot be used in this endpoint/
       );
@@ -161,6 +170,16 @@ describe('Authentication Utils', () => {
 
         expect(() => auth.verifyInviteSignupToken(noEmail)).toThrow('Invalid invite signup token');
         expect(() => auth.verifyInviteSignupToken(noInvite)).toThrow('Invalid invite signup token');
+      });
+
+      it('refuses a token with neither invite claim, as approvals were sent before #704', () => {
+        const base = { userId, type: 'invite_signup', purpose: 'completeSignup' };
+        const legacy = realJwt.sign(base, 'test_secret');
+        const bound = realJwt.sign({ ...base, ...invite }, 'test_secret');
+
+        expect(() => auth.verifyInviteSignupToken(legacy)).toThrow('Invalid invite signup token');
+        // The same token with the claims is accepted, so only the missing invite refuses it.
+        expect(auth.verifyInviteSignupToken(bound)).toMatchObject(invite);
       });
     });
   });
