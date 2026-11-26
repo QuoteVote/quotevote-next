@@ -26,9 +26,4 @@ export {
   recalculateAllReputations,
 } from './reputation';
 export type { ReputationData } from './reputation';
-export {
-  getMessages,
-  getUnreadMessages,
-  addUserToPostRoom,
-  getReadableMessageRoom,
-} from './messages';
+export { addUserToPostRoom, getReadableMessageRoom } from './messages';

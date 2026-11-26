@@ -1,4 +1,4 @@
-import type { Message, MessageRoom, Prisma, PrismaClient } from '@prisma/client';
+import type { MessageRoom, Prisma, PrismaClient } from '@prisma/client';
 import type * as Common from '~/types/common';
 import { unique, whenAny } from '~/data/resolvers/utils/batchLoad';
 import { canAccessRoom } from '~/data/utils/roomAccess';
@@ -50,40 +50,6 @@ export async function attachMessageAuthors(
     };
   });
 }
-
-/**
- * Get all non-deleted messages in a message room.
- */
-export const getMessages = async (
-  prisma: PrismaClient,
-  messageRoomId: string
-): Promise<Message[]> => {
-  return prisma.message.findMany({
-    where: {
-      messageRoomId,
-      deleted: false,
-    },
-  });
-};
-
-/**
- * Get unread messages for the current user in a message room.
- * Excludes messages sent by the user and messages already read.
- */
-export const getUnreadMessages = async (
-  prisma: PrismaClient,
-  messageRoomId: string,
-  userId: string
-): Promise<Message[]> => {
-  return prisma.message.findMany({
-    where: {
-      messageRoomId,
-      userId: { not: userId },
-      NOT: { readBy: { has: userId } },
-      deleted: false,
-    },
-  });
-};
 
 /**
  * The oldest room matching `where`. Ids grow with time, so this is the one created first.

@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 import type * as Common from '~/types/common';
-import { SUBSCRIPTION_EVENTS, type GraphQLContext } from '~/types/graphql';
+import { SUBSCRIPTION_EVENTS, type GraphQLContext, type TypingPayload } from '~/types/graphql';
 import type { MessageSearchResult } from '~/data/types/MessageSearch';
 import { attachMessageAuthors, getReadableMessageRoom } from './utils/messages';
 import { isLive } from '~/data/resolvers/utils/batchLoad';
@@ -53,6 +53,9 @@ import {
 } from '~/data/utils/userPrismaMapper';
 
 /** Messages per member per minute, as legacy allowed. */
+/** Longest chat message, in characters (#797). */
+export const MESSAGE_MAX_LENGTH = 2000;
+
 const MESSAGE_RATE_LIMIT = 10;
 const MESSAGE_RATE_WINDOW_MS = 60_000;
 
@@ -289,6 +292,9 @@ export const chatResolver = {
       const userId = requireUserId(context);
       const text = args.message.text?.trim();
       if (!text) throw badInput('Message text is required');
+      if (text.length > MESSAGE_MAX_LENGTH) {
+        throw badInput('Messages can be up to 2,000 characters.');
+      }
       try {
         await checkRateLimit(
           context.prisma,
@@ -307,7 +313,7 @@ export const chatResolver = {
       const now = new Date();
       // updateMany and deleteMany don't read the record back; legacy rooms have
       // no createdAt, so `update` would fail on them.
-      await Promise.all([
+      const [stoppedTyping] = await Promise.all([
         context.prisma.typing.deleteMany({ where: { messageRoomId: room.id, userId } }),
         context.prisma.messageRoom.updateMany({
           where: { id: room.id },
@@ -333,6 +339,17 @@ export const chatResolver = {
       // Legacy marks new-message events with mutation_type 'CREATED'.
       const event = { ...message, mutation_type: 'CREATED' };
       await context.pubsub.publish(SUBSCRIPTION_EVENTS.MESSAGE_CREATED, { message: event });
+      // Sending ends typing: tell the room, so the indicator clears without waiting for
+      // its timeout (#795).
+      if (stoppedTyping.count > 0) {
+        const typing: TypingPayload = {
+          messageRoomId: room.id,
+          userId,
+          isTyping: false,
+          timestamp: now.getTime(),
+        };
+        await context.pubsub.publish(SUBSCRIPTION_EVENTS.TYPING_UPDATED, { typing });
+      }
       await notifyPostAuthorOfMessage(context.prisma, room, userId, text);
       return event;
     },

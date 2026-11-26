@@ -431,5 +431,36 @@ describe('MessageSend', () => {
 
     expect(setChatSubmitting).not.toHaveBeenCalled()
   })
+
+  describe('message length (#797)', () => {
+    it('caps the composer at 2,000 characters', () => {
+      render(<MessageSend messageRoomId="room1" type="USER" />)
+
+      expect(screen.getByPlaceholderText('Type a message...')).toHaveAttribute('maxLength', '2000')
+    })
+
+    it('shows the count only once a message gets close to the limit', () => {
+      render(<MessageSend messageRoomId="room1" type="USER" />)
+      const input = screen.getByPlaceholderText('Type a message...')
+
+      fireEvent.change(input, { target: { value: 'x'.repeat(1799) } })
+      expect(screen.queryByTestId('message-length-counter')).not.toBeInTheDocument()
+
+      fireEvent.change(input, { target: { value: 'x'.repeat(1850) } })
+      expect(screen.getByTestId('message-length-counter')).toHaveTextContent('1,850 / 2,000')
+    })
+
+    it('says the limit is reached at 2,000 characters', () => {
+      render(<MessageSend messageRoomId="room1" type="USER" />)
+
+      fireEvent.change(screen.getByPlaceholderText('Type a message...'), {
+        target: { value: 'x'.repeat(2000) },
+      })
+
+      expect(screen.getByTestId('message-length-counter')).toHaveTextContent(
+        '2,000 / 2,000 characters, the most a message can have'
+      )
+    })
+  })
 })
 
