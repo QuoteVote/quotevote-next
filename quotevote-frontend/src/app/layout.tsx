@@ -6,6 +6,7 @@ import { ApolloProviderWrapper } from "@/lib/apollo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthModalProvider } from "@/context/AuthModalContext";
 import { AuthGateDialog } from "@/components/AuthGateDialog";
+import { SessionKeeper } from "@/components/SessionKeeper";
 import { ThemeContextProvider } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
 import {
@@ -86,6 +87,7 @@ export default function RootLayout({
               <AuthModalProvider>
                 {children}
                 <AuthGateDialog />
+                <SessionKeeper />
                 <Toaster position="top-right" richColors closeButton />
               </AuthModalProvider>
             </ThemeContextProvider>

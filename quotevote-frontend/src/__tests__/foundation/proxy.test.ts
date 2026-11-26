@@ -26,8 +26,12 @@ import { proxy } from '@/proxy'
 import { NextResponse } from 'next/server'
 import { resolveJwtSession } from '@/lib/auth/jwtSession'
 
-function createMockRequest(pathname: string, tokenValue?: string) {
+function createMockRequest(pathname: string, tokenValue?: string, refreshValue?: string) {
   const parsedUrl = new URL(pathname, 'http://localhost:3000')
+  const cookies: Record<string, string | undefined> = {
+    'qv-token': tokenValue,
+    'qv-refresh': refreshValue,
+  }
   return {
     nextUrl: {
       pathname: parsedUrl.pathname,
@@ -36,8 +40,7 @@ function createMockRequest(pathname: string, tokenValue?: string) {
     },
     url: parsedUrl.toString(),
     cookies: {
-      get: (name: string) =>
-        name === 'qv-token' && tokenValue ? { value: tokenValue } : undefined,
+      get: (name: string) => (cookies[name] ? { value: cookies[name] } : undefined),
     },
   } as unknown as import('next/server').NextRequest
 }
@@ -191,6 +194,76 @@ describe('Middleware', () => {
         '',
         expect.objectContaining({ maxAge: 0 }),
       )
+    })
+  })
+
+  describe('Renewing an expired sign-in (#804)', () => {
+    const originalFetch = global.fetch
+    const expired = () => unsignedToken({ exp: Math.floor(Date.now() / 1000) - 10 })
+    const fresh = () => unsignedToken({ exp: Math.floor(Date.now() / 1000) + 900 })
+
+    afterEach(() => {
+      global.fetch = originalFetch
+    })
+
+    const mockRefresh = (ok: boolean, accessToken?: string) => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok,
+        json: async () => (ok ? { accessToken, refreshToken: 'refresh-1' } : { message: 'no' }),
+      }) as unknown as typeof fetch
+    }
+
+    it('renews with the refresh cookie instead of redirecting, and sets the new cookie', async () => {
+      const renewed = fresh()
+      mockRefresh(true, renewed)
+
+      await proxy(createMockRequest('/settings', expired(), 'refresh-1'))
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/auth\/refresh$/),
+        expect.objectContaining({ method: 'POST', body: JSON.stringify({ refreshToken: 'refresh-1' }) })
+      )
+      expect(NextResponse.redirect).not.toHaveBeenCalled()
+      const res = (NextResponse.next as jest.Mock).mock.results[0].value as {
+        cookies: { set: jest.Mock }
+      }
+      expect(res.cookies.set).toHaveBeenCalledWith(
+        'qv-token',
+        renewed,
+        expect.objectContaining({ path: '/' }),
+      )
+    })
+
+    it('renews when the token cookie is gone but the refresh cookie remains', async () => {
+      mockRefresh(true, fresh())
+
+      await proxy(createMockRequest('/notifications', undefined, 'refresh-1'))
+
+      expect(NextResponse.redirect).not.toHaveBeenCalled()
+      expect(NextResponse.next).toHaveBeenCalled()
+    })
+
+    it('redirects to sign-in and clears both cookies when renewal is refused', async () => {
+      mockRefresh(false)
+
+      await proxy(createMockRequest('/settings', expired(), 'refresh-1'))
+
+      expect(NextResponse.redirect).toHaveBeenCalled()
+      const res = (NextResponse.redirect as jest.Mock).mock.results[0].value as {
+        cookies: { set: jest.Mock }
+      }
+      for (const name of ['qv-token', 'qv-refresh']) {
+        expect(res.cookies.set).toHaveBeenCalledWith(name, '', expect.objectContaining({ maxAge: 0 }))
+      }
+    })
+
+    it('does not call the backend for a valid session or without a refresh cookie', async () => {
+      global.fetch = jest.fn() as unknown as typeof fetch
+
+      await proxy(createMockRequest('/settings', fresh(), 'refresh-1'))
+      await proxy(createMockRequest('/settings', expired()))
+
+      expect(global.fetch).not.toHaveBeenCalled()
     })
   })
 

@@ -4,6 +4,8 @@
 
 export interface LoginApiResponse {
   accessToken?: string;
+  /** Renews `accessToken` through `POST /auth/refresh` (#804). The legacy API sends none. */
+  refreshToken?: string;
   token?: string;
   message?: string;
   user?: {
