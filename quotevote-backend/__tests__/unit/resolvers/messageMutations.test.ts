@@ -153,6 +153,69 @@ describe('createMessage', () => {
     });
   });
 
+  describe('message length (#797)', () => {
+    it('refuses a message over 2,000 characters, before writing anything', async () => {
+      const context = createContext();
+      context.prisma.messageRoom.findUnique.mockResolvedValue(room());
+
+      await expect(
+        send(context, { messageRoomId: dmId, text: 'x'.repeat(2001) })
+      ).rejects.toMatchObject({
+        message: 'Messages can be up to 2,000 characters.',
+        extensions: { code: 'BAD_USER_INPUT' },
+      });
+      expect(context.prisma.message.create).not.toHaveBeenCalled();
+    });
+
+    it('sends a message of exactly 2,000 characters', async () => {
+      const context = createContext();
+      context.prisma.messageRoom.findUnique.mockResolvedValue(room());
+      const text = 'x'.repeat(2000);
+      context.prisma.message.create.mockResolvedValue(record({ text }));
+
+      await expect(send(context, { messageRoomId: dmId, text })).resolves.toMatchObject({ text });
+    });
+
+    it('measures the text after trimming the spaces around it', async () => {
+      const context = createContext();
+      context.prisma.messageRoom.findUnique.mockResolvedValue(room());
+      const text = 'x'.repeat(2000);
+      context.prisma.message.create.mockResolvedValue(record({ text }));
+
+      await expect(
+        send(context, { messageRoomId: dmId, text: `  ${text}  ` })
+      ).resolves.toBeDefined();
+    });
+  });
+
+  describe('typing stops when a message is sent (#795)', () => {
+    it('tells the room the sender stopped typing', async () => {
+      const context = createContext();
+      context.prisma.messageRoom.findUnique.mockResolvedValue(room());
+      context.prisma.message.create.mockResolvedValue(record({ text: 'hi' }));
+      context.prisma.typing.deleteMany.mockResolvedValue({ count: 1 });
+
+      await send(context, { messageRoomId: dmId, text: 'hi' });
+
+      expect(context.pubsub.publish).toHaveBeenCalledWith(SUBSCRIPTION_EVENTS.TYPING_UPDATED, {
+        typing: { messageRoomId: dmId, userId: me, isTyping: false, timestamp: expect.any(Number) },
+      });
+    });
+
+    it('publishes nothing about typing when the sender was not typing', async () => {
+      const context = createContext();
+      context.prisma.messageRoom.findUnique.mockResolvedValue(room());
+      context.prisma.message.create.mockResolvedValue(record({ text: 'hi' }));
+
+      await send(context, { messageRoomId: dmId, text: 'hi' });
+
+      expect(context.pubsub.publish).not.toHaveBeenCalledWith(
+        SUBSCRIPTION_EVENTS.TYPING_UPDATED,
+        expect.anything()
+      );
+    });
+  });
+
   it("refuses a direct room the caller isn't in", async () => {
     const context = createContext();
     context.prisma.messageRoom.findUnique.mockResolvedValue(room({ userIds: [bobId, carolId] }));

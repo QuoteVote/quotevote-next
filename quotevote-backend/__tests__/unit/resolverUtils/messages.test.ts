@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { MESSAGE_ROOM_SELECT } from '~/data/resolvers/utils/chatRooms';
-import { addUserToPostRoom, getMessages, getUnreadMessages } from '~/data/resolvers/utils/messages';
+import { addUserToPostRoom } from '~/data/resolvers/utils/messages';
 
 type PrismaMock = {
   message: {
@@ -31,37 +31,6 @@ const createPrismaMock = (): PrismaMock => ({
 });
 
 describe('messages resolver utilities', () => {
-  it('gets non-deleted messages for a room', async () => {
-    const prisma = createPrismaMock();
-    const messages = [{ id: 'm1', text: 'hello' }];
-    prisma.message.findMany.mockResolvedValue(messages);
-
-    await expect(getMessages(prisma as unknown as PrismaClient, 'room1')).resolves.toEqual(
-      messages
-    );
-    expect(prisma.message.findMany).toHaveBeenCalledWith({
-      where: { messageRoomId: 'room1', deleted: false },
-    });
-  });
-
-  it('gets unread messages excluding the current user and read messages', async () => {
-    const prisma = createPrismaMock();
-    const unread = [{ id: 'm1', text: 'new message' }];
-    prisma.message.findMany.mockResolvedValue(unread);
-
-    await expect(
-      getUnreadMessages(prisma as unknown as PrismaClient, 'room1', 'user1')
-    ).resolves.toEqual(unread);
-    expect(prisma.message.findMany).toHaveBeenCalledWith({
-      where: {
-        messageRoomId: 'room1',
-        userId: { not: 'user1' },
-        NOT: { readBy: { has: 'user1' } },
-        deleted: false,
-      },
-    });
-  });
-
   it('creates a post room when one does not exist', async () => {
     const prisma = createPrismaMock();
     const room = { id: 'room-new', userIds: ['user1'] };

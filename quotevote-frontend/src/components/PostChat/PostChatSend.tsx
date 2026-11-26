@@ -7,6 +7,8 @@ import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { MESSAGE_MAX_LENGTH } from '@/lib/constants/messages'
+import { MessageLengthCounter } from '@/components/Chat/MessageLengthCounter'
 import { useAppStore } from '@/store'
 import { ADD_COMMENT, ADD_QUOTE, SEND_MESSAGE } from '@/graphql/mutations'
 import { GET_POST, GET_ROOM_MESSAGES, GET_TOP_POSTS, GET_USER_ACTIVITY } from '@/graphql/queries'
@@ -277,6 +279,7 @@ export default function PostChatSend({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={submitting}
+          maxLength={MESSAGE_MAX_LENGTH}
           className={cn(
             'min-h-[44px] max-h-[120px] flex-1 resize-none rounded-xl',
             'border border-input bg-card shadow-xs',
@@ -309,6 +312,7 @@ export default function PostChatSend({
           )}
         </Button>
       </div>
+      <MessageLengthCounter length={text.length} />
     </div>
   )
 }

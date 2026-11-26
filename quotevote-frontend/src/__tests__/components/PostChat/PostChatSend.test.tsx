@@ -374,5 +374,14 @@ describe('PostChatSend', () => {
     fireEvent.click(cta)
     expect(ensureAuth).toHaveBeenCalled()
   })
+
+  it('caps a discussion message at 2,000 characters and shows the count near the limit (#797)', () => {
+    render(<PostChatSend messageRoomId="room1" title="Test Post" postId="post1" />)
+    const input = screen.getByPlaceholderText('Add to discussion...')
+
+    expect(input).toHaveAttribute('maxLength', '2000')
+    fireEvent.change(input, { target: { value: 'x'.repeat(1900) } })
+    expect(screen.getByTestId('message-length-counter')).toHaveTextContent('1,900 / 2,000')
+  })
 })
 

@@ -11,6 +11,8 @@ import { SEND_MESSAGE } from "@/graphql/mutations";
 import useGuestGuard from "@/hooks/useGuestGuard";
 import { useUserBlock } from "@/hooks/useUserBlock";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { MESSAGE_MAX_LENGTH } from "@/lib/constants/messages";
+import { MessageLengthCounter } from "./MessageLengthCounter";
 import type { MessageSendProps, ChatUser, SelectedRoomState } from "@/types/chat";
 
 export default function MessageSend({ messageRoomId, type, title, componentId }: MessageSendProps) {
@@ -236,6 +238,7 @@ export default function MessageSend({ messageRoomId, type, title, componentId }:
           disabled={isBlocked || isSending}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          maxLength={MESSAGE_MAX_LENGTH}
           rows={1}
         />
         <button
@@ -252,6 +255,7 @@ export default function MessageSend({ messageRoomId, type, title, componentId }:
           )}
         </button>
       </div>
+      <MessageLengthCounter length={text.length} />
     </div>
   );
 }
