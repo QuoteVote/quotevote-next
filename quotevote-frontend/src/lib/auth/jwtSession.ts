@@ -151,9 +151,11 @@ export async function resolveJwtSession(token: string | undefined | null): Promi
 export function clearAuthCookie(response: {
   cookies: { set: (name: string, value: string, options: Record<string, unknown>) => void }
 }): void {
-  response.cookies.set('qv-token', '', {
-    path: '/',
-    maxAge: 0,
-    sameSite: 'lax',
-  })
+  for (const name of ['qv-token', 'qv-refresh']) {
+    response.cookies.set(name, '', {
+      path: '/',
+      maxAge: 0,
+      sameSite: 'lax',
+    })
+  }
 }

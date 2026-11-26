@@ -4,6 +4,9 @@ import {
   isGuestReadableRoute,
 } from '@/lib/dashboard-routes';
 import { clearAuthCookie, resolveJwtSession } from '@/lib/auth/jwtSession';
+import { REFRESH_COOKIE_NAME } from '@/lib/auth';
+import { postRefresh } from '@/lib/auth/session';
+import { env } from '@/config/env';
 
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/auths/login', '/auths/signup', '/auths/request-access', '/auths/forgot-password'];
@@ -22,14 +25,38 @@ function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
   return response;
 }
 
+/**
+ * A member whose 15-minute sign-in expired while they were away still holds a refresh
+ * token. Renew it here, before deciding to redirect to sign-in (#804). Null when there's
+ * no refresh cookie or the backend refuses it.
+ */
+async function renewFromCookie(request: NextRequest): Promise<string | null> {
+  const refreshToken = request.cookies.get(REFRESH_COOKIE_NAME)?.value;
+  if (!refreshToken) return null;
+  const data = await postRefresh(env.serverUrl, refreshToken);
+  return data?.accessToken ?? null;
+}
+
+/** Sends the renewed token back as the `qv-token` cookie the client reads. */
+function withRenewedToken(response: NextResponse, token: string | null): NextResponse {
+  if (token) response.cookies.set('qv-token', token, { path: '/', sameSite: 'lax' });
+  return response;
+}
+
 // Next.js 16 renamed the `middleware` file convention to `proxy` (same matcher and
 // behavior). It runs on the Node.js runtime.
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('qv-token')?.value;
-  const session = await resolveJwtSession(token);
+  let session = await resolveJwtSession(token);
 
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  let renewed: string | null = null;
+  if (isProtected && session.status !== 'valid') {
+    renewed = await renewFromCookie(request);
+    if (renewed) session = await resolveJwtSession(renewed);
+  }
+
   if (isProtected) {
     if (session.status !== 'valid') {
       if (!isGuestReadableRoute(pathname)) {
@@ -50,9 +77,10 @@ export async function proxy(request: NextRequest) {
       // Only authorize admin from a cryptographically verified token.
       // Without JWT_SECRET, defer to the page + API (never trust unsigned claims).
       if (session.verified && !session.admin) {
-        return NextResponse.redirect(new URL('/', request.url));
+        return withRenewedToken(NextResponse.redirect(new URL('/', request.url)), renewed);
       }
     }
+    if (renewed) return withRenewedToken(NextResponse.next(), renewed);
   }
 
   if (pathname.startsWith('/auths')) {
