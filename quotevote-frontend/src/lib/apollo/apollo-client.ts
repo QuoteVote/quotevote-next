@@ -18,7 +18,7 @@ import { from as fromPromise, map, mergeMap, Observable, tap, throwError } from 
 import { toast } from "sonner";
 import { env } from "@/config/env";
 import { serializeObjectIds } from "@/lib/utils/objectIdSerializer";
-import { getRefreshToken, getToken, removeToken } from "@/lib/auth";
+import { SESSION_CHANGE_EVENT, getRefreshToken, getToken, removeToken } from "@/lib/auth";
 import { endSession } from "@/lib/auth/endSession";
 import { needsRenewal, renewSession } from "@/lib/auth/session";
 import { triggerAuthGate } from "@/lib/auth-gate";
@@ -115,93 +115,109 @@ function createWsLink(): GraphQLWsLink | null {
     }
   };
 
-  return new GraphQLWsLink(
-    createClient({
-      url: env.graphqlWsEndpoint,
-      connectionParams: () => {
-        const token = getToken();
-        const authToken = token
-          ? token.startsWith("Bearer ")
-            ? token
-            : `Bearer ${token}`
-          : undefined;
-        log("Connecting with auth token", authToken ? "present" : "missing");
-        return {
-          authToken,
-        };
-      },
-      retryAttempts: MAX_RETRY_ATTEMPTS,
-      shouldRetry: (errOrCloseEvent) => {
-        // Don't retry if we've exceeded max attempts
-        if (retryCount >= MAX_RETRY_ATTEMPTS) {
-          logError(`Max retry attempts (${MAX_RETRY_ATTEMPTS}) reached. Scheduling reset.`);
-          // Schedule a reset of retry count after RETRY_RESET_DELAY
-          if (retryResetTimeout) {
-            clearTimeout(retryResetTimeout);
-          }
-          retryResetTimeout = setTimeout(() => {
-            log("Resetting retry count after delay");
-            retryCount = 0;
-          }, RETRY_RESET_DELAY);
+  // The token this connection was opened with. The server signs a connection in once, so a
+  // new token (a renewal, signing in as someone else) or signing out reconnects (#793).
+  let connectedToken: string | null = null;
+
+  const client = createClient({
+    url: env.graphqlWsEndpoint,
+    connectionParams: () => {
+      const token = getToken();
+      connectedToken = token;
+      const authToken = token
+        ? token.startsWith("Bearer ")
+          ? token
+          : `Bearer ${token}`
+        : undefined;
+      log("Connecting with auth token", authToken ? "present" : "missing");
+      return {
+        authToken,
+      };
+    },
+    retryAttempts: MAX_RETRY_ATTEMPTS,
+    shouldRetry: (errOrCloseEvent) => {
+      // Don't retry if we've exceeded max attempts
+      if (retryCount >= MAX_RETRY_ATTEMPTS) {
+        logError(`Max retry attempts (${MAX_RETRY_ATTEMPTS}) reached. Scheduling reset.`);
+        // Schedule a reset of retry count after RETRY_RESET_DELAY
+        if (retryResetTimeout) {
+          clearTimeout(retryResetTimeout);
+        }
+        retryResetTimeout = setTimeout(() => {
+          log("Resetting retry count after delay");
+          retryCount = 0;
+        }, RETRY_RESET_DELAY);
+        return false;
+      }
+
+      // Clear any existing reset timeout since we're retrying
+      if (retryResetTimeout) {
+        clearTimeout(retryResetTimeout);
+        retryResetTimeout = null;
+      }
+
+      // Check for specific error codes that shouldn't be retried
+      if (errOrCloseEvent && typeof errOrCloseEvent === "object" && "code" in errOrCloseEvent) {
+        const code = errOrCloseEvent.code as number;
+        if (code === 1001 || code === 1002) {
+          // 1001: Going Away, 1002: Protocol Error - don't retry
+          logError(`Connection error code ${code} - not retrying`);
           return false;
         }
 
-        // Clear any existing reset timeout since we're retrying
+        // Check if connection was cleanly closed (code 1000)
+        if (code === 1000 && "wasClean" in errOrCloseEvent && errOrCloseEvent.wasClean) {
+          log("Connection cleanly closed - not retrying");
+          return false;
+        }
+      }
+
+      retryCount++;
+      log(`Retrying connection (attempt ${retryCount}/${MAX_RETRY_ATTEMPTS})`);
+      return true;
+    },
+    on: {
+      connected: () => {
+        setSocketConnected(true);
+      },
+      opened: () => {
+        log("WebSocket connection opened");
+        // Reset retry count on successful connection
+        retryCount = 0;
         if (retryResetTimeout) {
           clearTimeout(retryResetTimeout);
           retryResetTimeout = null;
         }
-
-        // Check for specific error codes that shouldn't be retried
-        if (errOrCloseEvent && typeof errOrCloseEvent === "object" && "code" in errOrCloseEvent) {
-          const code = errOrCloseEvent.code as number;
-          if (code === 1001 || code === 1002) {
-            // 1001: Going Away, 1002: Protocol Error - don't retry
-            logError(`Connection error code ${code} - not retrying`);
-            return false;
-          }
-
-          // Check if connection was cleanly closed (code 1000)
-          if (code === 1000 && "wasClean" in errOrCloseEvent && errOrCloseEvent.wasClean) {
-            log("Connection cleanly closed - not retrying");
-            return false;
-          }
+      },
+      closed: (event?: unknown) => {
+        setSocketConnected(false);
+        if (event && typeof event === "object" && "code" in event) {
+          const closeEvent = event as { code?: number; reason?: string; wasClean?: boolean };
+          log(
+            `WebSocket connection closed: code=${closeEvent.code}, reason=${closeEvent.reason || "none"}, wasClean=${closeEvent.wasClean}`
+          );
+        } else {
+          log("WebSocket connection closed");
         }
+      },
+      error: (error?: unknown) => {
+        logError("WebSocket connection error", error);
+      },
+    },
+  });
 
-        retryCount++;
-        log(`Retrying connection (attempt ${retryCount}/${MAX_RETRY_ATTEMPTS})`);
-        return true;
-      },
-      on: {
-        connected: () => {
-          setSocketConnected(true);
-        },
-        opened: () => {
-          log("WebSocket connection opened");
-          // Reset retry count on successful connection
-          retryCount = 0;
-          if (retryResetTimeout) {
-            clearTimeout(retryResetTimeout);
-            retryResetTimeout = null;
-          }
-        },
-        closed: (event?: unknown) => {
-          setSocketConnected(false);
-          if (event && typeof event === "object" && "code" in event) {
-            const closeEvent = event as { code?: number; reason?: string; wasClean?: boolean };
-            log(
-              `WebSocket connection closed: code=${closeEvent.code}, reason=${closeEvent.reason || "none"}, wasClean=${closeEvent.wasClean}`
-            );
-          } else {
-            log("WebSocket connection closed");
-          }
-        },
-        error: (error?: unknown) => {
-          logError("WebSocket connection error", error);
-        },
-      },
-    })
-  );
+  const reconnectIfTokenChanged = (): void => {
+    if (getToken() !== connectedToken) {
+      log("Sign-in changed, reconnecting");
+      client.terminate();
+    }
+  };
+  window.addEventListener(SESSION_CHANGE_EVENT, reconnectIfTokenChanged);
+  window.addEventListener("storage", (event) => {
+    if (event.key === "token" || event.key === null) reconnectIfTokenChanged();
+  });
+
+  return new GraphQLWsLink(client);
 }
 
 /**

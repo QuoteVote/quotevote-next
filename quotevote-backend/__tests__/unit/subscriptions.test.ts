@@ -2,6 +2,7 @@ import http from 'http';
 import { createClient } from 'graphql-ws';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import WebSocket from 'ws';
+import * as jwt from 'jsonwebtoken';
 import { createSubscriptionServer } from '~/subscriptions';
 import { pubsub } from '~/data/utils/pubsub';
 import { subscriptionResolver } from '~/data/resolvers/subscriptionResolver';
@@ -118,5 +119,96 @@ describe('createSubscriptionServer', () => {
     unrelatedClient.dispose();
     await subscriptionServer.dispose();
     await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+  });
+
+  describe('live updates follow the session (#793)', () => {
+    const messageQuery = `
+      subscription MessageSubscription($messageRoomId: String!) {
+        message(messageRoomId: $messageRoomId) {
+          _id
+        }
+      }
+    `;
+
+    const startServer = async (context: () => WsGraphQLContext) => {
+      const httpServer = http.createServer();
+      const subscriptionServer = createSubscriptionServer(httpServer, {
+        schema: testSchema,
+        contextFactory: async () => context(),
+      });
+      await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+      const address = httpServer.address();
+      if (!address || typeof address === 'string') throw new Error('no port');
+      const stop = async () => {
+        await subscriptionServer.dispose();
+        await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+      };
+      return { port: address.port, stop };
+    };
+
+    it('closes the connection with 4403 when its sign-in token expires', async () => {
+      const server = await startServer(
+        () =>
+          ({
+            ...createTestContext(),
+            user: { _id: 'user-1', accountStatus: 'active' },
+          }) as unknown as WsGraphQLContext
+      );
+      const closed = new Promise<{ code: number; reason: string }>((resolve) => {
+        const client = createClient({
+          url: `ws://127.0.0.1:${server.port}/graphql`,
+          webSocketImpl: WebSocket,
+          retryAttempts: 0,
+          connectionParams: {
+            authToken: jwt.sign({ userId: 'user-1' }, 'test-secret', { expiresIn: 1 }),
+          },
+          on: {
+            closed: (event) => {
+              const { code, reason } = event as { code: number; reason: string };
+              resolve({ code, reason });
+            },
+          },
+        });
+        client.subscribe(
+          { query: messageQuery, variables: { messageRoomId: 'room-1' } },
+          { next: () => undefined, error: () => undefined, complete: () => undefined }
+        );
+      });
+
+      await expect(closed).resolves.toEqual({ code: 4403, reason: 'Session expired' });
+      await server.stop();
+    });
+
+    it('refuses a subscription from a disabled account', async () => {
+      const server = await startServer(
+        () =>
+          ({
+            ...createTestContext(),
+            user: { _id: 'user-1', accountStatus: 'disabled' },
+          }) as unknown as WsGraphQLContext
+      );
+      const client = createClient({
+        url: `ws://127.0.0.1:${server.port}/graphql`,
+        webSocketImpl: WebSocket,
+        retryAttempts: 0,
+        connectionParams: { authToken: 'test-token' },
+      });
+
+      const refused = new Promise<unknown>((resolve) => {
+        client.subscribe(
+          { query: messageQuery, variables: { messageRoomId: 'room-1' } },
+          { next: () => undefined, error: resolve, complete: () => undefined }
+        );
+      });
+
+      await expect(refused).resolves.toEqual([
+        expect.objectContaining({
+          message: 'This account is disabled',
+          extensions: { code: 'FORBIDDEN' },
+        }),
+      ]);
+      client.dispose();
+      await server.stop();
+    });
   });
 });

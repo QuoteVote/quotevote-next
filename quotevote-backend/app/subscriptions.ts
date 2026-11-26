@@ -12,7 +12,8 @@ import {
 // Type-only: the runtime import goes through `exports`, which this tsconfig's
 // node module resolution can't read, so the declarations are named directly.
 import type { useServer as UseServer } from 'graphql-ws/dist/use/ws';
-import { createWsContext } from './context';
+import { createWsContext, tokenFromConnectionParams } from './context';
+import { watchSession } from './data/utils/wsSession';
 import { requireAuth } from './data/utils/requireAuth';
 import type { WsGraphQLContext } from './types/graphql';
 import { reportError, reportGraphQLErrors } from '~/lib/errorTracking';
@@ -87,6 +88,34 @@ export function createSubscriptionServer(
               extensions: { code: 'UNAUTHENTICATED' },
             }),
           ];
+        }
+
+        // A disabled account gets no live updates (#793), and a signed-in connection is
+        // closed when its token expires or the account stops being usable.
+        if (contextValue.user) {
+          if (contextValue.user.accountStatus === 'disabled') {
+            return [
+              new GraphQLError('This account is disabled', {
+                extensions: { code: 'FORBIDDEN' },
+              }),
+            ];
+          }
+          const token = tokenFromConnectionParams(connectionParams);
+          const userId = contextValue.userId ?? contextValue.user._id?.toString();
+          if (token && userId) {
+            const prisma = contextValue.prisma;
+            watchSession(ctx.extra.socket, {
+              token,
+              userId,
+              accountStillActive: async (id) => {
+                const account = await prisma.user.findUnique({
+                  where: { id },
+                  select: { accountStatus: true },
+                });
+                return account !== null && account.accountStatus !== 'disabled';
+              },
+            });
+          }
         }
 
         return {

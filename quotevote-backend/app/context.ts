@@ -68,15 +68,22 @@ async function loadUserFromToken(
   }
 }
 
+/** The sign-in token a WebSocket client sent in its connection params, without `Bearer `. */
+export function tokenFromConnectionParams(
+  connectionParams: Record<string, unknown> | undefined
+): string | undefined {
+  const rawToken =
+    connectionParams?.authToken ?? connectionParams?.authorization ?? connectionParams?.token;
+  return typeof rawToken === 'string' ? rawToken.replace(/^Bearer\s+/i, '') : undefined;
+}
+
 export async function createWsContext(
   connectionParams: Record<string, unknown> | undefined,
   options?: WsContextFactoryOptions
 ): Promise<WsGraphQLContext> {
   const prisma = options?.prisma ?? defaultPrisma;
   const pubsub = options?.pubsub ?? defaultPubsub;
-  const rawToken =
-    connectionParams?.authToken ?? connectionParams?.authorization ?? connectionParams?.token;
-  const token = typeof rawToken === 'string' ? rawToken.replace(/^Bearer\s+/i, '') : undefined;
+  const token = tokenFromConnectionParams(connectionParams);
   const user = token ? await loadUserFromToken(token, prisma) : null;
 
   return {
@@ -118,10 +125,9 @@ export async function createHttpContext(
   const requestId = (req.headers['x-request-id'] as string | undefined) ?? crypto.randomUUID();
 
   // Gate every query the request carries (Apollo runs the URL one on GET, the body one on POST)
-  const queries = [
-    (req.body as { query?: unknown } | undefined)?.query,
-    req.query?.query,
-  ].filter((q) => q !== undefined);
+  const queries = [(req.body as { query?: unknown } | undefined)?.query, req.query?.query].filter(
+    (q) => q !== undefined
+  );
   if (!user && queries.some((q) => typeof q !== 'string' || requireAuth(q))) {
     throw new GraphQLError('Auth token not found in request', {
       extensions: { code: 'UNAUTHENTICATED' },
