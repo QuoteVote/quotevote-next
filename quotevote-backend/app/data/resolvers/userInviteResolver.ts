@@ -419,7 +419,7 @@ export const userInviteResolver = {
         return null;
       }
 
-      // A used or expired member invite shows as invalid straight away.
+      // A used or expired invite shows as invalid straight away.
       if (!(await isMemberInviteUsable(context.prisma, payload, user.email))) {
         return null;
       }
@@ -863,10 +863,10 @@ export const userInviteResolver = {
         });
       }
 
-      // A member invite also needs its invite pending and unexpired, and the token,
-      // the invite and the account to name the same address.
+      // The link's invite must be pending and unexpired, and the token, the invite
+      // and the account must name the same address.
       const inviteId = payload.inviteId;
-      if (inviteId && !(await isMemberInviteUsable(context.prisma, payload, existing.email))) {
+      if (!(await isMemberInviteUsable(context.prisma, payload, existing.email))) {
         throw badInput(INVITE_LINK_UNUSABLE);
       }
 
@@ -885,15 +885,13 @@ export const userInviteResolver = {
 
       const hashedPassword = await generateHashPassword(password);
 
-      // Claim the member invite in one conditional write, so of two requests at
-      // once only one gets through.
-      if (inviteId) {
-        const claimed = await context.prisma.userInvite.updateMany({
-          where: { id: inviteId, status: 'pending', expiresAt: { gt: new Date() } },
-          data: { status: 'accepted' },
-        });
-        if (claimed.count !== 1) throw badInput(INVITE_LINK_UNUSABLE);
-      }
+      // Claim the invite in one conditional write, so of two requests at once only
+      // one gets through.
+      const claimed = await context.prisma.userInvite.updateMany({
+        where: { id: inviteId, status: 'pending', expiresAt: { gt: new Date() } },
+        data: { status: 'accepted' },
+      });
+      if (claimed.count !== 1) throw badInput(INVITE_LINK_UNUSABLE);
 
       try {
         const updated = await context.prisma.user.update({
@@ -920,19 +918,17 @@ export const userInviteResolver = {
         return toPublicUser(updated as PrismaUserRecord);
       } catch (err) {
         // Signup didn't finish, so the link stays usable.
-        if (inviteId) {
-          await context.prisma.userInvite
-            .updateMany({
-              where: { id: inviteId, status: 'accepted' },
-              data: { status: 'pending' },
-            })
-            .catch((releaseErr: unknown) => {
-              logger.error('completeSignup could not release a member invite', {
-                inviteId,
-                error: releaseErr instanceof Error ? releaseErr.message : String(releaseErr),
-              });
+        await context.prisma.userInvite
+          .updateMany({
+            where: { id: inviteId, status: 'accepted' },
+            data: { status: 'pending' },
+          })
+          .catch((releaseErr: unknown) => {
+            logger.error('completeSignup could not release an invite', {
+              inviteId,
+              error: releaseErr instanceof Error ? releaseErr.message : String(releaseErr),
             });
-        }
+          });
         if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
           throw new GraphQLError('Username already exists or terms already accepted', {
             extensions: { code: 'BAD_USER_INPUT' },

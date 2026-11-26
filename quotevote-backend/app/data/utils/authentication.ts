@@ -41,28 +41,29 @@ export interface InviteSignupTokenPayload {
   type: typeof INVITE_SIGNUP_TOKEN_TYPE;
   purpose: typeof INVITE_SIGNUP_TOKEN_PURPOSE;
   /** The UserInvite row that decides if the link still works (member invites, approvals). */
-  inviteId?: string;
-  /** Set with `inviteId`: the address the invite was sent to. */
-  email?: string;
+  inviteId: string;
+  /** The address the invite was sent to. */
+  email: string;
   iat?: number;
   exp?: number;
 }
 
 /**
- * Issues an invite-signup token, one day by default. Valid only for
- * `completeSignup`, never as a general GraphQL session. Member invites pass
- * `invite`, which binds the token to that invite and its recipient.
+ * Issues an invite-signup token. Valid only for `completeSignup`, never as a
+ * general GraphQL session. Every link is bound to its `UserInvite` and recipient
+ * (#704), so the invite row decides whether it still works and it works once.
  */
 export const generateInviteSignupToken = (
   userId: string,
-  expiresInSeconds = ADMIN_INVITE_TTL_SECONDS,
-  invite?: { inviteId: string; email: string }
+  expiresInSeconds: number,
+  invite: { inviteId: string; email: string }
 ): string => {
   const payload: InviteSignupTokenPayload = {
     userId,
     type: INVITE_SIGNUP_TOKEN_TYPE,
     purpose: INVITE_SIGNUP_TOKEN_PURPOSE,
-    ...(invite ? { inviteId: invite.inviteId, email: invite.email } : {}),
+    inviteId: invite.inviteId,
+    email: invite.email,
   };
   return jwt.sign(payload, safeSecret, { expiresIn: expiresInSeconds });
 };
@@ -79,8 +80,9 @@ export const verifyInviteSignupToken = (rawToken: string): InviteSignupTokenPayl
       decoded.type !== INVITE_SIGNUP_TOKEN_TYPE ||
       decoded.purpose !== INVITE_SIGNUP_TOKEN_PURPOSE ||
       !decoded.userId ||
-      // A member invite token carries both claims or neither.
-      Boolean(decoded.inviteId) !== Boolean(decoded.email)
+      // Every link names its invite and recipient (#704).
+      !decoded.inviteId ||
+      !decoded.email
     ) {
       throw new GraphQLError('Invalid invite signup token', {
         extensions: { code: 'UNAUTHENTICATED' },

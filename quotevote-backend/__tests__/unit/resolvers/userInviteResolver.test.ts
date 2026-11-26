@@ -29,6 +29,29 @@ jest.mock('~/data/utils/logger', () => ({
 }));
 
 const userId = '507f1f77bcf86cd799439011';
+const linkInviteId = '507f1f77bcf86cd799439044';
+
+/** A signup link bound to its invite, as every link is since #704. */
+const signupLink = (email = 'invitee@example.com', expiresIn = auth.ADMIN_INVITE_TTL_SECONDS) =>
+  auth.generateInviteSignupToken(userId, expiresIn, { inviteId: linkInviteId, email });
+
+/** The link's invite, pending and open, so it can be used and claimed. */
+function openInvite(ctx: GraphQLContext, email = 'invitee@example.com'): void {
+  (ctx.prisma.userInvite.findUnique as jest.Mock).mockResolvedValue({
+    email,
+    status: 'pending',
+    expiresAt: new Date(Date.now() + 60 * 60_000),
+  });
+  (ctx.prisma.userInvite.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+}
+
+/** A link signed the way approvals were before #704: no invite id or address. */
+const legacyLink = () =>
+  (jest.requireActual('jsonwebtoken') as typeof import('jsonwebtoken')).sign(
+    { userId, type: 'invite_signup', purpose: 'completeSignup' },
+    'test_secret',
+    { expiresIn: 3600 }
+  );
 
 function mockContext(overrides: Partial<GraphQLContext> = {}): GraphQLContext {
   return {
@@ -61,7 +84,7 @@ describe('userInviteResolver', () => {
   describe('completeSignup', () => {
     it('rejects missing or stale Terms version', async () => {
       const ctx = mockContext();
-      const token = auth.generateInviteSignupToken(userId);
+      const token = signupLink();
 
       await expect(
         userInviteResolver.Mutation.completeSignup(
@@ -79,7 +102,7 @@ describe('userInviteResolver', () => {
 
     it('rejects when invite user already has a password', async () => {
       const ctx = mockContext();
-      const token = auth.generateInviteSignupToken(userId);
+      const token = signupLink('a@b.com');
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: userId,
         password: 'already-set',
@@ -104,7 +127,7 @@ describe('userInviteResolver', () => {
 
     it('rejects when invite status is not approved (4)', async () => {
       const ctx = mockContext();
-      const token = auth.generateInviteSignupToken(userId);
+      const token = signupLink('a@b.com');
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: userId,
         password: null,
@@ -129,7 +152,8 @@ describe('userInviteResolver', () => {
 
     it('creates user password and TermsAcceptance atomically', async () => {
       const ctx = mockContext();
-      const token = auth.generateInviteSignupToken(userId);
+      const token = signupLink();
+      openInvite(ctx);
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: userId,
         password: null,
@@ -172,14 +196,17 @@ describe('userInviteResolver', () => {
         })
       );
       expect(result).toMatchObject({ _id: userId, username: 'newuser' });
-      // An admin-approval link has no invite row, so that path is unchanged.
-      expect(ctx.prisma.userInvite.findUnique).not.toHaveBeenCalled();
-      expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+      // Every link claims its invite once (#704).
+      expect(ctx.prisma.userInvite.updateMany).toHaveBeenCalledWith({
+        where: { id: linkInviteId, status: 'pending', expiresAt: { gt: expect.any(Date) } },
+        data: { status: 'accepted' },
+      });
     });
 
     it('rejects when TermsAcceptance write fails (unique constraint)', async () => {
       const ctx = mockContext();
-      const token = auth.generateInviteSignupToken(userId);
+      const token = signupLink();
+      openInvite(ctx);
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: userId,
         password: null,
@@ -249,7 +276,7 @@ describe('userInviteResolver', () => {
         userInviteResolver.Mutation.completeSignup(
           null,
           {
-            token: auth.generateInviteSignupToken(userId, -60),
+            token: signupLink('invitee@example.com', -60),
             username: 'newuser',
             password: 'Password1',
             acceptedTermsVersion: CURRENT_TERMS_VERSION,
@@ -259,12 +286,39 @@ describe('userInviteResolver', () => {
       ).rejects.toThrow(/Invite signup token has expired/);
       expect(ctx.prisma.user.update).not.toHaveBeenCalled();
     });
+
+    it('refuses a link without an invite id, as approvals were sent before #704', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        password: null,
+        status: 4,
+        accountStatus: 'active',
+        email: 'invitee@example.com',
+      });
+
+      await expect(
+        userInviteResolver.Mutation.completeSignup(
+          null,
+          {
+            token: legacyLink(),
+            username: 'newuser',
+            password: 'Password1',
+            acceptedTermsVersion: CURRENT_TERMS_VERSION,
+          },
+          ctx
+        )
+      ).rejects.toThrow(/Invalid invite signup token/);
+      expect(ctx.prisma.userInvite.updateMany).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('verifyInviteSignupToken', () => {
     it('returns user info for a valid unused invite token', async () => {
       const ctx = mockContext();
-      const token = auth.generateInviteSignupToken(userId);
+      const token = signupLink();
+      openInvite(ctx);
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: userId,
         email: 'invitee@example.com',
@@ -285,7 +339,7 @@ describe('userInviteResolver', () => {
 
     it('returns null when signup was already completed', async () => {
       const ctx = mockContext();
-      const token = auth.generateInviteSignupToken(userId);
+      const token = signupLink();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: userId,
         email: 'invitee@example.com',
@@ -302,7 +356,7 @@ describe('userInviteResolver', () => {
 
     it('returns null when invite was not approved', async () => {
       const ctx = mockContext();
-      const token = auth.generateInviteSignupToken(userId);
+      const token = signupLink();
       (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: userId,
         email: 'invitee@example.com',
@@ -315,6 +369,15 @@ describe('userInviteResolver', () => {
       const result = await userInviteResolver.Query.verifyInviteSignupToken(null, { token }, ctx);
 
       expect(result).toBeNull();
+    });
+
+    it('refuses a link without an invite id (#704)', async () => {
+      const ctx = mockContext();
+
+      await expect(
+        userInviteResolver.Query.verifyInviteSignupToken(null, { token: legacyLink() }, ctx)
+      ).rejects.toThrow(/Invalid invite signup token/);
+      expect(ctx.prisma.user.findUnique).not.toHaveBeenCalled();
     });
   });
 
