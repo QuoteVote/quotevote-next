@@ -207,6 +207,45 @@ interface AddCreatorToUserParams {
   requirePassword?: boolean;
 }
 
+const SIGN_IN_SELECT = {
+  id: true,
+  password: true,
+  email: true,
+  username: true,
+  isAdmin: true,
+  isModerator: true,
+  isInviteApprover: true,
+  accountStatus: true,
+  name: true,
+  avatar: true,
+  bio: true,
+} as const;
+
+const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+
+/**
+ * Finds the account for a sign-in by username or email, the way legacy does.
+ *
+ * Legacy saves usernames and emails lowercased and trimmed, and Mongoose applies the
+ * same to the search, so "Louis" or "louis@Example.com " signs in there. The exact
+ * spelling is tried first, because accounts created here may keep capitals in the
+ * username, then the lowercase form. Both are plain equality lookups.
+ */
+export const findSignInAccount = async (input: string) => {
+  const typed = input.trim();
+  if (!typed) return null;
+  const field = EMAIL_PATTERN.test(typed) ? 'email' : 'username';
+
+  const exact = await prisma.user.findFirst({
+    where: { [field]: typed },
+    select: SIGN_IN_SELECT,
+  });
+  const lower = typed.toLowerCase();
+  if (exact || lower === typed) return exact;
+
+  return prisma.user.findFirst({ where: { [field]: lower }, select: SIGN_IN_SELECT });
+};
+
 /**
  * Internal helper to generate a JWT token and handle user authentication response.
  * @param params Authentication parameters including username and password.
@@ -223,23 +262,8 @@ export const addCreatorToUser = async (
   expiresIn: number = 60 * 15, // Default 15 minutes for access token
   tokenOnly: boolean = false
 ): Promise<Response | string | void> => {
-  const isEmail = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(username);
-  const user = await prisma.user.findFirst({
-    where: isEmail ? { email: username } : { username },
-    select: {
-      id: true,
-      password: true,
-      email: true,
-      username: true,
-      isAdmin: true,
-      isModerator: true,
-      isInviteApprover: true,
-      accountStatus: true,
-      name: true,
-      avatar: true,
-      bio: true,
-    },
-  });
+  if (typeof username !== 'string') return invalidUserPassword(res);
+  const user = await findSignInAccount(username);
 
   if (!user) {
     return invalidUserPassword(res);
