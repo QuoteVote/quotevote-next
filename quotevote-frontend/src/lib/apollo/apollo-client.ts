@@ -14,11 +14,13 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
 import { setSocketConnected } from "@/lib/apollo/socketStatus";
-import { map, Observable } from "rxjs";
+import { from as fromPromise, map, mergeMap, Observable, tap, throwError } from "rxjs";
 import { toast } from "sonner";
 import { env } from "@/config/env";
 import { serializeObjectIds } from "@/lib/utils/objectIdSerializer";
-import { getToken, removeToken } from "@/lib/auth";
+import { getRefreshToken, getToken, removeToken } from "@/lib/auth";
+import { endSession } from "@/lib/auth/endSession";
+import { needsRenewal, renewSession } from "@/lib/auth/session";
 import { triggerAuthGate } from "@/lib/auth-gate";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -55,13 +57,18 @@ function createHttpLink(): HttpLink {
  * @returns Configured auth link
  */
 function createAuthLink() {
-  return setContext((_, { headers }) => {
+  return setContext(async (_, { headers }) => {
     // Only access localStorage on the client side
     if (typeof window === "undefined") {
       return { headers };
     }
 
-    const token = getToken();
+    // A token that has expired or is about to is renewed first, so a member coming back
+    // to the tab after a while isn't refused (#804).
+    let token = getToken();
+    if (token && getRefreshToken() && needsRenewal(token)) {
+      token = (await renewSession()) ?? token;
+    }
     const authHeaders: Record<string, string> = { ...headers };
 
     if (token) {
@@ -203,28 +210,58 @@ function createWsLink(): GraphQLWsLink | null {
  * @returns Configured error link
  */
 function createErrorLink() {
-  return new ErrorLink(({ error, operation }) => {
+  return new ErrorLink(({ error, operation, forward }) => {
     if (CombinedGraphQLErrors.is(error)) {
       for (const err of error.errors) {
         const code = (err.extensions?.code as string) ?? "";
 
         if (code === "UNAUTHENTICATED") {
-          if (typeof window !== "undefined") {
-            removeToken();
-            // Keep UI auth state in sync with the cleared token.
-            useAppStore.getState().logout();
+          if (typeof window === "undefined") return undefined;
 
-            // Background queries (notifications, rooms, activities) must not
-            // pop the invite/login modal while the user still looks signed in.
-            // Interactive mutations still open the login gate.
-            const definition = getMainDefinition(operation.query);
-            const isMutation =
-              definition.kind === "OperationDefinition" && definition.operation === "mutation";
-            if (isMutation) {
-              triggerAuthGate({ view: "login" });
+          // A refused session is renewed once and the request sent again (#804). If it
+          // can't be renewed, the session has really ended: say so and offer sign-in.
+          const context = operation.getContext();
+          if (getRefreshToken()) {
+            if (context.retriedAfterRenewal) {
+              endSession();
+              return undefined;
             }
+            operation.setContext({ retriedAfterRenewal: true });
+            return fromPromise(renewSession()).pipe(
+              mergeMap((renewed) => {
+                if (!renewed) {
+                  endSession();
+                  return throwError(() => error);
+                }
+                // The retry's errors don't come back through this link, so a session
+                // refused again is ended here.
+                return forward(operation).pipe(
+                  tap((result) => {
+                    const refusedAgain = result.errors?.some(
+                      (retryError) => retryError.extensions?.code === "UNAUTHENTICATED"
+                    );
+                    if (refusedAgain) endSession();
+                  })
+                );
+              })
+            );
           }
-          return;
+
+          // No session to renew (a guest, or a sign-in from before refresh tokens).
+          removeToken();
+          // Keep UI auth state in sync with the cleared token.
+          useAppStore.getState().logout();
+
+          // Background queries (notifications, rooms, activities) must not
+          // pop the invite/login modal while the user still looks signed in.
+          // Interactive mutations still open the login gate.
+          const definition = getMainDefinition(operation.query);
+          const isMutation =
+            definition.kind === "OperationDefinition" && definition.operation === "mutation";
+          if (isMutation) {
+            triggerAuthGate({ view: "login" });
+          }
+          return undefined;
         }
 
         if (typeof window !== "undefined") {
@@ -262,6 +299,7 @@ function createErrorLink() {
         console.error("[Unknown error]", operation.operationName, error);
       }
     }
+    return undefined;
   });
 }
 

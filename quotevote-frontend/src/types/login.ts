@@ -35,3 +35,10 @@ export interface LoginResponse {
         token?: string;
     };
 }
+
+/** What `POST /auth/refresh` returns: a new access token, and the refresh token it used (#804). */
+export interface RefreshApiResponse {
+    accessToken?: string;
+    refreshToken?: string;
+    message?: string;
+}
