@@ -307,6 +307,74 @@ describe('Authentication Utils', () => {
     });
   });
 
+  describe('sign-in lookup matches legacy (capitals and spaces)', () => {
+    const account = {
+      id: 'mockId',
+      username: 'louis',
+      email: 'louis@example.com',
+      password: 'hashed',
+      isAdmin: false,
+      accountStatus: 'active',
+    };
+    const findFirst = () => prisma.user.findFirst as jest.Mock;
+    const lookedUp = () => findFirst().mock.calls.map((call) => call[0].where);
+
+    beforeEach(() => {
+      findFirst().mockReset();
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    });
+
+    it('signs in with a capitalised username and a trailing space, as legacy does', async () => {
+      findFirst().mockResolvedValueOnce(null).mockResolvedValueOnce(account);
+      req.body = { username: 'Louis ', password: 'password123' };
+
+      await auth.login(req as Request, res as Response);
+
+      expect(lookedUp()).toEqual([{ username: 'Louis' }, { username: 'louis' }]);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ accessToken: 'token' }));
+    });
+
+    it('signs in with an email typed with capitals', async () => {
+      findFirst().mockResolvedValueOnce(null).mockResolvedValueOnce(account);
+      req.body = { username: ' Louis@Example.com', password: 'password123' };
+
+      await auth.login(req as Request, res as Response);
+
+      expect(lookedUp()).toEqual([{ email: 'Louis@Example.com' }, { email: 'louis@example.com' }]);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ accessToken: 'token' }));
+    });
+
+    it('keeps an exact match first, so a username saved with capitals still signs in', async () => {
+      findFirst().mockResolvedValueOnce({ ...account, username: 'Louis' });
+      req.body = { username: 'Louis', password: 'password123' };
+
+      await auth.login(req as Request, res as Response);
+
+      expect(lookedUp()).toEqual([{ username: 'Louis' }]);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ accessToken: 'token' }));
+    });
+
+    it('looks up once when the input is already lowercase', async () => {
+      findFirst().mockResolvedValueOnce(null);
+      req.body = { username: 'nobody', password: 'password123' };
+
+      await auth.login(req as Request, res as Response);
+
+      expect(lookedUp()).toEqual([{ username: 'nobody' }]);
+      expect(status).toHaveBeenCalledWith(401);
+    });
+
+    it('refuses a username that is not text, or only spaces, without a lookup', async () => {
+      for (const username of [{ $ne: null }, '   ']) {
+        req.body = { username, password: 'password123' };
+        await auth.login(req as Request, res as Response);
+      }
+
+      expect(findFirst()).not.toHaveBeenCalled();
+      expect(status).toHaveBeenCalledWith(401);
+    });
+  });
+
   describe('addCreatorToUser extra behavior', () => {
     it('should return 401 if user not found', async () => {
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
