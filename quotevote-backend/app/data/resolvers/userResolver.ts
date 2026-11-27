@@ -27,6 +27,7 @@ import { hasRole, requireRole } from '~/data/utils/requireRole';
 import { recordStaffAction } from '~/data/utils/staffActions';
 import type * as Common from '~/types/common';
 import type { FollowInfoEntry, GraphQLContext } from '~/types/graphql';
+import { findUsernameOwner, normalizeUsername } from '~/data/utils/usernames';
 
 /** Legacy invite codes: 1 = requested, 4 = approved (not yet signed up). */
 const UNFINISHED_INVITE_STATUSES = new Set([1, 4]);
@@ -718,20 +719,15 @@ export const userResolver = {
       }
 
       if (input.username !== undefined && input.username !== null) {
-        const username = input.username.trim();
+        // Saved in lowercase, like legacy (#748).
+        const username = normalizeUsername(input.username);
         if (username.length < 4 || username.length > 50) {
           throw new GraphQLError('Username must be between 4 and 50 characters', {
             extensions: { code: 'BAD_USER_INPUT' },
           });
         }
 
-        const existingUsername = await context.prisma.user.findFirst({
-          where: {
-            username,
-            NOT: { id: targetId },
-          },
-          select: { id: true },
-        });
+        const existingUsername = await findUsernameOwner(context.prisma, username, targetId);
 
         if (existingUsername) {
           throw new GraphQLError('Username already exists!', {
