@@ -85,5 +85,23 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "path-to-regexp@>=8 <9": "^8.4.0",
+      "axios@>=1 <2": "^1.21.1",
+      "form-data@>=4 <5": "^4.0.6",
+      "defu@<7": "^6.1.5",
+      "effect@>=3 <4": "^3.22.1",
+      "minimatch@<4": "^3.1.4",
+      "minimatch@>=9 <10": "^9.0.7",
+      "brace-expansion@<2": "^1.1.20",
+      "brace-expansion@>=2 <3": "^2.1.6",
+      "picomatch@<3": "^2.3.2",
+      "picomatch@>=4 <5": "^4.0.4",
+      "flatted@<4": "^3.4.2",
+      "js-yaml@>=3 <4": "^3.15.2",
+      "browserslist@<5": "^4.28.7"
+    }
   }
 }

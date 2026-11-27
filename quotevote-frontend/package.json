@@ -46,16 +46,16 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "axios": "^1.13.2",
+    "axios": "^1.21.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "graphql": "^16.12.0",
     "graphql-ws": "^6.0.6",
     "jwt-decode": "^4.0.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "lucide-react": "^0.554.0",
     "moment": "^2.30.1",
-    "next": "16.1.1",
+    "next": "16.4.6",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-device-detect": "^2.2.3",
@@ -95,5 +95,28 @@
     "tw-animate-css": "^1.4.0",
     "typescript": "^5",
     "wait-on": "^8.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "ws@>=8 <9": "^8.21.0",
+      "postcss@<9": "^8.5.18",
+      "nanoid@<4": "^3.3.18",
+      "source-map-js@<2": "^1.2.2",
+      "sharp@<1": "^0.35.5",
+      "form-data@>=4 <5": "^4.0.6",
+      "handlebars@<5": "^4.7.10",
+      "minimatch@<4": "^3.1.4",
+      "minimatch@>=9 <10": "^9.0.7",
+      "brace-expansion@<2": "^1.1.20",
+      "brace-expansion@>=2 <3": "^2.1.6",
+      "picomatch@<3": "^2.3.2",
+      "picomatch@>=4 <5": "^4.0.4",
+      "flatted@<4": "^3.4.2",
+      "js-yaml@>=3 <4": "^3.15.2",
+      "js-yaml@>=4 <5": "^4.3.2",
+      "browserslist@<5": "^4.28.7",
+      "joi@>=18 <19": "^18.3.1",
+      "@fastify/busboy@<4": "^3.2.1"
+    }
   }
 }
