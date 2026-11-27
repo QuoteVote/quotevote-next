@@ -12,6 +12,7 @@ import { pubsub } from '~/data/utils/pubsub';
 import { toPublicUser, type PrismaUserRecord } from '~/data/utils/userPrismaMapper';
 import type { GraphQLContext } from '~/types/graphql';
 import type { AdminInput, DemoContent, DemoSeedResult } from '~/types/instanceSetup';
+import { normalizeUsername } from '~/data/utils/usernames';
 
 /** Same rule as signup (`completeSignup`). */
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
@@ -20,8 +21,10 @@ const MIN_PASSWORD_LENGTH = 12;
 /** Checks the first administrator's details. Returns them trimmed, or throws. */
 export function validateAdminInput(input: AdminInput): AdminInput {
   const email = input.email.trim().toLowerCase();
-  const username = input.username.trim();
-  const name = input.name.trim() || username;
+  const typedUsername = input.username.trim();
+  // Saved in lowercase, like legacy (#748); the display name keeps the capitals.
+  const username = normalizeUsername(typedUsername);
+  const name = input.name.trim() || typedUsername;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid email');
   if (!USERNAME_PATTERN.test(username)) {
     throw new Error('Username must be 3 to 20 letters, digits or underscores');

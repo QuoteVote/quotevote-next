@@ -203,6 +203,75 @@ describe('userInviteResolver', () => {
       });
     });
 
+    it('saves the username in lowercase, like legacy (#748)', async () => {
+      const ctx = mockContext();
+      const token = signupLink();
+      openInvite(ctx);
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        password: null,
+        status: 4,
+        accountStatus: 'active',
+        email: 'invitee@example.com',
+      });
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({
+        id: userId,
+        username: 'newuser',
+        accountStatus: 'active',
+      });
+
+      await userInviteResolver.Mutation.completeSignup(
+        null,
+        {
+          token,
+          username: ' NewUser ',
+          password: 'Password1',
+          acceptedTermsVersion: CURRENT_TERMS_VERSION,
+        },
+        ctx
+      );
+
+      expect(ctx.prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          username: { equals: 'newuser', mode: 'insensitive' },
+          NOT: { id: userId },
+        },
+        select: { id: true },
+      });
+      expect(ctx.prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ username: 'newuser' }) })
+      );
+    });
+
+    it('refuses a username taken with different capitals (#748)', async () => {
+      const ctx = mockContext();
+      const token = signupLink();
+      openInvite(ctx);
+      (ctx.prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        password: null,
+        status: 4,
+        accountStatus: 'active',
+        email: 'invitee@example.com',
+      });
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 'someone-else' });
+
+      await expect(
+        userInviteResolver.Mutation.completeSignup(
+          null,
+          {
+            token,
+            username: 'NewUser',
+            password: 'Password1',
+            acceptedTermsVersion: CURRENT_TERMS_VERSION,
+          },
+          ctx
+        )
+      ).rejects.toThrow('Username already exists!');
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
+
     it('rejects when TermsAcceptance write fails (unique constraint)', async () => {
       const ctx = mockContext();
       const token = signupLink();
