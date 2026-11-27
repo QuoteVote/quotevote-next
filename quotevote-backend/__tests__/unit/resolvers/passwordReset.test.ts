@@ -59,6 +59,7 @@ function mockContext(ip = '203.0.113.7', trustProxy: number | false = false): Gr
         findFirst: jest.fn().mockResolvedValue(null),
         findUnique: jest.fn().mockResolvedValue(null),
         update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       userInvite: { findUnique: jest.fn().mockResolvedValue(null) },
     },
@@ -250,7 +251,7 @@ describe('password reset (#623)', () => {
       return ctx;
     };
 
-    it("sets the token account's password, updating by id only", async () => {
+    it("sets the token account's password, only while the link's hash is current", async () => {
       const ctx = withUser();
       const token = generatePasswordResetToken(userId, OLD_HASH);
 
@@ -262,12 +263,47 @@ describe('password reset (#623)', () => {
         )
       ).resolves.toBe(true);
 
-      const update = (ctx.prisma.user.update as jest.Mock).mock.calls[0][0];
-      expect(update.where).toEqual({ id: userId });
+      const update = (ctx.prisma.user.updateMany as jest.Mock).mock.calls[0][0];
+      // The token decides the account, and the write needs the hash the link was issued for.
+      expect(update.where).toEqual({ id: userId, password: OLD_HASH });
       expect(Object.keys(update.data)).toEqual(['password']);
-      // Existing accounts have no createdAt, so nothing beyond the id is read back.
-      expect(update.select).toEqual({ id: true });
       expect(await bcrypt.compare(NEW_PASSWORD, update.data.password)).toBe(true);
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('lets only one of two requests with the same link through (#107)', async () => {
+      const ctx = withUser();
+      const token = generatePasswordResetToken(userId, OLD_HASH);
+      // Both requests read the old hash; the first write changes it, so the second matches nothing.
+      (ctx.prisma.user.updateMany as jest.Mock)
+        .mockResolvedValueOnce({ count: 1 })
+        .mockResolvedValueOnce({ count: 0 });
+
+      const [first, second] = await Promise.allSettled([
+        userResolver.Mutation.updateUserPassword(null, { password: NEW_PASSWORD, token }, ctx),
+        userResolver.Mutation.updateUserPassword(null, { password: 'Otherpass456', token }, ctx),
+      ]);
+
+      expect(first).toEqual({ status: 'fulfilled', value: true });
+      expect(second.status).toBe('rejected');
+      expect(((second as PromiseRejectedResult).reason as GraphQLError).extensions.code).toBe(
+        'UNAUTHENTICATED'
+      );
+    });
+
+    it('matches an account without a password whether the field is null or unset', async () => {
+      const ctx = withUser({ ...activeUser, password: undefined });
+      const token = generatePasswordResetToken(userId, undefined);
+
+      await expect(
+        userResolver.Mutation.updateUserPassword(null, { password: NEW_PASSWORD, token }, ctx)
+      ).resolves.toBe(true);
+
+      const update = (ctx.prisma.user.updateMany as jest.Mock).mock.calls[0][0];
+      expect(update.where).toEqual({
+        id: userId,
+        OR: [{ password: null }, { password: { isSet: false } }],
+      });
     });
 
     it('works without the username argument', async () => {
@@ -288,7 +324,7 @@ describe('password reset (#623)', () => {
         userResolver.Mutation.updateUserPassword(null, { password: NEW_PASSWORD, token }, ctx),
         'UNAUTHENTICATED'
       );
-      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
     });
 
     it('refuses a username that is not the token account', async () => {
@@ -303,7 +339,7 @@ describe('password reset (#623)', () => {
         ),
         'UNAUTHENTICATED'
       );
-      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+      expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
     });
 
     it('refuses missing, expired, session and invite tokens', async () => {
@@ -322,7 +358,7 @@ describe('password reset (#623)', () => {
           userResolver.Mutation.updateUserPassword(null, { password: NEW_PASSWORD, token }, ctx),
           'UNAUTHENTICATED'
         );
-        expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+        expect(ctx.prisma.user.updateMany).not.toHaveBeenCalled();
       }
     });
 
