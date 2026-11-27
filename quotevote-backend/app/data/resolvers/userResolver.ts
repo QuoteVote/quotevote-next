@@ -613,14 +613,19 @@ export const userResolver = {
       const username = args.username?.trim();
       if (username && username !== user.username) throw invalidResetLink();
 
-      // Updating by id only: the token decides the account, never the username argument.
-      // Selecting just the id keeps Prisma from reading back fields that existing
-      // accounts don't have, such as `createdAt`.
-      await context.prisma.user.update({
-        where: { id: user.id },
+      // The token decides the account, never the username argument. The write only
+      // goes through while the stored hash is still the one the link was issued for,
+      // so of two requests with the same link at once only one succeeds (#107).
+      // An account without a password may have the field unset, which `null` alone
+      // doesn't match on MongoDB.
+      const currentHash = user.password
+        ? { password: user.password }
+        : { OR: [{ password: null }, { password: { isSet: false } }] };
+      const updated = await context.prisma.user.updateMany({
+        where: { id: user.id, ...currentHash },
         data: { password: await generateHashPassword(password) },
-        select: { id: true },
       });
+      if (updated.count !== 1) throw invalidResetLink();
 
       return true;
     },
