@@ -210,6 +210,39 @@ describe('userResolver', () => {
       expect(result.bio).toBe('Thoughtful dialogue');
     });
 
+    it('saves a new username in lowercase and checks it ignoring capitals (#748)', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+      (ctx.prisma.user.update as jest.Mock).mockResolvedValue({ id: actorId, username: 'alice.r' });
+
+      await userResolver.Mutation.updateUser(
+        null,
+        { user: { _id: actorId, username: ' Alice.R ' } },
+        ctx
+      );
+
+      expect(ctx.prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          username: { equals: 'alice\\.r', mode: 'insensitive' },
+          NOT: { id: actorId },
+        },
+        select: { id: true },
+      });
+      expect((ctx.prisma.user.update as jest.Mock).mock.calls[0][0].data).toEqual({
+        username: 'alice.r',
+      });
+    });
+
+    it('refuses a username another account has with different capitals (#748)', async () => {
+      const ctx = mockContext();
+      (ctx.prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 'someone-else' });
+
+      await expect(
+        userResolver.Mutation.updateUser(null, { user: { _id: actorId, username: 'Bobby' } }, ctx)
+      ).rejects.toThrow('Username already exists!');
+      expect(ctx.prisma.user.update).not.toHaveBeenCalled();
+    });
+
     it('rejects HTML in bio', async () => {
       const ctx = mockContext();
       await expect(

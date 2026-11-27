@@ -56,6 +56,13 @@ describe('instance setup: first administrator', () => {
     });
   });
 
+  it('saves the username in lowercase and keeps the capitals in the display name (#748)', () => {
+    expect(validateAdminInput({ ...input, username: ' Admin1 ' })).toMatchObject({
+      username: 'admin1',
+      name: 'Admin1',
+    });
+  });
+
   it.each([
     [{ ...input, email: 'not-an-email' }, /valid email/],
     [{ ...input, username: 'a b' }, /Username/],

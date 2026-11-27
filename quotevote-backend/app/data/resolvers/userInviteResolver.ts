@@ -39,6 +39,7 @@ import { requireRole } from '~/data/utils/requireRole';
 import { recordStaffAction } from '~/data/utils/staffActions';
 import type * as Common from '~/types/common';
 import type { GraphQLContext } from '~/types/graphql';
+import { findUsernameOwner, normalizeUsername } from '~/data/utils/usernames';
 
 const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/;
 
@@ -810,7 +811,8 @@ export const userInviteResolver = {
       },
       context: GraphQLContext
     ): Promise<Common.User> => {
-      const username = args.username?.trim();
+      // Saved in lowercase, like legacy (#748).
+      const username = args.username ? normalizeUsername(args.username) : '';
       const password = args.password;
       const token = args.token?.trim();
 
@@ -870,13 +872,7 @@ export const userInviteResolver = {
         throw badInput(INVITE_LINK_UNUSABLE);
       }
 
-      const usernameTaken = await context.prisma.user.findFirst({
-        where: {
-          username,
-          NOT: { id: existing.id },
-        },
-        select: { id: true },
-      });
+      const usernameTaken = await findUsernameOwner(context.prisma, username, existing.id);
       if (usernameTaken) {
         throw new GraphQLError('Username already exists!', {
           extensions: { code: 'BAD_USER_INPUT' },
