@@ -274,21 +274,27 @@ describe('password reset (#623)', () => {
     it('lets only one of two requests with the same link through (#107)', async () => {
       const ctx = withUser();
       const token = generatePasswordResetToken(userId, OLD_HASH);
-      // Both requests read the old hash; the first write changes it, so the second matches nothing.
+      // Both requests read the old hash; whichever writes first changes it, so the other
+      // matches nothing. Which one that is depends on hashing time, so the test doesn't
+      // assume an order.
       (ctx.prisma.user.updateMany as jest.Mock)
         .mockResolvedValueOnce({ count: 1 })
         .mockResolvedValueOnce({ count: 0 });
 
-      const [first, second] = await Promise.allSettled([
+      const results = await Promise.allSettled([
         userResolver.Mutation.updateUserPassword(null, { password: NEW_PASSWORD, token }, ctx),
         userResolver.Mutation.updateUserPassword(null, { password: 'Otherpass456', token }, ctx),
       ]);
 
-      expect(first).toEqual({ status: 'fulfilled', value: true });
-      expect(second.status).toBe('rejected');
-      expect(((second as PromiseRejectedResult).reason as GraphQLError).extensions.code).toBe(
-        'UNAUTHENTICATED'
-      );
+      const succeeded = results.filter((r) => r.status === 'fulfilled');
+      const refused = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+      expect(succeeded).toEqual([{ status: 'fulfilled', value: true }]);
+      expect(refused).toHaveLength(1);
+      expect((refused[0].reason as GraphQLError).extensions.code).toBe('UNAUTHENTICATED');
+      // Both writes were conditional on the link's hash.
+      for (const [args] of (ctx.prisma.user.updateMany as jest.Mock).mock.calls) {
+        expect(args.where).toEqual({ id: userId, password: OLD_HASH });
+      }
     });
 
     it('matches an account without a password whether the field is null or unset', async () => {
