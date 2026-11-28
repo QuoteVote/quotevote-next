@@ -383,7 +383,7 @@ export function LandingFeed() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Search quotes, topics and sources"
-            className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-[var(--auth-ink)] outline-none placeholder:text-[var(--auth-muted)]"
+            className="min-w-0 flex-1 border-0 bg-transparent text-base text-[var(--auth-ink)] outline-none placeholder:text-[var(--auth-muted)] sm:text-[15px]"
           />
         </div>
         <button
