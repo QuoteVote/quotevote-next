@@ -207,26 +207,24 @@ describe("VotingPopup", () => {
       ).toBeInTheDocument();
     });
 
-    it("shows the passage and says Tap in the phone sheet", () => {
+    it("shows only the actions in the phone sheet, and says Tap (#816)", () => {
       renderPopup({ variant: "sheet" });
-      expect(screen.getByText(selectedText.text)).toBeInTheDocument();
+      // The passage stays highlighted in the post, so the sheet doesn't repeat it.
+      expect(screen.queryByText(selectedText.text)).not.toBeInTheDocument();
+      expect(screen.queryByTestId("selection-sheet-passage")).not.toBeInTheDocument();
+      // No drag handle.
+      expect(screen.getByTestId("selection-popup").querySelector(".h-1.w-10")).toBeNull();
+      expect(screen.getByTestId("highlight-quote-button")).toBeInTheDocument();
       openVoteMode();
       expect(
         screen.getByText("Your vote is outlined. Tap it again to remove it.")
       ).toBeInTheDocument();
     });
 
-    it("shows the whole passage in the phone sheet, scrolling instead of cutting it off", () => {
-      const long = `${"Night routes would cost less than the overtime. ".repeat(25)}End, really.`;
-      renderPopup({ variant: "sheet", selectedText: { ...selectedText, text: long } });
-      const passage = screen.getByTestId("selection-sheet-passage");
-      expect(passage).toHaveAccessibleName("Selected passage");
-      expect(passage).toHaveTextContent(long.trim());
-      expect(passage.className).toContain("overflow-y-auto");
-      expect(passage.className).toContain("overscroll-contain");
-      expect(passage.innerHTML).not.toContain("line-clamp");
-      expect(screen.getByTestId("highlight-quote-button")).toBeInTheDocument();
-      expect(screen.getByTestId("highlight-vote-mode-button")).toBeInTheDocument();
+    it("still quotes the selected passage from the phone sheet (#816)", () => {
+      const props = renderPopup({ variant: "sheet" });
+      fireEvent.click(screen.getByTestId("highlight-quote-button"));
+      expect(props.onQuote).toHaveBeenCalledWith(selectedText);
     });
 
     it("keeps the passage out of the desktop popover", () => {
