@@ -7,7 +7,6 @@ import { WifiOff } from 'lucide-react'
 import PostController from '@/components/Post/PostController'
 import PostUnavailable from '@/components/Post/PostUnavailable'
 import PostActionList from '@/components/PostActions/PostActionList'
-import SelectedPassageSummary from '@/components/PostActions/SelectedPassageSummary'
 import PostChatSend from '@/components/PostChat/PostChatSend'
 import MobileDiscussionSplit from '@/components/Post/MobileDiscussionSplit'
 import DiscussionSplitPane from '@/components/Post/DiscussionSplitPane'
@@ -15,7 +14,6 @@ import { useHasMounted, useIsMobile, useIsLandscapeMobile } from '@/hooks/useMed
 import { GET_POST, GET_ROOM_MESSAGES } from '@/graphql/queries'
 import { toAppPostUrl } from '@/lib/utils/sanitizeUrl'
 import { toLinkedPassage } from '@/lib/utils/discussionSplit'
-import { summarizePassage } from '@/lib/utils/passageSummary'
 import { NEW_MESSAGE_SUBSCRIPTION } from '@/graphql/subscriptions'
 import { useAppStore } from '@/store'
 import type { PostQueryData } from '@/types/post'
@@ -46,8 +44,6 @@ interface InteractionSectionProps {
   selectedActionId?: string | null
   onActionSelect?: (action: PostAction) => void
   onCountChange?: (count: number) => void
-  /** Clears the selected passage and Discussion item. */
-  onClearSelection?: () => void
 }
 
 export default function PostDetailPage(): React.ReactNode {
@@ -98,8 +94,14 @@ function PostLayout({ postId }: { postId: string }) {
     (open: boolean) => {
       setDiscussionOpen(open)
       setMobileDiscussionOpen(open && isPortraitMobile)
+      // The passage highlight marks what the open Discussion is about, so it goes when it closes (#773).
+      if (!open) {
+        setSelectedActionId(null)
+        setFocusedComment(null)
+        setLinkedPassage(null)
+      }
     },
-    [isPortraitMobile, setMobileDiscussionOpen],
+    [isPortraitMobile, setFocusedComment, setLinkedPassage, setMobileDiscussionOpen],
   )
 
   const handleActionSelect = useCallback(
@@ -129,12 +131,6 @@ function PostLayout({ postId }: { postId: string }) {
       setMobileDiscussionOpen,
     ],
   )
-
-  const handleClearSelection = useCallback(() => {
-    setSelectedActionId(null)
-    setFocusedComment(null)
-    setLinkedPassage(null)
-  }, [setFocusedComment, setLinkedPassage])
 
   const handleActivateLinkedComment = useCallback(
     (actionId: string) => {
@@ -166,7 +162,6 @@ function PostLayout({ postId }: { postId: string }) {
       selectedActionId={selectedActionId}
       onActionSelect={handleActionSelect}
       onCountChange={setDiscussionCount}
-      onClearSelection={handleClearSelection}
     />
   )
 
@@ -212,10 +207,8 @@ function InteractionSection({
   selectedActionId = null,
   onActionSelect,
   onCountChange,
-  onClearSelection,
 }: InteractionSectionProps) {
   const [wsDisconnected, setWsDisconnected] = useState(false)
-  const linkedPassage = useAppStore((s) => s.ui.linkedPassage)
 
   const { loading: postLoading, data: postData, refetch: refetchPost } = useQuery<PostQueryData>(
     GET_POST,
@@ -336,27 +329,18 @@ function InteractionSection({
     onCountChange?.(postActions.length)
   }, [postActions.length, onCountChange])
 
-  const passageSummary = useMemo(
-    () => summarizePassage(post?.text, linkedPassage, postActions),
-    [post?.text, linkedPassage, postActions]
-  )
-
   return (
     <div className="flex flex-col h-full">
-      {!hideHeader || passageSummary ? (
+      {/* The selected passage is highlighted in the post itself, so no summary card here (#773). */}
+      {!hideHeader ? (
         <div className="font-redesign flex shrink-0 flex-col gap-3 px-4 pt-4 pb-2 lg:px-6 lg:pt-[22px]">
-          {!hideHeader && (
-            <h2
-              data-discussion-title
-              className="text-[22px]! leading-tight! font-extrabold! tracking-[-0.02em]! text-[var(--shell-ink)]"
-            >
-              Discussion{' '}
-              <span className="font-semibold text-[var(--shell-muted)]">· {postActions.length}</span>
-            </h2>
-          )}
-          {passageSummary && onClearSelection ? (
-            <SelectedPassageSummary summary={passageSummary} onClear={onClearSelection} />
-          ) : null}
+          <h2
+            data-discussion-title
+            className="text-[22px]! leading-tight! font-extrabold! tracking-[-0.02em]! text-[var(--shell-ink)]"
+          >
+            Discussion{' '}
+            <span className="font-semibold text-[var(--shell-muted)]">· {postActions.length}</span>
+          </h2>
         </div>
       ) : null}
 
