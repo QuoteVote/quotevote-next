@@ -115,7 +115,7 @@ export default function NotFound() {
               name="q"
               type="search"
               placeholder="Search quotes, people and topics"
-              className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-[var(--auth-ink)] outline-none placeholder:text-[var(--auth-muted)]"
+              className="min-w-0 flex-1 border-0 bg-transparent text-base text-[var(--auth-ink)] outline-none placeholder:text-[var(--auth-muted)] sm:text-[15px]"
             />
           </div>
           <button type="submit" className="qv-auth-btn qv-auth-btn-primary qv-auth-btn-lg">

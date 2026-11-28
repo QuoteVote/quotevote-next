@@ -136,7 +136,7 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange }: Da
             value={localFrom}
             max={localTo || undefined}
             onChange={(e) => handleFromChange(e.target.value)}
-            className="min-h-9 w-full rounded-md border border-[#8a8a93] bg-background px-2 py-1.5 text-sm text-foreground focus:border-[#2f7a4c] focus:outline-none focus:ring-2 focus:ring-[#52b274]/40 dark:border-[#6e7681] dark:focus:border-[#7fdc9c]"
+            className="min-h-9 w-full rounded-md border border-[#8a8a93] bg-background px-2 py-1.5 text-base text-foreground sm:text-sm focus:border-[#2f7a4c] focus:outline-none focus:ring-2 focus:ring-[#52b274]/40 dark:border-[#6e7681] dark:focus:border-[#7fdc9c]"
           />
         </div>
         <div className="space-y-1">
@@ -152,7 +152,7 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange }: Da
             value={localTo}
             min={localFrom || undefined}
             onChange={(e) => handleToChange(e.target.value)}
-            className="min-h-9 w-full rounded-md border border-[#8a8a93] bg-background px-2 py-1.5 text-sm text-foreground focus:border-[#2f7a4c] focus:outline-none focus:ring-2 focus:ring-[#52b274]/40 dark:border-[#6e7681] dark:focus:border-[#7fdc9c]"
+            className="min-h-9 w-full rounded-md border border-[#8a8a93] bg-background px-2 py-1.5 text-base text-foreground sm:text-sm focus:border-[#2f7a4c] focus:outline-none focus:ring-2 focus:ring-[#52b274]/40 dark:border-[#6e7681] dark:focus:border-[#7fdc9c]"
           />
         </div>
       </div>

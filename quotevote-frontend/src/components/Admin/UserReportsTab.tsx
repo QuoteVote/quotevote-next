@@ -128,7 +128,7 @@ export default function UserReportsTab() {
               placeholder="Search by username or name…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-sm"
+              className="pl-8 h-8 text-base md:text-sm"
             />
           </div>
 
