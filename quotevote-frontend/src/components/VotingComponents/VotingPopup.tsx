@@ -116,7 +116,7 @@ export default function VotingPopup({
       className={cn(
         "font-redesign bg-[var(--shell-surface)] text-[var(--shell-ink)]",
         sheet
-          ? "max-h-[calc(100dvh-0.5rem)] w-full overflow-y-auto overscroll-contain rounded-t-[22px] px-[18px] pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] [.neo-brutalism_&]:rounded-t-[6px] [.neo-brutalism_&]:border-t-[2.5px] [.neo-brutalism_&]:border-[var(--shell-line)]"
+          ? "max-h-[calc(100dvh-0.5rem)] w-full overflow-y-auto overscroll-contain rounded-t-[22px] border-t border-[var(--shell-line)] px-[18px] pt-[18px] pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-10px_28px_-14px_rgba(15,23,42,0.35)] [.neo-brutalism_&]:rounded-t-[6px] [.neo-brutalism_&]:border-t-[2.5px] [.neo-brutalism_&]:shadow-none"
           : cn(
               "w-[min(28.5rem,calc(100vw-1.25rem))] rounded-[18px] border border-[var(--shell-line)] p-[18px]",
               "shadow-[0_24px_48px_-16px_rgba(15,23,42,0.28)] animate-in fade-in-0 zoom-in-95",
@@ -124,33 +124,8 @@ export default function VotingPopup({
             )
       )}
     >
-      {sheet && (
-        <>
-          <span
-            aria-hidden="true"
-            className="mx-auto mb-3.5 block h-1 w-10 rounded-full bg-[var(--shell-muted)] opacity-30"
-          />
-          {/* The whole passage, never cut off (#760). A long one scrolls inside the box, so
-              Quote and Vote stay on screen; overscroll-contain keeps the page still. */}
-          <div className="mb-3.5 flex items-start gap-2.5 rounded-[12px] bg-[var(--shell-blue-soft)] py-2.5 pl-3 text-[15px] leading-[1.4] font-bold [.neo-brutalism_&]:rounded-[4px] [.neo-brutalism_&]:border-2 [.neo-brutalism_&]:border-[var(--shell-line)]">
-            <span
-              aria-hidden="true"
-              className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-[var(--shell-surface)] pt-1 font-serif text-[15px] leading-none text-[var(--shell-blue)]"
-            >
-              “
-            </span>
-            <div
-              role="region"
-              aria-label="Selected passage"
-              tabIndex={0}
-              data-testid="selection-sheet-passage"
-              className="max-h-[min(35dvh,20rem)] min-w-0 flex-1 overflow-y-auto overscroll-contain pr-3 break-words whitespace-pre-wrap focus-visible:rounded-[6px] focus-visible:outline-2 focus-visible:outline-[var(--shell-blue)]"
-            >
-              {selectedText.text}
-            </div>
-          </div>
-        </>
-      )}
+      {/* The phone sheet shows only the actions (#816): the passage stays highlighted in
+          the post above, so there's no preview here and no drag handle. */}
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"

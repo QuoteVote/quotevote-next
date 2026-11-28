@@ -4,6 +4,11 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { SelectionPopoverProps } from "@/types/voting";
 
+/** Space kept between the highlighted passage and the top of the phone sheet, in px. */
+const SHEET_PASSAGE_GAP = 12;
+/** Space kept at the top of the screen for the header when scrolling a passage up, in px. */
+const SHEET_TOP_CLEARANCE = 72;
+
 export default function SelectionPopover({
   showPopover,
   topOffset = 30,
@@ -95,6 +100,30 @@ export default function SelectionPopover({
     return undefined;
   }, [showPopover, mounted, computePopoverBox, popoverRef]);
 
+  // Phone: the sheet no longer repeats the passage (#816), so keep the highlighted passage
+  // in view above it, also when the Vote options make the sheet taller. A passage taller
+  // than the space left keeps its first line just below the header.
+  useEffect(() => {
+    if (!sheet || !showPopover || !mounted) return undefined;
+    const keepPassageVisible = () => {
+      const passage = resolveAnchorRect();
+      const panel = popoverRef.current;
+      if (!passage || !panel) return;
+      const overlap = passage.bottom + SHEET_PASSAGE_GAP - panel.getBoundingClientRect().top;
+      const roomAbove = passage.top - SHEET_TOP_CLEARANCE;
+      const by = Math.min(overlap, roomAbove);
+      if (by > 0) window.scrollBy(0, by);
+    };
+    const rafId = requestAnimationFrame(() => requestAnimationFrame(keepPassageVisible));
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(keepPassageVisible) : null;
+    if (resizeObserver && popoverRef.current) resizeObserver.observe(popoverRef.current);
+    return () => {
+      cancelAnimationFrame(rafId);
+      resizeObserver?.disconnect();
+    };
+  }, [sheet, showPopover, mounted, resolveAnchorRect, popoverRef]);
+
   // Escape closes the popup, in both layouts.
   useEffect(() => {
     if (!showPopover || !onDismiss) return undefined;
@@ -108,15 +137,16 @@ export default function SelectionPopover({
   if (!mounted) return null;
 
   if (sheet) {
-    // Phone: a bottom sheet over the dimmed page, no anchoring to the selection. Above the
-    // phone tab bar (z-60), as in the design.
+    // Phone: a bottom sheet, no anchoring to the selection. Above the phone tab bar (z-60).
+    // The page stays undimmed so the post can be read while the sheet is open (#816); the
+    // clear layer behind the sheet only closes it on a tap outside.
     return createPortal(
       showPopover ? (
         <>
           <div
             aria-hidden="true"
             data-testid="selection-sheet-backdrop"
-            className="fixed inset-0 z-[70] bg-slate-900/35 backdrop-blur-[3px] animate-in fade-in-0"
+            className="fixed inset-0 z-[70] bg-transparent"
             onClick={onDismiss}
           />
           <div

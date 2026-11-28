@@ -207,17 +207,83 @@ describe("SelectionPopover", () => {
   });
 
   describe("phone sheet", () => {
-    it("shows the content at the bottom over a backdrop, without anchoring to the text", () => {
+    it("shows the content at the bottom, without anchoring to the text", () => {
       const props = makeProps({ showPopover: true, sheet: true, onDismiss: jest.fn() });
       render(<SelectionPopover {...props} />);
 
       const sheet = screen.getByTestId("highlight-popup");
       expect(sheet).toHaveClass("fixed", "inset-x-0", "bottom-0");
+      expect(sheet.style.top).toBe("");
       expect(screen.getByText("Test content")).toBeVisible();
-      expect(props.resolveAnchorRect).not.toHaveBeenCalled();
     });
 
-    it("closes on a backdrop tap", () => {
+    it("leaves the post undimmed and unblurred behind the sheet (#816)", () => {
+      render(
+        <SelectionPopover
+          {...makeProps({ showPopover: true, sheet: true, onDismiss: jest.fn() })}
+        />
+      );
+
+      const backdrop = screen.getByTestId("selection-sheet-backdrop");
+      expect(backdrop).toHaveClass("bg-transparent");
+      expect(backdrop.className).not.toMatch(/bg-slate|backdrop-blur/);
+    });
+
+    describe("keeping the highlighted passage in view (#816)", () => {
+      const rect = (top: number, bottom: number) =>
+        ({ top, bottom, left: 0, right: 300, width: 300, height: bottom - top }) as DOMRect;
+      let frames: FrameRequestCallback[];
+      let scrollBy: jest.SpyInstance;
+
+      beforeEach(() => {
+        frames = [];
+        jest
+          .spyOn(window, "requestAnimationFrame")
+          .mockImplementation((cb: FrameRequestCallback) => frames.push(cb));
+        scrollBy = jest.spyOn(window, "scrollBy").mockImplementation(() => undefined);
+      });
+      afterEach(() => jest.restoreAllMocks());
+
+      /** Opens the sheet with its top edge at `sheetTop`, then runs the queued frames. */
+      const openSheet = (passage: DOMRect, sheetTop: number) => {
+        const popoverRef = createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement | null>;
+        render(
+          <SelectionPopover
+            {...makeProps({
+              showPopover: true,
+              sheet: true,
+              onDismiss: jest.fn(),
+              popoverRef,
+              resolveAnchorRect: () => passage,
+            })}
+          />
+        );
+        popoverRef.current!.getBoundingClientRect = () => rect(sheetTop, 844);
+        act(() => {
+          // Frames can queue more frames, so run until none are left.
+          while (frames.length) frames.shift()!(0);
+        });
+      };
+
+      it("scrolls a passage the sheet would cover up above it", () => {
+        openSheet(rect(650, 700), 500);
+        // 700 + 12 px gap - 500
+        expect(scrollBy).toHaveBeenCalledWith(0, 212);
+      });
+
+      it("leaves the page alone when the passage is already above the sheet", () => {
+        openSheet(rect(200, 260), 500);
+        expect(scrollBy).not.toHaveBeenCalled();
+      });
+
+      it("keeps the first line of a long passage below the header", () => {
+        openSheet(rect(300, 1200), 500);
+        // Only as far as 300 - 72 px header clearance, not the whole 712.
+        expect(scrollBy).toHaveBeenCalledWith(0, 228);
+      });
+    });
+
+    it("closes on a tap outside the sheet", () => {
       const onDismiss = jest.fn();
       render(<SelectionPopover {...makeProps({ showPopover: true, sheet: true, onDismiss })} />);
 
