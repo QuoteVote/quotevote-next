@@ -4033,10 +4033,6 @@ p { line-height: 1.625; }
   font-size: 15.5px;
 }
 .qv-compose .qv-compose-text { font-family: var(--font-quote), Georgia, serif; font-size: 17px; }
-/* Phones: 16px fields, so iOS Safari doesn't zoom the page when one is focused. */
-@media (max-width: 639px) {
-  .qv-compose .qv-auth-input { font-size: 16px; }
-}
 @media (min-width: 640px) {
   .qv-compose .qv-compose-text { font-size: 18px; }
 }
@@ -5312,4 +5308,17 @@ p { line-height: 1.625; }
 .qv-convo-body > .qv-typing { flex: none; margin: 0 28px 14px; }
 @media (max-width: 767px) {
   .qv-convo-body > .qv-typing { margin: 0 14px 12px; }
+}
+
+/* Phones: every text field is at least 16px, so iOS Safari doesn't zoom the page when one
+   is focused. A zoomed page can then be dragged sideways (#815). Kept last so it wins over
+   each field's own size above. */
+@media (max-width: 639px) {
+  .qv-auth-input,
+  .qv-compose-field input,
+  .qv-inv-search input,
+  .qv-msg-search-input,
+  .qv-compose-msg-input {
+    font-size: 16px;
+  }
 }

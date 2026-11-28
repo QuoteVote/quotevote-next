@@ -152,7 +152,7 @@ export default function FeaturedPostsTab() {
               placeholder="Search posts..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="pl-8 h-8 text-sm"
+              className="pl-8 h-8 text-base md:text-sm"
             />
           </div>
         </div>
